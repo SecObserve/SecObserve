@@ -36,7 +36,7 @@ requests = "2.32.5"  # https://github.com/psf/requests
 # Database
 # ------------------------------------------------------------------------------
 pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
-psycopg = { version = "3.2.12", extras = ["binary"] }  # https://github.com/psycopg/psycopg
+psycopg = { version = "3.2.13", extras = ["binary"] }  # https://github.com/psycopg/psycopg
 # Dataformats
 # ------------------------------------------------------------------------------
 defusedcsv = "3.0.0"  # https://github.com/raphaelm/defusedcsv
