@@ -1,4 +1,5 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     BooleanField,
@@ -77,7 +78,7 @@ const UserComponent = () => {
     return (
         <WithRecord
             render={(user) => (
-                <Box width={"100%"}>
+                <Box width={"100%"} sx={{ marginBottom: 2 }}>
                     <Stack direction="row" spacing={2} sx={{ marginBottom: 1 }}>
                         <Stack sx={{ width: userWidth(user) }}>
                             <Paper sx={{ marginBottom: 1, padding: 2, height: "100%" }}>
@@ -169,41 +170,49 @@ const UserComponent = () => {
                         )}
                     </Stack>
                     {showFullInformation(user) && (user.has_api_tokens || current_user_id === user.id) && (
-                        <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                            <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                API Token
-                            </Typography>
-                            {current_user_id === user.id && (
-                                <Box sx={{ marginBottom: 2 }}>
-                                    <ApiTokenCreate type="user" user={user} />
-                                </Box>
-                            )}
-                            <ApiTokenEmbeddedList type="user" user={user} />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">API Token</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                {current_user_id === user.id && (
+                                    <Box sx={{ marginBottom: 2 }}>
+                                        <ApiTokenCreate type="user" user={user} />
+                                    </Box>
+                                )}
+                                <ApiTokenEmbeddedList type="user" user={user} />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                     {showFullInformation(user) && user.has_authorization_groups && (
-                        <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                            <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                Authorization Groups
-                            </Typography>
-                            <AuthorizationGroupEmbeddedList user={user} />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">Authorization Groups</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <AuthorizationGroupEmbeddedList user={user} />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                     {showFullInformation(user) && user.has_product_group_members && (
-                        <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                            <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                Product Groups
-                            </Typography>
-                            <UserProductMemberEmbeddedList user={user} is_product_group={true} />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">Product Groups</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <UserProductMemberEmbeddedList user={user} is_product_group={true} />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                     {showFullInformation(user) && user.has_product_members && (
-                        <Paper sx={{ marginBottom: 1, padding: 2, width: "100%" }}>
-                            <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                Products
-                            </Typography>
-                            <UserProductMemberEmbeddedList user={user} is_product_group={false} />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">Products</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <UserProductMemberEmbeddedList user={user} is_product_group={false} />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                 </Box>
             )}

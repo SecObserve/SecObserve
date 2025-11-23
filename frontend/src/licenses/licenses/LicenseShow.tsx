@@ -1,4 +1,5 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Accordion, AccordionDetails, AccordionSummary, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import { BooleanField, Labeled, PrevNextButtons, Show, TextField, TopToolbar, WithRecord } from "react-admin";
 
@@ -56,24 +57,28 @@ const LicenseComponent = () => {
                         </Stack>{" "}
                     </Paper>
                     {license.is_in_license_group && (
-                        <Paper sx={{ marginBottom: 1, padding: 2 }}>
-                            <Typography variant="h6" sx={{ marginBottom: 2 }}>
-                                License Groups containing this license
-                            </Typography>
-                            <WithRecord render={(license) => <LicenseGroupEmbeddedList license={license} />} />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 0, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">License Groups containing this license</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <WithRecord render={(license) => <LicenseGroupEmbeddedList license={license} />} />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                     {license.is_in_license_policy && (
-                        <Paper sx={{ marginBottom: 1, padding: 2 }}>
-                            <Typography variant="h6" sx={{ marginBottom: 2 }}>
-                                License Policies containing this license
-                            </Typography>
-                            <WithRecord
-                                render={(license) => (
-                                    <LicensePolicyEmbeddedList license={license} license_group={null} />
-                                )}
-                            />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 0, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">License Policies containing this license</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <WithRecord
+                                    render={(license) => (
+                                        <LicensePolicyEmbeddedList license={license} license_group={null} />
+                                    )}
+                                />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                 </Stack>
             )}

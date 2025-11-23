@@ -79,6 +79,7 @@ const App = () => {
                     name="product_groups"
                     {...product_groups} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "Product Groups" }}
                     recordRepresentation={(record) => `${trim_string(record.name)}`}
                 />
                 <Resource
@@ -97,6 +98,7 @@ const App = () => {
                     name="observation_logs"
                     {...observation_logs} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "Observation Logs" }}
                 />
                 <Resource
                     name="parsers"
@@ -108,12 +110,14 @@ const App = () => {
                     name="general_rules"
                     {...general_rules} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "General Rules" }}
                     recordRepresentation={(record) => `${trim_string(record.name)}`}
                 />
                 <Resource
                     name="product_rules"
                     {...product_rules} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "Product Rules" }}
                     recordRepresentation={(record) => `${trim_string(record.name)}`}
                 />
                 <Resource
@@ -133,6 +137,7 @@ const App = () => {
                     name="authorization_groups"
                     {...authorization_groups} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "Authorization Groups" }}
                     recordRepresentation={(record) => `${trim_string(record.name)}`}
                 />
                 <Resource
@@ -150,6 +155,7 @@ const App = () => {
                     name="vex/csaf"
                     {...csaf} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "exported CSAF documents" }}
                     recordRepresentation={(record) =>
                         `${trim_string(record.document_id_prefix + " / " + record.document_base_id)}`
                     }
@@ -158,6 +164,7 @@ const App = () => {
                     name="vex/openvex"
                     {...openvex} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "exported OpenVEX documents" }}
                     recordRepresentation={(record) =>
                         `${trim_string(record.document_id_prefix + " / " + record.document_base_id)}`
                     }
@@ -166,6 +173,7 @@ const App = () => {
                     name="vex/cyclonedx"
                     {...cyclonedx} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "exported CycloneDX documents" }}
                     recordRepresentation={(record) =>
                         `${trim_string(record.document_id_prefix + " / " + record.document_base_id)}`
                     }
@@ -174,53 +182,63 @@ const App = () => {
                     name="vex/vex_counters"
                     {...vex_counters} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "VEX Counters" }}
                     recordRepresentation={(record) => `${trim_string(record.document_id_prefix + "_" + record.year)}`}
                 />
                 <Resource
                     name="vex/vex_documents"
                     {...vex_documents} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "imported VEX documents" }}
                     recordRepresentation={(record) => `${trim_string(record.document_id)}`}
                 />
                 <Resource
                     name="vex/vex_statements"
                     {...vex_statements} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "VEX Statements" }}
                 />
                 <Resource
                     name="license_components"
                     {...license_components} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "License Components" }}
                 />
                 <Resource
                     name="license_component_evidences"
                     {...license_component_evidences} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "License Component Evidences" }}
                 />
                 <Resource
                     name="licenses"
                     {...licenses} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "SPDX Licenses" }}
                 />
                 <Resource
                     name="license_groups"
                     {...license_groups} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "License Groups" }}
                 />
                 <Resource
                     name="license_policies"
                     {...license_policies} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "License Policies" }}
                 />
                 <Resource
                     name="concluded_licenses"
                     {...concluded_licenses} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "Concluded Licenses" }}
                 />
                 <Resource
                     name="periodic_tasks"
                     {...periodic_tasks} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                     // nosemgrep because the props are well defined in the import
+                    options={{ label: "Periodic Tasks" }}
                 />
                 <Resource
                     name="components"
@@ -229,6 +247,15 @@ const App = () => {
                     recordRepresentation={(record) =>
                         `${trim_string(record.product_name + " / " + record.component_name_version)}`
                     }
+                />
+                <Resource name="api_tokens" options={{ label: "API Tokens" }} />
+                <Resource name="product_api_tokens" options={{ label: "API Tokens" }} />
+                <Resource name="vulnerability_checks" options={{ label: "Vulnerability Checks" }} />
+                <Resource name="api_configurations" options={{ label: "API Configurations" }} />
+                <Resource name="product_members" options={{ label: "User Members" }} />
+                <Resource
+                    name="product_authorization_group_members"
+                    options={{ label: "Authorization Group Members" }}
                 />
             </Admin>
         </AuthProvider>

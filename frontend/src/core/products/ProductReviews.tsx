@@ -28,6 +28,7 @@ const ProductReviews = ({ product }: ProductReviewsProps) => {
                     product.observation_log_approvals == 0 &&
                     product.product_rule_approvals == 0
                 }
+                disableGutters
             >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                     <Stack direction="row" sx={{ display: "flex", alignItems: "center" }}>
@@ -48,6 +49,7 @@ const ProductReviews = ({ product }: ProductReviewsProps) => {
                         product.observation_reviews == 0 &&
                         product.product_rule_approvals == 0
                     }
+                    disableGutters
                 >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Stack direction="row" sx={{ display: "flex", alignItems: "center" }}>
@@ -72,6 +74,7 @@ const ProductReviews = ({ product }: ProductReviewsProps) => {
                         product.observation_log_approvals == 0 &&
                         product.observation_reviews == 0
                     }
+                    disableGutters
                 >
                     <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Stack direction="row" sx={{ display: "flex", alignItems: "center" }}>
