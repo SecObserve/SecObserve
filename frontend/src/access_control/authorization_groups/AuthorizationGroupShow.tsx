@@ -1,4 +1,5 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     EditButton,
@@ -40,7 +41,7 @@ const AuthorizationGroupComponent = () => {
     return (
         <WithRecord
             render={(authorization_group) => (
-                <Box width={"100%"}>
+                <Box width={"100%"} sx={{ marginBottom: 2 }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                         <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
                             <authorization_groups.icon />
@@ -64,26 +65,30 @@ const AuthorizationGroupComponent = () => {
                         <AuthorizationGroupMemberEmbeddedList authorization_group={authorization_group} />
                     </Paper>
                     {authorization_group.has_product_group_members && (
-                        <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                            <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                Product Groups
-                            </Typography>
-                            <UserProductAuthorizationGroupMemberEmbeddedList
-                                authorization_group={authorization_group}
-                                is_product_group={true}
-                            />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">Product Groups</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <UserProductAuthorizationGroupMemberEmbeddedList
+                                    authorization_group={authorization_group}
+                                    is_product_group={true}
+                                />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                     {authorization_group.has_product_members && (
-                        <Paper sx={{ marginBottom: 1, padding: 2, width: "100%" }}>
-                            <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                Products
-                            </Typography>
-                            <UserProductAuthorizationGroupMemberEmbeddedList
-                                authorization_group={authorization_group}
-                                is_product_group={false}
-                            />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">Products</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <UserProductAuthorizationGroupMemberEmbeddedList
+                                    authorization_group={authorization_group}
+                                    is_product_group={false}
+                                />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
                 </Box>
             )}

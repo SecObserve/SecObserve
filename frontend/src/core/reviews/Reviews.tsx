@@ -1,7 +1,6 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import { Badge, Box, Divider, Paper, Tab, Tabs } from "@mui/material";
-import { ReactNode } from "react";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, ReactNode, useEffect, useState } from "react";
 import { useNotify } from "react-admin";
 import { Link, matchPath, useLocation } from "react-router-dom";
 
@@ -115,7 +114,7 @@ export default function Reviews() {
                         // nosemgrep because the props are well defined in the import
                     />
                     <Tab
-                        label="Observation Log approvals"
+                        label="Assessment approvals"
                         icon={
                             <Badge badgeContent={count_observation_log_approvals} color="secondary">
                                 <observation_logs.icon />

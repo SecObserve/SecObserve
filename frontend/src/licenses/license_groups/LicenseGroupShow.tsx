@@ -1,4 +1,5 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Accordion, AccordionDetails, AccordionSummary, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     BooleanField,
@@ -71,26 +72,32 @@ const LicenseGroupComponent = () => {
                         </Typography>
                         <LicenseGroupLicenseEmbeddedList license_group={license_group} />
                     </Paper>
-                    <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                            Users
-                        </Typography>
-                        <LicenseGroupMemberEmbeddedList license_group={license_group} />
-                    </Paper>
-                    <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                            Authorization Groups
-                        </Typography>
-                        <LicenseGroupAuthorizationGroupMemberEmbeddedList license_group={license_group} />
-                    </Paper>
                     {license_group.is_in_license_policy && (
-                        <Paper sx={{ marginBottom: 1, padding: 2 }}>
-                            <Typography variant="h6" sx={{ marginBottom: 2 }}>
-                                License Policies containing this license group
-                            </Typography>
-                            <LicensePolicyEmbeddedList license={null} license_group={license_group} />
-                        </Paper>
+                        <Accordion sx={{ marginBottom: 0, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">License Policies containing this license group</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <LicensePolicyEmbeddedList license={null} license_group={license_group} />
+                            </AccordionDetails>
+                        </Accordion>
                     )}
+                    <Accordion sx={{ marginBottom: 0, padding: 0 }} disableGutters>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography variant="h6">Users</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <LicenseGroupMemberEmbeddedList license_group={license_group} />
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion sx={{ marginBottom: 0, padding: 0 }} disableGutters>
+                        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                            <Typography variant="h6">Authorization Groups</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <LicenseGroupAuthorizationGroupMemberEmbeddedList license_group={license_group} />
+                        </AccordionDetails>
+                    </Accordion>
                 </Stack>
             )}
         />

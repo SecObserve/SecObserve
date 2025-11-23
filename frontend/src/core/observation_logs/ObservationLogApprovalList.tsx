@@ -2,6 +2,7 @@ import { Stack } from "@mui/material";
 import { Fragment } from "react";
 import {
     AutocompleteInput,
+    ChipField,
     Datagrid,
     DateField,
     FilterForm,
@@ -16,6 +17,7 @@ import {
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_vex_enabled } from "../../commons/functions";
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
@@ -226,8 +228,8 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                             />
                         )}
                         <TextField source="user_full_name" label="User" />
-                        <TextField source="severity" emptyText="---" />
-                        <TextField source="status" emptyText="---" />
+                        <SeverityField label="Severity" source="severity" />
+                        <ChipField source="status" label="Status" emptyText="---" />
                         {feature_vex_enabled() && (
                             <TextField
                                 label="VEX justification"
