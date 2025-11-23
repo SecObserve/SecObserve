@@ -20,7 +20,7 @@
         "cm6-theme-basic-light": "0.2.0",
         "cm6-theme-basic-dark": "0.2.0",
         "humanize-duration": "3.33.1",
-        "markdown-to-jsx": "8.0.0",
+        "markdown-to-jsx": "9.1.1",
         "mermaid": "11.12.1",
         "oidc-client-ts": "3.4.1",
         "packageurl-js": "2.0.1",
