@@ -45,7 +45,7 @@ jsonpickle = "4.1.1"  # https://github.com/jsonpickle/jsonpickle
 pyyaml = "6.0.3"  # https://github.com/yaml/pyyaml
 # Field specifications
 # ------------------------------------------------------------------------------
-packageurl-python = "0.17.5"  # https://github.com/package-url/packageurl-python
+packageurl-python = "0.17.6"  # https://github.com/package-url/packageurl-python
 cvss = "3.6"  # https://github.com/RedHatProductSecurity/cvss
 semver = "3.0.4"  # https://github.com/python-semver/python-semver
 license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expression
