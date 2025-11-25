@@ -5,12 +5,16 @@ import { Confirm, useListContext, useNotify, useRefresh, useUnselectAll } from "
 
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
-const AssessmentDeleteApproval = () => {
+type AssessmentDeleteApprovalProps = {
+    storeKey: string;
+};
+
+const AssessmentDeleteApproval = ({ storeKey }: AssessmentDeleteApprovalProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const { selectedIds } = useListContext();
-    const unselectAll = useUnselectAll("observation_logs");
+    const unselectAll = useUnselectAll("observation_logs", storeKey);
     const [loading, setLoading] = useState(false);
 
     const assessmentDelete = async () => {

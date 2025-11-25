@@ -146,17 +146,22 @@ const ShowObservations = (id: any) => {
     return "../../../../observations/" + id + "/show";
 };
 
-type ObservationsReviewListProps = {
+type BulkActionButtonsProps = {
     product?: any;
+    storeKey: string;
 };
 
-const BulkActionButtons = ({ product }: any) => (
+const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => (
     <Fragment>
         {(!product || product?.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT)) && (
-            <ObservationBulkAssessment product={product} />
+            <ObservationBulkAssessment product={product} storeKey={storeKey} />
         )}
     </Fragment>
 );
+
+type ObservationsReviewListProps = {
+    product?: any;
+};
 
 const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
     if (product) {
@@ -200,7 +205,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                         rowClick={ShowObservations}
                         bulkActionButtons={
                             (!product || product?.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT)) && (
-                                <BulkActionButtons product={product} />
+                                <BulkActionButtons product={product} storeKey={storeKey} />
                             )
                         }
                         resource="observations"
