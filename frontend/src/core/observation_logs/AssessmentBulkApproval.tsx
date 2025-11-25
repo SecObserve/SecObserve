@@ -10,12 +10,16 @@ import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/the
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { ASSESSMENT_STATUS_CHOICES } from "../types";
 
-const AssessmentBulkApproval = () => {
+type AssessmentBulkApprovalProps = {
+    storeKey: string;
+};
+
+const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const { selectedIds } = useListContext();
-    const unselectAll = useUnselectAll("observation_logs");
+    const unselectAll = useUnselectAll("observation_logs", storeKey);
     const [loading, setLoading] = useState(false);
 
     const assessmentUpdate = async (data: any) => {

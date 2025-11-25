@@ -49,11 +49,7 @@ const listFilters = [
     <BooleanInput source="exclude_already_viewed" alwaysOn />,
 ];
 
-const BulkActionButtons = () => (
-    <Fragment>
-        <NotificationBulkMarkAsViewedButton />
-    </Fragment>
-);
+const BulkActionButtons = () => <NotificationBulkMarkAsViewedButton />;
 
 const ListActions = () => (
     <TopToolbar>

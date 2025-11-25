@@ -34,9 +34,10 @@ import {
 
 type ObservationBulkAssessmentButtonProps = {
     product: any;
+    storeKey: string;
 };
 
-const ObservationBulkAssessment = (props: ObservationBulkAssessmentButtonProps) => {
+const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessmentButtonProps) => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [comment, setComment] = useState("");
     const [open, setOpen] = useState(false);
@@ -46,7 +47,7 @@ const ObservationBulkAssessment = (props: ObservationBulkAssessmentButtonProps) 
     const [loading, setLoading] = useState(false);
     const notify = useNotify();
     const { selectedIds } = useListContext();
-    const unselectAll = useUnselectAll("observations");
+    const unselectAll = useUnselectAll("observations", storeKey);
 
     const observationUpdate = async (data: any) => {
         if (comment === "") {
@@ -57,12 +58,8 @@ const ObservationBulkAssessment = (props: ObservationBulkAssessmentButtonProps) 
         }
         setLoading(true);
         let url = "";
-        if (props.product) {
-            url =
-                window.__RUNTIME_CONFIG__.API_BASE_URL +
-                "/products/" +
-                props.product.id +
-                "/observations_bulk_assessment/";
+        if (product) {
+            url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/products/" + product.id + "/observations_bulk_assessment/";
         } else {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/observations/bulk_assessment/";
         }

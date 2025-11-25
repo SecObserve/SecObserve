@@ -7,22 +7,22 @@ import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 type ObservationBulkDeleteButtonProps = {
     product: any;
+    storeKey: string;
 };
 
-const ObservationBulkDeleteButton = (props: ObservationBulkDeleteButtonProps) => {
+const ObservationBulkDeleteButton = ({ product, storeKey }: ObservationBulkDeleteButtonProps) => {
     const [open, setOpen] = useState(false);
     const { selectedIds } = useListContext();
     const refresh = useRefresh();
     const [loading, setLoading] = useState(false);
     const notify = useNotify();
-    const unselectAll = useUnselectAll("observations");
+    const unselectAll = useUnselectAll("observations", storeKey);
     const handleClick = () => setOpen(true);
     const handleDialogClose = () => setOpen(false);
 
     const handleConfirm = async () => {
         setLoading(true);
-        const url =
-            window.__RUNTIME_CONFIG__.API_BASE_URL + "/products/" + props.product.id + "/observations_bulk_delete/";
+        const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/products/" + product.id + "/observations_bulk_delete/";
         const delete_data = {
             observations: selectedIds,
         };

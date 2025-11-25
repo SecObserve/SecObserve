@@ -26,13 +26,18 @@ import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
 import { commentShortened } from "./functions";
 
-const BulkActionButtons = ({ product }: any) => {
+type BulkActionButtonsProps = {
+    product: any;
+    storeKey: string;
+};
+
+const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
     return (
         <Fragment>
             {(!product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL)) && (
                 <Stack direction="row" spacing={2} alignItems="center">
-                    <AssessmentBulkApproval />
-                    <AssessmentDeleteApproval />
+                    <AssessmentBulkApproval storeKey={storeKey} />
+                    <AssessmentDeleteApproval storeKey={storeKey} />
                 </Stack>
             )}
         </Fragment>
@@ -169,7 +174,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                         sx={{ width: "100%" }}
                         bulkActionButtons={
                             !product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
-                                <BulkActionButtons product={product} />
+                                <BulkActionButtons product={product} storeKey={storeKey} />
                             ) : (
                                 false
                             )
