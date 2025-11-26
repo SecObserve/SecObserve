@@ -6,8 +6,6 @@
     "baseBranchPatterns": [
         "dev"
     ],
-    "binarySource": "install",
-    "branchConcurrentLimit": 10,
     "dependencyDashboard": true,
     "dependencyDashboardApproval": false,
     "labels": [
@@ -54,6 +52,5 @@
             ],
             "allowedVersions": "<9"
         }
-    ],
-    "prHourlyLimit": 10
+    ]
 }
