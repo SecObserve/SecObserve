@@ -878,14 +878,14 @@ drf = ["djangorestframework"]
 
 [[package]]
 name = "django-picklefield"
-version = "3.3"
+version = "3.4.0"
 description = "Pickled object field for Django"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "django-picklefield-3.3.tar.gz", hash = "sha256:4e76dd20f2e95ffdaf18d641226ccecc169ff0473b0d6bec746f3ab97c26b8cb"},
-    {file = "django_picklefield-3.3-py3-none-any.whl", hash = "sha256:d6f6fd94a17177fe0d16b0b452a9860b8a1da97b6e70633ab53ade4975f1ce9a"},
+    {file = "django_picklefield-3.4.0-py3-none-any.whl", hash = "sha256:929bcfbae5b48bd22a52bc04521fdfdd152eee36abb9f20228f9480f9df65f45"},
+    {file = "django_picklefield-3.4.0.tar.gz", hash = "sha256:3a1f740536c0e60d0dba43aa89ccdbe86760d4c3f8ec47799eae122baa741d0a"},
 ]
 
 [package.dependencies]
@@ -3092,4 +3092,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.10, < 3.15"
-content-hash = "d74fc157b0a47fcae7dabd611585403d1cb6fd9bc89e38e6f5068fb6a7cc10aa"
+content-hash = "e66a779e7a99349afa480da01a3bc89dd196511883adb718449400ed4c87a97a"
