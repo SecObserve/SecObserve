@@ -119,7 +119,7 @@ class Product(Model):
         blank=True,
     )
 
-    osv_enabled = BooleanField(default=False)
+    osv_enabled = BooleanField(default=True)
     osv_linux_distribution = CharField(
         max_length=12,
         choices=OSVLinuxDistribution.OSV_LINUX_DISTRIBUTION_CHOICES,
