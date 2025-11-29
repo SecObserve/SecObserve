@@ -67,7 +67,7 @@ cyclonedx-python-lib = "11.5.0"  # https://github.com/CycloneDX/cyclonedx-python
 # Development dependencies
 # ------------------------------------------------------------------------------
 # Werkzeug = { version = "3.0.4", extras = ["watchdog"], optional = true }  # https://github.com/pallets/werkzeug
-Werkzeug = { version = "3.1.3", optional = true }  # https://github.com/pallets/werkzeug
+Werkzeug = { version = "3.1.4", optional = true }  # https://github.com/pallets/werkzeug
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
