@@ -35,7 +35,7 @@
         "react-is": "19.0.0",
         "react-oidc-context": "3.3.0",
         "runtime-env-cra": "file:lib/runtime-env-cra",
-        "tss-react": "4.9.19"
+        "tss-react": "4.9.20"
     },
     "scripts": {
         "start": "NODE_ENV=development ./node_modules/runtime-env-cra/lib/index.js --config-name=./public/runtime-env.js && vite",
