@@ -1,9 +1,7 @@
 from django.core.management import call_command
 
 from application.licenses.models import License, License_Policy, License_Policy_Item
-from application.licenses.services.export_license_policy_sbom_utility import (
-    export_license_policy_sbom_utility,
-)
+from application.licenses.services.export_license_policy_sbom_utility import export_license_policy_sbom_utility
 from application.licenses.services.export_license_policy_secobserve import (
     export_license_policy_secobserve_json,
     export_license_policy_secobserve_yaml,
@@ -18,7 +16,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         call_command(
             "loaddata",
             [
-                "application/licenses/fixtures/initial_data.json",
+                "unittests/fixtures/initial_license_data.json",
                 "unittests/fixtures/unittests_fixtures.json",
                 "unittests/fixtures/unittests_license_fixtures.json",
             ],
@@ -56,10 +54,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             comment="Unknown license comment",
         ).save()
 
-        self.license_policy_with_parent = License_Policy(
-            name="license_policy_with_parent",
-            parent=license_policy,
-        )
+        self.license_policy_with_parent = License_Policy(name="license_policy_with_parent", parent=license_policy)
         self.license_policy_with_parent.save()
 
         License_Policy_Item(

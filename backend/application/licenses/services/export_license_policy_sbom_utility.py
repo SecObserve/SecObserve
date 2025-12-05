@@ -41,9 +41,7 @@ def export_license_policy_sbom_utility(license_policy: License_Policy) -> str:
     return object_to_json(_create_license_policy_export(license_policy))
 
 
-def _create_license_policy_export(
-    license_policy: License_Policy,
-) -> License_Policy_Export:
+def _create_license_policy_export(license_policy: License_Policy) -> License_Policy_Export:
     license_policy_export = License_Policy_Export(policies=[])
 
     license_evaluation_results: dict[str, LicensePolicyEvaluationResult] = {}

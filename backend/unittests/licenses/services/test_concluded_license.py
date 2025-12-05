@@ -5,10 +5,7 @@ from django.core.management import call_command
 from application.access_control.models import User
 from application.core.models import Product
 from application.licenses.models import Concluded_License, License, License_Component
-from application.licenses.services.concluded_license import (
-    apply_concluded_license,
-    update_concluded_license,
-)
+from application.licenses.services.concluded_license import apply_concluded_license, update_concluded_license
 from application.licenses.types import NO_LICENSE_INFORMATION
 from unittests.base_test_case import BaseTestCase
 
@@ -19,7 +16,7 @@ class TestConcludedLicense(BaseTestCase):
         call_command(
             "loaddata",
             [
-                "application/licenses/fixtures/initial_data.json",
+                "unittests/fixtures/initial_license_data.json",
                 "unittests/fixtures/unittests_fixtures.json",
                 "unittests/fixtures/unittests_license_fixtures.json",
             ],

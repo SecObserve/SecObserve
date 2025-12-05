@@ -467,7 +467,7 @@ class TestFileUploadObservations(BaseTestCase):
         try:
             license_policy_standard = License_Policy.objects.get(name="Standard")
         except License_Policy.DoesNotExist:
-            call_command("loaddata", "application/licenses/fixtures/initial_data.json")
+            call_command("loaddata", "unittests/fixtures/initial_license_data.json")
             license_policy_standard = License_Policy.objects.get(name="Standard")
 
         License_Component.objects.all().delete()

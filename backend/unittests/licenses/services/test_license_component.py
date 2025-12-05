@@ -6,10 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from application.core.models import Product
 from application.licenses.models import License, License_Component
-from application.licenses.services.license_component import (
-    save_concluded_license,
-    set_effective_license,
-)
+from application.licenses.services.license_component import save_concluded_license, set_effective_license
 from application.licenses.types import NO_LICENSE_INFORMATION
 from unittests.base_test_case import BaseTestCase
 
@@ -20,7 +17,7 @@ class TestLicenseComponent(BaseTestCase):
         call_command(
             "loaddata",
             [
-                "application/licenses/fixtures/initial_data.json",
+                "unittests/fixtures/initial_license_data.json",
                 "unittests/fixtures/unittests_fixtures.json",
                 "unittests/fixtures/unittests_license_fixtures.json",
             ],

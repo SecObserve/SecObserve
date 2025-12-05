@@ -23,9 +23,7 @@ def get_identity_hash(license_component: License_Component) -> str:
     return hashlib.sha256(hash_string.casefold().encode("utf-8").strip()).hexdigest()
 
 
-def _get_string_to_hash(
-    license_component: License_Component,
-) -> str:  # pylint: disable=too-many-branches
+def _get_string_to_hash(license_component: License_Component) -> str:  # pylint: disable=too-many-branches
     hash_string = license_component.component_name_version
     if license_component.component_dependencies:
         hash_string += license_component.component_dependencies

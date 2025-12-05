@@ -42,12 +42,7 @@ class ConcludedLicenseFilter(FilterSet):
     )
     age = ChoiceFilter(field_name="age", method="get_age", choices=Age_Choices.AGE_CHOICES)
 
-    def get_age(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
-    ) -> QuerySet:
+    def get_age(self, queryset: QuerySet, name: Any, value: Any) -> QuerySet:  # pylint: disable=unused-argument
         days = Age_Choices.get_days_from_age(value)
 
         if days is None:
@@ -61,20 +56,13 @@ class ConcludedLicenseFilter(FilterSet):
         # tuple-mapping retains order
         fields=(
             ("product__name", "product_data.name"),
-            (
-                (
-                    "component_name",
-                    "component_version",
-                    "component_purl_type",
-                ),
-                "component_name_version",
-            ),
+            (("component_name", "component_version", "component_purl_type"), "component_name_version"),
             ("manual_concluded_spdx_license__spdx_id", "manual_concluded_spdx_license_id"),
             ("manual_concluded_license_expression", "manual_concluded_license_expression"),
             ("manual_concluded_non_spdx_license", "manual_concluded_non_spdx_license"),
             ("user__full_name", "user_data.full_name"),
             ("last_updated", "last_updated"),
-        ),
+        )
     )
 
     class Meta:
@@ -93,12 +81,7 @@ class LicenseComponentFilter(FilterSet):
     branch_name_exact = CharFilter(field_name="branch__name")
     manual_concluded_comment = CharFilter(field_name="manual_concluded_comment", lookup_expr="icontains")
 
-    def get_age(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
-    ) -> QuerySet:
+    def get_age(self, queryset: QuerySet, name: Any, value: Any) -> QuerySet:  # pylint: disable=unused-argument
         days = Age_Choices.get_days_from_age(value)
 
         if days is None:
@@ -115,28 +98,12 @@ class LicenseComponentFilter(FilterSet):
             ("effective_license_expression", "effective_license_expression"),
             ("effective_non_spdx_license", "effective_non_spdx_license"),
             (
-                (
-                    "effective_license_name",
-                    "numerical_evaluation_result",
-                    "component_name_version",
-                ),
+                ("effective_license_name", "numerical_evaluation_result", "component_name_version"),
                 "effective_license_name",
             ),
+            (("numerical_evaluation_result", "effective_license_name", "component_name_version"), "evaluation_result"),
             (
-                (
-                    "numerical_evaluation_result",
-                    "effective_license_name",
-                    "component_name_version",
-                ),
-                "evaluation_result",
-            ),
-            (
-                (
-                    "branch__name",
-                    "effective_license_name",
-                    "numerical_evaluation_result",
-                    "component_name_version",
-                ),
+                ("branch__name", "effective_license_name", "numerical_evaluation_result", "component_name_version"),
                 "branch_name",
             ),
             ("component_name_version", "component_name_version"),
@@ -169,7 +136,7 @@ class LicenseComponentFilter(FilterSet):
                 "manual_concluded_comment",
             ),
             ("last_change", "last_change"),
-        ),
+        )
     )
 
     class Meta:
@@ -194,7 +161,7 @@ class LicenseComponentEvidenceFilter(FilterSet):
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
-        fields=(("name", "name"), ("license_component", "license_component")),
+        fields=(("name", "name"), ("license_component", "license_component"))
     )
 
     class Meta:
@@ -210,20 +177,14 @@ class LicenseFilter(FilterSet):
     license_groups = ModelMultipleChoiceFilter(queryset=License.objects.none())
 
     def get_exclude_license_group(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
+        self, queryset: QuerySet, name: Any, value: Any  # pylint: disable=unused-argument
     ) -> QuerySet:
         if value is not None:
             return queryset.exclude(license_groups__id=value)
         return queryset
 
     def get_exclude_license_policy(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
+        self, queryset: QuerySet, name: Any, value: Any  # pylint: disable=unused-argument
     ) -> QuerySet:
         if value is not None:
             return queryset.exclude(license_policy_items__license_policy__id=value)
@@ -236,7 +197,7 @@ class LicenseFilter(FilterSet):
             ("name", "name"),
             ("is_osi_approved", "is_osi_approved"),
             ("is_deprecated", "is_deprecated"),
-        ),
+        )
     )
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -245,13 +206,7 @@ class LicenseFilter(FilterSet):
 
     class Meta:
         model = License
-        fields = [
-            "spdx_id",
-            "name",
-            "is_osi_approved",
-            "is_deprecated",
-            "license_groups",
-        ]
+        fields = ["spdx_id", "name", "is_osi_approved", "is_deprecated", "license_groups"]
 
 
 class LicenseGroupFilter(FilterSet):
@@ -259,10 +214,7 @@ class LicenseGroupFilter(FilterSet):
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
 
     def get_exclude_license_policy(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
+        self, queryset: QuerySet, name: Any, value: Any  # pylint: disable=unused-argument
     ) -> QuerySet:
         if value is not None:
             return queryset.exclude(license_policy_items__license_policy__id=value)
@@ -270,10 +222,7 @@ class LicenseGroupFilter(FilterSet):
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
-        fields=(
-            ("name", "name"),
-            ("is_public", "is_public"),
-        ),
+        fields=(("name", "name"), ("is_public", "is_public"))
     )
 
     class Meta:
@@ -292,7 +241,7 @@ class LicenseGroupMemberFilter(FilterSet):
             ("license_group", "license_group"),
             ("user", "user"),
             ("is_manager", "is_manager"),
-        ),
+        )
     )
 
     class Meta:
@@ -310,7 +259,7 @@ class LicenseGroupAuthorizationGroupFilter(FilterSet):
             ("license_group", "license_group"),
             ("authorization_group", "authorization_group"),
             ("is_manager", "is_manager"),
-        ),
+        )
     )
 
     class Meta:
@@ -325,46 +274,26 @@ class LicensePolicyFilter(FilterSet):
     license = NumberFilter(field_name="license", method="get_license_policies_with_license")
     license_group = NumberFilter(field_name="license_group", method="get_license_policies_with_license_group")
 
-    def get_is_child(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
-    ) -> QuerySet:
+    def get_is_child(self, queryset: QuerySet, name: Any, value: Any) -> QuerySet:  # pylint: disable=unused-argument
         parent_null = not value
         return queryset.filter(parent__isnull=parent_null)
 
-    def get_is_not_id(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
-    ) -> QuerySet:
+    def get_is_not_id(self, queryset: QuerySet, name: Any, value: Any) -> QuerySet:  # pylint: disable=unused-argument
         return queryset.exclude(pk=value)
 
     def get_license_policies_with_license(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
+        self, queryset: QuerySet, name: Any, value: Any  # pylint: disable=unused-argument
     ) -> QuerySet:
         return queryset.filter(license_policy_items__license=value)
 
     def get_license_policies_with_license_group(
-        self,
-        queryset: QuerySet,
-        name: Any,  # pylint: disable=unused-argument
-        value: Any,
+        self, queryset: QuerySet, name: Any, value: Any  # pylint: disable=unused-argument
     ) -> QuerySet:
         return queryset.filter(license_policy_items__license_group=value)
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
-        fields=(
-            ("name", "name"),
-            (("parent__name", "name"), "parent_name"),
-            ("is_public", "is_public"),
-        ),
+        fields=(("name", "name"), (("parent__name", "name"), "parent_name"), ("is_public", "is_public"))
     )
 
     class Meta:
@@ -383,41 +312,15 @@ class LicensePolicyItemFilter(FilterSet):
         fields=(
             ("license_policy__name", "license_policy_data.name"),
             (
-                (
-                    "license_group__name",
-                    "license__spdx_id",
-                    "license_expression",
-                    "non_spdx_license",
-                ),
+                ("license_group__name", "license__spdx_id", "license_expression", "non_spdx_license"),
                 "license_group_name",
             ),
+            (("license__spdx_id", "license_group__name", "license_expression", "non_spdx_license"), "license_spdx_id"),
             (
-                (
-                    "license__spdx_id",
-                    "license_group__name",
-                    "license_expression",
-                    "non_spdx_license",
-                ),
-                "license_spdx_id",
-            ),
-            (
-                (
-                    "license_expression",
-                    "license_group__name",
-                    "license__spdx_id",
-                    "non_spdx_license",
-                ),
+                ("license_expression", "license_group__name", "license__spdx_id", "non_spdx_license"),
                 "license_expression",
             ),
-            (
-                (
-                    "non_spdx_license",
-                    "license_group__name",
-                    "license__spdx_id",
-                    "license_expression",
-                ),
-                "non_spdx_license",
-            ),
+            (("non_spdx_license", "license_group__name", "license__spdx_id", "license_expression"), "non_spdx_license"),
             (
                 (
                     "numerical_evaluation_result",
@@ -428,7 +331,7 @@ class LicensePolicyItemFilter(FilterSet):
                 ),
                 "evaluation_result",
             ),
-        ),
+        )
     )
 
     class Meta:
@@ -455,7 +358,7 @@ class LicensePolicyMemberFilter(FilterSet):
             ("license_policy", "license_policy"),
             ("user", "user"),
             ("is_manager", "is_manager"),
-        ),
+        )
     )
 
     class Meta:
@@ -473,7 +376,7 @@ class LicensePolicyAuthorizationGroupFilter(FilterSet):
             ("license_policy", "license_policy"),
             ("authorization_group", "authorization_group"),
             ("is_manager", "is_manager"),
-        ),
+        )
     )
 
     class Meta:

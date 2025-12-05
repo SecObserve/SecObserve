@@ -14,12 +14,7 @@ def export_license_components_excel(product: Product) -> Workbook:
 
 def export_license_components_csv(response: HttpResponse, product: Product) -> None:
     license_components = _get_license_components(product)
-    export_csv(
-        response,
-        license_components,
-        _get_excludes(),
-        _get_foreign_keys(),
-    )
+    export_csv(response, license_components, _get_excludes(), _get_foreign_keys())
 
 
 def _get_license_components(product: Product) -> QuerySet:
@@ -29,9 +24,7 @@ def _get_license_components(product: Product) -> QuerySet:
         license_components = License_Component.objects.filter(product=product)
 
     license_components = license_components.order_by(
-        "numerical_evaluation_result",
-        "effective_license_name",
-        "component_name_version",
+        "numerical_evaluation_result", "effective_license_name", "component_name_version"
     )
 
     return license_components

@@ -3,14 +3,9 @@ from typing import Optional
 from django.db.models.query import QuerySet
 
 from application.access_control.models import Authorization_Group
-from application.access_control.queries.authorization_group import (
-    get_authorization_groups,
-)
+from application.access_control.queries.authorization_group import get_authorization_groups
 from application.access_control.services.current_user import get_current_user
-from application.licenses.models import (
-    License_Group,
-    License_Group_Authorization_Group_Member,
-)
+from application.licenses.models import License_Group, License_Group_Authorization_Group_Member
 from application.licenses.queries.license_group import get_license_groups
 
 
