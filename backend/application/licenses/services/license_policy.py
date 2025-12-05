@@ -3,7 +3,13 @@ from typing import Optional
 
 from django.db.models import Q
 from django.utils import timezone
-from license_expression import AND, OR, LicenseExpression, LicenseSymbol, get_spdx_licensing
+from license_expression import (
+    AND,
+    OR,
+    LicenseExpression,
+    LicenseSymbol,
+    get_spdx_licensing,
+)
 
 from application.commons.services.functions import get_comma_separated_as_list
 from application.core.models import Product

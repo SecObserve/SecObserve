@@ -3,7 +3,9 @@ from datetime import datetime
 from django.core.management import call_command
 
 from application.core.models import Product
-from application.licenses.services.export_license_components import export_license_components_excel
+from application.licenses.services.export_license_components import (
+    export_license_components_excel,
+)
 from unittests.base_test_case import BaseTestCase
 
 

@@ -1,7 +1,9 @@
 from django.core.management import call_command
 
 from application.licenses.models import License, License_Policy, License_Policy_Item
-from application.licenses.services.export_license_policy_sbom_utility import export_license_policy_sbom_utility
+from application.licenses.services.export_license_policy_sbom_utility import (
+    export_license_policy_sbom_utility,
+)
 from application.licenses.services.export_license_policy_secobserve import (
     export_license_policy_secobserve_json,
     export_license_policy_secobserve_yaml,

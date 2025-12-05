@@ -18,7 +18,10 @@ from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CON
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from application.access_control.services.current_user import get_current_user
-from application.authorization.services.authorization import user_has_permission, user_has_permission_or_403
+from application.authorization.services.authorization import (
+    user_has_permission,
+    user_has_permission_or_403,
+)
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Branch, Product
 from application.core.queries.branch import get_branch_by_id
@@ -87,19 +90,29 @@ from application.licenses.queries.license_component import (
     get_license_component_licenses,
     get_license_components,
 )
-from application.licenses.queries.license_component_evidence import get_license_component_evidences
+from application.licenses.queries.license_component_evidence import (
+    get_license_component_evidences,
+)
 from application.licenses.queries.license_group import get_license_groups
 from application.licenses.queries.license_group_authorization_group_member import (
     get_license_group_authorization_group_members,
 )
-from application.licenses.queries.license_group_member import get_license_group_member, get_license_group_members
+from application.licenses.queries.license_group_member import (
+    get_license_group_member,
+    get_license_group_members,
+)
 from application.licenses.queries.license_policy import get_license_policies
 from application.licenses.queries.license_policy_authorization_group_member import (
     get_license_policy_authorization_group_members,
 )
 from application.licenses.queries.license_policy_item import get_license_policy_items
-from application.licenses.queries.license_policy_member import get_license_policy_member, get_license_policy_members
-from application.licenses.services.export_license_policy_sbom_utility import export_license_policy_sbom_utility
+from application.licenses.queries.license_policy_member import (
+    get_license_policy_member,
+    get_license_policy_members,
+)
+from application.licenses.services.export_license_policy_sbom_utility import (
+    export_license_policy_sbom_utility,
+)
 from application.licenses.services.export_license_policy_secobserve import (
     export_license_policy_secobserve_json,
     export_license_policy_secobserve_yaml,

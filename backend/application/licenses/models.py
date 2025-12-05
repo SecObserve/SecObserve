@@ -18,7 +18,10 @@ from django.utils import timezone
 
 from application.access_control.models import Authorization_Group, User
 from application.core.models import Branch, Product, Service
-from application.licenses.types import NO_LICENSE_INFORMATION, License_Policy_Evaluation_Result
+from application.licenses.types import (
+    NO_LICENSE_INFORMATION,
+    License_Policy_Evaluation_Result,
+)
 
 
 class License(Model):

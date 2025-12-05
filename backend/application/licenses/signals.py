@@ -4,7 +4,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from application.access_control.services.current_user import get_current_user
-from application.licenses.models import License_Group, License_Group_Member, License_Policy, License_Policy_Member
+from application.licenses.models import (
+    License_Group,
+    License_Group_Member,
+    License_Policy,
+    License_Policy_Member,
+)
 
 
 @receiver(post_save, sender=License_Group)

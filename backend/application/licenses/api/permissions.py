@@ -7,8 +7,13 @@ from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from application.access_control.queries.authorization_group import get_authorization_groups
-from application.authorization.api.permissions_base import check_object_permission, check_post_permission
+from application.access_control.queries.authorization_group import (
+    get_authorization_groups,
+)
+from application.authorization.api.permissions_base import (
+    check_object_permission,
+    check_post_permission,
+)
 from application.authorization.services.roles_permissions import Permissions
 from application.licenses.models import (
     Concluded_License,

@@ -1,7 +1,11 @@
 # backend/unittests/licenses/services/test_license_policy.py
 from django.test import TestCase
 
-from application.licenses.models import License_Group, License_Policy, License_Policy_Item
+from application.licenses.models import (
+    License_Group,
+    License_Policy,
+    License_Policy_Item,
+)
 from application.licenses.services.license_policy import create_scancode_standard_policy
 from application.licenses.types import License_Policy_Evaluation_Result
 

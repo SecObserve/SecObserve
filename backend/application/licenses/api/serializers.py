@@ -12,12 +12,21 @@ from rest_framework.serializers import (
     ValidationError,
 )
 
-from application.access_control.api.serializers import AuthorizationGroupListSerializer, UserListSerializer
+from application.access_control.api.serializers import (
+    AuthorizationGroupListSerializer,
+    UserListSerializer,
+)
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import get_highest_user_role
-from application.authorization.services.roles_permissions import Permissions, get_permissions_for_role
+from application.authorization.services.roles_permissions import (
+    Permissions,
+    get_permissions_for_role,
+)
 from application.commons.services.functions import get_comma_separated_as_list
-from application.core.api.serializers_product import NestedProductSerializer, NestedProductSerializerSmall
+from application.core.api.serializers_product import (
+    NestedProductSerializer,
+    NestedProductSerializerSmall,
+)
 from application.core.queries.product import get_products
 from application.core.types import PURL_Type
 from application.licenses.models import (
@@ -37,13 +46,19 @@ from application.licenses.queries.license_group_authorization_group_member impor
     get_license_group_authorization_group_member,
     get_license_group_authorization_group_members,
 )
-from application.licenses.queries.license_group_member import get_license_group_member, get_license_group_members
+from application.licenses.queries.license_group_member import (
+    get_license_group_member,
+    get_license_group_members,
+)
 from application.licenses.queries.license_policy_authorization_group_member import (
     get_license_policy_authorization_group_member,
     get_license_policy_authorization_group_members,
 )
 from application.licenses.queries.license_policy_item import get_license_policy_items
-from application.licenses.queries.license_policy_member import get_license_policy_member, get_license_policy_members
+from application.licenses.queries.license_policy_member import (
+    get_license_policy_member,
+    get_license_policy_members,
+)
 
 
 class LicenseSerializer(ModelSerializer):

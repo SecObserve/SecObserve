@@ -4,7 +4,12 @@ from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.query import QuerySet
 
 from application.access_control.services.current_user import get_current_user
-from application.core.models import Branch, Product, Product_Authorization_Group_Member, Product_Member
+from application.core.models import (
+    Branch,
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 from application.licenses.models import License_Component
 
 

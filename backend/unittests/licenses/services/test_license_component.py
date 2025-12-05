@@ -6,7 +6,10 @@ from rest_framework.exceptions import ValidationError
 
 from application.core.models import Product
 from application.licenses.models import License, License_Component
-from application.licenses.services.license_component import save_concluded_license, set_effective_license
+from application.licenses.services.license_component import (
+    save_concluded_license,
+    set_effective_license,
+)
 from application.licenses.types import NO_LICENSE_INFORMATION
 from unittests.base_test_case import BaseTestCase
 
