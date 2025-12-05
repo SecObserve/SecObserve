@@ -49,9 +49,9 @@ const LicenseGroupEmbeddedList = ({ license }: LicenseGroupEmbeddedListProps) =>
         <ResourceContextProvider value="license_groups">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                        {!is_external() && !license && (
-                            <CreateButton title="Create license group" to="/license_groups/create" />
-                        )}
+                    {!is_external() && !license && (
+                        <CreateButton title="Create license group" to="/license_groups/create" />
+                    )}
                     {!license && <FilterForm filters={listFilters} />}
                     <Datagrid
                         size={getSettingListSize()}
