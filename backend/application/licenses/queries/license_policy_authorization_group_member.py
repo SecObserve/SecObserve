@@ -39,6 +39,5 @@ def get_license_policy_authorization_group_members() -> QuerySet[License_Policy_
     authorization_groups = get_authorization_groups()
     license_policies = get_license_policies()
     return license_policy_authorization_group_members.filter(
-        authorization_group__in=authorization_groups,
-        license_policy__in=license_policies,
+        authorization_group__in=authorization_groups, license_policy__in=license_policies
     )

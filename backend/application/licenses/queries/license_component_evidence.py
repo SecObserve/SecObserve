@@ -15,23 +15,17 @@ def get_license_component_evidences() -> QuerySet[License_Component_Evidence]:
     components = License_Component_Evidence.objects.all()
 
     if not user.is_superuser:
-        product_members = Product_Member.objects.filter(
-            product=OuterRef("license_component__product_id"),
-            user=user,
-        )
+        product_members = Product_Member.objects.filter(product=OuterRef("license_component__product_id"), user=user)
         product_group_members = Product_Member.objects.filter(
-            product=OuterRef("license_component__product__product_group"),
-            user=user,
+            product=OuterRef("license_component__product__product_group"), user=user
         )
 
         product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("license_component__product_id"),
-            authorization_group__users=user,
+            product=OuterRef("license_component__product_id"), authorization_group__users=user
         )
 
         product_group_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("license_component__product__product_group"),
-            authorization_group__users=user,
+            product=OuterRef("license_component__product__product_group"), authorization_group__users=user
         )
 
         components = components.annotate(

@@ -18,7 +18,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         call_command(
             "loaddata",
             [
-                "application/licenses/fixtures/initial_data.json",
+                "unittests/fixtures/initial_license_data.json",
                 "unittests/fixtures/unittests_fixtures.json",
                 "unittests/fixtures/unittests_license_fixtures.json",
             ],
@@ -56,10 +56,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             comment="Unknown license comment",
         ).save()
 
-        self.license_policy_with_parent = License_Policy(
-            name="license_policy_with_parent",
-            parent=license_policy,
-        )
+        self.license_policy_with_parent = License_Policy(name="license_policy_with_parent", parent=license_policy)
         self.license_policy_with_parent.save()
 
         License_Policy_Item(

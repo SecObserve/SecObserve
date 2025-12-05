@@ -109,9 +109,9 @@ Additionally a `License Policy` has a list of user members and a list of authori
 
 ## Managing License Groups
 
-A `License Group` is a collection of licenses with similar license conditions. There is a predefined list of license groups, taken from the classification of the [Blue Oak Council](https://blueoakcouncil.org/). Administrators can import license group from the ScanCode LicenseDB, see [License data import](../integrations/license_data.md#scancode-licensedb).
+A `License Group` is a collection of licenses with similar license conditions. There is a predefined list of license groups, imported from the ScanCode LicenseDB, see [License data import](../integrations/license_data.md#scancode-licensedb).
 
-As with `License Policies`, a `License Group` 
+As for `License Policies`, a `License Group` 
 
 * can be found in the `Licenses` sub-menu under `Administration`,
 * can be copied if adjustments are needed for a specific Product,

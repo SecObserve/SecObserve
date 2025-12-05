@@ -16,6 +16,7 @@ from application.core.models import Product
 from application.licenses.models import (
     License,
     License_Component,
+    License_Group,
     License_Policy,
     License_Policy_Item,
     License_Policy_Member,
@@ -30,6 +31,27 @@ class LicensePolicyEvaluationResult:
     from_parent: bool
     license_group_name: Optional[str] = None
     comment: Optional[str] = None
+
+
+def create_scancode_standard_policy() -> None:
+    try:
+        License_Policy.objects.get(name="Standard")
+    except License_Policy.DoesNotExist:
+        license_groups = License_Group.objects.filter(name__contains="(ScanCode LicenseDB)")
+        if license_groups:
+            license_policy = License_Policy(
+                name="Standard", description="Created automatically during initial startup", is_public=True
+            )
+            license_policy.save()
+            for license_group in license_groups:
+                evaluation_result = License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED
+                if license_group.name.startswith("Permissive") or license_group.name.startswith("Public Domain"):
+                    evaluation_result = License_Policy_Evaluation_Result.RESULT_ALLOWED
+                if license_group.name.startswith("Copyleft"):
+                    evaluation_result = License_Policy_Evaluation_Result.RESULT_FORBIDDEN
+                License_Policy_Item(
+                    license_policy=license_policy, license_group=license_group, evaluation_result=evaluation_result
+                ).save()
 
 
 def copy_license_policy(source_license_policy: License_Policy, name: str) -> License_Policy:
@@ -53,9 +75,7 @@ def copy_license_policy(source_license_policy: License_Policy, name: str) -> Lic
     members = License_Policy_Member.objects.filter(license_policy=source_license_policy)
     for member in members:
         License_Policy_Member.objects.update_or_create(
-            license_policy=new_license_policy,
-            user=member.user,
-            is_manager=member.is_manager,
+            license_policy=new_license_policy, user=member.user, is_manager=member.is_manager
         )
 
     return new_license_policy
@@ -220,8 +240,7 @@ def _get_multiple_licenses_evaluation_result(
 
 
 def _evaluate_license_expression(
-    license_expression: str,
-    evaluation_results: dict[str, LicensePolicyEvaluationResult],
+    license_expression: str, evaluation_results: dict[str, LicensePolicyEvaluationResult]
 ) -> Optional[str]:
     evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
 
@@ -239,8 +258,7 @@ def _evaluate_license_expression(
 
 
 def _evaluate_parsed_license_expression(
-    parsed_expression: LicenseExpression,
-    evaluation_results: dict[str, LicensePolicyEvaluationResult],
+    parsed_expression: LicenseExpression, evaluation_results: dict[str, LicensePolicyEvaluationResult]
 ) -> str:
     evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
 

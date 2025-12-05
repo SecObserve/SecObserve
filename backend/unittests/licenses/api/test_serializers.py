@@ -27,29 +27,23 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
 
     def test_validate_license_group_change(self):
         license_group_2 = License_Group.objects.get(id=2)
-        attrs = {
-            "license_group": license_group_2,
-        }
+        attrs = {"license_group": license_group_2}
 
         with self.assertRaises(ValidationError) as e:
             self.license_group_member_serializer_1.validate(attrs)
 
         self.assertEqual(
-            "[ErrorDetail(string='License group and user cannot be changed', code='invalid')]",
-            str(e.exception),
+            "[ErrorDetail(string='License group and user cannot be changed', code='invalid')]", str(e.exception)
         )
 
     def test_validate_user_change(self):
-        attrs = {
-            "user": self.user_external,
-        }
+        attrs = {"user": self.user_external}
 
         with self.assertRaises(ValidationError) as e:
             self.license_group_member_serializer_1.validate(attrs)
 
         self.assertEqual(
-            "[ErrorDetail(string='License group and user cannot be changed', code='invalid')]",
-            str(e.exception),
+            "[ErrorDetail(string='License group and user cannot be changed', code='invalid')]", str(e.exception)
         )
 
     @patch("application.licenses.api.serializers.get_license_group_member")
@@ -57,10 +51,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         self.license_group_member_serializer_1.instance = None
         mock_license_group_member.return_value = self.license_group_member_1
 
-        attrs = {
-            "license_group": self.license_group_1,
-            "user": self.user_internal,
-        }
+        attrs = {"license_group": self.license_group_1, "user": self.user_internal}
 
         with self.assertRaises(ValidationError) as e:
             self.license_group_member_serializer_1.validate(attrs)
@@ -84,29 +75,23 @@ class TestLicensePolicyMemberSerializer(BaseTestCase):
 
     def test_validate_license_policy_change(self):
         license_policy_2 = License_Policy(name="license_policy_2")
-        attrs = {
-            "license_policy": license_policy_2,
-        }
+        attrs = {"license_policy": license_policy_2}
 
         with self.assertRaises(ValidationError) as e:
             self.license_policy_member_serializer_1.validate(attrs)
 
         self.assertEqual(
-            "[ErrorDetail(string='License policy and user cannot be changed', code='invalid')]",
-            str(e.exception),
+            "[ErrorDetail(string='License policy and user cannot be changed', code='invalid')]", str(e.exception)
         )
 
     def test_validate_user_change(self):
-        attrs = {
-            "user": self.user_external,
-        }
+        attrs = {"user": self.user_external}
 
         with self.assertRaises(ValidationError) as e:
             self.license_policy_member_serializer_1.validate(attrs)
 
         self.assertEqual(
-            "[ErrorDetail(string='License policy and user cannot be changed', code='invalid')]",
-            str(e.exception),
+            "[ErrorDetail(string='License policy and user cannot be changed', code='invalid')]", str(e.exception)
         )
 
     @patch("application.licenses.api.serializers.get_license_policy_member")
@@ -114,10 +99,7 @@ class TestLicensePolicyMemberSerializer(BaseTestCase):
         self.license_policy_member_serializer_1.instance = None
         mock_license_policy_member.return_value = self.license_policy_member_1
 
-        attrs = {
-            "license_policy": self.license_policy_1,
-            "user": self.user_internal,
-        }
+        attrs = {"license_policy": self.license_policy_1, "user": self.user_internal}
 
         with self.assertRaises(ValidationError) as e:
             self.license_policy_member_serializer_1.validate(attrs)

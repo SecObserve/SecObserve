@@ -8,8 +8,7 @@ from unittests.authorization.api.test_authorization import (
 
 
 class TestAuthorizationLicenseGroups(TestAuthorizationBase):
-    @patch("application.licenses.api.views.import_scancode_licensedb")
-    def test_authorization_license_groups(self, mock_import_scancode_licensedb):
+    def test_authorization_license_groups(self):
         License_Policy.objects.all().delete()
         License_Group.objects.filter(pk__lt=1000).delete()
 
@@ -343,31 +342,6 @@ class TestAuthorizationLicenseGroups(TestAuthorizationBase):
                 "/api/license_groups/1003/",
                 None,
                 403,
-                None,
-                no_second_user=True,
-            )
-        )
-
-        expected_data = "{'message': 'User is not allowed to import license groups from ScanCode LicenseDB'}"
-        self._test_api(
-            APITest(
-                "db_internal_write",
-                "post",
-                "/api/license_groups/import_scancode_licensedb/",
-                post_data,
-                403,
-                expected_data,
-                no_second_user=True,
-            )
-        )
-
-        self._test_api(
-            APITest(
-                "db_admin",
-                "post",
-                "/api/license_groups/import_scancode_licensedb/",
-                post_data,
-                204,
                 None,
                 no_second_user=True,
             )

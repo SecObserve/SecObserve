@@ -118,10 +118,7 @@ from application.licenses.services.export_license_policy_secobserve import (
     export_license_policy_secobserve_yaml,
 )
 from application.licenses.services.license_component import save_concluded_license
-from application.licenses.services.license_group import (
-    copy_license_group,
-    import_scancode_licensedb,
-)
+from application.licenses.services.license_group import copy_license_group
 from application.licenses.services.license_policy import (
     apply_license_policy,
     apply_license_policy_product,
@@ -152,9 +149,7 @@ class ConcludedLicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
     filter_backends = [SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasConcludedLicensePermission]
 
-    def get_serializer_class(
-        self,
-    ) -> type[ConcludedLicenseListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[ConcludedLicenseListSerializer] | type[BaseSerializer]:
         if self.action == "list":
             return ConcludedLicenseListSerializer
         return super().get_serializer_class()
@@ -169,9 +164,7 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
     queryset = License_Component.objects.none()
     filter_backends = [DjangoFilterBackend]
 
-    def get_serializer_class(
-        self,
-    ) -> type[LicenseComponentListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[LicenseComponentListSerializer] | type[BaseSerializer]:
         if self.action == "list":
             return LicenseComponentListSerializer
         return super().get_serializer_class()
@@ -182,9 +175,7 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
     @extend_schema(
         methods=["GET"],
         responses={200: LicenseComponentListSerializer},
-        parameters=[
-            OpenApiParameter(name="component", type=str, required=True),
-        ],
+        parameters=[OpenApiParameter(name="component", type=str, required=True)],
     )
     @action(detail=False, methods=["get"])
     def for_component(self, request: Request) -> Response:
@@ -207,18 +198,11 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
 
         if license_component:
             response_serializer = LicenseComponentListSerializer(license_component)
-            return Response(
-                status=HTTP_200_OK,
-                data=response_serializer.data,
-            )
+            return Response(status=HTTP_200_OK, data=response_serializer.data)
 
         return Response(status=HTTP_204_NO_CONTENT)
 
-    @extend_schema(
-        methods=["PATCH"],
-        request=ConcludedLicenseCreateUpdateSerializer,
-        responses={200: None},
-    )
+    @extend_schema(methods=["PATCH"], request=ConcludedLicenseCreateUpdateSerializer, responses={200: None})
     @action(detail=True, methods=["patch"])
     def concluded_license(self, request: Request, pk: int) -> Response:
         request_serializer = ConcludedLicenseCreateUpdateSerializer(data=request.data)
@@ -306,31 +290,25 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
             )
             results.append(license_component_overview_element)
 
-        license_overview = LicenseComponentOverview(
-            count=len(results),
-            results=results,
-        )
+        license_overview = LicenseComponentOverview(count=len(results), results=results)
 
         response_serializer = LicenseComponentOverviewSerializer(license_overview)
 
-        return Response(
-            status=HTTP_200_OK,
-            data=response_serializer.data,
-        )
+        return Response(status=HTTP_200_OK, data=response_serializer.data)
 
     def _get_ordering(self, ordering: Optional[str]) -> Tuple[str, str, str]:
         if ordering and ordering == "-branch_name":
-            return "-branch__name", "-effective_license_name", "-numerical_evaluation_result"
+            return ("-branch__name", "-effective_license_name", "-numerical_evaluation_result")
         if ordering and ordering == "branch_name":
-            return "branch__name", "effective_license_name", "numerical_evaluation_result"
+            return ("branch__name", "effective_license_name", "numerical_evaluation_result")
 
         if ordering and ordering == "-effective_license_name":
-            return "-effective_license_name", "-numerical_evaluation_result", "-branch__name"
+            return ("-effective_license_name", "-numerical_evaluation_result", "-branch__name")
         if ordering and ordering == "effective_license_name":
-            return "effective_license_name", "numerical_evaluation_result", "branch__name"
+            return ("effective_license_name", "numerical_evaluation_result", "branch__name")
 
         if ordering and ordering == "-evaluation_result":
-            return "-numerical_evaluation_result", "-effective_license_name", "-branch__name"
+            return ("-numerical_evaluation_result", "-effective_license_name", "-branch__name")
 
         return "numerical_evaluation_result", "effective_license_name", "branch__name"
 
@@ -404,9 +382,7 @@ class LicenseGroupViewSet(ModelViewSet):
         return get_license_groups()
 
     @extend_schema(
-        methods=["POST"],
-        request=LicenseGroupCopySerializer,
-        responses={HTTP_201_CREATED: LicenseGroupSerializer},
+        methods=["POST"], request=LicenseGroupCopySerializer, responses={HTTP_201_CREATED: LicenseGroupSerializer}
     )
     @action(detail=True, methods=["post"])
     def copy(self, request: Request, pk: int) -> Response:
@@ -433,15 +409,10 @@ class LicenseGroupViewSet(ModelViewSet):
 
         new_license_group = copy_license_group(license_group, name)
 
-        return Response(
-            status=HTTP_201_CREATED,
-            data=LicenseGroupSerializer(new_license_group).data,
-        )
+        return Response(status=HTTP_201_CREATED, data=LicenseGroupSerializer(new_license_group).data)
 
     @extend_schema(
-        methods=["POST"],
-        request=LicenseGroupLicenseAddRemoveSerializer,
-        responses={HTTP_204_NO_CONTENT: None},
+        methods=["POST"], request=LicenseGroupLicenseAddRemoveSerializer, responses={HTTP_204_NO_CONTENT: None}
     )
     @action(detail=True, methods=["post"])
     def add_license(self, request: Request, pk: int) -> Response:
@@ -466,9 +437,7 @@ class LicenseGroupViewSet(ModelViewSet):
         return Response(status=HTTP_204_NO_CONTENT)
 
     @extend_schema(
-        methods=["POST"],
-        request=LicenseGroupLicenseAddRemoveSerializer,
-        responses={HTTP_204_NO_CONTENT: None},
+        methods=["POST"], request=LicenseGroupLicenseAddRemoveSerializer, responses={HTTP_204_NO_CONTENT: None}
     )
     @action(detail=True, methods=["post"])
     def remove_license(self, request: Request, pk: int) -> Response:
@@ -486,21 +455,6 @@ class LicenseGroupViewSet(ModelViewSet):
             raise ValidationError(f"License {license_id} not found")
 
         license_group.licenses.remove(license_to_be_removed)
-
-        return Response(status=HTTP_204_NO_CONTENT)
-
-    @extend_schema(
-        methods=["POST"],
-        request=None,
-        responses={HTTP_204_NO_CONTENT: None},
-    )
-    @action(detail=False, methods=["post"])
-    def import_scancode_licensedb(self, request: Request) -> Response:
-        user = request.user
-        if not user.is_superuser:
-            raise PermissionDenied("User is not allowed to import license groups from ScanCode LicenseDB")
-
-        import_scancode_licensedb()
 
         return Response(status=HTTP_204_NO_CONTENT)
 
@@ -541,10 +495,7 @@ class LicenseGroupAuthorizationGroupMemberViewSet(ModelViewSet):
     filterset_class = LicenseGroupAuthorizationGroupFilter
     queryset = License_Group_Authorization_Group_Member.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
-    permission_classes = [
-        IsAuthenticated,
-        UserHasLicenseGroupAuthenticationGroupMemberPermission,
-    ]
+    permission_classes = [IsAuthenticated, UserHasLicenseGroupAuthenticationGroupMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Group_Authorization_Group_Member]:
         return (
@@ -566,9 +517,7 @@ class LicensePolicyViewSet(ModelViewSet):
         return get_license_policies()
 
     @extend_schema(
-        methods=["POST"],
-        request=LicensePolicyCopySerializer,
-        responses={HTTP_201_CREATED: LicensePolicySerializer},
+        methods=["POST"], request=LicensePolicyCopySerializer, responses={HTTP_201_CREATED: LicensePolicySerializer}
     )
     @action(detail=True, methods=["post"])
     def copy(self, request: Request, pk: int) -> Response:
@@ -595,16 +544,9 @@ class LicensePolicyViewSet(ModelViewSet):
 
         new_license_policy = copy_license_policy(license_policy, name)
 
-        return Response(
-            status=HTTP_201_CREATED,
-            data=LicensePolicySerializer(new_license_policy).data,
-        )
+        return Response(status=HTTP_201_CREATED, data=LicensePolicySerializer(new_license_policy).data)
 
-    @extend_schema(
-        methods=["POST"],
-        request=None,
-        responses={HTTP_204_NO_CONTENT: None},
-    )
+    @extend_schema(methods=["POST"], request=None, responses={HTTP_204_NO_CONTENT: None})
     @action(detail=True, methods=["post"])
     def apply(self, request: Request, pk: int) -> Response:
         license_policy = self._get_license_policy(pk, True)
@@ -613,17 +555,13 @@ class LicensePolicyViewSet(ModelViewSet):
 
         apply_license_policy(license_policy)
 
-        return Response(
-            status=HTTP_204_NO_CONTENT,
-        )
+        return Response(status=HTTP_204_NO_CONTENT)
 
     @extend_schema(
         methods=["POST"],
         request=None,
         responses={HTTP_204_NO_CONTENT: None},
-        parameters=[
-            OpenApiParameter(name="product", type=int, required=True),
-        ],
+        parameters=[OpenApiParameter(name="product", type=int, required=True)],
     )
     @action(detail=False, methods=["post"])
     def apply_product(self, request: Request) -> Response:
@@ -636,56 +574,40 @@ class LicensePolicyViewSet(ModelViewSet):
         product = _get_product(int(product_id), Permissions.Product_Edit)
         apply_license_policy_product(product)
 
-        return Response(
-            status=HTTP_204_NO_CONTENT,
-        )
+        return Response(status=HTTP_204_NO_CONTENT)
 
-    @extend_schema(
-        methods=["GET"],
-        responses={200: None},
-    )
+    @extend_schema(methods=["GET"], responses={200: None})
     @action(detail=True, methods=["get"])
     def export_json(self, request: Request, pk: int) -> HttpResponse:
         license_policy = self._get_license_policy(pk, False)
         license_policy_export = export_license_policy_secobserve_json(license_policy)
 
         response = HttpResponse(  # pylint: disable=http-response-with-content-type-json
-            content=license_policy_export,
-            content_type="application/json",
+            content=license_policy_export, content_type="application/json"
         )
         response["Content-Disposition"] = f"attachment; filename=license_policy_{pk}.json"
 
         return response
 
-    @extend_schema(
-        methods=["GET"],
-        responses={200: None},
-    )
+    @extend_schema(methods=["GET"], responses={200: None})
     @action(detail=True, methods=["get"])
     def export_yaml(self, request: Request, pk: int) -> HttpResponse:
         license_policy = self._get_license_policy(pk, False)
         license_policy_export = export_license_policy_secobserve_yaml(license_policy)
 
-        response = HttpResponse(
-            content=license_policy_export,
-            content_type="application/yaml",
-        )
+        response = HttpResponse(content=license_policy_export, content_type="application/yaml")
         response["Content-Disposition"] = f"attachment; filename=license_policy_{pk}.yaml"
 
         return response
 
-    @extend_schema(
-        methods=["GET"],
-        responses={200: None},
-    )
+    @extend_schema(methods=["GET"], responses={200: None})
     @action(detail=True, methods=["get"])
     def export_sbom_utility(self, request: Request, pk: int) -> HttpResponse:
         license_policy = self._get_license_policy(pk, False)
         license_policy_export = export_license_policy_sbom_utility(license_policy)
 
         response = HttpResponse(  # pylint: disable=http-response-with-content-type-json
-            content=license_policy_export,
-            content_type="application/json",
+            content=license_policy_export, content_type="application/json"
         )
         response["Content-Disposition"] = f"attachment; filename=license_policy_{pk}.json"
 
@@ -744,10 +666,7 @@ class LicensePolicyAuthorizationGroupMemberViewSet(ModelViewSet):
     filterset_class = LicensePolicyAuthorizationGroupFilter
     queryset = License_Policy_Authorization_Group_Member.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
-    permission_classes = [
-        IsAuthenticated,
-        UserHasLicensePolicyAuthorizationGroupMemberPermission,
-    ]
+    permission_classes = [IsAuthenticated, UserHasLicensePolicyAuthorizationGroupMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Policy_Authorization_Group_Member]:
         return (

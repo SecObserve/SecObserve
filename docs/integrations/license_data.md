@@ -14,4 +14,4 @@ Hour is always in UTC time.
 
 ##  ScanCode LicenseDB
 
-The [ScanCode LicenseDB](https://scancode-licensedb.aboutcode.org) is a free and open database of mostly all the software licenses, including a category per license. Administrators can import the data from the ScanCode LicenseDB with a button in the list of [License Groups](../usage/license_management.md#managing-license-groups). License groups will be created or updated for each category, containing the respective SPDX licenses.
+The [ScanCode LicenseDB](https://scancode-licensedb.aboutcode.org) is a free and open database of mostly all the software licenses, including a category per license. License groups will be created with the initial startup of SecObserve for each category of the ScanCode License, containing the respective SPDX licenses, and updated every night after the update of the SPDX licenses.

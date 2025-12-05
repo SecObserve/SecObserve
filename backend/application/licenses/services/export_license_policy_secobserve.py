@@ -41,9 +41,7 @@ def export_license_policy_secobserve_json(license_policy: License_Policy) -> str
     return object_to_json(_create_license_policy_export(license_policy))
 
 
-def _create_license_policy_export(
-    license_policy: License_Policy,
-) -> License_Policy_Export:
+def _create_license_policy_export(license_policy: License_Policy) -> License_Policy_Export:
     license_policy_export = License_Policy_Export(
         name=license_policy.name,
         description=license_policy.description,

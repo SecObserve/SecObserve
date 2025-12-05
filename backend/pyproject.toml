@@ -97,7 +97,7 @@ code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "p
 
 [tool.black]
 line-length = 120
-target-version = ['py312']
+target-version = ['py314']
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
