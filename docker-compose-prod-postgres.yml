@@ -35,7 +35,7 @@ services:
       - traefik
 
   frontend:
-    image: ghcr.io/secobserve/secobserve-frontend:1.43.1
+    image: ghcr.io/secobserve/secobserve-frontend:1.44.0
     container_name: "prod_secobserve_frontend"
     labels:
       - "traefik.enable=true"
@@ -54,7 +54,7 @@ services:
       - traefik
 
   backend:
-    image: ghcr.io/secobserve/secobserve-backend:1.43.1
+    image: ghcr.io/secobserve/secobserve-backend:1.44.0
     container_name: "prod_secobserve_backend"
     labels:
       - "traefik.enable=true"
