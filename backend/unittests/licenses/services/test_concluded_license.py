@@ -19,7 +19,7 @@ class TestConcludedLicense(BaseTestCase):
         call_command(
             "loaddata",
             [
-                "application/licenses/fixtures/initial_data.json",
+                "unittests/fixtures/initial_license_data.json",
                 "unittests/fixtures/unittests_fixtures.json",
                 "unittests/fixtures/unittests_license_fixtures.json",
             ],

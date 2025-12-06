@@ -467,7 +467,7 @@ class TestFileUploadObservations(BaseTestCase):
         try:
             license_policy_standard = License_Policy.objects.get(name="Standard")
         except License_Policy.DoesNotExist:
-            call_command("loaddata", "application/licenses/fixtures/initial_data.json")
+            call_command("loaddata", "unittests/fixtures/initial_license_data.json")
             license_policy_standard = License_Policy.objects.get(name="Standard")
 
         License_Component.objects.all().delete()
@@ -526,7 +526,7 @@ class TestFileUploadObservations(BaseTestCase):
             )
             self.assertEqual(license_components[1].component_purl_type, "pypi")
             self.assertEqual(license_components[1].component_cpe, "")
-            dependencies = """SecObserve:1.43.1 --> argon2-cffi:23.1.0
+            dependencies = """SecObserve:1.44.0 --> argon2-cffi:23.1.0
 argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             self.assertEqual(license_components[1].component_dependencies, dependencies)
             self.assertEqual(license_components[1].effective_spdx_license, License.objects.get(spdx_id="MIT"))

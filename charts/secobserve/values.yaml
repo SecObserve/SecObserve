@@ -2,9 +2,9 @@ replicaCount: 1
 
 frontend:
   image:
-    registry: docker.io
-    repository: ghcr.io/secobserve/secobserve-frontend
-    tag: 1.43.1
+    registry: ghcr.io
+    repository: secobserve/secobserve-frontend
+    tag: 1.44.0
     pullPolicy: IfNotPresent
   securityContext:
     enabled: true
@@ -37,9 +37,9 @@ frontend:
 
 backend:
   image:
-    registry: docker.io
-    repository: ghcr.io/secobserve/secobserve-backend
-    tag: 1.43.1
+    registry: ghcr.io
+    repository: secobserve/secobserve-backend
+    tag: 1.44.0
     pullPolicy: IfNotPresent
   securityContext:
     enabled: true

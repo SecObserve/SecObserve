@@ -1,4 +1,5 @@
 .vscode/settings.json
+.continue
 node_modules
 docs/assets/images/.$secobserve_architecture.drawio.bkp
 docs/assets/images/.$secobserve_process.drawio.bkp

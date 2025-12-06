@@ -263,9 +263,7 @@ class LicenseGroupSerializer(ModelSerializer):
             return True
 
         if License_Group_Authorization_Group_Member.objects.filter(
-            license_group=obj,
-            authorization_group__users=user,
-            is_manager=True,
+            license_group=obj, authorization_group__users=user, is_manager=True
         ).exists():
             return True
 
@@ -289,10 +287,7 @@ class LicenseGroupLicenseAddRemoveSerializer(Serializer):
 
 
 class LicenseGroupAuthorizationGroupMemberSerializer(ModelSerializer):
-    license_group_data = LicenseGroupSerializer(
-        source="license_group",
-        read_only=True,
-    )
+    license_group_data = LicenseGroupSerializer(source="license_group", read_only=True)
     authorization_group_data = AuthorizationGroupListSerializer(source="authorization_group", read_only=True)
 
     class Meta:
@@ -329,10 +324,7 @@ class LicenseGroupAuthorizationGroupMemberSerializer(ModelSerializer):
 
 
 class LicenseGroupMemberSerializer(ModelSerializer):
-    license_group_data = LicenseGroupSerializer(
-        source="license_group",
-        read_only=True,
-    )
+    license_group_data = LicenseGroupSerializer(source="license_group", read_only=True)
     user_data = UserListSerializer(source="user", read_only=True)
 
     class Meta:
@@ -393,9 +385,7 @@ class LicensePolicySerializer(ModelSerializer):
             return True
 
         if License_Policy_Authorization_Group_Member.objects.filter(
-            license_policy=obj,
-            authorization_group__users=user,
-            is_manager=True,
+            license_policy=obj, authorization_group__users=user, is_manager=True
         ).exists():
             return True
 
@@ -450,10 +440,7 @@ class LicensePolicySerializer(ModelSerializer):
 class LicensePolicyItemSerializer(ModelSerializer):
     license_spdx_id = SerializerMethodField()
     license_group_name = SerializerMethodField()
-    license_policy_data = LicensePolicySerializer(
-        source="license_policy",
-        read_only=True,
-    )
+    license_policy_data = LicensePolicySerializer(source="license_policy", read_only=True)
 
     class Meta:
         model = License_Policy_Item
@@ -541,10 +528,7 @@ class LicensePolicyItemSerializer(ModelSerializer):
 
 
 class LicensePolicyMemberSerializer(ModelSerializer):
-    license_policy_data = LicensePolicySerializer(
-        source="license_policy",
-        read_only=True,
-    )
+    license_policy_data = LicensePolicySerializer(source="license_policy", read_only=True)
     user_data = UserListSerializer(source="user", read_only=True)
 
     class Meta:
@@ -576,10 +560,7 @@ class LicensePolicyMemberSerializer(ModelSerializer):
 
 
 class LicensePolicyAuthorizationGroupMemberSerializer(ModelSerializer):
-    license_policy_data = LicensePolicySerializer(
-        source="license_policy",
-        read_only=True,
-    )
+    license_policy_data = LicensePolicySerializer(source="license_policy", read_only=True)
     authorization_group_data = AuthorizationGroupListSerializer(source="authorization_group", read_only=True)
 
     class Meta:

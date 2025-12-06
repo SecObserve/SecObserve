@@ -392,7 +392,7 @@ export const ProductCreateEditComponent = ({
             </Typography>
 
             <Stack direction="row" spacing={2} alignItems="center">
-                <BooleanInput source="osv_enabled" label="OSV scanning enabled" defaultValue={false} />
+                <BooleanInput source="osv_enabled" label="OSV scanning enabled" defaultValue={true} />
                 <FormDataConsumer>
                     {({ formData }) => formData.osv_enabled && <OSVLinuxDistributionInput />}
                 </FormDataConsumer>

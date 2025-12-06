@@ -29,23 +29,15 @@ def get_license_components() -> QuerySet[License_Component]:
     components = License_Component.objects.all()
 
     if not user.is_superuser:
-        product_members = Product_Member.objects.filter(
-            product=OuterRef("product_id"),
-            user=user,
-        )
-        product_group_members = Product_Member.objects.filter(
-            product=OuterRef("product__product_group"),
-            user=user,
-        )
+        product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
+        product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 
         product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("product_id"),
-            authorization_group__users=user,
+            product=OuterRef("product_id"), authorization_group__users=user
         )
 
         product_group_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("product__product_group"),
-            authorization_group__users=user,
+            product=OuterRef("product__product_group"), authorization_group__users=user
         )
 
         components = components.annotate(
@@ -66,15 +58,9 @@ def get_license_components() -> QuerySet[License_Component]:
 
 
 def get_license_component_licenses(
-    product: Product,
-    branch: Optional[Branch],
-    order_by_1: str,
-    order_by2: str,
-    order_by_3: str,
+    product: Product, branch: Optional[Branch], order_by_1: str, order_by2: str, order_by_3: str
 ) -> QuerySet:
-    license_components = get_license_components().filter(
-        product=product,
-    )
+    license_components = get_license_components().filter(product=product)
     if branch:
         license_components = license_components.filter(branch=branch)
 

@@ -1,10 +1,12 @@
-import { ChipField, useRecordContext } from "react-admin";
+import { ChipField, TextField, useRecordContext } from "react-admin";
+import { Fragment } from "react/jsx-runtime";
 
 import { get_severity_color } from "../functions";
 
 interface SeverityProps {
     source: string;
     label: string;
+    emptyText?: string;
 }
 
 function get_current_severity(record: any) {
@@ -27,15 +29,22 @@ function get_current_severity(record: any) {
 export const SeverityField = (props: SeverityProps) => {
     const record = useRecordContext();
     return record ? (
-        <ChipField
-            source={props.source}
-            sortable={true}
-            sortBy={props.source}
-            sx={{
-                backgroundColor: get_severity_color(get_current_severity(record)),
-                color: "white",
-                width: "fit-content",
-            }}
-        />
+        <Fragment>
+            {get_current_severity(record) && (
+                <ChipField
+                    source={props.source}
+                    sortable={true}
+                    sortBy={props.source}
+                    sx={{
+                        backgroundColor: get_severity_color(get_current_severity(record)),
+                        color: "white",
+                        width: "fit-content",
+                    }}
+                />
+            )}
+            {!get_current_severity(record) && (
+                <TextField source={props.source} sortable={true} sortBy={props.source} emptyText="---" />
+            )}
+        </Fragment>
     ) : null;
 };

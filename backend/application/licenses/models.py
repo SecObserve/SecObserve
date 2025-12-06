@@ -32,9 +32,7 @@ class License(Model):
     is_deprecated = BooleanField(null=True)
 
     class Meta:
-        indexes = [
-            Index(fields=["name"]),
-        ]
+        indexes = [Index(fields=["name"])]
 
     def __str__(self) -> str:
         return self.spdx_id
@@ -46,10 +44,7 @@ class License_Group(Model):
     is_public = BooleanField(default=False)
     licenses = ManyToManyField(License, related_name="license_groups")
     users: ManyToManyField = ManyToManyField(
-        User,
-        through="License_Group_Member",
-        related_name="license_groups",
-        blank=True,
+        User, through="License_Group_Member", related_name="license_groups", blank=True
     )
     authorization_groups: ManyToManyField = ManyToManyField(
         Authorization_Group,
@@ -68,10 +63,7 @@ class License_Group_Member(Model):
     is_manager = BooleanField(default=False)
 
     class Meta:
-        unique_together = (
-            "license_group",
-            "user",
-        )
+        unique_together = ("license_group", "user")
 
     def __str__(self) -> str:
         return f"{self.license_group} / {self.user}"
@@ -79,22 +71,15 @@ class License_Group_Member(Model):
 
 class License_Group_Authorization_Group_Member(Model):
     license_group = ForeignKey(
-        License_Group,
-        related_name="license_group_authorization_group_members",
-        on_delete=CASCADE,
+        License_Group, related_name="license_group_authorization_group_members", on_delete=CASCADE
     )
     authorization_group = ForeignKey(
-        Authorization_Group,
-        related_name="license_group_authorization_group_members",
-        on_delete=CASCADE,
+        Authorization_Group, related_name="license_group_authorization_group_members", on_delete=CASCADE
     )
     is_manager = BooleanField(default=False)
 
     class Meta:
-        unique_together = (
-            "license_group",
-            "authorization_group",
-        )
+        unique_together = ("license_group", "authorization_group")
 
     def __str__(self) -> str:
         return f"{self.license_group} / {self.authorization_group}"
@@ -118,11 +103,7 @@ class License_Component(Model):
 
     imported_declared_license_name = CharField(max_length=255, blank=True, default=NO_LICENSE_INFORMATION)
     imported_declared_spdx_license = ForeignKey(
-        License,
-        related_name="imported_declared_license_components",
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
+        License, related_name="imported_declared_license_components", on_delete=PROTECT, blank=True, null=True
     )
     imported_declared_license_expression = CharField(max_length=255, blank=True)
     imported_declared_non_spdx_license = CharField(max_length=255, blank=True)
@@ -130,11 +111,7 @@ class License_Component(Model):
 
     imported_concluded_license_name = CharField(max_length=255, blank=True, default=NO_LICENSE_INFORMATION)
     imported_concluded_spdx_license = ForeignKey(
-        License,
-        related_name="imported_concluded_license_components",
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
+        License, related_name="imported_concluded_license_components", on_delete=PROTECT, blank=True, null=True
     )
     imported_concluded_license_expression = CharField(max_length=255, blank=True)
     imported_concluded_non_spdx_license = CharField(max_length=255, blank=True)
@@ -142,11 +119,7 @@ class License_Component(Model):
 
     manual_concluded_license_name = CharField(max_length=255, blank=True, default=NO_LICENSE_INFORMATION)
     manual_concluded_spdx_license = ForeignKey(
-        License,
-        related_name="manual_concluded_license_components",
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
+        License, related_name="manual_concluded_license_components", on_delete=PROTECT, blank=True, null=True
     )
     manual_concluded_license_expression = CharField(max_length=255, blank=True)
     manual_concluded_non_spdx_license = CharField(max_length=255, blank=True)
@@ -154,21 +127,13 @@ class License_Component(Model):
 
     effective_license_name = CharField(max_length=255, blank=True, default=NO_LICENSE_INFORMATION)
     effective_spdx_license = ForeignKey(
-        License,
-        related_name="effective_license_components",
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
+        License, related_name="effective_license_components", on_delete=PROTECT, blank=True, null=True
     )
     effective_license_expression = CharField(max_length=255, blank=True)
     effective_non_spdx_license = CharField(max_length=255, blank=True)
     effective_multiple_licenses = CharField(max_length=512, blank=True)
 
-    evaluation_result = CharField(
-        max_length=16,
-        choices=License_Policy_Evaluation_Result.RESULT_CHOICES,
-        blank=True,
-    )
+    evaluation_result = CharField(max_length=16, choices=License_Policy_Evaluation_Result.RESULT_CHOICES, blank=True)
     numerical_evaluation_result = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
 
     origin_service = ForeignKey(Service, on_delete=PROTECT, null=True)
@@ -200,45 +165,26 @@ class License_Component_Evidence(Model):
     evidence = TextField()
 
     class Meta:
-        indexes = [
-            Index(fields=["name"]),
-        ]
+        indexes = [Index(fields=["name"])]
 
 
 class Concluded_License(Model):
-    product = ForeignKey(
-        Product,
-        related_name="concluded_licenses",
-        on_delete=CASCADE,
-    )
+    product = ForeignKey(Product, related_name="concluded_licenses", on_delete=CASCADE)
     component_purl_type = CharField(max_length=16, blank=True)
     component_name = CharField(max_length=255)
     component_version = CharField(max_length=255, blank=True)
 
     manual_concluded_spdx_license = ForeignKey(
-        License,
-        related_name="manual_concluded_licenses",
-        on_delete=CASCADE,
-        blank=True,
-        null=True,
+        License, related_name="manual_concluded_licenses", on_delete=CASCADE, blank=True, null=True
     )
     manual_concluded_license_expression = CharField(max_length=255, blank=True)
     manual_concluded_non_spdx_license = CharField(max_length=255, blank=True)
 
-    user = ForeignKey(
-        User,
-        related_name="concluded_licenses",
-        on_delete=PROTECT,
-    )
+    user = ForeignKey(User, related_name="concluded_licenses", on_delete=PROTECT)
     last_updated = DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = (
-            "product",
-            "component_purl_type",
-            "component_name",
-            "component_version",
-        )
+        unique_together = ("product", "component_purl_type", "component_name", "component_version")
 
 
 class License_Policy(Model):
@@ -248,10 +194,7 @@ class License_Policy(Model):
     is_public = BooleanField(default=False)
     ignore_component_types = CharField(max_length=255, blank=True)
     users: ManyToManyField = ManyToManyField(
-        User,
-        through="License_Policy_Member",
-        related_name="license_policies",
-        blank=True,
+        User, through="License_Policy_Member", related_name="license_policies", blank=True
     )
     authorization_groups: ManyToManyField = ManyToManyField(
         Authorization_Group,
@@ -267,19 +210,9 @@ class License_Policy(Model):
 class License_Policy_Item(Model):
     license_policy = ForeignKey(License_Policy, related_name="license_policy_items", on_delete=CASCADE)
     license_group = ForeignKey(
-        License_Group,
-        related_name="license_policy_items",
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
+        License_Group, related_name="license_policy_items", on_delete=PROTECT, blank=True, null=True
     )
-    license = ForeignKey(
-        License,
-        related_name="license_policy_items",
-        on_delete=PROTECT,
-        blank=True,
-        null=True,
-    )
+    license = ForeignKey(License, related_name="license_policy_items", on_delete=PROTECT, blank=True, null=True)
     license_expression = CharField(max_length=255, blank=True)
     non_spdx_license = CharField(max_length=255, blank=True)
     evaluation_result = CharField(max_length=16, choices=License_Policy_Evaluation_Result.RESULT_CHOICES)
@@ -300,10 +233,7 @@ class License_Policy_Member(Model):
     is_manager = BooleanField(default=False)
 
     class Meta:
-        unique_together = (
-            "license_policy",
-            "user",
-        )
+        unique_together = ("license_policy", "user")
 
     def __str__(self) -> str:
         return f"{self.license_policy} / {self.user}"
@@ -311,22 +241,15 @@ class License_Policy_Member(Model):
 
 class License_Policy_Authorization_Group_Member(Model):
     license_policy = ForeignKey(
-        License_Policy,
-        related_name="license_policy_authorization_group_members",
-        on_delete=CASCADE,
+        License_Policy, related_name="license_policy_authorization_group_members", on_delete=CASCADE
     )
     authorization_group = ForeignKey(
-        Authorization_Group,
-        related_name="license_policy_authorization_group_members",
-        on_delete=CASCADE,
+        Authorization_Group, related_name="license_policy_authorization_group_members", on_delete=CASCADE
     )
     is_manager = BooleanField(default=False)
 
     class Meta:
-        unique_together = (
-            "license_policy",
-            "authorization_group",
-        )
+        unique_together = ("license_policy", "authorization_group")
 
     def __str__(self) -> str:
         return f"{self.license_policy} / {self.authorization_group}"

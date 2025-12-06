@@ -7,9 +7,7 @@ from application.licenses.models import License, License_Group, License_Group_Me
 
 def copy_license_group(source_license_group: License_Group, name: str) -> License_Group:
     new_license_group = License_Group.objects.create(
-        name=name,
-        description=source_license_group.description,
-        is_public=source_license_group.is_public,
+        name=name, description=source_license_group.description, is_public=source_license_group.is_public
     )
 
     for license_to_be_added in source_license_group.licenses.all():
@@ -18,9 +16,7 @@ def copy_license_group(source_license_group: License_Group, name: str) -> Licens
     members = License_Group_Member.objects.filter(license_group=source_license_group)
     for member in members:
         License_Group_Member.objects.update_or_create(
-            license_group=new_license_group,
-            user=member.user,
-            is_manager=member.is_manager,
+            license_group=new_license_group, user=member.user, is_manager=member.is_manager
         )
 
     return new_license_group
@@ -29,11 +25,7 @@ def copy_license_group(source_license_group: License_Group, name: str) -> Licens
 def import_scancode_licensedb() -> None:
     license_groups: dict[str, License_Group] = {}
 
-    response = requests.get(
-        "https://scancode-licensedb.aboutcode.org/index.json",
-        timeout=60,
-        stream=True,
-    )
+    response = requests.get("https://scancode-licensedb.aboutcode.org/index.json", timeout=60, stream=True)
     response.raise_for_status()
     data = loads(response.content)
 
@@ -56,9 +48,9 @@ def _add_license_to_group(license_groups: dict[str, License_Group], category: st
             license_group, _ = License_Group.objects.get_or_create(
                 name=f"{category} (ScanCode LicenseDB)",
                 defaults={
-                    "description": "Do not edit! "
+                    "description": "**Do not edit!** "
                     + "Imported from [ScanCode LicenseDB](https://scancode-licensedb.aboutcode.org/) "
-                    + "under the CC-BY-4.0 license.",
+                    + "under the CC-BY-4.0 license and updated every 24 hours.",
                     "is_public": True,
                 },
             )

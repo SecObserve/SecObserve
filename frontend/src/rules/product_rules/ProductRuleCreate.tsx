@@ -37,13 +37,13 @@ const ProductRuleCreate = ({ product }: ProductRuleCreateProps) => {
                 onSuccess: () => {
                     refresh();
                     notify("Product rule added", { type: "success" });
+                    setOpen(false);
                 },
                 onError: (error: any) => {
                     notify(error.message, { type: "warning" });
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

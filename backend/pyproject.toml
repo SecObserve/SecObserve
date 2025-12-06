@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.43.1"
+version = "1.44.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -11,11 +11,11 @@ python = ">= 3.10, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
 gunicorn = "23.0.0"  # https://github.com/benoitc/gunicorn
-django = "5.2.8"  # https://www.djangoproject.com/
+django = "5.2.9"  # https://www.djangoproject.com/
 django-environ = "0.12.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
 django-csp = "4.0"  # https://github.com/mozilla/django-csp
-django-picklefield = "3.3"  # https://github.com/gintas/django-picklefield 
+django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield 
 django-encrypted-model-fields = "0.6.5"  # https://gitlab.com/lansharkconsulting/django/django-encrypted-model-fields
 argon2-cffi = "25.1.0"  # https://github.com/hynek/argon2_cffi
 whitenoise = "6.11.0"  # https://github.com/evansd/whitenoise
@@ -26,7 +26,7 @@ django-cors-headers = "4.9.0" # https://github.com/adamchainz/django-cors-header
 # OpenAPI 3
 # ------------------------------------------------------------------------------
 drf-spectacular = "0.29.0" # https://github.com/tfranzel/drf-spectacular
-drf-spectacular-sidecar = "2025.10.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
+drf-spectacular-sidecar = "2025.12.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
 # Token authentication
 # ------------------------------------------------------------------------------
 PyJWT = "2.10.1"  # https://github.com/jpadilla/pyjwt
@@ -36,7 +36,7 @@ requests = "2.32.5"  # https://github.com/psf/requests
 # Database
 # ------------------------------------------------------------------------------
 pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
-psycopg = { version = "3.2.12", extras = ["binary"] }  # https://github.com/psycopg/psycopg
+psycopg = { version = "3.3.1", extras = ["binary"] }  # https://github.com/psycopg/psycopg
 # Dataformats
 # ------------------------------------------------------------------------------
 defusedcsv = "3.0.0"  # https://github.com/raphaelm/defusedcsv
@@ -45,13 +45,13 @@ jsonpickle = "4.1.1"  # https://github.com/jsonpickle/jsonpickle
 pyyaml = "6.0.3"  # https://github.com/yaml/pyyaml
 # Field specifications
 # ------------------------------------------------------------------------------
-packageurl-python = "0.17.5"  # https://github.com/package-url/packageurl-python
+packageurl-python = "0.17.6"  # https://github.com/package-url/packageurl-python
 cvss = "3.6"  # https://github.com/RedHatProductSecurity/cvss
 semver = "3.0.4"  # https://github.com/python-semver/python-semver
 license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expression
 # Task queue
 # ------------------------------------------------------------------------------
-huey = "2.5.4"  # https://github.com/coleifer/huey
+huey = "2.5.5"  # https://github.com/coleifer/huey
 # Issue tracker
 # ------------------------------------------------------------------------------
 jira = "3.10.5"  # https://github.com/pycontribs/jira
@@ -61,13 +61,13 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.8.3"  # https://github.com/Goldziher/html-to-markdown
-cyclonedx-python-lib = "11.5.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
+html-to-markdown = "2.11.1"  # https://github.com/Goldziher/html-to-markdown
+cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 
 # Development dependencies
 # ------------------------------------------------------------------------------
 # Werkzeug = { version = "3.0.4", extras = ["watchdog"], optional = true }  # https://github.com/pallets/werkzeug
-Werkzeug = { version = "3.1.3", optional = true }  # https://github.com/pallets/werkzeug
+Werkzeug = { version = "3.1.4", optional = true }  # https://github.com/pallets/werkzeug
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
@@ -84,9 +84,9 @@ flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gfor
 black = { version = "25.11.0", optional = true }  # https://github.com/psf/black
 pylint = { version = "3.3.9", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.6.1", optional = true }  # https://github.com/PyCQA/pylint-django
-mypy = { version = "1.18.2", optional = true }  # https://github.com/python/mypy
-django-stubs = { version = "5.2.7", optional = true }  # https://github.com/typeddjango/django-stubs
-djangorestframework-stubs = { version = "3.16.5", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
+mypy = { version = "1.19.0", optional = true }  # https://github.com/python/mypy
+django-stubs = { version = "5.2.8", optional = true }  # https://github.com/typeddjango/django-stubs
+djangorestframework-stubs = { version = "3.16.6", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.1.0.20250916", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
@@ -97,7 +97,7 @@ code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "p
 
 [tool.black]
 line-length = 120
-target-version = ['py312']
+target-version = ['py314']
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

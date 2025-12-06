@@ -13,7 +13,7 @@ const NotificationBulkMarkAsViewedButton = () => {
     const refresh = useRefresh();
     const [loading, setLoading] = useState(false);
     const notify = useNotify();
-    const unselectAll = useUnselectAll("notifications");
+    const unselectAll = useUnselectAll("notifications", "notifications.list");
     const handleClick = () => setOpen(true);
     const handleDialogClose = () => setOpen(false);
 

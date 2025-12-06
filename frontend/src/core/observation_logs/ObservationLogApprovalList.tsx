@@ -2,6 +2,7 @@ import { Stack } from "@mui/material";
 import { Fragment } from "react";
 import {
     AutocompleteInput,
+    ChipField,
     Datagrid,
     DateField,
     FilterForm,
@@ -16,6 +17,7 @@ import {
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_vex_enabled } from "../../commons/functions";
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
@@ -24,13 +26,18 @@ import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
 import { commentShortened } from "./functions";
 
-const BulkActionButtons = ({ product }: any) => {
+type BulkActionButtonsProps = {
+    product: any;
+    storeKey: string;
+};
+
+const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
     return (
         <Fragment>
             {(!product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL)) && (
                 <Stack direction="row" spacing={2} alignItems="center">
-                    <AssessmentBulkApproval />
-                    <AssessmentDeleteApproval />
+                    <AssessmentBulkApproval storeKey={storeKey} />
+                    <AssessmentDeleteApproval storeKey={storeKey} />
                 </Stack>
             )}
         </Fragment>
@@ -167,7 +174,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                         sx={{ width: "100%" }}
                         bulkActionButtons={
                             !product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
-                                <BulkActionButtons product={product} />
+                                <BulkActionButtons product={product} storeKey={storeKey} />
                             ) : (
                                 false
                             )
@@ -226,8 +233,8 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                             />
                         )}
                         <TextField source="user_full_name" label="User" />
-                        <TextField source="severity" emptyText="---" />
-                        <TextField source="status" emptyText="---" />
+                        <SeverityField label="Severity" source="severity" />
+                        <ChipField source="status" label="Status" emptyText="---" />
                         {feature_vex_enabled() && (
                             <TextField
                                 label="VEX justification"
