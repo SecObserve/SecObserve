@@ -4,7 +4,6 @@ import {
     BooleanField,
     Datagrid,
     FilterForm,
-    Identifier,
     ListContextProvider,
     NullableBooleanInput,
     ResourceContextProvider,
@@ -28,10 +27,6 @@ function listFilters() {
         <NullableBooleanInput source="is_manager" label="Manager" alwaysOn />,
     ];
 }
-
-const showUser = (id: Identifier) => {
-    return "#/users/" + id + "/show";
-};
 
 type AuthorizationGroupMemberEmbeddedListProps = {
     authorization_group: any;
