@@ -4,7 +4,6 @@ import {
     BooleanField,
     Datagrid,
     FilterForm,
-    Identifier,
     ListContextProvider,
     NullableBooleanInput,
     ResourceContextProvider,
@@ -14,7 +13,7 @@ import {
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import TextUrlField from "../../commons/custom_fields/TextUrlField";
+import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { is_superuser } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import LicensePolicyMemberAdd from "./LicensePolicyMemberAdd";
@@ -28,10 +27,6 @@ function listFilters() {
         <NullableBooleanInput source="is_manager" label="Manager" alwaysOn />,
     ];
 }
-
-const showUser = (id: Identifier) => {
-    return "#/users/" + id + "/show";
-};
 
 type LicensePolicyMemberEmbeddedListProps = {
     license_policy: any;
@@ -65,26 +60,7 @@ const LicensePolicyMemberEmbeddedList = ({ license_policy }: LicensePolicyMember
                                 bulkActionButtons={false}
                                 resource="users"
                             >
-                                <WithRecord
-                                    label="Full name"
-                                    render={(license_policy_member) => (
-                                        <TextUrlField
-                                            label="User"
-                                            text={license_policy_member.user_data.full_name}
-                                            url={showUser(license_policy_member.user_data.id)}
-                                        />
-                                    )}
-                                />
-                                <WithRecord
-                                    label="Username"
-                                    render={(license_policy_member) => (
-                                        <TextUrlField
-                                            label="User"
-                                            text={license_policy_member.user_data.username}
-                                            url={showUser(license_policy_member.user_data.id)}
-                                        />
-                                    )}
-                                />
+                                <UserFullNameURLField source="user_data.full_name" label="User" />
                                 <BooleanField source="is_manager" label="Manager" />
                                 {(is_superuser() || license_policy.is_manager) && (
                                     <WithRecord

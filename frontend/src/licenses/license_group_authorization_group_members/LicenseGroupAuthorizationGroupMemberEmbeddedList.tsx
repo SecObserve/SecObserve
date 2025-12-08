@@ -4,7 +4,6 @@ import {
     BooleanField,
     Datagrid,
     FilterForm,
-    Identifier,
     ListContextProvider,
     NullableBooleanInput,
     ResourceContextProvider,
@@ -13,8 +12,8 @@ import {
     useListController,
 } from "react-admin";
 
+import { AuthorizationGroupNameURLField } from "../../commons/custom_fields/AuthorizationGroupNameURLField";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import LicenseGroupAuthorizationGroupMemberAdd from "./LicenseGroupAuthorizationGroupMemberAdd";
@@ -27,10 +26,6 @@ function listFilters() {
         <NullableBooleanInput source="is_manager" label="Manager" alwaysOn />,
     ];
 }
-
-const showAuthorizationGroup = (id: Identifier) => {
-    return "#/authorization_groups/" + id + "/show";
-};
 
 type LicenseGroupAuthorizationGroupMemberEmbeddedListProps = {
     license_group: any;
@@ -68,17 +63,9 @@ const LicenseGroupAuthorizationGroupMemberEmbeddedList = ({
                                 bulkActionButtons={false}
                                 resource="license_group_authorization_group_members"
                             >
-                                <WithRecord
-                                    label="Name"
-                                    render={(license_group_authorization_group) => (
-                                        <TextUrlField
-                                            label="Authorization group"
-                                            text={license_group_authorization_group.authorization_group_data.name}
-                                            url={showAuthorizationGroup(
-                                                license_group_authorization_group.authorization_group_data.id
-                                            )}
-                                        />
-                                    )}
+                                <AuthorizationGroupNameURLField
+                                    source="authorization_group_data.name"
+                                    label="Authorization Group"
                                 />
                                 <BooleanField source="is_manager" label="Manager" />
                                 {(is_superuser() || license_group.is_manager) && (

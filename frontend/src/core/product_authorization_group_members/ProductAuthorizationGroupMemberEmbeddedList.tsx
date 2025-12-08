@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import {
     Datagrid,
-    Identifier,
     ListContextProvider,
     ResourceContextProvider,
     SelectField,
@@ -14,18 +13,14 @@ import {
     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_EDIT,
     ROLE_CHOICES,
 } from "../../access_control/types";
+import { AuthorizationGroupNameURLField } from "../../commons/custom_fields/AuthorizationGroupNameURLField";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import ProductAuthorizationGroupMemberDelete from "./ProductAuthorizationGroupMemberDelete";
 import ProductAuthorizationGroupMemberEdit from "./ProductAuthorizationGroupMemberEdit";
 
 type ProductAuthorizationGroupMemberEmbeddedListProps = {
     product: any;
-};
-
-const showAuthorizationGroup = (id: Identifier) => {
-    return "#/authorization_groups/" + id + "/show";
 };
 
 const ProductAuthorizationGroupMemberEmbeddedList = ({ product }: ProductAuthorizationGroupMemberEmbeddedListProps) => {
@@ -52,17 +47,9 @@ const ProductAuthorizationGroupMemberEmbeddedList = ({ product }: ProductAuthori
                         rowClick={false}
                         resource="product_authorization_group_members"
                     >
-                        <WithRecord
+                        <AuthorizationGroupNameURLField
+                            source="authorization_group_data.name"
                             label="Authorization Group"
-                            render={(product_authorization_group_member) => (
-                                <TextUrlField
-                                    label="User"
-                                    text={product_authorization_group_member.authorization_group_data.name}
-                                    url={showAuthorizationGroup(
-                                        product_authorization_group_member.authorization_group_data.id
-                                    )}
-                                />
-                            )}
                         />
                         <SelectField source="role" choices={ROLE_CHOICES} />
                         <WithRecord

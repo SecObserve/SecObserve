@@ -3,11 +3,13 @@ import {
     BooleanField,
     Datagrid,
     DateField,
+    FieldProps,
     ListContextProvider,
     ResourceContextProvider,
     TextField,
     WithRecord,
     useListController,
+    useRecordContext,
 } from "react-admin";
 
 import { PERMISSION_BRANCH_DELETE, PERMISSION_BRANCH_EDIT, PERMISSION_PRODUCT_EDIT } from "../../access_control/types";
@@ -21,6 +23,15 @@ import { getSettingListSize } from "../../commons/user_settings/functions";
 import BranchDelete from "./BranchDelete";
 import BranchEdit from "./BranchEdit";
 import DefaultBranch from "./DefaultBranch";
+
+export const BranchNameURLField = (props: FieldProps) => {
+    const record = useRecordContext(props);
+    return record ? <TextUrlField text={record.name} url={get_observations_url(record.product, record.id)} /> : null;
+};
+
+function get_observations_url(product_id: number, branch_id: number): string {
+    return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
+}
 
 type BranchEmbeddedListProps = {
     product: any;
@@ -40,10 +51,6 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
         return <div>Loading...</div>;
     }
 
-    function get_observations_url(product_id: number, branch_id: number): string {
-        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
-    }
-
     return (
         <ResourceContextProvider value="branches">
             <ListContextProvider value={listContext}>
@@ -54,16 +61,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                         bulkActionButtons={false}
                         rowClick={false}
                     >
-                        <WithRecord
-                            label="Name"
-                            render={(branch) => (
-                                <TextUrlField
-                                    label="Name"
-                                    text={branch.name}
-                                    url={get_observations_url(product.id, branch.id)}
-                                />
-                            )}
-                        />
+                        <BranchNameURLField source="name" />
                         <BooleanField source="is_default_branch" label="Default branch / version" sortable={false} />
                         {product?.has_branch_purls && <TextField source="purl" label="PURL" />}
                         {product?.has_branch_cpe23s && <TextField source="cpe23" label="CPE 2.3" />}

@@ -1,5 +1,13 @@
 import { Stack } from "@mui/material";
-import { Datagrid, ListContextProvider, ResourceContextProvider, WithRecord, useListController } from "react-admin";
+import {
+    Datagrid,
+    FieldProps,
+    ListContextProvider,
+    ResourceContextProvider,
+    WithRecord,
+    useListController,
+    useRecordContext,
+} from "react-admin";
 
 import { PERMISSION_SERVICE_DELETE, PERMISSION_SERVICE_EDIT } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
@@ -11,9 +19,31 @@ import { getSettingListSize } from "../../commons/user_settings/functions";
 import ServiceDelete from "./ServiceDelete";
 import ServiceEdit from "./ServiceEdit";
 
-type ServiceEmbeddedListProps = {
+interface ServiceNameURLFieldProps extends FieldProps {
     product: any;
+}
+
+export const ServiceNameURLField = (props: ServiceNameURLFieldProps) => {
+    const record = useRecordContext(props);
+    return record ? (
+        <TextUrlField
+            text={record.name}
+            url={get_observations_url(props.product.id, record.id, props.product.repository_default_branch)}
+        />
+    ) : null;
 };
+
+function get_observations_url(product_id: number, service_id: number, repository_default_branch_id: number): string {
+    if (repository_default_branch_id) {
+        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22origin_service%22%3A${service_id}%2C%22branch%22%3A${repository_default_branch_id}%7D&order=ASC&sort=current_severity`;
+    } else {
+        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22origin_service%22%3A${service_id}%7D&order=ASC&sort=current_severity`;
+    }
+}
+
+interface ServiceEmbeddedListProps {
+    product: any;
+}
 
 const ServiceEmbeddedList = ({ product }: ServiceEmbeddedListProps) => {
     const listContext = useListController({
@@ -29,18 +59,6 @@ const ServiceEmbeddedList = ({ product }: ServiceEmbeddedListProps) => {
         return <div>Loading...</div>;
     }
 
-    function get_observations_url(
-        product_id: number,
-        service_id: number,
-        repository_default_branch_id: number
-    ): string {
-        if (repository_default_branch_id) {
-            return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22origin_service%22%3A${service_id}%2C%22branch%22%3A${repository_default_branch_id}%7D&order=ASC&sort=current_severity`;
-        } else {
-            return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22origin_service%22%3A${service_id}%7D&order=ASC&sort=current_severity`;
-        }
-    }
-
     return (
         <ResourceContextProvider value="services">
             <ListContextProvider value={listContext}>
@@ -51,20 +69,7 @@ const ServiceEmbeddedList = ({ product }: ServiceEmbeddedListProps) => {
                         bulkActionButtons={false}
                         rowClick={false}
                     >
-                        <WithRecord
-                            label="Name"
-                            render={(service) => (
-                                <TextUrlField
-                                    label="Name"
-                                    text={service.name}
-                                    url={get_observations_url(
-                                        product.id,
-                                        service.id,
-                                        product.repository_default_branch
-                                    )}
-                                />
-                            )}
-                        />
+                        <ServiceNameURLField source="name" product={product} />
                         <ObservationsCountField label="Open observations" withLabel={false} />
                         {feature_license_management() && product?.has_licenses && (
                             <LicensesCountField label="Licenses / Components" withLabel={false} />
