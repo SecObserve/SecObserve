@@ -313,9 +313,9 @@ class LicensePolicyItemFilter(FilterSet):
             ("license_policy__name", "license_policy_data.name"),
             (
                 ("license_group__name", "license__spdx_id", "license_expression", "non_spdx_license"),
-                "license_group_name",
+                "license_group",
             ),
-            (("license__spdx_id", "license_group__name", "license_expression", "non_spdx_license"), "license_spdx_id"),
+            (("license__spdx_id", "license_group__name", "license_expression", "non_spdx_license"), "spdx_id"),
             (
                 ("license_expression", "license_group__name", "license__spdx_id", "non_spdx_license"),
                 "license_expression",
