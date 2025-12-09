@@ -2,9 +2,9 @@ import { Stack } from "@mui/material";
 import { Fragment } from "react";
 import { EditButton, PrevNextButtons, Show, TopToolbar, WithRecord, useRecordContext } from "react-admin";
 
-import { is_superuser } from "../../commons/functions";
-import { feature_general_rules_need_approval_enabled } from "../../commons/functions";
+import { feature_general_rules_need_approval_enabled, is_superuser } from "../../commons/functions";
 import RuleApproval from "../RuleApproval";
+import RuleSimulation from "../RuleSimulation";
 import { RuleShowComponent } from "../functions";
 import { RULE_STATUS_NEEDS_APPROVAL } from "../types";
 
@@ -17,6 +17,7 @@ const ShowActions = () => {
                 {rule?.approval_status == RULE_STATUS_NEEDS_APPROVAL &&
                     feature_general_rules_need_approval_enabled() &&
                     is_superuser() && <RuleApproval rule_id={rule.id} class="general_rules" />}
+                {rule && <RuleSimulation rule_id={rule.id} rules_provider="general_rules" />}
                 {is_superuser() && <EditButton />}
             </Stack>
         </TopToolbar>
