@@ -8,14 +8,17 @@ from rest_framework.exceptions import ValidationError
 from application.commons.services.functions import get_comma_separated_as_list
 from application.core.models import Product
 from application.licenses.models import License_Component
-from application.licenses.queries.license import get_license_by_spdx_id
 from application.licenses.services.concluded_license import update_concluded_license
 from application.licenses.services.license_policy import (
     apply_license_policy_to_component,
     get_license_evaluation_results_for_product,
     get_license_policy,
 )
-from application.licenses.types import NO_LICENSE_INFORMATION
+from application.licenses.services.spdx_license_cache import SPDXLicenseCache
+from application.licenses.types import (
+    NO_LICENSE_INFORMATION,
+    License_Policy_Evaluation_Result,
+)
 
 
 def get_identity_hash(license_component: License_Component) -> str:
@@ -32,7 +35,7 @@ def _get_string_to_hash(license_component: License_Component) -> str:  # pylint:
     return hash_string
 
 
-def prepare_license_component(component: License_Component) -> None:
+def prepare_license_component(component: License_Component, spdx_cache: SPDXLicenseCache) -> None:
     _prepare_name_version(component)
 
     if component.component_name_version is None:
@@ -59,7 +62,10 @@ def prepare_license_component(component: License_Component) -> None:
     if component.component_purl_type is None:
         component.component_purl_type = ""
 
-    _prepare_license(component)
+    _prepare_license(component, spdx_cache)
+
+    if component.evaluation_result in [None, ""]:
+        component.evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
 
     component.identity_hash = get_identity_hash(component)
 
@@ -83,13 +89,13 @@ def _prepare_name_version(component: License_Component) -> None:
             component.component_version = ""
 
 
-def _prepare_license(component: License_Component) -> None:
-    _prepare_imported_declared_license(component)
-    _prepare_imported_concluded_license(component)
+def _prepare_license(component: License_Component, spdx_cache: SPDXLicenseCache) -> None:
+    _prepare_imported_declared_license(component, spdx_cache)
+    _prepare_imported_concluded_license(component, spdx_cache)
     set_effective_license(component)
 
 
-def _prepare_imported_declared_license(component: License_Component) -> None:
+def _prepare_imported_declared_license(component: License_Component, spdx_cache: SPDXLicenseCache) -> None:
     component.imported_declared_spdx_license = None
     component.imported_declared_license_expression = ""
     component.imported_declared_non_spdx_license = ""
@@ -98,7 +104,7 @@ def _prepare_imported_declared_license(component: License_Component) -> None:
     if not component.unsaved_declared_licenses:
         component.imported_declared_license_name = NO_LICENSE_INFORMATION
     elif len(component.unsaved_declared_licenses) == 1:
-        component.imported_declared_spdx_license = get_license_by_spdx_id(component.unsaved_declared_licenses[0])
+        component.imported_declared_spdx_license = spdx_cache.get(component.unsaved_declared_licenses[0])
         if component.imported_declared_spdx_license:
             component.imported_declared_license_name = component.imported_declared_spdx_license.spdx_id
         else:
@@ -120,12 +126,13 @@ def _prepare_imported_declared_license(component: License_Component) -> None:
         component.imported_declared_license_name = component.imported_declared_multiple_licenses
 
 
-def _prepare_imported_concluded_license(component: License_Component) -> None:
+def _prepare_imported_concluded_license(component: License_Component, spdx_cache: SPDXLicenseCache) -> None:
     if not component.unsaved_concluded_licenses:
         component.imported_concluded_license_name = NO_LICENSE_INFORMATION
     elif len(component.unsaved_concluded_licenses) == 1:
-        component.imported_concluded_spdx_license = get_license_by_spdx_id(component.unsaved_concluded_licenses[0])
+        component.imported_concluded_spdx_license = spdx_cache.get(component.unsaved_concluded_licenses[0])
         if component.imported_concluded_spdx_license:
+
             component.imported_concluded_license_name = component.imported_concluded_spdx_license.spdx_id
         else:
             licensing = get_spdx_licensing()
@@ -211,7 +218,10 @@ def save_concluded_license(component: License_Component) -> None:
     if license_policy:
         license_evaluation_results = get_license_evaluation_results_for_product(component.product)
         apply_license_policy_to_component(
-            component, license_evaluation_results, get_comma_separated_as_list(license_policy.ignore_component_types)
+            component,
+            license_evaluation_results,
+            get_comma_separated_as_list(license_policy.ignore_component_types),
+            SPDXLicenseCache(),
         )
 
     component.save()
