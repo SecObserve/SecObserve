@@ -152,8 +152,8 @@ class License_Component(Model):
     def __str__(self) -> str:
         return self.component_name_version
 
-    def __setattr__(self, attrname, val):
-        super(License_Component, self).__setattr__(attrname, val)
+    def __setattr__(self, attrname: str, val: Any) -> None:
+        super().__setattr__(attrname, val)
 
         if attrname == "evaluation_result":
             self.numerical_evaluation_result = License_Policy_Evaluation_Result.NUMERICAL_RESULTS.get(val, 3)

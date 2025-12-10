@@ -1,4 +1,3 @@
-import logging
 import os
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -67,8 +66,6 @@ from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
-
-logger = logging.getLogger("secobserve.import_observations")
 
 
 @dataclass
@@ -176,18 +173,10 @@ def file_upload_observations(
     if settings.feature_license_management and (
         not file_upload_parameters.suppress_licenses or file_upload_parameters.sbom
     ):
-
-        logger.info("--- before getting license components")
-
         imported_license_components, scanner = parser_instance.get_license_components(data)
-
-        logger.info("--- before processing license components")
-
         numbers_license_components = process_license_components(
             imported_license_components, scanner, vulnerability_check
         )
-
-        logger.info("--- after processing license components")
 
     return (
         numbers_observations[0],
@@ -344,7 +333,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     return observations_new, observations_updated, len(observations_resolved)
 
 
-def process_license_components(  # pylint: disable=too-many-statements
+def process_license_components(  # pylint: disable=too-many-statements disable=too-many-locals
     license_components: list[License_Component],
     scanner: str,
     vulnerability_check: Vulnerability_Check,
@@ -353,7 +342,8 @@ def process_license_components(  # pylint: disable=too-many-statements
         product=vulnerability_check.product,
         branch=vulnerability_check.branch,
         upload_filename=vulnerability_check.filename,
-    )
+    ).select_related("effective_spdx_license")
+
     existing_component: Optional[License_Component] = None
     existing_components_dict: dict[str, License_Component] = {}
     existing_component_ids: list[int] = []
@@ -363,8 +353,8 @@ def process_license_components(  # pylint: disable=too-many-statements
 
     License_Component_Evidence.objects.filter(license_component__in=existing_component_ids).delete()
 
-    components_new = 0
-    components_updated = 0
+    components_new = []
+    components_updated = []
 
     spdx_cache = SPDXLicenseCache()
     concluded_license_applicator = ConcludeLicenseApplicator(vulnerability_check.product)
@@ -380,12 +370,11 @@ def process_license_components(  # pylint: disable=too-many-statements
             effective_license_expression_before = existing_component.effective_license_expression
             effective_multiple_licenses_before = existing_component.effective_multiple_licenses
             evaluation_result_before = existing_component.evaluation_result
-            existing_component.component_name = unsaved_component.component_name
-            existing_component.component_version = unsaved_component.component_version
             existing_component.component_purl = unsaved_component.component_purl
             existing_component.component_purl_type = unsaved_component.component_purl_type
             existing_component.component_cpe = unsaved_component.component_cpe
             existing_component.component_dependencies = unsaved_component.component_dependencies
+            existing_component.component_cyclonedx_bom_link = unsaved_component.component_cyclonedx_bom_link
             existing_component.imported_declared_license_name = unsaved_component.imported_declared_license_name
             existing_component.imported_declared_spdx_license = unsaved_component.imported_declared_spdx_license
             existing_component.imported_declared_non_spdx_license = unsaved_component.imported_declared_non_spdx_license
@@ -406,7 +395,6 @@ def process_license_components(  # pylint: disable=too-many-statements
             existing_component.imported_concluded_multiple_licenses = (
                 unsaved_component.imported_concluded_multiple_licenses
             )
-            existing_component.origin_service = vulnerability_check.service
 
             existing_component.import_last_seen = timezone.now()
             if (
@@ -427,12 +415,11 @@ def process_license_components(  # pylint: disable=too-many-statements
                 set_effective_license(existing_component)
 
             clip_fields("licenses", "License_Component", existing_component)
-            existing_component.save()
+            components_updated.append(existing_component)
 
             license_component_evidences += _process_license_evidences(unsaved_component, existing_component)
 
             existing_components_dict.pop(unsaved_component.identity_hash)
-            components_updated += 1
         else:
             unsaved_component.product = vulnerability_check.product
             unsaved_component.branch = vulnerability_check.branch
@@ -447,19 +434,49 @@ def process_license_components(  # pylint: disable=too-many-statements
             set_effective_license(unsaved_component)
 
             clip_fields("licenses", "License_Component", unsaved_component)
-            unsaved_component.save()
+            components_new.append(unsaved_component)
 
-            license_component_evidences += _process_license_evidences(unsaved_component, unsaved_component)
+    License_Component.objects.bulk_update(
+        components_updated,
+        [
+            "component_purl",
+            "component_purl_type",
+            "component_cpe",
+            "component_dependencies",
+            "component_cyclonedx_bom_link",
+            "imported_declared_license_name",
+            "imported_declared_spdx_license",
+            "imported_declared_license_expression",
+            "imported_declared_non_spdx_license",
+            "imported_declared_multiple_licenses",
+            "imported_concluded_license_name",
+            "imported_concluded_spdx_license",
+            "imported_concluded_license_expression",
+            "imported_concluded_non_spdx_license",
+            "imported_concluded_multiple_licenses",
+            "manual_concluded_license_name",
+            "manual_concluded_spdx_license",
+            "manual_concluded_license_expression",
+            "manual_concluded_non_spdx_license",
+            "manual_concluded_comment",
+            "effective_license_name",
+            "effective_spdx_license",
+            "effective_license_expression",
+            "effective_non_spdx_license",
+            "effective_multiple_licenses",
+            "evaluation_result",
+            "numerical_evaluation_result",
+            "import_last_seen",
+            "last_change",
+        ],
+        100,
+    )
 
-            components_new += 1
+    inserted_components = License_Component.objects.bulk_create(components_new, 100)
+    for inserted_component in inserted_components:
+        license_component_evidences += _process_license_evidences(inserted_component, inserted_component)
 
-    License_Component_Evidence.objects.bulk_create(license_component_evidences, 1000)
-
-    logger.info("--- before applying license policy")
-
-    apply_license_policy_product(spdx_cache, vulnerability_check.product, vulnerability_check.branch)
-
-    logger.info("--- after applying license policy")
+    License_Component_Evidence.objects.bulk_create(license_component_evidences, 100)
 
     components_deleted = len(existing_components_dict)
     license_component_ids: list[int] = []
@@ -467,20 +484,22 @@ def process_license_components(  # pylint: disable=too-many-statements
         license_component_ids.append(existing_component.pk)
     License_Component.objects.filter(pk__in=license_component_ids).delete()
 
-    if components_new == 0 and components_updated == 0 and components_deleted == 0:
+    if len(components_new) == 0 and len(components_updated) == 0 and components_deleted == 0:
         vulnerability_check.last_import_licenses_new = None
         vulnerability_check.last_import_licenses_updated = None
         vulnerability_check.last_import_licenses_deleted = None
     else:
-        vulnerability_check.last_import_licenses_new = components_new
-        vulnerability_check.last_import_licenses_updated = components_updated
+        vulnerability_check.last_import_licenses_new = len(components_new)
+        vulnerability_check.last_import_licenses_updated = len(components_updated)
         vulnerability_check.last_import_licenses_deleted = components_deleted
 
     if scanner:
         vulnerability_check.scanner = scanner
     vulnerability_check.save()
 
-    return components_new, components_updated, components_deleted
+    apply_license_policy_product(spdx_cache, vulnerability_check.product, vulnerability_check.branch)
+
+    return len(components_new), len(components_updated), components_deleted
 
 
 def _process_license_evidences(

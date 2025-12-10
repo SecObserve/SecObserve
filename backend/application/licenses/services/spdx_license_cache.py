@@ -1,7 +1,10 @@
+import re
 from typing import Optional
 
 from application.licenses.models import License
 from application.licenses.queries.license import get_license_by_spdx_id
+
+SPDX_ID_REGEX = re.compile("^[A-Za-z0-9-.+:]+$")
 
 
 class SPDXLicenseCache:
@@ -12,8 +15,7 @@ class SPDXLicenseCache:
         self.cache: dict[str, License | str] = {}
 
     def get(self, spdx_id: str) -> Optional[License]:
-        if " or " in spdx_id.lower() or " and " in spdx_id.lower():
-            # This is a license expression
+        if not SPDX_ID_REGEX.match(spdx_id):
             return None
 
         spdx_license = self.cache.get(spdx_id)

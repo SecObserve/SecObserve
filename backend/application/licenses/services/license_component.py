@@ -15,7 +15,10 @@ from application.licenses.services.license_policy import (
     get_license_policy,
 )
 from application.licenses.services.spdx_license_cache import SPDXLicenseCache
-from application.licenses.types import NO_LICENSE_INFORMATION, License_Policy_Evaluation_Result
+from application.licenses.types import (
+    NO_LICENSE_INFORMATION,
+    License_Policy_Evaluation_Result,
+)
 
 
 def get_identity_hash(license_component: License_Component) -> str:

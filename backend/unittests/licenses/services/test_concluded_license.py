@@ -6,8 +6,8 @@ from application.access_control.models import User
 from application.core.models import Product
 from application.licenses.models import Concluded_License, License, License_Component
 from application.licenses.services.concluded_license import (
-    apply_concluded_license,
     update_concluded_license,
+    ConcludeLicenseApplicator
 )
 from application.licenses.types import NO_LICENSE_INFORMATION
 from unittests.base_test_case import BaseTestCase
@@ -30,8 +30,15 @@ class TestConcludedLicense(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.license_obj = License.objects.first()
+
         self.product_indirect = Product.objects.get(pk=2)
+        self.product_indirect.product_group = Product.objects.get(name="db_product_group")
+        self.product_indirect.save()
+
         self.product_direct = Product.objects.get(pk=1)
+        self.product_direct.product_group = Product.objects.get(name="db_product_group")
+        self.product_direct.save()
+
         self.component = License_Component(
             product=self.product_direct,
             component_name="test_component",
@@ -43,6 +50,7 @@ class TestConcludedLicense(BaseTestCase):
             effective_non_spdx_license="",
         )
         self.db_user = User.objects.get(username="db_admin")
+
 
     def test_apply_concluded_license_no_product_group_exact_match_spdx_license(self):
         """
@@ -58,9 +66,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_spdx_license=self.license_obj,
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertEqual(self.component.manual_concluded_spdx_license, self.license_obj)
@@ -86,9 +95,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_spdx_license=self.license_obj,
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [self.product_indirect])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertEqual(self.component.manual_concluded_spdx_license, self.license_obj)
@@ -117,9 +127,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_license_expression="MIT OR Apache-2.0",
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertIsNone(self.component.manual_concluded_spdx_license)
@@ -145,9 +156,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_non_spdx_license="Custom License",
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertIsNone(self.component.manual_concluded_spdx_license)
@@ -172,9 +184,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_spdx_license=self.license_obj,
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertEqual(self.component.manual_concluded_spdx_license, self.license_obj)
@@ -202,9 +215,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_spdx_license=self.license_obj,
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [self.product_indirect])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertEqual(self.component.manual_concluded_spdx_license, self.license_obj)
@@ -223,8 +237,10 @@ class TestConcludedLicense(BaseTestCase):
         """
         Test apply_concluded_license when there's no match at all.
         """
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
+
         # Act
-        apply_concluded_license(self.component, [])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert
         self.assertIsNone(self.component.manual_concluded_spdx_license)
@@ -248,9 +264,10 @@ class TestConcludedLicense(BaseTestCase):
             manual_concluded_spdx_license=self.license_obj,
             user=self.db_user,
         )
+        concluded_license_applicator = ConcludeLicenseApplicator(self.product_direct)
 
         # Act
-        apply_concluded_license(self.component, [])
+        concluded_license_applicator.apply_concluded_license(self.component)
 
         # Assert - No changes should be made
         self.assertIsNone(self.component.manual_concluded_spdx_license)

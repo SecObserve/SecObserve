@@ -61,7 +61,7 @@ class ConcludeLicenseApplicator:
 
         if not concluded_license:
             concluded_license = self.product_name.get(
-                f"{component.component_purl_type}|{component.component_name}|{component.component_version}"
+                f"{component.component_purl_type}|{component.component_name}"
             )
             if concluded_license:
                 manual_concluded_comment = (
@@ -69,8 +69,8 @@ class ConcludeLicenseApplicator:
                 )
 
         if not concluded_license:
-            concluded_license = self.product_name.get(
-                f"{component.component_purl_type}|{component.component_name}|{component.component_version}"
+            concluded_license = self.product_group_name.get(
+                f"{component.component_purl_type}|{component.component_name}"
             )
             if concluded_license:
                 manual_concluded_comment = (

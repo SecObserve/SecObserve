@@ -15,7 +15,6 @@ from license_expression import (
 from application.commons.services.functions import get_comma_separated_as_list
 from application.core.models import Branch, Product
 from application.licenses.models import (
-    License,
     License_Component,
     License_Group,
     License_Policy,
@@ -161,7 +160,9 @@ def apply_license_policy_product(
 
     license_evaluation_results = get_license_evaluation_results_for_product(product)
 
-    components = License_Component.objects.filter(product=product).order_by("pk")
+    components = (
+        License_Component.objects.filter(product=product).order_by("pk").select_related("effective_spdx_license")
+    )
     if branch:
         components = components.filter(branch=branch)
 
@@ -249,8 +250,8 @@ def _get_multiple_licenses_evaluation_result(
 ) -> str:
     licenses = get_comma_separated_as_list(multiple_licenses)
     spdx_licenses = []
-    for license in licenses:
-        spdx_license = spdx_cache.get(license)
+    for my_license in licenses:
+        spdx_license = spdx_cache.get(my_license)
         if spdx_license:
             spdx_licenses.append(spdx_license.spdx_id)
 

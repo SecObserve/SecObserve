@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -387,5 +387,5 @@ class TestLicenseComponent(BaseTestCase):
         mock_get_license_policy.assert_called_once_with(component.product)
         mock_get_results.assert_called_once_with(component.product)
         mock_get_comma_separated.assert_called_once_with(mock_license_policy.ignore_component_types)
-        mock_apply_policy.assert_called_once_with(component, mock_evaluation_results, ["type1", "type2"])
+        mock_apply_policy.assert_called_once_with(component, mock_evaluation_results, ["type1", "type2"], ANY)
         mock_save.assert_called_once()
