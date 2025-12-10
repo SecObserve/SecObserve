@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -7,10 +8,7 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from application.commons.models import Settings
-from application.commons.services.functions import (
-    clip_fields,
-    get_comma_separated_as_list,
-)
+from application.commons.services.functions import clip_fields
 from application.core.models import (
     Branch,
     Evidence,
@@ -55,19 +53,22 @@ from application.import_observations.services.parser_detector import (
 from application.issue_tracker.services.issue_tracker import (
     push_observations_to_issue_tracker,
 )
-from application.licenses.models import License_Component, License_Component_Evidence
-from application.licenses.services.concluded_license import apply_concluded_license
+from application.licenses.models import (
+    License_Component,
+    License_Component_Evidence,
+)
+from application.licenses.services.concluded_license import ConcludeLicenseApplicator
 from application.licenses.services.license_component import (
     prepare_license_component,
     set_effective_license,
 )
-from application.licenses.services.license_policy import (
-    apply_license_policy_to_component,
-    get_license_evaluation_results_for_product,
-)
+from application.licenses.services.license_policy import apply_license_policy_product
+from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
+
+logger = logging.getLogger("secobserve.import_observations")
 
 
 @dataclass
@@ -175,10 +176,18 @@ def file_upload_observations(
     if settings.feature_license_management and (
         not file_upload_parameters.suppress_licenses or file_upload_parameters.sbom
     ):
+
+        logger.info("--- before getting license components")
+
         imported_license_components, scanner = parser_instance.get_license_components(data)
+
+        logger.info("--- before processing license components")
+
         numbers_license_components = process_license_components(
             imported_license_components, scanner, vulnerability_check
         )
+
+        logger.info("--- after processing license components")
 
     return (
         numbers_observations[0],
@@ -347,29 +356,23 @@ def process_license_components(  # pylint: disable=too-many-statements
     )
     existing_component: Optional[License_Component] = None
     existing_components_dict: dict[str, License_Component] = {}
+    existing_component_ids: list[int] = []
     for existing_component in existing_components:
         existing_components_dict[existing_component.identity_hash] = existing_component
+        existing_component_ids.append(existing_component.pk)
 
-    license_evaluation_results = get_license_evaluation_results_for_product(vulnerability_check.product)
+    License_Component_Evidence.objects.filter(license_component__in=existing_component_ids).delete()
 
     components_new = 0
     components_updated = 0
 
-    license_policy = vulnerability_check.product.license_policy
-    ignore_component_types = (
-        get_comma_separated_as_list(license_policy.ignore_component_types) if license_policy else []
-    )
+    spdx_cache = SPDXLicenseCache()
+    concluded_license_applicator = ConcludeLicenseApplicator(vulnerability_check.product)
 
-    product_group_products = []
-    if vulnerability_check.product.product_group:
-        product_group_products = list(
-            Product.objects.filter(product_group=vulnerability_check.product.product_group).exclude(
-                pk=vulnerability_check.product.pk
-            )
-        )
+    license_component_evidences = []
 
     for unsaved_component in license_components:
-        prepare_license_component(unsaved_component)
+        prepare_license_component(unsaved_component, spdx_cache)
         existing_component = existing_components_dict.get(unsaved_component.identity_hash)
         if existing_component:
             effective_spdx_license_before = existing_component.effective_spdx_license
@@ -403,19 +406,8 @@ def process_license_components(  # pylint: disable=too-many-statements
             existing_component.imported_concluded_multiple_licenses = (
                 unsaved_component.imported_concluded_multiple_licenses
             )
-            set_effective_license(existing_component)
-            if (
-                not existing_component.manual_concluded_license_name
-                or existing_component.manual_concluded_license_name == NO_LICENSE_INFORMATION
-            ):
-                apply_concluded_license(existing_component, product_group_products)
-                set_effective_license(existing_component)
             existing_component.origin_service = vulnerability_check.service
-            apply_license_policy_to_component(
-                existing_component,
-                license_evaluation_results,
-                ignore_component_types,
-            )
+
             existing_component.import_last_seen = timezone.now()
             if (
                 effective_spdx_license_before != existing_component.effective_spdx_license
@@ -425,11 +417,19 @@ def process_license_components(  # pylint: disable=too-many-statements
                 or evaluation_result_before != existing_component.evaluation_result
             ):
                 existing_component.last_change = timezone.now()
+
+            set_effective_license(existing_component)
+            if (
+                not existing_component.manual_concluded_license_name
+                or existing_component.manual_concluded_license_name == NO_LICENSE_INFORMATION
+            ):
+                concluded_license_applicator.apply_concluded_license(existing_component)
+                set_effective_license(existing_component)
+
             clip_fields("licenses", "License_Component", existing_component)
             existing_component.save()
 
-            existing_component.evidences.all().delete()
-            _process_license_evidences(unsaved_component, existing_component)
+            license_component_evidences += _process_license_evidences(unsaved_component, existing_component)
 
             existing_components_dict.pop(unsaved_component.identity_hash)
             components_updated += 1
@@ -439,28 +439,33 @@ def process_license_components(  # pylint: disable=too-many-statements
             unsaved_component.origin_service = vulnerability_check.service
             unsaved_component.upload_filename = vulnerability_check.filename
 
-            set_effective_license(unsaved_component)
-            apply_concluded_license(unsaved_component, product_group_products)
-            set_effective_license(unsaved_component)
-
-            apply_license_policy_to_component(
-                unsaved_component,
-                license_evaluation_results,
-                ignore_component_types,
-            )
-
             unsaved_component.import_last_seen = timezone.now()
             unsaved_component.last_change = timezone.now()
+
+            set_effective_license(unsaved_component)
+            concluded_license_applicator.apply_concluded_license(unsaved_component)
+            set_effective_license(unsaved_component)
+
             clip_fields("licenses", "License_Component", unsaved_component)
             unsaved_component.save()
 
-            _process_license_evidences(unsaved_component, unsaved_component)
+            license_component_evidences += _process_license_evidences(unsaved_component, unsaved_component)
 
             components_new += 1
 
+    License_Component_Evidence.objects.bulk_create(license_component_evidences, 1000)
+
+    logger.info("--- before applying license policy")
+
+    apply_license_policy_product(spdx_cache, vulnerability_check.product, vulnerability_check.branch)
+
+    logger.info("--- after applying license policy")
+
     components_deleted = len(existing_components_dict)
+    license_component_ids: list[int] = []
     for existing_component in existing_components_dict.values():
-        existing_component.delete()
+        license_component_ids.append(existing_component.pk)
+    License_Component.objects.filter(pk__in=license_component_ids).delete()
 
     if components_new == 0 and components_updated == 0 and components_deleted == 0:
         vulnerability_check.last_import_licenses_new = None
@@ -478,7 +483,11 @@ def process_license_components(  # pylint: disable=too-many-statements
     return components_new, components_updated, components_deleted
 
 
-def _process_license_evidences(source_component: License_Component, target_component: License_Component) -> None:
+def _process_license_evidences(
+    source_component: License_Component, target_component: License_Component
+) -> list[License_Component_Evidence]:
+    license_component_evidences = []
+
     if source_component.unsaved_evidences:
         for unsaved_evidence in source_component.unsaved_evidences:
             evidence = License_Component_Evidence(
@@ -487,7 +496,9 @@ def _process_license_evidences(source_component: License_Component, target_compo
                 evidence=unsaved_evidence[1],
             )
             clip_fields("licenses", "License_Component_Evidence", evidence)
-            evidence.save()
+            license_component_evidences.append(evidence)
+
+    return license_component_evidences
 
 
 def _prepare_imported_observation(import_parameters: ImportParameters, imported_observation: Observation) -> None:

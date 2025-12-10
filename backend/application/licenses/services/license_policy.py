@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
 from license_expression import (
@@ -12,7 +13,7 @@ from license_expression import (
 )
 
 from application.commons.services.functions import get_comma_separated_as_list
-from application.core.models import Product
+from application.core.models import Branch, Product
 from application.licenses.models import (
     License,
     License_Component,
@@ -21,7 +22,7 @@ from application.licenses.models import (
     License_Policy_Item,
     License_Policy_Member,
 )
-from application.licenses.queries.license import get_license_by_spdx_id
+from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import License_Policy_Evaluation_Result
 
 
@@ -150,35 +151,53 @@ def apply_license_policy(license_policy: License_Policy) -> None:
         | (Q(product_group__license_policy=license_policy) & Q(license_policy__isnull=True))
     )
     for product in products:
-        apply_license_policy_product(product)
+        apply_license_policy_product(SPDXLicenseCache(), product)
 
 
-def apply_license_policy_product(product: Product) -> None:
+def apply_license_policy_product(
+    spdx_cache: SPDXLicenseCache, product: Product, branch: Optional[Branch] = None
+) -> None:
+    license_policy = get_license_policy(product)
+
     license_evaluation_results = get_license_evaluation_results_for_product(product)
-    components = License_Component.objects.filter(product=product)
-    for component in components:
-        evaluation_result_before = component.evaluation_result
 
-        license_policy = get_license_policy(product)
-        if license_policy:
-            apply_license_policy_to_component(
-                component,
-                license_evaluation_results,
-                get_comma_separated_as_list(license_policy.ignore_component_types),
-            )
-        else:
-            component.evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
+    components = License_Component.objects.filter(product=product).order_by("pk")
+    if branch:
+        components = components.filter(branch=branch)
 
-        if evaluation_result_before != component.evaluation_result:
-            component.last_change = timezone.now()
+    paginator = Paginator(components, 1000)
+    for page_number in paginator.page_range:
+        page = paginator.page(page_number)
+        updates = []
 
-        component.save()
+        for component in page.object_list:
+            evaluation_result_before = component.evaluation_result
+
+            if license_policy:
+                apply_license_policy_to_component(
+                    component,
+                    license_evaluation_results,
+                    get_comma_separated_as_list(license_policy.ignore_component_types),
+                    spdx_cache,
+                )
+            else:
+                component.evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
+
+            if evaluation_result_before != component.evaluation_result:
+                component.last_change = timezone.now()
+
+            updates.append(component)
+
+        License_Component.objects.bulk_update(
+            updates, ["evaluation_result", "numerical_evaluation_result", "last_change"]
+        )
 
 
 def apply_license_policy_to_component(
     component: License_Component,
     evaluation_results: dict[str, LicensePolicyEvaluationResult],
     ignore_component_types: list,
+    spdx_cache: SPDXLicenseCache,
 ) -> None:
     evaluation_result = None
     if component.component_purl_type in ignore_component_types:
@@ -188,14 +207,16 @@ def apply_license_policy_to_component(
             f"spdx_{component.effective_spdx_license.spdx_id}", evaluation_results
         )
     elif component.effective_license_expression:
-        evaluation_result = _evaluate_license_expression(component.effective_license_expression, evaluation_results)
+        evaluation_result = _evaluate_license_expression(
+            component.effective_license_expression, evaluation_results, spdx_cache
+        )
     elif component.effective_non_spdx_license:
         evaluation_result = _get_license_evaluation_result(
             f"non_spdx_{component.effective_non_spdx_license}", evaluation_results
         )
     elif component.effective_multiple_licenses:
         evaluation_result = _get_multiple_licenses_evaluation_result(
-            component.effective_multiple_licenses, evaluation_results
+            component.effective_multiple_licenses, evaluation_results, spdx_cache
         )
     if not evaluation_result:
         evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
@@ -224,10 +245,14 @@ def _get_license_evaluation_result(
 
 
 def _get_multiple_licenses_evaluation_result(
-    multiple_licenses: str, evaluation_results: dict[str, LicensePolicyEvaluationResult]
+    multiple_licenses: str, evaluation_results: dict[str, LicensePolicyEvaluationResult], spdx_cache: SPDXLicenseCache
 ) -> str:
     licenses = get_comma_separated_as_list(multiple_licenses)
-    spdx_licenses = License.objects.filter(spdx_id__in=licenses).values_list("spdx_id", flat=True)
+    spdx_licenses = []
+    for license in licenses:
+        spdx_license = spdx_cache.get(license)
+        if spdx_license:
+            spdx_licenses.append(spdx_license.spdx_id)
 
     evaluation_result_set = set()
     for license_string in licenses:
@@ -240,14 +265,14 @@ def _get_multiple_licenses_evaluation_result(
 
 
 def _evaluate_license_expression(
-    license_expression: str, evaluation_results: dict[str, LicensePolicyEvaluationResult]
+    license_expression: str, evaluation_results: dict[str, LicensePolicyEvaluationResult], spdx_cache: SPDXLicenseCache
 ) -> Optional[str]:
     evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
 
     try:
         licensing = get_spdx_licensing()
         parsed_expression = licensing.parse(license_expression, validate=True, strict=True)
-        evaluation_result = _evaluate_parsed_license_expression(parsed_expression, evaluation_results)
+        evaluation_result = _evaluate_parsed_license_expression(parsed_expression, evaluation_results, spdx_cache)
         if evaluation_result == License_Policy_Evaluation_Result.RESULT_UNKNOWN:
             evaluation_result = _get_license_evaluation_result(f"expression_{license_expression}", evaluation_results)
     except Exception:  # nosec B110
@@ -258,7 +283,9 @@ def _evaluate_license_expression(
 
 
 def _evaluate_parsed_license_expression(
-    parsed_expression: LicenseExpression, evaluation_results: dict[str, LicensePolicyEvaluationResult]
+    parsed_expression: LicenseExpression,
+    evaluation_results: dict[str, LicensePolicyEvaluationResult],
+    spdx_cache: SPDXLicenseCache,
 ) -> str:
     evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
 
@@ -268,7 +295,7 @@ def _evaluate_parsed_license_expression(
 
     if parsed_expression_type == LicenseSymbol:
         license_symbol = str(parsed_expression)
-        spdx_license = get_license_by_spdx_id(license_symbol)
+        spdx_license = spdx_cache.get(license_symbol)
         if spdx_license:
             return _get_license_evaluation_result(f"spdx_{spdx_license.spdx_id}", evaluation_results)
         return License_Policy_Evaluation_Result.RESULT_UNKNOWN
@@ -276,7 +303,7 @@ def _evaluate_parsed_license_expression(
     if parsed_expression_type in [AND, OR]:
         evaluation_result_set = set()
         for arg in parsed_expression.args:
-            evaluation_result_set.add(_evaluate_parsed_license_expression(arg, evaluation_results))
+            evaluation_result_set.add(_evaluate_parsed_license_expression(arg, evaluation_results, spdx_cache))
         if parsed_expression_type == AND:
             evaluation_result = _evaluate_and_expression(evaluation_result_set)
         if parsed_expression_type == OR:
