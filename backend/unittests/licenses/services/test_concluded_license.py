@@ -6,8 +6,8 @@ from application.access_control.models import User
 from application.core.models import Product
 from application.licenses.models import Concluded_License, License, License_Component
 from application.licenses.services.concluded_license import (
+    ConcludeLicenseApplicator,
     update_concluded_license,
-    ConcludeLicenseApplicator
 )
 from application.licenses.types import NO_LICENSE_INFORMATION
 from unittests.base_test_case import BaseTestCase
@@ -50,7 +50,6 @@ class TestConcludedLicense(BaseTestCase):
             effective_non_spdx_license="",
         )
         self.db_user = User.objects.get(username="db_admin")
-
 
     def test_apply_concluded_license_no_product_group_exact_match_spdx_license(self):
         """

@@ -60,9 +60,7 @@ class ConcludeLicenseApplicator:
                 )
 
         if not concluded_license:
-            concluded_license = self.product_name.get(
-                f"{component.component_purl_type}|{component.component_name}"
-            )
+            concluded_license = self.product_name.get(f"{component.component_purl_type}|{component.component_name}")
             if concluded_license:
                 manual_concluded_comment = (
                     f"Copied from version {concluded_license.component_version}, set by {str(concluded_license.user)}"
