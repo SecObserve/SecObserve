@@ -9,7 +9,7 @@ DEBUG = True
 # MIDDLEWARE
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#middleware
-MIDDLEWARE = ["silk.middleware.SilkyMiddleware"] + MIDDLEWARE
+MIDDLEWARE = ["silk.middleware.SilkyMiddleware"] + MIDDLEWARE  # noqa F405
 
 # CACHES
 # ------------------------------------------------------------------------------
