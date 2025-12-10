@@ -71,6 +71,7 @@ Werkzeug = { version = "3.1.4", optional = true }  # https://github.com/pallets/
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
+django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzband/django-silk
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
@@ -91,7 +92,7 @@ types-PyMySQL = { version = "1.1.0.20250916", optional = true }  # https://githu
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
 [tool.poetry.extras]
-dev = ["Werkzeug", "ipdb", "watchgod", "django-extensions"]
+dev = ["Werkzeug", "ipdb", "watchgod", "django-extensions", "django-silk"]
 unittests = ["coverage", "django-extensions", "django-coverage-plugin"]
 code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "pre-commit", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
 
