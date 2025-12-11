@@ -68,6 +68,9 @@ from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
 
 
+SBOM_BULK_BATCH_SIZE = 100
+
+
 @dataclass
 class ImportParameters:
     product: Product
@@ -360,9 +363,14 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
     concluded_license_applicator = ConcludeLicenseApplicator(vulnerability_check.product)
 
     license_component_evidences = []
+    processed_hashes = set()
 
     for unsaved_component in license_components:
         prepare_license_component(unsaved_component, spdx_cache)
+
+        if unsaved_component.identity_hash in processed_hashes:
+            continue
+
         existing_component = existing_components_dict.get(unsaved_component.identity_hash)
         if existing_component:
             effective_spdx_license_before = existing_component.effective_spdx_license
@@ -436,6 +444,8 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
             clip_fields("licenses", "License_Component", unsaved_component)
             components_new.append(unsaved_component)
 
+        processed_hashes.add(unsaved_component.identity_hash)
+
     License_Component.objects.bulk_update(
         components_updated,
         [
@@ -469,14 +479,14 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
             "import_last_seen",
             "last_change",
         ],
-        100,
+        SBOM_BULK_BATCH_SIZE,
     )
 
-    inserted_components = License_Component.objects.bulk_create(components_new, 100)
+    inserted_components = License_Component.objects.bulk_create(components_new, SBOM_BULK_BATCH_SIZE)
     for inserted_component in inserted_components:
         license_component_evidences += _process_license_evidences(inserted_component, inserted_component)
 
-    License_Component_Evidence.objects.bulk_create(license_component_evidences, 100)
+    License_Component_Evidence.objects.bulk_create(license_component_evidences, SBOM_BULK_BATCH_SIZE)
 
     components_deleted = len(existing_components_dict)
     license_component_ids: list[int] = []
