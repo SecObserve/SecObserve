@@ -4,12 +4,15 @@ from rest_framework.serializers import (
     CharField,
     ChoiceField,
     DateTimeField,
+    IntegerField,
+    ListField,
     ModelSerializer,
     Serializer,
     SerializerMethodField,
     ValidationError,
 )
 
+from application.core.api.serializers_observation import ObservationListSerializer
 from application.core.api.serializers_product import NestedProductSerializer
 from application.core.models import Product
 from application.rules.models import Rule
@@ -111,3 +114,8 @@ class ProductRuleSerializer(ModelSerializer):
 class RuleApprovalSerializer(Serializer):
     approval_status = ChoiceField(choices=Rule_Status.RULE_STATUS_CHOICES_APPROVAL, required=True)
     approval_remark = CharField(max_length=255, required=True)
+
+
+class SimulationResultSerializer(Serializer):
+    count = IntegerField()
+    results = ListField(child=ObservationListSerializer())
