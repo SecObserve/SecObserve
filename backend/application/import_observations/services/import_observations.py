@@ -67,7 +67,6 @@ from application.licenses.types import NO_LICENSE_INFORMATION
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
 
-
 SBOM_BULK_BATCH_SIZE = 100
 
 
