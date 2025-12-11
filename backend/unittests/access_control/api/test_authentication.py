@@ -196,6 +196,7 @@ class TestAuthentication(BaseTestCase):
 
         self._check_authentication(["get", "post"], "/api/general_rules/")
         self._check_authentication(["delete", "get", "put", "patch"], "/api/general_rules/1/")
+        self._check_authentication(["post"], "/api/general_rules/1/simulate/")
 
         self._check_authentication(["get"], "/api/metrics/export_csv/")
         self._check_authentication(["get"], "/api/metrics/export_excel/")
@@ -241,6 +242,7 @@ class TestAuthentication(BaseTestCase):
 
         self._check_authentication(["get", "post"], "/api/product_rules/")
         self._check_authentication(["delete", "get", "put", "patch"], "/api/product_rules/1/")
+        self._check_authentication(["post"], "/api/product_rules/1/simulate/")
 
         self._check_authentication(["get", "post"], "/api/product_groups/")
         self._check_authentication(["delete", "get", "put", "patch"], "/api/product_groups/1/")

@@ -1,7 +1,7 @@
 from unittest.mock import call, patch
 
 from application.core.models import Product
-from application.rules.services.rule_engine import Rule_Engine
+from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from unittests.base_test_case import BaseTestCase
 
 
@@ -62,22 +62,22 @@ class TestRuleEngine(BaseTestCase):
         product = Product()
         product.save()
         rule_engine = Rule_Engine(product)
-        self.assertTrue(rule_engine._check_regex(None, "value"))
+        self.assertTrue(_check_regex("", "value"))
 
     def test_check_regex_no_value(self):
         product = Product()
         product.save()
         rule_engine = Rule_Engine(product)
-        self.assertFalse(rule_engine._check_regex("pattern", None))
+        self.assertFalse(_check_regex("pattern", ""))
 
     def test_check_regex_no_match(self):
         product = Product()
         product.save()
         rule_engine = Rule_Engine(product)
-        self.assertFalse(rule_engine._check_regex("pattern", "value"))
+        self.assertFalse(_check_regex("pattern", "value"))
 
     def test_check_regex_match(self):
         product = Product()
         product.save()
         rule_engine = Rule_Engine(product)
-        self.assertTrue(rule_engine._check_regex("v.+lue", "VALUE"))
+        self.assertTrue(_check_regex("v.+lue", "VALUE"))
