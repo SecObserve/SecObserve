@@ -256,7 +256,7 @@ class ApiTokenViewSet(ListModelMixin, GenericViewSet):
     queryset = API_Token_Multiple.objects.none()
 
     def get_queryset(self) -> QuerySet[API_Token_Multiple]:
-        return get_api_tokens()
+        return get_api_tokens().select_related("user")
 
 
 class UserAPITokenCreateView(APIView):

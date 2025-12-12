@@ -173,7 +173,12 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet[License_Component]:
-        return get_license_components().select_related("branch").select_related("origin_service")
+        return (
+            get_license_components()
+            .select_related("branch")
+            .select_related("origin_service")
+            .select_related("effective_spdx_license")
+        )
 
     @extend_schema(
         methods=["GET"],
