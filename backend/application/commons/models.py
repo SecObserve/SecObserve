@@ -8,6 +8,7 @@ from django.db.models import (
     Model,
 )
 
+from application.commons.services.request_cache import cache_for_request
 from application.commons.types import VEX_Justification_Styles
 
 
@@ -217,6 +218,7 @@ class Settings(Model):
         super().save(*args, **kwargs)
 
     @classmethod
+    @cache_for_request
     def load(cls) -> "Settings":
         """
         Load object from the database. Failing that, create a new empty

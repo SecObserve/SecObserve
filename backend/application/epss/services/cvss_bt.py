@@ -35,6 +35,8 @@ def import_cvss_bt() -> str:
     exploit_information_list = []
     num_exploit_informations = 0
 
+    settings = Settings.load()
+
     for row in reader:
         if first_row:
             if not _check_first_row(row):
@@ -54,7 +56,6 @@ def import_cvss_bt() -> str:
         if cve_year is None:
             continue
         current_year = timezone.now().year
-        settings = Settings.load()
         if cve_year <= current_year - settings.exploit_information_max_age_years:
             continue
 
