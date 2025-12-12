@@ -184,6 +184,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "csp.middleware.CSPMiddleware",
     "application.commons.services.global_request.GlobalRequestMiddleware",
+    "application.commons.services.request_cache.RequestCacheMiddleware",
     "application.commons.services.security_headers.SecurityHeadersMiddleware",
 ]
 
