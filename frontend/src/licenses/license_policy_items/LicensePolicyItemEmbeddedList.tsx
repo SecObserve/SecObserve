@@ -2,6 +2,7 @@ import { Stack } from "@mui/material";
 import { Fragment } from "react";
 import {
     Datagrid,
+    FieldProps,
     FilterForm,
     FunctionField,
     Identifier,
@@ -11,6 +12,7 @@ import {
     TextInput,
     WithRecord,
     useListController,
+    useRecordContext,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
@@ -39,8 +41,24 @@ function listFilters() {
     ];
 }
 
+export const LicenseGroupNameURLField = (props: FieldProps) => {
+    const record = useRecordContext(props);
+    return record ? (
+        <TextUrlField
+            label="License group"
+            text={record.license_group_name}
+            url={showLicenseGroup(record.license_group)}
+        />
+    ) : null;
+};
+
 const showLicenseGroup = (id: Identifier) => {
     return "#/license_groups/" + id + "/show";
+};
+
+export const LicenseIDURLField = (props: FieldProps) => {
+    const record = useRecordContext(props);
+    return record ? <TextUrlField text={record.license_spdx_id} url={showLicense(record.license)} /> : null;
 };
 
 const showLicense = (id: Identifier) => {
@@ -86,25 +104,8 @@ const LicensePolicyItemEmbeddedList = ({ license_policy }: LicensePolicyItemEmbe
                                 bulkActionButtons={false}
                                 resource="license_policy_item"
                             >
-                                <WithRecord
-                                    label="License group"
-                                    render={(license_group) => (
-                                        <TextUrlField
-                                            label="License group"
-                                            text={license_group.license_group_name}
-                                            url={showLicenseGroup(license_group.license_group)}
-                                        />
-                                    )}
-                                />
-                                <WithRecord
-                                    label="SPDX License"
-                                    render={(license_group) => (
-                                        <TextUrlField
-                                            text={license_group.license_spdx_id}
-                                            url={showLicense(license_group.license)}
-                                        />
-                                    )}
-                                />
+                                <LicenseGroupNameURLField source="license_group" label="License group" />
+                                <LicenseIDURLField source="spdx_id" label="SPDX Id" />
                                 <TextField source="license_expression" label="License expression" />
                                 <TextField source="non_spdx_license" label="Non-SPDX license" />
                                 <EvaluationResultField source="evaluation_result" label="Evaluation result" />

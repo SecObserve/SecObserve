@@ -5,6 +5,7 @@ import { EditButton, PrevNextButtons, Show, SortPayload, TopToolbar, WithRecord,
 import { PERMISSION_PRODUCT_RULE_APPROVAL, PERMISSION_PRODUCT_RULE_EDIT } from "../../access_control/types";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL } from "../../core/types";
 import RuleApproval from "../RuleApproval";
+import RuleSimulation from "../RuleSimulation";
 import { RuleShowComponent } from "../functions";
 import { RULE_STATUS_NEEDS_APPROVAL } from "../types";
 
@@ -38,6 +39,7 @@ const ShowActions = () => {
                     rule?.product_data.permissions.includes(PERMISSION_PRODUCT_RULE_APPROVAL) && (
                         <RuleApproval rule_id={rule.id} class="product_rules" />
                     )}
+                {rule && <RuleSimulation rule_id={rule.id} rules_provider="product_rules" />}
                 {rule?.product_data.permissions.includes(PERMISSION_PRODUCT_RULE_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>

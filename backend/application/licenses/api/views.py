@@ -117,7 +117,10 @@ from application.licenses.services.export_license_policy_secobserve import (
     export_license_policy_secobserve_json,
     export_license_policy_secobserve_yaml,
 )
-from application.licenses.services.license_component import save_concluded_license
+from application.licenses.services.license_component import (
+    SPDXLicenseCache,
+    save_concluded_license,
+)
 from application.licenses.services.license_group import copy_license_group
 from application.licenses.services.license_policy import (
     apply_license_policy,
@@ -170,7 +173,12 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet[License_Component]:
-        return get_license_components().select_related("branch").select_related("origin_service")
+        return (
+            get_license_components()
+            .select_related("branch")
+            .select_related("origin_service")
+            .select_related("effective_spdx_license")
+        )
 
     @extend_schema(
         methods=["GET"],
@@ -572,7 +580,7 @@ class LicensePolicyViewSet(ModelViewSet):
             raise ValidationError("Product id is not an integer")
 
         product = _get_product(int(product_id), Permissions.Product_Edit)
-        apply_license_policy_product(product)
+        apply_license_policy_product(SPDXLicenseCache(), product)
 
         return Response(status=HTTP_204_NO_CONTENT)
 

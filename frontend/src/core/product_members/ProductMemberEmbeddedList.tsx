@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import {
     Datagrid,
-    Identifier,
     ListContextProvider,
     ResourceContextProvider,
     SelectField,
@@ -15,17 +14,13 @@ import {
     ROLE_CHOICES,
 } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import TextUrlField from "../../commons/custom_fields/TextUrlField";
+import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import ProductMemberDelete from "./ProductMemberDelete";
 import ProductMemberEdit from "./ProductMemberEdit";
 
 type ProductMemberEmbeddedListProps = {
     product: any;
-};
-
-const showUser = (id: Identifier) => {
-    return "#/users/" + id + "/show";
 };
 
 const ProductMemberEmbeddedList = ({ product }: ProductMemberEmbeddedListProps) => {
@@ -52,16 +47,7 @@ const ProductMemberEmbeddedList = ({ product }: ProductMemberEmbeddedListProps) 
                         rowClick={false}
                         resource="product_members"
                     >
-                        <WithRecord
-                            label="User"
-                            render={(product_member) => (
-                                <TextUrlField
-                                    label="User"
-                                    text={product_member.user_data.full_name}
-                                    url={showUser(product_member.user_data.id)}
-                                />
-                            )}
-                        />
+                        <UserFullNameURLField source="user_data.full_name" label="User" />
                         <SelectField source="role" choices={ROLE_CHOICES} />
                         <WithRecord
                             render={(product_member) => (

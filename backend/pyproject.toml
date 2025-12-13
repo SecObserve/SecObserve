@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.44.1"
+version = "1.45.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -36,7 +36,7 @@ requests = "2.32.5"  # https://github.com/psf/requests
 # Database
 # ------------------------------------------------------------------------------
 pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
-psycopg = { version = "3.3.1", extras = ["binary"] }  # https://github.com/psycopg/psycopg
+psycopg = { version = "3.3.2", extras = ["binary"] }  # https://github.com/psycopg/psycopg
 # Dataformats
 # ------------------------------------------------------------------------------
 defusedcsv = "3.0.0"  # https://github.com/raphaelm/defusedcsv
@@ -61,7 +61,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.11.1"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "2.14.1"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 
 # Development dependencies
@@ -71,17 +71,18 @@ Werkzeug = { version = "3.1.4", optional = true }  # https://github.com/pallets/
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
+django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzband/django-silk
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
-coverage = { version = "7.12.0", optional = true }  # https://github.com/nedbat/coveragepy
+coverage = { version = "7.13.0", optional = true }  # https://github.com/nedbat/coveragepy
 django-coverage-plugin = { version = "3.2.0", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies
 # ------------------------------------------------------------------------------
 flake8 = { version = "7.3.0", optional = true }  # https://github.com/PyCQA/flake8
 flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gforcada/flake8-isort
-black = { version = "25.11.0", optional = true }  # https://github.com/psf/black
+black = { version = "25.12.0", optional = true }  # https://github.com/psf/black
 pylint = { version = "3.3.9", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.6.1", optional = true }  # https://github.com/PyCQA/pylint-django
 mypy = { version = "1.19.0", optional = true }  # https://github.com/python/mypy
@@ -91,7 +92,7 @@ types-PyMySQL = { version = "1.1.0.20250916", optional = true }  # https://githu
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
 [tool.poetry.extras]
-dev = ["Werkzeug", "ipdb", "watchgod", "django-extensions"]
+dev = ["Werkzeug", "ipdb", "watchgod", "django-extensions", "django-silk"]
 unittests = ["coverage", "django-extensions", "django-coverage-plugin"]
 code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "pre-commit", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
 

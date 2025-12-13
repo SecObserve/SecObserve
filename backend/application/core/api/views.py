@@ -204,6 +204,7 @@ class ProductViewSet(ModelViewSet):
         return (
             get_products(is_product_group=False, with_annotations=True)
             .select_related("product_group")
+            .select_related("product_group__license_policy")
             .select_related("repository_default_branch")
         )
 

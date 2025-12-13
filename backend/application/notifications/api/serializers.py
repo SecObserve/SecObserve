@@ -57,8 +57,7 @@ class NotificationSerializer(ModelSerializer):
     def get_new_viewed(self, obj: Notification) -> str:
         user = get_current_user()
         if user:
-            notification_viewed = Notification_Viewed.objects.filter(notification=obj, user=user).first()
-            if notification_viewed:
+            if Notification_Viewed.objects.filter(notification=obj, user=user).exists():
                 return "Viewed"
         return "New"
 

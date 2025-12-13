@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import {
     BooleanField,
     Datagrid,
+    FieldProps,
     FilterForm,
     Identifier,
     ListContextProvider,
@@ -11,6 +12,7 @@ import {
     TextInput,
     WithRecord,
     useListController,
+    useRecordContext,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
@@ -28,6 +30,11 @@ function listFilters() {
         <NullableBooleanInput source="is_deprecated" label="Deprecated" alwaysOn />,
     ];
 }
+
+export const LicenseIDURLField = (props: FieldProps) => {
+    const record = useRecordContext(props);
+    return record ? <TextUrlField text={record.spdx_id} url={showLicense(record.id)} /> : null;
+};
 
 const showLicense = (id: Identifier) => {
     return "#/licenses/" + id + "/show";
@@ -66,12 +73,7 @@ const LicenseGroupLicenseEmbeddedList = ({ license_group }: LicenseGroupLicenseE
                                 bulkActionButtons={false}
                                 resource="users"
                             >
-                                <WithRecord
-                                    label="SPDX Id"
-                                    render={(license) => (
-                                        <TextUrlField text={license.spdx_id} url={showLicense(license.id)} />
-                                    )}
-                                />
+                                <LicenseIDURLField source="spdx_id" label="SPDX Id" />
                                 <TextField source="name" label="Name" />
                                 <BooleanField source="is_osi_approved" label="OSI approved" />
                                 <BooleanField source="is_deprecated" label="Deprecated" />

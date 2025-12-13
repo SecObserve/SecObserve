@@ -28,6 +28,10 @@ class UserHasGeneralRulePermission(BasePermission):
 
 class UserHasProductRulePermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
+        if "/simulate" in request.path:
+            # Permission will be checked in the view
+            return True
+
         return check_post_permission(request, Product, "product", Permissions.Product_Rule_Create)
 
     def has_object_permission(self, request: Request, view: APIView, obj: Rule) -> bool:

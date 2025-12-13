@@ -4,7 +4,6 @@ import {
     BooleanField,
     Datagrid,
     FilterForm,
-    Identifier,
     ListContextProvider,
     NullableBooleanInput,
     ResourceContextProvider,
@@ -14,7 +13,7 @@ import {
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import TextUrlField from "../../commons/custom_fields/TextUrlField";
+import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { is_superuser } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import AuthorizationGroupMemberAdd from "./AuthorizationGroupMemberAdd";
@@ -28,10 +27,6 @@ function listFilters() {
         <NullableBooleanInput source="is_manager" label="Manager" alwaysOn />,
     ];
 }
-
-const showUser = (id: Identifier) => {
-    return "#/users/" + id + "/show";
-};
 
 type AuthorizationGroupMemberEmbeddedListProps = {
     authorization_group: any;
@@ -67,26 +62,7 @@ const AuthorizationGroupMemberEmbeddedList = ({ authorization_group }: Authoriza
                                 bulkActionButtons={false}
                                 resource="users"
                             >
-                                <WithRecord
-                                    label="Full name"
-                                    render={(authorization_group_member) => (
-                                        <TextUrlField
-                                            label="User"
-                                            text={authorization_group_member.user_data.full_name}
-                                            url={showUser(authorization_group_member.user_data.id)}
-                                        />
-                                    )}
-                                />
-                                <WithRecord
-                                    label="Username"
-                                    render={(authorization_group_member) => (
-                                        <TextUrlField
-                                            label="User"
-                                            text={authorization_group_member.user_data.username}
-                                            url={showUser(authorization_group_member.user_data.id)}
-                                        />
-                                    )}
-                                />
+                                <UserFullNameURLField source="user_data.full_name" label="User" />
                                 <BooleanField source="is_manager" label="Manager" />
                                 {(is_superuser() || authorization_group.is_manager) && (
                                     <WithRecord
