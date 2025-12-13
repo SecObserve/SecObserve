@@ -64,6 +64,6 @@
         }
     ],
     "timestamp": "2020-01-01T04:30:00+00:00",
-    "tooling": "SecObserve / 1.44.1",
+    "tooling": "SecObserve / 1.45.0",
     "version": 2
 }
