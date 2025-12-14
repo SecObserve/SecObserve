@@ -5,7 +5,7 @@ set -o errexit
 rm -f /var/lib/sqlite/secobserve.db
 python manage.py migrate
 
-# coverage run /app/manage.py test unittests
-coverage run /app/manage.py test unittests.import_observations.parsers.osv.test_parser
+coverage run /app/manage.py test unittests
+# coverage run /app/manage.py test unittests.import_observations.parsers.osv.test_parser
 coverage report
 coverage xml -o /home/coverage.xml
