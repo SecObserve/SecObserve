@@ -252,6 +252,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
 
 * ECOSYSTEM: Introduced: 0 - Fixed: 2:8.0.0197-3"""
         self.assertEqual(description, observation.description)
+        self.assertEqual("ALPINE-CVE-2017-6349", observation.vulnerability_id_aliases)
 
     def test_linux_rpm(self):
         call_command(
@@ -279,6 +280,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
 
 **Confidence: High** (Component found in affected ranges)"""
         self.assertEqual(description, observation.description)
+        self.assertEqual("CVE-2023-22025, CVE-2023-22081", observation.vulnerability_id_aliases)
 
     def test_linux_rpm_ecosystem_not_found(self):
         call_command(

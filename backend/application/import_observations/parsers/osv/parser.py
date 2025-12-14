@@ -162,12 +162,29 @@ class OSVParser(BaseParser):
         osv_id = str(osv_vulnerability.get("id", ""))
 
         aliases: list[str] = []
+        cve_to_swap = None
+        cve_found = False
         for alias in osv_vulnerability.get("aliases", []):
+            aliases.append(str(alias))
             if not osv_id.startswith("CVE-") and str(alias).startswith("CVE-"):
-                aliases.append(str(osv_id))
-                osv_id = str(alias)
-            elif str(alias) != osv_id:
-                aliases.append(str(alias))
+                if cve_found:
+                    cve_to_swap = None
+                else:
+                    cve_to_swap = str(alias)
+                    cve_found = True
+        for alias in osv_vulnerability.get("upstream", []):
+            aliases.append(str(alias))
+            if not osv_id.startswith("CVE-") and str(alias).startswith("CVE-"):
+                if cve_found:
+                    cve_to_swap = None
+                else:
+                    cve_to_swap = str(alias)
+                    cve_found = True
+
+        if cve_to_swap:
+            aliases.insert(0, osv_id)
+            osv_id = cve_to_swap
+            aliases = [x for x in aliases if x != cve_to_swap]
 
         aliases.sort()
         return osv_id, ", ".join(aliases)
