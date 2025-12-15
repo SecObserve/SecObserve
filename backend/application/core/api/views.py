@@ -88,6 +88,7 @@ from application.core.api.serializers_product import (
     ProductApiTokenSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductGroupSerializer,
+    ProductListSerializer,
     ProductMemberSerializer,
     ProductNameSerializer,
     ProductSerializer,
@@ -207,6 +208,12 @@ class ProductViewSet(ModelViewSet):
             .select_related("product_group__license_policy")
             .select_related("repository_default_branch")
         )
+
+    def get_serializer_class(self) -> type[BaseSerializer[Any]]:
+        if self.action == "list":
+            return ProductListSerializer
+
+        return super().get_serializer_class()
 
     @extend_schema(
         methods=["GET"],

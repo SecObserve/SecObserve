@@ -9,7 +9,7 @@ class TestAuthorizationLicensePolicyAuthorizationGroupMembers(TestAuthorizationB
     def test_authorization_license_policy_authorization_group_members(self):
         License_Policy.objects.filter(pk__lt=1000).delete()
 
-        expected_data = "{'count': 3, 'next': None, 'previous': None, 'results': [{'id': 1000, 'license_policy_data': {'id': 1003, 'parent_name': '', 'is_parent': False, 'is_manager': False, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': False, 'license_policy': 1003, 'authorization_group': 2}, {'id': 1001, 'license_policy_data': {'id': 1004, 'parent_name': '', 'is_parent': False, 'is_manager': False, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': True, 'license_policy': 1004, 'authorization_group': 2}, {'id': 1002, 'license_policy_data': {'id': 1003, 'parent_name': '', 'is_parent': False, 'is_manager': False, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 3, 'name': 'non_oidc_group', 'oidc_group': ''}, 'is_manager': True, 'license_policy': 1003, 'authorization_group': 3}]}"
+        expected_data = "{'count': 3, 'next': None, 'previous': None, 'results': [{'id': 1000, 'license_policy_data': {'id': 1003, 'parent_name': '', 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': False, 'license_policy': 1003, 'authorization_group': 2}, {'id': 1001, 'license_policy_data': {'id': 1004, 'parent_name': '', 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': True, 'license_policy': 1004, 'authorization_group': 2}, {'id': 1002, 'license_policy_data': {'id': 1003, 'parent_name': '', 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 3, 'name': 'non_oidc_group', 'oidc_group': ''}, 'is_manager': True, 'license_policy': 1003, 'authorization_group': 3}]}"
         self._test_api(
             APITest(
                 "db_admin",
@@ -21,7 +21,7 @@ class TestAuthorizationLicensePolicyAuthorizationGroupMembers(TestAuthorizationB
             )
         )
 
-        expected_data = "{'count': 2, 'next': None, 'previous': None, 'results': [{'id': 1000, 'license_policy_data': {'id': 1003, 'parent_name': '', 'is_parent': False, 'is_manager': False, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': False, 'license_policy': 1003, 'authorization_group': 2}, {'id': 1001, 'license_policy_data': {'id': 1004, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': True, 'license_policy': 1004, 'authorization_group': 2}]}"
+        expected_data = "{'count': 2, 'next': None, 'previous': None, 'results': [{'id': 1000, 'license_policy_data': {'id': 1003, 'parent_name': '', 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': False, 'license_policy': 1003, 'authorization_group': 2}, {'id': 1001, 'license_policy_data': {'id': 1004, 'parent_name': '', 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': True, 'license_policy': 1004, 'authorization_group': 2}]}"
         self._test_api(
             APITest(
                 "db_product_group_user",
@@ -34,7 +34,7 @@ class TestAuthorizationLicensePolicyAuthorizationGroupMembers(TestAuthorizationB
             )
         )
 
-        expected_data = "{'id': 1000, 'license_policy_data': {'id': 1003, 'parent_name': '', 'is_parent': False, 'is_manager': False, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': False, 'license_policy': 1003, 'authorization_group': 2}"
+        expected_data = "{'id': 1000, 'license_policy_data': {'id': 1003, 'parent_name': '', 'name': 'authorization_group_not_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 2, 'name': 'oidc_group_2', 'oidc_group': 'oidc_2'}, 'is_manager': False, 'license_policy': 1003, 'authorization_group': 2}"
         self._test_api(
             APITest(
                 "db_product_group_user",
@@ -65,7 +65,7 @@ class TestAuthorizationLicensePolicyAuthorizationGroupMembers(TestAuthorizationB
             "authorization_group": 1,
             "is_manager": False,
         }
-        expected_data = "{'id': 1003, 'license_policy_data': {'id': 1004, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 1, 'name': 'oidc_group_1', 'oidc_group': 'oidc_1'}, 'is_manager': False, 'license_policy': 1004, 'authorization_group': 1}"
+        expected_data = "{'id': 1003, 'license_policy_data': {'id': 1004, 'parent_name': '', 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 1, 'name': 'oidc_group_1', 'oidc_group': 'oidc_1'}, 'is_manager': False, 'license_policy': 1004, 'authorization_group': 1}"
         self._test_api(
             APITest(
                 "db_product_group_user",
@@ -131,7 +131,7 @@ class TestAuthorizationLicensePolicyAuthorizationGroupMembers(TestAuthorizationB
             )
         )
 
-        expected_data = "{'id': 1003, 'license_policy_data': {'id': 1004, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 1, 'name': 'oidc_group_1', 'oidc_group': 'oidc_1'}, 'is_manager': True, 'license_policy': 1004, 'authorization_group': 1}"
+        expected_data = "{'id': 1003, 'license_policy_data': {'id': 1004, 'parent_name': '', 'name': 'authorization_group_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}, 'authorization_group_data': {'id': 1, 'name': 'oidc_group_1', 'oidc_group': 'oidc_1'}, 'is_manager': True, 'license_policy': 1004, 'authorization_group': 1}"
         self._test_api(
             APITest(
                 "db_product_group_user",
