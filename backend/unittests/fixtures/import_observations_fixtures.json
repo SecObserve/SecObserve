@@ -74,7 +74,8 @@
         "pk": 1,
         "fields": {
             "product": 1,
-            "name": "db_branch_import"
+            "name": "db_branch_import",
+            "is_default_branch": true
         }
     },
     {

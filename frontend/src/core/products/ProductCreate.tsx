@@ -13,7 +13,7 @@ const ProductCreate = () => {
     return (
         <Create redirect="show" transform={create_transform}>
             <SimpleForm warnWhenUnsavedChanges>
-                <ProductCreateEditComponent edit={false} initialDescription="" setDescription={setDescription} />
+                <ProductCreateEditComponent initialDescription="" setDescription={setDescription} />
             </SimpleForm>
         </Create>
     );

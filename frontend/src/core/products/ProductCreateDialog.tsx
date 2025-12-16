@@ -53,7 +53,6 @@ const ProductCreateDialog = ({ productGroupId }: ProductCreateDialogProps) => {
                     <CreateBase resource="product">
                         <SimpleForm onSubmit={createProduct} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
                             <ProductCreateEditComponent
-                                edit={false}
                                 initialDescription=""
                                 setDescription={setDescription}
                                 productGroupId={productGroupId}

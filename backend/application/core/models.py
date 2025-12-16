@@ -148,6 +148,7 @@ class Product(Model):
 class Branch(Model):
     product = ForeignKey(Product, on_delete=CASCADE)
     name = CharField(max_length=255)
+    is_default_branch = BooleanField(default=False)
     last_import = DateTimeField(null=True)
     housekeeping_protect = BooleanField(default=False)
     purl = CharField(max_length=255, blank=True)

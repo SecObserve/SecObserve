@@ -17,14 +17,6 @@ from unittests.base_test_case import BaseTestCase
 
 
 class TestBranchSerializer(BaseTestCase):
-    def test_is_default_branch_true(self):
-        branch_serializer = BranchSerializer()
-        self.assertTrue(branch_serializer.get_is_default_branch(obj=self.branch_1))
-
-    def test_is_default_branch_false(self):
-        branch_serializer = BranchSerializer()
-        self.assertFalse(branch_serializer.get_is_default_branch(obj=self.branch_2))
-
     @patch("application.core.models.Observation.objects.filter")
     def test_get_open_critical_observation_count(self, mock_filter):
         mock_filter.return_value.count.return_value = 99

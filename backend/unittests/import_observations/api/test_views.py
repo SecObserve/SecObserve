@@ -234,7 +234,15 @@ class TestImport(BaseTestCase):
         )
         self._test_api(data)
 
-    def test_file_upload_observations_by_name_branch_not_found(self):
+    def test_file_upload_observations_by_name_branch_not_found_default(self):
+        product = Product.objects.get(name="db_product_internal")
+        product.repository_default_branch = None
+        product.save()
+
+        for branch in Branch.objects.filter(product=product):
+            branch.is_default_branch = False
+            branch.save()
+
         data = APITest(
             username="db_internal_write",
             url="/api/import/file_upload_observations_by_name/",
@@ -260,7 +268,56 @@ class TestImport(BaseTestCase):
         self._test_api(data)
 
         product = Product.objects.get(name="db_product_internal")
-        branch = (Branch.objects.get(product=product.pk, name="db_branch_internal_dev"),)
+        branch = Branch.objects.get(product=product.pk, name="Unknown Branch")
+
+        self.assertEqual(branch, product.repository_default_branch)
+        self.assertTrue(branch.is_default_branch)
+
+    def test_file_upload_observations_by_name_branch_not_found_no_default(self):
+        product = Product.objects.get(name="db_product_internal")
+
+        for branch in Branch.objects.filter(product=product):
+            branch.is_default_branch = False
+            branch.save()
+
+        branch = Branch.objects.filter(product=product).first()
+        if not branch:
+            self.fail()
+        branch.is_default_branch = True
+        branch.save()
+
+        product.repository_default_branch = branch
+        product.save
+
+        data = APITest(
+            username="db_internal_write",
+            url="/api/import/file_upload_observations_by_name/",
+            post_data={
+                "product_name": "db_product_internal",
+                "branch_name": "Unknown Branch",
+                "service": "service_name",
+                "docker_image_name_tag": "docker_image_name_tag",
+                "endpoint_url": "endpoint_url",
+                "kubernetes_cluster": "kubernetes_cluster",
+                "suppress_licenses": True,
+            },
+            expected_data={
+                "license_components_deleted": 6,
+                "license_components_new": 4,
+                "license_components_updated": 5,
+                "observations_new": 1,
+                "observations_resolved": 3,
+                "observations_updated": 2,
+            },
+            expected_status_code=200,
+        )
+        self._test_api(data)
+
+        product = Product.objects.get(name="db_product_internal")
+        branch = Branch.objects.get(product=product.pk, name="Unknown Branch")
+
+        self.assertNotEqual(branch, product.repository_default_branch)
+        self.assertFalse(branch.is_default_branch)
 
     def test_file_upload_observations_by_name_successful(self):
         data = APITest(
@@ -413,7 +470,15 @@ class TestImport(BaseTestCase):
         )
         self._test_api(data)
 
-    def test_file_upload_sbom_by_name_branch_not_found(self):
+    def test_file_upload_sbom_by_name_branch_not_found_default(self):
+        product = Product.objects.get(name="db_product_internal")
+        product.repository_default_branch = None
+        product.save()
+
+        for branch in Branch.objects.filter(product=product):
+            branch.is_default_branch = False
+            branch.save()
+
         data = APITest(
             username="db_internal_write",
             url="/api/import/file_upload_sbom_by_name/",
@@ -431,7 +496,48 @@ class TestImport(BaseTestCase):
         self._test_api(data)
 
         product = Product.objects.get(name="db_product_internal")
-        branch = (Branch.objects.get(product=product.pk, name="db_branch_internal_dev"),)
+        branch = Branch.objects.get(product=product.pk, name="Unknown Branch")
+
+        self.assertEqual(branch, product.repository_default_branch)
+        self.assertTrue(branch.is_default_branch)
+
+    def test_file_upload_sbom_by_name_branch_not_found_no_default(self):
+        product = Product.objects.get(name="db_product_internal")
+
+        for branch in Branch.objects.filter(product=product):
+            branch.is_default_branch = False
+            branch.save()
+
+        branch = Branch.objects.filter(product=product).first()
+        if not branch:
+            self.fail()
+        branch.is_default_branch = True
+        branch.save()
+
+        product.repository_default_branch = branch
+        product.save
+
+        data = APITest(
+            username="db_internal_write",
+            url="/api/import/file_upload_sbom_by_name/",
+            post_data={
+                "product_name": "db_product_internal",
+                "branch_name": "Unknown Branch",
+            },
+            expected_data={
+                "license_components_deleted": 6,
+                "license_components_new": 4,
+                "license_components_updated": 5,
+            },
+            expected_status_code=200,
+        )
+        self._test_api(data)
+
+        product = Product.objects.get(name="db_product_internal")
+        branch = Branch.objects.get(product=product.pk, name="Unknown Branch")
+
+        self.assertNotEqual(branch, product.repository_default_branch)
+        self.assertFalse(branch.is_default_branch)
 
     def test_file_upload_sbom_by_name_successful(self):
         data = APITest(

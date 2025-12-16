@@ -19,9 +19,9 @@ const DefaultBranch = ({ branch }: DefaultBranchProps) => {
 
     const setDefaultBranch = async () => {
         const patch = {
-            repository_default_branch: branch.id,
+            is_default_branch: true,
         };
-        const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/products/" + branch.product + "/";
+        const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/branches/" + branch.id + "/";
         httpClient(url, {
             method: "PATCH",
             body: JSON.stringify(patch),

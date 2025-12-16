@@ -52,7 +52,6 @@ class TestFileUploadObservations(BaseTestCase):
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
-    @patch("application.import_observations.services.import_observations.set_repository_default_branch")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
@@ -65,7 +64,6 @@ class TestFileUploadObservations(BaseTestCase):
         mock_apply_exploit_information,
         mock_apply_epss,
         mock_push_observations_to_issue_tracker,
-        mock_set_repository_default_branch,
         mock_check_security_gate,
         mock_get_current_request,
     ):
@@ -81,7 +79,6 @@ class TestFileUploadObservations(BaseTestCase):
 
         product = Product.objects.get(id=1)
         mock_check_security_gate.assert_has_calls([call(product), call(product)])
-        mock_set_repository_default_branch.assert_has_calls([call(product), call(product)])
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
@@ -90,7 +87,6 @@ class TestFileUploadObservations(BaseTestCase):
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
-    @patch("application.import_observations.services.import_observations.set_repository_default_branch")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
@@ -103,7 +99,6 @@ class TestFileUploadObservations(BaseTestCase):
         mock_apply_exploit_information,
         mock_apply_epss,
         mock_push_observations_to_issue_tracker,
-        mock_set_repository_default_branch,
         mock_check_security_gate,
         mock_get_current_request,
     ):
@@ -115,7 +110,6 @@ class TestFileUploadObservations(BaseTestCase):
         self._file_upload_observations(None, None, None, None, None)
 
         mock_check_security_gate.assert_has_calls([call(product), call(product)])
-        mock_set_repository_default_branch.assert_has_calls([call(product), call(product)])
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
@@ -124,7 +118,6 @@ class TestFileUploadObservations(BaseTestCase):
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
-    @patch("application.import_observations.services.import_observations.set_repository_default_branch")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
@@ -137,7 +130,6 @@ class TestFileUploadObservations(BaseTestCase):
         mock_apply_exploit_information,
         mock_apply_epss,
         mock_push_observations_to_issue_tracker,
-        mock_set_repository_default_branch,
         mock_check_security_gate,
         mock_get_current_request,
     ):
@@ -147,7 +139,6 @@ class TestFileUploadObservations(BaseTestCase):
         self._file_upload_observations(None, None, None, None, None)
 
         mock_check_security_gate.assert_not_called()
-        mock_set_repository_default_branch.assert_has_calls([call(product), call(product)])
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
@@ -337,7 +328,6 @@ class TestFileUploadObservations(BaseTestCase):
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
-    @patch("application.import_observations.services.import_observations.set_repository_default_branch")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
@@ -354,7 +344,6 @@ class TestFileUploadObservations(BaseTestCase):
         mock_apply_exploit_information,
         mock_apply_epss,
         mock_push_observations_to_issue_tracker,
-        mock_set_repository_default_branch,
         mock_check_security_gate,
         mock_get_current_request,
     ):
@@ -383,7 +372,6 @@ class TestFileUploadObservations(BaseTestCase):
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
-    @patch("application.import_observations.services.import_observations.set_repository_default_branch")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
@@ -400,7 +388,6 @@ class TestFileUploadObservations(BaseTestCase):
         mock_apply_exploit_information,
         mock_apply_epss,
         mock_push_observations_to_issue_tracker,
-        mock_set_repository_default_branch,
         mock_check_security_gate,
         mock_get_current_request,
     ):
@@ -421,7 +408,6 @@ class TestFileUploadObservations(BaseTestCase):
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
-    @patch("application.import_observations.services.import_observations.set_repository_default_branch")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
@@ -434,7 +420,6 @@ class TestFileUploadObservations(BaseTestCase):
         mock_apply_exploit_information,
         mock_apply_epss,
         mock_push_observations_to_issue_tracker,
-        mock_set_repository_default_branch,
         mock_check_security_gate,
         mock_get_current_request,
     ):

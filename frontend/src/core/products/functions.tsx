@@ -48,14 +48,12 @@ export const transform = (data: any, description: string) => {
 };
 
 export type ProductCreateEditComponentProps = {
-    edit: boolean;
     initialDescription: string;
     setDescription: (value: string) => void;
     productGroupId?: Identifier;
 };
 
 export const ProductCreateEditComponent = ({
-    edit,
     initialDescription,
     setDescription,
     productGroupId,
@@ -114,22 +112,8 @@ export const ProductCreateEditComponent = ({
                 source="repository_prefix"
                 helperText="URL prefix to link to a file in the source code repository"
                 validate={validate_255}
+                sx={{ marginBottom: 3 }}
             />
-            {edit && (
-                <WithRecord
-                    render={(product) => (
-                        <ReferenceInput
-                            source="repository_default_branch"
-                            reference="branches"
-                            queryOptions={{ meta: { api_resource: "branch_names" } }}
-                            sort={{ field: "name", order: "ASC" }}
-                            filter={{ product: product.id }}
-                        >
-                            <AutocompleteInputWide optionText="name" label="Default branch / version" />
-                        </ReferenceInput>
-                    )}
-                />
-            )}
             <Stack direction="row" spacing={4}>
                 <NullableBooleanInput
                     source="repository_branch_housekeeping_active"
