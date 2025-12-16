@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 from django.contrib.auth.models import AnonymousUser
 from django.db.models.query import QuerySet
@@ -61,11 +61,14 @@ from application.licenses.api.serializers import (
     LicenseGroupAuthorizationGroupMemberSerializer,
     LicenseGroupCopySerializer,
     LicenseGroupLicenseAddRemoveSerializer,
+    LicenseGroupListSerializer,
     LicenseGroupMemberSerializer,
     LicenseGroupSerializer,
+    LicenseListSerializer,
     LicensePolicyAuthorizationGroupMemberSerializer,
     LicensePolicyCopySerializer,
     LicensePolicyItemSerializer,
+    LicensePolicyListSerializer,
     LicensePolicyMemberSerializer,
     LicensePolicySerializer,
     LicenseSerializer,
@@ -148,17 +151,22 @@ class LicenseComponentOverview:
 class ConcludedLicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin, DestroyModelMixin):
     serializer_class = ConcludedLicenseSerializer
     filterset_class = ConcludedLicenseFilter
-    queryset = Concluded_License.objects.all()
+    queryset = Concluded_License.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasConcludedLicensePermission]
 
-    def get_serializer_class(self) -> type[ConcludedLicenseListSerializer] | type[BaseSerializer]:
+    def get_queryset(self) -> QuerySet[Concluded_License]:
+        return (
+            get_concluded_licenses()
+            .select_related("product")
+            .select_related("user")
+            .select_related("manual_concluded_spdx_license")
+        )
+
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "list":
             return ConcludedLicenseListSerializer
         return super().get_serializer_class()
-
-    def get_queryset(self) -> QuerySet[Concluded_License]:
-        return get_concluded_licenses().select_related("product").select_related("user")
 
 
 class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -167,7 +175,7 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
     queryset = License_Component.objects.none()
     filter_backends = [DjangoFilterBackend]
 
-    def get_serializer_class(self) -> type[LicenseComponentListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "list":
             return LicenseComponentListSerializer
         return super().get_serializer_class()
@@ -377,6 +385,11 @@ class LicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["spdx_id", "name"]
 
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        if self.action == "list":
+            return LicenseListSerializer
+        return super().get_serializer_class()
+
 
 class LicenseGroupViewSet(ModelViewSet):
     serializer_class = LicenseGroupSerializer
@@ -388,6 +401,11 @@ class LicenseGroupViewSet(ModelViewSet):
 
     def get_queryset(self) -> QuerySet[License_Group]:
         return get_license_groups()
+
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        if self.action == "list":
+            return LicenseGroupListSerializer
+        return super().get_serializer_class()
 
     @extend_schema(
         methods=["POST"], request=LicenseGroupCopySerializer, responses={HTTP_201_CREATED: LicenseGroupSerializer}
@@ -522,7 +540,13 @@ class LicensePolicyViewSet(ModelViewSet):
     permission_classes = [IsAuthenticated, UserHasLicensePolicyPermission]
 
     def get_queryset(self) -> QuerySet[License_Policy]:
-        return get_license_policies()
+        return get_license_policies().select_related("parent")
+
+    def get_serializer_class(self) -> type[BaseSerializer[Any]]:
+        if self.action == "list":
+            return LicensePolicyListSerializer
+
+        return super().get_serializer_class()
 
     @extend_schema(
         methods=["POST"], request=LicensePolicyCopySerializer, responses={HTTP_201_CREATED: LicensePolicySerializer}

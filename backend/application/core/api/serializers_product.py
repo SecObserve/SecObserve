@@ -225,7 +225,7 @@ class ProductNameSerializer(ModelSerializer):
         fields = ["id", "name"]
 
 
-class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-public-methods
+class ProductListSerializer(ProductCoreSerializer):
     # all these methods are needed
     open_critical_observation_count = IntegerField(read_only=True)
     open_high_observation_count = IntegerField(read_only=True)
@@ -240,6 +240,19 @@ class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-publ
     ignored_licenses_count = IntegerField(read_only=True)
 
     product_group_name = SerializerMethodField()
+
+    class Meta:
+        model = Product
+        exclude = ["is_product_group", "members", "authorization_group_members"]
+
+    def get_product_group_name(self, obj: Product) -> str:
+        if not obj.product_group:
+            return ""
+        return obj.product_group.name
+
+
+class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-public-methods
+    # all these methods are needed
     product_group_repository_branch_housekeeping_active = SerializerMethodField()
     product_group_security_gate_active = SerializerMethodField()
     product_group_assessments_need_approval = SerializerMethodField()
@@ -263,11 +276,6 @@ class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-publ
     class Meta:
         model = Product
         exclude = ["is_product_group", "members", "authorization_group_members"]
-
-    def get_product_group_name(self, obj: Product) -> str:
-        if not obj.product_group:
-            return ""
-        return obj.product_group.name
 
     def get_product_group_repository_branch_housekeeping_active(self, obj: Product) -> Optional[bool]:
         if not obj.product_group:
