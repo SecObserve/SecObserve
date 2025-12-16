@@ -226,7 +226,6 @@ class ProductNameSerializer(ModelSerializer):
 
 
 class ProductListSerializer(ProductCoreSerializer):
-    # all these methods are needed
     open_critical_observation_count = IntegerField(read_only=True)
     open_high_observation_count = IntegerField(read_only=True)
     open_medium_observation_count = IntegerField(read_only=True)
@@ -240,6 +239,7 @@ class ProductListSerializer(ProductCoreSerializer):
     ignored_licenses_count = IntegerField(read_only=True)
 
     product_group_name = SerializerMethodField()
+    repository_default_branch_name = SerializerMethodField()
 
     class Meta:
         model = Product
@@ -250,13 +250,17 @@ class ProductListSerializer(ProductCoreSerializer):
             return ""
         return obj.product_group.name
 
+    def get_repository_default_branch_name(self, obj: Product) -> str:
+        if not obj.repository_default_branch:
+            return ""
+        return obj.repository_default_branch.name
+
 
 class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-public-methods
     # all these methods are needed
     product_group_repository_branch_housekeeping_active = SerializerMethodField()
     product_group_security_gate_active = SerializerMethodField()
     product_group_assessments_need_approval = SerializerMethodField()
-    repository_default_branch_name = SerializerMethodField()
     observation_reviews = SerializerMethodField()
     observation_log_approvals = SerializerMethodField()
     has_services = SerializerMethodField()
@@ -291,11 +295,6 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         if not obj.product_group:
             return False
         return obj.product_group.assessments_need_approval
-
-    def get_repository_default_branch_name(self, obj: Product) -> str:
-        if not obj.repository_default_branch:
-            return ""
-        return obj.repository_default_branch.name
 
     def get_observation_reviews(self, obj: Product) -> int:
         return Observation.objects.filter(product=obj, current_status=Status.STATUS_IN_REVIEW).count()
