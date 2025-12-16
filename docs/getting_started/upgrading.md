@@ -10,6 +10,13 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.46.0
+
+**Breaking changes**
+
+* The results of API list endpoints for `products/`, `license_components/`, `licences/`, `license_groups/` and `license_policies/` contained some attributes that were used to streamline the user interface for single instances but are not necessary for list views and needed a lot of interactions with the database. These attributes have been removed from the result sets for performance optimization.
+
+
 ## Release 1.42.0
 
 !!! warning
