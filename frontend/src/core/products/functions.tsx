@@ -7,7 +7,6 @@ import {
     NullableBooleanInput,
     NumberInput,
     ReferenceInput,
-    WithRecord,
 } from "react-admin";
 
 import products from ".";
