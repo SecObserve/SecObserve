@@ -163,7 +163,7 @@ class ConcludedLicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
             .select_related("manual_concluded_spdx_license")
         )
 
-    def get_serializer_class(self) -> type[ConcludedLicenseListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "list":
             return ConcludedLicenseListSerializer
         return super().get_serializer_class()
@@ -175,7 +175,7 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
     queryset = License_Component.objects.none()
     filter_backends = [DjangoFilterBackend]
 
-    def get_serializer_class(self) -> type[LicenseComponentListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "list":
             return LicenseComponentListSerializer
         return super().get_serializer_class()
@@ -385,7 +385,7 @@ class LicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["spdx_id", "name"]
 
-    def get_serializer_class(self) -> type[LicenseListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "list":
             return LicenseListSerializer
         return super().get_serializer_class()
@@ -402,7 +402,7 @@ class LicenseGroupViewSet(ModelViewSet):
     def get_queryset(self) -> QuerySet[License_Group]:
         return get_license_groups()
 
-    def get_serializer_class(self) -> type[LicenseGroupListSerializer] | type[BaseSerializer]:
+    def get_serializer_class(self) -> type[BaseSerializer]:
         if self.action == "list":
             return LicenseGroupListSerializer
         return super().get_serializer_class()
