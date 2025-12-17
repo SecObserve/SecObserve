@@ -27,7 +27,6 @@ from application.core.services.observation import (
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.potential_duplicates import find_potential_duplicates
-from application.core.services.product import set_repository_default_branch
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
@@ -323,12 +322,16 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
 
     observations_resolved = _resolve_unimported_observations(observations_before)
     vulnerability_check_observations.update(observations_resolved)
-    if import_parameters.branch == import_parameters.product.repository_default_branch:
+
+    if (not import_parameters.branch and not import_parameters.product.repository_default_branch) or (
+        import_parameters.branch and import_parameters.branch.is_default_branch
+    ):
         check_security_gate(import_parameters.product)
-    set_repository_default_branch(import_parameters.product)
+
     if import_parameters.branch:
         import_parameters.branch.last_import = timezone.now()
         import_parameters.branch.save()
+
     push_observations_to_issue_tracker(import_parameters.product, vulnerability_check_observations)
     find_potential_duplicates(import_parameters.product, import_parameters.branch, import_parameters.service)
 

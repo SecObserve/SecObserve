@@ -28,7 +28,6 @@ const ProductEdit = () => {
                 <WithRecord
                     render={(product) => (
                         <ProductCreateEditComponent
-                            edit={true}
                             initialDescription={product.description}
                             setDescription={setDescription}
                         />

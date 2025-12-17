@@ -121,7 +121,9 @@ class ApiImportObservationsByName(APIView):
         if branch_name:
             branch = get_branch_by_name(product, branch_name)
             if not branch:
-                branch = Branch.objects.create(product=product, name=branch_name)
+                branch = Branch.objects.create(
+                    product=product, name=branch_name, is_default_branch=product.repository_default_branch is None
+                )
 
         api_configuration_name = request_serializer.validated_data.get("api_configuration_name")
         api_configuration = get_api_configuration_by_name(product, api_configuration_name)
@@ -263,7 +265,9 @@ def _get_product_branch_by_name(request_serializer: Serializer) -> tuple[Product
     if branch_name:
         branch = get_branch_by_name(product, branch_name)
         if not branch:
-            branch = Branch.objects.create(product=product, name=branch_name)
+            branch = Branch.objects.create(
+                product=product, name=branch_name, is_default_branch=product.repository_default_branch is None
+            )
     return product, branch
 
 

@@ -64,34 +64,17 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                 </Fragment>
             )}
 
-            {(product.repository_prefix ||
-                product.repository_default_branch ||
-                product.repository_branch_housekeeping_active != null) && (
+            {(product.repository_prefix || product.repository_branch_housekeeping_active != null) && (
                 <Fragment>
                     <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 1 }}>
                         Source code repository and housekeeping
                     </Typography>
-                    <Stack spacing={1}>
-                        {product.repository_prefix && (
-                            <Labeled>
-                                <TextField source="repository_prefix" />
-                            </Labeled>
-                        )}
-                        {product.repository_default_branch && (
-                            <ReferenceField
-                                source="repository_default_branch"
-                                reference="branches"
-                                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                                link={false}
-                                sx={{ "& a": { textDecoration: "none" } }}
-                            >
-                                <Labeled label="Default branch / version">
-                                    <TextField source="name" />
-                                </Labeled>
-                            </ReferenceField>
-                        )}
-                    </Stack>
+                    {product.repository_prefix && (
+                        <Labeled>
+                            <TextField source="repository_prefix" />
+                        </Labeled>
+                    )}
                     {((!product.product_group && product.repository_branch_housekeeping_active != null) ||
                         (product.product_group &&
                             product.product_group_repository_branch_housekeeping_active == null &&

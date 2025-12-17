@@ -279,6 +279,7 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     class Meta:
         model = Product
+        read_only_fields = ["repository_default_branch"]
         exclude = ["is_product_group", "members", "authorization_group_members"]
 
     def get_product_group_repository_branch_housekeeping_active(self, obj: Product) -> Optional[bool]:
@@ -577,7 +578,6 @@ class ProductApiTokenSerializer(Serializer):
 
 class BranchSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
-    is_default_branch = SerializerMethodField()
     open_critical_observation_count = SerializerMethodField()
     open_high_observation_count = SerializerMethodField()
     open_medium_observation_count = SerializerMethodField()
@@ -598,9 +598,6 @@ class BranchSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
-
-    def get_is_default_branch(self, obj: Branch) -> bool:
-        return obj.product.repository_default_branch == obj
 
     def get_open_critical_observation_count(self, obj: Branch) -> int:
         return obj.open_critical_observation_count
