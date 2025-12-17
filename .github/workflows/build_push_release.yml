@@ -199,7 +199,7 @@ jobs:
           sbom-utility validate --input-file sbom_"$VERSION".json
       -
         name: Commit SBOMs
-        uses: stefanzweifel/git-auto-commit-action@28e16e81777b558cc906c8750092100bbb34c5e3 # v7
+        uses: stefanzweifel/git-auto-commit-action@04702edda442b2e678b25b537cec683a1493fcb9 # v7
         with:
           skip_fetch: true
           create_branch: true
