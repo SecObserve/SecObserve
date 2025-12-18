@@ -79,7 +79,7 @@ class TestAuthorizationBranches(TestAuthorizationBase):
             )
         )
 
-        expected_data = "{'id': 4, 'name_with_product': 'string (db_product_internal)', 'open_critical_observation_count': 0, 'open_high_observation_count': 0, 'open_medium_observation_count': 0, 'open_low_observation_count': 0, 'open_none_observation_count': 0, 'open_unknown_observation_count': 0, 'forbidden_licenses_count': 0, 'review_required_licenses_count': 0, 'unknown_licenses_count': 0, 'allowed_licenses_count': 0, 'ignored_licenses_count': 0, 'name': 'string', 'is_default_branch': False, 'last_import': None, 'housekeeping_protect': False, 'purl': '', 'cpe23': '', 'osv_linux_distribution': '', 'osv_linux_release': '', 'product': 1}"
+        expected_data = "{'id': 4, 'name_with_product': 'string (db_product_internal)', 'name': 'string', 'is_default_branch': False, 'last_import': None, 'housekeeping_protect': False, 'purl': '', 'cpe23': '', 'osv_linux_distribution': '', 'osv_linux_release': '', 'product': 1}"
         self._test_api(
             APITest(
                 "db_internal_write",

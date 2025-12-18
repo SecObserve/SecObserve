@@ -65,6 +65,7 @@ const BranchCreate = ({ product }: BranchCreateProps) => {
                     <CreateBase resource="branches">
                         <SimpleForm onSubmit={create_branch} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
                             <TextInputWide source="name" validate={validate_required_255} />
+                            <BooleanInput source="is_default_branch" label="Default branch / version" defaultValue={product.repository_default_branch === null}/>
                             <TextInputWide source="purl" label="PURL" validate={validate_255} />
                             <TextInputWide source="cpe23" label="CPE 2.3" validate={validate_255} />
                             <BooleanInput

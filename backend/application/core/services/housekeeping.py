@@ -70,12 +70,12 @@ def delete_inactive_branches_for_product(product: Product) -> int:
         compiled_exempt_branches = re.compile(exempt_branches, re.IGNORECASE)
 
     num_deleted_branches = 0
-    branches = Branch.objects.filter(product=product, housekeeping_protect=False, last_import__lte=inactive_date)
+    branches = Branch.objects.filter(
+        product=product, is_default_branch=False, housekeeping_protect=False, last_import__lte=inactive_date
+    )
 
     for branch in branches:
-        if product.repository_default_branch == branch or (
-            compiled_exempt_branches and compiled_exempt_branches.match(branch.name)
-        ):
+        if compiled_exempt_branches and compiled_exempt_branches.match(branch.name):
             continue
 
         logger.info(  # pylint: disable=logging-fstring-interpolation
