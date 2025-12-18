@@ -129,7 +129,9 @@ class TestSecurityGate(BaseTestCase):
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
     @patch("application.notifications.models.Notification.save")
-    def test_check_security_gate_true_high_product_group(self, notification_save_mock, product_save_mock, get_product_mock):
+    def test_check_security_gate_true_high_product_group(
+        self, notification_save_mock, product_save_mock, get_product_mock
+    ):
         product_group = Product(
             is_product_group=True,
             security_gate_active=True,
@@ -245,7 +247,9 @@ class TestSecurityGate(BaseTestCase):
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
     @patch("application.notifications.models.Notification.save")
-    def test_check_security_gate_true_low_product_group(self, notification_save_mock, product_save_mock, get_product_mock):
+    def test_check_security_gate_true_low_product_group(
+        self, notification_save_mock, product_save_mock, get_product_mock
+    ):
         product_group = Product(
             id=999,
             is_product_group=True,
@@ -306,7 +310,9 @@ class TestSecurityGate(BaseTestCase):
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
     @patch("application.notifications.models.Notification.save")
-    def test_check_security_gate_true_none_product_group(self, notification_save_mock, product_save_mock, get_product_mock):
+    def test_check_security_gate_true_none_product_group(
+        self, notification_save_mock, product_save_mock, get_product_mock
+    ):
         product_group = Product(
             is_product_group=True,
             security_gate_active=True,
