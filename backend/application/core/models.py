@@ -1,7 +1,6 @@
 from decimal import Decimal
 from typing import Any
 
-from django.apps import apps
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
@@ -31,10 +30,9 @@ from application.core.types import (
     VEX_Justification,
 )
 from application.issue_tracker.types import Issue_Tracker
-from application.licenses.types import License_Policy_Evaluation_Result
 
 
-class Product(Model):
+class Product(Model):  # pylint: disable=too-many-instance-attributes
     name = CharField(max_length=255, unique=True)
     description = TextField(max_length=2048, blank=True)
 
@@ -141,6 +139,22 @@ class Product(Model):
             Index(fields=["name"]),
         ]
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.open_critical_observation_count: int | None = None
+        self.open_high_observation_count: int | None = None
+        self.open_medium_observation_count: int | None = None
+        self.open_low_observation_count: int | None = None
+        self.open_none_observation_count: int | None = None
+        self.open_unknown_observation_count: int | None = None
+
+        self.forbidden_licenses_count: int | None = None
+        self.review_required_licenses_count: int | None = None
+        self.unknown_licenses_count: int | None = None
+        self.allowed_licenses_count: int | None = None
+        self.ignored_licenses_count: int | None = None
+
+        super().__init__(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.name
 
@@ -172,94 +186,6 @@ class Branch(Model):
     def __str__(self) -> str:
         return self.name
 
-    @property
-    def open_critical_observation_count(self) -> int:
-        return Observation.objects.filter(
-            branch=self,
-            current_severity=Severity.SEVERITY_CRITICAL,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_high_observation_count(self) -> int:
-        return Observation.objects.filter(
-            branch=self,
-            current_severity=Severity.SEVERITY_HIGH,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_medium_observation_count(self) -> int:
-        return Observation.objects.filter(
-            branch=self,
-            current_severity=Severity.SEVERITY_MEDIUM,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_low_observation_count(self) -> int:
-        return Observation.objects.filter(
-            branch=self,
-            current_severity=Severity.SEVERITY_LOW,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_none_observation_count(self) -> int:
-        return Observation.objects.filter(
-            branch=self,
-            current_severity=Severity.SEVERITY_NONE,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_unknown_observation_count(self) -> int:
-        return Observation.objects.filter(
-            branch=self,
-            current_severity=Severity.SEVERITY_UNKNOWN,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def forbidden_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            branch=self,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_FORBIDDEN,
-        ).count()
-
-    @property
-    def review_required_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            branch=self,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED,
-        ).count()
-
-    @property
-    def unknown_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            branch=self,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_UNKNOWN,
-        ).count()
-
-    @property
-    def allowed_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            branch=self,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED,
-        ).count()
-
-    @property
-    def ignored_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            branch=self,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_IGNORED,
-        ).count()
-
 
 class Service(Model):
     product = ForeignKey(Product, on_delete=CASCADE)
@@ -276,105 +202,6 @@ class Service(Model):
 
     def __str__(self) -> str:
         return self.name
-
-    @property
-    def open_critical_observation_count(self) -> int:
-        return Observation.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            current_severity=Severity.SEVERITY_CRITICAL,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_high_observation_count(self) -> int:
-        return Observation.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            current_severity=Severity.SEVERITY_HIGH,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_medium_observation_count(self) -> int:
-        return Observation.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            current_severity=Severity.SEVERITY_MEDIUM,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_low_observation_count(self) -> int:
-        return Observation.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            current_severity=Severity.SEVERITY_LOW,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_none_observation_count(self) -> int:
-        return Observation.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            current_severity=Severity.SEVERITY_NONE,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def open_unknown_observation_count(self) -> int:
-        return Observation.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            current_severity=Severity.SEVERITY_UNKNOWN,
-            current_status=Status.STATUS_OPEN,
-        ).count()
-
-    @property
-    def forbidden_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_FORBIDDEN,
-        ).count()
-
-    @property
-    def review_required_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED,
-        ).count()
-
-    @property
-    def unknown_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_UNKNOWN,
-        ).count()
-
-    @property
-    def allowed_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED,
-        ).count()
-
-    @property
-    def ignored_licenses_count(self) -> int:
-        License_Component = apps.get_model("licenses", "License_Component")
-        return License_Component.objects.filter(
-            origin_service=self,
-            branch=self.product.repository_default_branch,
-            evaluation_result=License_Policy_Evaluation_Result.RESULT_IGNORED,
-        ).count()
 
 
 class Product_Member(Model):

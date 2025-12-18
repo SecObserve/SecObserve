@@ -2,8 +2,7 @@ from typing import Optional
 
 from application.commons.models import Settings
 from application.core.models import Observation, Product
-from application.core.services.product import get_product_observation_count
-from application.core.types import Severity
+from application.core.queries.product import get_product_by_id
 from application.notifications.services.send_notifications import (
     send_product_security_gate_notification,
 )
@@ -94,16 +93,27 @@ def _calculate_active_product_security_gate(product: Product) -> bool:
             product.security_gate_threshold_unknown if product.security_gate_threshold_unknown else 0
         )
 
-    if (
-        get_product_observation_count(  # pylint: disable=too-many-boolean-expressions
-            product, Severity.SEVERITY_CRITICAL
-        )
-        > security_gate_threshold_critical
-        or get_product_observation_count(product, Severity.SEVERITY_HIGH) > security_gate_threshold_high
-        or get_product_observation_count(product, Severity.SEVERITY_MEDIUM) > security_gate_threshold_medium
-        or get_product_observation_count(product, Severity.SEVERITY_LOW) > security_gate_threshold_low
-        or get_product_observation_count(product, Severity.SEVERITY_NONE) > security_gate_threshold_none
-        or get_product_observation_count(product, Severity.SEVERITY_UNKNOWN) > security_gate_threshold_unknown
+    annotated_product = get_product_by_id(product_id=product.pk, is_product_group=False, with_annotations=True)
+    if not annotated_product:
+        raise ValueError(f"Product {product.pk} not found while calculating security gate.")
+
+    if (  # pylint: disable=too-many-boolean-expressions
+        annotated_product.open_critical_observation_count is None
+        or annotated_product.open_high_observation_count is None
+        or annotated_product.open_medium_observation_count is None
+        or annotated_product.open_low_observation_count is None
+        or annotated_product.open_none_observation_count is None
+        or annotated_product.open_unknown_observation_count is None
+    ):
+        raise ValueError("Observation counts are None.")
+
+    if (  # pylint: disable=too-many-boolean-expressions
+        annotated_product.open_critical_observation_count > security_gate_threshold_critical
+        or annotated_product.open_high_observation_count > security_gate_threshold_high
+        or annotated_product.open_medium_observation_count > security_gate_threshold_medium
+        or annotated_product.open_low_observation_count > security_gate_threshold_low
+        or annotated_product.open_none_observation_count > security_gate_threshold_none
+        or annotated_product.open_unknown_observation_count > security_gate_threshold_unknown
     ):
         new_security_gate_passed = False
 
@@ -113,17 +123,28 @@ def _calculate_active_product_security_gate(product: Product) -> bool:
 def _calculate_active_config_security_gate(product: Product) -> bool:
     settings = Settings.load()
 
+    annotated_product = get_product_by_id(product_id=product.pk, is_product_group=False, with_annotations=True)
+    if not annotated_product:
+        raise ValueError(f"Product {product.pk} not found while calculating security gate.")
+
+    if (  # pylint: disable=too-many-boolean-expressions
+        annotated_product.open_critical_observation_count is None
+        or annotated_product.open_high_observation_count is None
+        or annotated_product.open_medium_observation_count is None
+        or annotated_product.open_low_observation_count is None
+        or annotated_product.open_none_observation_count is None
+        or annotated_product.open_unknown_observation_count is None
+    ):
+        raise ValueError("Observation counts are None.")
+
     new_security_gate_passed = True
-    if (
-        get_product_observation_count(  # pylint: disable=too-many-boolean-expressions
-            product, Severity.SEVERITY_CRITICAL
-        )
-        > settings.security_gate_threshold_critical
-        or get_product_observation_count(product, Severity.SEVERITY_HIGH) > settings.security_gate_threshold_high
-        or get_product_observation_count(product, Severity.SEVERITY_MEDIUM) > settings.security_gate_threshold_medium
-        or get_product_observation_count(product, Severity.SEVERITY_LOW) > settings.security_gate_threshold_low
-        or get_product_observation_count(product, Severity.SEVERITY_NONE) > settings.security_gate_threshold_none
-        or get_product_observation_count(product, Severity.SEVERITY_UNKNOWN) > settings.security_gate_threshold_unknown
+    if (  # pylint: disable=too-many-boolean-expressions
+        annotated_product.open_critical_observation_count > settings.security_gate_threshold_critical
+        or annotated_product.open_high_observation_count > settings.security_gate_threshold_high
+        or annotated_product.open_medium_observation_count > settings.security_gate_threshold_medium
+        or annotated_product.open_low_observation_count > settings.security_gate_threshold_low
+        or annotated_product.open_none_observation_count > settings.security_gate_threshold_none
+        or annotated_product.open_unknown_observation_count > settings.security_gate_threshold_unknown
     ):
         new_security_gate_passed = False
 
