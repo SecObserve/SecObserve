@@ -377,7 +377,7 @@ class ApiConfigurationViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Api_Configuration]:
-        return get_api_configurations()
+        return get_api_configurations().select_related("product").select_related("product__product_group")
 
 
 class VulnerabilityCheckViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -388,7 +388,7 @@ class VulnerabilityCheckViewSet(GenericViewSet, ListModelMixin, RetrieveModelMix
     filter_backends = [DjangoFilterBackend]
 
     def get_queryset(self) -> QuerySet[Vulnerability_Check]:
-        return get_vulnerability_checks()
+        return get_vulnerability_checks().select_related("branch").select_related("service")
 
 
 class ParserViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
