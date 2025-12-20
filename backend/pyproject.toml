@@ -88,7 +88,7 @@ pylint-django = { version = "2.6.1", optional = true }  # https://github.com/PyC
 mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "5.2.8", optional = true }  # https://github.com/typeddjango/django-stubs
 djangorestframework-stubs = { version = "3.16.6", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
-types-PyMySQL = { version = "1.1.0.20250916", optional = true }  # https://github.com/python/typeshed
+types-PyMySQL = { version = "1.1.0.20251220", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
 [tool.poetry.extras]
