@@ -61,7 +61,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.14.1"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "2.16.1"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 
 # Development dependencies
