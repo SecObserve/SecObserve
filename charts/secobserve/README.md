@@ -1,6 +1,6 @@
 # secobserve
 
-![Version: 1.0.11](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.45.0](https://img.shields.io/badge/AppVersion-1.45.0-informational?style=flat-square)
+![Version: 1.0.12](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.46.0](https://img.shields.io/badge/AppVersion-1.46.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system designed for software development teams and cloud-native environments. SecObserve helps teams identify, manage, and remediate security vulnerabilities and license compliance issues across their software projects, enhancing visibility and improving DevSecOps workflows.
 
@@ -76,7 +76,7 @@ A Helm chart to deploy SecObserve, an open-source vulnerability and license mana
 | backend.image.pullPolicy | string | `"IfNotPresent"` |  |
 | backend.image.registry | string | `"docker.io"` |  |
 | backend.image.repository | string | `"ghcr.io/secobserve/secobserve-backend"` |  |
-| backend.image.tag | string | `"1.45.0"` |  |
+| backend.image.tag | string | `"1.46.0"` |  |
 | backend.resources.limits.cpu | string | `"1000m"` |  |
 | backend.resources.limits.memory | string | `"1500Mi"` |  |
 | backend.resources.requests.cpu | string | `"1000m"` |  |
@@ -116,7 +116,7 @@ A Helm chart to deploy SecObserve, an open-source vulnerability and license mana
 | frontend.image.pullPolicy | string | `"IfNotPresent"` |  |
 | frontend.image.registry | string | `"docker.io"` |  |
 | frontend.image.repository | string | `"ghcr.io/secobserve/secobserve-frontend"` |  |
-| frontend.image.tag | string | `"1.45.0"` |  |
+| frontend.image.tag | string | `"1.46.0"` |  |
 | frontend.resources.limits.cpu | string | `"500m"` |  |
 | frontend.resources.limits.memory | string | `"1000Mi"` |  |
 | frontend.resources.requests.cpu | string | `"500m"` |  |
