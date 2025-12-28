@@ -45,6 +45,11 @@ const SettingsShowComponent = () => {
                                 <TextField source="internal_users" />
                             </Labeled>
                         )}
+                        {settings.oidc_clock_skew > 0 && (
+                            <Labeled label="OIDC clock skew (seconds)">
+                                <NumberField source="oidc_clock_skew" />
+                            </Labeled>
+                        )}
                     </Paper>
 
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>

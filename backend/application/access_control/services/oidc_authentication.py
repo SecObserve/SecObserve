@@ -51,6 +51,7 @@ class OIDCAuthentication(BaseAuthentication):
         return OIDC_PREFIX
 
     def _validate_jwt(self, token: str) -> Optional[User]:
+        settings = Settings.load()
         try:
             jwks_uri = self._get_jwks_uri()
             jwks_client = jwt.PyJWKClient(jwks_uri)
@@ -70,6 +71,7 @@ class OIDCAuthentication(BaseAuthentication):
                 key=signing_key.key,
                 algorithms=ALGORITHMS,
                 audience=os.environ["OIDC_CLIENT_ID"],
+                leeway=settings.oidc_clock_skew,
             )
             username = payload.get(os.environ["OIDC_USERNAME"])
             user = get_user_by_username(username)

@@ -209,6 +209,12 @@ class Settings(Model):
         help_text="Maximum number of entries to keep per periodic task",
     )
 
+    oidc_clock_skew = IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
+        help_text="Time margin in seconds for checks of issued at, not before and expiration of OIDC tokens",
+    )
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save object to the database. Removes all other entries if there

@@ -74,3 +74,10 @@ Then the login dialog will only show the `Enterprise sign in` button:
 ![Enterprise sign in](../assets/images/screenshot_login_enterprise.png)
 
 If the user and password is needed to login, e.g. for a local admin user, `#force_user_login` can be added to the URL (like `https://secobserve.example.com/#/login#force_user_login`) to force the user and password fields to be shown.
+
+
+## Clock skew betwenn OIDC server and SecObserve backend
+
+A time deviation between the OIDC server and the SecObserve backend cannot always be avoided. To prevent the verification of claims issued at, not before and expiry from failing because of it, the parameter `OIDC clock skew`  can be set in the settings.
+
+![OIDC clock skew](../assets/images/screenshot_oidc_clock_skew.png)
