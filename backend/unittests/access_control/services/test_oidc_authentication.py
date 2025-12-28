@@ -110,6 +110,9 @@ class TestOIDCAuthentication(BaseTestCase):
         get_signing_key_mock.return_value = mock_py_jwk
         jwt_mock.side_effect = jwt.ExpiredSignatureError("Signature expired")
 
+        settings = Settings.load()
+        settings.oidc_clock_skew = 9
+
         with self.assertRaises(AuthenticationFailed) as e:
             oidc_authentication = OIDCAuthentication()
             oidc_authentication._validate_jwt("token")
@@ -132,6 +135,7 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            leeway=9,
         )
 
     @patch("jwt.decode")
@@ -158,6 +162,9 @@ class TestOIDCAuthentication(BaseTestCase):
         expected_user = User(username="test_username")
         create_user_mock.return_value = expected_user
 
+        settings = Settings.load()
+        settings.oidc_clock_skew = 7
+
         oidc_authentication = OIDCAuthentication()
         user = oidc_authentication._validate_jwt("token")
 
@@ -180,6 +187,7 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            leeway=7,
         )
         create_user_mock.assert_called_once_with("test_username", {"preferred_username": "test_username"})
 
@@ -206,6 +214,9 @@ class TestOIDCAuthentication(BaseTestCase):
         get_user_mock.return_value = self.user_internal
         check_user_change_mock.return_value = self.user_internal
 
+        settings = Settings.load()
+        settings.oidc_clock_skew = 5
+
         oidc_authentication = OIDCAuthentication()
         user = oidc_authentication._validate_jwt("token")
 
@@ -228,6 +239,7 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            leeway=5,
         )
         check_user_change_mock.assert_called_once_with(
             self.user_internal, {"preferred_username": self.user_internal.username}

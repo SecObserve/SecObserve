@@ -85,6 +85,15 @@ const SettingsEdit = () => {
                         helperText="Comma separated list of email regular expressions to identify internal users"
                         sx={{ marginBottom: 2 }}
                     />
+                    <NumberInput
+                        source="oidc_clock_skew"
+                        label="OIDC clock skew (seconds)"
+                        min={0}
+                        step={1}
+                        validate={validate_0_999999}
+                        helperText="Time margin in seconds for checks of issued at, not before and expiration of OIDC tokens"
+                        sx={{ marginBottom: 2 }}
+                    />
 
                     <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
