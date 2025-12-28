@@ -61,10 +61,8 @@ from application.licenses.queries.license_policy_member import (
 )
 
 
-class LicenseSerializer(ModelSerializer):
+class LicenseListSerializer(ModelSerializer):
     spdx_id_name = SerializerMethodField()
-    is_in_license_group = SerializerMethodField()
-    is_in_license_policy = SerializerMethodField()
 
     class Meta:
         model = License
@@ -72,6 +70,15 @@ class LicenseSerializer(ModelSerializer):
 
     def get_spdx_id_name(self, obj: License) -> str:
         return f"{obj.spdx_id} / {obj.name}"
+
+
+class LicenseSerializer(LicenseListSerializer):
+    is_in_license_group = SerializerMethodField()
+    is_in_license_policy = SerializerMethodField()
+
+    class Meta:
+        model = License
+        fields = "__all__"
 
     def get_is_in_license_group(self, obj: License) -> bool:
         return License_Group.objects.filter(licenses=obj).exists()
@@ -97,20 +104,10 @@ class NestedLicenseComponentEvidenceSerializer(ModelSerializer):
         exclude = ["license_component", "evidence"]
 
 
-class LicenseComponentSerializer(ModelSerializer):
+class LicenseComponentListSerializer(ModelSerializer):
     component_name_version_type = SerializerMethodField()
     branch_name = SerializerMethodField()
     origin_service_name = SerializerMethodField()
-    license_policy_name: Optional[SerializerMethodField] = SerializerMethodField()
-    license_policy_id: Optional[SerializerMethodField] = SerializerMethodField()
-    evidences: Optional[NestedLicenseComponentEvidenceSerializer] = NestedLicenseComponentEvidenceSerializer(many=True)
-    effective_license_type = SerializerMethodField()
-    title = SerializerMethodField()
-    permissions: Optional[SerializerMethodField] = SerializerMethodField()
-
-    class Meta:
-        model = License_Component
-        fields = "__all__"
 
     def get_component_name_version_type(self, obj: License_Component) -> Optional[str]:
         if obj.component_name_version:
@@ -132,6 +129,23 @@ class LicenseComponentSerializer(ModelSerializer):
             return obj.origin_service.name
 
         return ""
+
+    class Meta:
+        model = License_Component
+        exclude = ["component_dependencies"]
+
+
+class LicenseComponentSerializer(LicenseComponentListSerializer):
+    license_policy_name: Optional[SerializerMethodField] = SerializerMethodField()
+    license_policy_id: Optional[SerializerMethodField] = SerializerMethodField()
+    evidences: Optional[NestedLicenseComponentEvidenceSerializer] = NestedLicenseComponentEvidenceSerializer(many=True)
+    effective_license_type = SerializerMethodField()
+    title = SerializerMethodField()
+    permissions: Optional[SerializerMethodField] = SerializerMethodField()
+
+    class Meta:
+        model = License_Component
+        fields = "__all__"
 
     def get_license_policy_name(self, obj: License_Component) -> str:
         if obj.product.license_policy:
@@ -165,17 +179,6 @@ class LicenseComponentSerializer(ModelSerializer):
 
     def get_permissions(self, obj: License_Component) -> Optional[set[Permissions]]:
         return get_permissions_for_role(get_highest_user_role(obj.product))
-
-
-class LicenseComponentListSerializer(LicenseComponentSerializer):
-    license_policy_id = None
-    license_policy_name = None
-    evidences = None
-    permissions = None
-
-    class Meta:
-        model = License_Component
-        exclude = ["component_dependencies"]
 
 
 class LicenseComponentIdSerializer(ModelSerializer):
@@ -214,8 +217,8 @@ class ConcludedLicenseCreateUpdateSerializer(Serializer):
         return attrs
 
 
-class ConcludedLicenseSerializer(ModelSerializer):
-    product_data: NestedProductSerializer | NestedProductSerializerSmall = NestedProductSerializer(
+class ConcludedLicenseListSerializer(ModelSerializer):
+    product_data: NestedProductSerializerSmall | NestedProductSerializer = NestedProductSerializerSmall(
         source="product", read_only=True
     )
     user_data = UserListSerializer(source="user", read_only=True)
@@ -241,11 +244,17 @@ class ConcludedLicenseSerializer(ModelSerializer):
         fields = "__all__"
 
 
-class ConcludedLicenseListSerializer(ConcludedLicenseSerializer):
-    product_data = NestedProductSerializerSmall(source="product", read_only=True)
+class ConcludedLicenseSerializer(ConcludedLicenseListSerializer):
+    product_data = NestedProductSerializer(source="product", read_only=True)
 
 
-class LicenseGroupSerializer(ModelSerializer):
+class LicenseGroupListSerializer(ModelSerializer):
+    class Meta:
+        model = License_Group
+        exclude = ["licenses", "users", "authorization_groups"]
+
+
+class LicenseGroupSerializer(LicenseGroupListSerializer):
     is_manager = SerializerMethodField()
     is_in_license_policy = SerializerMethodField()
     has_licenses = SerializerMethodField()
@@ -287,7 +296,7 @@ class LicenseGroupLicenseAddRemoveSerializer(Serializer):
 
 
 class LicenseGroupAuthorizationGroupMemberSerializer(ModelSerializer):
-    license_group_data = LicenseGroupSerializer(source="license_group", read_only=True)
+    license_group_data = LicenseGroupListSerializer(source="license_group", read_only=True)
     authorization_group_data = AuthorizationGroupListSerializer(source="authorization_group", read_only=True)
 
     class Meta:
@@ -324,7 +333,7 @@ class LicenseGroupAuthorizationGroupMemberSerializer(ModelSerializer):
 
 
 class LicenseGroupMemberSerializer(ModelSerializer):
-    license_group_data = LicenseGroupSerializer(source="license_group", read_only=True)
+    license_group_data = LicenseGroupListSerializer(source="license_group", read_only=True)
     user_data = UserListSerializer(source="user", read_only=True)
 
     class Meta:
@@ -357,6 +366,20 @@ class LicenseGroupMemberSerializer(ModelSerializer):
 
 class LicenseGroupCopySerializer(Serializer):
     name = CharField(max_length=255, required=True)
+
+
+class LicensePolicyListSerializer(ModelSerializer):
+    parent_name = SerializerMethodField()
+
+    def get_parent_name(self, obj: License_Policy) -> str:
+        if obj.parent:
+            return obj.parent.name
+
+        return ""
+
+    class Meta:
+        model = License_Policy
+        exclude = ["users", "authorization_groups"]
 
 
 class LicensePolicySerializer(ModelSerializer):
@@ -440,7 +463,7 @@ class LicensePolicySerializer(ModelSerializer):
 class LicensePolicyItemSerializer(ModelSerializer):
     license_spdx_id = SerializerMethodField()
     license_group_name = SerializerMethodField()
-    license_policy_data = LicensePolicySerializer(source="license_policy", read_only=True)
+    license_policy_data = LicensePolicyListSerializer(source="license_policy", read_only=True)
 
     class Meta:
         model = License_Policy_Item
@@ -528,7 +551,7 @@ class LicensePolicyItemSerializer(ModelSerializer):
 
 
 class LicensePolicyMemberSerializer(ModelSerializer):
-    license_policy_data = LicensePolicySerializer(source="license_policy", read_only=True)
+    license_policy_data = LicensePolicyListSerializer(source="license_policy", read_only=True)
     user_data = UserListSerializer(source="user", read_only=True)
 
     class Meta:
@@ -560,7 +583,7 @@ class LicensePolicyMemberSerializer(ModelSerializer):
 
 
 class LicensePolicyAuthorizationGroupMemberSerializer(ModelSerializer):
-    license_policy_data = LicensePolicySerializer(source="license_policy", read_only=True)
+    license_policy_data = LicensePolicyListSerializer(source="license_policy", read_only=True)
     authorization_group_data = AuthorizationGroupListSerializer(source="authorization_group", read_only=True)
 
     class Meta:

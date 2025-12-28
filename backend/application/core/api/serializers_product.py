@@ -43,18 +43,13 @@ from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
 )
-from application.core.services.product import (
-    get_product_group_license_count,
-    get_product_group_observation_count,
-)
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
-from application.core.types import Assessment_Status, Severity, Status
+from application.core.types import Assessment_Status, Status
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
 from application.licenses.models import License_Component
-from application.licenses.types import License_Policy_Evaluation_Result
 from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
@@ -108,52 +103,20 @@ class ProductCoreSerializer(ModelSerializer):
 
 
 class ProductGroupSerializer(ProductCoreSerializer):
-    open_critical_observation_count = SerializerMethodField()
-    open_high_observation_count = SerializerMethodField()
-    open_medium_observation_count = SerializerMethodField()
-    open_low_observation_count = SerializerMethodField()
-    open_none_observation_count = SerializerMethodField()
-    open_unknown_observation_count = SerializerMethodField()
-    forbidden_licenses_count = SerializerMethodField()
-    review_required_licenses_count = SerializerMethodField()
-    unknown_licenses_count = SerializerMethodField()
-    allowed_licenses_count = SerializerMethodField()
-    ignored_licenses_count = SerializerMethodField()
+    open_critical_observation_count = IntegerField(read_only=True)
+    open_high_observation_count = IntegerField(read_only=True)
+    open_medium_observation_count = IntegerField(read_only=True)
+    open_low_observation_count = IntegerField(read_only=True)
+    open_none_observation_count = IntegerField(read_only=True)
+    open_unknown_observation_count = IntegerField(read_only=True)
+    forbidden_licenses_count = IntegerField(read_only=True)
+    review_required_licenses_count = IntegerField(read_only=True)
+    unknown_licenses_count = IntegerField(read_only=True)
+    allowed_licenses_count = IntegerField(read_only=True)
+    ignored_licenses_count = IntegerField(read_only=True)
+
     products_count = SerializerMethodField()
     product_rule_approvals = SerializerMethodField()
-
-    def get_open_critical_observation_count(self, obj: Product) -> int:
-        return get_product_group_observation_count(obj, Severity.SEVERITY_CRITICAL)
-
-    def get_open_high_observation_count(self, obj: Product) -> int:
-        return get_product_group_observation_count(obj, Severity.SEVERITY_HIGH)
-
-    def get_open_medium_observation_count(self, obj: Product) -> int:
-        return get_product_group_observation_count(obj, Severity.SEVERITY_MEDIUM)
-
-    def get_open_low_observation_count(self, obj: Product) -> int:
-        return get_product_group_observation_count(obj, Severity.SEVERITY_LOW)
-
-    def get_open_none_observation_count(self, obj: Product) -> int:
-        return get_product_group_observation_count(obj, Severity.SEVERITY_NONE)
-
-    def get_open_unknown_observation_count(self, obj: Product) -> int:
-        return get_product_group_observation_count(obj, Severity.SEVERITY_UNKNOWN)
-
-    def get_forbidden_licenses_count(self, obj: Product) -> int:
-        return get_product_group_license_count(obj, License_Policy_Evaluation_Result.RESULT_FORBIDDEN)
-
-    def get_review_required_licenses_count(self, obj: Product) -> int:
-        return get_product_group_license_count(obj, License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)
-
-    def get_unknown_licenses_count(self, obj: Product) -> int:
-        return get_product_group_license_count(obj, License_Policy_Evaluation_Result.RESULT_UNKNOWN)
-
-    def get_allowed_licenses_count(self, obj: Product) -> int:
-        return get_product_group_license_count(obj, License_Policy_Evaluation_Result.RESULT_ALLOWED)
-
-    def get_ignored_licenses_count(self, obj: Product) -> int:
-        return get_product_group_license_count(obj, License_Policy_Evaluation_Result.RESULT_IGNORED)
 
     def get_products_count(self, obj: Product) -> int:
         return obj.products.count()
@@ -225,8 +188,7 @@ class ProductNameSerializer(ModelSerializer):
         fields = ["id", "name"]
 
 
-class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-public-methods
-    # all these methods are needed
+class ProductListSerializer(ProductCoreSerializer):
     open_critical_observation_count = IntegerField(read_only=True)
     open_high_observation_count = IntegerField(read_only=True)
     open_medium_observation_count = IntegerField(read_only=True)
@@ -240,10 +202,28 @@ class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-publ
     ignored_licenses_count = IntegerField(read_only=True)
 
     product_group_name = SerializerMethodField()
+    repository_default_branch_name = SerializerMethodField()
+
+    class Meta:
+        model = Product
+        exclude = ["is_product_group", "members", "authorization_group_members"]
+
+    def get_product_group_name(self, obj: Product) -> str:
+        if not obj.product_group:
+            return ""
+        return obj.product_group.name
+
+    def get_repository_default_branch_name(self, obj: Product) -> str:
+        if not obj.repository_default_branch:
+            return ""
+        return obj.repository_default_branch.name
+
+
+class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-public-methods
+    # all these methods are needed
     product_group_repository_branch_housekeeping_active = SerializerMethodField()
     product_group_security_gate_active = SerializerMethodField()
     product_group_assessments_need_approval = SerializerMethodField()
-    repository_default_branch_name = SerializerMethodField()
     observation_reviews = SerializerMethodField()
     observation_log_approvals = SerializerMethodField()
     has_services = SerializerMethodField()
@@ -262,12 +242,8 @@ class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-publ
 
     class Meta:
         model = Product
+        read_only_fields = ["repository_default_branch"]
         exclude = ["is_product_group", "members", "authorization_group_members"]
-
-    def get_product_group_name(self, obj: Product) -> str:
-        if not obj.product_group:
-            return ""
-        return obj.product_group.name
 
     def get_product_group_repository_branch_housekeeping_active(self, obj: Product) -> Optional[bool]:
         if not obj.product_group:
@@ -283,11 +259,6 @@ class ProductSerializer(ProductCoreSerializer):  # pylint: disable=too-many-publ
         if not obj.product_group:
             return False
         return obj.product_group.assessments_need_approval
-
-    def get_repository_default_branch_name(self, obj: Product) -> str:
-        if not obj.repository_default_branch:
-            return ""
-        return obj.repository_default_branch.name
 
     def get_observation_reviews(self, obj: Product) -> int:
         return Observation.objects.filter(product=obj, current_status=Status.STATUS_IN_REVIEW).count()
@@ -570,18 +541,17 @@ class ProductApiTokenSerializer(Serializer):
 
 class BranchSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
-    is_default_branch = SerializerMethodField()
-    open_critical_observation_count = SerializerMethodField()
-    open_high_observation_count = SerializerMethodField()
-    open_medium_observation_count = SerializerMethodField()
-    open_low_observation_count = SerializerMethodField()
-    open_none_observation_count = SerializerMethodField()
-    open_unknown_observation_count = SerializerMethodField()
-    forbidden_licenses_count = SerializerMethodField()
-    review_required_licenses_count = SerializerMethodField()
-    unknown_licenses_count = SerializerMethodField()
-    allowed_licenses_count = SerializerMethodField()
-    ignored_licenses_count = SerializerMethodField()
+    open_critical_observation_count = IntegerField(read_only=True)
+    open_high_observation_count = IntegerField(read_only=True)
+    open_medium_observation_count = IntegerField(read_only=True)
+    open_low_observation_count = IntegerField(read_only=True)
+    open_none_observation_count = IntegerField(read_only=True)
+    open_unknown_observation_count = IntegerField(read_only=True)
+    forbidden_licenses_count = IntegerField(read_only=True)
+    review_required_licenses_count = IntegerField(read_only=True)
+    unknown_licenses_count = IntegerField(read_only=True)
+    allowed_licenses_count = IntegerField(read_only=True)
+    ignored_licenses_count = IntegerField(read_only=True)
 
     def validate_purl(self, purl: str) -> str:
         return validate_purl(purl)
@@ -591,42 +561,6 @@ class BranchSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
-
-    def get_is_default_branch(self, obj: Branch) -> bool:
-        return obj.product.repository_default_branch == obj
-
-    def get_open_critical_observation_count(self, obj: Branch) -> int:
-        return obj.open_critical_observation_count
-
-    def get_open_high_observation_count(self, obj: Branch) -> int:
-        return obj.open_high_observation_count
-
-    def get_open_medium_observation_count(self, obj: Branch) -> int:
-        return obj.open_medium_observation_count
-
-    def get_open_low_observation_count(self, obj: Branch) -> int:
-        return obj.open_low_observation_count
-
-    def get_open_none_observation_count(self, obj: Branch) -> int:
-        return obj.open_none_observation_count
-
-    def get_open_unknown_observation_count(self, obj: Branch) -> int:
-        return obj.open_unknown_observation_count
-
-    def get_forbidden_licenses_count(self, obj: Branch) -> int:
-        return obj.forbidden_licenses_count
-
-    def get_review_required_licenses_count(self, obj: Branch) -> int:
-        return obj.review_required_licenses_count
-
-    def get_unknown_licenses_count(self, obj: Branch) -> int:
-        return obj.unknown_licenses_count
-
-    def get_allowed_licenses_count(self, obj: Branch) -> int:
-        return obj.allowed_licenses_count
-
-    def get_ignored_licenses_count(self, obj: Branch) -> int:
-        return obj.ignored_licenses_count
 
     class Meta:
         model = Branch
@@ -652,17 +586,17 @@ class BranchNameSerializer(ModelSerializer):
 
 class ServiceSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
-    open_critical_observation_count = SerializerMethodField()
-    open_high_observation_count = SerializerMethodField()
-    open_medium_observation_count = SerializerMethodField()
-    open_low_observation_count = SerializerMethodField()
-    open_none_observation_count = SerializerMethodField()
-    open_unknown_observation_count = SerializerMethodField()
-    forbidden_licenses_count = SerializerMethodField()
-    review_required_licenses_count = SerializerMethodField()
-    unknown_licenses_count = SerializerMethodField()
-    allowed_licenses_count = SerializerMethodField()
-    ignored_licenses_count = SerializerMethodField()
+    open_critical_observation_count = IntegerField(read_only=True)
+    open_high_observation_count = IntegerField(read_only=True)
+    open_medium_observation_count = IntegerField(read_only=True)
+    open_low_observation_count = IntegerField(read_only=True)
+    open_none_observation_count = IntegerField(read_only=True)
+    open_unknown_observation_count = IntegerField(read_only=True)
+    forbidden_licenses_count = IntegerField(read_only=True)
+    review_required_licenses_count = IntegerField(read_only=True)
+    unknown_licenses_count = IntegerField(read_only=True)
+    allowed_licenses_count = IntegerField(read_only=True)
+    ignored_licenses_count = IntegerField(read_only=True)
 
     class Meta:
         model = Service
@@ -670,39 +604,6 @@ class ServiceSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
-
-    def get_open_critical_observation_count(self, obj: Service) -> int:
-        return obj.open_critical_observation_count
-
-    def get_open_high_observation_count(self, obj: Service) -> int:
-        return obj.open_high_observation_count
-
-    def get_open_medium_observation_count(self, obj: Service) -> int:
-        return obj.open_medium_observation_count
-
-    def get_open_low_observation_count(self, obj: Service) -> int:
-        return obj.open_low_observation_count
-
-    def get_open_none_observation_count(self, obj: Service) -> int:
-        return obj.open_none_observation_count
-
-    def get_open_unknown_observation_count(self, obj: Service) -> int:
-        return obj.open_unknown_observation_count
-
-    def get_forbidden_licenses_count(self, obj: Branch) -> int:
-        return obj.forbidden_licenses_count
-
-    def get_review_required_licenses_count(self, obj: Branch) -> int:
-        return obj.review_required_licenses_count
-
-    def get_unknown_licenses_count(self, obj: Branch) -> int:
-        return obj.unknown_licenses_count
-
-    def get_allowed_licenses_count(self, obj: Branch) -> int:
-        return obj.allowed_licenses_count
-
-    def get_ignored_licenses_count(self, obj: Branch) -> int:
-        return obj.ignored_licenses_count
 
 
 class ServiceNameSerializer(ModelSerializer):

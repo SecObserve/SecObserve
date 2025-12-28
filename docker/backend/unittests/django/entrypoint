@@ -6,6 +6,6 @@ rm -f /var/lib/sqlite/secobserve.db
 python manage.py migrate
 
 coverage run /app/manage.py test unittests
-# coverage run /app/manage.py test unittests.licenses.services.test_concluded_license
+# coverage run /app/manage.py test unittests.core.services.test_security_gate
 coverage report
 coverage xml -o /home/coverage.xml

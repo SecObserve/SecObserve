@@ -88,6 +88,7 @@ from application.core.api.serializers_product import (
     ProductApiTokenSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductGroupSerializer,
+    ProductListSerializer,
     ProductMemberSerializer,
     ProductNameSerializer,
     ProductSerializer,
@@ -177,7 +178,7 @@ class ProductGroupViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Product]:
-        return get_products(is_product_group=True)
+        return get_products(is_product_group=True, with_annotations=True)
 
 
 class ProductGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -207,6 +208,12 @@ class ProductViewSet(ModelViewSet):
             .select_related("product_group__license_policy")
             .select_related("repository_default_branch")
         )
+
+    def get_serializer_class(self) -> type[BaseSerializer[Any]]:
+        if self.action == "list":
+            return ProductListSerializer
+
+        return super().get_serializer_class()
 
     @extend_schema(
         methods=["GET"],
@@ -465,11 +472,11 @@ class BranchViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Branch]:
-        return get_branches().select_related("product")
+        return get_branches(with_annotations=True).select_related("product")
 
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         instance: Branch = self.get_object()
-        if instance == instance.product.repository_default_branch:
+        if instance.is_default_branch:
             raise ValidationError("You cannot delete the default branch of a product.")
 
         return super().destroy(request, *args, **kwargs)
@@ -496,7 +503,7 @@ class ServiceViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Service]:
-        return get_services().select_related("product")
+        return get_services(with_annotations=True).select_related("product")
 
 
 class ServiceNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -543,9 +550,10 @@ class ObservationViewSet(ModelViewSet):
     def perform_destroy(self, instance: Observation) -> None:
         product = instance.product
         issue_id = instance.issue_tracker_issue_id
-        observation_branch = instance.branch
         super().perform_destroy(instance)
-        if observation_branch == product.repository_default_branch:
+        if (instance.branch and instance.branch.is_default_branch) or (
+            not instance.branch and not instance.product.repository_default_branch
+        ):
             check_security_gate(product)
         push_deleted_observation_to_issue_tracker(product, issue_id, get_current_user())
         product.last_observation_change = timezone.now()
@@ -684,7 +692,14 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet[Observation_Log]:
-        return get_observation_logs().select_related("observation").select_related("user")
+        return (
+            get_observation_logs()
+            .select_related("observation")
+            .select_related("observation__product")
+            .select_related("observation__branch")
+            .select_related("observation__parser")
+            .select_related("user")
+        )
 
     @extend_schema(
         methods=["PATCH"],

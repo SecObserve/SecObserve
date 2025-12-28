@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.45.0"
+version = "1.46.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -61,7 +61,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.14.1"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "2.16.1"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 
 # Development dependencies
@@ -85,10 +85,10 @@ flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gfor
 black = { version = "25.12.0", optional = true }  # https://github.com/psf/black
 pylint = { version = "3.3.9", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.6.1", optional = true }  # https://github.com/PyCQA/pylint-django
-mypy = { version = "1.19.0", optional = true }  # https://github.com/python/mypy
+mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "5.2.8", optional = true }  # https://github.com/typeddjango/django-stubs
 djangorestframework-stubs = { version = "3.16.6", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
-types-PyMySQL = { version = "1.1.0.20250916", optional = true }  # https://github.com/python/typeshed
+types-PyMySQL = { version = "1.1.0.20251220", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
 [tool.poetry.extras]

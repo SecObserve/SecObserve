@@ -216,6 +216,7 @@
             "name": "db_product_external",
             "description": "",
             "repository_prefix": "",
+            "repository_default_branch": 3,
             "security_gate_passed": null,
             "security_gate_active": false,
             "security_gate_threshold_critical": null,
@@ -236,7 +237,6 @@
             "name": "db_product_group",
             "description": "",
             "repository_prefix": "",
-            "repository_default_branch": 1,
             "security_gate_passed": true,
             "security_gate_active": null,
             "security_gate_threshold_critical": null,
@@ -258,7 +258,6 @@
             "name": "db_product_group_admin_only",
             "description": "",
             "repository_prefix": "",
-            "repository_default_branch": 1,
             "security_gate_passed": true,
             "security_gate_active": null,
             "security_gate_threshold_critical": null,
@@ -278,7 +277,8 @@
         "pk": 1,
         "fields": {
             "product": 1,
-            "name": "db_branch_internal_dev"
+            "name": "db_branch_internal_dev",
+            "is_default_branch": true
         }
     },
     {
@@ -294,7 +294,8 @@
         "pk": 3,
         "fields": {
             "product": 2,
-            "name": "db_branch_external"
+            "name": "db_branch_external",
+            "is_default_branch": true
         }
     },
     {

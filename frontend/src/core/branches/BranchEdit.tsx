@@ -39,6 +39,7 @@ const BranchEdit = ({ product }: BranchEditProps) => {
 
         const patch = {
             name: data.name,
+            is_default_branch: data.is_default_branch,
             housekeeping_protect: data.housekeeping_protect,
             purl: data.purl,
             cpe23: data.cpe23,
@@ -77,6 +78,7 @@ const BranchEdit = ({ product }: BranchEditProps) => {
                 <DialogContent>
                     <SimpleForm onSubmit={branch_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
                         <TextInputWide source="name" validate={validate_required_255} />
+                        <BooleanInput source="is_default_branch" label="Default branch / version" />
                         <TextInputWide source="purl" label="PURL" validate={validate_255} />
                         <TextInputWide source="cpe23" label="CPE 2.3" validate={validate_255} />
                         <BooleanInput source="housekeeping_protect" label="Protect from housekeeping" />
