@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.46.0"
+version = "1.46.1"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -19,42 +19,53 @@ django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield
 django-encrypted-model-fields = "0.6.5"  # https://gitlab.com/lansharkconsulting/django/django-encrypted-model-fields
 argon2-cffi = "25.1.0"  # https://github.com/hynek/argon2_cffi
 whitenoise = "6.11.0"  # https://github.com/evansd/whitenoise
+django-dirtyfields = "1.9.8"  # https://github.com/romgar/django-dirtyfields
+
 # Django REST Framework
 # ------------------------------------------------------------------------------
 djangorestframework = "3.16.1"  # https://github.com/encode/django-rest-framework
 django-cors-headers = "4.9.0" # https://github.com/adamchainz/django-cors-headers
+
 # OpenAPI 3
 # ------------------------------------------------------------------------------
 drf-spectacular = "0.29.0" # https://github.com/tfranzel/drf-spectacular
 drf-spectacular-sidecar = "2025.12.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
+
 # Token authentication
 # ------------------------------------------------------------------------------
 PyJWT = "2.10.1"  # https://github.com/jpadilla/pyjwt
+
 # HTTP requests
 # ------------------------------------------------------------------------------
 requests = "2.32.5"  # https://github.com/psf/requests
+
 # Database
 # ------------------------------------------------------------------------------
 pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
 psycopg = { version = "3.3.2", extras = ["binary"] }  # https://github.com/psycopg/psycopg
+
 # Dataformats
 # ------------------------------------------------------------------------------
 defusedcsv = "3.0.0"  # https://github.com/raphaelm/defusedcsv
 openpyxl = "3.1.5"  # https://foss.heptapod.net/openpyxl/openpyxl
 jsonpickle = "4.1.1"  # https://github.com/jsonpickle/jsonpickle
 pyyaml = "6.0.3"  # https://github.com/yaml/pyyaml
+
 # Field specifications
 # ------------------------------------------------------------------------------
 packageurl-python = "0.17.6"  # https://github.com/package-url/packageurl-python
 cvss = "3.6"  # https://github.com/RedHatProductSecurity/cvss
 semver = "3.0.4"  # https://github.com/python-semver/python-semver
 license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expression
+
 # Task queue
 # ------------------------------------------------------------------------------
 huey = "2.5.5"  # https://github.com/coleifer/huey
+
 # Issue tracker
 # ------------------------------------------------------------------------------
 jira = "3.10.5"  # https://github.com/pycontribs/jira
+
 # Others
 # ------------------------------------------------------------------------------
 inflect = "7.5.0"  # https://github.com/jaraco/inflect
@@ -75,7 +86,7 @@ django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzb
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
-coverage = { version = "7.13.0", optional = true }  # https://github.com/nedbat/coveragepy
+coverage = { version = "7.13.1", optional = true }  # https://github.com/nedbat/coveragepy
 django-coverage-plugin = { version = "3.2.0", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies

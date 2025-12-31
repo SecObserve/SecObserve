@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import Any
 
+from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
@@ -159,7 +160,7 @@ class Product(Model):  # pylint: disable=too-many-instance-attributes
         return self.name
 
 
-class Branch(Model):
+class Branch(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE)
     name = CharField(max_length=255)
     is_default_branch = BooleanField(default=False)
