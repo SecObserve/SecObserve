@@ -31,11 +31,11 @@
         ],
         "component": {
             "name": "SecObserve",
-            "version": "1.46.0",
+            "version": "1.46.1",
             "description": "SecObserve is an open source vulnerability management system for software development and cloud environments.",
             "type": "application",
-            "bom-ref": "pkg:pypi/secobserve@1.46.0",
-            "purl": "pkg:pypi/secobserve@1.46.0"
+            "bom-ref": "pkg:pypi/secobserve@1.46.1",
+            "purl": "pkg:pypi/secobserve@1.46.1"
         },
         "properties": [
             {
@@ -2856,7 +2856,7 @@
     ],
     "dependencies": [
         {
-            "ref": "pkg:pypi/secobserve@1.46.0",
+            "ref": "pkg:pypi/secobserve@1.46.1",
             "dependsOn": [
                 "pkg:pypi/argon2-cffi@23.1.0",
                 "pkg:pypi/cvss@3.2",
