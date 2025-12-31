@@ -58,7 +58,7 @@ def branch_post_save(
     sender: Any, instance: Branch, created: bool, **kwargs: Any  # pylint: disable=unused-argument
 ) -> None:
     # sender is needed according to Django documentation
-    set_default_branch(instance)
+    set_default_branch(instance, created)
 
 
 @receiver(post_save, sender=Settings)
