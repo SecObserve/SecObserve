@@ -511,7 +511,7 @@ class TestFileUploadObservations(BaseTestCase):
             )
             self.assertEqual(license_components[1].component_purl_type, "pypi")
             self.assertEqual(license_components[1].component_cpe, "")
-            dependencies = """SecObserve:1.46.0 --> argon2-cffi:23.1.0
+            dependencies = """SecObserve:1.46.1 --> argon2-cffi:23.1.0
 argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             self.assertEqual(license_components[1].component_dependencies, dependencies)
             self.assertEqual(license_components[1].effective_spdx_license, License.objects.get(spdx_id="MIT"))
