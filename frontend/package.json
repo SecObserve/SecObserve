@@ -54,7 +54,7 @@
         "@eslint/eslintrc": "3.3.3",
         "@eslint/js": "9.39.2",
         "@microsoft/eslint-formatter-sarif": "3.1.0",
-        "@trivago/prettier-plugin-sort-imports": "6.0.0",
+        "@trivago/prettier-plugin-sort-imports": "6.0.1",
         "@types/humanize-duration": "3.27.4",
         "@types/node": "24.10.4",
         "@types/prop-types": "15.7.15",
