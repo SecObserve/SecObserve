@@ -28,7 +28,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_product(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
-        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
+        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
             self.mock_observation
         ]
         mock_check_rule.return_value = True
@@ -60,7 +60,7 @@ class TestSimulateRule(unittest.TestCase):
 
         self.mock_product.product_group = self.mock_product_group
 
-        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
+        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
             self.mock_observation
         ]
         mock_check_rule.return_value = True
@@ -86,7 +86,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_without_product(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
-        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
+        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
             self.mock_observation
         ]
         mock_check_rule.return_value = True
@@ -112,7 +112,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_parser(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
-        mock_observation_manager.filter.return_value.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
+        mock_observation_manager.filter.return_value.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
             self.mock_observation
         ]
         mock_check_rule.return_value = True
@@ -141,7 +141,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_scanner_prefix(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
-        mock_observation_manager.filter.return_value.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
+        mock_observation_manager.filter.return_value.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
             self.mock_observation
         ]
         mock_check_rule.return_value = True
@@ -170,7 +170,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_no_matches(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
-        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
+        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = [
             self.mock_observation
         ]
         mock_check_rule.return_value = False
@@ -195,7 +195,7 @@ class TestSimulateRule(unittest.TestCase):
         for i, obs in enumerate(observations):
             obs.title = f"Observation {i}"
 
-        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = (
+        mock_observation_manager.filter.return_value.order_by.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value.select_related.return_value = (
             observations
         )
         mock_check_rule.return_value = True
