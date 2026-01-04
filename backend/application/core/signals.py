@@ -75,8 +75,7 @@ def settings_post_save(  # pylint: disable=unused-argument
     sender: Any, instance: Settings, created: bool, **kwargs: Any
 ) -> None:
     # parameters are needed according to Django documentation
-    env = environ.Env()
-    if not env.bool("SO_UNITTESTS", False) and (  # pylint: disable=too-many-boolean-expressions
+    if (  # pylint: disable=too-many-boolean-expressions
         "security_gate_active" in instance.get_dirty_fields().keys()
         or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
         or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
