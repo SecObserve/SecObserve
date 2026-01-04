@@ -18,21 +18,22 @@ import { getSettingListSize } from "../commons/user_settings/functions";
 import ObservationExpand from "../core/observations/ObservationExpand";
 
 interface RuleSimulationProps {
-    rule_id: string | number;
-    rules_provider: string;
+    rule: any;
+    product?: any;
 }
 
-const RuleSimulation = ({ rule_id, rules_provider }: RuleSimulationProps) => {
+const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
     const notify = useNotify();
     const [data, setData] = useState<any[]>([]);
     const [count, setCount] = useState(0);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    const simulateRule = async () => {
+    const simulateRule = () => {
         setLoading(true);
-        httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/" + rules_provider + "/" + rule_id + "/simulate/", {
+        const rules_provider = product === undefined ? "general_rules" : "product_rules";
+        httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/" + rules_provider + "/" + rule.id + "/simulate/", {
             method: "POST",
         })
             .then((result: any) => {
@@ -75,7 +76,7 @@ const RuleSimulation = ({ rule_id, rules_provider }: RuleSimulationProps) => {
         <Fragment>
             <SmallButton title="Simulate" onClick={handleOpen} icon={<CachedIcon />} />
             <Dialog ref={dialogRef} open={open} onClose={handleClose} fullWidth maxWidth={"lg"}>
-                <DialogTitle>Affected observations</DialogTitle>
+                <DialogTitle>Affected observations of rule {rule.name}</DialogTitle>
                 <DialogContent>
                     {count !== data.length && (
                         <Typography sx={{ marginBottom: 2 }}>
@@ -95,7 +96,7 @@ const RuleSimulation = ({ rule_id, rules_provider }: RuleSimulationProps) => {
                                 expandSingle
                             >
                                 <TextField source="title" label="Title" sortable={false} />
-                                {rules_provider === "general_rules" && (
+                                {(product === undefined || product.is_product_group) && (
                                     <TextField source="product_data.name" label="Product" sortable={false} />
                                 )}
                                 <TextField source="branch_name" label="Branch / Version" sortable={false} />
