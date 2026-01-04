@@ -17,7 +17,7 @@ const ShowActions = () => {
                 {rule?.approval_status == RULE_STATUS_NEEDS_APPROVAL &&
                     feature_general_rules_need_approval_enabled() &&
                     is_superuser() && <RuleApproval rule_id={rule.id} class="general_rules" />}
-                {rule && <RuleSimulation rule={rule} />}
+                {rule && is_superuser() && <RuleSimulation rule={rule} />}
                 {is_superuser() && <EditButton />}
             </Stack>
         </TopToolbar>

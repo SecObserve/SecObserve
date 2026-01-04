@@ -91,7 +91,7 @@ const GeneralRuleList = () => {
                     />
                     <TextField source="scanner_prefix" />
                     <TextField source="title" label="Observation title" />
-                    <WithRecord render={(rule) => <RuleSimulation rule={rule} />} />
+                    {is_superuser() && <WithRecord render={(rule) => <RuleSimulation rule={rule} />} />}
                 </Datagrid>
             </List>
         </Fragment>
