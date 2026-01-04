@@ -13,7 +13,11 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
     simulation_results: list[Observation] = []
 
     if rule.product:
-        observations = Observation.objects.filter(product=rule.product)
+        if rule.product.is_product_group:
+            products = rule.product.products.all()
+            observations = Observation.objects.filter(product__in=products)
+        else:
+            observations = Observation.objects.filter(product=rule.product)
     else:
         observations = Observation.objects.filter(product__in=get_products(), product__apply_general_rules=True)
 
@@ -22,7 +26,15 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
     if rule.scanner_prefix:
         observations = observations.filter(scanner__startswith=rule.scanner_prefix)
 
-    observations = observations.order_by("product__name", "title")
+    observations = (
+        observations.order_by("product__name", "title")
+        .select_related("product")
+        .select_related("product__product_group")
+        .select_related("branch")
+        .select_related("parser")
+        .select_related("general_rule")
+        .select_related("product_rule")
+    )
 
     for observation in observations:
         previous_product_rule = observation.product_rule if observation.product_rule else None

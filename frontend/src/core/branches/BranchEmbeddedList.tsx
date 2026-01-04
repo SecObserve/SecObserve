@@ -24,7 +24,7 @@ import BranchDelete from "./BranchDelete";
 import BranchEdit from "./BranchEdit";
 import DefaultBranch from "./DefaultBranch";
 
-export const BranchNameURLField = (props: FieldProps) => {
+const BranchNameURLField = (props: FieldProps) => {
     const record = useRecordContext(props);
     return record ? <TextUrlField text={record.name} url={get_observations_url(record.product, record.id)} /> : null;
 };
