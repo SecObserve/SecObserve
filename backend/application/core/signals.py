@@ -43,7 +43,7 @@ def product_post_save(
     # sender is needed according to Django documentation
     if not created:
         if (
-            "security_gate_active" in instance.get_dirty_fields().keys()
+            "security_gate_active" in instance.get_dirty_fields().keys()  # pylint: disable=too-many-boolean-expressions
             or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
             or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
             or "security_gate_threshold_medium" in instance.get_dirty_fields().keys()
@@ -76,7 +76,7 @@ def settings_post_save(  # pylint: disable=unused-argument
 ) -> None:
     # parameters are needed according to Django documentation
     env = environ.Env()
-    if not env.bool("SO_UNITTESTS", False) and (
+    if not env.bool("SO_UNITTESTS", False) and (  # pylint: disable=too-many-boolean-expressions
         "security_gate_active" in instance.get_dirty_fields().keys()
         or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
         or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
