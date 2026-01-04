@@ -127,11 +127,7 @@ class TestCoreSignals(TestCase):
         mock_set_default_branch.assert_called_with(branch, True)
 
     @patch("application.core.signals.settings_post_save_task")
-    @patch("application.core.signals.environ.Env")
-    def test_settings_post_save(self, mock_env, mock_settings_post_save_task):
-        # Mock environment to not be in unittests mode
-        mock_env.return_value.bool.return_value = False
-
+    def test_settings_post_save(self, mock_settings_post_save_task):
         # Create settings
         settings = Settings.objects.create(security_gate_active=False)
 
@@ -162,11 +158,7 @@ class TestCoreSignals(TestCase):
         # Verify that check_security_gate was called for each product
         mock_check_security_gate.assert_called_once_with(mock_product)
 
-    @patch("application.core.signals.environ.Env")
-    def test_settings_post_save_unit_tests_mode(self, mock_env):
-        # Mock environment to be in unittests mode
-        mock_env.return_value.bool.return_value = True
-
+    def test_settings_post_save_unit_tests_mode(self):
         # Create settings
         settings = Settings.objects.create()
 
