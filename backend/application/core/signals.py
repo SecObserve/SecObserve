@@ -1,7 +1,6 @@
 import logging
 from typing import Any
 
-import environ
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from huey.contrib.djhuey import db_task, lock_task
