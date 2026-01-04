@@ -33,7 +33,7 @@ from application.core.types import (
 from application.issue_tracker.types import Issue_Tracker
 
 
-class Product(Model):  # pylint: disable=too-many-instance-attributes
+class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-attributes
     name = CharField(max_length=255, unique=True)
     description = TextField(max_length=2048, blank=True)
 

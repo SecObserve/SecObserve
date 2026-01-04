@@ -42,11 +42,20 @@ def product_post_save(
 ) -> None:
     # sender is needed according to Django documentation
     if not created:
-        if instance.is_product_group:
-            for product in instance.products.all():
-                check_security_gate(product)
-        else:
-            check_security_gate(instance)
+        if (
+            "security_gate_active" in instance.get_dirty_fields().keys()
+            or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
+            or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
+            or "security_gate_threshold_medium" in instance.get_dirty_fields().keys()
+            or "security_gate_threshold_low" in instance.get_dirty_fields().keys()
+            or "security_gate_threshold_none" in instance.get_dirty_fields().keys()
+            or "security_gate_threshold_unknown" in instance.get_dirty_fields().keys()
+        ):
+            if instance.is_product_group:
+                for product in instance.products.all():
+                    check_security_gate(product)
+            else:
+                check_security_gate(instance)
     else:
         user = get_current_user()
         if user:
@@ -67,7 +76,15 @@ def settings_post_save(  # pylint: disable=unused-argument
 ) -> None:
     # parameters are needed according to Django documentation
     env = environ.Env()
-    if not env.bool("SO_UNITTESTS", False):
+    if not env.bool("SO_UNITTESTS", False) and (
+        "security_gate_active" in instance.get_dirty_fields().keys()
+        or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
+        or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
+        or "security_gate_threshold_medium" in instance.get_dirty_fields().keys()
+        or "security_gate_threshold_low" in instance.get_dirty_fields().keys()
+        or "security_gate_threshold_none" in instance.get_dirty_fields().keys()
+        or "security_gate_threshold_unknown" in instance.get_dirty_fields().keys()
+    ):
         settings_post_save_task()
 
 
