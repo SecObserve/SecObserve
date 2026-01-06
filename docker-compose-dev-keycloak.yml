@@ -86,7 +86,7 @@ services:
       - "8025:8025"
 
   keycloak:
-    image: keycloak/keycloak:26.4.7
+    image: keycloak/keycloak:26.5.0
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin
