@@ -1225,19 +1225,18 @@ files = [
 
 [[package]]
 name = "huey"
-version = "2.5.5"
-description = "huey, a little task queue"
+version = "2.6.0"
+description = "a little task queue"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "huey-2.5.5-py3-none-any.whl", hash = "sha256:82ac73343248c5d7acec04814f952c61f7793e11fd99d26ed9030137d32f912c"},
-    {file = "huey-2.5.5.tar.gz", hash = "sha256:a39010628a9a1a9e91462f9bf33dc243b006a9f21193026ea47ae18949a12581"},
+    {file = "huey-2.6.0-py3-none-any.whl", hash = "sha256:1b9df9d370b49c6d5721ba8a01ac9a787cf86b3bdc584e4679de27b920395c3f"},
+    {file = "huey-2.6.0.tar.gz", hash = "sha256:8d11f8688999d65266af1425b831f6e3773e99415027177b8734b0ffd5e251f6"},
 ]
 
 [package.extras]
 backends = ["redis (>=3.0.0)"]
-redis = ["redis (>=3.0.0)"]
 
 [[package]]
 name = "idna"
@@ -3223,4 +3222,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.10, < 3.15"
-content-hash = "f53266fd869941b7018be10e7922c6a789ca4095756d3eb30051a62e1e4eb1fe"
+content-hash = "c968cc7a42931d196d981ec3250fd70482f0b70ba528b64d4e3470c123ef6771"
