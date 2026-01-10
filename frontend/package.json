@@ -56,7 +56,7 @@
         "@microsoft/eslint-formatter-sarif": "3.1.0",
         "@trivago/prettier-plugin-sort-imports": "6.0.2",
         "@types/humanize-duration": "3.27.4",
-        "@types/node": "24.10.4",
+        "@types/node": "24.10.6",
         "@types/prop-types": "15.7.15",
         "@types/react": "19.2.0",
         "@types/react-dom": "19.2.0",
