@@ -3,7 +3,7 @@ import {
     AutocompleteInput,
     BooleanInput,
     ChipField,
-    DatagridConfigurable,
+    Datagrid,
     DateField,
     FunctionField,
     List,
@@ -12,10 +12,12 @@ import {
     TextField,
     TextInput,
     TopToolbar,
+    WithListContext,
 } from "react-admin";
 
 import notifications from ".";
 import { CustomPagination } from "../commons/custom_fields/CustomPagination";
+import { has_attribute } from "../commons/functions";
 import ListHeader from "../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../commons/layout/themes";
 import { getSettingListSize } from "../commons/user_settings/functions";
@@ -71,26 +73,32 @@ const NotificationList = () => {
                 storeKey="notifications.list"
                 actions={<ListActions />}
             >
-                <DatagridConfigurable
-                    size={getSettingListSize()}
-                    rowClick="show"
-                    bulkActionButtons={<BulkActionButtons />}
-                >
-                    <TextField source="type" />
-                    <TextField source="name" />
-                    <DateField source="created" showTime={true} />
-                    <FunctionField
-                        label="Message"
-                        render={(record) => messageShortened(record.message)}
-                        sortable={false}
-                        sx={{ wordBreak: "break-word" }}
-                    />
-                    <TextField source="function" />
-                    <TextField source="product_name" label="Product" />
-                    <TextField source="observation_title" label="Observation" />
-                    <TextField source="user_full_name" label="User" />
-                    <ChipField source="new_viewed" label="Status" sortable={false} />
-                </DatagridConfigurable>
+                <WithListContext
+                    render={({ data }) => (
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                            <TextField source="type" />
+                            <TextField source="name" />
+                            <DateField source="created" showTime={true} />
+                            {has_attribute("message", data) && (
+                                <FunctionField
+                                    label="Message"
+                                    render={(record) => messageShortened(record.message)}
+                                    sortable={false}
+                                    sx={{ wordBreak: "break-word" }}
+                                />
+                            )}
+                            {has_attribute("function", data) && <TextField source="function" />}
+                            {has_attribute("product_name", data) && <TextField source="product_name" label="Product" />}
+                            {has_attribute("observation_title", data) && (
+                                <TextField source="observation_title" label="Observation" />
+                            )}
+                            {has_attribute("user_full_name", data) && (
+                                <TextField source="user_full_name" label="User" />
+                            )}
+                            <ChipField source="new_viewed" label="Status" sortable={false} />
+                        </Datagrid>
+                    )}
+                />
             </List>
         </Fragment>
     );

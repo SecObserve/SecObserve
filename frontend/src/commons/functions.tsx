@@ -363,3 +363,31 @@ export const is_external = () => {
     const user = localStorage.getItem("user");
     return user && JSON.parse(user).is_external;
 };
+
+export function has_attribute(attribute: string, data: any) {
+    if (!data || !Array.isArray(data)) {
+        return false;
+    }
+
+    return data.some((entry: any) => {
+        if (!entry) return false;
+
+        // Handle nested attributes (e.g., "product_data.name")
+        if (attribute.includes(".")) {
+            const parts = attribute.split(".");
+            let value: any = entry;
+            for (const part of parts) {
+                if (value && typeof value === "object") {
+                    value = value[part]; // eslint-disable-line security/detect-object-injection
+                } else {
+                    value = undefined;
+                    break;
+                }
+            }
+            return value !== null && value !== undefined && value !== "";
+        } else {
+            const value = entry[attribute]; // eslint-disable-line security/detect-object-injection
+            return value !== null && value !== undefined && value !== "";
+        }
+    });
+}

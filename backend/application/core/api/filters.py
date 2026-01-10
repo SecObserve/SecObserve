@@ -321,6 +321,7 @@ class ObservationLogFilter(FilterSet):
     )
     branch_name = CharFilter(field_name="observation__branch__name", lookup_expr="icontains")
     branch = ModelChoiceFilter(field_name="observation__branch", queryset=Branch.objects.all())
+    origin_service = ModelChoiceFilter(field_name="observation__origin_service", queryset=Service.objects.all())
     origin_component_name_version = CharFilter(
         field_name="observation__origin_component_name_version", lookup_expr="icontains"
     )
