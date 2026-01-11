@@ -3,7 +3,7 @@ name: Publish released chart
 on:
   push:
     branches:
-      - dev
+      - main
     paths:
       - charts/**
 
