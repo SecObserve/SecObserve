@@ -1,4 +1,3 @@
-import { Stack } from "@mui/material";
 import { Fragment } from "react";
 import {
     AutocompleteInput,
@@ -11,7 +10,6 @@ import {
     NullableBooleanInput,
     NumberField,
     ReferenceInput,
-    SelectColumnsButton,
     TextField,
     TextInput,
     TopToolbar,
@@ -110,10 +108,7 @@ function listFilters() {
 
 const ListActions = () => (
     <TopToolbar>
-        <Stack spacing={0.5} alignItems="flex-start">
-            <SelectColumnsButton />
-            <FilterButton />
-        </Stack>
+        <FilterButton />
     </TopToolbar>
 );
 

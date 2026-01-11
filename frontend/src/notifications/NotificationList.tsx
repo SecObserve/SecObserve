@@ -8,10 +8,8 @@ import {
     FunctionField,
     List,
     ReferenceInput,
-    SelectColumnsButton,
     TextField,
     TextInput,
-    TopToolbar,
     WithListContext,
 } from "react-admin";
 
@@ -53,12 +51,6 @@ const listFilters = [
 
 const BulkActionButtons = () => <NotificationBulkMarkAsViewedButton />;
 
-const ListActions = () => (
-    <TopToolbar>
-        <SelectColumnsButton />
-    </TopToolbar>
-);
-
 const NotificationList = () => {
     return (
         <Fragment>
@@ -71,7 +63,7 @@ const NotificationList = () => {
                 sort={{ field: "created", order: "DESC" }}
                 disableSyncWithLocation={false}
                 storeKey="notifications.list"
-                actions={<ListActions />}
+                actions={false}
             >
                 <WithListContext
                     render={({ data }) => (
