@@ -7,7 +7,6 @@ frontend:
     tag: "{{ .Chart.appVersion }}"
     pullPolicy: IfNotPresent
   securityContext:
-    enabled: true
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
@@ -42,7 +41,6 @@ backend:
     tag: "{{ .Chart.appVersion }}"
     pullPolicy: IfNotPresent
   securityContext:
-    enabled: true
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
