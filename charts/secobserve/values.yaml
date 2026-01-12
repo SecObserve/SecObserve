@@ -119,7 +119,7 @@ backend:
 service:
   type: ClusterIP
   # If you want to use a NodePort service for ALB, uncomment the following line
-  #type: NodePort
+  # type: NodePort
 
 ingress:
   # If true, a Kubernetes Ingress resource will be created to the http port of the secobserve Service
