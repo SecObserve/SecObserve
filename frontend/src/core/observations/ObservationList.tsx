@@ -47,9 +47,6 @@ function listFilters() {
         />,
         <AutocompleteInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
     );
-    if (feature_exploit_information()) {
-        filters.push(<NullableBooleanInput source="cve_known_exploited" label="CVE exploited" alwaysOn />);
-    }
     filters.push(
         <ReferenceInput
             source="product"
@@ -103,6 +100,10 @@ function listFilters() {
             alwaysOn
         />
     );
+    if (feature_exploit_information()) {
+        filters.push(<NullableBooleanInput source="cve_known_exploited" label="CVE exploited" alwaysOn />);
+    }
+    filters.push(<NullableBooleanInput source="fix_available" label="Fix available" alwaysOn />);
     return filters;
 }
 
@@ -203,6 +204,9 @@ const ObservationList = () => {
                                 render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
                             />
                             <BooleanField source="has_potential_duplicates" label="Dupl." />
+                            {has_attribute("update_impact_score", data) && (
+                                <TextField source="update_impact_score" label="Update impact score" />
+                            )}
                         </Datagrid>
                     )}
                 />

@@ -12,6 +12,10 @@
 As for the severity, if a [rule](../usage/rule_engine.md) matches the observation or a user sets a different status in an [assessment](../usage/assess_observations.md), these changes will override the status set by the import.
 * **Title** and **Description** are short and long explanations what the observation is about.
 * Scanners might suggest a **Recommendation** *(not shown in the screenshot)*.
+* If there is a recommendation for a component with a version number, the **Update impact score** is calculated:
+    * If there is a major update, the difference between the current major version and the recommended major version is multiplied by 100
+    * Otherwise if there is a minor update, the difference between the current minor version and the recommended minor version is multiplied by 10
+    * Otherwise if there is a patch update, the *update impact score* is the difference between the current patch version and the recommended minor version
 
 ## Vulnerability
 
