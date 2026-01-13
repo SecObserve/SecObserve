@@ -9,8 +9,9 @@ from packageurl import PackageURL
 from application.core.models import Observation
 from application.core.types import Severity, Status
 
-VERSION_REGEX = r"(?:\s|^)?(?:\d+:)?(\d+[\.\d]*)"
+VERSION_REGEX = r"(?:\s|^)+(?:\d+:)?(\d+[\.\d]*)"  # NOSONAR
 VERSION_REGEX_COMPILED = re.compile(VERSION_REGEX)
+# The regex will never be used on an empty string
 
 
 def get_identity_hash(observation: Observation) -> str:
