@@ -990,20 +990,19 @@ django = ">=4.2"
 
 [[package]]
 name = "djangorestframework-stubs"
-version = "3.16.6"
+version = "3.16.7"
 description = "PEP-484 stubs for django-rest-framework"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "djangorestframework_stubs-3.16.6-py3-none-any.whl", hash = "sha256:9bf2e5c83478edca3b8eb5ffd673737243ade16ce4b47b633a4ea62fe6924331"},
-    {file = "djangorestframework_stubs-3.16.6.tar.gz", hash = "sha256:b8d3e73604280f69c628ff7900f0e84703d9ff47cd050fccb5f751438e4c5813"},
+    {file = "djangorestframework_stubs-3.16.7-py3-none-any.whl", hash = "sha256:70f80050144875f80ce8ac823ff8628f6e3eb7336495394bb9803251721d9358"},
+    {file = "djangorestframework_stubs-3.16.7.tar.gz", hash = "sha256:e53bc346e9950ebdd1bb2bbc19d7e5c8b7acc894e381df55da69248f47ab78ff"},
 ]
 
 [package.dependencies]
 django-stubs = ">=5.2.8"
-requests = ">=2.0"
 types-pyyaml = "*"
 types-requests = "*"
 typing-extensions = ">=4.0"
@@ -3222,4 +3221,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.10, < 3.15"
-content-hash = "aeb4fe85c510a0ca070e24afa1819570b93940d79551f645572466b3edf0c65e"
+content-hash = "cd7618fdb275fa8a097e364c911e43cc7f2a6436de30bd0781baad834866f619"
