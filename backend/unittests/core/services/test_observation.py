@@ -7,6 +7,7 @@ from application.core.services.observation import (
     get_current_status,
     get_identity_hash,
     normalize_observation_fields,
+    _normalize_update_impact_score_and_fix_available
 )
 from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
@@ -15,6 +16,8 @@ from unittests.base_test_case import BaseTestCase
 class TestObservation(BaseTestCase):
     def setUp(self) -> None:
         self.addTypeEqualityFunc(Observation, _observation_equal)
+        self.observation = Observation()
+
         return super().setUp()
 
     # --- identity hash ---
@@ -281,6 +284,7 @@ class TestObservation(BaseTestCase):
         before_observation.current_status = Status.STATUS_OPEN
         before_observation.origin_component_name = "component_name"
         before_observation.origin_component_version = ""
+        before_observation.fix_available = False
 
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
@@ -297,6 +301,7 @@ class TestObservation(BaseTestCase):
         before_observation.current_status = Status.STATUS_OPEN
         before_observation.origin_component_name = "component_name"
         before_observation.origin_component_version = "component_version"
+        before_observation.fix_available = False
 
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
@@ -313,6 +318,7 @@ class TestObservation(BaseTestCase):
         before_observation.numerical_severity = 6
         before_observation.current_status = Status.STATUS_OPEN
         before_observation.origin_component_name_version = "component_name:component_version"
+        before_observation.fix_available = False
 
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
@@ -325,6 +331,7 @@ class TestObservation(BaseTestCase):
         before_observation.numerical_severity = 6
         before_observation.current_status = Status.STATUS_OPEN
         before_observation.origin_component_name_version = "component_name"
+        before_observation.fix_available = False
 
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
@@ -391,6 +398,106 @@ class TestObservation(BaseTestCase):
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
 
+    # --- update_impact_score and fix_available ---
+
+    def test_no_origin_component_name(self):
+        """Test when origin_component_name is None or empty"""
+        self.observation.origin_component_name = None
+        self.observation.recommendation = "Upgrade to version 2.0.0"
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertIsNone(self.observation.fix_available)
+        self.assertIsNone(self.observation.update_impact_score)
+    
+    def test_fix_available_false_no_recommendation(self):
+        """Test when there's no recommendation"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = None
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertFalse(self.observation.fix_available)
+        self.assertIsNone(self.observation.update_impact_score)
+    
+    def test_fix_available_false_no_component_version(self):
+        """Test when there's no component version"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade to version 2.0.0"
+        self.observation.origin_component_version = None
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertIsNone(self.observation.update_impact_score)
+    
+    def test_fix_available_true_with_simple_recommendation(self):
+        """Test when there's a simple recommendation with version"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade to version 2.0.0"
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 100)  # 1 major version diff
+    
+    def test_fix_available_true_with_complex_recommendation(self):
+        """Test when there's a complex recommendation with number in component name"""
+        self.observation.origin_component_name = "test-component1"
+        self.observation.recommendation = "Upgrade test-component1 to version 2.0.0"
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 100)  # 1 major version diff
+    
+    def test_fix_available_true_minor_version_diff(self):
+        """Test when there's a minor version difference"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade to version 1.5.0"
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 50)  # 5 minor version diff
+    
+    def test_fix_available_true_patch_version_diff(self):
+        """Test when there's a patch version difference"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade to version 1.0.5"
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 5)  # 5 patch version diff
+    
+    def test_fix_available_true_no_version_diff(self):
+        """Test when there's no version difference"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade to version 1.0.0"
+        self.observation.origin_component_version = "1.0.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 0)  # No diff
+    
+    def test_fix_available_true_with_complex_version_numbers(self):
+        """Test with complex version numbers"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade to version 10.5.2"
+        self.observation.origin_component_version = "2.1.0"
+        
+        _normalize_update_impact_score_and_fix_available(self.observation)
+        
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 800)  # 8 major versions diff
 
 def _observation_equal(expected_observation, actual_observation, msg=None):
     for key in dir(expected_observation):

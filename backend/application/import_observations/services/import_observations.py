@@ -594,6 +594,9 @@ def _process_current_observation(
     else:
         observation_before.risk_acceptance_expiry_date = None
 
+    observation_before.fix_available = imported_observation.fix_available
+    observation_before.update_impact_score = imported_observation.update_impact_score
+
     apply_epss(observation_before)
     apply_exploit_information(observation_before, settings)
     observation_before.import_last_seen = timezone.now()
