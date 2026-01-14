@@ -113,3 +113,45 @@ class TestOCSFParser(TestCase):
                 '"uid":"prowler-azure-aks_clusters_public_access_disabled-6c63340e-8a77-447a-9a9f-6c8277e6bc83-westeurope-aks-prod"',
                 observation.unsaved_evidences[0][1],
             )
+
+    def test_prowler_kubernetes(self):
+        with open(path.dirname(__file__) + "/files/prowler_kubernetes.ocsf.json") as testfile:
+
+            self.maxDiff = None
+
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("OCSF (Open Cybersecurity Schema Framework)", parser.name)
+            self.assertIsInstance(parser_instance, OCSFParser)
+
+            observations, scanner = parser_instance.get_observations(data, Product(name="product"), None)
+
+            self.assertEqual("Prowler / 5.16.1", scanner)
+            self.assertEqual(1, len(observations))
+
+            observation = observations[0]
+            self.assertEqual("Prowler / 5.16.1", observation.scanner)
+            self.assertEqual(
+                "Minimize the admission of containers which use HostPorts",
+                observation.title,
+            )
+            description = """This check ensures that Kubernetes clusters are configured to minimize the admission of containers that require the use of HostPorts. This helps maintain network policy controls and reduce security risks.
+
+**Status detail:** Pod cert-manager does not use HostPorts.
+
+**Risk details:** Permitting containers with HostPorts can bypass network policy controls, increasing the risk of unauthorized network access.
+
+**Notes:** Carefully evaluate the need for HostPorts in container configurations and prefer network policies for secure communication."""
+            self.assertEqual(description, observation.description)
+            self.assertEqual(
+                "Limit the use of HostPorts in Kubernetes containers to maintain network security.",
+                observation.recommendation,
+            )
+            self.assertEqual(Severity.SEVERITY_HIGH, observation.parser_severity)
+            self.assertEqual("", observation.origin_cloud_provider)
+            self.assertEqual("", observation.origin_cloud_account_subscription_project)
+            self.assertEqual("", observation.origin_cloud_resource)
+            self.assertEqual("", observation.origin_cloud_resource_type)
+            self.assertEqual("", observation.origin_kubernetes_cluster)
+            self.assertEqual("cert-manager-namespace", observation.origin_kubernetes_namespace)
+            self.assertEqual("KubernetesPod", observation.origin_kubernetes_resource_type)
+            self.assertEqual("cert-manager", observation.origin_kubernetes_resource_name)
