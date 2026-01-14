@@ -4,7 +4,7 @@ frontend:
   image:
     registry: ghcr.io
     repository: secobserve/secobserve-frontend
-    tag: "{{ .Chart.appVersion }}"
+    tag:
     pullPolicy: IfNotPresent
   securityContext:
     allowPrivilegeEscalation: false
@@ -38,7 +38,7 @@ backend:
   image:
     registry: ghcr.io
     repository: secobserve/secobserve-backend
-    tag: "{{ .Chart.appVersion }}"
+    tag:
     pullPolicy: IfNotPresent
   securityContext:
     allowPrivilegeEscalation: false
