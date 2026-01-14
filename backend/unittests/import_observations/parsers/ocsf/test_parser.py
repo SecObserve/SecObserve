@@ -155,4 +155,3 @@ class TestOCSFParser(TestCase):
             self.assertEqual("cert-manager-namespace", observation.origin_kubernetes_namespace)
             self.assertEqual("KubernetesPod", observation.origin_kubernetes_resource_type)
             self.assertEqual("cert-manager", observation.origin_kubernetes_resource_name)
-
