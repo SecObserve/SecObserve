@@ -185,7 +185,7 @@ postgresql:
 
 dbchecker:
   enabled: true
-  hostname: secobserve-postgresql
+  hostname:
   port: 5432
   image:
     # Docker image used to check Database readiness at startup

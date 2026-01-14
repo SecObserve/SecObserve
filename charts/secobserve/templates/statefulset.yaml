@@ -39,7 +39,7 @@ spec:
             - |
               echo 'Waiting for Database to become ready...'
 
-              until printf "." && nc -z -w 2 {{ required ".Values.dbchecker.hostname is required if dbchecker is enabled!" .Values.dbchecker.hostname }} {{ required ".Values.database.port is required if dbchecker is enabled!" .Values.dbchecker.port }}; do
+              until printf "." && nc -z -w 2 {{ .Values.dbchecker.hostname | default (printf "%s-%s" .Release.Name "postgresql") }} {{ .Values.dbchecker.port }}; do
                   sleep 2;
               done;
 
