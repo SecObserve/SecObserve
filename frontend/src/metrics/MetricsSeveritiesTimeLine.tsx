@@ -102,13 +102,6 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                     unknown_observations.push(metrics.open_unknown);
                 }
 
-                console.log(critical_observations);
-                console.log(high_observations);
-                console.log(medium_observations);
-                console.log(low_observations);
-                console.log(none_observations);
-                console.log(unknown_observations);
-
                 const data_sets = [
                     {
                         fill: true,
