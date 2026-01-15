@@ -46,14 +46,6 @@ backend:
     runAsGroup: 1001
     runAsNonRoot: true
   env:
-    - name: ADMIN_USER
-      value: admin
-      # This secret is not managed by the chart
-    - name: ADMIN_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: secobserve-secrets
-          key: password
     - name: ADMIN_EMAIL
       value: admin@admin.com
     - name: DATABASE_ENGINE
@@ -75,18 +67,6 @@ backend:
       value: secobserve.dev
     - name: CORS_ALLOWED_ORIGINS
       value: https://secobserve.dev
-      # This secret is not managed by the chart
-    - name: DJANGO_SECRET_KEY
-      valueFrom:
-        secretKeyRef:
-          name: secobserve-secrets
-          key: django_secret_key
-      # This secret is not managed by the chart
-    - name: FIELD_ENCRYPTION_KEY
-      valueFrom:
-        secretKeyRef:
-          name: secobserve-secrets
-          key: field_encryption_key
     - name: OIDC_AUTHORITY
       value: https://oidc.secobserve.dev
     - name: OIDC_CLIENT_ID
@@ -208,3 +188,14 @@ dbchecker:
     limits:
       cpu: "20m"
       memory: "32Mi"
+
+secobserveSecret:
+  # Specify the name of an existing secret.
+  existingSecret: ""
+  # Username for the admin user
+  adminUser: admin
+  # An empty adminPasword will generate a random password
+  adminPassword: ""
+
+# Database secret name is required if the postgres subchart is disabled
+databaseSecretName: ""

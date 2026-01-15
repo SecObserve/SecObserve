@@ -1,0 +1,17 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get all {{ .Release.Name }}
+
+{{- if eq .Values.secobserveSecret.existingSecret ""}}
+The admin user has been created with a generated password.
+
+You can retrieve the password from the secret using:
+
+  $ kubectl get -n {{ .Release.Namespace }} secret {{ include "secobserve.fullname" . }}-secret --template="{{"{{"}}.data.password{{"}}"}}" | base64 --decode
+
+{{- end }}

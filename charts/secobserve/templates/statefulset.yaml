@@ -106,8 +106,29 @@ spec:
         - name: backend
           image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-          {{- with .Values.backend.env }}
           env:
+            {{- $secretName := default (printf "%s-%s" (include "secobserve.fullname" .) "secret" ) .Values.secobserveSecret.secretName }}
+            - name: ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $secretName }}"
+                  key: password
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $secretName }}"
+                  key: password
+            - name: DJANGO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $secretName }}"
+                  key: django_secret_key
+            - name: FIELD_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $secretName }}"
+                  key: field_encryption_key
+          {{- with .Values.backend.env }}
           {{- toYaml . | nindent 12 }}
           {{- end }}
           ports:
