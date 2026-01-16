@@ -24,6 +24,13 @@ if READ_DOT_ENV_FILE:
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
+# HUEY IMMEDIATE Config
+HUEY_TMP = env.get_value("HUEY_IMMEDIATE", default=None)
+if DEBUG is True and not HUEY_TMP:
+    HUEY_IMMEDIATE = DEBUG
+elif HUEY_TMP is not None:
+    HUEY_IMMEDIATE = env.bool("HUEY_IMMEDIATE", False)
+
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
@@ -425,7 +432,7 @@ HUEY = {
     "name": DATABASES["default"]["NAME"],  # Use db name for huey.
     "results": False,  # Store return values of tasks.
     "store_none": False,  # If a task returns None, do not save to results.
-    "immediate": DEBUG,  # If DEBUG=True, run synchronously.
+    "immediate": HUEY_IMMEDIATE,  # Check the variable for documentation
     "utc": True,  # Use UTC for all times internally.
     "connection": {
         "filename": HUEY_FILENAME,  # Filename for sqlite.
