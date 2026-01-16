@@ -32,6 +32,7 @@ Frontend
 | `OIDC_CLIENT_ID`                | `CLIENT_ID`                                         |
 | `OIDC_REDIRECT_URI`             | `https://secobserve.example.com`                    |
 | `OIDC_POST_LOGOUT_REDIRECT_URI` | `https://secobserve.example.com`                    |
+| `OIDC_PROMPT`                   | [no value]                                          |
 
 
 ## Azure Active Directory
@@ -61,6 +62,7 @@ Frontend
 | `OIDC_CLIENT_ID`                | `CLIENT_ID`                                        |
 | `OIDC_REDIRECT_URI`             | `https://secobserve.example.com`                   |
 | `OIDC_POST_LOGOUT_REDIRECT_URI` | `https://secobserve.example.com`                   |
+| `OIDC_PROMPT`                   | [no value]                                         |
 
 
 ## Customize the login dialog

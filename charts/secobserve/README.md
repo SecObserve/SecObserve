@@ -113,6 +113,8 @@ A Helm chart to deploy SecObserve, an open-source vulnerability and license mana
 | frontend.env[4].value | string | `"https://secobserve.dev/"` |  |
 | frontend.env[5].name | string | `"OIDC_POST_LOGOUT_REDIRECT_URI"` |  |
 | frontend.env[5].value | string | `"https://secobserve.dev/"` |  |
+| frontend.env[5].name | string | `"OIDC_PROMPT"` |  |
+| frontend.env[5].value | string | null |  |
 | frontend.image.pullPolicy | string | `"IfNotPresent"` |  |
 | frontend.image.registry | string | `"docker.io"` |  |
 | frontend.image.repository | string | `"ghcr.io/secobserve/secobserve-frontend"` |  |
