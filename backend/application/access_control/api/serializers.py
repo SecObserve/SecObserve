@@ -52,7 +52,6 @@ class UserListSerializer(ModelSerializer):
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
-            "setting_list_properties",
             "setting_metrics_timespan",
             "permissions",
             "oidc_groups_hash",
@@ -75,7 +74,6 @@ class UserListSerializer(ModelSerializer):
             data.pop("setting_theme")
             data.pop("setting_list_size")
             data.pop("setting_package_info_preference")
-            data.pop("setting_list_properties")
             data.pop("setting_metrics_timespan")
             data.pop("permissions")
             data.pop("oidc_groups_hash")
@@ -134,7 +132,6 @@ class UserSerializer(UserListSerializer):
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
-            "setting_list_properties",
             "setting_metrics_timespan",
             "permissions",
             "oidc_groups_hash",
@@ -279,7 +276,6 @@ class UserSettingsSerializer(ModelSerializer):
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
-            "setting_list_properties",
             "setting_metrics_timespan",
         ]
 
