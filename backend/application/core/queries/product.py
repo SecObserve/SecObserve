@@ -87,6 +87,12 @@ def _add_annotations(queryset: QuerySet, is_product_group: bool, with_annotation
     if not with_annotations:
         return queryset
 
+    queryset = _add_observation_annotations(queryset, is_product_group)
+    queryset = _add_license_annotations(queryset, is_product_group)
+    return queryset
+
+
+def _add_observation_annotations(queryset: QuerySet, is_product_group: bool) -> QuerySet:
     subquery_open_critical = (
         _get_product_group_observation_subquery(Severity.SEVERITY_CRITICAL)
         if is_product_group
@@ -127,6 +133,10 @@ def _add_annotations(queryset: QuerySet, is_product_group: bool, with_annotation
         open_unknown_observation_count=Coalesce(subquery_open_unknown, 0),
     )
 
+    return queryset
+
+
+def _add_license_annotations(queryset: QuerySet, is_product_group: bool) -> QuerySet:
     settings = Settings.load()
     if settings.feature_license_management:
         subquery_license_forbidden = (
