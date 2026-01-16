@@ -74,29 +74,6 @@ export function getTheme(): ThemeType {
     }
 }
 
-export async function saveSettingListProperties() {
-    const list_settings: { key: string; value: string | null }[] = [];
-    Object.keys(localStorage).forEach(function (ls_key) {
-        if (ls_key.startsWith("RaStore.preferences")) {
-            list_settings.push({ key: ls_key, value: localStorage.getItem(ls_key) });
-        }
-    });
-    const list_setting_string = JSON.stringify(list_settings);
-    saveSetting({ setting_list_properties: list_setting_string });
-}
-
-export function setListProperties(setting_list_properties: string) {
-    if (setting_list_properties == null || setting_list_properties == "") {
-        return;
-    }
-    const list_settings = JSON.parse(setting_list_properties);
-    list_settings.forEach(function (ls: { key: string; value: string | null }) {
-        if (ls.value != null) {
-            localStorage.setItem(ls.key, ls.value);
-        }
-    });
-}
-
 export async function saveSettingsMetricsTimespan(setting_metrics_timespan: string) {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     user.setting_metrics_timespan = setting_metrics_timespan;
