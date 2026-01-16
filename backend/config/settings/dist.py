@@ -1,10 +1,11 @@
 from .base import *  # noqa NOSONAR
 from .base import env
+import os
 
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False")
 
 # MIDDLEWARE
 # ------------------------------------------------------------------------------

@@ -1,9 +1,10 @@
 from .base import *  # noqa
+import os
 
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = False
+DEBUG = os.environ.get("DEBUG", "False")
 
 # STATIC
 # ------------------------
