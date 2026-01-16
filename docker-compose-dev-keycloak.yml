@@ -21,6 +21,7 @@ services:
       OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-secobserve}
       OIDC_REDIRECT_URI: ${SO_OIDC_REDIRECT_URI:-http://localhost:3000}
       OIDC_POST_LOGOUT_REDIRECT_URI: ${SO_OIDC_POST_LOGOUT_REDIRECT_URI:-http://localhost:3000}
+      OIDC_PROMPT: ${SO_OIDC_PROMPT:-}
 
   backend:
     build:

@@ -25,6 +25,8 @@ frontend:
       value: https://secobserve.dev/
     - name: OIDC_POST_LOGOUT_REDIRECT_URI
       value: https://secobserve.dev/
+    - name: OIDC_PROMPT
+      value: null
   resources:
     limits:
       cpu: 500m

@@ -10,6 +10,7 @@ declare global {
             OIDC_REDIRECT_URI: string;
             OIDC_POST_LOGOUT_REDIRECT_URI: string;
             OIDC_SCOPE: string;
+            OIDC_PROMPT: string;
         };
     }
 }
