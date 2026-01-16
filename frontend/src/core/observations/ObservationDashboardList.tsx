@@ -52,7 +52,7 @@ const ObservationDashboardList = () => {
                 <ListContextProvider value={listContext}>
                     <div style={{ width: "100%" }}>
                         <WithListContext
-                            render={({ data }) => (
+                            render={({ data, sort }) => (
                                 <Datagrid
                                     size={getSettingListSize()}
                                     sx={{ width: "100%" }}
@@ -63,10 +63,10 @@ const ObservationDashboardList = () => {
                                     expandSingle
                                 >
                                     <TextField source="product_data.name" label="Product" />
-                                    {has_attribute("branch_name", data) && (
+                                    {has_attribute("branch_name", data, sort) && (
                                         <TextField source="branch_name" label="Branch / Version" />
                                     )}
-                                    {has_attribute("origin_service_name", data) && (
+                                    {has_attribute("origin_service_name", data, sort) && (
                                         <TextField source="origin_service_name" label="Service" />
                                     )}
                                     <TextField source="title" sx={{ wordBreak: "break-word" }} />
