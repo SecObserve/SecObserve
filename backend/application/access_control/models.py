@@ -10,7 +10,6 @@ from django.db.models import (
     Index,
     ManyToManyField,
     Model,
-    TextField,
 )
 from encrypted_model_fields.fields import EncryptedCharField
 
@@ -32,7 +31,6 @@ class User(AbstractUser):
         choices=PackageInfo.PACKAGE_INFO_PREFERENCE_CHOICES,
         default=PackageInfo.PACKAGE_INFO_PREFERENCE_DEPS_DEV,
     )
-    setting_list_properties = TextField(max_length=2048, blank=True)
     setting_metrics_timespan = CharField(
         max_length=8, choices=MetricsTimespan.METRICS_TIMESPAN_CHOICES, default=MetricsTimespan.METRICS_TIMESPAN_7_DAYS
     )

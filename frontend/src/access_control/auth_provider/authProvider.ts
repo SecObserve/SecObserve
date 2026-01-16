@@ -3,7 +3,6 @@ import { AuthProvider } from "react-admin";
 
 import { set_settings_in_local_storage } from "../../commons/functions";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { saveSettingListProperties, setListProperties } from "../../commons/user_settings/functions";
 import { oidcConfig, oidcStorageKey, oidc_signed_in } from "./oidc";
 
 const authProvider: AuthProvider = {
@@ -27,8 +26,6 @@ const authProvider: AuthProvider = {
                 })
                 .then((response) => {
                     localStorage.setItem("jwt", response.jwt);
-                    setListProperties(response.user.setting_list_properties);
-                    delete response.user.setting_list_properties;
                     localStorage.setItem("user", JSON.stringify(response.user));
                     localStorage.setItem("theme", response.user.setting_theme);
                 })
@@ -42,10 +39,6 @@ const authProvider: AuthProvider = {
         }
     },
     logout: async () => {
-        if (oidc_signed_in() || jwt_signed_in()) {
-            await saveSettingListProperties();
-        }
-
         localStorage.removeItem("jwt");
         localStorage.removeItem("user");
         localStorage.removeItem("notification_count");
@@ -105,8 +98,6 @@ const authProvider: AuthProvider = {
 
 export const setUserInfo = async () => {
     const userinfo = await getUserInfo();
-    setListProperties(userinfo.setting_list_properties);
-    delete userinfo.setting_list_properties;
     localStorage.setItem("user", JSON.stringify(userinfo));
     localStorage.setItem("theme", userinfo.setting_theme);
 };
