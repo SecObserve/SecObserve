@@ -26,10 +26,12 @@ if READ_DOT_ENV_FILE:
 DEBUG = env.bool("DJANGO_DEBUG", False)
 # HUEY IMMEDIATE Config
 HUEY_TMP = env.get_value("HUEY_IMMEDIATE", default=None)
-if DEBUG is True and not HUEY_TMP:
+if HUEY_TMP is None:
     HUEY_IMMEDIATE = DEBUG
-elif HUEY_TMP is not None:
+else:
     HUEY_IMMEDIATE = env.bool("HUEY_IMMEDIATE", False)
+    if HUEY_IMMEDIATE not in [True, False]:
+        raise ValueError("HUEY_IMMEDIATE must be True or False")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
