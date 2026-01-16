@@ -133,7 +133,7 @@ const ObservationList = () => {
                 sx={{ marginTop: 1 }}
             >
                 <WithListContext
-                    render={({ data }) => (
+                    render={({ data, sort }) => (
                         <Datagrid
                             size={getSettingListSize()}
                             rowClick="show"
@@ -144,53 +144,55 @@ const ObservationList = () => {
                             <TextField source="title" />
                             <SeverityField label="Severity" source="current_severity" />
                             <ChipField source="current_status" label="Status" />
-                            {has_attribute("epss_score", data) && <NumberField source="epss_score" label="EPSS" />}
+                            {has_attribute("epss_score", data, sort) && (
+                                <NumberField source="epss_score" label="EPSS" />
+                            )}
                             <TextField source="product_data.name" label="Product" />
-                            {has_attribute("product_data.product_group_name", data) && (
+                            {has_attribute("product_data.product_group_name", data, sort) && (
                                 <TextField source="product_data.product_group_name" label="Group" />
                             )}
-                            {has_attribute("branch_name", data) && (
+                            {has_attribute("branch_name", data, sort) && (
                                 <TextField source="branch_name" label="Branch / Version" />
                             )}
-                            {has_attribute("origin_service_name", data) && (
+                            {has_attribute("origin_service_name", data, sort) && (
                                 <TextField source="origin_service_name" label="Service" />
                             )}
-                            {has_attribute("origin_component_name_version", data) && (
+                            {has_attribute("origin_component_name_version", data, sort) && (
                                 <TextField
                                     source="origin_component_name_version"
                                     label="Component"
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
-                            {has_attribute("origin_docker_image_name_tag_short", data) && (
+                            {has_attribute("origin_docker_image_name_tag_short", data, sort) && (
                                 <TextField
                                     source="origin_docker_image_name_tag_short"
                                     label="Cont."
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
-                            {has_attribute("origin_endpoint_hostname", data) && (
+                            {has_attribute("origin_endpoint_hostname", data, sort) && (
                                 <TextField
                                     source="origin_endpoint_hostname"
                                     label="Host"
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
-                            {has_attribute("origin_source_file_short", data) && (
+                            {has_attribute("origin_source_file_short", data, sort) && (
                                 <TextField
                                     source="origin_source_file_short"
                                     label="Source"
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
-                            {has_attribute("origin_cloud_qualified_resource", data) && (
+                            {has_attribute("origin_cloud_qualified_resource", data, sort) && (
                                 <TextField
                                     source="origin_cloud_qualified_resource"
                                     label="Cloud res."
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
-                            {has_attribute("origin_kubernetes_qualified_resource", data) && (
+                            {has_attribute("origin_kubernetes_qualified_resource", data, sort) && (
                                 <TextField
                                     source="origin_kubernetes_qualified_resource"
                                     label="Kube. res."
@@ -204,7 +206,7 @@ const ObservationList = () => {
                                 render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
                             />
                             <BooleanField source="has_potential_duplicates" label="Dupl." />
-                            {has_attribute("update_impact_score", data) && (
+                            {has_attribute("update_impact_score", data, sort) && (
                                 <TextField source="update_impact_score" label="Update impact score" />
                             )}
                         </Datagrid>

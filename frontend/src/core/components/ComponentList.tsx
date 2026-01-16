@@ -76,17 +76,17 @@ const ComponentList = () => {
                 storeKey="components.list"
             >
                 <WithListContext
-                    render={({ data }) => (
+                    render={({ data, sort }) => (
                         <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
                             <TextField source="component_name_version_type" label="Component" />
                             <TextField source="product_name" label="Product" />
-                            {has_attribute("product_group_name", data) && (
+                            {has_attribute("product_group_name", data, sort) && (
                                 <TextField source="product_group_name" label="Group" />
                             )}
-                            {has_attribute("branch_name", data) && (
+                            {has_attribute("branch_name", data, sort) && (
                                 <TextField source="branch_name" label="Branch / Version" />
                             )}
-                            {has_attribute("origin_service_name", data) && (
+                            {has_attribute("origin_service_name", data, sort) && (
                                 <TextField source="origin_service_name" label="Service" />
                             )}
                             <BooleanField source="has_observations" label="Open observations" />
