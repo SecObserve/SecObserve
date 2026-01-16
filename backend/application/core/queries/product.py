@@ -5,6 +5,7 @@ from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 
 from application.access_control.services.current_user import get_current_user
+from application.commons.models import Settings
 from application.core.models import (
     Observation,
     Product,
@@ -117,32 +118,6 @@ def _add_annotations(queryset: QuerySet, is_product_group: bool, with_annotation
         else _get_product_observation_subquery(Severity.SEVERITY_UNKNOWN)
     )
 
-    subquery_license_forbidden = (
-        _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_FORBIDDEN)
-        if is_product_group
-        else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_FORBIDDEN)
-    )
-    subquery_license_review_required = (
-        _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)
-        if is_product_group
-        else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)
-    )
-    subquery_license_unknown = (
-        _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_UNKNOWN)
-        if is_product_group
-        else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_UNKNOWN)
-    )
-    subquery_license_allowed = (
-        _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_ALLOWED)
-        if is_product_group
-        else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_ALLOWED)
-    )
-    subquery_license_ignored = (
-        _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_IGNORED)
-        if is_product_group
-        else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_IGNORED)
-    )
-
     queryset = queryset.annotate(
         open_critical_observation_count=Coalesce(subquery_open_critical, 0),
         open_high_observation_count=Coalesce(subquery_open_high, 0),
@@ -150,12 +125,43 @@ def _add_annotations(queryset: QuerySet, is_product_group: bool, with_annotation
         open_low_observation_count=Coalesce(subquery_open_low, 0),
         open_none_observation_count=Coalesce(subquery_open_none, 0),
         open_unknown_observation_count=Coalesce(subquery_open_unknown, 0),
-        forbidden_licenses_count=Coalesce(subquery_license_forbidden, 0),
-        review_required_licenses_count=Coalesce(subquery_license_review_required, 0),
-        unknown_licenses_count=Coalesce(subquery_license_unknown, 0),
-        allowed_licenses_count=Coalesce(subquery_license_allowed, 0),
-        ignored_licenses_count=Coalesce(subquery_license_ignored, 0),
     )
+
+    settings = Settings.load()
+    if settings.feature_license_management:
+        subquery_license_forbidden = (
+            _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_FORBIDDEN)
+            if is_product_group
+            else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_FORBIDDEN)
+        )
+        subquery_license_review_required = (
+            _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)
+            if is_product_group
+            else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)
+        )
+        subquery_license_unknown = (
+            _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_UNKNOWN)
+            if is_product_group
+            else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_UNKNOWN)
+        )
+        subquery_license_allowed = (
+            _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_ALLOWED)
+            if is_product_group
+            else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_ALLOWED)
+        )
+        subquery_license_ignored = (
+            _get_product_group_license_subquery(License_Policy_Evaluation_Result.RESULT_IGNORED)
+            if is_product_group
+            else _get_product_license_subquery(License_Policy_Evaluation_Result.RESULT_IGNORED)
+        )
+
+        queryset = queryset.annotate(
+            forbidden_licenses_count=Coalesce(subquery_license_forbidden, 0),
+            review_required_licenses_count=Coalesce(subquery_license_review_required, 0),
+            unknown_licenses_count=Coalesce(subquery_license_unknown, 0),
+            allowed_licenses_count=Coalesce(subquery_license_allowed, 0),
+            ignored_licenses_count=Coalesce(subquery_license_ignored, 0),
+        )
 
     return queryset
 
