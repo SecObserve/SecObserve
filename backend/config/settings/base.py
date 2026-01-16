@@ -24,14 +24,6 @@ if READ_DOT_ENV_FILE:
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 DEBUG = env.bool("DJANGO_DEBUG", False)
-# HUEY IMMEDIATE Config
-HUEY_TMP = env.get_value("HUEY_IMMEDIATE", default=None)
-if HUEY_TMP is None:
-    HUEY_IMMEDIATE = DEBUG
-else:
-    HUEY_IMMEDIATE = env.bool("HUEY_IMMEDIATE", False)
-    if HUEY_IMMEDIATE not in [True, False]:
-        raise ValueError("HUEY_IMMEDIATE must be True or False")
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
@@ -428,6 +420,10 @@ SPECTACULAR_SETTINGS = {
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
 HUEY_FILENAME = env("HUEY_FILENAME", default="/var/lib/huey/huey.db")
+
+HUEY_IMMEDIATE = env.bool("HUEY_IMMEDIATE", False)
+if HUEY_IMMEDIATE not in [True, False]:
+    raise ValueError("HUEY_IMMEDIATE must be True or False")
 
 HUEY = {
     "huey_class": "huey.SqliteHuey",  # Huey implementation to use.
