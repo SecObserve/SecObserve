@@ -218,65 +218,48 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                             label="Group"
                                         />
                                     )}
-                                {((!product && has_attribute("observation_data.branch_name", data, sort)) ||
-                                    product?.has_branches) && (
+                                {has_attribute("observation_data.branch_name", data, sort) && (
                                     <TextField source="observation_data.branch_name" label="Branch / Version" />
                                 )}
-                                {((!product && has_attribute("observation_data.origin_service_name", data, sort)) ||
-                                    product?.has_services) && (
+                                {has_attribute("observation_data.origin_service_name", data, sort) && (
                                     <TextField source="observation_data.origin_service_name" label="Service" />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_component_name_version", data, sort)) ||
-                                    product?.has_component) && (
+                                {has_attribute("observation_data.origin_component_name_version", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_component_name_version"
                                         label="Component"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_docker_image_name_tag_short", data, sort)) ||
-                                    product?.has_docker_image) && (
+                                {has_attribute("observation_data.origin_docker_image_name_tag_short", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_docker_image_name_tag_short"
                                         label="Container"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_endpoint_hostname", data, sort)) ||
-                                    product?.has_endpoint) && (
+                                {has_attribute("observation_data.origin_endpoint_hostname", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_endpoint_hostname"
                                         label="Host"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("observation_data.origin_source_file", data, sort)) ||
-                                    product?.has_source) && (
+                                {has_attribute("observation_data.origin_source_file", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_source_file"
                                         label="Source"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_cloud_qualified_resource", data, sort)) ||
-                                    product?.has_cloud_resource) && (
+                                {has_attribute("observation_data.origin_cloud_qualified_resource", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_cloud_qualified_resource"
                                         label="Cloud res."
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute(
-                                        "observation_data.origin_kubernetes_qualified_resource",
-                                        data,
-                                        sort
-                                    )) ||
-                                    product?.has_kubernetes_resource) && (
+                                {has_attribute("observation_data.origin_kubernetes_qualified_resource", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_kubernetes_qualified_resource"
                                         label="Kube. res."
