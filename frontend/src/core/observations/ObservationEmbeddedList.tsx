@@ -15,6 +15,7 @@ import {
     ResourceContextProvider,
     TextField,
     TextInput,
+    WithListContext,
     useListController,
 } from "react-admin";
 import { useNavigate } from "react-router";
@@ -22,7 +23,7 @@ import { useNavigate } from "react-router";
 import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { feature_exploit_information, humanReadableDate } from "../../commons/functions";
+import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
@@ -183,82 +184,92 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters(product)} />
-                    <Datagrid
-                        size={getSettingListSize()}
-                        sx={{ width: "100%" }}
-                        rowClick={ShowObservations}
-                        bulkActionButtons={
-                            product &&
-                            (product.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT) ||
-                                product.permissions.includes(PERMISSION_OBSERVATION_DELETE)) && (
-                                <BulkActionButtons product={product} />
-                            )
-                        }
-                        resource="observations"
-                        expand={<ObservationExpand showComponent={true} />}
-                        expandSingle
-                    >
-                        {product?.has_branches && <TextField source="branch_name" label="Branch / Version" />}
-                        <TextField source="title" />
-                        <SeverityField label="Severity" source="current_severity" />
-                        <ChipField source="current_status" label="Status" />
-                        {product?.has_component && <NumberField source="epss_score" label="EPSS" />}
-                        {product?.has_services && <TextField source="origin_service_name" label="Service" />}
-                        {product?.has_component && (
-                            <TextField
-                                source="origin_component_name_version"
-                                label="Component"
-                                sx={{ wordBreak: "break-word" }}
-                            />
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                sx={{ width: "100%" }}
+                                rowClick={ShowObservations}
+                                bulkActionButtons={
+                                    product &&
+                                    (product.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT) ||
+                                        product.permissions.includes(PERMISSION_OBSERVATION_DELETE)) && (
+                                        <BulkActionButtons product={product} />
+                                    )
+                                }
+                                resource="observations"
+                                expand={<ObservationExpand showComponent={true} />}
+                                expandSingle
+                            >
+                                {has_attribute("branch_name", data, sort) && (
+                                    <TextField source="branch_name" label="Branch / Version" />
+                                )}
+                                <TextField source="title" />
+                                <SeverityField label="Severity" source="current_severity" />
+                                <ChipField source="current_status" label="Status" />
+                                {has_attribute("epss_score", data, sort) && (
+                                    <NumberField source="epss_score" label="EPSS" />
+                                )}
+                                {has_attribute("origin_service_name", data, sort) && (
+                                    <TextField source="origin_service_name" label="Service" />
+                                )}
+                                {has_attribute("origin_component_name_version", data, sort) && (
+                                    <TextField
+                                        source="origin_component_name_version"
+                                        label="Component"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("origin_docker_image_name_tag_short", data, sort) && (
+                                    <TextField
+                                        source="origin_docker_image_name_tag_short"
+                                        label="Container"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("origin_endpoint_hostname", data, sort) && (
+                                    <TextField
+                                        source="origin_endpoint_hostname"
+                                        label="Host"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("origin_source_file_short", data, sort) && (
+                                    <TextField
+                                        source="origin_source_file_short"
+                                        label="Source"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("origin_cloud_qualified_resource", data, sort) && (
+                                    <TextField
+                                        source="origin_cloud_qualified_resource"
+                                        label="Cloud resource"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("origin_kubernetes_qualified_resource", data, sort) && (
+                                    <TextField
+                                        source="origin_kubernetes_qualified_resource"
+                                        label="Kubernetes resource"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                <TextField source="scanner_name" label="Scanner" />
+                                <FunctionField<Observation>
+                                    label="Age"
+                                    sortBy="last_observation_log"
+                                    render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
+                                />
+                                {product?.has_potential_duplicates && (
+                                    <BooleanField source="has_potential_duplicates" label="Dupl." />
+                                )}
+                                {has_attribute("update_impact_score", data, sort) && (
+                                    <TextField source="update_impact_score" label="Update impact score" />
+                                )}
+                            </Datagrid>
                         )}
-                        {product?.has_docker_image && (
-                            <TextField
-                                source="origin_docker_image_name_tag_short"
-                                label="Container"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {product?.has_endpoint && (
-                            <TextField
-                                source="origin_endpoint_hostname"
-                                label="Host"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {product?.has_source && (
-                            <TextField
-                                source="origin_source_file_short"
-                                label="Source"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {product?.has_cloud_resource && (
-                            <TextField
-                                source="origin_cloud_qualified_resource"
-                                label="Cloud resource"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {product?.has_kubernetes_resource && (
-                            <TextField
-                                source="origin_kubernetes_qualified_resource"
-                                label="Kubernetes resource"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        <TextField source="scanner_name" label="Scanner" />
-                        <FunctionField<Observation>
-                            label="Age"
-                            sortBy="last_observation_log"
-                            render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                        />
-                        {product?.has_potential_duplicates && (
-                            <BooleanField source="has_potential_duplicates" label="Dupl." />
-                        )}
-                        {product?.has_component && (
-                            <TextField source="update_impact_score" label="Update impact score" />
-                        )}
-                    </Datagrid>
+                    />
                     <CustomPagination />
                 </div>
             </ListContextProvider>
