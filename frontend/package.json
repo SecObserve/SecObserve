@@ -1,6 +1,6 @@
 {
     "name": "secobserve",
-    "version": "1.47.0",
+    "version": "1.47.1",
     "license": "BSD-3-Clause",
     "description": "SecObserve is an open source vulnerability management system for software development and cloud environments.",
     "private": true,
@@ -21,6 +21,7 @@
         "cm6-theme-basic-dark": "0.2.0",
         "humanize-duration": "3.33.2",
         "markdown-to-jsx": "9.5.7",
+        "marked": "17.0.1",
         "mermaid": "11.12.2",
         "oidc-client-ts": "3.4.1",
         "packageurl-js": "2.0.1",

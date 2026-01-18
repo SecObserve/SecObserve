@@ -92,13 +92,6 @@ export const darkTheme = {
                 variant: "outlined" as const,
             },
         },
-        RaLabeled: {
-            styleOverrides: {
-                root: {
-                    fontSize: "0.875rem",
-                },
-            },
-        },
         RaToolbar: {
             styleOverrides: {
                 root: {
@@ -133,13 +126,6 @@ export const lightTheme = {
     },
     components: {
         ...defaultTheme.components,
-        RaLabeled: {
-            styleOverrides: {
-                root: {
-                    fontSize: "0.875rem",
-                },
-            },
-        },
         RaReferenceField: {
             styleOverrides: {
                 root: {
