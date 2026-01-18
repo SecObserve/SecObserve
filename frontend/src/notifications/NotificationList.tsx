@@ -3,19 +3,19 @@ import {
     AutocompleteInput,
     BooleanInput,
     ChipField,
-    DatagridConfigurable,
+    Datagrid,
     DateField,
     FunctionField,
     List,
     ReferenceInput,
-    SelectColumnsButton,
     TextField,
     TextInput,
-    TopToolbar,
+    WithListContext,
 } from "react-admin";
 
 import notifications from ".";
 import { CustomPagination } from "../commons/custom_fields/CustomPagination";
+import { has_attribute } from "../commons/functions";
 import ListHeader from "../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../commons/layout/themes";
 import { getSettingListSize } from "../commons/user_settings/functions";
@@ -51,12 +51,6 @@ const listFilters = [
 
 const BulkActionButtons = () => <NotificationBulkMarkAsViewedButton />;
 
-const ListActions = () => (
-    <TopToolbar>
-        <SelectColumnsButton />
-    </TopToolbar>
-);
-
 const NotificationList = () => {
     return (
         <Fragment>
@@ -69,28 +63,36 @@ const NotificationList = () => {
                 sort={{ field: "created", order: "DESC" }}
                 disableSyncWithLocation={false}
                 storeKey="notifications.list"
-                actions={<ListActions />}
+                actions={false}
             >
-                <DatagridConfigurable
-                    size={getSettingListSize()}
-                    rowClick="show"
-                    bulkActionButtons={<BulkActionButtons />}
-                >
-                    <TextField source="type" />
-                    <TextField source="name" />
-                    <DateField source="created" showTime={true} />
-                    <FunctionField
-                        label="Message"
-                        render={(record) => messageShortened(record.message)}
-                        sortable={false}
-                        sx={{ wordBreak: "break-word" }}
-                    />
-                    <TextField source="function" />
-                    <TextField source="product_name" label="Product" />
-                    <TextField source="observation_title" label="Observation" />
-                    <TextField source="user_full_name" label="User" />
-                    <ChipField source="new_viewed" label="Status" sortable={false} />
-                </DatagridConfigurable>
+                <WithListContext
+                    render={({ data, sort }) => (
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                            <TextField source="type" />
+                            <TextField source="name" />
+                            <DateField source="created" showTime={true} />
+                            {has_attribute("message", data, sort) && (
+                                <FunctionField
+                                    label="Message"
+                                    render={(record) => messageShortened(record.message)}
+                                    sortable={false}
+                                    sx={{ wordBreak: "break-word" }}
+                                />
+                            )}
+                            {has_attribute("function", data, sort) && <TextField source="function" />}
+                            {has_attribute("product_name", data, sort) && (
+                                <TextField source="product_name" label="Product" />
+                            )}
+                            {has_attribute("observation_title", data, sort) && (
+                                <TextField source="observation_title" label="Observation" />
+                            )}
+                            {has_attribute("user_full_name", data, sort) && (
+                                <TextField source="user_full_name" label="User" />
+                            )}
+                            <ChipField source="new_viewed" label="Status" sortable={false} />
+                        </Datagrid>
+                    )}
+                />
             </List>
         </Fragment>
     );

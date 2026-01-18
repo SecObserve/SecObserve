@@ -10,6 +10,13 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.47.0
+
+**Breaking changes**
+
+* The OIDC attribute `prompt` is now configurable and it is not set as default. To return to the former behaviour, you have to set the environment variable `OIDC_PROMPT=select_account` for the frontend in your installation. For further details search for `prompt` in the [OpenID specification](https://openid.net/specs/openid-connect-core-1_0.html).
+
+
 ## Release 1.46.0
 
 **Breaking changes**

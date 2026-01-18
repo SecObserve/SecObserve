@@ -5,21 +5,25 @@ import {
     ChipField,
     CreateButton,
     Datagrid,
+    FieldProps,
     List,
     ReferenceField,
     ReferenceInput,
     TextField,
     TextInput,
     TopToolbar,
+    WithRecord,
+    useRecordContext,
 } from "react-admin";
 
 import general_rules from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { is_superuser } from "../../commons/functions";
-import { feature_general_rules_need_approval_enabled } from "../../commons/functions";
+import TextUrlField from "../../commons/custom_fields/TextUrlField";
+import { feature_general_rules_need_approval_enabled, is_superuser } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
+import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 
 const listFilters = [
@@ -37,6 +41,15 @@ if (feature_general_rules_need_approval_enabled()) {
             alwaysOn
         />
     );
+}
+
+const RuleNameURLField = (props: FieldProps) => {
+    const record = useRecordContext(props);
+    return record ? <TextUrlField text={record.name} url={get_rule_url(record.id)} /> : null;
+};
+
+function get_rule_url(rule_id: number): string {
+    return `#/general_rules/${rule_id}/show`;
 }
 
 const BulkActionButtons = () => {
@@ -62,10 +75,10 @@ const GeneralRuleList = () => {
             >
                 <Datagrid
                     size={getSettingListSize()}
-                    rowClick="show"
+                    rowClick={false}
                     bulkActionButtons={is_superuser() && <BulkActionButtons />}
                 >
-                    <TextField source="name" sx={{ wordBreak: "break-word" }} />
+                    <RuleNameURLField source="name" />
                     <TextField source="new_severity" />
                     <TextField source="new_status" />
                     {feature_general_rules_need_approval_enabled() && <ChipField source="approval_status" />}
@@ -78,6 +91,7 @@ const GeneralRuleList = () => {
                     />
                     <TextField source="scanner_prefix" />
                     <TextField source="title" label="Observation title" />
+                    {is_superuser() && <WithRecord render={(rule) => <RuleSimulation rule={rule} />} />}
                 </Datagrid>
             </List>
         </Fragment>

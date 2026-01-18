@@ -8,10 +8,12 @@ import {
     ReferenceInput,
     TextField,
     TextInput,
+    WithListContext,
 } from "react-admin";
 
 import components from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
@@ -73,14 +75,24 @@ const ComponentList = () => {
                 actions={false}
                 storeKey="components.list"
             >
-                <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
-                    <TextField source="component_name_version_type" label="Component" />
-                    <TextField source="product_name" label="Product" />
-                    <TextField source="product_group_name" label="Group" />
-                    <TextField source="branch_name" label="Branch / Version" />
-                    <TextField source="origin_service_name" label="Service" />
-                    <BooleanField source="has_observations" label="Open observations" />
-                </Datagrid>
+                <WithListContext
+                    render={({ data, sort }) => (
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
+                            <TextField source="component_name_version_type" label="Component" />
+                            <TextField source="product_name" label="Product" />
+                            {has_attribute("product_group_name", data, sort) && (
+                                <TextField source="product_group_name" label="Group" />
+                            )}
+                            {has_attribute("branch_name", data, sort) && (
+                                <TextField source="branch_name" label="Branch / Version" />
+                            )}
+                            {has_attribute("origin_service_name", data, sort) && (
+                                <TextField source="origin_service_name" label="Service" />
+                            )}
+                            <BooleanField source="has_observations" label="Open observations" />
+                        </Datagrid>
+                    )}
+                />
             </List>
         </Fragment>
     );

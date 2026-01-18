@@ -13,6 +13,7 @@ from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
+from application.core.services.security_gate import check_security_gate
 from application.core.types import Assessment_Status, Status
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
@@ -79,8 +80,18 @@ class Rule_Engine:
         else:
             observations = Observation.objects.filter(product=self.product)
 
+        observations = (
+            observations.select_related("parser").select_related("general_rule").select_related("product_rule")
+        )
+
         for observation in observations:
             self.apply_rules_for_observation(observation)
+
+        if self.product.is_product_group:
+            for product in self.product.products.all():
+                check_security_gate(product)
+        else:
+            check_security_gate(self.product)
 
 
 def check_rule_for_observation(
@@ -95,10 +106,8 @@ def check_rule_for_observation(
         and (not rule.scanner_prefix or observation.scanner.lower().startswith(rule.scanner_prefix.lower()))
         and _check_regex(rule.title, observation.title)
         and _check_regex(rule.description_observation, observation.description)
-        and _check_regex(
-            rule.origin_component_name_version,
-            observation.origin_component_name_version,
-        )
+        and _check_regex(rule.origin_component_name_version, observation.origin_component_name_version)
+        and _check_regex(rule.origin_component_purl, observation.origin_component_purl)
         and _check_regex(
             rule.origin_docker_image_name_tag,
             observation.origin_docker_image_name_tag,

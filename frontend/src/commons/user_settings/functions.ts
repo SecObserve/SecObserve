@@ -1,6 +1,12 @@
 import { ThemeType } from "react-admin";
 
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import {
+    METRICS_TIMESPAN_7_DAYS,
+    METRICS_TIMESPAN_30_DAYS,
+    METRICS_TIMESPAN_90_DAYS,
+    METRICS_TIMESPAN_365_DAYS,
+} from "../types";
 
 export async function saveSettingTheme(theme: string) {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -68,27 +74,37 @@ export function getTheme(): ThemeType {
     }
 }
 
-export async function saveSettingListProperties() {
-    const list_settings: { key: string; value: string | null }[] = [];
-    Object.keys(localStorage).forEach(function (ls_key) {
-        if (ls_key.startsWith("RaStore.preferences")) {
-            list_settings.push({ key: ls_key, value: localStorage.getItem(ls_key) });
-        }
-    });
-    const list_setting_string = JSON.stringify(list_settings);
-    saveSetting({ setting_list_properties: list_setting_string });
+export async function saveSettingsMetricsTimespan(setting_metrics_timespan: string) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.setting_metrics_timespan = setting_metrics_timespan;
+    localStorage.setItem("user", JSON.stringify(user));
+    saveSetting({ setting_metrics_timespan: setting_metrics_timespan });
 }
 
-export function setListProperties(setting_list_properties: string) {
-    if (setting_list_properties == null || setting_list_properties == "") {
-        return;
+export function getSettingMetricsTimespan(): string {
+    let setting_metrics_timespan = METRICS_TIMESPAN_7_DAYS;
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        setting_metrics_timespan = user_json.setting_metrics_timespan;
     }
-    const list_settings = JSON.parse(setting_list_properties);
-    list_settings.forEach(function (ls: { key: string; value: string | null }) {
-        if (ls.value != null) {
-            localStorage.setItem(ls.key, ls.value);
-        }
-    });
+
+    return setting_metrics_timespan;
+}
+
+export function getSettingsMetricsTimespanInDays(): number {
+    switch (getSettingMetricsTimespan()) {
+        case METRICS_TIMESPAN_7_DAYS:
+            return 7;
+        case METRICS_TIMESPAN_30_DAYS:
+            return 30;
+        case METRICS_TIMESPAN_90_DAYS:
+            return 90;
+        case METRICS_TIMESPAN_365_DAYS:
+            return 365;
+        default:
+            return 7; // Default to Week
+    }
 }
 
 function saveSetting(setting: any) {

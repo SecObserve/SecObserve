@@ -10,7 +10,7 @@ networks:
 services:
 
   traefik:
-    image: "traefik:v3.6.5"
+    image: "traefik:v3.6.7"
     container_name: "prod_traefik"
     command:
       - "--log.level=INFO"
@@ -35,7 +35,7 @@ services:
       - traefik
 
   frontend:
-    image: ghcr.io/secobserve/secobserve-frontend:1.46.1
+    image: ghcr.io/secobserve/secobserve-frontend:1.47.0
     container_name: "prod_secobserve_frontend"
     labels:
       - "traefik.enable=true"
@@ -50,11 +50,12 @@ services:
       OIDC_REDIRECT_URI: ${SO_OIDC_REDIRECT_URI:-http://secobserve.localhost}
       OIDC_POST_LOGOUT_REDIRECT_URI: ${SO_OIDC_POST_LOGOUT_REDIRECT_URI:-http://secobserve.localhost}
       OIDC_SCOPE: ${SO_OIDC_SCOPE:-openid profile email}
+      OIDC_PROMPT: ${SO_OIDC_PROMPT:-}
     networks:
       - traefik
 
   backend:
-    image: ghcr.io/secobserve/secobserve-backend:1.46.1
+    image: ghcr.io/secobserve/secobserve-backend:1.47.0
     container_name: "prod_secobserve_backend"
     labels:
       - "traefik.enable=true"

@@ -12,13 +12,14 @@ import {
     ResourceContextProvider,
     TextField,
     TextInput,
+    WithListContext,
     useListController,
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { feature_vex_enabled } from "../../commons/functions";
+import { feature_vex_enabled, has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
@@ -46,6 +47,9 @@ const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
 
 function listFilters(product: any) {
     const filters = [];
+
+    filters.push(<TextInput source="observation_title" label="Observation title" alwaysOn />);
+
     if (!product) {
         filters.push(
             <ReferenceInput
@@ -74,6 +78,15 @@ function listFilters(product: any) {
                 alwaysOn
             >
                 <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
+            </ReferenceInput>,
+            <ReferenceInput
+                source="origin_service"
+                reference="services"
+                queryOptions={{ meta: { api_resource: "service_names" } }}
+                sort={{ field: "name", order: "ASC" }}
+                alwaysOn
+            >
+                <AutocompleteInputWide label="Service" optionText="name_with_product" />
             </ReferenceInput>
         );
     }
@@ -92,8 +105,20 @@ function listFilters(product: any) {
             </ReferenceInput>
         );
     }
-
-    filters.push(<TextInput source="observation_title" label="Observation title" alwaysOn />);
+    if (product?.has_services) {
+        filters.push(
+            <ReferenceInput
+                source="origin_service"
+                reference="services"
+                queryOptions={{ meta: { api_resource: "service_names" } }}
+                sort={{ field: "name", order: "ASC" }}
+                filter={{ product: product.id }}
+                alwaysOn
+            >
+                <AutocompleteInputMedium label="Service" optionText="name" />
+            </ReferenceInput>
+        );
+    }
 
     if (!product || product?.has_component) {
         filters.push(<TextInput source="origin_component_name_version" label="Component" alwaysOn />);
@@ -169,88 +194,99 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters(product)} />
-                    <Datagrid
-                        size={getSettingListSize()}
-                        sx={{ width: "100%" }}
-                        bulkActionButtons={
-                            !product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
-                                <BulkActionButtons product={product} storeKey={storeKey} />
-                            ) : (
-                                false
-                            )
-                        }
-                        rowClick={ShowObservationLogs}
-                        resource="observation_logs"
-                    >
-                        {!product && <TextField source="observation_data.product_data.name" label="Product" />}
-                        {!product && (
-                            <TextField source="observation_data.product_data.product_group_name" label="Group" />
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                sx={{ width: "100%" }}
+                                bulkActionButtons={
+                                    !product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
+                                        <BulkActionButtons product={product} storeKey={storeKey} />
+                                    ) : (
+                                        false
+                                    )
+                                }
+                                rowClick={ShowObservationLogs}
+                                resource="observation_logs"
+                            >
+                                <TextField source="observation_data.title" label="Observation" />
+                                {!product && <TextField source="observation_data.product_data.name" label="Product" />}
+                                {!product &&
+                                    has_attribute("observation_data.product_data.product_group_name", data, sort) && (
+                                        <TextField
+                                            source="observation_data.product_data.product_group_name"
+                                            label="Group"
+                                        />
+                                    )}
+                                {has_attribute("observation_data.branch_name", data, sort) && (
+                                    <TextField source="observation_data.branch_name" label="Branch / Version" />
+                                )}
+                                {has_attribute("observation_data.origin_service_name", data, sort) && (
+                                    <TextField source="observation_data.origin_service_name" label="Service" />
+                                )}
+                                {has_attribute("observation_data.origin_component_name_version", data, sort) && (
+                                    <TextField
+                                        source="observation_data.origin_component_name_version"
+                                        label="Component"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("observation_data.origin_docker_image_name_tag_short", data, sort) && (
+                                    <TextField
+                                        source="observation_data.origin_docker_image_name_tag_short"
+                                        label="Container"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("observation_data.origin_endpoint_hostname", data, sort) && (
+                                    <TextField
+                                        source="observation_data.origin_endpoint_hostname"
+                                        label="Host"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("observation_data.origin_source_file", data, sort) && (
+                                    <TextField
+                                        source="observation_data.origin_source_file"
+                                        label="Source"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("observation_data.origin_cloud_qualified_resource", data, sort) && (
+                                    <TextField
+                                        source="observation_data.origin_cloud_qualified_resource"
+                                        label="Cloud res."
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                {has_attribute("observation_data.origin_kubernetes_qualified_resource", data, sort) && (
+                                    <TextField
+                                        source="observation_data.origin_kubernetes_qualified_resource"
+                                        label="Kube. res."
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                <TextField source="user_full_name" label="User" />
+                                <SeverityField label="Severity" source="severity" />
+                                <ChipField source="status" label="Status" emptyText="---" />
+                                {feature_vex_enabled() && has_attribute("vex_justification", data, sort) && (
+                                    <TextField
+                                        label="VEX justification"
+                                        source="vex_justification"
+                                        emptyText="---"
+                                        sx={{ wordBreak: "break-word" }}
+                                    />
+                                )}
+                                <FunctionField
+                                    label="Comment"
+                                    render={(record) => commentShortened(record.comment)}
+                                    sortable={false}
+                                    sx={{ wordBreak: "break-word" }}
+                                />
+                                <DateField source="created" showTime />
+                            </Datagrid>
                         )}
-                        {(!product || product?.has_branches) && (
-                            <TextField source="observation_data.branch_name" label="Branch / Version" />
-                        )}
-                        <TextField source="observation_data.title" label="Observation" />
-                        {(!product || product?.has_component) && (
-                            <TextField
-                                source="observation_data.origin_component_name_version"
-                                label="Component"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {(!product || product?.has_docker_image) && (
-                            <TextField
-                                source="observation_data.origin_docker_image_name_tag_short"
-                                label="Container"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {(!product || product?.has_endpoint) && (
-                            <TextField
-                                source="observation_data.origin_endpoint_hostname"
-                                label="Host"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {(!product || product?.has_source) && (
-                            <TextField
-                                source="observation_data.origin_source_file"
-                                label="Source"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {(!product || product?.has_cloud_resource) && (
-                            <TextField
-                                source="observation_data.origin_cloud_qualified_resource"
-                                label="Cloud res."
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        {(!product || product?.has_kubernetes_resource) && (
-                            <TextField
-                                source="observation_data.origin_kubernetes_qualified_resource"
-                                label="Kube. res."
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        <TextField source="user_full_name" label="User" />
-                        <SeverityField label="Severity" source="severity" />
-                        <ChipField source="status" label="Status" emptyText="---" />
-                        {feature_vex_enabled() && (
-                            <TextField
-                                label="VEX justification"
-                                source="vex_justification"
-                                emptyText="---"
-                                sx={{ wordBreak: "break-word" }}
-                            />
-                        )}
-                        <FunctionField
-                            label="Comment"
-                            render={(record) => commentShortened(record.comment)}
-                            sortable={false}
-                            sx={{ wordBreak: "break-word" }}
-                        />
-                        <DateField source="created" showTime />
-                    </Datagrid>
+                    />
                     <CustomPagination />
                 </div>
             </ListContextProvider>

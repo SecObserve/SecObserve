@@ -251,6 +251,8 @@ class ObservationFilter(FilterSet):
             ("epss_score", "epss_score"),
             ("has_potential_duplicates", "has_potential_duplicates"),
             ("origin_component_purl_type", "origin_component_purl_type"),
+            ("update_impact_score", "update_impact_score"),
+            ("fix_available", "fix_available"),
         ),
     )
 
@@ -272,6 +274,8 @@ class ObservationFilter(FilterSet):
             "origin_component_purl",
             "origin_component_cpe",
             "origin_component_cyclonedx_bom_link",
+            "update_impact_score",
+            "fix_available",
         ]
 
     def get_age(
@@ -321,6 +325,7 @@ class ObservationLogFilter(FilterSet):
     )
     branch_name = CharFilter(field_name="observation__branch__name", lookup_expr="icontains")
     branch = ModelChoiceFilter(field_name="observation__branch", queryset=Branch.objects.all())
+    origin_service = ModelChoiceFilter(field_name="observation__origin_service", queryset=Service.objects.all())
     origin_component_name_version = CharFilter(
         field_name="observation__origin_component_name_version", lookup_expr="icontains"
     )

@@ -6,12 +6,13 @@ import {
     ListContextProvider,
     ResourceContextProvider,
     TextField,
+    WithListContext,
     useListController,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { humanReadableDate } from "../../commons/functions";
+import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { OBSERVATION_STATUS_OPEN } from "../types";
 import { Observation } from "../types";
@@ -50,27 +51,38 @@ const ObservationDashboardList = () => {
             <ResourceContextProvider value="observations">
                 <ListContextProvider value={listContext}>
                     <div style={{ width: "100%" }}>
-                        <Datagrid
-                            size={getSettingListSize()}
-                            sx={{ width: "100%" }}
-                            rowClick={ShowObservations}
-                            bulkActionButtons={false}
-                            resource="observations"
-                            expand={<ObservationExpand showComponent={true} />}
-                            expandSingle
-                        >
-                            <TextField source="product_data.name" label="Product" />
-                            <TextField source="branch_name" label="Branch / Version" />
-                            <TextField source="title" sx={{ wordBreak: "break-word" }} />
-                            <SeverityField label="Severity" source="current_severity" />
-                            <ChipField source="current_status" label="Status" />
-                            <TextField source="scanner_name" label="Scanner" />
-                            <FunctionField<Observation>
-                                label="Age"
-                                sortBy="last_observation_log"
-                                render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                            />
-                        </Datagrid>
+                        <WithListContext
+                            render={({ data, sort }) => (
+                                <Datagrid
+                                    size={getSettingListSize()}
+                                    sx={{ width: "100%" }}
+                                    rowClick={ShowObservations}
+                                    bulkActionButtons={false}
+                                    resource="observations"
+                                    expand={<ObservationExpand showComponent={true} />}
+                                    expandSingle
+                                >
+                                    <TextField source="product_data.name" label="Product" />
+                                    {has_attribute("branch_name", data, sort) && (
+                                        <TextField source="branch_name" label="Branch / Version" />
+                                    )}
+                                    {has_attribute("origin_service_name", data, sort) && (
+                                        <TextField source="origin_service_name" label="Service" />
+                                    )}
+                                    <TextField source="title" sx={{ wordBreak: "break-word" }} />
+                                    <SeverityField label="Severity" source="current_severity" />
+                                    <ChipField source="current_status" label="Status" />
+                                    <TextField source="scanner_name" label="Scanner" />
+                                    <FunctionField<Observation>
+                                        label="Age"
+                                        sortBy="last_observation_log"
+                                        render={(record) =>
+                                            record ? humanReadableDate(record.last_observation_log) : ""
+                                        }
+                                    />
+                                </Datagrid>
+                            )}
+                        />
                         <CustomPagination />
                     </div>
                 </ListContextProvider>

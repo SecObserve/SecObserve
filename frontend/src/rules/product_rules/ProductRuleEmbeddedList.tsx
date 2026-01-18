@@ -2,6 +2,7 @@ import {
     BooleanField,
     ChipField,
     Datagrid,
+    FieldProps,
     FilterForm,
     ListContextProvider,
     ReferenceField,
@@ -9,12 +10,16 @@ import {
     ResourceContextProvider,
     TextField,
     TextInput,
+    WithRecord,
     useListController,
+    useRecordContext,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
+import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 
 function listFilters(product: any) {
@@ -37,6 +42,15 @@ function listFilters(product: any) {
     return filters;
 }
 
+const RuleNameURLField = (props: FieldProps) => {
+    const record = useRecordContext(props);
+    return record ? <TextUrlField text={record.name} url={get_rule_url(record.id)} /> : null;
+};
+
+function get_rule_url(rule_id: number): string {
+    return `#/product_rules/${rule_id}/show`;
+}
+
 type ProductRuleEmbeddedListProps = {
     product: any;
 };
@@ -55,10 +69,6 @@ const ProductRuleEmbeddedList = ({ product }: ProductRuleEmbeddedListProps) => {
         return <div>Loading...</div>;
     }
 
-    const ShowProductRule = (id: any) => {
-        return "../../../../product_rules/" + id + "/show";
-    };
-
     localStorage.setItem("productruleembeddedlist", "true");
     localStorage.removeItem("productruleapprovallist");
 
@@ -71,10 +81,10 @@ const ProductRuleEmbeddedList = ({ product }: ProductRuleEmbeddedListProps) => {
                         size={getSettingListSize()}
                         sx={{ width: "100%" }}
                         bulkActionButtons={false}
-                        rowClick={ShowProductRule}
+                        rowClick={false}
                         resource="product_rules"
                     >
-                        <TextField source="name" sx={{ wordBreak: "break-word" }} />
+                        <RuleNameURLField source="name" />
                         <TextField source="new_severity" />
                         <TextField source="new_status" />
                         {product &&
@@ -91,6 +101,7 @@ const ProductRuleEmbeddedList = ({ product }: ProductRuleEmbeddedListProps) => {
                         />
                         <TextField source="scanner_prefix" />
                         <TextField source="title" label="Observation title" />
+                        <WithRecord render={(rule) => <RuleSimulation rule={rule} product={product} />} />
                     </Datagrid>
                     <CustomPagination />
                 </div>

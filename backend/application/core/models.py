@@ -33,7 +33,7 @@ from application.core.types import (
 from application.issue_tracker.types import Issue_Tracker
 
 
-class Product(Model):  # pylint: disable=too-many-instance-attributes
+class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-attributes
     name = CharField(max_length=255, unique=True)
     description = TextField(max_length=2048, blank=True)
 
@@ -375,6 +375,9 @@ class Observation(Model):
 
     risk_acceptance_expiry_date = DateField(null=True)
 
+    update_impact_score = IntegerField(null=True, validators=[MinValueValidator(0), MaxValueValidator(999999)])
+    fix_available = BooleanField(null=True)
+
     class Meta:
         indexes = [
             Index(fields=["product", "branch"]),
@@ -394,6 +397,7 @@ class Observation(Model):
             Index(fields=["last_observation_log"]),
             Index(fields=["epss_score"]),
             Index(fields=["scanner"]),
+            Index(fields=["update_impact_score"]),
         ]
 
     def __str__(self) -> str:

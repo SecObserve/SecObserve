@@ -111,7 +111,9 @@ def get_origins(finding: DetectionFinding) -> list[Origin]:
     if finding.finding_info.uid.startswith("prowler-kubernetes"):
         for resource in finding.resources:
             namespace = ""
-            if resource.region and ":" in resource.region:
+            if resource.namespace:
+                namespace = resource.namespace
+            elif resource.region and ":" in resource.region:
                 namespace = resource.region.split(":")[1].strip()
             origins.append(
                 Origin(

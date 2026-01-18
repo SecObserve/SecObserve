@@ -1,5 +1,6 @@
 from typing import Any
 
+from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     BooleanField,
@@ -12,7 +13,7 @@ from application.commons.services.request_cache import cache_for_request
 from application.commons.types import VEX_Justification_Styles
 
 
-class Settings(Model):
+class Settings(Model, DirtyFieldsMixin):
     security_gate_active = BooleanField(default=True, help_text="Is the security gate activated?")
     security_gate_threshold_critical = IntegerField(
         default=0,

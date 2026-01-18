@@ -235,8 +235,6 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     has_licenses = SerializerMethodField()
     product_group_license_policy = SerializerMethodField()
     has_api_configurations = SerializerMethodField()
-    has_branch_purls = SerializerMethodField()
-    has_branch_cpe23s = SerializerMethodField()
     has_branch_osv_linux_distribution = SerializerMethodField()
     has_concluded_comments = SerializerMethodField()
 
@@ -315,12 +313,6 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     def get_has_api_configurations(self, obj: Product) -> bool:
         return Api_Configuration.objects.filter(product=obj).exists()
-
-    def get_has_branch_purls(self, obj: Product) -> bool:
-        return Branch.objects.filter(product=obj).exclude(purl="").exists()
-
-    def get_has_branch_cpe23s(self, obj: Product) -> bool:
-        return Branch.objects.filter(product=obj).exclude(cpe23="").exists()
 
     def get_has_branch_osv_linux_distribution(self, obj: Product) -> bool:
         return Branch.objects.filter(product=obj).exclude(osv_linux_distribution="").exists()

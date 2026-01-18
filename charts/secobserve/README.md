@@ -1,6 +1,6 @@
 # secobserve
 
-![Version: 1.0.13](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.46.1](https://img.shields.io/badge/AppVersion-1.46.1-informational?style=flat-square)
+![Version: 1.0.14](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.47.0](https://img.shields.io/badge/AppVersion-1.47.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system designed for software development teams and cloud-native environments. SecObserve helps teams identify, manage, and remediate security vulnerabilities and license compliance issues across their software projects, enhancing visibility and improving DevSecOps workflows.
 
@@ -76,7 +76,7 @@ A Helm chart to deploy SecObserve, an open-source vulnerability and license mana
 | backend.image.pullPolicy | string | `"IfNotPresent"` |  |
 | backend.image.registry | string | `"docker.io"` |  |
 | backend.image.repository | string | `"ghcr.io/secobserve/secobserve-backend"` |  |
-| backend.image.tag | string | `"1.46.1"` |  |
+| backend.image.tag | string | `"1.47.0"` |  |
 | backend.resources.limits.cpu | string | `"1000m"` |  |
 | backend.resources.limits.memory | string | `"1500Mi"` |  |
 | backend.resources.requests.cpu | string | `"1000m"` |  |
@@ -113,10 +113,12 @@ A Helm chart to deploy SecObserve, an open-source vulnerability and license mana
 | frontend.env[4].value | string | `"https://secobserve.dev/"` |  |
 | frontend.env[5].name | string | `"OIDC_POST_LOGOUT_REDIRECT_URI"` |  |
 | frontend.env[5].value | string | `"https://secobserve.dev/"` |  |
+| frontend.env[5].name | string | `"OIDC_PROMPT"` |  |
+| frontend.env[5].value | string | null |  |
 | frontend.image.pullPolicy | string | `"IfNotPresent"` |  |
 | frontend.image.registry | string | `"docker.io"` |  |
 | frontend.image.repository | string | `"ghcr.io/secobserve/secobserve-frontend"` |  |
-| frontend.image.tag | string | `"1.46.1"` |  |
+| frontend.image.tag | string | `"1.47.0"` |  |
 | frontend.resources.limits.cpu | string | `"500m"` |  |
 | frontend.resources.limits.memory | string | `"1000Mi"` |  |
 | frontend.resources.requests.cpu | string | `"500m"` |  |

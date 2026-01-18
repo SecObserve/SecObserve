@@ -12,12 +12,20 @@ import {
 import { Title, useTheme } from "react-admin";
 
 import {
+    METRICS_TIMESPAN_7_DAYS,
+    METRICS_TIMESPAN_30_DAYS,
+    METRICS_TIMESPAN_90_DAYS,
+    METRICS_TIMESPAN_365_DAYS,
+} from "../types";
+import {
     getSettingListSize,
+    getSettingMetricsTimespan,
     getSettingPackageInfoPreference,
     getSettingTheme,
     saveSettingListSize,
     saveSettingPackageInfoPreference,
     saveSettingTheme,
+    saveSettingsMetricsTimespan,
 } from "./functions";
 
 const UserSettings = () => {
@@ -99,6 +107,38 @@ const UserSettings = () => {
                                 control={<Radio />}
                                 label="ecosyste.ms"
                                 onClick={() => saveSettingPackageInfoPreference("ecosyste.ms")}
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
+                        Metrics Timespan (days)
+                    </Typography>
+                    <FormControl>
+                        <RadioGroup defaultValue={getSettingMetricsTimespan()} name="radio-buttons-group-list-size" row>
+                            <FormControlLabel
+                                value={METRICS_TIMESPAN_7_DAYS}
+                                control={<Radio />}
+                                label="7"
+                                onClick={() => saveSettingsMetricsTimespan(METRICS_TIMESPAN_7_DAYS)}
+                            />
+                            <FormControlLabel
+                                value={METRICS_TIMESPAN_30_DAYS}
+                                control={<Radio />}
+                                label="30"
+                                onClick={() => saveSettingsMetricsTimespan(METRICS_TIMESPAN_30_DAYS)}
+                            />
+                            <FormControlLabel
+                                value={METRICS_TIMESPAN_90_DAYS}
+                                control={<Radio />}
+                                label="90"
+                                onClick={() => saveSettingsMetricsTimespan(METRICS_TIMESPAN_90_DAYS)}
+                            />
+                            <FormControlLabel
+                                value={METRICS_TIMESPAN_365_DAYS}
+                                control={<Radio />}
+                                label="365"
+                                onClick={() => saveSettingsMetricsTimespan(METRICS_TIMESPAN_365_DAYS)}
                             />
                         </RadioGroup>
                     </FormControl>
