@@ -4,7 +4,7 @@ frontend:
   image:
     registry: ghcr.io
     repository: secobserve/secobserve-frontend
-    tag: 1.47.0
+    tag: 1.47.1
     pullPolicy: IfNotPresent
   securityContext:
     enabled: true
@@ -41,7 +41,7 @@ backend:
   image:
     registry: ghcr.io
     repository: secobserve/secobserve-backend
-    tag: 1.47.0
+    tag: 1.47.1
     pullPolicy: IfNotPresent
   securityContext:
     enabled: true
