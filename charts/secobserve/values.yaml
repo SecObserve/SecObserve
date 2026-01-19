@@ -48,25 +48,21 @@ backend:
   env:
     - name: ADMIN_EMAIL
       value: admin@admin.com
-    - name: DATABASE_ENGINE
-      value: "django.db.backends.postgresql"
-    - name: DATABASE_HOST
-      value: secobserve-postgresql
-    - name: DATABASE_PORT
-      value: "5432"
-    - name: DATABASE_DB
-      value: secobserve
-    - name: DATABASE_USER
-      value: secobserve
-    - name: DATABASE_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: secobserve-postgresql
-          key: password
     - name: ALLOWED_HOSTS
       value: secobserve.dev
     - name: CORS_ALLOWED_ORIGINS
       value: https://secobserve.dev
+    # - name: DATABASE_ENGINE
+    #   value: "django.db.backends.postgresql"
+    # - name: DATABASE_HOST
+    #   value: "{{ .Chart.Name }}-{{ .Release.Name }}-postgresql"
+    # - name: DATABASE_PORT
+    #   value: "5432"
+    # - name: DATABASE_DB
+    #   value: secobserve
+    # - name: DATABASE_USER
+    #   value: secobserve
+    # - name: DATABASE_PASSWORD
     - name: OIDC_AUTHORITY
       value: https://oidc.secobserve.dev
     - name: OIDC_CLIENT_ID

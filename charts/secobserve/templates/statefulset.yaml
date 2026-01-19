@@ -128,6 +128,21 @@ spec:
                 secretKeyRef:
                   name: "{{ $secretName }}"
                   key: field_encryption_key
+            - name: DATABASE_ENGINE
+              value: "django.db.backends.postgresql"
+            - name: DATABASE_HOST
+              value: "{{ .Chart.Name }}-{{ .Release.Name }}-postgresql"
+            - name: DATABASE_PORT
+              value: "5432"
+            - name: DATABASE_DB
+              value: secobserve
+            - name: DATABASE_USER
+              value: secobserve
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Chart.Name }}-{{ .Release.Name }}-postgresql"
+                  key: password
           {{- with .Values.backend.env }}
           {{- toYaml . | nindent 12 }}
           {{- end }}
