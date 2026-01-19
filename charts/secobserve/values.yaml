@@ -1,29 +1,43 @@
 replicaCount: 1
 
 frontend:
+  # -- image to use
   image:
+    # -- registry to use for the frontend image
     registry: ghcr.io
+    # -- image repository
     repository: secobserve/secobserve-frontend
+    # -- (string) Tag to use for image
+    # @default -- {{ .Chart.AppVersion }}
     tag:
+    # -- image pull policy
     pullPolicy: IfNotPresent
+  # -- frontend container security context
   securityContext:
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
     runAsNonRoot: true
   env:
+      # -- API base URL
     - name: API_BASE_URL
       value: https://secobserve.dev/api
+      # -- OIDC enabled
     - name: OIDC_ENABLED
       value: "false"
+      # -- OIDC authority
     - name: OIDC_AUTHORITY
       value: https://oidc.secobserve.dev
+      # -- OIDC client ID
     - name: OIDC_CLIENT_ID
       value: secobserve
+      # -- OIDC redirect URI
     - name: OIDC_REDIRECT_URI
       value: https://secobserve.dev/
+      # -- OIDC post logout redirect URI
     - name: OIDC_POST_LOGOUT_REDIRECT_URI
       value: https://secobserve.dev/
+  # -- resource requirements and limits for the frontend container
   resources:
     limits:
       cpu: 500m
@@ -31,25 +45,36 @@ frontend:
     requests:
       cpu: 500m
       memory: 1000Mi
+  # -- service configuration
   service:
     port: 3000
 
 backend:
+  # -- backend image
   image:
+    # -- registry to use for the frontend image
     registry: ghcr.io
+    # -- backend image repository
     repository: secobserve/secobserve-backend
+    # -- (string) Tag to use for image 
+    # @default -- {{ .Chart.AppVersion }}
     tag:
+    # -- image pull policy
     pullPolicy: IfNotPresent
+  # -- backend container security context
   securityContext:
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
     runAsNonRoot: true
   env:
+      # -- Email address of the admin user
     - name: ADMIN_EMAIL
       value: admin@admin.com
+      # -- allowed hosts
     - name: ALLOWED_HOSTS
       value: secobserve.dev
+      # -- CORS allowed origins
     - name: CORS_ALLOWED_ORIGINS
       value: https://secobserve.dev
     # - name: DATABASE_ENGINE
@@ -63,22 +88,31 @@ backend:
     # - name: DATABASE_USER
     #   value: secobserve
     # - name: DATABASE_PASSWORD
+    # -- OIDC authority
     - name: OIDC_AUTHORITY
       value: https://oidc.secobserve.dev
+    # -- OIDC client ID
     - name: OIDC_CLIENT_ID
       value: secobserve
+    # -- OIDC user name
     - name: OIDC_USERNAME
       value: preferred_username
+    # -- OIDC first name
     - name: OIDC_FIRST_NAME
       value: given_name
+    # -- OIDC last name
     - name: OIDC_LAST_NAME
       value: family_name
+    # -- OIDC full name
     - name: OIDC_FULL_NAME
       value: preferred_username
+    # -- OIDC email
     - name: OIDC_EMAIL
       value: email
+    # OIDC groups
     - name: OIDC_GROUPS
       value: groups
+  # -- resource requirements and limits
   resources:
     limits:
       cpu: 1000m
@@ -86,16 +120,18 @@ backend:
     requests:
       cpu: 1000m
       memory: 1500Mi
+  # -- service port
   service:
     port: 5000
 
-# Defines the secobserve http service
+# -- Defines the secobserve http service
 service:
   type: ClusterIP
-  # If you want to use a NodePort service for ALB, uncomment the following line
+  # -- If you want to use a NodePort service for ALB, uncomment the following line
   # type: NodePort
 
 ingress:
+  # -- enable the ingress definition
   # If true, a Kubernetes Ingress resource will be created to the http port of the secobserve Service
   enabled: true
   hostname: "secobserve.dev"
@@ -114,17 +150,17 @@ ingress:
     # Configure a custom timeout for the proxy
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-  # # TLS configuration for HTTPS
+  # -- TLS configuration for HTTPS
   # tls:
   #   secretName: secobserve-tls
 
-# Node labels for secobserve pod assignment
+# -- Node labels for secobserve pod assignment
 nodeSelector: {}
 
-# Toleration labels for pod assignment
+# -- Toleration labels for pod assignment
 tolerations: {}
 
-# Sets the affinity for the secobserve pod
+# -- Sets the affinity for the secobserve pod
 # For more information on affinity, see https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
 affinity: {}
 
@@ -140,6 +176,7 @@ affinity: {}
 ## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
 ##
 postgresql:
+  # -- enables the bitnami postgres subchart if `true`
   enabled: true
   image:
     repository: bitnamilegacy/postgresql
@@ -164,19 +201,19 @@ dbchecker:
   hostname:
   port: 5432
   image:
-    # Docker image used to check Database readiness at startup
+    # -- Docker image used to check Database readiness at startup
     repository: busybox
-    # Image tag for the dbchecker image
+    # -- Image tag for the dbchecker image
     tag: latest
-    # Image pull policy for the dbchecker image
+    # -- Image pull policy for the dbchecker image
     pullPolicy: IfNotPresent
-  # SecurityContext for the dbchecker container
+  # -- SecurityContext for the dbchecker container
   securityContext:
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
     runAsNonRoot: true
-  # Resource requests and limits for the dbchecker container
+  # -- Resource requests and limits for the dbchecker container
   resources:
     requests:
       cpu: "20m"
@@ -185,13 +222,14 @@ dbchecker:
       cpu: "20m"
       memory: "32Mi"
 
+# -- defines the generated secret for secobserve. Will only be generated if the secret does not exist yet
 secobserveSecret:
-  # Specify the name of an existing secret.
+  # -- Specify the name of an existing secret. Disables generation of the default secret
   existingSecret: ""
-  # Username for the admin user
+  # -- Username for the admin user
   adminUser: admin
-  # An empty adminPasword will generate a random password
+  # -- An empty adminPasword will generate a random password
   adminPassword: ""
 
-# Database secret name is required if the postgres subchart is disabled
+# -- Database secret name is required if the postgres subchart is disabled
 databaseSecretName: ""
