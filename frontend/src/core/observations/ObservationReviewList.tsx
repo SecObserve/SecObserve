@@ -201,7 +201,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters(product)} />
                     <WithListContext
-                        render={({ data }) => (
+                        render={({ data, sort }) => (
                             <Datagrid
                                 size={getSettingListSize()}
                                 sx={{ width: "100%" }}
@@ -218,62 +218,55 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                 <TextField source="title" />
                                 <SeverityField label="Severity" source="current_severity" />
                                 <ChipField source="current_status" label="Status" />
-                                {((!product && has_attribute("epss_score", data)) || product?.has_component) && (
+                                {has_attribute("epss_score", data, sort) && (
                                     <NumberField source="epss_score" label="EPSS" />
                                 )}
                                 {!product && <TextField source="product_data.name" label="Product" />}
-                                {!product && has_attribute("product_data.product_group_name", data) && (
+                                {!product && has_attribute("product_data.product_group_name", data, sort) && (
                                     <TextField source="product_data.product_group_name" label="Group" />
                                 )}
-                                {((!product && has_attribute("branch_name", data)) || product?.has_branches) && (
+                                {has_attribute("branch_name", data, sort) && (
                                     <TextField source="branch_name" label="Branch / Version" />
                                 )}
-                                {((!product && has_attribute("origin_service_name", data)) ||
-                                    product?.has_services) && (
+                                {has_attribute("origin_service_name", data, sort) && (
                                     <TextField source="origin_service_name" label="Service" />
                                 )}
-                                {((!product && has_attribute("origin_component_name_version", data)) ||
-                                    product?.has_component) && (
+                                {has_attribute("origin_component_name_version", data, sort) && (
                                     <TextField
                                         source="origin_component_name_version"
                                         label="Component"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("origin_docker_image_name_tag_short", data)) ||
-                                    product?.has_docker_image) && (
+                                {has_attribute("origin_docker_image_name_tag_short", data, sort) && (
                                     <TextField
                                         source="origin_docker_image_name_tag_short"
                                         label="Container"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("origin_endpoint_hostname", data)) ||
-                                    product?.has_endpoint) && (
+                                {has_attribute("origin_endpoint_hostname", data, sort) && (
                                     <TextField
                                         source="origin_endpoint_hostname"
                                         label="Host"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("origin_source_file_short", data)) ||
-                                    product?.has_source) && (
+                                {has_attribute("origin_source_file_short", data, sort) && (
                                     <TextField
                                         source="origin_source_file_short"
                                         label="Source"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("origin_cloud_qualified_resource", data)) ||
-                                    product?.has_cloud_resource) && (
+                                {has_attribute("origin_cloud_qualified_resource", data, sort) && (
                                     <TextField
                                         source="origin_cloud_qualified_resource"
                                         label="Cloud res."
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("origin_kubernetes_qualified_resource", data)) ||
-                                    product?.has_kubernetes_resource) && (
+                                {has_attribute("origin_kubernetes_qualified_resource", data, sort) && (
                                     <TextField
                                         source="origin_kubernetes_qualified_resource"
                                         label="Kube. res."

@@ -57,7 +57,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <WithListContext
-                        render={({ data }) => (
+                        render={({ data, sort }) => (
                             <Datagrid
                                 size={getSettingListSize()}
                                 sx={{ width: "100%" }}
@@ -70,8 +70,8 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                     label="Default branch / version"
                                     sortable={false}
                                 />
-                                {has_attribute("purl", data) && <TextField source="purl" label="PURL" />}
-                                {has_attribute("cpe23", data) && <TextField source="cpe23" label="CPE 2.3" />}
+                                {has_attribute("purl", data, sort) && <TextField source="purl" label="PURL" />}
+                                {has_attribute("cpe23", data, sort) && <TextField source="cpe23" label="CPE 2.3" />}
                                 <WithRecord
                                     label="Protect"
                                     render={(branch) =>

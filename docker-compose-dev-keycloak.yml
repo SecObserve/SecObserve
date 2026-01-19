@@ -21,6 +21,7 @@ services:
       OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-secobserve}
       OIDC_REDIRECT_URI: ${SO_OIDC_REDIRECT_URI:-http://localhost:3000}
       OIDC_POST_LOGOUT_REDIRECT_URI: ${SO_OIDC_POST_LOGOUT_REDIRECT_URI:-http://localhost:3000}
+      OIDC_PROMPT: ${SO_OIDC_PROMPT:-}
 
   backend:
     build:
@@ -86,7 +87,7 @@ services:
       - "8025:8025"
 
   keycloak:
-    image: keycloak/keycloak:26.5.0
+    image: keycloak/keycloak:26.5.1
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin

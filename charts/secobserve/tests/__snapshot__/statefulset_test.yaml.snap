@@ -39,7 +39,7 @@ should exclude initContainer dbchecker if disabled:
                   value: https://secobserve.dev/
                 - name: OIDC_POST_LOGOUT_REDIRECT_URI
                   value: https://secobserve.dev/
-              image: ghcr.io/secobserve/secobserve-frontend:1.46.1
+              image: ghcr.io/secobserve/secobserve-frontend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -122,7 +122,7 @@ should exclude initContainer dbchecker if disabled:
                   value: email
                 - name: OIDC_GROUPS
                   value: groups
-              image: ghcr.io/secobserve/secobserve-backend:1.46.1
+              image: ghcr.io/secobserve/secobserve-backend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -204,7 +204,7 @@ should include affinity if specified:
                   value: https://secobserve.dev/
                 - name: OIDC_POST_LOGOUT_REDIRECT_URI
                   value: https://secobserve.dev/
-              image: ghcr.io/secobserve/secobserve-frontend:1.46.1
+              image: ghcr.io/secobserve/secobserve-frontend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -287,7 +287,7 @@ should include affinity if specified:
                   value: email
                 - name: OIDC_GROUPS
                   value: groups
-              image: ghcr.io/secobserve/secobserve-backend:1.46.1
+              image: ghcr.io/secobserve/secobserve-backend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -386,7 +386,7 @@ should include initContainer dbchecker if enabled:
                   value: https://secobserve.dev/
                 - name: OIDC_POST_LOGOUT_REDIRECT_URI
                   value: https://secobserve.dev/
-              image: ghcr.io/secobserve/secobserve-frontend:1.46.1
+              image: ghcr.io/secobserve/secobserve-frontend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -469,7 +469,7 @@ should include initContainer dbchecker if enabled:
                   value: email
                 - name: OIDC_GROUPS
                   value: groups
-              image: ghcr.io/secobserve/secobserve-backend:1.46.1
+              image: ghcr.io/secobserve/secobserve-backend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -750,7 +750,7 @@ should render nodeSelector if provided:
                   value: https://secobserve.dev/
                 - name: OIDC_POST_LOGOUT_REDIRECT_URI
                   value: https://secobserve.dev/
-              image: ghcr.io/secobserve/secobserve-frontend:1.46.1
+              image: ghcr.io/secobserve/secobserve-frontend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12
@@ -833,7 +833,7 @@ should render nodeSelector if provided:
                   value: email
                 - name: OIDC_GROUPS
                   value: groups
-              image: ghcr.io/secobserve/secobserve-backend:1.46.1
+              image: ghcr.io/secobserve/secobserve-backend:1.47.1
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 failureThreshold: 12

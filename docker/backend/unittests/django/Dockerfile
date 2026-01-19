@@ -29,7 +29,7 @@ RUN poetry install --extras "unittests" --no-root && rm -rf "$POETRY_CACHE_DIR"
 # Python 'run' stage
 FROM python-base AS python-run-stage
 
-ENV SO_UNITTESTS=true
+ENV HUEY_IMMEDIATE=true
 
 ARG BUILD_ENVIRONMENT=prod
 ARG APP_HOME=/app

@@ -3,7 +3,7 @@ import logging
 from django.core.paginator import Paginator
 from django.db import migrations
 
-from application.core.services.observation import normalize_origin_component
+from application.core.services.observation import _normalize_origin_component
 
 logger = logging.getLogger("secobserve.migration")
 
@@ -20,7 +20,7 @@ def populate_purl_type(apps, schema_editor):
         updates = []
 
         for observation in page.object_list:
-            normalize_origin_component(observation)
+            _normalize_origin_component(observation)
             updates.append(observation)
 
         Observation.objects.bulk_update(updates, ["origin_component_purl_type"])

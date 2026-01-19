@@ -375,6 +375,9 @@ class Observation(Model):
 
     risk_acceptance_expiry_date = DateField(null=True)
 
+    update_impact_score = IntegerField(null=True, validators=[MinValueValidator(0), MaxValueValidator(999999)])
+    fix_available = BooleanField(null=True)
+
     class Meta:
         indexes = [
             Index(fields=["product", "branch"]),
@@ -394,6 +397,7 @@ class Observation(Model):
             Index(fields=["last_observation_log"]),
             Index(fields=["epss_score"]),
             Index(fields=["scanner"]),
+            Index(fields=["update_impact_score"]),
         ]
 
     def __str__(self) -> str:

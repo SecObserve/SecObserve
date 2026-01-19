@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import { Labeled, useRecordContext } from "react-admin";
+import { Labeled, NumberField, useRecordContext } from "react-admin";
 
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 
@@ -12,11 +12,18 @@ const ObservationShowDescriptionRecommendation = () => {
                     <MarkdownField content={observation.description} label="Description" />
                 </Labeled>
             )}
-            {observation && observation.recommendation != "" && (
-                <Labeled>
-                    <MarkdownField content={observation.recommendation} label="Recommendation" />
-                </Labeled>
-            )}
+            <Stack spacing={4} direction={"row"}>
+                {observation && observation?.recommendation != "" && (
+                    <Labeled>
+                        <MarkdownField content={observation.recommendation} label="Recommendation" />
+                    </Labeled>
+                )}
+                {observation?.update_impact_score !== null && (
+                    <Labeled>
+                        <NumberField label="Update impact score" source="update_impact_score" />
+                    </Labeled>
+                )}
+            </Stack>
         </Stack>
     );
 };

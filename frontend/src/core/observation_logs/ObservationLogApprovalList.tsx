@@ -195,7 +195,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters(product)} />
                     <WithListContext
-                        render={({ data }) => (
+                        render={({ data, sort }) => (
                             <Datagrid
                                 size={getSettingListSize()}
                                 sx={{ width: "100%" }}
@@ -212,65 +212,54 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                 <TextField source="observation_data.title" label="Observation" />
                                 {!product && <TextField source="observation_data.product_data.name" label="Product" />}
                                 {!product &&
-                                    has_attribute("observation_data.product_data.product_group_name", data) && (
+                                    has_attribute("observation_data.product_data.product_group_name", data, sort) && (
                                         <TextField
                                             source="observation_data.product_data.product_group_name"
                                             label="Group"
                                         />
                                     )}
-                                {((!product && has_attribute("observation_data.branch_name", data)) ||
-                                    product?.has_branches) && (
+                                {has_attribute("observation_data.branch_name", data, sort) && (
                                     <TextField source="observation_data.branch_name" label="Branch / Version" />
                                 )}
-                                {((!product && has_attribute("observation_data.origin_service_name", data)) ||
-                                    product?.has_services) && (
+                                {has_attribute("observation_data.origin_service_name", data, sort) && (
                                     <TextField source="observation_data.origin_service_name" label="Service" />
                                 )}
-                                {((!product && has_attribute("observation_data.origin_component_name_version", data)) ||
-                                    product?.has_component) && (
+                                {has_attribute("observation_data.origin_component_name_version", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_component_name_version"
                                         label="Component"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_docker_image_name_tag_short", data)) ||
-                                    product?.has_docker_image) && (
+                                {has_attribute("observation_data.origin_docker_image_name_tag_short", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_docker_image_name_tag_short"
                                         label="Container"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("observation_data.origin_endpoint_hostname", data)) ||
-                                    product?.has_endpoint) && (
+                                {has_attribute("observation_data.origin_endpoint_hostname", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_endpoint_hostname"
                                         label="Host"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product && has_attribute("observation_data.origin_source_file", data)) ||
-                                    product?.has_source) && (
+                                {has_attribute("observation_data.origin_source_file", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_source_file"
                                         label="Source"
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_cloud_qualified_resource", data)) ||
-                                    product?.has_cloud_resource) && (
+                                {has_attribute("observation_data.origin_cloud_qualified_resource", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_cloud_qualified_resource"
                                         label="Cloud res."
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                {((!product &&
-                                    has_attribute("observation_data.origin_kubernetes_qualified_resource", data)) ||
-                                    product?.has_kubernetes_resource) && (
+                                {has_attribute("observation_data.origin_kubernetes_qualified_resource", data, sort) && (
                                     <TextField
                                         source="observation_data.origin_kubernetes_qualified_resource"
                                         label="Kube. res."
@@ -280,7 +269,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                 <TextField source="user_full_name" label="User" />
                                 <SeverityField label="Severity" source="severity" />
                                 <ChipField source="status" label="Status" emptyText="---" />
-                                {feature_vex_enabled() && has_attribute("vex_justification", data) && (
+                                {feature_vex_enabled() && has_attribute("vex_justification", data, sort) && (
                                     <TextField
                                         label="VEX justification"
                                         source="vex_justification"

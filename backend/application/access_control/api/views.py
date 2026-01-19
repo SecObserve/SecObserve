@@ -134,7 +134,7 @@ class UserViewSet(ModelViewSet):
         setting_theme = request_serializer.validated_data.get("setting_theme")
         setting_list_size = request_serializer.validated_data.get("setting_list_size")
         setting_package_info_preference = request_serializer.validated_data.get("setting_package_info_preference")
-        setting_list_properties = request_serializer.validated_data.get("setting_list_properties")
+        setting_metrics_timespan = request_serializer.validated_data.get("setting_metrics_timespan")
         user = request.user
         if isinstance(user, AnonymousUser):
             raise PermissionDenied("You must be authenticated to change settings")
@@ -145,8 +145,8 @@ class UserViewSet(ModelViewSet):
             user.setting_list_size = setting_list_size
         if setting_package_info_preference:
             user.setting_package_info_preference = setting_package_info_preference
-        if setting_list_properties:
-            user.setting_list_properties = setting_list_properties
+        if setting_metrics_timespan:
+            user.setting_metrics_timespan = setting_metrics_timespan
         user.save()
 
         response_serializer = UserSerializer(request.user)

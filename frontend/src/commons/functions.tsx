@@ -1,4 +1,5 @@
 import { PackageURL } from "packageurl-js";
+import { SortPayload } from "ra-core";
 
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import {
@@ -364,7 +365,11 @@ export const is_external = () => {
     return user && JSON.parse(user).is_external;
 };
 
-export function has_attribute(attribute: string, data: any) {
+export function has_attribute(attribute: string, data: any, sort: SortPayload | undefined) {
+    if (sort?.field === attribute) {
+        return true;
+    }
+
     if (!data || !Array.isArray(data)) {
         return false;
     }

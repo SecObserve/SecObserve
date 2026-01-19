@@ -166,6 +166,7 @@ export const RuleShowComponent = ({ rule }: any) => {
 
             {rule &&
                 (rule.origin_component_name_version ||
+                    rule.origin_component_purl ||
                     rule.origin_docker_image_name_tag ||
                     rule.origin_endpoint_url ||
                     rule.origin_service_name ||
@@ -180,6 +181,11 @@ export const RuleShowComponent = ({ rule }: any) => {
                             {rule.origin_component_name_version && (
                                 <Labeled label="Component name:version">
                                     <TextField source="origin_component_name_version" />
+                                </Labeled>
+                            )}
+                            {rule.origin_component_purl && (
+                                <Labeled label="Component PURL">
+                                    <TextField source="origin_component_purl" />
                                 </Labeled>
                             )}
                             {rule.origin_docker_image_name_tag && (
@@ -269,6 +275,7 @@ export const non_duplicate_transform = (data: any, description: string) => {
     data.scanner_prefix ??= "";
 
     data.origin_component_name_version ??= "";
+    data.origin_component_purl ??= "";
     data.origin_docker_image_name_tag ??= "";
     data.origin_endpoint_url ??= "";
     data.origin_service_name ??= "";
@@ -381,6 +388,12 @@ export const RuleCreateEditComponent = ({
                     label="Component name:version"
                     helperText="Regular expression to match the component name:version"
                     validate={validate_513}
+                />
+                <TextInputWide
+                    source="origin_component_purl"
+                    label="Component PURL"
+                    helperText="Regular expression to match the component PURL"
+                    validate={validate_255}
                 />
                 <TextInputWide
                     source="origin_docker_image_name_tag"

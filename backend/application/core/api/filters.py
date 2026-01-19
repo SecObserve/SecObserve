@@ -251,6 +251,8 @@ class ObservationFilter(FilterSet):
             ("epss_score", "epss_score"),
             ("has_potential_duplicates", "has_potential_duplicates"),
             ("origin_component_purl_type", "origin_component_purl_type"),
+            ("update_impact_score", "update_impact_score"),
+            ("fix_available", "fix_available"),
         ),
     )
 
@@ -272,6 +274,8 @@ class ObservationFilter(FilterSet):
             "origin_component_purl",
             "origin_component_cpe",
             "origin_component_cyclonedx_bom_link",
+            "update_impact_score",
+            "fix_available",
         ]
 
     def get_age(

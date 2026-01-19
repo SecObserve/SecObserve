@@ -1,4 +1,5 @@
 import hashlib
+import re
 from decimal import Decimal
 from urllib.parse import urlparse
 
@@ -7,6 +8,10 @@ from packageurl import PackageURL
 
 from application.core.models import Observation
 from application.core.types import Severity, Status
+
+VERSION_REGEX = r"(?:\s|^)+(?:\d+:)?v?(\d+[\.\d]*)"  # NOSONAR
+VERSION_REGEX_COMPILED = re.compile(VERSION_REGEX)
+# The regex will never be used on an empty string
 
 
 def get_identity_hash(observation: Observation) -> str:
@@ -144,19 +149,21 @@ def get_current_vex_justification(observation: Observation) -> str:
 
 
 def normalize_observation_fields(observation: Observation) -> None:
-    normalize_origin_component(observation)
-    normalize_origin_docker(observation)
-    normalize_origin_endpoint(observation)
-    normalize_origin_cloud(observation)
-    normalize_origin_kubernetes(observation)
+    _normalize_origin_component(observation)
+    _normalize_origin_docker(observation)
+    _normalize_origin_endpoint(observation)
+    _normalize_origin_cloud(observation)
+    _normalize_origin_kubernetes(observation)
 
-    normalize_severity(observation)
-    normalize_status(observation)
-    normalize_vex_justification(observation)
+    _normalize_severity(observation)
+    _normalize_status(observation)
+    _normalize_vex_justification(observation)
 
-    normalize_description(observation)
-    normalize_vulnerability_ids(observation)
-    normalize_cvss_vectors(observation)
+    _normalize_description(observation)
+    _normalize_vulnerability_ids(observation)
+    _normalize_cvss_vectors(observation)
+
+    _normalize_update_impact_score_and_fix_available(observation)
 
     if observation.recommendation is None:
         observation.recommendation = ""
@@ -180,14 +187,14 @@ def normalize_observation_fields(observation: Observation) -> None:
         observation.issue_tracker_jira_initial_status = ""
 
 
-def normalize_vulnerability_ids(observation: Observation) -> None:
+def _normalize_vulnerability_ids(observation: Observation) -> None:
     if observation.vulnerability_id is None:
         observation.vulnerability_id = ""
     if observation.vulnerability_id_aliases is None:
         observation.vulnerability_id_aliases = ""
 
 
-def normalize_cvss_vectors(observation: Observation) -> None:
+def _normalize_cvss_vectors(observation: Observation) -> None:
     if observation.cvss3_vector is None:
         observation.cvss3_vector = ""
     if observation.cvss4_vector is None:
@@ -196,7 +203,7 @@ def normalize_cvss_vectors(observation: Observation) -> None:
         observation.cve_found_in = ""
 
 
-def normalize_description(observation: Observation) -> None:
+def _normalize_description(observation: Observation) -> None:
     if observation.description is None:
         observation.description = ""
     else:
@@ -208,7 +215,7 @@ def normalize_description(observation: Observation) -> None:
         observation.description = observation.description.replace("\u0000", "REDACTED_NULL")
 
 
-def normalize_origin_component(observation: Observation) -> None:  # pylint: disable=too-many-branches
+def _normalize_origin_component(observation: Observation) -> None:  # pylint: disable=too-many-branches
     if not observation.origin_component_name_version:
         if observation.origin_component_name and observation.origin_component_version:
             observation.origin_component_name_version = (
@@ -258,7 +265,7 @@ def normalize_origin_component(observation: Observation) -> None:  # pylint: dis
         observation.origin_component_purl_type = ""
 
 
-def normalize_origin_docker(observation: Observation) -> None:
+def _normalize_origin_docker(observation: Observation) -> None:
     if not observation.origin_docker_image_name_tag:
         _normalize_origin_docker_image_name(observation)
     else:
@@ -306,7 +313,7 @@ def _normalize_origin_docker_image_name_tag(observation: Observation) -> None:
         observation.origin_docker_image_name = observation.origin_docker_image_name_tag
 
 
-def normalize_origin_endpoint(observation: Observation) -> None:
+def _normalize_origin_endpoint(observation: Observation) -> None:
     if observation.origin_endpoint_url:
         parse_result = urlparse(observation.origin_endpoint_url)
         observation.origin_endpoint_scheme = parse_result.scheme
@@ -341,7 +348,7 @@ def normalize_origin_endpoint(observation: Observation) -> None:
         observation.origin_endpoint_fragment = ""
 
 
-def normalize_origin_cloud(observation: Observation) -> None:
+def _normalize_origin_cloud(observation: Observation) -> None:
     if observation.origin_cloud_provider is None:
         observation.origin_cloud_provider = ""
     if observation.origin_cloud_account_subscription_project is None:
@@ -368,7 +375,7 @@ def normalize_origin_cloud(observation: Observation) -> None:
         )
 
 
-def normalize_origin_kubernetes(observation: Observation) -> None:
+def _normalize_origin_kubernetes(observation: Observation) -> None:
     if observation.origin_kubernetes_cluster is None:
         observation.origin_kubernetes_cluster = ""
     if observation.origin_kubernetes_namespace is None:
@@ -403,7 +410,7 @@ def normalize_origin_kubernetes(observation: Observation) -> None:
         )
 
 
-def normalize_severity(observation: Observation) -> None:
+def _normalize_severity(observation: Observation) -> None:
     if observation.current_severity is None:
         observation.current_severity = ""
     if observation.assessment_severity is None:
@@ -429,7 +436,7 @@ def normalize_severity(observation: Observation) -> None:
     )
 
 
-def normalize_status(observation: Observation) -> None:
+def _normalize_status(observation: Observation) -> None:
     if observation.current_status is None:
         observation.current_status = ""
     if observation.assessment_status is None:
@@ -444,7 +451,7 @@ def normalize_status(observation: Observation) -> None:
     observation.current_status = get_current_status(observation)
 
 
-def normalize_vex_justification(observation: Observation) -> None:
+def _normalize_vex_justification(observation: Observation) -> None:
     if observation.current_vex_justification is None:
         observation.current_vex_justification = ""
     if observation.assessment_vex_justification is None:
@@ -457,6 +464,62 @@ def normalize_vex_justification(observation: Observation) -> None:
         observation.vex_vex_justification = ""
 
     observation.current_vex_justification = get_current_vex_justification(observation)
+
+
+def _normalize_update_impact_score_and_fix_available(observation: Observation) -> None:
+    observation.fix_available = None
+    observation.update_impact_score = None
+
+    if not observation.origin_component_name:
+        return
+
+    observation.fix_available = False
+
+    recommendation_matches = (
+        re.findall(VERSION_REGEX_COMPILED, observation.recommendation) if observation.recommendation else None
+    )
+    component_matches = (
+        re.findall(VERSION_REGEX_COMPILED, observation.origin_component_version)
+        if observation.origin_component_version
+        else None
+    )
+
+    observation.fix_available = bool(recommendation_matches)
+
+    if not recommendation_matches or not component_matches:
+        return
+
+    observation.fix_available = True
+
+    recommendation_version = None
+    if len(recommendation_matches) == 1:
+        recommendation_version = _parse_version(recommendation_matches[0])
+    else:
+        component_name = re.sub(r":\d+", "", observation.origin_component_name)
+        search_prefix = rf"(?:Upgrade (?:\S+:)?{component_name} to version)"
+        match = re.findall(rf"{search_prefix}{VERSION_REGEX}", observation.recommendation)
+        if match:
+            recommendation_version = _parse_version(match[0])
+
+    if recommendation_version:
+        component_version = _parse_version(component_matches[0])
+        major_diff = max(recommendation_version[0] - component_version[0], 0)
+        minor_diff = max(recommendation_version[1] - component_version[1], 0)
+        patch_diff = max(recommendation_version[2] - component_version[2], 0)
+
+        if major_diff > 0:
+            observation.update_impact_score = major_diff * 100
+        elif minor_diff > 0:
+            observation.update_impact_score = minor_diff * 10
+        else:
+            observation.update_impact_score = patch_diff
+
+
+def _parse_version(version: str) -> tuple[int, ...]:
+    rettuple = tuple(map(int, version.split(".")[:3]))
+    for _ in range(3 - len(rettuple)):
+        rettuple += (0,)
+    return rettuple
 
 
 def set_product_flags(observation: Observation) -> None:

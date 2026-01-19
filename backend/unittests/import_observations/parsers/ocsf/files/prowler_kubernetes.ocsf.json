@@ -1,0 +1,184 @@
+[
+    {
+        "message": "Pod cert-manager does not use HostPorts.",
+        "metadata": {
+            "event_code": "core_minimize_admission_hostport_containers",
+            "product": {
+                "name": "Prowler",
+                "uid": "prowler",
+                "vendor_name": "Prowler",
+                "version": "5.16.1"
+            },
+            "profiles": [
+                "container",
+                "datetime"
+            ],
+            "version": "1.5.0"
+        },
+        "severity_id": 4,
+        "severity": "High",
+        "status": "New",
+        "status_code": "PASS",
+        "status_detail": "Pod cert-manager does not use HostPorts.",
+        "status_id": 1,
+        "unmapped": {
+            "related_url": "https://kubernetes.io/docs/concepts/security/pod-security-standards/",
+            "categories": [
+                "internet-exposed"
+            ],
+            "depends_on": [],
+            "related_to": [],
+            "additional_urls": [],
+            "notes": "Carefully evaluate the need for HostPorts in container configurations and prefer network policies for secure communication.",
+            "compliance": {
+                "PCI-4.0": [
+                    "1.2.5.17",
+                    "1.2.8.13",
+                    "1.2.8.16",
+                    "1.2.8.20",
+                    "1.2.8.28",
+                    "1.2.8.30",
+                    "1.2.8.41",
+                    "1.3.1.8",
+                    "1.3.1.29",
+                    "1.3.1.34",
+                    "1.3.2.18",
+                    "1.3.2.28",
+                    "1.3.2.45",
+                    "1.4.2.26",
+                    "1.4.2.43",
+                    "1.4.4.7",
+                    "1.5.1.16",
+                    "1.5.1.32",
+                    "1.5.1.40",
+                    "10.3.2.18",
+                    "10.3.2.19",
+                    "11.5.1.1.1",
+                    "2.2.5.17",
+                    "3.5.1.3.6",
+                    "3.5.1.3.14",
+                    "3.5.1.3.20",
+                    "3.5.1.3.23",
+                    "A1.1.3.26",
+                    "A1.1.3.40",
+                    "A3.4.1.8",
+                    "A3.4.1.18"
+                ],
+                "CIS-1.11.1": [
+                    "5.2.13"
+                ],
+                "ProwlerThreatScore-1.0": [
+                    "2.1.2"
+                ],
+                "CIS-1.10": [
+                    "5.2.13"
+                ],
+                "CIS-1.8": [
+                    "5.2.13"
+                ]
+            }
+        },
+        "activity_name": "Create",
+        "activity_id": 1,
+        "finding_info": {
+            "created_time": 1768388905,
+            "created_time_dt": "2026-01-14T11:08:25.883259",
+            "desc": "This check ensures that Kubernetes clusters are configured to minimize the admission of containers that require the use of HostPorts. This helps maintain network policy controls and reduce security risks.",
+            "title": "Minimize the admission of containers which use HostPorts",
+            "types": [],
+            "uid": "prowler-kubernetes-core_minimize_admission_hostport_containers-cluster_node-namespace: cert-manager-cert-manager"
+        },
+        "resources": [
+            {
+                "data": {
+                    "details": "",
+                    "metadata": {
+                        "name": "cert-manager",
+                        "uid": "aa8f6baf-1b52-4023-adca-4bef65a59e51",
+                        "namespace": "cert-manager",
+                        "labels": {
+                            "app": "cert-manager",
+                            "app.kubernetes.io/component": "controller",
+                            "app.kubernetes.io/instance": "cert-manager",
+                            "app.kubernetes.io/managed-by": "Helm",
+                            "app.kubernetes.io/name": "cert-manager",
+                            "app.kubernetes.io/version": "v1.7.0",
+                            "helm.sh/chart": "cert-manager-v1.7.0",
+                            "pod-template-hash": "67644fb9d8"
+                        },
+                        "annotations": {
+                            "prometheus.io/path": "/metrics",
+                            "prometheus.io/port": "9402",
+                            "prometheus.io/scrape": "true"
+                        },
+                        "node_name": "cluster_node-jlze6bf4fi",
+                        "service_account": "cert-manager",
+                        "status_phase": "Running",
+                        "pod_ip": "242.59.13.70",
+                        "host_ip": "109.0.85.203",
+                        "host_pid": null,
+                        "host_ipc": null,
+                        "host_network": null,
+                        "security_context": {
+                            "app_armor_profile": null,
+                            "fs_group": null,
+                            "fs_group_change_policy": null,
+                            "run_as_group": null,
+                            "run_as_non_root": true,
+                            "run_as_user": null,
+                            "se_linux_change_policy": null,
+                            "se_linux_options": null,
+                            "seccomp_profile": null,
+                            "supplemental_groups": null,
+                            "supplemental_groups_policy": null,
+                            "sysctls": null,
+                            "windows_options": null
+                        },
+                        "containers": {
+                            "cert-manager": {
+                                "name": "cert-manager",
+                                "image": "quay.io/jetstack/cert-manager-controller@sha256:d6d12274f4b9c9c9cae2bcdc837744006d5f301c1dfa3e50f4a67d08f3bf9589",
+                                "command": null,
+                                "ports": [
+                                    {
+                                        "containerPort": 1234
+                                    }
+                                ],
+                                "env": [
+                                    {
+                                        "name": "POD_NAMESPACE",
+                                        "value": null
+                                    }
+                                ],
+                                "security_context": {}
+                            }
+                        }
+                    }
+                },
+                "group": {
+                    "name": "core"
+                },
+                "labels": [],
+                "name": "cert-manager",
+                "namespace": "cert-manager-namespace",
+                "type": "KubernetesPod",
+                "uid": "aa8f6baf-1b52-4023-adca-4bef65a59e51"
+            }
+        ],
+        "category_name": "Findings",
+        "class_name": "Detection Finding",
+        "remediation": {
+            "desc": "Limit the use of HostPorts in Kubernetes containers to maintain network security.",
+            "references": [
+                "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+            ]
+        },
+        "risk_details": "Permitting containers with HostPorts can bypass network policy controls, increasing the risk of unauthorized network access.",
+        "time": 1768388905,
+        "time_dt": "2026-01-14T11:08:25.883259",
+        "type_uid": 200401,
+        "type_name": "Detection Finding: Create",
+        "category_uid": 2,
+        "class_uid": 2004
+    }
+]

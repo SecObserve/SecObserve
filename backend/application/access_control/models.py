@@ -10,46 +10,30 @@ from django.db.models import (
     Index,
     ManyToManyField,
     Model,
-    TextField,
 )
 from encrypted_model_fields.fields import EncryptedCharField
 
+from application.access_control.types import (
+    ListSize,
+    MetricsTimespan,
+    PackageInfo,
+    Theme,
+)
+
 
 class User(AbstractUser):
-    THEME_LIGHT = "light"
-    THEME_DARK = "dark"
-
-    THEME_CHOICES = [
-        (THEME_LIGHT, THEME_LIGHT),
-        (THEME_DARK, THEME_DARK),
-    ]
-
-    LIST_SIZE_SMALL = "small"
-    LIST_SIZE_MEDIUM = "medium"
-
-    LIST_SIZE_CHOICES = [
-        (LIST_SIZE_SMALL, LIST_SIZE_SMALL),
-        (LIST_SIZE_MEDIUM, LIST_SIZE_MEDIUM),
-    ]
-
-    PACKAGE_INFO_PREFERENCE_DEPS_DEV = "open/source/insights"
-    PACKAGE_INFO_PREFERENCE_ECOSYSTE_MS = "ecosyste.ms"
-
-    PACKAGE_INFO_PREFERENCE_CHOICES = [
-        (PACKAGE_INFO_PREFERENCE_DEPS_DEV, PACKAGE_INFO_PREFERENCE_DEPS_DEV),
-        (PACKAGE_INFO_PREFERENCE_ECOSYSTE_MS, PACKAGE_INFO_PREFERENCE_ECOSYSTE_MS),
-    ]
-
     full_name = CharField(max_length=301, blank=True)
     is_external = BooleanField(default=False)
-    setting_theme = CharField(max_length=5, choices=THEME_CHOICES, default=THEME_LIGHT)
-    setting_list_size = CharField(max_length=6, choices=LIST_SIZE_CHOICES, default=LIST_SIZE_MEDIUM)
+    setting_theme = CharField(max_length=5, choices=Theme.THEME_CHOICES, default=Theme.THEME_LIGHT)
+    setting_list_size = CharField(max_length=6, choices=ListSize.LIST_SIZE_CHOICES, default=ListSize.LIST_SIZE_MEDIUM)
     setting_package_info_preference = CharField(
         max_length=20,
-        choices=PACKAGE_INFO_PREFERENCE_CHOICES,
-        default=PACKAGE_INFO_PREFERENCE_DEPS_DEV,
+        choices=PackageInfo.PACKAGE_INFO_PREFERENCE_CHOICES,
+        default=PackageInfo.PACKAGE_INFO_PREFERENCE_DEPS_DEV,
     )
-    setting_list_properties = TextField(max_length=2048, blank=True)
+    setting_metrics_timespan = CharField(
+        max_length=8, choices=MetricsTimespan.METRICS_TIMESPAN_CHOICES, default=MetricsTimespan.METRICS_TIMESPAN_7_DAYS
+    )
     oidc_groups_hash = CharField(max_length=64, blank=True)
     is_oidc_user = BooleanField(default=False)
 

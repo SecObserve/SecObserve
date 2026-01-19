@@ -18,6 +18,8 @@ services:
       OIDC_CLIENT_ID: dummy
       OIDC_REDIRECT_URI: dummy
       OIDC_POST_LOGOUT_REDIRECT_URI: dummy
+      OIDC_PROMPT: null
+
     networks:
       - secobserve
 

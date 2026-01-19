@@ -106,10 +106,8 @@ def check_rule_for_observation(
         and (not rule.scanner_prefix or observation.scanner.lower().startswith(rule.scanner_prefix.lower()))
         and _check_regex(rule.title, observation.title)
         and _check_regex(rule.description_observation, observation.description)
-        and _check_regex(
-            rule.origin_component_name_version,
-            observation.origin_component_name_version,
-        )
+        and _check_regex(rule.origin_component_name_version, observation.origin_component_name_version)
+        and _check_regex(rule.origin_component_purl, observation.origin_component_purl)
         and _check_regex(
             rule.origin_docker_image_name_tag,
             observation.origin_docker_image_name_tag,
