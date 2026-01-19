@@ -37,6 +37,7 @@ frontend:
       # -- OIDC post logout redirect URI
     - name: OIDC_POST_LOGOUT_REDIRECT_URI
       value: https://secobserve.dev/
+      # -- OIDC prompt
     - name: OIDC_PROMPT
       value: null
   resources:
