@@ -19,7 +19,7 @@ frontend:
     runAsGroup: 1001
     runAsNonRoot: true
   env:
-      # -- API base URL
+    # -- API base URL
     - name: API_BASE_URL
       value: https://secobserve.dev/api
       # -- OIDC enabled
@@ -56,7 +56,7 @@ backend:
     registry: ghcr.io
     # -- backend image repository
     repository: secobserve/secobserve-backend
-    # -- (string) Tag to use for image 
+    # -- (string) Tag to use for image
     # @default -- {{ .Chart.AppVersion }}
     tag:
     # -- image pull policy
@@ -68,7 +68,7 @@ backend:
     runAsGroup: 1001
     runAsNonRoot: true
   env:
-      # -- Email address of the admin user
+    # -- Email address of the admin user
     - name: ADMIN_EMAIL
       value: admin@admin.com
       # -- allowed hosts
