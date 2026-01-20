@@ -499,6 +499,18 @@ class TestObservation(BaseTestCase):
         self.assertTrue(self.observation.fix_available)
         self.assertEqual(self.observation.update_impact_score, 800)  # 8 major versions diff
 
+    def test_fix_available_true_with_version_numbers_with_chars(self):
+        """Test with a version number containing characters"""
+        self.observation.origin_component_name = "test-component"
+        self.observation.recommendation = "Upgrade package protobuf to version 32.dev0 or above."
+        self.observation.origin_component_version = "30..dev0"
+
+        _normalize_update_impact_score_and_fix_available(self.observation)
+
+        self.assertTrue(self.observation.fix_available)
+        self.assertEqual(self.observation.update_impact_score, 200)  # 8 major versions diff
+
+
 
 def _observation_equal(expected_observation, actual_observation, msg=None):
     for key in dir(expected_observation):

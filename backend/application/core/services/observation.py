@@ -516,7 +516,10 @@ def _normalize_update_impact_score_and_fix_available(observation: Observation) -
 
 
 def _parse_version(version: str) -> tuple[int, ...]:
-    rettuple = tuple(map(int, version.split(".")[:3]))
+    parts = version.split(".")[:3]
+    # Filter out empty strings
+    parts = [part for part in parts if part]
+    rettuple = tuple(map(int, parts))
     for _ in range(3 - len(rettuple)):
         rettuple += (0,)
     return rettuple
