@@ -511,7 +511,6 @@ class TestObservation(BaseTestCase):
         self.assertEqual(self.observation.update_impact_score, 200)  # 8 major versions diff
 
 
-
 def _observation_equal(expected_observation, actual_observation, msg=None):
     for key in dir(expected_observation):
         if key not in _get_excludes() and not callable(getattr(expected_observation, key)) and not key.startswith("_"):
