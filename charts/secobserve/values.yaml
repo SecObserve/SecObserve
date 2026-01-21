@@ -1,32 +1,65 @@
 replicaCount: 1
 
+# @section -- Frontend
 frontend:
   image:
+    # -- image registry
+    # @section -- Frontend
     registry: ghcr.io
+    # -- image repository
+    # @section -- Frontend
     repository: secobserve/secobserve-frontend
-    tag: 1.47.2
+    # -- image tag
+    # @section -- Frontend
+    # @default -- (chart/appVersion)
+    tag:
+    # -- image pull policy
+    # @section -- Frontend
     pullPolicy: IfNotPresent
+  # -- securityContext to use for frontend container
+  # @section -- Frontend
   securityContext:
     enabled: true
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
     runAsNonRoot: true
+  # -- Frontend environment variables
+  # @section -- Frontend
   env:
+      # -- Base URL for API
+      # @section -- Frontend
     - name: API_BASE_URL
       value: https://secobserve.dev/api
+
+      # -- enable OIDC authentication
+      # @section -- Frontend
     - name: OIDC_ENABLED
       value: "false"
+
+      # -- oidc metadata endpoint
+      # @section -- Frontend
     - name: OIDC_AUTHORITY
       value: https://oidc.secobserve.dev
+
+      # OIDC client ID
+      # @section -- Frontend
     - name: OIDC_CLIENT_ID
       value: secobserve
+
+      # OIDC client redirect URL
+      # @section -- Frontend
     - name: OIDC_REDIRECT_URI
       value: https://secobserve.dev/
+      # @section -- Frontend
     - name: OIDC_POST_LOGOUT_REDIRECT_URI
       value: https://secobserve.dev/
+      # @section -- Frontend
     - name: OIDC_PROMPT
       value: null
+
+  # -- resource requirements and limits
+  # @section -- Frontend
   resources:
     limits:
       cpu: 500m
@@ -34,79 +67,140 @@ frontend:
     requests:
       cpu: 500m
       memory: 1000Mi
+
   service:
+    # -- service port
+    # @section -- Frontend
     port: 3000
 
+# @section -- Backend
 backend:
+  # -- image registry
+  # @section -- Backend
   image:
     registry: ghcr.io
+    # -- image repository
+    # @section -- Backend
     repository: secobserve/secobserve-backend
-    tag: 1.47.2
+    # -- image tag
+    # @section -- Backend
+    # @default {{ .Charts.AppVersion}}
+    tag:
+    # -- image pull policy
+    # @section -- Backend
     pullPolicy: IfNotPresent
+  # -- security context to use for backend pod
+  # @section -- Backend
   securityContext:
     enabled: true
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
     runAsNonRoot: true
+  # -- environment configuration
+  # @section -- Backend
   env:
     - name: ADMIN_USER
+      # -- admin user name
+      # @section -- Backend
       value: admin
-      # This secret is not managed by the chart
     - name: ADMIN_PASSWORD
       valueFrom:
+        # -- reference to secret to get the admin password
+        # @section -- Backend
         secretKeyRef:
           name: secobserve-secrets
           key: password
     - name: ADMIN_EMAIL
+      # -- admin email address
+      # @section -- Backend
       value: admin@admin.com
     - name: DATABASE_ENGINE
+      # -- database engine
+      # @section -- Backend
       value: "django.db.backends.postgresql"
     - name: DATABASE_HOST
+      # -- database host/service
+      # @section -- Backend
       value: secobserve-postgresql
     - name: DATABASE_PORT
+      # -- database port
+      # @section -- Backend
       value: "5432"
     - name: DATABASE_DB
+      # -- database name
+      # @section -- Backend
       value: secobserve
     - name: DATABASE_USER
+      # -- database user
+      # @section -- Backend
       value: secobserve
     - name: DATABASE_PASSWORD
       valueFrom:
+        # -- reference to secret containing db credentials
+        # @section -- Backend
         secretKeyRef:
           name: secobserve-postgresql
           key: password
     - name: ALLOWED_HOSTS
+      # -- allowed hosts
+      # @section -- Backend
       value: secobserve.dev
     - name: CORS_ALLOWED_ORIGINS
+      # -- CORS allowed origins
+      # @section -- Backend
       value: https://secobserve.dev
-      # This secret is not managed by the chart
     - name: DJANGO_SECRET_KEY
+      # -- django secret key
+      # @section -- Backend
       valueFrom:
+        # -- secret name containing the django secret key
+        # @section -- Backend
         secretKeyRef:
           name: secobserve-secrets
           key: django_secret_key
-      # This secret is not managed by the chart
     - name: FIELD_ENCRYPTION_KEY
+      # -- encryption key for fields
+      # @section -- Backend
       valueFrom:
+        # -- secret name containig the field encryption key
+        # @section -- Backend
         secretKeyRef:
           name: secobserve-secrets
           key: field_encryption_key
     - name: OIDC_AUTHORITY
+      # -- admin OIDC authority
+      # @section -- Backend
       value: https://oidc.secobserve.dev
     - name: OIDC_CLIENT_ID
+      # -- OIDC client id
+      # @section -- Backend
       value: secobserve
     - name: OIDC_USERNAME
+      # -- OIDC user name
+      # @section -- Backend
       value: preferred_username
     - name: OIDC_FIRST_NAME
+      # -- OIDC first name
+      # @section -- Backend
       value: given_name
     - name: OIDC_LAST_NAME
+      # -- OIDC last name
+      # @section -- Backend
       value: family_name
     - name: OIDC_FULL_NAME
+      # -- OIDC full name
+      # @section -- Backend
       value: preferred_username
     - name: OIDC_EMAIL
+      # -- OIDC email address
+      # @section -- Backend
       value: email
     - name: OIDC_GROUPS
+      # -- OIDC groups
+      # @section -- Backend
       value: groups
+  # -- resource requirements and limits
   resources:
     limits:
       cpu: 1000m
@@ -115,25 +209,36 @@ backend:
       cpu: 1000m
       memory: 1500Mi
   service:
+    # -- service port
+    # @section -- Backend
     port: 5000
 
-# Defines the secobserve http service
+# -- defines the secobserve http service
+# @section -- Service
 service:
+  # -- Service type of service
+  # @section -- Service
   type: ClusterIP
   # If you want to use a NodePort service for ALB, uncomment the following line
   #type: NodePort
 
 ingress:
-  # If true, a Kubernetes Ingress resource will be created to the http port of the secobserve Service
+  # -- If true, a Kubernetes Ingress resource will be created to the http port of the secobserve Service
+  # @section -- Ingress
   enabled: true
+  # -- hostname of ingress
+  # @section -- Ingress
   hostname: "secobserve.dev"
-  # Example configuration for using an Amazon Load Balancer controller
+  # -- Example configuration for using an Amazon Load Balancer controller
   # ingressClassName: alb
   # annotations:
   #   alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
   #   alb.ingress.kubernetes.io/ssl-policy: 'ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04'
   #   alb.ingress.kubernetes.io/healthcheck-path: /
+  # @section -- Ingress
   ingressClassName: nginx
+  # -- annotations to add to ingress
+  # @section -- Ingress
   annotations:
     # Use the NGINX ingress class
     kubernetes.io/ingress.class: nginx
@@ -142,17 +247,18 @@ ingress:
     # Configure a custom timeout for the proxy
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-  # # TLS configuration for HTTPS
+  # -- # TLS configuration for HTTPS
+  # @section -- Ingress
   # tls:
   #   secretName: secobserve-tls
 
-# Node labels for secobserve pod assignment
+# -- Node labels for secobserve pod assignment
 nodeSelector: {}
 
-# Toleration labels for pod assignment
+# -- Toleration labels for pod assignment
 tolerations: {}
 
-# Sets the affinity for the secobserve pod
+# -- Sets the affinity for the secobserve pod
 # For more information on affinity, see https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
 affinity: {}
 
@@ -168,6 +274,7 @@ affinity: {}
 ## @param postgresql.architecture PostgreSQL architecture (`standalone` or `replication`)
 ##
 postgresql:
+  # -- enable postgresql subchart
   enabled: true
   image:
     repository: bitnamilegacy/postgresql
@@ -188,23 +295,34 @@ postgresql:
   architecture: standalone
 
 dbchecker:
+  # -- enable dbchecker init container
+  # @section -- dbchecker
   enabled: true
+  # -- enable dbchecker init container
+  # @section -- dbchecker
   hostname: secobserve-postgresql
+  # -- enable dbchecker init container
+  # @section -- dbchecker
   port: 5432
   image:
-    # Docker image used to check Database readiness at startup
+    # -- Docker image used to check Database readiness at startup
+    # @section -- dbchecker
     repository: busybox
-    # Image tag for the dbchecker image
+    # -- Image tag for the dbchecker image
+    # @section -- dbchecker
     tag: latest
-    # Image pull policy for the dbchecker image
+    # -- Image pull policy for the dbchecker image
+    # @section -- dbchecker
     pullPolicy: IfNotPresent
-  # SecurityContext for the dbchecker container
+  # -- SecurityContext for the dbchecker container
+  # @section -- dbchecker
   securityContext:
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001
     runAsNonRoot: true
-  # Resource requests and limits for the dbchecker container
+  # -- Resource requests and limits for the dbchecker container
+  # @section -- dbchecker
   resources:
     requests:
       cpu: "20m"
