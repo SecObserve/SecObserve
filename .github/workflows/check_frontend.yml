@@ -1,6 +1,12 @@
 name: Check frontend
 
-on: [push, pull_request]
+on:
+  push:
+    paths-ignore:
+      - charts/**
+  pull_request:
+    paths-ignore:
+      - charts/**
 
 permissions: read-all
 
