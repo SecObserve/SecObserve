@@ -29,6 +29,7 @@ class RequestPURL:
 @dataclass
 class RequestPackage:
     package: RequestPURL
+    page_token: Optional[str]
 
 
 @dataclass
@@ -143,57 +144,12 @@ def scan_license_components(
 
     jsonpickle.set_encoder_options("json", ensure_ascii=False)
 
-    osv_components = [
-        OSV_Component(
-            license_component=license_component,
-            vulnerabilities=set(),
-        )
-        for license_component in license_components
-    ]
+    next_pages: dict[License_Component, str] = {}
+    osv_components, next_pages = _do_scan(license_components, next_pages)
 
-    slice_actual = 0
-    slice_size = 500
-    results = []
-
-    while slice_actual * slice_size < len(license_components):
-        queries = RequestQueries(
-            queries=[
-                RequestPackage(RequestPURL(purl=license_component.component_purl))
-                for license_component in license_components[
-                    (slice_actual * slice_size) : ((slice_actual + 1) * slice_size)  # noqa: E203
-                ]
-            ]
-        )
-
-        response = requests.post(  # nosec B113
-            # This is a false positive, there is a timeout of 5 minutes
-            url="https://api.osv.dev/v1/querybatch",
-            data=jsonpickle.encode(queries, unpicklable=False),
-            timeout=5 * 60,
-        )
-
-        response.raise_for_status()
-        results.extend(response.json().get("results", []))
-
-        slice_actual += 1
-
-    if len(osv_components) != len(results):
-        raise OSVException(  # pylint: disable=broad-exception-raised
-            "Number of results is different than number of components"
-        )
-
-    for result in results:
-        if result.get("next_page_token"):
-            raise OSVException("Next page token is not yet supported")  # pylint: disable=broad-exception-raised
-
-    for i, result in enumerate(results):
-        for vuln in result.get("vulns", []):
-            osv_components[i].vulnerabilities.add(
-                OSV_Vulnerability(
-                    id=vuln.get("id"),
-                    modified=datetime.fromisoformat(vuln.get("modified")),
-                )
-            )
+    while next_pages:
+        new_osv_components, next_pages = _do_scan(list(next_pages.keys()), next_pages)
+        osv_components += new_osv_components
 
     osv_parser = OSVParser()
     observations, scanner = osv_parser.get_observations(osv_components, product, branch)
@@ -217,9 +173,9 @@ def scan_license_components(
     numbers: Tuple[int, int, int] = _process_data(import_parameters, Settings.load())
 
     Vulnerability_Check.objects.update_or_create(
-        product=import_parameters.product,
-        branch=import_parameters.branch,
-        service=import_parameters.service,
+        product=product,
+        branch=branch,
+        service=service,
         filename="",
         api_configuration_name="",
         defaults={
@@ -231,3 +187,71 @@ def scan_license_components(
     )
 
     return numbers[0], numbers[1], numbers[2]
+
+
+def _do_scan(
+    license_components: list[License_Component],
+    next_pages: dict[License_Component, str],
+) -> Tuple[list[OSV_Component], dict]:
+
+    osv_components = [
+        OSV_Component(
+            license_component=license_component,
+            vulnerabilities=set(),
+        )
+        for license_component in license_components
+    ]
+
+    slice_actual = 0
+    slice_size = 500
+    results = []
+
+    while slice_actual * slice_size < len(license_components):
+        queries = RequestQueries(
+            queries=[
+                RequestPackage(
+                    RequestPURL(purl=license_component.component_purl),
+                    next_pages[license_component] if next_pages else None,
+                )
+                for license_component in license_components[
+                    (slice_actual * slice_size) : ((slice_actual + 1) * slice_size)  # noqa: E203
+                ]
+            ]
+        )
+
+        response = requests.post(  # nosec B113
+            # This is a false positive, there is a timeout of 5 minutes
+            url="https://api.osv.dev/v1/querybatch",
+            data=jsonpickle.encode(queries, unpicklable=False),
+            timeout=5 * 60,
+        )
+
+        response.raise_for_status()
+        results.extend(response.json().get("results", []))
+
+        slice_actual += 1
+
+    if len(osv_components) != len(results):
+
+        print("---------------------------------------")
+        print(osv_components)
+        print(results)
+        print("---------------------------------------")
+
+        raise OSVException(  # pylint: disable=broad-exception-raised
+            "Number of results is different than number of components"
+        )
+
+    new_next_pages: dict[License_Component, str] = {}
+    for i, result in enumerate(results):
+        for vuln in result.get("vulns", []):
+            osv_components[i].vulnerabilities.add(
+                OSV_Vulnerability(
+                    id=vuln.get("id"),
+                    modified=datetime.fromisoformat(vuln.get("modified")),
+                )
+            )
+        if result.get("next_page_token"):
+            new_next_pages[osv_components[i].license_component] = result.get("next_page_token")
+
+    return osv_components, new_next_pages

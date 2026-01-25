@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
 from json import dumps, loads
@@ -71,14 +72,15 @@ class OSVParser(BaseParser):
 
         for osv_component in data:
             ordered_vulnerabilities = sorted(osv_component.vulnerabilities, key=lambda x: x.id)
+            osv_cache = self._fill_osv_cache(ordered_vulnerabilities)
 
             for vulnerability in ordered_vulnerabilities:
-                osv_vulnerability = _get_osv_vulnerability(osv_id=vulnerability.id, modified=vulnerability.modified)
-
-                if osv_vulnerability is None:
+                osv_cache_item = osv_cache.get(vulnerability.id)
+                if not osv_cache_item:
                     logger.warning("OSV vulnerability %s not found", vulnerability.id)
                     continue
 
+                osv_vulnerability = loads(osv_cache_item.data)
                 if osv_vulnerability.get("withdrawn"):
                     continue
 
@@ -157,6 +159,53 @@ class OSVParser(BaseParser):
                     observation.unsaved_evidences.append(evidence)
 
         return observations, self.get_name()
+
+    def _fill_osv_cache(self, ordered_vulnerabilities: list[OSV_Vulnerability]) -> dict[str, OSV_Cache]:
+        vulnerability_ids_tmp = {vulnerability.id: vulnerability.modified for vulnerability in ordered_vulnerabilities}
+        vulnerabilities_from_cache = list(OSV_Cache.objects.filter(osv_id__in=vulnerability_ids_tmp))
+        valid_vulnerability_ids = [
+            vulnerability.osv_id
+            for vulnerability in vulnerabilities_from_cache
+            if vulnerability.modified >= vulnerability_ids_tmp[vulnerability.osv_id]
+        ]
+        invalid_vulnerability_ids = [
+            vulnerability.osv_id
+            for vulnerability in vulnerabilities_from_cache
+            if vulnerability.modified < vulnerability_ids_tmp[vulnerability.osv_id]
+        ]
+        OSV_Cache.objects.filter(osv_id__in=invalid_vulnerability_ids).delete()
+        missing_osv_vulnerabilities = []
+        for osv_vulnerability in ordered_vulnerabilities:
+            if osv_vulnerability.id not in valid_vulnerability_ids:
+                missing_osv_vulnerabilities.append(osv_vulnerability)
+
+        def _read_osv_vulnerability(osv_vulnerability: OSV_Vulnerability) -> OSV_Cache:
+            response = requests.get(
+                url=f"https://api.osv.dev/v1/vulns/{osv_vulnerability.id}",
+                timeout=60,
+            )
+            response.raise_for_status()
+            return OSV_Cache(osv_id=osv_vulnerability.id, modified=osv_vulnerability.modified, data=response.text)
+
+            # max number of threads to use
+
+        MAX_THREADS = 100
+
+        with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+            osv_cache_items_from_osv = list(executor.map(_read_osv_vulnerability, missing_osv_vulnerabilities))
+
+        if osv_cache_items_from_osv:
+            OSV_Cache.objects.bulk_create(osv_cache_items_from_osv)
+
+        valid_osv_cache_items = [
+            vulnerability
+            for vulnerability in vulnerabilities_from_cache
+            if vulnerability.osv_id not in invalid_vulnerability_ids
+        ]
+
+        relevant_osv_cache_items = valid_osv_cache_items + osv_cache_items_from_osv
+        osv_cache = {osv_cache_item.osv_id: osv_cache_item for osv_cache_item in relevant_osv_cache_items}
+        return osv_cache
 
     def _get_osv_ids(self, osv_vulnerability: dict) -> tuple[str, str]:
         osv_id = str(osv_vulnerability.get("id", ""))
@@ -423,18 +472,3 @@ class OSVParser(BaseParser):
                     events.append(event)
                     event = Event(osv_range.get("type", ""), introduced="", fixed="")
         return events
-
-
-def _get_osv_vulnerability(osv_id: str, modified: datetime) -> dict:
-    osv_vulnerability = OSV_Cache.objects.filter(osv_id=osv_id).first()
-    if osv_vulnerability is None or osv_vulnerability.modified < modified:
-        response = requests.get(
-            url=f"https://api.osv.dev/v1/vulns/{osv_id}",
-            timeout=60,
-        )
-        response.raise_for_status()
-        osv_vulnerability, _ = OSV_Cache.objects.update_or_create(
-            osv_id=osv_id, defaults={"modified": modified, "data": response.text}
-        )
-
-    return loads(osv_vulnerability.data)
