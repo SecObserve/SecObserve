@@ -812,14 +812,14 @@ typing = ["django-stubs[compatible-mypy]", "jinja2 (>=2.9.6)", "mypy", "pytest",
 
 [[package]]
 name = "django-dirtyfields"
-version = "1.9.8"
+version = "1.9.9"
 description = "Tracking dirty fields on a Django model instance."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "django_dirtyfields-1.9.8-py3-none-any.whl", hash = "sha256:28e2de32df1385d7ccd33c23a6de90e3579e9b9644bc9bdfe6214e6c8b51a127"},
-    {file = "django_dirtyfields-1.9.8.tar.gz", hash = "sha256:f18fd998bc891390f92c98a0a1a7a8140b8e8cc8defa5f6539ad416550c46559"},
+    {file = "django_dirtyfields-1.9.9-py3-none-any.whl", hash = "sha256:80da479ab989331e6f29c90576e5f7d7b3df65b36f16bfd6f5d37a0dbdeda6b0"},
+    {file = "django_dirtyfields-1.9.9.tar.gz", hash = "sha256:c11c8e03827166d2c91f6634a4d10f5aa5cc7ea430d60e5bd576b3ebf319172f"},
 ]
 
 [package.dependencies]
@@ -3232,4 +3232,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.10, < 3.15"
-content-hash = "c346cc9169bc043ebd9117d01863348fa6955004a619e74d90409c71d738f406"
+content-hash = "a7787f233b265fff614b037baaa7879c9f266d0ca2927378286582e56a067690"

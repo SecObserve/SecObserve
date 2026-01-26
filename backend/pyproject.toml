@@ -19,7 +19,7 @@ django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield
 django-encrypted-model-fields = "0.6.5"  # https://gitlab.com/lansharkconsulting/django/django-encrypted-model-fields
 argon2-cffi = "25.1.0"  # https://github.com/hynek/argon2_cffi
 whitenoise = "6.11.0"  # https://github.com/evansd/whitenoise
-django-dirtyfields = "1.9.8"  # https://github.com/romgar/django-dirtyfields
+django-dirtyfields = "1.9.9"  # https://github.com/romgar/django-dirtyfields
 
 # Django REST Framework
 # ------------------------------------------------------------------------------
