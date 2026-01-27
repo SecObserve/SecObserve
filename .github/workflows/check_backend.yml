@@ -1,9 +1,14 @@
 name: Check backend
 
-on: [push, pull_request]
+on: 
+  push:
+    paths-ignore:
+      - charts/**
+  pull_request:
+    paths-ignore:
+      - charts/**
 
 permissions: read-all
-
 
 env:
   POETRY_NO_INTERACTION: 1
