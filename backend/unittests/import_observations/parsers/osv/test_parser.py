@@ -325,7 +325,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
     def test_get_linux_package_osv_ecosystem_alpine_2(self):
         parser = OSVParser()
         package_osv_ecosystem = parser._get_linux_package_osv_ecosystem(
-            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.47.1-r12?arch=x86_64&distro=3.21.3"),
+            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.47.2-r12?arch=x86_64&distro=3.21.3"),
             None,
         )
         self.assertEqual("Alpine:v3.21", package_osv_ecosystem)
