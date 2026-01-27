@@ -26,11 +26,18 @@ from unittests.base_test_case import BaseTestCase
 class MockResponse:
     def __init__(self, filename):
         self.filename = filename
+        self.next_page_token_first_call = True
 
     def raise_for_status(self):
         pass
 
     def json(self):
+        if self.filename == "osv_querybatch_next_page_token_first.json":
+            if self.next_page_token_first_call:
+                self.next_page_token_first_call = False
+            else:
+                self.filename = "osv_querybatch_next_page_token second.json"
+
         with open(f"unittests/import_observations/services/files/{self.filename}") as file:
             return loads(file.read())
 
@@ -224,7 +231,7 @@ class TestImportObservations(BaseTestCase):
 
         mock_requests_post.assert_called_with(
             url="https://api.osv.dev/v1/querybatch",
-            data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}}, {"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1-0.20240603202750-6249541f2a6c"}}]}',
+            data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}, "page_token": null}, {"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1-0.20240603202750-6249541f2a6c"}, "page_token": null}]}',
             timeout=300,
         )
 
@@ -249,26 +256,69 @@ class TestImportObservations(BaseTestCase):
         product = Product.objects.get(id=1)
         branch = Branch.objects.get(id=1)
 
-        response = MockResponse("osv_querybatch_error_next_page_token.json")
+        response = MockResponse("osv_querybatch_next_page_token_first.json")
         mock_requests_post.return_value = response
+        mock_get_observations.return_value = [], "OSV (Open Source Vulnerabilities)"
 
-        with self.assertRaises(Exception) as e:
-            scan_license_components(license_components, product, branch, None)
+        scan_license_components(license_components, product, branch, None)
 
-        self.assertEqual(
-            "Next page token is not yet supported",
-            str(e.exception),
+        mock_requests_post.assert_has_calls(
+            [
+                call(
+                    url="https://api.osv.dev/v1/querybatch",
+                    data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}, "page_token": null}, {"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1-0.20240603202750-6249541f2a6c"}, "page_token": null}]}',
+                    timeout=300,
+                ),
+                call(
+                    url="https://api.osv.dev/v1/querybatch",
+                    data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}, "page_token": "token for query 1"}]}',
+                    timeout=300,
+                ),
+            ]
         )
 
-        mock_requests_post.assert_called_with(
-            url="https://api.osv.dev/v1/querybatch",
-            data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}}, {"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1-0.20240603202750-6249541f2a6c"}}]}',
-            timeout=300,
+        mock_get_observations.assert_has_calls(
+            [
+                call(
+                    [
+                        OSV_Component(
+                            license_component=license_components[0],
+                            vulnerabilities={
+                                OSV_Vulnerability(
+                                    id="GHSA-795c-9xpc-xw6g",
+                                    modified=datetime(2024, 8, 7, 20, 1, 58, 452618, tzinfo=timezone.utc),
+                                ),
+                                OSV_Vulnerability(
+                                    id="GHSA-5hgc-2vfp-mqvc",
+                                    modified=datetime(2024, 10, 30, 19, 23, 43, 662562, tzinfo=timezone.utc),
+                                ),
+                            },
+                        ),
+                        OSV_Component(
+                            license_component=license_components[1],
+                            vulnerabilities={
+                                OSV_Vulnerability(
+                                    id="GO-2024-3333", modified=datetime(2024, 12, 20, 20, 37, 27, tzinfo=timezone.utc)
+                                )
+                            },
+                        ),
+                        OSV_Component(
+                            license_component=license_components[0],
+                            vulnerabilities={
+                                OSV_Vulnerability(
+                                    id="CVE-2025-00001",
+                                    modified=datetime(2024, 10, 30, 19, 23, 43, 662562, tzinfo=timezone.utc),
+                                )
+                            },
+                        ),
+                    ],
+                    product,
+                    branch,
+                )
+            ]
         )
-
-        mock_get_observations.assert_not_called()
-        mock_process_data.assert_not_called()
-        mock_vulnerability_check.assert_not_called()
+        mock_process_data.assert_called_once()
+        mock_vulnerability_check.assert_called_once()
 
     @patch("requests.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
@@ -300,7 +350,7 @@ class TestImportObservations(BaseTestCase):
 
         mock_requests_post.assert_called_with(
             url="https://api.osv.dev/v1/querybatch",
-            data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}}, {"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1-0.20240603202750-6249541f2a6c"}}]}',
+            data='{"queries": [{"package": {"purl": "pkg:pypi/django@4.2.11"}, "page_token": null}, {"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1-0.20240603202750-6249541f2a6c"}, "page_token": null}]}',
             timeout=300,
         )
 

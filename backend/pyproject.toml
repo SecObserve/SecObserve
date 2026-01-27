@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.47.1"
+version = "1.47.2"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -10,7 +10,7 @@ package-mode = false
 python = ">= 3.10, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
-gunicorn = "23.0.0"  # https://github.com/benoitc/gunicorn
+gunicorn = "24.1.1"  # https://github.com/benoitc/gunicorn
 django = "5.2.10"  # https://www.djangoproject.com/
 django-environ = "0.12.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
@@ -19,7 +19,7 @@ django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield
 django-encrypted-model-fields = "0.6.5"  # https://gitlab.com/lansharkconsulting/django/django-encrypted-model-fields
 argon2-cffi = "25.1.0"  # https://github.com/hynek/argon2_cffi
 whitenoise = "6.11.0"  # https://github.com/evansd/whitenoise
-django-dirtyfields = "1.9.8"  # https://github.com/romgar/django-dirtyfields
+django-dirtyfields = "1.9.9"  # https://github.com/romgar/django-dirtyfields
 
 # Django REST Framework
 # ------------------------------------------------------------------------------
@@ -72,7 +72,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.22.5"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "2.23.4"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 
 # Development dependencies
@@ -86,18 +86,18 @@ django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzb
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
-coverage = { version = "7.13.1", optional = true }  # https://github.com/nedbat/coveragepy
+coverage = { version = "7.13.2", optional = true }  # https://github.com/nedbat/coveragepy
 django-coverage-plugin = { version = "3.2.0", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies
 # ------------------------------------------------------------------------------
 flake8 = { version = "7.3.0", optional = true }  # https://github.com/PyCQA/flake8
 flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gforcada/flake8-isort
-black = { version = "25.12.0", optional = true }  # https://github.com/psf/black
+black = { version = "26.1.0", optional = true }  # https://github.com/psf/black
 pylint = { version = "4.0.4", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.7.0", optional = true }  # https://github.com/PyCQA/pylint-django
 mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
-django-stubs = { version = "5.2.8", optional = true }  # https://github.com/typeddjango/django-stubs
+django-stubs = { version = "5.2.9", optional = true }  # https://github.com/typeddjango/django-stubs
 djangorestframework-stubs = { version = "3.16.7", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.1.0.20251220", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker

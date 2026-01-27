@@ -35,7 +35,7 @@ services:
       - traefik
 
   frontend:
-    image: ghcr.io/secobserve/secobserve-frontend:1.47.1
+    image: ghcr.io/secobserve/secobserve-frontend:1.47.2
     container_name: "prod_secobserve_frontend"
     labels:
       - "traefik.enable=true"
@@ -55,7 +55,7 @@ services:
       - traefik
 
   backend:
-    image: ghcr.io/secobserve/secobserve-backend:1.47.1
+    image: ghcr.io/secobserve/secobserve-backend:1.47.2
     container_name: "prod_secobserve_backend"
     labels:
       - "traefik.enable=true"
@@ -98,7 +98,7 @@ services:
       - database
 
   mysql:
-    image: mysql:8.4.7
+    image: mysql:8.4.8
     container_name: "prod_mysql"
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: ${SO_MYSQL_RANDOM_ROOT_PASSWORD:-yes}
