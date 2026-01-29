@@ -13,9 +13,8 @@ frontend:
     # @section -- Frontend
     repository: secobserve/secobserve-frontend
 
-    # -- image tag
+    # -- image tag (uses appVersion value of Chart.yaml if not specified)
     # @section -- Frontend
-    # @default -- (chart/appVersion)
     tag:
 
     # -- image pull policy
@@ -84,13 +83,15 @@ backend:
     # -- image repository
     # @section -- Backend
     repository: secobserve/secobserve-backend
-    # -- image tag
+
+    # -- image tag (uses appVersion value of Chart.yaml if not specified)
     # @section -- Backend
-    # @default {{ .Charts.AppVersion}}
     tag:
+
     # -- image pull policy
     # @section -- Backend
     pullPolicy: IfNotPresent
+
   # -- security context to use for backend pod
   # @section -- Backend
   securityContext:
@@ -310,7 +311,6 @@ postgresql:
   # -- enable postgresql subchart
   # @section -- Postgresql
   auth:
-
     # -- Password for the "postgres" admin user. Ignored if `auth.existingSecret` with key `postgres-password` is provided
     # @section -- Postgresql
     postgresPassword: ""
@@ -332,7 +332,6 @@ postgresql:
     existingSecret: ""
 
     secretKeys:
-
       # -- Name of key in existing secret to use for PostgreSQL credentials. Only used when `auth.existingSecret` is set.
       # @section -- Postgresql
       userPasswordKey: password
