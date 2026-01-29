@@ -9,6 +9,7 @@ import {
     Stack,
     Typography,
 } from "@mui/material";
+import { useEffect } from "react";
 import { Title, useTheme } from "react-admin";
 
 import {
@@ -18,10 +19,12 @@ import {
     METRICS_TIMESPAN_365_DAYS,
 } from "../types";
 import {
+    ThemePreference,
     getSettingListSize,
     getSettingMetricsTimespan,
     getSettingPackageInfoPreference,
     getSettingTheme,
+    resolveTheme,
     saveSettingListSize,
     saveSettingPackageInfoPreference,
     saveSettingTheme,
@@ -31,16 +34,35 @@ import {
 const UserSettings = () => {
     const [, setTheme] = useTheme();
 
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        const handleChange = () => {
+            const currentPreference = getSettingTheme() as ThemePreference;
+            if (currentPreference === "system") {
+                setTheme(resolveTheme("system"));
+            }
+        };
+
+        mediaQuery.addEventListener("change", handleChange);
+        return () => mediaQuery.removeEventListener("change", handleChange);
+    }, [setTheme]);
+
     function setLightTheme() {
-        setTheme("light");
         localStorage.setItem("theme", "light");
         saveSettingTheme("light");
+        setTheme("light");
     }
 
     function setDarkTheme() {
-        setTheme("dark");
         localStorage.setItem("theme", "dark");
         saveSettingTheme("dark");
+        setTheme("dark");
+    }
+
+    function setSystemTheme() {
+        localStorage.setItem("theme", "system");
+        saveSettingTheme("system");
+        setTheme(resolveTheme("system"));
     }
 
     return (
@@ -63,6 +85,12 @@ const UserSettings = () => {
                                 control={<Radio />}
                                 label="Dark"
                                 onClick={() => setDarkTheme()}
+                            />
+                            <FormControlLabel
+                                value="system"
+                                control={<Radio />}
+                                label="System"
+                                onClick={() => setSystemTheme()}
                             />
                         </RadioGroup>
                     </FormControl>

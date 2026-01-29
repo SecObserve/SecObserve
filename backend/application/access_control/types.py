@@ -1,10 +1,12 @@
 class Theme:
     THEME_LIGHT = "light"
     THEME_DARK = "dark"
+    THEME_SYSTEM = "system"
 
     THEME_CHOICES = [
         (THEME_LIGHT, THEME_LIGHT),
         (THEME_DARK, THEME_DARK),
+        (THEME_SYSTEM, THEME_SYSTEM),
     ]
 
 

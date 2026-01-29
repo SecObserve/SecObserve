@@ -8,6 +8,32 @@ import {
     METRICS_TIMESPAN_365_DAYS,
 } from "../types";
 
+export type ThemePreference = "light" | "dark" | "system";
+
+export function getSystemPrefersDark(): boolean {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+export function resolveTheme(preference: ThemePreference): ThemeType {
+    if (preference === "system") {
+        return getSystemPrefersDark() ? "dark" : "light";
+    }
+    return preference;
+}
+
+export function getNextTheme(current: ThemePreference): ThemePreference {
+    switch (current) {
+        case "light":
+            return "dark";
+        case "dark":
+            return "system";
+        case "system":
+            return "light";
+        default:
+            return "light";
+    }
+}
+
 export async function saveSettingTheme(theme: string) {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     user.setting_theme = theme;
@@ -66,12 +92,8 @@ export function getSettingPackageInfoPreference(): PackageInfoPreference {
 }
 
 export function getTheme(): ThemeType {
-    const setting_theme = getSettingTheme();
-    if (setting_theme == "dark") {
-        return "dark";
-    } else {
-        return "light";
-    }
+    const setting_theme = getSettingTheme() as ThemePreference;
+    return resolveTheme(setting_theme);
 }
 
 export async function saveSettingsMetricsTimespan(setting_metrics_timespan: string) {
