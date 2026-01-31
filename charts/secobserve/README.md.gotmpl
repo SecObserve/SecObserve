@@ -1,0 +1,25 @@
+{{ template "chart.header" . }}
+
+## Installing the chart
+
+The chart can be installed as from the OCI repository using `helm install {{ template "chart.name" . }} --version {{ template "chart.appVersion" . }} oci://ghcr.io/SecObserve/charts/{{ template "chart.name" . }}`.
+
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "chart.valuesSectionHtml" . }}
+
+{{ template "helm-docs.versionFooter" . }}
