@@ -14,7 +14,7 @@ import {
 
 import evidences from ".";
 import { useStyles } from "../../commons/layout/themes";
-import { getSettingTheme } from "../../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const ShowActions = () => {
     const evidence = useRecordContext();
@@ -70,7 +70,7 @@ const EvidenceShow = () => {
                                 collapseStringsAfterLength={false}
                                 enableClipboard={false}
                                 className={classes.displayFontSize}
-                                theme={getSettingTheme() as JsonViewerTheme}
+                                theme={getResolvedSettingTheme() as JsonViewerTheme}
                                 sx={{ padding: 1 }}
                             />
                         </Labeled>

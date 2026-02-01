@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
 import { useLinkStyles } from "../../commons/layout/themes";
-import { getSettingTheme } from "../../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const ObservationsShowAside = () => {
     return (
@@ -108,7 +108,7 @@ const MetaData = () => {
 const EmptyDatagridHeader = () => <TableHead />;
 
 const References = () => {
-    const { classes } = useLinkStyles({ setting_theme: getSettingTheme() });
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
 
     return (
         <WithRecord
@@ -138,7 +138,7 @@ const References = () => {
 };
 
 const Evidences = () => {
-    const { classes } = useLinkStyles({ setting_theme: getSettingTheme() });
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
     return (
         <WithRecord
             render={(observation) => (

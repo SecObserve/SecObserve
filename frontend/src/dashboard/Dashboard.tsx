@@ -3,7 +3,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useTheme } from "react-admin";
 
 import { setUserInfo } from "../access_control/auth_provider/authProvider";
-import { getSettingTheme, getTheme } from "../commons/user_settings/functions";
+import { getResolvedSettingTheme, getTheme } from "../commons/user_settings/functions";
 import ObservationDashboardList from "../core/observations/ObservationDashboardList";
 import MetricsHeader from "../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../metrics/MetricsSeveritiesCurrent";
@@ -19,7 +19,7 @@ const Dashboard = () => {
         if (!user) {
             await setUserInfo();
         }
-        setSettingTheme(getSettingTheme());
+        setSettingTheme(getResolvedSettingTheme());
     };
 
     useEffect(() => {

@@ -21,6 +21,19 @@ export function resolveTheme(preference: ThemePreference): ThemeType {
     return preference;
 }
 
+export function castThemePreference(theme: string): ThemePreference {
+    switch (theme) {
+        case "light":
+            return "light";
+        case "dark":
+            return "dark";
+        case "system":
+            return "system";
+        default:
+            return "light";
+    }
+}
+
 export function getNextTheme(current: ThemePreference): ThemePreference {
     switch (current) {
         case "light":
@@ -51,8 +64,12 @@ export function getSettingTheme(): string {
     } else if (storage_theme) {
         theme = storage_theme;
     }
-
     return theme;
+}
+
+export function getResolvedSettingTheme(): ThemeType {
+    const user_theme = getSettingTheme();
+    return resolveTheme(castThemePreference(user_theme));
 }
 
 export function saveSettingListSize(list_size: string) {
