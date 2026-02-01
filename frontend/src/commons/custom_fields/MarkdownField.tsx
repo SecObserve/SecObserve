@@ -3,7 +3,7 @@ import { marked } from "marked";
 import { Fragment } from "react";
 
 import { useLinkStyles } from "../../commons/layout/themes";
-import { getSettingTheme } from "../user_settings/functions";
+import { getResolvedSettingTheme } from "../user_settings/functions";
 import LabeledTextField from "./LabeledTextField";
 
 interface MarkdownProps {
@@ -46,7 +46,7 @@ function isMarkdownValue(value: string): boolean {
 }
 
 const MarkdownField = (props: MarkdownProps) => {
-    const { classes } = useLinkStyles({ setting_theme: getSettingTheme() });
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
 
     return (
         <Fragment>

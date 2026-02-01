@@ -8,6 +8,45 @@ import {
     METRICS_TIMESPAN_365_DAYS,
 } from "../types";
 
+export type ThemePreference = "light" | "dark" | "system";
+
+export function getSystemPrefersDark(): boolean {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+export function resolveTheme(preference: ThemePreference): ThemeType {
+    if (preference === "system") {
+        return getSystemPrefersDark() ? "dark" : "light";
+    }
+    return preference;
+}
+
+export function castThemePreference(theme: string): ThemePreference {
+    switch (theme) {
+        case "light":
+            return "light";
+        case "dark":
+            return "dark";
+        case "system":
+            return "system";
+        default:
+            return "light";
+    }
+}
+
+export function getNextTheme(current: ThemePreference): ThemePreference {
+    switch (current) {
+        case "light":
+            return "dark";
+        case "dark":
+            return "system";
+        case "system":
+            return "light";
+        default:
+            return "light";
+    }
+}
+
 export async function saveSettingTheme(theme: string) {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     user.setting_theme = theme;
@@ -25,8 +64,12 @@ export function getSettingTheme(): string {
     } else if (storage_theme) {
         theme = storage_theme;
     }
-
     return theme;
+}
+
+export function getResolvedSettingTheme(): ThemeType {
+    const user_theme = getSettingTheme();
+    return resolveTheme(castThemePreference(user_theme));
 }
 
 export function saveSettingListSize(list_size: string) {
@@ -66,12 +109,8 @@ export function getSettingPackageInfoPreference(): PackageInfoPreference {
 }
 
 export function getTheme(): ThemeType {
-    const setting_theme = getSettingTheme();
-    if (setting_theme == "dark") {
-        return "dark";
-    } else {
-        return "light";
-    }
+    const setting_theme = getSettingTheme() as ThemePreference;
+    return resolveTheme(setting_theme);
 }
 
 export async function saveSettingsMetricsTimespan(setting_metrics_timespan: string) {

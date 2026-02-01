@@ -24,7 +24,7 @@ from application.access_control.types import (
 class User(AbstractUser):
     full_name = CharField(max_length=301, blank=True)
     is_external = BooleanField(default=False)
-    setting_theme = CharField(max_length=5, choices=Theme.THEME_CHOICES, default=Theme.THEME_LIGHT)
+    setting_theme = CharField(max_length=6, choices=Theme.THEME_CHOICES, default=Theme.THEME_LIGHT)
     setting_list_size = CharField(max_length=6, choices=ListSize.LIST_SIZE_CHOICES, default=ListSize.LIST_SIZE_MEDIUM)
     setting_package_info_preference = CharField(
         max_length=20,

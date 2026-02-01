@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { useLinkStyles } from "../../commons/layout/themes";
-import { getSettingTheme } from "../../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const LicenseComponentShowAside = () => {
     return (
@@ -77,7 +77,7 @@ const MetaData = () => {
 const EmptyDatagridHeader = () => <TableHead />;
 
 const Evidences = () => {
-    const { classes } = useLinkStyles({ setting_theme: getSettingTheme() });
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
     return (
         <WithRecord
             render={(license_component) => (

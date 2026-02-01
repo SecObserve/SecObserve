@@ -20,7 +20,7 @@ import {
     EVALUATION_RESULT_REVIEW_REQUIRED,
     EVALUATION_RESULT_UNKNOWN,
 } from "../licenses/types";
-import { getSettingPackageInfoPreference, getSettingTheme } from "./user_settings/functions";
+import { getResolvedSettingTheme, getSettingPackageInfoPreference } from "./user_settings/functions";
 
 export function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -28,7 +28,7 @@ export function getErrorMessage(error: unknown) {
 }
 
 export function getIconAndFontColor() {
-    if (getSettingTheme() == "dark") {
+    if (getResolvedSettingTheme() == "dark") {
         return "white";
     } else {
         return "black";
