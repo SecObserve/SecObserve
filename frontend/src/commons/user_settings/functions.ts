@@ -60,7 +60,7 @@ export function getSettingTheme(): string {
     const user = localStorage.getItem("user");
     if (user) {
         const user_json = JSON.parse(user);
-        theme = user_json.setting_theme;
+        theme = user_json.setting_theme ?? theme;
     } else if (storage_theme) {
         theme = storage_theme;
     }

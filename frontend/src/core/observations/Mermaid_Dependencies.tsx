@@ -7,7 +7,7 @@ import { Fragment, useEffect, useState } from "react";
 import { Labeled, WrapperField } from "react-admin";
 
 import LabeledTextField from "../../commons/custom_fields/LabeledTextField";
-import { getTheme } from "../../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 mermaid.initialize({
     flowchart: {
@@ -40,9 +40,9 @@ const createMermaidGraph = (dependencies_str: string) => {
     if (dependencies.length > 500) {
         return "Error: Graph is too large, it has more than 500 dependencies";
     }
-    const line_color = getTheme() == "dark" ? "white" : "black";
-    const primary_color = getTheme() == "dark" ? "#0086B4" : "#C9F1FF";
-    const primary_text_color = getTheme() == "dark" ? "white" : "black";
+    const line_color = getResolvedSettingTheme() == "dark" ? "white" : "black";
+    const primary_color = getResolvedSettingTheme() == "dark" ? "#0086B4" : "#C9F1FF";
+    const primary_text_color = getResolvedSettingTheme() == "dark" ? "white" : "black";
     let mermaid_content =
         "---\n" +
         "  config:\n" +
