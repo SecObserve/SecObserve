@@ -9,6 +9,6 @@
   "author": "",
   "devDependencies": {
     "@playwright/test": "1.58.1",
-    "@types/node": "24.10.9"
+    "@types/node": "24.10.10"
   }
 }
