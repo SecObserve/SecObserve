@@ -12,9 +12,14 @@ import {
 import products from ".";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import OSVLinuxDistributionInput from "../../commons/custom_fields/OSVLinuxDistributionInput";
-import { validate_0_999999, validate_255, validate_required_255 } from "../../commons/custom_validators";
+import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_automatic_osv_scanning, feature_email, feature_license_management } from "../../commons/functions";
-import { AutocompleteInputMedium, AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
+import {
+    AutocompleteInputMedium,
+    AutocompleteInputWide,
+    TextInputExtraWide,
+    TextInputWide,
+} from "../../commons/layout/themes";
 import { transform_product_group_and_product } from "../functions";
 import { ISSUE_TRACKER_TYPE_CHOICES, OBSERVATION_SEVERITY_CHOICES } from "../types";
 
@@ -164,17 +169,17 @@ export const ProductCreateEditComponent = ({
                         validate={validate_255}
                     />
                 )}
-                <TextInputWide
+                <TextInputExtraWide
                     source="notification_ms_teams_webhook"
                     label="MS Teams"
                     helperText="Webhook URL to send notifications to MS Teams"
-                    validate={validate_255}
+                    validate={validate_2048}
                 />
-                <TextInputWide
+                <TextInputExtraWide
                     source="notification_slack_webhook"
                     label="Slack"
                     helperText="Webhook URL to send notifications to Slack"
-                    validate={validate_255}
+                    validate={validate_2048}
                 />
             </Stack>
 
