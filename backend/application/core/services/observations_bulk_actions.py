@@ -22,9 +22,6 @@ from application.core.services.potential_duplicates import (
 )
 from application.core.services.security_gate import check_security_gate
 from application.core.types import Assessment_Status, Status
-from application.issue_tracker.services.issue_tracker import (
-    push_deleted_observation_to_issue_tracker,
-)
 
 
 def observations_bulk_assessment(
@@ -56,9 +53,6 @@ def observations_bulk_delete(product: Product, observation_ids: list[int]) -> No
         issue_ids.append(observation.issue_tracker_issue_id)
 
     observations.delete()
-
-    for issue_id in issue_ids:
-        push_deleted_observation_to_issue_tracker(product, issue_id, get_current_user())
 
     check_security_gate(product)
     product.last_observation_change = timezone.now()
@@ -151,7 +145,7 @@ def _check_observation_logs(product: Optional[Product], observation_log_ids: lis
         else:
             if not user_has_permission(observation_log, Permissions.Observation_Log_Approval):
                 raise ValidationError(f"First observation log without approval permission: {observation_log.pk}")
-            if not observation_log.assessment_status == Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
+            if observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
                 raise ValidationError(f"First observation log that does not need approval: {observation_log.pk}")
             if get_current_user() == observation_log.user:
                 raise ValidationError(

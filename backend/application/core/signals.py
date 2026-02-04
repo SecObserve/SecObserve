@@ -17,6 +17,9 @@ from application.core.services.observation import (
     set_product_flags,
 )
 from application.core.services.security_gate import check_security_gate
+from application.issue_tracker.services.issue_tracker import (
+    push_deleted_observation_to_issue_tracker,
+)
 
 logger = logging.getLogger("secobserve.core")
 
@@ -27,6 +30,14 @@ def observation_pre_save(sender: Any, instance: Observation, **kwargs: Any) -> N
     normalize_observation_fields(instance)
     instance.identity_hash = get_identity_hash(instance)
     set_product_flags(instance)
+
+
+@receiver(post_delete, sender=Observation)
+def observation_post_delete(
+    sender: Any, instance: Observation, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    push_deleted_observation_to_issue_tracker(instance.product, instance.issue_tracker_issue_id, get_current_user())
 
 
 @receiver(post_delete, sender=Product)
