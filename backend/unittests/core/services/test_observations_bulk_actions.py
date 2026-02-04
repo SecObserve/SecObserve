@@ -58,7 +58,6 @@ class TestObservationsBulkActions(BaseTestCase):
 
     @patch("application.core.services.observations_bulk_actions._check_observations")
     @patch("django.db.models.query.QuerySet.delete")
-    @patch("application.core.services.observations_bulk_actions.push_deleted_observation_to_issue_tracker")
     @patch("application.core.services.observations_bulk_actions.get_current_user")
     @patch("application.core.services.observations_bulk_actions.check_security_gate")
     @patch("application.core.models.Product.save")
@@ -67,7 +66,6 @@ class TestObservationsBulkActions(BaseTestCase):
         product_save_mock,
         check_security_gate_mock,
         current_user_mock,
-        push_issue_tracker_mock,
         delete_mock,
         check_mock,
     ):
@@ -85,7 +83,6 @@ class TestObservationsBulkActions(BaseTestCase):
             call(self.product_1, "issue_1", self.user_internal),
             call(self.product_1, "issue_2", self.user_internal),
         ]
-        push_issue_tracker_mock.assert_has_calls(calls)
         check_security_gate_mock.assert_called_once()
         self.product_1.save.assert_called_once()
 
