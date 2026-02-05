@@ -153,7 +153,6 @@ from application.core.services.purl_type import get_purl_type, get_purl_types
 from application.core.services.security_gate import check_security_gate
 from application.core.types import Assessment_Status, Status
 from application.issue_tracker.services.issue_tracker import (
-    push_deleted_observation_to_issue_tracker,
     push_observations_to_issue_tracker,
 )
 from application.licenses.api.serializers import LicenseComponentBulkDeleteSerializer
@@ -549,13 +548,13 @@ class ObservationViewSet(ModelViewSet):
 
     def perform_destroy(self, instance: Observation) -> None:
         product = instance.product
-        issue_id = instance.issue_tracker_issue_id
+
         super().perform_destroy(instance)
         if (instance.branch and instance.branch.is_default_branch) or (
             not instance.branch and not instance.product.repository_default_branch
         ):
             check_security_gate(product)
-        push_deleted_observation_to_issue_tracker(product, issue_id, get_current_user())
+
         product.last_observation_change = timezone.now()
         product.save()
 

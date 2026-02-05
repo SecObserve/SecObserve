@@ -3,11 +3,11 @@ import CloseIcon from "@mui/icons-material/Close";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { Dialog, DialogContent, DialogTitle, Divider, IconButton, Paper, Stack } from "@mui/material";
 import mermaid from "mermaid";
-import { Fragment, useEffect, useState } from "react";
-import { Labeled, WrapperField } from "react-admin";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { Labeled, WrapperField, useTheme } from "react-admin";
 
 import LabeledTextField from "../../commons/custom_fields/LabeledTextField";
-import { getTheme } from "../../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 mermaid.initialize({
     flowchart: {
@@ -40,9 +40,9 @@ const createMermaidGraph = (dependencies_str: string) => {
     if (dependencies.length > 500) {
         return "Error: Graph is too large, it has more than 500 dependencies";
     }
-    const line_color = getTheme() == "dark" ? "white" : "black";
-    const primary_color = getTheme() == "dark" ? "#0086B4" : "#C9F1FF";
-    const primary_text_color = getTheme() == "dark" ? "white" : "black";
+    const line_color = getResolvedSettingTheme() == "dark" ? "white" : "black";
+    const primary_color = getResolvedSettingTheme() == "dark" ? "#0086B4" : "#C9F1FF";
+    const primary_text_color = getResolvedSettingTheme() == "dark" ? "white" : "black";
     let mermaid_content =
         "---\n" +
         "  config:\n" +
@@ -94,6 +94,8 @@ type ComponentShowProps = {
 
 const MermaidDependencies = ({ dependencies }: ComponentShowProps) => {
     const [open, setOpen] = useState(false);
+    const [theme] = useTheme();
+    const mermaidRef = useRef<HTMLAnchorElement>(null);
     const handleOpen = () => {
         setOpen(true);
     };
@@ -103,13 +105,13 @@ const MermaidDependencies = ({ dependencies }: ComponentShowProps) => {
     };
 
     useEffect(() => {
-        if (dependencies) {
-            if (document.getElementById("mermaid-dependencies")) {
-                document.getElementById("mermaid-dependencies")?.removeAttribute("data-processed");
-                mermaid.contentLoaded();
-            }
+        if (dependencies && mermaidRef.current) {
+            const element = mermaidRef.current;
+            element.removeAttribute("data-processed");
+            element.innerHTML = createMermaidGraph(dependencies);
+            mermaid.run({ nodes: [element] });
         }
-    }, [dependencies, mermaid.contentLoaded()]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [dependencies, theme]);
 
     return (
         <Fragment>
@@ -120,6 +122,7 @@ const MermaidDependencies = ({ dependencies }: ComponentShowProps) => {
                             <a
                                 href="javasrcipt:void(0);"
                                 id="mermaid-dependencies"
+                                ref={mermaidRef}
                                 className="mermaid"
                                 onClick={handleOpen}
                             >

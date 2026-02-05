@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.47.2"
+version = "1.47.3"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -10,8 +10,8 @@ package-mode = false
 python = ">= 3.10, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
-gunicorn = "24.1.1"  # https://github.com/benoitc/gunicorn
-django = "5.2.10"  # https://www.djangoproject.com/
+gunicorn = "25.0.1"  # https://github.com/benoitc/gunicorn
+django = "5.2.11"  # https://www.djangoproject.com/
 django-environ = "0.12.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
 django-csp = "4.0"  # https://github.com/mozilla/django-csp
@@ -72,7 +72,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.23.4"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "2.24.5"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 
 # Development dependencies
@@ -86,7 +86,7 @@ django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzb
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
-coverage = { version = "7.13.2", optional = true }  # https://github.com/nedbat/coveragepy
+coverage = { version = "7.13.3", optional = true }  # https://github.com/nedbat/coveragepy
 django-coverage-plugin = { version = "3.2.0", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies

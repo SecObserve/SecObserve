@@ -64,6 +64,10 @@ class OCSFParser(BaseParser, BaseFileParser):
                 if finding.status_id not in [StatusID.New, StatusID.InProgress]:
                     continue
 
+                if finding.status_code in ["PASS", "MANUAL", "MUTED"]:
+                    # These are status codes set by Prowler
+                    continue
+
                 if finding.activity_id not in [ActivityID.Create, ActivityID.Update]:
                     continue
 
@@ -142,6 +146,8 @@ def get_origins(finding: DetectionFinding) -> list[Origin]:
 def get_description(finding: DetectionFinding) -> str:
     description = finding.finding_info.desc
 
+    if finding.status_code and finding.status_code != "FAIL":
+        description += f"\n\n**Status code:** {finding.status_code}"
     if finding.status_detail:
         description += f"\n\n**Status detail:** {finding.status_detail}"
     if finding.risk_details:

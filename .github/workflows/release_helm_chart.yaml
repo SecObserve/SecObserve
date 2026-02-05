@@ -1,0 +1,34 @@
+name: Publish released chart
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - charts/**
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor}}@users.noreply.github.com"
+
+      - name: Run chart-releaser
+        uses: bitdeps/helm-oci-charts-releaser@v0.1.5
+        with:
+          oci_registry: ghcr.io/${{ github.repository_owner }}/charts
+          oci_username: ${{ github.actor}}
+          oci_password: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

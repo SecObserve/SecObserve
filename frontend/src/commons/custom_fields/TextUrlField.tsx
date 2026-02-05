@@ -3,7 +3,7 @@ import { Link, Typography } from "@mui/material";
 import { Fragment } from "react";
 
 import { useLinkStyles } from "../../commons/layout/themes";
-import { getSettingTheme } from "../../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 interface TextUrlFieldProps {
     text: string | number;
@@ -39,7 +39,7 @@ function is_invalid_url(urlString: string): boolean {
 }
 
 const TextUrlField = (props: TextUrlFieldProps) => {
-    const { classes } = useLinkStyles({ setting_theme: getSettingTheme() });
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
 
     return (
         <Fragment>

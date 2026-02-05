@@ -1,7 +1,7 @@
-import { getSettingTheme } from "../user_settings/functions";
+import { getResolvedSettingTheme } from "../user_settings/functions";
 
 const Logo = () => {
-    if (getSettingTheme() == "dark") {
+    if (getResolvedSettingTheme() == "dark") {
         return <img src="secobserve_white.svg" alt="SecObserve logo" height={"20px"} />;
     } else {
         return <img src="secobserve.svg" alt="SecObserve logo" height={"20px"} />;
