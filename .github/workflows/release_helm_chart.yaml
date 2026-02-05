@@ -7,11 +7,13 @@ on:
     paths:
       - charts/**
 
+permissions: read-all
+
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       packages: write
 
     steps:
@@ -26,7 +28,7 @@ jobs:
           git config user.email "${{ github.actor}}@users.noreply.github.com"
 
       - name: Run chart-releaser
-        uses: bitdeps/helm-oci-charts-releaser@v0.1.5
+        uses: bitdeps/helm-oci-charts-releaser@caedceea2a5ab997c7e5469a999811dbb3d5b070 # v0.1.5
         with:
           oci_registry: ghcr.io/${{ github.repository_owner }}/charts
           oci_username: ${{ github.actor}}
