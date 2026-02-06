@@ -7,10 +7,10 @@ authors = [ "Stefan Fleckenstein", ]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">= 3.10, < 3.15"
+python = ">= 3.11, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
-gunicorn = "25.0.1"  # https://github.com/benoitc/gunicorn
+gunicorn = "25.0.2"  # https://github.com/benoitc/gunicorn
 django = "5.2.11"  # https://www.djangoproject.com/
 django-environ = "0.12.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
@@ -74,6 +74,7 @@ py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
 html-to-markdown = "2.24.5"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
+licenselynx = "2.0.2"  # https://github.com/licenselynx/licenselynx
 
 # Development dependencies
 # ------------------------------------------------------------------------------
@@ -98,7 +99,7 @@ pylint = { version = "4.0.4", optional = true }  # https://github.com/pylint-dev
 pylint-django = { version = "2.7.0", optional = true }  # https://github.com/PyCQA/pylint-django
 mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "5.2.9", optional = true }  # https://github.com/typeddjango/django-stubs
-djangorestframework-stubs = { version = "3.16.7", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
+djangorestframework-stubs = { version = "3.16.8", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.1.0.20251220", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 

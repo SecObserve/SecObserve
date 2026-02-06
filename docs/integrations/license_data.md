@@ -12,6 +12,10 @@ Per default the task to import the SPDX licenses is scheduled to run every night
 
 Hour is always in UTC time.
 
-##  ScanCode LicenseDB
+## ScanCode LicenseDB
 
 The [ScanCode LicenseDB](https://scancode-licensedb.aboutcode.org) is a free and open database of mostly all the software licenses, including a category per license. License groups will be created with the initial startup of SecObserve for each category of the ScanCode License, containing the respective SPDX licenses, and updated every night after the update of the SPDX licenses.
+
+## LicenseLynx
+
+[LicenseLynx](https://licenselynx.org/) is a project focused on deterministically map unknown or ambiguous license names and their canonical license names. Imported license names which are not SPDX licenses will be mapped with LicenseLynx to find the correct SPDX license if possible.
