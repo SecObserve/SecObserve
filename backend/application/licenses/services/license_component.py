@@ -19,7 +19,7 @@ from application.licenses.types import (
     NO_LICENSE_INFORMATION,
     License_Policy_Evaluation_Result,
 )
-from licenselynx.licenselynx import LicenseLynx
+
 
 def get_identity_hash(license_component: License_Component) -> str:
     hash_string = _get_string_to_hash(license_component)
@@ -121,14 +121,7 @@ def _prepare_imported_declared_license(component: License_Component, spdx_cache:
                 component.imported_declared_non_spdx_license = component.unsaved_declared_licenses[0]
                 component.imported_declared_license_name = component.imported_declared_non_spdx_license
 
-        if component.imported_declared_non_spdx_license:
-            _get_mapped_licence(component.imported_declared_non_spdx_license, spdx_cache)
-
     else:
-        for i, unsaved_declared_license in enumerate(component.unsaved_declared_licenses):
-            mapped_license = _get_mapped_licence_string(unsaved_declared_license)
-            if mapped_license:
-                component.unsaved_declared_licenses[i] = mapped_license
         component.imported_declared_multiple_licenses = ", ".join(component.unsaved_declared_licenses)
         component.imported_declared_license_name = component.imported_declared_multiple_licenses
 
@@ -139,7 +132,6 @@ def _prepare_imported_concluded_license(component: License_Component, spdx_cache
     elif len(component.unsaved_concluded_licenses) == 1:
         component.imported_concluded_spdx_license = spdx_cache.get(component.unsaved_concluded_licenses[0])
         if component.imported_concluded_spdx_license:
-
             component.imported_concluded_license_name = component.imported_concluded_spdx_license.spdx_id
         else:
             licensing = get_spdx_licensing()
@@ -232,18 +224,3 @@ def save_concluded_license(component: License_Component) -> None:
         )
 
     component.save()
-
-
-def _get_mapped_licence_string(license_string: str) -> Optional[str]:
-    license_object = LicenseLynx.map(license_string)
-
-    print("---")
-    print(license_string)
-    if license_object and license_object.id != license_string:
-        print(license_object.id)
-        
-    return license_object.id if license_object else None
-
-def _get_mapped_licence(license_string: str, spdx_cache: SPDXLicenseCache) -> Optional[License]:
-    license_string = _get_mapped_licence_string(license_string)
-    return spdx_cache.get(license_string) if license_string else None

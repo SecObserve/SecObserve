@@ -61,6 +61,7 @@ from application.licenses.services.license_component import (
     set_effective_license,
 )
 from application.licenses.services.license_policy import apply_license_policy_product
+from application.licenses.services.licenselynx import apply_licenselynx
 from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
 from application.rules.services.rule_engine import Rule_Engine
@@ -424,6 +425,8 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
                 concluded_license_applicator.apply_concluded_license(existing_component)
                 set_effective_license(existing_component)
 
+            apply_licenselynx(existing_component, spdx_cache)
+
             clip_fields("licenses", "License_Component", existing_component)
             components_updated.append(existing_component)
 
@@ -442,6 +445,8 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
             set_effective_license(unsaved_component)
             concluded_license_applicator.apply_concluded_license(unsaved_component)
             set_effective_license(unsaved_component)
+
+            apply_licenselynx(unsaved_component, spdx_cache)
 
             clip_fields("licenses", "License_Component", unsaved_component)
             components_new.append(unsaved_component)
