@@ -1,4 +1,3 @@
-# tests/test_licenselynx.py
 import unittest
 from unittest.mock import patch
 
