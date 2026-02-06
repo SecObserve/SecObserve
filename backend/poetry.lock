@@ -981,27 +981,27 @@ django = ">=4.2"
 
 [[package]]
 name = "djangorestframework-stubs"
-version = "3.16.7"
+version = "3.16.8"
 description = "PEP-484 stubs for django-rest-framework"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "djangorestframework_stubs-3.16.7-py3-none-any.whl", hash = "sha256:70f80050144875f80ce8ac823ff8628f6e3eb7336495394bb9803251721d9358"},
-    {file = "djangorestframework_stubs-3.16.7.tar.gz", hash = "sha256:e53bc346e9950ebdd1bb2bbc19d7e5c8b7acc894e381df55da69248f47ab78ff"},
+    {file = "djangorestframework_stubs-3.16.8-py3-none-any.whl", hash = "sha256:c5bf61def0f330a071dd5f470f05710189d06c467b3f3e186b32c5a23d4952fb"},
+    {file = "djangorestframework_stubs-3.16.8.tar.gz", hash = "sha256:f6d464b54fa2f929610e957446c04e6ac29558265418e0a2d9f653a4cdd410b5"},
 ]
 
 [package.dependencies]
 django-stubs = ">=5.2.8"
 types-pyyaml = "*"
-types-requests = "*"
 typing-extensions = ">=4.0"
 
 [package.extras]
 compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.13,<1.20)"]
 coreapi = ["coreapi (>=2.0.0)"]
 markdown = ["types-markdown (>=0.1.5)"]
+requests = ["types-requests"]
 
 [[package]]
 name = "dnspython"
@@ -2959,22 +2959,6 @@ files = [
 ]
 
 [[package]]
-name = "types-requests"
-version = "2.32.4.20260107"
-description = "Typing stubs for requests"
-optional = true
-python-versions = ">=3.9"
-groups = ["main"]
-markers = "extra == \"code-quality\""
-files = [
-    {file = "types_requests-2.32.4.20260107-py3-none-any.whl", hash = "sha256:b703fe72f8ce5b31ef031264fe9395cac8f46a04661a79f7ed31a80fb308730d"},
-    {file = "types_requests-2.32.4.20260107.tar.gz", hash = "sha256:018a11ac158f801bfa84857ddec1650750e393df8a004a8a9ae2a9bec6fcb24f"},
-]
-
-[package.dependencies]
-urllib3 = ">=2"
-
-[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -3141,4 +3125,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "0b2cd586c3f4fcf6f87c8d2726b61ef21c229e32421b752b94155b8294469ba2"
+content-hash = "36ce2992c7701bcc78bc47338cb16a06ae77b05ed16c6fe763dc6a03727ae1a3"
