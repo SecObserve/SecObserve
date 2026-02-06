@@ -99,7 +99,7 @@ pylint = { version = "4.0.4", optional = true }  # https://github.com/pylint-dev
 pylint-django = { version = "2.7.0", optional = true }  # https://github.com/PyCQA/pylint-django
 mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "5.2.9", optional = true }  # https://github.com/typeddjango/django-stubs
-djangorestframework-stubs = { version = "3.16.7", optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
+djangorestframework-stubs = { version = "3.16.8", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.1.0.20251220", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 

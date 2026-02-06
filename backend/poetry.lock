@@ -981,27 +981,28 @@ django = ">=4.2"
 
 [[package]]
 name = "djangorestframework-stubs"
-version = "3.16.7"
+version = "3.16.8"
 description = "PEP-484 stubs for django-rest-framework"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "djangorestframework_stubs-3.16.7-py3-none-any.whl", hash = "sha256:70f80050144875f80ce8ac823ff8628f6e3eb7336495394bb9803251721d9358"},
-    {file = "djangorestframework_stubs-3.16.7.tar.gz", hash = "sha256:e53bc346e9950ebdd1bb2bbc19d7e5c8b7acc894e381df55da69248f47ab78ff"},
+    {file = "djangorestframework_stubs-3.16.8-py3-none-any.whl", hash = "sha256:c5bf61def0f330a071dd5f470f05710189d06c467b3f3e186b32c5a23d4952fb"},
+    {file = "djangorestframework_stubs-3.16.8.tar.gz", hash = "sha256:f6d464b54fa2f929610e957446c04e6ac29558265418e0a2d9f653a4cdd410b5"},
 ]
 
 [package.dependencies]
 django-stubs = ">=5.2.8"
 types-pyyaml = "*"
-types-requests = "*"
+types-requests = {version = "*", optional = true, markers = "extra == \"requests\""}
 typing-extensions = ">=4.0"
 
 [package.extras]
 compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.13,<1.20)"]
 coreapi = ["coreapi (>=2.0.0)"]
 markdown = ["types-markdown (>=0.1.5)"]
+requests = ["types-requests"]
 
 [[package]]
 name = "dnspython"
@@ -3141,4 +3142,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "0b2cd586c3f4fcf6f87c8d2726b61ef21c229e32421b752b94155b8294469ba2"
+content-hash = "852418d5eb46db3d669580f9f7ca8e62e3bbb21ff3e17abfec3791e3e4c4a274"
