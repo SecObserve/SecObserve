@@ -1160,14 +1160,14 @@ files = [
 
 [[package]]
 name = "gunicorn"
-version = "25.0.1"
+version = "25.0.2"
 description = "WSGI HTTP Server for UNIX"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "gunicorn-25.0.1-py3-none-any.whl", hash = "sha256:23cbe968c6ae3c8efc3d118c8353fa0763efc2102d89d0d3cea696cede7ff6b1"},
-    {file = "gunicorn-25.0.1.tar.gz", hash = "sha256:573e053aa950246e307ea908bd7ddce1870d41a40aec0c935938c586f0b9b946"},
+    {file = "gunicorn-25.0.2-py3-none-any.whl", hash = "sha256:288c002141d73ec8d05fdbb7c8453e3d01d3209d8ff6ad425df0ae1430153ca2"},
+    {file = "gunicorn-25.0.2.tar.gz", hash = "sha256:8e44f2f7cf791de60c84ce119221c26121fd2ffcb27badfbced5a1c919d35d67"},
 ]
 
 [package.dependencies]
@@ -3141,4 +3141,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "bfb0bd3eb0900c170f785917b73022ff4ba817bddb5f97b93cbcf3465823fb6f"
+content-hash = "0b2cd586c3f4fcf6f87c8d2726b61ef21c229e32421b752b94155b8294469ba2"
