@@ -20,9 +20,7 @@ class SPDXLicenseCache:
 
         spdx_license = self.cache.get(spdx_id)
         if spdx_license:
-            if isinstance(spdx_license, License):
-                return spdx_license
-            return None
+            return spdx_license if isinstance(spdx_license, License) else None
 
         spdx_license = get_license_by_spdx_id(spdx_id)
         if spdx_license:
