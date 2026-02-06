@@ -995,6 +995,7 @@ files = [
 [package.dependencies]
 django-stubs = ">=5.2.8"
 types-pyyaml = "*"
+types-requests = {version = "*", optional = true, markers = "extra == \"requests\""}
 typing-extensions = ">=4.0"
 
 [package.extras]
@@ -2959,6 +2960,22 @@ files = [
 ]
 
 [[package]]
+name = "types-requests"
+version = "2.32.4.20260107"
+description = "Typing stubs for requests"
+optional = true
+python-versions = ">=3.9"
+groups = ["main"]
+markers = "extra == \"code-quality\""
+files = [
+    {file = "types_requests-2.32.4.20260107-py3-none-any.whl", hash = "sha256:b703fe72f8ce5b31ef031264fe9395cac8f46a04661a79f7ed31a80fb308730d"},
+    {file = "types_requests-2.32.4.20260107.tar.gz", hash = "sha256:018a11ac158f801bfa84857ddec1650750e393df8a004a8a9ae2a9bec6fcb24f"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "typing-extensions"
 version = "4.15.0"
 description = "Backported and Experimental Type Hints for Python 3.9+"
@@ -3125,4 +3142,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "36ce2992c7701bcc78bc47338cb16a06ae77b05ed16c6fe763dc6a03727ae1a3"
+content-hash = "852418d5eb46db3d669580f9f7ca8e62e3bbb21ff3e17abfec3791e3e4c4a274"
