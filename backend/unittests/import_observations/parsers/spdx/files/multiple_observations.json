@@ -2596,7 +2596,7 @@
       {
         "name": "libcom_err",
         "SPDXID": "SPDXRef-Package-202055e74aac337d",
-        "versionInfo": "1.47.3-r5",
+        "versionInfo": "1.48.0-r5",
         "supplier": "NOASSERTION",
         "downloadLocation": "NONE",
         "filesAnalyzed": false,
@@ -2606,14 +2606,14 @@
             "checksumValue": "b12095c140bb68ff17a3667e9bf3ba8ba9a52d00"
           }
         ],
-        "sourceInfo": "built package from: e2fsprogs 1.47.3-r5",
+        "sourceInfo": "built package from: e2fsprogs 1.48.0-r5",
         "licenseConcluded": "GPL-2.0-or-later AND LGPL-2.0-or-later AND BSD-3-Clause AND MIT",
         "licenseDeclared": "GPL-2.0-or-later AND LGPL-2.0-or-later AND BSD-3-Clause AND MIT",
         "externalRefs": [
           {
             "referenceCategory": "PACKAGE-MANAGER",
             "referenceType": "purl",
-            "referenceLocator": "pkg:apk/alpine/libcom_err@1.47.3-r5?arch=x86_64\u0026distro=3.20.3"
+            "referenceLocator": "pkg:apk/alpine/libcom_err@1.48.0-r5?arch=x86_64\u0026distro=3.20.3"
           }
         ],
         "primaryPackagePurpose": "LIBRARY",
@@ -2634,7 +2634,7 @@
             "annotator": "Tool: trivy-0.58.0",
             "annotationDate": "2024-12-21T15:02:40Z",
             "annotationType": "OTHER",
-            "comment": "PkgID: libcom_err@1.47.3-r5"
+            "comment": "PkgID: libcom_err@1.48.0-r5"
           },
           {
             "annotator": "Tool: trivy-0.58.0",
