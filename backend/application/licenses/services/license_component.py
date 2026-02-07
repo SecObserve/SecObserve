@@ -132,7 +132,6 @@ def _prepare_imported_concluded_license(component: License_Component, spdx_cache
     elif len(component.unsaved_concluded_licenses) == 1:
         component.imported_concluded_spdx_license = spdx_cache.get(component.unsaved_concluded_licenses[0])
         if component.imported_concluded_spdx_license:
-
             component.imported_concluded_license_name = component.imported_concluded_spdx_license.spdx_id
         else:
             licensing = get_spdx_licensing()

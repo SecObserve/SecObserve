@@ -2,9 +2,9 @@
 
 ## Installing the chart
 
-The chart can be installed as from the OCI repository using `helm install secobserve --version 1.47.3 oci://ghcr.io/SecObserve/charts/secobserve`.
+The chart can be installed as from the OCI repository using `helm install secobserve --version 1.48.0 oci://ghcr.io/SecObserve/charts/secobserve`.
 
-![Version: 1.0.17](https://img.shields.io/badge/Version-1.0.16-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.47.3](https://img.shields.io/badge/AppVersion-1.47.3-informational?style=flat-square)
+![Version: 1.0.18](https://img.shields.io/badge/Version-1.0.18-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.48.0](https://img.shields.io/badge/AppVersion-1.48.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system
 designed for software development teams and cloud-native environments.
