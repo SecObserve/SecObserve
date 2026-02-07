@@ -4,9 +4,9 @@ import { BooleanInput, FormDataConsumer, NullableBooleanInput, NumberInput, Refe
 
 import product_groups from ".";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
-import { validate_0_999999, validate_255, validate_required_255 } from "../../commons/custom_validators";
+import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_email, feature_license_management } from "../../commons/functions";
-import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputWide, TextInputExtraWide, TextInputWide } from "../../commons/layout/themes";
 
 export type ProductGroupCreateEditComponentProps = {
     initialDescription: string;
@@ -83,17 +83,17 @@ export const ProductGroupCreateEditComponent = ({
                         validate={validate_255}
                     />
                 )}
-                <TextInputWide
+                <TextInputExtraWide
                     source="notification_ms_teams_webhook"
                     label="MS Teams"
                     helperText="Webhook URL to send notifications to MS Teams"
-                    validate={validate_255}
+                    validate={validate_2048}
                 />
-                <TextInputWide
+                <TextInputExtraWide
                     source="notification_slack_webhook"
                     label="Slack"
                     helperText="Webhook URL to send notifications to Slack"
-                    validate={validate_255}
+                    validate={validate_2048}
                 />
             </Stack>
 
