@@ -69,6 +69,9 @@ export const updateRefreshToken = () => {
                     return Promise.resolve();
                 })
                 .catch((error: Error) => {
+                    if (location.hash !== "#/login") {
+                        localStorage.setItem("last_location", location.hash);
+                    }
                     return Promise.reject(error);
                 });
         }
