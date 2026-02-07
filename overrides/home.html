@@ -1,0 +1,225 @@
+<!-- Custom HTML site displayed as the Home chapter -->
+
+{% extends "base.html" %}
+{% block tabs %}
+{{ super() }}
+
+<style>
+    @font-face {
+        font-family: 'poppinsregular';
+        src: url('assets/fonts/poppins-regular-webfont.woff') format('woff'),
+            url('assets/fonts/poppins-regular-webfont.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    .md-main {
+        display: none;
+    }
+
+    .md-main__inner {
+        display: none;
+    }
+
+    .md-footer__inner {
+        display: none;
+    }
+
+    /* Remove spacing, as we cannot hide it completely */
+    .md-main__inner {
+        display: none;
+    }
+
+    /* Hide main content for now */
+    .md-content {
+        display: none;
+    }
+
+    .md-sidebar--secondary {
+        display: none;
+    }
+
+    .md-sidebar--primary {
+        display: none;
+    }
+
+    .tx-container {
+        padding-top: .0rem;
+        background: linear-gradient(var(--md-primary-fg-color) 10%, rgb(0, 180, 240));
+        flex-grow: 1;
+    }
+
+    .tx-hero {
+        margin: 32px 2.8rem;
+        color: var(--md-primary-bg-color);
+        justify-content: center;
+    }
+
+    .tx-hero h1 {
+        font-family: "poppinsregular";
+        margin-bottom: 1rem;
+        color: currentColor;
+        font-weight: 700
+    }
+
+    .tx-hero__content {
+        padding-bottom: 1rem;
+        margin: 0 auto;
+        font-family: "poppinsregular";
+    }
+
+    .tx-hero .md-button {
+        margin-top: .5rem;
+        margin-right: .5rem;
+        color: var(--md-primary-bg-color);
+        font-family: "poppinsregular";
+    }
+
+    .tx-hero .md-button--primary {
+        background-color: var(--md-primary-bg-color);
+        color: var(--md-primary-fg-color);
+        border-color: var(--md-primary-bg-color)
+    }
+
+    .tx-hero .md-button:focus,
+    .tx-hero .md-button:hover {
+        background-color: var(--md-primary-fg-color);
+        color: var(--md-default-bg-color);
+        border-color: var(--md-primary-fg-color)
+    }
+
+    .feature-item h2 svg {
+        height: 30px;
+        float: left;
+        margin-right: 10px;
+        transform: translateY(10%);
+    }
+
+    .top-hr {
+        margin-top: 42px;
+    }
+
+    @media screen and (max-width:30em) {
+        .tx-hero h1 {
+            font-size: 1.4rem
+        }
+    }
+
+    @media screen and (min-width:60em) {
+        .md-sidebar--secondary {
+            display: none
+        }
+
+        .md-sidebar--primary {
+            display: none
+        }
+
+        .tx-hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tx-hero__content {
+            padding-top: 10%;
+        }
+    }
+
+    @media screen and (min-width:76.25em) {
+        .md-sidebar--primary {
+            display: none
+        }
+
+        .md-sidebar--secondary {
+            display: none
+        }
+
+        .top-hr {
+            width: 100%;
+            display: flex;
+            max-width: 61rem;
+            margin-right: auto;
+            margin-left: auto;
+            padding: 0 .2rem;
+        }
+
+        .bottom-hr {
+            margin-top: 10px;
+            width: 100%;
+            display: flex;
+            max-width: 61rem;
+            margin-right: auto;
+            margin-left: auto;
+            padding: 0 .2rem;
+        }
+
+        .feature-item {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .feature-item:hover {
+            background-color: #526cfe47;
+            border-radius: 3px;
+        }
+    }
+
+    .row {
+        display: flex;
+    }
+
+    /* Create two equal columns that sits next to each other */
+    .column_1 {
+        flex: 55%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .column_2 {
+        flex: 45%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 150px;
+    }
+</style>
+
+<!-- Main site Entry button descriptions -->
+<section class="tx-container">
+    <div class="md-typeset">
+        <div class="tx-hero">
+            <div class="tx-hero__content">
+                <div class="row">
+                    <div class="column_1">
+                        <div>
+                            <h1>Vulnerability and License Management</h1>
+                            <p>with</p>
+                            <p><img src="assets/images/secobserve_white.svg" alt="SecObserve" width="500px" /></p>
+                            <a href="{{ page.next_page.url | url }}" title="{{ page.next_page.title | striptags }}"
+                                class="md-button md-button--primary">
+                                Get started
+                            </a>
+                            <a href="getting_started/features/" title="Features"
+                                class="md-button md-button--primary">
+                                Features
+                            </a>
+                            <a href="integrations/overview/" title="Integrations"
+                                class="md-button md-button--primary">
+                                Integrations
+                            </a>
+                        </div>
+                    </div>
+                    <div class="column_2">
+                        <p><img src="assets/images/secobserve_home.png" alt="SecObserve" width="900px" /></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block content %}{% endblock %}
+{% block footer %}{% endblock %}
