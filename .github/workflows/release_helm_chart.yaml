@@ -1,6 +1,7 @@
 name: Publish released chart
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
