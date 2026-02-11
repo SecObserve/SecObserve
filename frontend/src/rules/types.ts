@@ -55,3 +55,11 @@ export const RULE_STATUS_CHOICES_APPROVAL = [
     { id: RULE_STATUS_APPROVED, name: RULE_STATUS_APPROVED },
     { id: RULE_STATUS_REJECTED, name: RULE_STATUS_REJECTED },
 ];
+
+export const RULE_TYPE_FIELDS = "Fields";
+export const RULE_TYPE_REGO = "Rego";
+
+export const RULE_TYPE_CHOICES = [
+    { id: RULE_TYPE_FIELDS, name: RULE_TYPE_FIELDS },
+    { id: RULE_TYPE_REGO, name: RULE_TYPE_REGO },
+];

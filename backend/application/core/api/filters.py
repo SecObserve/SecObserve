@@ -230,6 +230,7 @@ class ObservationFilter(FilterSet):
             ("title", "title"),
             (("numerical_severity", "id"), "current_severity"),
             ("current_status", "current_status"),
+            ("current_priority", "current_priority"),
             ("origin_component_name_version", "origin_component_name_version"),
             (
                 "origin_docker_image_name_tag_short",
@@ -379,6 +380,7 @@ class ObservationLogFilter(FilterSet):
             ),
             ("severity", "severity"),
             ("status", "status"),
+            ("priority", "priority"),
             ("comment", "comment"),
             ("created", "created"),
             ("assessment_status", "assessment_status"),

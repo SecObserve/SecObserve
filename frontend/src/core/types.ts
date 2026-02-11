@@ -65,10 +65,12 @@ export interface Observation extends RaRecord {
     current_severity: string;
     parser_severity: string;
     assessment_severity: string;
+    rule_rego_severity: string;
     rule_severity: string;
     current_status: string;
     parser_status: string;
     assessment_status: string;
+    rule_rego_status: string;
     rule_status: string;
     scanner_observation_id: string;
     origin_component_name: string;

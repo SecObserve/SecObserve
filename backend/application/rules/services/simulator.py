@@ -3,7 +3,8 @@ from typing import Tuple
 from application.core.models import Observation
 from application.core.queries.product import get_products
 from application.rules.models import Rule
-from application.rules.services.rule_engine import check_rule_for_observation
+
+# from application.rules.services.rule_engine import check_rule_for_observation
 
 MAX_OBSERVATIONS = 100
 
@@ -40,9 +41,9 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
         previous_product_rule = observation.product_rule if observation.product_rule else None
         previous_general_rule = observation.general_rule if observation.general_rule else None
 
-        if check_rule_for_observation(rule, observation, previous_general_rule, previous_product_rule, True):
-            number_observations += 1
-            if len(simulation_results) < MAX_OBSERVATIONS:
-                simulation_results.append(observation)
+        # if check_rule_for_observation(rule, observation, previous_general_rule, previous_product_rule, True):
+        #     number_observations += 1
+        #     if len(simulation_results) < MAX_OBSERVATIONS:
+        #         simulation_results.append(observation)
 
     return number_observations, simulation_results

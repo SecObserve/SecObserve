@@ -247,13 +247,20 @@ class Observation(Model):
     numerical_severity = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
     parser_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     rule_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
+    rule_rego_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     assessment_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
 
     current_status = CharField(max_length=16, choices=Status.STATUS_CHOICES)
     parser_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     vex_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     rule_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
+    rule_rego_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     assessment_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
+
+    current_priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
+    rule_priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
+    rule_rego_priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
+    assessment_priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
 
     scanner_observation_id = CharField(max_length=255, blank=True)
     vulnerability_id = CharField(max_length=255, blank=True)
@@ -350,6 +357,21 @@ class Observation(Model):
         on_delete=PROTECT,
     )
 
+    general_rule_rego = ForeignKey(
+        "rules.Rule",
+        related_name="general_rules_rego",
+        blank=True,
+        null=True,
+        on_delete=PROTECT,
+    )
+    product_rule_rego = ForeignKey(
+        "rules.Rule",
+        related_name="product_rules_rego",
+        blank=True,
+        null=True,
+        on_delete=PROTECT,
+    )
+
     issue_tracker_issue_id = CharField(max_length=255, blank=True)
     issue_tracker_issue_closed = BooleanField(default=False)
     issue_tracker_jira_initial_status = CharField(max_length=255, blank=True)
@@ -362,6 +384,9 @@ class Observation(Model):
     parser_vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
     vex_vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
     rule_vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
+    rule_rego_vex_justification = CharField(
+        max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True
+    )
     assessment_vex_justification = CharField(
         max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True
     )
@@ -385,6 +410,7 @@ class Observation(Model):
             Index(fields=["current_severity"]),
             Index(fields=["numerical_severity"]),
             Index(fields=["current_status"]),
+            Index(fields=["current_priority"]),
             Index(fields=["vulnerability_id"]),
             Index(fields=["origin_component_name_version"]),
             Index(fields=["origin_component_cyclonedx_bom_link"]),
@@ -415,6 +441,7 @@ class Observation_Log(Model):
     user = ForeignKey("access_control.User", related_name="observation_logs", on_delete=PROTECT)
     severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
+    priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
     comment = TextField(max_length=4096)
     created = DateTimeField(auto_now_add=True)
     vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
