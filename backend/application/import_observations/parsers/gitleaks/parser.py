@@ -28,7 +28,7 @@ class GitleaksParser(BaseParser, BaseFileParser):
             return False
 
         findings = data.get("findings")
-        if not findings or not isinstance(findings, list):
+        if findings is None or not isinstance(findings, list):
             return False
 
         if len(findings) == 0 or (
