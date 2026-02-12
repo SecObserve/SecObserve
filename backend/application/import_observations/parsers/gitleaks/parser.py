@@ -31,7 +31,7 @@ class GitleaksParser(BaseParser, BaseFileParser):
         if findings is None or not isinstance(findings, list):
             return False
 
-        if len(findings) == 0 or (
+        if len(findings) == 0 or (  # pylint: disable=too-many-boolean-expressions
             len(findings) >= 1
             and isinstance(findings[0], dict)
             and findings[0].get("RuleID")
@@ -41,7 +41,9 @@ class GitleaksParser(BaseParser, BaseFileParser):
             return True
         return False
 
-    def get_observations(self, data: dict, product: Product, branch: Optional[Branch]) -> tuple[list[Observation], str]:
+    def get_observations(  # pylint: disable=too-many-locals
+        self, data: dict, product: Product, branch: Optional[Branch]
+    ) -> tuple[list[Observation], str]:
 
         findings = data.get("findings", [])
 
