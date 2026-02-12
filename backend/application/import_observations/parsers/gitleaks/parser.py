@@ -24,21 +24,32 @@ class GitleaksParser(BaseParser, BaseFileParser):
         return Parser_Type.TYPE_SECRETS
 
     def check_format(self, data: Any) -> bool:
-        if (
-            isinstance(data, list)  # pylint: disable=too-many-boolean-expressions
-            and len(data) >= 1
-            and isinstance(data[0], dict)
-            and data[0].get("RuleID")
-            and data[0].get("Match")
-            and data[0].get("Secret")
+        if not data or not isinstance(data, dict):
+            return False
+
+        findings = data.get("findings")
+        if findings is None or not isinstance(findings, list):
+            return False
+
+        if len(findings) == 0 or (  # pylint: disable=too-many-boolean-expressions
+            len(findings) >= 1
+            and isinstance(findings[0], dict)
+            and findings[0].get("RuleID")
+            and findings[0].get("Match")
+            and findings[0].get("Secret")
         ):
             return True
         return False
 
-    def get_observations(self, data: list, product: Product, branch: Optional[Branch]) -> tuple[list[Observation], str]:
+    def get_observations(  # pylint: disable=too-many-locals
+        self, data: dict, product: Product, branch: Optional[Branch]
+    ) -> tuple[list[Observation], str]:
+
+        findings = data.get("findings", [])
+
         observations = []
 
-        for entry in data:
+        for entry in findings:
             rule_id = entry.get("RuleID")
             description = entry.get("Description")
             start_line = entry.get("StartLine")

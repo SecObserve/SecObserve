@@ -16,7 +16,7 @@ class TestGitleaksParser(TestCase):
             parser = GitleaksParser()
             data = load(testfile)
 
-            self.assertFalse(parser.check_format(data))
+            self.assertTrue(parser.check_format(data))
 
     def test_gitleaks_dir(self):
         with open(path.dirname(__file__) + "/files/gitleaks.dir.json") as testfile:
