@@ -1,7 +1,6 @@
 import json
 import re
 from copy import copy
-from datetime import date
 from typing import Any, Optional
 
 import jsonpickle
@@ -68,12 +67,34 @@ class Rule_Engine:
     def apply_rules_for_observation(self, observation: Observation) -> None:
         observation_before = copy(observation)
 
+        observation.rule_severity = ""
+        observation.rule_rego_severity = ""
+        observation.rule_status = ""
+        observation.rule_rego_status = ""
+        observation.rule_priority = None
+        observation.rule_rego_priority = None
+        observation.rule_vex_justification = ""
+        observation.rule_rego_vex_justification = ""
+        observation.general_rule = None
+        observation.general_rule_rego = None
+        observation.product_rule = None
+        observation.product_rule_rego = None
+
         rule_fields_found = False
         for rule in self.rules:
             if rule.type == Rule_Type.RULE_TYPE_FIELDS:
                 rule_fields_found = self.check_rule_for_observation(rule, observation, observation_before)
                 if rule_fields_found:
                     break
+
+        # Write observation and observation log if no rule was found but there was one before
+        if not rule_fields_found and (
+            observation_before.general_rule != observation.general_rule
+            or observation_before.product_rule != observation.product_rule
+        ):
+            _write_observation_log_no_rule(
+                observation, observation_before.product_rule, observation_before.general_rule
+            )
 
         rule_rego_found = False
         for rule in self.rules:
@@ -83,13 +104,13 @@ class Rule_Engine:
                     break
 
         # Write observation and observation log if no rule was found but there was one before
-        # if not rule_fields_found and (
-        #     observation_before.general_rule != observation.general_rule
-        #     or observation_before.product_rule != observation.product_rule
-        # ):
-        #     _write_observation_log_no_rule(
-        #         observation, observation_before.product_rule, observation_before.general_rule
-        #     )
+        if not rule_rego_found and (
+            observation_before.general_rule_rego != observation.general_rule_rego
+            or observation_before.product_rule_rego != observation.product_rule_rego
+        ):
+            _write_observation_log_no_rule(
+                observation, observation_before.product_rule_rego, observation_before.general_rule_rego
+            )
 
     def apply_all_rules_for_product(self) -> None:
         if self.product.is_product_group:
@@ -118,49 +139,59 @@ class Rule_Engine:
         observation_before: Observation,
         simulation: Optional[bool] = False,
     ) -> bool:
-        found = False
+        fields_found = False
         if rule.type == Rule_Type.RULE_TYPE_FIELDS:
-            found = self._check_rule_fields(rule, observation, observation_before, simulation)
+            fields_found = self._check_rule_fields(rule, observation, observation_before, simulation)
             if simulation:
-                return found
-
-        if rule.type == Rule_Type.RULE_TYPE_REGO:
-            found = self._check_rule_rego(rule, observation, observation_before, simulation)
-            if simulation:
-                return found
+                return fields_found
 
         # Write observation and observation and push to issue tracker log if status or severity has been changed
-        if found and (  # pylint: disable=too-many-boolean-expressions
+        if fields_found and (  # pylint: disable=too-many-boolean-expressions
             observation_before.rule_priority != observation.rule_priority
-            or observation_before.rule_rego_priority != observation.rule_rego_priority
             or observation_before.current_priority != observation.current_priority
             or observation_before.rule_status != observation.rule_status
-            or observation_before.rule_rego_status != observation.rule_rego_status
             or observation_before.current_status != observation.current_status
             or observation_before.rule_severity != observation.rule_severity
-            or observation_before.rule_rego_severity != observation.rule_rego_severity
             or observation_before.current_severity != observation.current_severity
             or observation_before.rule_vex_justification != observation.rule_vex_justification
-            or observation_before.rule_rego_vex_justification != observation.rule_rego_vex_justification
             or observation_before.current_vex_justification != observation.current_vex_justification
             or observation_before.general_rule != observation.general_rule
             or observation_before.product_rule != observation.product_rule
+        ):
+            _write_observation_log(
+                observation=observation,
+                observation_before=observation_before,
+                rule=rule,
+            )
+            push_observation_to_issue_tracker(observation, get_current_user())
+
+        rego_found = False
+        if rule.type == Rule_Type.RULE_TYPE_REGO:
+            rego_found = self._check_rule_rego(rule, observation, observation_before, simulation)
+            if simulation:
+                return rego_found
+
+        # Write observation and observation and push to issue tracker log if status or severity has been changed
+        if rego_found and (  # pylint: disable=too-many-boolean-expressions
+            observation_before.rule_rego_priority != observation.rule_rego_priority
+            or observation_before.current_priority != observation.current_priority
+            or observation_before.rule_rego_status != observation.rule_rego_status
+            or observation_before.current_status != observation.current_status
+            or observation_before.rule_rego_severity != observation.rule_rego_severity
+            or observation_before.current_severity != observation.current_severity
+            or observation_before.rule_rego_vex_justification != observation.rule_rego_vex_justification
+            or observation_before.current_vex_justification != observation.current_vex_justification
             or observation_before.general_rule_rego != observation.general_rule_rego
             or observation_before.product_rule_rego != observation.product_rule_rego
         ):
             _write_observation_log(
                 observation=observation,
+                observation_before=observation_before,
                 rule=rule,
-                previous_severity=observation_before.current_severity,
-                previous_status=observation_before.current_status,
-                previous_vex_justification=observation_before.current_vex_justification,
-                previous_risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
             )
             push_observation_to_issue_tracker(observation, get_current_user())
 
-            return True
-
-        return False
+        return fields_found or rego_found
 
     def _check_rule_fields(
         self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
@@ -285,28 +316,26 @@ def _check_regex(pattern: str, value: str) -> bool:
 def _write_observation_log(
     *,
     observation: Observation,
+    observation_before: Observation,
     rule: Rule,
-    previous_severity: str,
-    previous_status: str,
-    previous_vex_justification: str,
-    previous_risk_acceptance_expiry_date: Optional[date],
 ) -> None:
-    if previous_status != observation.current_status:
-        status = observation.current_status
-    else:
-        status = ""
-    if previous_severity != observation.current_severity:
-        severity = observation.current_severity
-    else:
-        severity = ""
-    if previous_vex_justification != observation.current_vex_justification:
-        vex_justification = observation.current_vex_justification
-    else:
-        vex_justification = ""
-    if previous_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date:
-        risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date
-    else:
-        risk_acceptance_expiry_date = None
+    status = observation.current_status if observation_before.current_status != observation.current_status else ""
+    severity = (
+        observation.current_severity if observation_before.current_severity != observation.current_severity else ""
+    )
+    priority = (
+        observation.current_priority if observation_before.current_priority != observation.current_priority else None
+    )
+    vex_justification = (
+        observation.current_vex_justification
+        if observation_before.current_vex_justification != observation.current_vex_justification
+        else ""
+    )
+    risk_acceptance_expiry_date = (
+        observation.risk_acceptance_expiry_date
+        if observation_before.risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
+        else None
+    )
 
     if rule.description:
         comment = rule.description
@@ -320,6 +349,7 @@ def _write_observation_log(
         observation=observation,
         severity=severity,
         status=status,
+        priority=priority,
         comment=comment,
         vex_justification=vex_justification,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
@@ -332,15 +362,15 @@ def _write_observation_log_no_rule(
     previous_product_rule: Optional[Rule],
     previous_general_rule: Optional[Rule],
 ) -> None:
-    observation.rule_severity = ""
     previous_severity = observation.current_severity
     observation.current_severity = get_current_severity(observation)
 
-    observation.rule_status = ""
     previous_status = observation.current_status
     observation.current_status = get_current_status(observation)
 
-    observation.rule_vex_justification = ""
+    previous_priority = observation.current_priority
+    observation.current_priority = get_current_priority(observation)
+
     previous_vex_justification = observation.current_vex_justification
     observation.current_vex_justification = get_current_vex_justification(observation)
 
@@ -355,6 +385,8 @@ def _write_observation_log_no_rule(
 
     log_severity = observation.current_severity if previous_severity != observation.current_severity else ""
 
+    log_priority = observation.current_priority if previous_priority != observation.current_priority else None
+
     log_vex_justification = (
         observation.current_vex_justification
         if previous_vex_justification != observation.current_vex_justification
@@ -368,9 +400,9 @@ def _write_observation_log_no_rule(
     )
 
     if previous_product_rule:
-        comment = f"Removed product rule {previous_product_rule.name}"
+        comment = f"Removed product {previous_product_rule.type.lower()} rule {previous_product_rule.name}"
     elif previous_general_rule:
-        comment = f"Removed general rule {previous_general_rule.name}"
+        comment = f"Removed general {previous_general_rule.type.lower()} rule {previous_general_rule.name}"
     else:
         comment = "Removed unknown rule"
 
@@ -378,6 +410,7 @@ def _write_observation_log_no_rule(
         observation=observation,
         severity=log_severity,
         status=log_status,
+        priority=log_priority,
         comment=comment,
         vex_justification=log_vex_justification,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
