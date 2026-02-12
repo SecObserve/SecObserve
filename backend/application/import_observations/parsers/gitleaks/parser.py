@@ -43,7 +43,7 @@ class GitleaksParser(BaseParser, BaseFileParser):
 
     def get_observations(self, data: dict, product: Product, branch: Optional[Branch]) -> tuple[list[Observation], str]:
 
-        findings = data.get("findings")
+        findings = data.get("findings", [])
 
         observations = []
 
