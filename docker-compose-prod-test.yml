@@ -78,7 +78,7 @@ services:
       - "3306:3306"
 
   postgres:
-    image: postgres:15.15-alpine
+    image: postgres:15.16-alpine
     environment:
       POSTGRES_DB: ${SO_POSTGRES_DB:-secobserve}
       POSTGRES_USER: ${SO_POSTGRES_USER:-secobserve}
