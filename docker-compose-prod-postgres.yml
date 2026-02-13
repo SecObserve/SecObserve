@@ -98,7 +98,7 @@ services:
       - database
 
   postgres:
-    image: postgres:15.15-alpine
+    image: postgres:15.16-alpine
     container_name: "prod_postgres"
     environment:
       POSTGRES_DB: ${SO_POSTGRES_DB:-secobserve}
