@@ -33,7 +33,7 @@ drf-spectacular-sidecar = "2026.1.1"  # https://github.com/tfranzel/drf-spectacu
 
 # Token authentication
 # ------------------------------------------------------------------------------
-PyJWT = "2.10.1"  # https://github.com/jpadilla/pyjwt
+PyJWT = "2.11.0"  # https://github.com/jpadilla/pyjwt
 
 # HTTP requests
 # ------------------------------------------------------------------------------
