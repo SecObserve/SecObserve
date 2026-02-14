@@ -13,8 +13,9 @@ import {
     useRecordContext,
 } from "react-admin";
 import { useWatch } from "react-hook-form";
-import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
-import rego from "react-syntax-highlighter/dist/esm/languages/prism/rego";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+// import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
+// import rego from "react-syntax-highlighter/dist/esm/languages/prism/rego";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import MarkdownEdit from "../commons/custom_fields/MarkdownEdit";
@@ -52,7 +53,7 @@ import general_rules from "./general_rules";
 import product_rules from "./product_rules";
 import { RULE_TYPE_CHOICES, RULE_TYPE_FIELDS, RULE_TYPE_REGO } from "./types";
 
-SyntaxHighlighter.registerLanguage("rego", rego);
+// SyntaxHighlighter.registerLanguage("rego", rego);
 
 export function getRegoTheme() {
     const theme = getResolvedSettingTheme();

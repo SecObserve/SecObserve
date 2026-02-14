@@ -1,14 +1,12 @@
+from copy import copy
 from typing import Tuple
 
-from copy import copy
 from application.core.models import Observation
 from application.core.queries.product import get_products
-from application.rules.models import Rule
-from application.rules.types import Rule_Type
-
 from application.core.services.observation import normalize_observation_fields
-
+from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine
+from application.rules.types import Rule_Type
 
 MAX_OBSERVATIONS = 100
 

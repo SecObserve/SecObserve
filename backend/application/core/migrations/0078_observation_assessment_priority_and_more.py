@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0076_alter_product_notification_ms_teams_webhook_and_more"),
+        ("core", "0077_drop_component_view"),
         ("import_observations", "0016_api_configuration_migrate_names"),
         ("rules", "0018_rule_rego_module_rule_type"),
         ("vex", "0010_cyclonedx_cyclonedx_branch_cyclonedx_vulnerability"),
