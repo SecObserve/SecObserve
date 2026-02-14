@@ -1948,15 +1948,15 @@ ptyprocess = ">=0.5"
 
 [[package]]
 name = "platformdirs"
-version = "4.8.0"
+version = "4.9.0"
 description = "A small Python package for determining appropriate platform-specific dirs, e.g. a `user data dir`."
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "platformdirs-4.8.0-py3-none-any.whl", hash = "sha256:1c1328b4d2ea997bbcb904175a9bde14e824a3fa79f751ea3888d63d7d727557"},
-    {file = "platformdirs-4.8.0.tar.gz", hash = "sha256:c1d4a51ab04087041dd602707fbe7ee8b62b64e590f30e336e5c99c2d0c542d2"},
+    {file = "platformdirs-4.9.0-py3-none-any.whl", hash = "sha256:b02ef5c8ddacd466a19decb2390e52f48ae49a5c41f55646cc45e85320d9aff7"},
+    {file = "platformdirs-4.9.0.tar.gz", hash = "sha256:d8c98e89c427a101947441c7e77b4cd1c8ea717de6f3885e2aa9c73fce276207"},
 ]
 
 [[package]]
