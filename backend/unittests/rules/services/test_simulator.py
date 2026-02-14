@@ -24,7 +24,7 @@ class TestSimulateRule(unittest.TestCase):
         self.mock_rule.scanner_prefix = None
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_product(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
@@ -50,7 +50,7 @@ class TestSimulateRule(unittest.TestCase):
         mock_get_products.assert_not_called()
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_product_group(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
@@ -82,7 +82,7 @@ class TestSimulateRule(unittest.TestCase):
         mock_get_products.assert_not_called()
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_without_product(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
@@ -108,7 +108,7 @@ class TestSimulateRule(unittest.TestCase):
         mock_get_products.assert_called_once()
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_parser(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
@@ -137,7 +137,7 @@ class TestSimulateRule(unittest.TestCase):
         mock_check_rule.assert_called_once()
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_with_scanner_prefix(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
@@ -166,7 +166,7 @@ class TestSimulateRule(unittest.TestCase):
         mock_check_rule.assert_called_once()
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_no_matches(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks
@@ -187,7 +187,7 @@ class TestSimulateRule(unittest.TestCase):
         mock_check_rule.assert_called_once()
 
     @patch("application.rules.services.simulator.get_products")
-    @patch("application.rules.services.simulator.check_rule_for_observation")
+    @patch("application.rules.services.simulator.Rule_Engine.check_rule_for_observation")
     @patch("application.rules.services.simulator.Observation.objects")
     def test_simulate_rule_max_observations(self, mock_observation_manager, mock_check_rule, mock_get_products):
         # Setup mocks

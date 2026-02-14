@@ -17,7 +17,7 @@ else
     fi
 fi
 
-python manage.py custom_migrate
+python manage.py migrate
 
 echo "Admin user: ${ADMIN_USER}"
 ADMIN_EXISTS=$(echo "SELECT * from access_control_user;" | python manage.py dbshell | grep "${ADMIN_USER}" || :)

@@ -63,7 +63,7 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
         observation_before.product_rule = None
         observation_before.product_rule_rego = None
 
-        normalize_observation_fields(observation)
+        normalize_observation_fields(observation_before)
 
         if rule_engine.check_rule_for_observation(rule, observation, observation_before, True):
             number_observations += 1
