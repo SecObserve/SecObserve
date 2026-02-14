@@ -1,5 +1,5 @@
 import CachedIcon from "@mui/icons-material/Cached";
-import { Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { Backdrop, CircularProgress, Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
 import {
     ChipField,
@@ -41,6 +41,7 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
                 setData(result.json.results);
             })
             .catch((error) => {
+                setOpen(false)
                 notify(error.message, {
                     type: "warning",
                 });
@@ -75,7 +76,7 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
     return (
         <Fragment>
             <SmallButton title="Simulate" onClick={handleOpen} icon={<CachedIcon />} />
-            <Dialog ref={dialogRef} open={open} onClose={handleClose} fullWidth maxWidth={"lg"}>
+            <Dialog ref={dialogRef} open={open && !loading} onClose={handleClose} fullWidth maxWidth={"lg"}>
                 <DialogTitle>Affected observations of rule {rule.name}</DialogTitle>
                 <DialogContent>
                     {count !== data.length && (
@@ -111,6 +112,11 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
                     </Stack>
                 </DialogContent>
             </Dialog>
+            {loading ? (
+                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
+                    <CircularProgress color="primary" />
+                </Backdrop>
+            ) : null}
         </Fragment>
     );
 };

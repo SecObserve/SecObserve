@@ -2,11 +2,10 @@ from typing import Any, Optional
 
 from regopy import Input, Interpreter
 from regopy.rego_shared import RegoError
+from rest_framework.exceptions import ValidationError
 
-
-class RegoException(Exception):
-    def __init__(self, message: str) -> None:
-        self.message = message
+class RegoException(ValidationError):
+    pass
 
 
 class RegoInterpreter:
