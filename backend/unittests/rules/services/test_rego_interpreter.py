@@ -7,7 +7,7 @@ from application.rules.services.rego_interpreter import RegoException, RegoInter
 class TestRegoException(unittest.TestCase):
     def test_message(self):
         exception = RegoException("test error")
-        self.assertEqual(exception.message, "test error")
+        self.assertEqual(str(exception), "[ErrorDetail(string='test error', code='invalid')]")
 
     def test_is_exception(self):
         exception = RegoException("test error")
@@ -43,8 +43,8 @@ class TestRegoInterpreterInit(unittest.TestCase):
         with self.assertRaises(RegoException) as context:
             RegoInterpreter("invalid rego")
 
-        self.assertIn("Error while building rego bundle", context.exception.message)
-        self.assertIn("syntax error", context.exception.message)
+        self.assertIn("Error while building rego bundle", str(context.exception))
+        self.assertIn("syntax error", str(context.exception))
 
 
 class TestRegoInterpreterQuery(unittest.TestCase):
@@ -120,7 +120,7 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         with self.assertRaises(RegoException) as context:
             self.interpreter.query({"title": "test"})
 
-        self.assertEqual(context.exception.message, "Rego output has no results")
+        self.assertEqual(str(context.exception), "[ErrorDetail(string='Rego output has no results', code='invalid')]")
 
     @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
@@ -135,7 +135,7 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         with self.assertRaises(RegoException) as context:
             self.interpreter.query({"title": "test"})
 
-        self.assertEqual(context.exception.message, "Rego output has no results")
+        self.assertEqual(str(context.exception), "[ErrorDetail(string='Rego output has no results', code='invalid')]")
 
     @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
@@ -152,7 +152,9 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         with self.assertRaises(RegoException) as context:
             self.interpreter.query({"title": "test"})
 
-        self.assertEqual(context.exception.message, "Rego results have no expressions")
+        self.assertEqual(
+            str(context.exception), "[ErrorDetail(string='Rego results have no expressions', code='invalid')]"
+        )
 
     @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
@@ -171,7 +173,9 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         with self.assertRaises(RegoException) as context:
             self.interpreter.query({"title": "test"})
 
-        self.assertEqual(context.exception.message, "Rego expressions have no 'rule' element")
+        self.assertEqual(
+            str(context.exception), "[ErrorDetail(string=\"Rego expressions have no 'rule' element\", code='invalid')]"
+        )
 
     @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
@@ -185,5 +189,5 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         with self.assertRaises(RegoException) as context:
             self.interpreter.query({"title": "test"})
 
-        self.assertIn("Error while querying rego module", context.exception.message)
-        self.assertIn("query failed", context.exception.message)
+        self.assertIn("Error while querying rego module", str(context.exception))
+        self.assertIn("query failed", str(context.exception))
