@@ -1,8 +1,8 @@
 from typing import Optional
 
+from django.db import connection
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.query import QuerySet
-from django.db import connection
 
 from application.access_control.services.current_user import get_current_user
 from application.core.models import (
@@ -61,6 +61,7 @@ def get_components() -> QuerySet[Component]:
 
     return components
 
+
 DROP_COMPONENT_VIEW = "DROP VIEW IF EXISTS core_component;"
 
 CREATE_COMPONENT_VIEW = """
@@ -82,8 +83,8 @@ WITH CombinedData AS (
     WHERE origin_component_name_version != ''
 
     UNION
-    
-    SELECT 
+
+    SELECT
         product_id as product_id,
         branch_id as branch_id,
         origin_service_id as origin_service_id,
@@ -113,17 +114,17 @@ ObservationFlag AS (
 )
 SELECT
     MD5(
-		CONCAT(
-			CAST(COALESCE(cd.product_id, 111) as CHAR(255)),
-			CAST(COALESCE(cd.branch_id, 222) as CHAR(255)),
-			CAST(COALESCE(cd.origin_service_id, 333) as CHAR(255)),
-			COALESCE(cd.component_name_version, 'no_name_version'),
-			COALESCE(cd.component_purl, 'no_purl'),
-			COALESCE(cd.component_cpe, 'no_cpe'),
-			COALESCE(cd.component_dependencies, 'no_dependencies'),
-			COALESCE(cd.component_cyclonedx_bom_link, 'component_cyclonedx_bom_link')
-			)		
-		) AS id,
+        CONCAT(
+            CAST(COALESCE(cd.product_id, 111) as CHAR(255)),
+            CAST(COALESCE(cd.branch_id, 222) as CHAR(255)),
+            CAST(COALESCE(cd.origin_service_id, 333) as CHAR(255)),
+            COALESCE(cd.component_name_version, 'no_name_version'),
+            COALESCE(cd.component_purl, 'no_purl'),
+            COALESCE(cd.component_cpe, 'no_cpe'),
+            COALESCE(cd.component_dependencies, 'no_dependencies'),
+            COALESCE(cd.component_cyclonedx_bom_link, 'component_cyclonedx_bom_link')
+            )
+        ) AS id,
     cd.product_id as product_id,
     cd.branch_id as branch_id,
     cd.origin_service_id as origin_service_id,
@@ -137,21 +138,21 @@ SELECT
     cd.component_cyclonedx_bom_link AS component_cyclonedx_bom_link,
     COALESCE(ObservationFlag.has_observation, FALSE) AS has_observations
 FROM CombinedData cd
-LEFT JOIN ObservationFlag ON 
+LEFT JOIN ObservationFlag ON
     cd.product_id = ObservationFlag.product_id
-	AND (
-        (cd.branch_id = ObservationFlag.branch_id) IS TRUE OR 
+    AND (
+        (cd.branch_id = ObservationFlag.branch_id) IS TRUE OR
         (cd.branch_id IS NULL AND ObservationFlag.branch_id IS NULL)
         )
-	AND (
-        (cd.origin_service_id = ObservationFlag.origin_service_id) IS TRUE OR 
+    AND (
+        (cd.origin_service_id = ObservationFlag.origin_service_id) IS TRUE OR
         (cd.origin_service_id IS NULL AND ObservationFlag.origin_service_id IS NULL)
         )
-    AND cd.component_name_version = ObservationFlag.component_name_version 
-    AND cd.component_purl = ObservationFlag.component_purl 
-    AND cd.component_cpe = ObservationFlag.component_cpe 
-    AND cd.component_dependencies = ObservationFlag.component_dependencies 
-    AND cd.component_cyclonedx_bom_link = ObservationFlag.component_cyclonedx_bom_link 
+    AND cd.component_name_version = ObservationFlag.component_name_version
+    AND cd.component_purl = ObservationFlag.component_purl
+    AND cd.component_cpe = ObservationFlag.component_cpe
+    AND cd.component_dependencies = ObservationFlag.component_dependencies
+    AND cd.component_cyclonedx_bom_link = ObservationFlag.component_cyclonedx_bom_link
 ;
 """
 

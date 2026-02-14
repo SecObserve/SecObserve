@@ -65,17 +65,13 @@ class TestSimulateRule(unittest.TestCase):
 
         self.assertEqual(count, 1)
         self.assertEqual(results, [self.mock_observation])
-        mock_obs_manager.filter.assert_called_once_with(
-            product__in=mock_product_group.products.all()
-        )
+        mock_obs_manager.filter.assert_called_once_with(product__in=mock_product_group.products.all())
 
     @patch("application.rules.services.simulator.normalize_observation_fields")
     @patch("application.rules.services.simulator.get_products")
     @patch("application.rules.services.simulator.Rule_Engine")
     @patch("application.rules.services.simulator.Observation.objects")
-    def test_no_product_general_rule(
-        self, mock_obs_manager, mock_rule_engine_cls, mock_get_products, mock_normalize
-    ):
+    def test_no_product_general_rule(self, mock_obs_manager, mock_rule_engine_cls, mock_get_products, mock_normalize):
         mock_get_products.return_value = [self.mock_product]
         self._setup_queryset_mock(mock_obs_manager, [self.mock_observation])
         mock_rule_engine_cls.return_value.check_rule_for_observation.return_value = True
@@ -217,9 +213,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.normalize_observation_fields")
     @patch("application.rules.services.simulator.Rule_Engine")
     @patch("application.rules.services.simulator.Observation.objects")
-    def test_multiple_observations_mixed_matches(
-        self, mock_obs_manager, mock_rule_engine_cls, mock_normalize
-    ):
+    def test_multiple_observations_mixed_matches(self, mock_obs_manager, mock_rule_engine_cls, mock_normalize):
         obs_match = MagicMock(spec=Observation)
         obs_match.product = self.mock_product
         obs_no_match = MagicMock(spec=Observation)
@@ -240,9 +234,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.normalize_observation_fields")
     @patch("application.rules.services.simulator.Rule_Engine")
     @patch("application.rules.services.simulator.Observation.objects")
-    def test_rule_engine_cached_per_product(
-        self, mock_obs_manager, mock_rule_engine_cls, mock_normalize
-    ):
+    def test_rule_engine_cached_per_product(self, mock_obs_manager, mock_rule_engine_cls, mock_normalize):
         product_a = MagicMock(spec=Product)
         product_a.pk = 10
         product_b = MagicMock(spec=Product)
@@ -270,9 +262,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.normalize_observation_fields")
     @patch("application.rules.services.simulator.Rule_Engine")
     @patch("application.rules.services.simulator.Observation.objects")
-    def test_normalize_called_for_each_observation(
-        self, mock_obs_manager, mock_rule_engine_cls, mock_normalize
-    ):
+    def test_normalize_called_for_each_observation(self, mock_obs_manager, mock_rule_engine_cls, mock_normalize):
         obs1 = MagicMock(spec=Observation)
         obs1.product = self.mock_product
         obs2 = MagicMock(spec=Observation)
@@ -320,9 +310,7 @@ class TestSimulateRule(unittest.TestCase):
     @patch("application.rules.services.simulator.normalize_observation_fields")
     @patch("application.rules.services.simulator.Rule_Engine")
     @patch("application.rules.services.simulator.Observation.objects")
-    def test_check_rule_called_with_simulation_true(
-        self, mock_obs_manager, mock_rule_engine_cls, mock_normalize
-    ):
+    def test_check_rule_called_with_simulation_true(self, mock_obs_manager, mock_rule_engine_cls, mock_normalize):
         self._setup_queryset_mock(mock_obs_manager, [self.mock_observation])
         mock_engine = mock_rule_engine_cls.return_value
         mock_engine.check_rule_for_observation.return_value = True

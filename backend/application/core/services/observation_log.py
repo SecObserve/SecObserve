@@ -6,7 +6,7 @@ from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log
 
 
-def create_observation_log(
+def create_observation_log(  # pylint: disable=too-many-arguments
     *,
     observation: Observation,
     severity: str,
