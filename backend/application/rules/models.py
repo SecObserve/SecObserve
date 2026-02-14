@@ -17,13 +17,15 @@ from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
 from application.core.models import Product
 from application.core.types import Severity, Status, VEX_Justification
-from application.rules.types import Rule_Status
+from application.rules.types import Rule_Status, Rule_Type
 
 
 class Rule(Model):
     name = CharField(max_length=255)
     description = TextField(max_length=2048, blank=True)
     product = ForeignKey(Product, blank=True, null=True, on_delete=CASCADE)
+    type = CharField(max_length=8, choices=Rule_Type.RULE_TYPE_CHOICES, default=Rule_Type.RULE_TYPE_FIELDS)
+
     parser = ForeignKey("import_observations.Parser", null=True, on_delete=CASCADE)
     scanner_prefix = CharField(max_length=255, blank=True)
     title = CharField(max_length=255, blank=True)
@@ -39,6 +41,9 @@ class Rule(Model):
     new_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     new_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     new_vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
+
+    rego_module = TextField(blank=True)
+
     enabled = BooleanField(default=True)
     user = ForeignKey(
         User,

@@ -1,9 +1,12 @@
+from copy import copy
 from typing import Tuple
 
 from application.core.models import Observation
 from application.core.queries.product import get_products
+from application.core.services.observation import normalize_observation_fields
 from application.rules.models import Rule
-from application.rules.services.rule_engine import check_rule_for_observation
+from application.rules.services.rule_engine import Rule_Engine
+from application.rules.types import Rule_Type
 
 MAX_OBSERVATIONS = 100
 
@@ -21,10 +24,11 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
     else:
         observations = Observation.objects.filter(product__in=get_products(), product__apply_general_rules=True)
 
-    if rule.parser:
-        observations = observations.filter(parser=rule.parser)
-    if rule.scanner_prefix:
-        observations = observations.filter(scanner__startswith=rule.scanner_prefix)
+    if rule.type == Rule_Type.RULE_TYPE_FIELDS:
+        if rule.parser:
+            observations = observations.filter(parser=rule.parser)
+        if rule.scanner_prefix:
+            observations = observations.filter(scanner__startswith=rule.scanner_prefix)
 
     observations = (
         observations.order_by("product__name", "title")
@@ -36,11 +40,32 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
         .select_related("product_rule")
     )
 
-    for observation in observations:
-        previous_product_rule = observation.product_rule if observation.product_rule else None
-        previous_general_rule = observation.general_rule if observation.general_rule else None
+    rule_engines: dict[int, Rule_Engine] = {}
 
-        if check_rule_for_observation(rule, observation, previous_general_rule, previous_product_rule, True):
+    for observation in observations:
+        rule_engine = rule_engines.get(observation.product.pk)
+        if not rule_engine:
+            rule_engine = Rule_Engine(observation.product)
+            rule_engines[observation.product.pk] = rule_engine
+
+        observation_before = copy(observation)
+
+        observation_before.rule_status = ""
+        observation_before.rule_rego_status = ""
+        observation_before.rule_severity = ""
+        observation_before.rule_rego_status = ""
+        observation_before.rule_priority = None
+        observation_before.rule_rego_priority = None
+        observation_before.rule_vex_justification = ""
+        observation_before.rule_rego_vex_justification = ""
+        observation_before.general_rule = None
+        observation_before.general_rule_rego = None
+        observation_before.product_rule = None
+        observation_before.product_rule_rego = None
+
+        normalize_observation_fields(observation_before)
+
+        if rule_engine.check_rule_for_observation(rule, observation, observation_before, True):
             number_observations += 1
             if len(simulation_results) < MAX_OBSERVATIONS:
                 simulation_results.append(observation)

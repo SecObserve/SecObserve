@@ -3,12 +3,15 @@ import {
     Datagrid,
     DateField,
     ListContextProvider,
+    NumberField,
     ResourceContextProvider,
     TextField,
+    WithListContext,
     useListController,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { has_attribute } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 
 type ObservationLogEmbeddedListProps = {
@@ -51,32 +54,43 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
         <ResourceContextProvider value="observation_logs">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <Datagrid
-                        size={getSettingListSize()}
-                        sx={{ width: "100%" }}
-                        bulkActionButtons={false}
-                        rowClick={ShowObservationLogs}
-                        resource="observation_logs"
-                    >
-                        {(observation.product_data.assessments_need_approval ||
-                            observation.product_data.product_group_assessments_need_approval) && (
-                            <ChipField source="assessment_status" sortable={false} />
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                sx={{ width: "100%" }}
+                                bulkActionButtons={false}
+                                rowClick={ShowObservationLogs}
+                                resource="observation_logs"
+                            >
+                                {(observation.product_data.assessments_need_approval ||
+                                    observation.product_data.product_group_assessments_need_approval) && (
+                                    <ChipField source="assessment_status" sortable={false} />
+                                )}
+                                <TextField source="user_full_name" label="User" sortable={false} />
+                                <TextField source="severity" emptyText="---" sortable={false} />
+                                <TextField source="status" emptyText="---" sortable={false} />
+                                {has_attribute("priority", data, sort) && (
+                                    <NumberField source="priority" emptyText="---" sortable={false} />
+                                )}
+                                <TextField
+                                    source="comment_shortened"
+                                    sortable={false}
+                                    label="Comment"
+                                    sx={{ wordBreak: "break-word" }}
+                                />
+                                <DateField source="created" showTime sortable={false} />
+                                {(observation.product_data.assessments_need_approval ||
+                                    observation.product_data.product_group_assessments_need_approval) && (
+                                    <TextField
+                                        source="approval_user_full_name"
+                                        label="Approved/rejected by"
+                                        sortable={false}
+                                    />
+                                )}
+                            </Datagrid>
                         )}
-                        <TextField source="user_full_name" label="User" sortable={false} />
-                        <TextField source="severity" emptyText="---" sortable={false} />
-                        <TextField source="status" emptyText="---" sortable={false} />
-                        <TextField
-                            source="comment_shortened"
-                            sortable={false}
-                            label="Comment"
-                            sx={{ wordBreak: "break-word" }}
-                        />
-                        <DateField source="created" showTime sortable={false} />
-                        {(observation.product_data.assessments_need_approval ||
-                            observation.product_data.product_group_assessments_need_approval) && (
-                            <TextField source="approval_user_full_name" label="Approved/rejected by" sortable={false} />
-                        )}
-                    </Datagrid>
+                    />
                     <CustomPagination />
                 </div>
             </ListContextProvider>

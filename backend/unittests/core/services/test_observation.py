@@ -4,6 +4,7 @@ from application.core.models import Observation
 from application.core.services.observation import (
     _get_string_to_hash,
     _normalize_update_impact_score_and_fix_available,
+    get_current_priority,
     get_current_severity,
     get_current_status,
     get_identity_hash,
@@ -76,6 +77,7 @@ class TestObservation(BaseTestCase):
             title="assessment_severity",
             current_severity=Severity.SEVERITY_NONE,
             parser_severity=Severity.SEVERITY_LOW,
+            rule_rego_severity=Severity.SEVERITY_LOW,
             rule_severity=Severity.SEVERITY_LOW,
             assessment_severity=Severity.SEVERITY_MEDIUM,
             cvss3_score=9.5,
@@ -92,6 +94,17 @@ class TestObservation(BaseTestCase):
             cvss3_score=9.5,
         )
         self.assertEqual(Severity.SEVERITY_MEDIUM, get_current_severity(observation))
+
+    def test_get_current_severity_rule_rego(self):
+        observation = Observation(
+            title="rule_severity",
+            current_severity=Severity.SEVERITY_NONE,
+            parser_severity=Severity.SEVERITY_CRITICAL,
+            rule_severity=Severity.SEVERITY_MEDIUM,
+            rule_rego_severity=Severity.SEVERITY_LOW,
+            cvss3_score=9.5,
+        )
+        self.assertEqual(Severity.SEVERITY_LOW, get_current_severity(observation))
 
     def test_get_current_severity_parser(self):
         observation = Observation(
@@ -202,6 +215,7 @@ class TestObservation(BaseTestCase):
             current_status=Status.STATUS_RESOLVED,
             parser_status=Status.STATUS_NOT_AFFECTED,
             rule_status=Status.STATUS_DUPLICATE,
+            rule_rego_status=Status.STATUS_DUPLICATE,
             assessment_status=Status.STATUS_FALSE_POSITIVE,
             cvss3_score=9.5,
         )
@@ -217,6 +231,17 @@ class TestObservation(BaseTestCase):
         )
         self.assertEqual(Status.STATUS_DUPLICATE, get_current_status(observation))
 
+    def test_get_current_status_rule_rego(self):
+        observation = Observation(
+            title="assessment_status",
+            current_status=Status.STATUS_RESOLVED,
+            parser_status=Status.STATUS_NOT_AFFECTED,
+            rule_status=Status.STATUS_FALSE_POSITIVE,
+            rule_rego_status=Status.STATUS_DUPLICATE,
+            cvss3_score=9.5,
+        )
+        self.assertEqual(Status.STATUS_DUPLICATE, get_current_status(observation))
+
     def test_get_current_status_parser(self):
         observation = Observation(
             title="parser_status",
@@ -224,6 +249,42 @@ class TestObservation(BaseTestCase):
             parser_status=Status.STATUS_NOT_AFFECTED,
         )
         self.assertEqual(Status.STATUS_NOT_AFFECTED, get_current_status(observation))
+
+    # --- get_current_priority ---
+
+    def test_get_current_priority_assessment(self):
+        observation = Observation(
+            title="assessment_priority",
+            current_priority=4,
+            rule_priority=3,
+            rule_rego_priority=2,
+            assessment_priority=1,
+        )
+        self.assertEqual(1, get_current_priority(observation))
+
+    def test_get_current_priority_rule_rego(self):
+        observation = Observation(
+            title="assessment_status",
+            current_priority=4,
+            rule_priority=3,
+            rule_rego_priority=2,
+        )
+        self.assertEqual(2, get_current_priority(observation))
+
+    def test_get_current_priority_rule(self):
+        observation = Observation(
+            title="assessment_status",
+            current_priority=4,
+            rule_priority=3,
+        )
+        self.assertEqual(3, get_current_priority(observation))
+
+    def test_get_current_priority(self):
+        observation = Observation(
+            title="assessment_status",
+            current_priority=4,
+        )
+        self.assertEqual(None, get_current_priority(observation))
 
     # --- normalize_observation_fields ---
 

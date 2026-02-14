@@ -144,6 +144,9 @@ const ObservationList = () => {
                             <TextField source="title" />
                             <SeverityField label="Severity" source="current_severity" />
                             <ChipField source="current_status" label="Status" />
+                            {has_attribute("current_priority", data, sort) && (
+                                <ChipField source="current_priority" label="Priority" />
+                            )}
                             {has_attribute("epss_score", data, sort) && (
                                 <NumberField source="epss_score" label="EPSS" />
                             )}
