@@ -2,7 +2,7 @@ from django.db import migrations
 
 # The component view has to be created after all other migrations. Otherwise some alterations of
 # observation lead to errors, due to https://www.sqlite.org/lang_altertable.html#caution.
-# Thanks to https://stackoverflow.com/a/40239171 for providing the idea how to solve this.
+# It will be created before the first query runs.
 
 DROP_SQL = "DROP VIEW IF EXISTS core_component;"
 
