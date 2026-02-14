@@ -4,6 +4,7 @@ from regopy import Input, Interpreter
 from regopy.rego_shared import RegoError
 from rest_framework.exceptions import ValidationError
 
+
 class RegoException(ValidationError):
     pass
 
