@@ -99,7 +99,9 @@ const ExportMenu = (props: ExportMenuProps) => {
 
     const exportOpenObservationsExcel = async () => {
         exportDataExcel(
-            "/products/" + props.product.id + "/export_observations_excel/?status=Open&status=Affected&status=In%20review",
+            "/products/" +
+                props.product.id +
+                "/export_observations_excel/?status=Open&status=Affected&status=In%20review",
             "open_observations.xlsx",
             "Observations"
         );
@@ -115,7 +117,9 @@ const ExportMenu = (props: ExportMenuProps) => {
 
     const exportOpenObservationsCsv = async () => {
         exportDataCsv(
-            "/products/" + props.product.id + "/export_observations_csv/?status=Open&status=Affected&status=In%20review",
+            "/products/" +
+                props.product.id +
+                "/export_observations_csv/?status=Open&status=Affected&status=In%20review",
             "open_observations.csv",
             "Observations"
         );
