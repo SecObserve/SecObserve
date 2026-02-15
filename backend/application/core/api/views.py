@@ -225,11 +225,12 @@ class ProductViewSet(ModelViewSet):
     def export_observations_excel(self, request: Request, pk: int) -> HttpResponse:
         product = self.__get_product(pk)
 
-        status = self.request.query_params.get("status")
-        if status and (status, status) not in Status.STATUS_CHOICES:
-            raise ValidationError(f"Status {status} is not a valid choice")
+        statuses = self.request.query_params.getlist("status")
+        for status in statuses:
+            if status and (status, status) not in Status.STATUS_CHOICES:
+                raise ValidationError(f"Status {status} is not a valid choice")
 
-        workbook = export_observations_excel(product, status)
+        workbook = export_observations_excel(product, statuses)
 
         with NamedTemporaryFile() as tmp:
             workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
@@ -256,14 +257,15 @@ class ProductViewSet(ModelViewSet):
     def export_observations_csv(self, request: Request, pk: int) -> HttpResponse:
         product = self.__get_product(pk)
 
-        status = self.request.query_params.get("status")
-        if status and (status, status) not in Status.STATUS_CHOICES:
-            raise ValidationError(f"Status {status} is not a valid choice")
+        statuses = self.request.query_params.getlist("status")
+        for status in statuses:
+            if status and (status, status) not in Status.STATUS_CHOICES:
+                raise ValidationError(f"Status {status} is not a valid choice")
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=observations.csv"
 
-        export_observations_csv(response, product, status)
+        export_observations_csv(response, product, statuses)
 
         return response
 
@@ -544,6 +546,7 @@ class ObservationViewSet(ModelViewSet):
             .select_related("product__product_group")
             .select_related("branch")
             .select_related("parser")
+            .select_related("origin_service")
         )
 
     def perform_destroy(self, instance: Observation) -> None:

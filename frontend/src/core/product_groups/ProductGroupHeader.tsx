@@ -38,7 +38,7 @@ const ProductGroupHeader = () => {
                     </Labeled>
                     <Stack spacing={8} direction="row">
                         <Labeled>
-                            <ObservationsCountField label="Open observations" withLabel={true} />
+                            <ObservationsCountField label="Active observations" withLabel={true} />
                         </Labeled>
                         {feature_license_management() &&
                             product_group &&

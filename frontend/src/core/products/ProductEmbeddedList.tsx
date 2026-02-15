@@ -79,7 +79,7 @@ const ProductEmbeddedList = ({ product_group, license_policy }: ProductEmbeddedL
                             sortable={false}
                         />
                         <SecurityGateTextField label="Security gate" />
-                        <ObservationsCountField label="Open observations" withLabel={false} />
+                        <ObservationsCountField label="Active observations" withLabel={false} />
                         {feature_license_management() &&
                             ((product_group &&
                                 product_group.forbidden_licenses_count +

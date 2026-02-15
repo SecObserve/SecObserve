@@ -30,11 +30,11 @@ def _handle_observation(observation: Observation, observations: QuerySet[Observa
     Potential_Duplicate.objects.filter(observation=observation).delete()
     initial_has_potential_duplicates = observation.has_potential_duplicates
     observation.has_potential_duplicates = False
-    if observation.current_status == Status.STATUS_OPEN:
+    if observation.current_status in Status.STATUS_ACTIVE:
         for potential_duplicate_observation in observations:
             if (
                 observation != potential_duplicate_observation
-                and potential_duplicate_observation.current_status == Status.STATUS_OPEN
+                and potential_duplicate_observation.current_status in Status.STATUS_ACTIVE
             ):
                 potential_duplicate_type = None
                 if (
@@ -73,10 +73,10 @@ def set_potential_duplicate_both_ways(observation: Observation) -> None:
 def set_potential_duplicate(observation: Observation) -> None:
     initial_has_potential_duplicates = observation.has_potential_duplicates
 
-    if observation.current_status == Status.STATUS_OPEN:
+    if observation.current_status in Status.STATUS_ACTIVE:
         open_potential_duplicates = Potential_Duplicate.objects.filter(
             observation=observation,
-            potential_duplicate_observation__current_status=Status.STATUS_OPEN,
+            potential_duplicate_observation__current_status__in=Status.STATUS_ACTIVE,
         ).count()
         if open_potential_duplicates == 0:
             observation.has_potential_duplicates = False

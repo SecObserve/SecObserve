@@ -109,7 +109,7 @@ def _get_observation_subquery(severity: str) -> Subquery:
     return Subquery(
         Observation.objects.filter(
             branch=OuterRef("pk"),
-            current_status=Status.STATUS_OPEN,
+            current_status__in=Status.STATUS_ACTIVE,
             current_severity=severity,
         )
         .order_by()

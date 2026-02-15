@@ -25,6 +25,7 @@ class Product_Metrics(Model):
     open_unknown = IntegerField(default=0)
 
     open = IntegerField(default=0)
+    affected = IntegerField(default=0)
     resolved = IntegerField(default=0)
     duplicate = IntegerField(default=0)
     false_positive = IntegerField(default=0)

@@ -185,7 +185,7 @@ def _get_product_observation_subquery(severity: str) -> Subquery:
         Observation.objects.filter(
             branch_filter,
             product=OuterRef("pk"),
-            current_status=Status.STATUS_OPEN,
+            current_status__in=Status.STATUS_ACTIVE,
             current_severity=severity,
         )
         .order_by()
@@ -205,7 +205,7 @@ def _get_product_group_observation_subquery(severity: str) -> Subquery:
         Observation.objects.filter(
             branch_filter,
             product__product_group=OuterRef("pk"),
-            current_status=Status.STATUS_OPEN,
+            current_status__in=Status.STATUS_ACTIVE,
             current_severity=severity,
         )
         .order_by()

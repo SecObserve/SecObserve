@@ -826,13 +826,14 @@
             "open_none": 5,
             "open_unknown": 6,
             "open": 7,
-            "resolved": 8,
-            "duplicate": 9,
-            "false_positive": 10,
-            "in_review": 11,
-            "not_affected": 12,
-            "not_security": 13,
-            "risk_accepted": 14
+            "affected": 8,
+            "resolved": 9,
+            "duplicate": 10,
+            "false_positive": 11,
+            "in_review": 12,
+            "not_affected": 13,
+            "not_security": 14,
+            "risk_accepted": 15
         }
     },
     {
@@ -848,13 +849,14 @@
             "open_none": 6,
             "open_unknown": 7,
             "open": 8,
-            "resolved": 9,
-            "duplicate": 10,
-            "false_positive": 11,
-            "in_review": 12,
-            "not_affected": 13,
-            "not_security": 14,
-            "risk_accepted": 15
+            "affected": 9,
+            "resolved": 10,
+            "duplicate": 11,
+            "false_positive": 12,
+            "in_review": 13,
+            "not_affected": 14,
+            "not_security": 15,
+            "risk_accepted": 16
         }
     },
     {
@@ -870,13 +872,14 @@
             "open_none": 8,
             "open_unknown": 9,
             "open": 10,
-            "resolved": 11,
-            "duplicate": 12,
-            "false_positive": 13,
-            "in_review": 14,
-            "not_affected": 15,
-            "not_security": 16,
-            "risk_accepted": 17
+            "affected": 11,
+            "resolved": 12,
+            "duplicate": 13,
+            "false_positive": 14,
+            "in_review": 15,
+            "not_affected": 16,
+            "not_security": 17,
+            "risk_accepted": 18
         }
     },
     {
@@ -892,13 +895,14 @@
             "open_none": 9,
             "open_unknown": 10,
             "open": 11,
-            "resolved": 12,
-            "duplicate": 13,
-            "false_positive": 14,
-            "in_review": 15,
-            "not_affected": 16,
-            "not_security": 17,
-            "risk_accepted": 18
+            "affected": 12,
+            "resolved": 13,
+            "duplicate": 14,
+            "false_positive": 15,
+            "in_review": 16,
+            "not_affected": 17,
+            "not_security": 18,
+            "risk_accepted": 19
         }
     },
     {

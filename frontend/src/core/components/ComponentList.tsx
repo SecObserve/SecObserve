@@ -15,7 +15,7 @@ import components from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { PURL_TYPE_CHOICES } from "../types";
 
@@ -40,26 +40,9 @@ const listFilters = [
     >
         <AutocompleteInputMedium optionText="name" />
     </ReferenceInput>,
-    <ReferenceInput
-        source="branch"
-        reference="branches"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "branch_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
-    </ReferenceInput>,
-    <ReferenceInput
-        label="Service"
-        source="origin_service"
-        queryOptions={{ meta: { api_resource: "service_names" } }}
-        reference="services"
-        sort={{ field: "name", order: "ASC" }}
-        alwaysOn
-    >
-        <AutocompleteInputWide label="Service" optionText="name_with_product" />
-        <NullableBooleanInput source="has_observations" label="Open observations" alwaysOn />
-    </ReferenceInput>,
+    <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+    <TextInput source="origin_service_name" label="Service" alwaysOn />,
+    <NullableBooleanInput source="has_observations" label="Active observations" alwaysOn />,
 ];
 
 const ComponentList = () => {
@@ -89,7 +72,7 @@ const ComponentList = () => {
                             {has_attribute("origin_service_name", data, sort) && (
                                 <TextField source="origin_service_name" label="Service" />
                             )}
-                            <BooleanField source="has_observations" label="Open observations" />
+                            <BooleanField source="has_observations" label="Active observations" />
                         </Datagrid>
                     )}
                 />

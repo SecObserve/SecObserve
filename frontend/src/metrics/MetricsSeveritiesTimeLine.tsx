@@ -210,7 +210,7 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                             title: {
                                 display: true,
                                 text:
-                                    "Severities of open observations (last " +
+                                    "Severities of active observations (last " +
                                     getSettingsMetricsTimespanInDays() +
                                     " days)",
                                 color: getFontColor(),

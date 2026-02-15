@@ -42,7 +42,7 @@ def push_observation_to_issue_tracker(observation: Observation, user: User) -> N
                 observation.issue_tracker_issue_id = ""
                 observation.save()
 
-            if observation.current_status == Status.STATUS_OPEN:
+            if observation.current_status in Status.STATUS_ACTIVE:
                 if observation.product.issue_tracker_minimum_severity:
                     numerical_minimum_severity = Severity.NUMERICAL_SEVERITIES.get(
                         observation.product.issue_tracker_minimum_severity, 99

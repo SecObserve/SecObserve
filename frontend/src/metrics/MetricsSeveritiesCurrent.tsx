@@ -37,7 +37,7 @@ const MetricsSeveritiesCurrent = (props: MetricsSeveritiesCurrentProps) => {
         ],
         datasets: [
             {
-                label: "Severities of open observations",
+                label: "Severities of active observations",
                 data: data,
                 backgroundColor: [
                     get_severity_color(OBSERVATION_SEVERITY_CRITICAL),
@@ -131,7 +131,7 @@ const MetricsSeveritiesCurrent = (props: MetricsSeveritiesCurrentProps) => {
                         plugins: {
                             title: {
                                 display: true,
-                                text: "Severities of open observations (current)",
+                                text: "Severities of active observations (current)",
                                 color: getFontColor(),
                             },
                             legend: {

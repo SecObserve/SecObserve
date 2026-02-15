@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import {
+    AutocompleteArrayInput,
     AutocompleteInput,
     BooleanField,
     ChipField,
@@ -21,13 +22,13 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_ACTIVE,
     OBSERVATION_STATUS_CHOICES,
-    OBSERVATION_STATUS_OPEN,
     Observation,
     PURL_TYPE_CHOICES,
 } from "../types";
@@ -39,13 +40,13 @@ function listFilters() {
     const filters = [];
     filters.push(
         <TextInput source="title" alwaysOn />,
-        <AutocompleteInput
+        <AutocompleteArrayInput
             source="current_severity"
             label="Severity"
             choices={OBSERVATION_SEVERITY_CHOICES}
             alwaysOn
         />,
-        <AutocompleteInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
+        <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
     );
     filters.push(
         <ReferenceInput
@@ -66,24 +67,8 @@ function listFilters() {
         >
             <AutocompleteInputMedium optionText="name" />
         </ReferenceInput>,
-        <ReferenceInput
-            source="branch"
-            reference="branches"
-            sort={{ field: "name", order: "ASC" }}
-            queryOptions={{ meta: { api_resource: "branch_names" } }}
-            alwaysOn
-        >
-            <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
-        </ReferenceInput>,
-        <ReferenceInput
-            label="Service"
-            source="origin_service"
-            queryOptions={{ meta: { api_resource: "service_names" } }}
-            reference="services"
-            sort={{ field: "name", order: "ASC" }}
-        >
-            <AutocompleteInputWide label="Service" optionText="name_with_product" />
-        </ReferenceInput>,
+        <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+        <TextInput source="origin_service_name" label="Service" />,
         <TextInput source="origin_component_name_version" label="Component" />,
         <TextInput source="origin_docker_image_name_tag_short" label="Container" />,
         <TextInput source="origin_endpoint_hostname" label="Host" />,
@@ -126,7 +111,7 @@ const ObservationList = () => {
                 pagination={<CustomPagination />}
                 filters={listFilters()}
                 sort={{ field: "current_severity", order: "ASC" }}
-                filterDefaultValues={{ current_status: OBSERVATION_STATUS_OPEN }}
+                filterDefaultValues={{ current_status: OBSERVATION_STATUS_ACTIVE }}
                 disableSyncWithLocation={false}
                 storeKey="observations.list"
                 actions={<ListActions />}

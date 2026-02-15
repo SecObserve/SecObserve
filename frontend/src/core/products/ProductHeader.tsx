@@ -17,9 +17,9 @@ const ProductHeader = () => {
 
     function get_open_observations_label(product: Product | undefined) {
         if (product?.repository_default_branch == null) {
-            return "Open observations";
+            return "Active observations";
         }
-        return "Open observations (" + product.repository_default_branch_name + ")";
+        return "Active observations (" + product.repository_default_branch_name + ")";
     }
 
     function get_licenses_label(product: Product | undefined) {

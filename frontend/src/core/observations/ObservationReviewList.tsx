@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import {
+    AutocompleteArrayInput,
     AutocompleteInput,
     BooleanField,
     ChipField,
@@ -21,7 +22,7 @@ import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
@@ -57,7 +58,12 @@ function listFilters(product: Product) {
     }
     filters.push(
         <TextInput source="title" alwaysOn />,
-        <AutocompleteInput source="current_severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />
+        <AutocompleteArrayInput
+            source="current_severity"
+            label="Severity"
+            choices={OBSERVATION_SEVERITY_CHOICES}
+            alwaysOn
+        />
     );
     if (!product) {
         filters.push(
@@ -79,15 +85,8 @@ function listFilters(product: Product) {
             >
                 <AutocompleteInputMedium optionText="name" />
             </ReferenceInput>,
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
-            </ReferenceInput>
+            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+            <TextInput source="origin_service_name" label="Service" alwaysOn />
         );
     }
     if (product?.has_services) {

@@ -20,7 +20,7 @@ import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types"
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_vex_enabled, has_attribute } from "../../commons/functions";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
 import AssessmentBulkApproval from "./AssessmentBulkApproval";
@@ -70,24 +70,8 @@ function listFilters(product: any) {
             >
                 <AutocompleteInputMedium optionText="name" />
             </ReferenceInput>,
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
-            </ReferenceInput>,
-            <ReferenceInput
-                source="origin_service"
-                reference="services"
-                queryOptions={{ meta: { api_resource: "service_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                alwaysOn
-            >
-                <AutocompleteInputWide label="Service" optionText="name_with_product" />
-            </ReferenceInput>
+            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+            <TextInput source="origin_service_name" label="Service" alwaysOn />
         );
     }
 

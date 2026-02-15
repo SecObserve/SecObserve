@@ -37,7 +37,7 @@ const ProductGroupList = () => {
                 <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
                     <TextField source="name" />
                     <TextField source="products_count" label="Products" sortable={false} />
-                    <ObservationsCountField label="Open observations" withLabel={false} />
+                    <ObservationsCountField label="Active observations" withLabel={false} />
                     {feature_license_management() && (
                         <LicensesCountField label="Licenses / Components" withLabel={false} />
                     )}

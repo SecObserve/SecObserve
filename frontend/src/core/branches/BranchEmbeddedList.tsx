@@ -90,7 +90,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                         )}
                                     />
                                 )}
-                                <ObservationsCountField label="Open observations" withLabel={false} />
+                                <ObservationsCountField label="Active observations" withLabel={false} />
                                 {feature_license_management() && product?.has_licenses && (
                                     <LicensesCountField label="Licenses / Components" withLabel={false} />
                                 )}

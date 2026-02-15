@@ -115,7 +115,7 @@ ObservationFlag AS (
         origin_component_cyclonedx_bom_link AS component_cyclonedx_bom_link,
         TRUE AS has_observation
     FROM core_observation
-    WHERE current_status = 'Open'
+    WHERE current_status IN ('Open', 'Affected', 'In review')
 )
 SELECT
     MD5(

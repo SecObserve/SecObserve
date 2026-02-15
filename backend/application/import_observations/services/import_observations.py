@@ -300,7 +300,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
                 rule_engine.apply_rules_for_observation(observation_before)
                 vex_engine.apply_vex_statements_for_observation(observation_before)
 
-                if observation_before.current_status == _get_initial_status(observation_before.product):
+                if observation_before.current_status in Status.STATUS_ACTIVE:
                     observations_updated += 1
 
                 # Remove observation from list of current observations because it is still part of the check
@@ -314,7 +314,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
                 rule_engine.apply_rules_for_observation(imported_observation)
                 vex_engine.apply_vex_statements_for_observation(imported_observation)
 
-                if imported_observation.current_status == _get_initial_status(imported_observation.product):
+                if imported_observation.current_status in Status.STATUS_ACTIVE:
                     observations_new += 1
 
                 # Add identity_hash to set of observations in this run to detect duplicates in this run
@@ -709,7 +709,7 @@ def _resolve_unimported_observations(
 
         new_status = get_current_status(observation)
         if old_status != new_status:
-            if old_status == Status.STATUS_OPEN:
+            if old_status in Status.STATUS_ACTIVE:
                 observations_resolved.add(observation)
 
             observation.current_status = new_status

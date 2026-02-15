@@ -99,7 +99,7 @@ const ExportMenu = (props: ExportMenuProps) => {
 
     const exportOpenObservationsExcel = async () => {
         exportDataExcel(
-            "/products/" + props.product.id + "/export_observations_excel/?status=Open",
+            "/products/" + props.product.id + "/export_observations_excel/?status=Open&status=Affected&status=In%20review",
             "open_observations.xlsx",
             "Observations"
         );
@@ -115,7 +115,7 @@ const ExportMenu = (props: ExportMenuProps) => {
 
     const exportOpenObservationsCsv = async () => {
         exportDataCsv(
-            "/products/" + props.product.id + "/export_observations_csv/?status=Open",
+            "/products/" + props.product.id + "/export_observations_csv/?status=Open&status=Affected&status=In%20review",
             "open_observations.csv",
             "Observations"
         );
@@ -202,13 +202,13 @@ const ExportMenu = (props: ExportMenuProps) => {
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
                     </ListItemIcon>
-                    Open observations / Excel
+                    Active observations / Excel
                 </MenuItem>
                 <MenuItem onClick={exportOpenObservationsCsv} divider>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
                     </ListItemIcon>
-                    Open observations / CSV
+                    Active observations / CSV
                 </MenuItem>
                 <MenuItem onClick={exportAllObservationsExcel}>
                     <ListItemIcon>
