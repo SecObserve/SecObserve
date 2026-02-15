@@ -1,5 +1,6 @@
 from typing import Optional
 
+from django.conf import settings
 from django.db import connection
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.query import QuerySet
@@ -61,6 +62,10 @@ def get_components() -> QuerySet[Component]:
 
     return components
 
+
+# The component view has to be created after all other migrations. Otherwise some alterations of
+# observation lead to errors, due to https://www.sqlite.org/lang_altertable.html#caution.
+# It will be created here before the first query runs.
 
 DROP_COMPONENT_VIEW = "DROP VIEW IF EXISTS core_component;"
 
@@ -157,10 +162,13 @@ LEFT JOIN ObservationFlag ON
 """
 
 
+class ComponentView:
+    created = False
+
+
 def _create_component_view() -> None:
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='view' AND name='core_component'")
-        row = cursor.fetchone()
-        if not row:
+    if not ComponentView.created or settings.DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+        ComponentView.created = True
+        with connection.cursor() as cursor:
             cursor.execute(DROP_COMPONENT_VIEW)
             cursor.execute(CREATE_COMPONENT_VIEW)
