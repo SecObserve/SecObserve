@@ -68,12 +68,12 @@ const MetricsSeveritiesCurrent = (props: MetricsSeveritiesCurrentProps) => {
         })
             .then((result) => {
                 const new_data = [
-                    result.json.open_critical,
-                    result.json.open_high,
-                    result.json.open_medium,
-                    result.json.open_low,
-                    result.json.open_none,
-                    result.json.open_unknown,
+                    result.json.active_critical,
+                    result.json.active_high,
+                    result.json.active_medium,
+                    result.json.active_low,
+                    result.json.active_none,
+                    result.json.active_unknown,
                 ];
                 setData((data) => data.concat(new_data));
             })

@@ -17,12 +17,12 @@ class Product_Metrics(Model):
     product = ForeignKey(Product, on_delete=CASCADE)
     date = DateField()
 
-    open_critical = IntegerField(default=0)
-    open_high = IntegerField(default=0)
-    open_medium = IntegerField(default=0)
-    open_low = IntegerField(default=0)
-    open_none = IntegerField(default=0)
-    open_unknown = IntegerField(default=0)
+    active_critical = IntegerField(default=0)
+    active_high = IntegerField(default=0)
+    active_medium = IntegerField(default=0)
+    active_low = IntegerField(default=0)
+    active_none = IntegerField(default=0)
+    active_unknown = IntegerField(default=0)
 
     open = IntegerField(default=0)
     affected = IntegerField(default=0)
