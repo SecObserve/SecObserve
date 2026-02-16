@@ -16,10 +16,8 @@ from application.metrics.services.age import get_days
 def calculate_product_metrics() -> str:
 
     num_products = 0
-
     for product in Product.objects.filter(is_product_group=False):
-        if calculate_metrics_for_product(product):
-            num_products += 1
+        num_products += bool(calculate_metrics_for_product(product))
 
     product_metrics_status = Product_Metrics_Status.load()
     product_metrics_status.last_calculated = timezone.now()

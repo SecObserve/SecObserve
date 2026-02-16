@@ -38,14 +38,14 @@ class Rule_Engine:
                 Rule_Status.RULE_STATUS_APPROVED,
                 Rule_Status.RULE_STATUS_AUTO_APPROVED,
             ],
-        )
+        ).order_by("name")
         self.rules: list[Rule] = list(product_parser_rules)
 
         if product.product_group:
             product_group_parser_rules = Rule.objects.filter(
                 product=product.product_group,
                 enabled=True,
-            )
+            ).order_by("name")
             self.rules += list(product_group_parser_rules)
 
         if product.apply_general_rules:
@@ -56,7 +56,7 @@ class Rule_Engine:
                     Rule_Status.RULE_STATUS_APPROVED,
                     Rule_Status.RULE_STATUS_AUTO_APPROVED,
                 ],
-            )
+            ).order_by("name")
             self.rules += list(general_rules)
 
         self.rego_interpreters: dict[Any, RegoInterpreter] = {}
