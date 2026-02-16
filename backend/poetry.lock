@@ -2650,6 +2650,7 @@ description = "Python interface for the OPA Rego Language and Runtime"
 optional = false
 python-versions = "<4,>=3.6"
 groups = ["main"]
+markers = "platform_machine == \"x86_64\" or platform_machine == \"AMD64\""
 files = [
     {file = "regopy-1.2.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:7fe114cae867fdd4ce5cb93481b103d25e9ba43f582536c68d8dd33d6742d2fb"},
     {file = "regopy-1.2.0-cp310-cp310-macosx_14_0_x86_64.whl", hash = "sha256:414c440897c2e82f3b2c1093df69518dfc8a1f9b52a448d375a35892ff144834"},
@@ -3352,4 +3353,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "df24ab585fc2df10f86c67fce5c5039b54e0b741f342cc694c506457f4de333f"
+content-hash = "1de2bdfa229a8a7ba81bb8a452a52a1db918f2347f484ce613889e0d6a1dca20"
