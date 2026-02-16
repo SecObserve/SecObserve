@@ -98,22 +98,22 @@ def _calculate_active_product_security_gate(product: Product) -> bool:
         raise ValueError(f"Product {product.pk} not found while calculating security gate.")
 
     if (  # pylint: disable=too-many-boolean-expressions
-        annotated_product.open_critical_observation_count is None
-        or annotated_product.open_high_observation_count is None
-        or annotated_product.open_medium_observation_count is None
-        or annotated_product.open_low_observation_count is None
-        or annotated_product.open_none_observation_count is None
-        or annotated_product.open_unknown_observation_count is None
+        annotated_product.active_critical_observation_count is None
+        or annotated_product.active_high_observation_count is None
+        or annotated_product.active_medium_observation_count is None
+        or annotated_product.active_low_observation_count is None
+        or annotated_product.active_none_observation_count is None
+        or annotated_product.active_unknown_observation_count is None
     ):
         raise ValueError("Observation counts are None.")
 
     if (  # pylint: disable=too-many-boolean-expressions
-        annotated_product.open_critical_observation_count > security_gate_threshold_critical
-        or annotated_product.open_high_observation_count > security_gate_threshold_high
-        or annotated_product.open_medium_observation_count > security_gate_threshold_medium
-        or annotated_product.open_low_observation_count > security_gate_threshold_low
-        or annotated_product.open_none_observation_count > security_gate_threshold_none
-        or annotated_product.open_unknown_observation_count > security_gate_threshold_unknown
+        annotated_product.active_critical_observation_count > security_gate_threshold_critical
+        or annotated_product.active_high_observation_count > security_gate_threshold_high
+        or annotated_product.active_medium_observation_count > security_gate_threshold_medium
+        or annotated_product.active_low_observation_count > security_gate_threshold_low
+        or annotated_product.active_none_observation_count > security_gate_threshold_none
+        or annotated_product.active_unknown_observation_count > security_gate_threshold_unknown
     ):
         new_security_gate_passed = False
 
@@ -128,23 +128,23 @@ def _calculate_active_config_security_gate(product: Product) -> bool:
         raise ValueError(f"Product {product.pk} not found while calculating security gate.")
 
     if (  # pylint: disable=too-many-boolean-expressions
-        annotated_product.open_critical_observation_count is None
-        or annotated_product.open_high_observation_count is None
-        or annotated_product.open_medium_observation_count is None
-        or annotated_product.open_low_observation_count is None
-        or annotated_product.open_none_observation_count is None
-        or annotated_product.open_unknown_observation_count is None
+        annotated_product.active_critical_observation_count is None
+        or annotated_product.active_high_observation_count is None
+        or annotated_product.active_medium_observation_count is None
+        or annotated_product.active_low_observation_count is None
+        or annotated_product.active_none_observation_count is None
+        or annotated_product.active_unknown_observation_count is None
     ):
         raise ValueError("Observation counts are None.")
 
     new_security_gate_passed = True
     if (  # pylint: disable=too-many-boolean-expressions
-        annotated_product.open_critical_observation_count > settings.security_gate_threshold_critical
-        or annotated_product.open_high_observation_count > settings.security_gate_threshold_high
-        or annotated_product.open_medium_observation_count > settings.security_gate_threshold_medium
-        or annotated_product.open_low_observation_count > settings.security_gate_threshold_low
-        or annotated_product.open_none_observation_count > settings.security_gate_threshold_none
-        or annotated_product.open_unknown_observation_count > settings.security_gate_threshold_unknown
+        annotated_product.active_critical_observation_count > settings.security_gate_threshold_critical
+        or annotated_product.active_high_observation_count > settings.security_gate_threshold_high
+        or annotated_product.active_medium_observation_count > settings.security_gate_threshold_medium
+        or annotated_product.active_low_observation_count > settings.security_gate_threshold_low
+        or annotated_product.active_none_observation_count > settings.security_gate_threshold_none
+        or annotated_product.active_unknown_observation_count > settings.security_gate_threshold_unknown
     ):
         new_security_gate_passed = False
 

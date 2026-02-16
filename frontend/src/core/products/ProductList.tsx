@@ -81,7 +81,7 @@ const ProductList = () => {
                         sortable={false}
                     />
                     <SecurityGateTextField label="Security gate" />
-                    <ObservationsCountField label="Open observations" withLabel={false} />
+                    <ObservationsCountField label="Active observations" withLabel={false} />
                     {feature_license_management() && (
                         <LicensesCountField label="Licenses / Components" withLabel={false} />
                     )}

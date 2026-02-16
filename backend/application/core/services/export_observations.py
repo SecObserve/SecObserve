@@ -8,12 +8,12 @@ from application.commons.services.export import export_csv, export_excel
 from application.core.models import Observation, Product
 
 
-def export_observations_excel(product: Product, status: Optional[str]) -> Workbook:
+def export_observations_excel(product: Product, status: Optional[list[str]]) -> Workbook:
     observations = _get_observations(product, status)
     return export_excel(observations, "Observations", _get_excludes(), _get_foreign_keys())
 
 
-def export_observations_csv(response: HttpResponse, product: Product, status: Optional[str]) -> None:
+def export_observations_csv(response: HttpResponse, product: Product, status: Optional[list[str]]) -> None:
     observations = _get_observations(product, status)
     export_csv(
         response,
@@ -23,14 +23,14 @@ def export_observations_csv(response: HttpResponse, product: Product, status: Op
     )
 
 
-def _get_observations(product: Product, status: Optional[str]) -> QuerySet:
+def _get_observations(product: Product, status: Optional[list[str]]) -> QuerySet:
     if product.is_product_group:
         observations = Observation.objects.filter(product__product_group=product)
     else:
         observations = Observation.objects.filter(product=product)
 
     if status:
-        observations = observations.filter(current_status=status)
+        observations = observations.filter(current_status__in=status)
 
     observations = observations.order_by("current_status", "current_severity", "title")
 

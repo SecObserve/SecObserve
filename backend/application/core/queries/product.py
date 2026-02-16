@@ -93,44 +93,44 @@ def _add_annotations(queryset: QuerySet, is_product_group: bool, with_annotation
 
 
 def _add_observation_annotations(queryset: QuerySet, is_product_group: bool) -> QuerySet:
-    subquery_open_critical = (
+    subquery_active_critical = (
         _get_product_group_observation_subquery(Severity.SEVERITY_CRITICAL)
         if is_product_group
         else _get_product_observation_subquery(Severity.SEVERITY_CRITICAL)
     )
-    subquery_open_high = (
+    subquery_active_high = (
         _get_product_group_observation_subquery(Severity.SEVERITY_HIGH)
         if is_product_group
         else _get_product_observation_subquery(Severity.SEVERITY_HIGH)
     )
-    subquery_open_medium = (
+    subquery_active_medium = (
         _get_product_group_observation_subquery(Severity.SEVERITY_MEDIUM)
         if is_product_group
         else _get_product_observation_subquery(Severity.SEVERITY_MEDIUM)
     )
-    subquery_open_low = (
+    subquery_active_low = (
         _get_product_group_observation_subquery(Severity.SEVERITY_LOW)
         if is_product_group
         else _get_product_observation_subquery(Severity.SEVERITY_LOW)
     )
-    subquery_open_none = (
+    subquery_active_none = (
         _get_product_group_observation_subquery(Severity.SEVERITY_NONE)
         if is_product_group
         else _get_product_observation_subquery(Severity.SEVERITY_NONE)
     )
-    subquery_open_unknown = (
+    subquery_active_unknown = (
         _get_product_group_observation_subquery(Severity.SEVERITY_UNKNOWN)
         if is_product_group
         else _get_product_observation_subquery(Severity.SEVERITY_UNKNOWN)
     )
 
     queryset = queryset.annotate(
-        open_critical_observation_count=Coalesce(subquery_open_critical, 0),
-        open_high_observation_count=Coalesce(subquery_open_high, 0),
-        open_medium_observation_count=Coalesce(subquery_open_medium, 0),
-        open_low_observation_count=Coalesce(subquery_open_low, 0),
-        open_none_observation_count=Coalesce(subquery_open_none, 0),
-        open_unknown_observation_count=Coalesce(subquery_open_unknown, 0),
+        active_critical_observation_count=Coalesce(subquery_active_critical, 0),
+        active_high_observation_count=Coalesce(subquery_active_high, 0),
+        active_medium_observation_count=Coalesce(subquery_active_medium, 0),
+        active_low_observation_count=Coalesce(subquery_active_low, 0),
+        active_none_observation_count=Coalesce(subquery_active_none, 0),
+        active_unknown_observation_count=Coalesce(subquery_active_unknown, 0),
     )
 
     return queryset
@@ -185,7 +185,7 @@ def _get_product_observation_subquery(severity: str) -> Subquery:
         Observation.objects.filter(
             branch_filter,
             product=OuterRef("pk"),
-            current_status=Status.STATUS_OPEN,
+            current_status__in=Status.STATUS_ACTIVE,
             current_severity=severity,
         )
         .order_by()
@@ -205,7 +205,7 @@ def _get_product_group_observation_subquery(severity: str) -> Subquery:
         Observation.objects.filter(
             branch_filter,
             product__product_group=OuterRef("pk"),
-            current_status=Status.STATUS_OPEN,
+            current_status__in=Status.STATUS_ACTIVE,
             current_severity=severity,
         )
         .order_by()

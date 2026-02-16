@@ -14,7 +14,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
-import { OBSERVATION_STATUS_OPEN } from "../types";
+import { OBSERVATION_STATUS_ACTIVE } from "../types";
 import { Observation } from "../types";
 import ObservationExpand from "./ObservationExpand";
 import { IDENTIFIER_OBSERVATION_DASHBOARD_LIST, setListIdentifier } from "./functions";
@@ -29,7 +29,7 @@ const ObservationDashboardList = () => {
     const listContext = useListController({
         filter: {
             age: "Past 7 days",
-            current_status: OBSERVATION_STATUS_OPEN,
+            current_status: OBSERVATION_STATUS_ACTIVE,
         },
         perPage: 10,
         resource: "observations",
@@ -46,7 +46,7 @@ const ObservationDashboardList = () => {
     return (
         <Paper sx={{ marginTop: 2, marginBottom: 2, padding: 2 }}>
             <Typography variant="h6" sx={{ paddingBottom: 2 }}>
-                Open observations of the last 7 days
+                Active observations of the last 7 days
             </Typography>
             <ResourceContextProvider value="observations">
                 <ListContextProvider value={listContext}>
@@ -72,6 +72,9 @@ const ObservationDashboardList = () => {
                                     <TextField source="title" sx={{ wordBreak: "break-word" }} />
                                     <SeverityField label="Severity" source="current_severity" />
                                     <ChipField source="current_status" label="Status" />
+                                    {has_attribute("current_priority", data, sort) && (
+                                        <ChipField source="current_priority" label="Priority" />
+                                    )}
                                     <TextField source="scanner_name" label="Scanner" />
                                     <FunctionField<Observation>
                                         label="Age"

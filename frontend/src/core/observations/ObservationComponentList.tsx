@@ -1,5 +1,5 @@
 import {
-    AutocompleteInput,
+    AutocompleteArrayInput,
     ChipField,
     Datagrid,
     FilterForm,
@@ -19,8 +19,8 @@ import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_ACTIVE,
     OBSERVATION_STATUS_CHOICES,
-    OBSERVATION_STATUS_OPEN,
     Observation,
 } from "../types";
 import ObservationExpand from "./ObservationExpand";
@@ -30,13 +30,13 @@ function listFilters() {
     const filters = [];
     filters.push(
         <TextInput source="title" alwaysOn />,
-        <AutocompleteInput
+        <AutocompleteArrayInput
             source="current_severity"
             label="Severity"
             choices={OBSERVATION_SEVERITY_CHOICES}
             alwaysOn
         />,
-        <AutocompleteInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
+        <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
         <TextInput source="scanner" alwaysOn />,
         <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />
     );
@@ -68,9 +68,7 @@ const ObservationsComponentList = ({ component }: ObservationsComponentListProps
         perPage: 25,
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
-        filterDefaultValues: {
-            current_status: OBSERVATION_STATUS_OPEN,
-        },
+        filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE },
         disableSyncWithLocation: false,
         storeKey: "observations.component",
     });

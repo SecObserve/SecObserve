@@ -9,6 +9,7 @@ from django_filters import (
     ChoiceFilter,
     FilterSet,
     ModelChoiceFilter,
+    MultipleChoiceFilter,
     OrderingFilter,
 )
 
@@ -26,7 +27,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
-from application.core.types import Status
+from application.core.types import Severity, Status
 from application.licenses.models import License_Component
 
 
@@ -201,6 +202,10 @@ class ServiceFilter(FilterSet):
 
 class ObservationFilter(FilterSet):
     title = CharFilter(field_name="title", lookup_expr="icontains")
+    current_severity = MultipleChoiceFilter(field_name="current_severity", choices=Severity.SEVERITY_CHOICES)
+    current_status = MultipleChoiceFilter(field_name="current_status", choices=Status.STATUS_CHOICES)
+    branch_name = CharFilter(field_name="branch__name", lookup_expr="icontains")
+    origin_service_name = CharFilter(field_name="origin_service__name", lookup_expr="icontains")
     origin_component_name_version = CharFilter(field_name="origin_component_name_version", lookup_expr="icontains")
     origin_docker_image_name_tag_short = CharFilter(
         field_name="origin_docker_image_name_tag_short", lookup_expr="icontains"
@@ -326,6 +331,7 @@ class ObservationLogFilter(FilterSet):
     )
     branch_name = CharFilter(field_name="observation__branch__name", lookup_expr="icontains")
     branch = ModelChoiceFilter(field_name="observation__branch", queryset=Branch.objects.all())
+    origin_service_name = CharFilter(field_name="observation__origin_service__name", lookup_expr="icontains")
     origin_service = ModelChoiceFilter(field_name="observation__origin_service", queryset=Service.objects.all())
     origin_component_name_version = CharFilter(
         field_name="observation__origin_component_name_version", lookup_expr="icontains"
@@ -496,6 +502,8 @@ class ComponentFilter(FilterSet):
         field_name="product__product_group",
         queryset=Product.objects.filter(is_product_group=True),
     )
+    branch_name = CharFilter(field_name="branch__name", lookup_expr="icontains")
+    origin_service_name = CharFilter(field_name="origin_service__name", lookup_expr="icontains")
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order

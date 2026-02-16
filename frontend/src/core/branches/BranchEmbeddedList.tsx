@@ -31,7 +31,7 @@ const BranchNameURLField = (props: FieldProps) => {
 };
 
 function get_observations_url(product_id: number, branch_id: number): string {
-    return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
+    return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
 }
 
 type BranchEmbeddedListProps = {
@@ -90,7 +90,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                         )}
                                     />
                                 )}
-                                <ObservationsCountField label="Open observations" withLabel={false} />
+                                <ObservationsCountField label="Active observations" withLabel={false} />
                                 {feature_license_management() && product?.has_licenses && (
                                     <LicensesCountField label="Licenses / Components" withLabel={false} />
                                 )}

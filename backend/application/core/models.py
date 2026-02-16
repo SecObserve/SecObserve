@@ -141,12 +141,12 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
         ]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.open_critical_observation_count: int | None = None
-        self.open_high_observation_count: int | None = None
-        self.open_medium_observation_count: int | None = None
-        self.open_low_observation_count: int | None = None
-        self.open_none_observation_count: int | None = None
-        self.open_unknown_observation_count: int | None = None
+        self.active_critical_observation_count: int | None = None
+        self.active_high_observation_count: int | None = None
+        self.active_medium_observation_count: int | None = None
+        self.active_low_observation_count: int | None = None
+        self.active_none_observation_count: int | None = None
+        self.active_unknown_observation_count: int | None = None
 
         self.forbidden_licenses_count: int | None = None
         self.review_required_licenses_count: int | None = None

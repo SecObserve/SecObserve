@@ -14,7 +14,7 @@ const ShowDefaultBranchObservationsButton = ({ product }: ShowDefaultBranchObser
     const navigate = useNavigate();
 
     function get_observations_url(branch_id: Identifier): string {
-        return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
+        return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
     }
 
     const navigateToObservations = () => {
