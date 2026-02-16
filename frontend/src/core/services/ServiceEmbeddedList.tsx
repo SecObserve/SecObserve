@@ -35,9 +35,9 @@ export const ServiceNameURLField = (props: ServiceNameURLFieldProps) => {
 
 function get_observations_url(product_id: number, service_id: number, repository_default_branch_id: number): string {
     if (repository_default_branch_id) {
-        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22origin_service%22%3A${service_id}%2C%22branch%22%3A${repository_default_branch_id}%7D&order=ASC&sort=current_severity`;
+        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22origin_service%22%3A${service_id}%2C%22branch%22%3A${repository_default_branch_id}%7D&order=ASC&sort=current_severity`;
     } else {
-        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22origin_service%22%3A${service_id}%7D&order=ASC&sort=current_severity`;
+        return `#/products/${product_id}/show?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22origin_service%22%3A${service_id}%7D&order=ASC&sort=current_severity`;
     }
 }
 
