@@ -42,7 +42,7 @@ requests = "2.32.5"  # https://github.com/psf/requests
 # Database
 # ------------------------------------------------------------------------------
 pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
-psycopg = { version = "3.3.2", extras = ["binary"] }  # https://github.com/psycopg/psycopg
+psycopg = { version = "3.3.3", extras = ["binary"] }  # https://github.com/psycopg/psycopg
 
 # Dataformats
 # ------------------------------------------------------------------------------
@@ -74,7 +74,7 @@ py-ocsf-models = "0.8.1"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
 html-to-markdown = "2.25.0"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
-licenselynx = "2.0.2"  # https://github.com/licenselynx/licenselynx
+licenselynx = "2.1.0"  # https://github.com/licenselynx/licenselynx
 regopy = { version = "1.2.0", markers = "platform_machine == 'x86_64' or platform_machine == 'AMD64'" }  # https://microsoft.github.io/rego-cpp/#python-example
 simplejson = "3.20.2"
 
