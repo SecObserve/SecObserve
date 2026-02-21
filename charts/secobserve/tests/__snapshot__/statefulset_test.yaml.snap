@@ -29,7 +29,7 @@ should exclude initContainer dbchecker if disabled:
             - env:
                 - name: API_BASE_URL
                   value: https://secobserve.dev/api
-                - name: OIDC_ENABLED
+                - name: OIDC_ENABLE
                   value: "true"
                 - name: OIDC_AUTHORITY
                   value: https://oidc.secobserve.dev
@@ -194,7 +194,7 @@ should include affinity if specified:
             - env:
                 - name: API_BASE_URL
                   value: https://secobserve.dev/api
-                - name: OIDC_ENABLED
+                - name: OIDC_ENABLE
                   value: "true"
                 - name: OIDC_AUTHORITY
                   value: https://oidc.secobserve.dev
@@ -376,7 +376,7 @@ should include initContainer dbchecker if enabled:
             - env:
                 - name: API_BASE_URL
                   value: https://secobserve.dev/api
-                - name: OIDC_ENABLED
+                - name: OIDC_ENABLE
                   value: "true"
                 - name: OIDC_AUTHORITY
                   value: https://oidc.secobserve.dev
@@ -558,7 +558,7 @@ should render frontend and backend containers:
             - env:
                 - name: API_BASE_URL
                   value: https://secobserve.dev/api
-                - name: OIDC_ENABLED
+                - name: OIDC_ENABLE
                   value: "true"
                 - name: OIDC_AUTHORITY
                   value: https://oidc.secobserve.dev
@@ -740,7 +740,7 @@ should render nodeSelector if provided:
             - env:
                 - name: API_BASE_URL
                   value: https://secobserve.dev/api
-                - name: OIDC_ENABLED
+                - name: OIDC_ENABLE
                   value: "true"
                 - name: OIDC_AUTHORITY
                   value: https://oidc.secobserve.dev
