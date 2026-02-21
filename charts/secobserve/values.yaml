@@ -37,9 +37,9 @@ frontend:
 
     # -- enable OIDC authentication
     # @section -- Frontend
-    - { name: OIDC_ENABLED, value: "false" }
+    - { name: OIDC_ENABLE, value: "false" }
 
-    # -- oidc metadata endpoint
+    # -- oidc issuer
     # @section -- Frontend
     - { name: OIDC_AUTHORITY, value: https://oidc.secobserve.dev }
 
