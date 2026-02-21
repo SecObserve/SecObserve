@@ -5,7 +5,6 @@ import {
     ArrayInput,
     CreateBase,
     FormDataConsumer,
-    ReferenceInput,
     SimpleForm,
     SimpleFormIterator,
     useNotify,
@@ -14,9 +13,11 @@ import {
 
 import axios_instance from "../../access_control/auth_provider/axios_instance";
 import AddButton from "../../commons/custom_fields/AddButton";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_255, validate_required_255 } from "../../commons/custom_validators";
-import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
+import { TextInputWide } from "../../commons/layout/themes";
 
 const CycloneDXCreate = () => {
     const [open, setOpen] = useState(false);
@@ -101,14 +102,7 @@ const CycloneDXCreate = () => {
                             <Typography variant="h6" sx={{ marginBottom: 1 }}>
                                 CycloneDX
                             </Typography>
-                            <ReferenceInput
-                                source="product"
-                                reference="products"
-                                queryOptions={{ meta: { api_resource: "product_names" } }}
-                                sort={{ field: "name", order: "ASC" }}
-                            >
-                                <AutocompleteInputWide optionText="name" />
-                            </ReferenceInput>
+                            <ProductReferenceInput />
                             <ArrayInput source="vulnerability_names" defaultValue={""} label="Vulnerabilities">
                                 <SimpleFormIterator disableReordering inline>
                                     <TextInputWide source="name" validate={validate_255} />
@@ -119,15 +113,11 @@ const CycloneDXCreate = () => {
                                     formData.product && (
                                         <ArrayInput source="branches" defaultValue={""} label="Branches / Versions">
                                             <SimpleFormIterator disableReordering inline>
-                                                <ReferenceInput
+                                                <BranchReferenceInput
                                                     source="branch"
-                                                    reference="branches"
-                                                    sort={{ field: "name", order: "ASC" }}
-                                                    filter={{ product: formData.product }}
-                                                    alwaysOn
-                                                >
-                                                    <AutocompleteInputWide optionText="name" label="Name" />
-                                                </ReferenceInput>
+                                                    product={formData.product}
+                                                    label="Name"
+                                                />
                                             </SimpleFormIterator>
                                         </ArrayInput>
                                     )

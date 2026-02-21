@@ -13,6 +13,8 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceField } from "../../commons/custom_fields/ProductGroupReferenceField";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 
 function listFilters() {
@@ -68,14 +70,10 @@ const AccessControlApiTokenEmbeddedList = () => {
                             render={(api_token) => (
                                 <Fragment>
                                     {api_token.product && (
-                                        <ReferenceField
-                                            source="product"
-                                            reference="products"
-                                            queryOptions={{ meta: { api_resource: "product_names" } }}
+                                        <ProductReferenceField
                                             link={(record: any, reference: any) =>
                                                 `../../${reference}/${record.id}/show/api_token`
                                             }
-                                            sx={{ "& a": { textDecoration: "none" } }}
                                         />
                                     )}
                                 </Fragment>
@@ -86,14 +84,10 @@ const AccessControlApiTokenEmbeddedList = () => {
                             render={(api_token) => (
                                 <Fragment>
                                     {api_token.product_group && (
-                                        <ReferenceField
-                                            source="product_group"
-                                            reference="product_groups"
-                                            queryOptions={{ meta: { api_resource: "product_group_names" } }}
+                                        <ProductGroupReferenceField
                                             link={(record: any, reference: any) =>
                                                 `../../${reference}/${record.id}/show/api_token`
                                             }
-                                            sx={{ "& a": { textDecoration: "none" } }}
                                         />
                                     )}
                                 </Fragment>

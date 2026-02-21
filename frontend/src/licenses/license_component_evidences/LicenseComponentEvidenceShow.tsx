@@ -13,6 +13,7 @@ import {
 } from "react-admin";
 
 import license_component_evidences from ".";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { useStyles } from "../../commons/layout/themes";
 import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
@@ -40,15 +41,9 @@ const LicenseComponentEvidenceShow = () => {
                     <license_component_evidences.icon />
                     &nbsp;&nbsp;License Component Evidence
                 </Typography>
-                <ReferenceField
-                    source="product"
-                    reference="products"
-                    queryOptions={{ meta: { api_resource: "product_names" } }}
-                    link={(record, reference) => `/${reference}/${record.id}/show/licenses`}
-                    sx={{ "& a": { textDecoration: "none" } }}
-                >
-                    <TextField source="name" />
-                </ReferenceField>
+                <ProductReferenceField
+                    link={(record: any, reference: any) => `/${reference}/${record.id}/show/licenses`}
+                />
                 <ReferenceField
                     source="license_component"
                     reference="license_components"

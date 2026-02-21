@@ -10,7 +10,6 @@ import {
     ListContextProvider,
     NullableBooleanInput,
     NumberField,
-    ReferenceInput,
     ResourceContextProvider,
     TextField,
     TextInput,
@@ -19,7 +18,11 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
@@ -43,18 +46,7 @@ import {
 function listFilters(product: Product) {
     const filters = [];
     if (product?.has_branches) {
-        filters.push(
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" label="Branch / Version" />
-            </ReferenceInput>
-        );
+        filters.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
     }
     filters.push(
         <TextInput source="title" alwaysOn />,
@@ -67,41 +59,14 @@ function listFilters(product: Product) {
     );
     if (!product) {
         filters.push(
-            <ReferenceInput
-                source="product"
-                reference="products"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "product_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" />
-            </ReferenceInput>,
-            <ReferenceInput
-                source="product_group"
-                reference="product_groups"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "product_group_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" />
-            </ReferenceInput>,
+            <ProductReferenceInput alwaysOn />,
+            <ProductGroupReferenceInput alwaysOn />,
             <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
             <TextInput source="origin_service_name" label="Service" alwaysOn />
         );
     }
     if (product?.has_services) {
-        filters.push(
-            <ReferenceInput
-                source="origin_service"
-                reference="services"
-                queryOptions={{ meta: { api_resource: "service_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium label="Service" optionText="name" />
-            </ReferenceInput>
-        );
+        filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
     }
 
     if (!product || product?.has_component) {

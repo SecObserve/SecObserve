@@ -5,7 +5,6 @@ import {
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
-    ReferenceField,
     ReferenceManyField,
     Show,
     SingleFieldList,
@@ -17,6 +16,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import cyclonedxs from ".";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import CycloneDXUpdate from "./CycloneDXUpdate";
 
@@ -50,13 +50,7 @@ const CycloneDXComponent = () => {
                             </Typography>
                             {cyclonedx?.product_data?.name && (
                                 <Labeled>
-                                    <ReferenceField
-                                        source="product"
-                                        reference="products"
-                                        queryOptions={{ meta: { api_resource: "product_names" } }}
-                                        link="show"
-                                        sx={{ "& a": { textDecoration: "none" } }}
-                                    />
+                                    <ProductReferenceField label="Product" />
                                 </Labeled>
                             )}
                             {cyclonedx?.vulnerability_names && (
