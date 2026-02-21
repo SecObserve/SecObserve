@@ -17,7 +17,10 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_vex_enabled, has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
@@ -52,15 +55,7 @@ function listFilters(product: any) {
 
     if (!product) {
         filters.push(
-            <ReferenceInput
-                source="product"
-                reference="products"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "product_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" />
-            </ReferenceInput>,
+            <ProductReferenceInput alwaysOn />,
             <ReferenceInput
                 source="product_group"
                 reference="product_groups"
@@ -76,32 +71,10 @@ function listFilters(product: any) {
     }
 
     if (product?.has_branches) {
-        filters.push(
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" label="Branch / Version" />
-            </ReferenceInput>
-        );
+        filters.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
     }
     if (product?.has_services) {
-        filters.push(
-            <ReferenceInput
-                source="origin_service"
-                reference="services"
-                queryOptions={{ meta: { api_resource: "service_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium label="Service" optionText="name" />
-            </ReferenceInput>
-        );
+        filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
     }
 
     if (!product || product?.has_component) {

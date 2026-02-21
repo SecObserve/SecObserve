@@ -19,6 +19,7 @@ import {
 
 import observations from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
@@ -49,15 +50,7 @@ function listFilters() {
         <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
     );
     filters.push(
-        <ReferenceInput
-            source="product"
-            reference="products"
-            sort={{ field: "name", order: "ASC" }}
-            queryOptions={{ meta: { api_resource: "product_names" } }}
-            alwaysOn
-        >
-            <AutocompleteInputMedium optionText="name" />
-        </ReferenceInput>,
+        <ProductReferenceInput alwaysOn />,
         <ReferenceInput
             source="product_group"
             reference="product_groups"

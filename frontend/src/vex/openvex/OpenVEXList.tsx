@@ -5,7 +5,6 @@ import {
     FunctionField,
     List,
     NumberField,
-    ReferenceInput,
     ReferenceManyField,
     SingleFieldList,
     TextField,
@@ -14,24 +13,16 @@ import {
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import openvex from "../../vex/openvex";
 import { OpenVEX } from "../../vex/types";
 import OpenVEXCreate from "./OpenVEXCreate";
 
 const listFilters = [
-    <ReferenceInput
-        source="product"
-        reference="products"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "product_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
+    <ProductReferenceInput alwaysOn />,
     <TextInput source="vulnerability_names__name" label="Vulnerability" alwaysOn />,
 ];
 

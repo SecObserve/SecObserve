@@ -5,7 +5,6 @@ import {
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
-    ReferenceField,
     Show,
     TextField,
     TopToolbar,
@@ -15,6 +14,7 @@ import {
 
 import concluded_licenses from ".";
 import { PERMISSION_CONCLUDED_LICENSE_DELETE } from "../../access_control/types";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 
 const ShowActions = () => {
     const concluded_license = useRecordContext();
@@ -47,12 +47,9 @@ const ConcludedLicenseComponent = () => {
                                 &nbsp;&nbsp;Concluded license
                             </Typography>
                             <Labeled>
-                                <ReferenceField
-                                    source="product"
-                                    reference="products"
-                                    queryOptions={{ meta: { api_resource: "product_names" } }}
-                                    link={(record, reference) => `/${reference}/${record.id}/show/licenses`}
-                                    sx={{ "& a": { textDecoration: "none" } }}
+                                <ProductReferenceField
+                                    label="Product"
+                                    link={(record: any, reference: any) => `/${reference}/${record.id}/show/licenses`}
                                 />
                             </Labeled>
                             <Labeled>

@@ -13,6 +13,7 @@ import {
 } from "react-admin";
 
 import evidences from ".";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { useStyles } from "../../commons/layout/themes";
 import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
@@ -40,15 +41,7 @@ const EvidenceShow = () => {
                     <evidences.icon />
                     &nbsp;&nbsp;Evidence
                 </Typography>
-                <ReferenceField
-                    source="product"
-                    reference="products"
-                    queryOptions={{ meta: { api_resource: "product_names" } }}
-                    link="show"
-                    sx={{ "& a": { textDecoration: "none" } }}
-                >
-                    <TextField source="name" />
-                </ReferenceField>
+                <ProductReferenceField label="Product" />
                 <ReferenceField
                     source="observation"
                     reference="observations"

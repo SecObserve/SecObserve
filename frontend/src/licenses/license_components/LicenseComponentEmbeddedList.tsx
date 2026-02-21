@@ -14,8 +14,10 @@ import {
 } from "react-admin";
 
 import { PERMISSION_COMPONENT_LICENSE_DELETE } from "../../access_control/types";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { EvaluationResultField } from "../../commons/custom_fields/EvaluationResultField";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { EVALUATION_RESULT_CHOICES } from "../types";
@@ -59,16 +61,7 @@ const LicenseComponentEmbeddedList = ({
         const filters = [];
         if (product?.has_branches) {
             filters.push(
-                <ReferenceInput
-                    source="branch"
-                    reference="branches"
-                    queryOptions={{ meta: { api_resource: "branch_names" } }}
-                    sort={{ field: "name", order: "ASC" }}
-                    filter={{ product: product.id, for_license_components: true }}
-                    alwaysOn
-                >
-                    <AutocompleteInputMedium optionText="name" label="Branch / Version" />
-                </ReferenceInput>
+                <BranchReferenceInput source="branch" product={product.id} for_license_components={true} alwaysOn />
             );
         }
         filters.push(
@@ -90,18 +83,7 @@ const LicenseComponentEmbeddedList = ({
             </ReferenceInput>
         );
         if (product?.has_services) {
-            filters.push(
-                <ReferenceInput
-                    source="origin_service"
-                    reference="services"
-                    queryOptions={{ meta: { api_resource: "service_names" } }}
-                    sort={{ field: "name", order: "ASC" }}
-                    filter={{ product: product.id }}
-                    alwaysOn
-                >
-                    <AutocompleteInputMedium label="Service" optionText="name" />
-                </ReferenceInput>
-            );
+            filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
         }
         if (product?.has_concluded_comments) {
             filters.push(<TextInput source="manual_concluded_comment" alwaysOn />);

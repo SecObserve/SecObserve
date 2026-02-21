@@ -1,8 +1,9 @@
 import { Box, Paper, Stack, TableHead, Typography } from "@mui/material";
 import { Fragment } from "react";
-import { ArrayField, Datagrid, DateField, Labeled, ReferenceField, TextField, WithRecord } from "react-admin";
+import { ArrayField, Datagrid, DateField, Labeled, TextField, WithRecord } from "react-admin";
 import { Link } from "react-router-dom";
 
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { useLinkStyles } from "../../commons/layout/themes";
 import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
@@ -26,12 +27,8 @@ const MetaData = () => {
                     </Typography>
                     <Stack spacing={1}>
                         <Labeled label="Product">
-                            <ReferenceField
-                                source="product"
-                                reference="products"
-                                queryOptions={{ meta: { api_resource: "product_names" } }}
-                                link={(record, reference) => `/${reference}/${record.id}/show/licenses`}
-                                sx={{ "& a": { textDecoration: "none" } }}
+                            <ProductReferenceField
+                                link={(record: any, reference: any) => `/${reference}/${record.id}/show/licenses`}
                             />
                         </Labeled>
                         {component.license_policy_name != "" && (

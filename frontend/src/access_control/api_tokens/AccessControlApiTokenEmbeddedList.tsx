@@ -13,6 +13,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 
 function listFilters() {
@@ -68,14 +69,10 @@ const AccessControlApiTokenEmbeddedList = () => {
                             render={(api_token) => (
                                 <Fragment>
                                     {api_token.product && (
-                                        <ReferenceField
-                                            source="product"
-                                            reference="products"
-                                            queryOptions={{ meta: { api_resource: "product_names" } }}
+                                        <ProductReferenceField
                                             link={(record: any, reference: any) =>
                                                 `../../${reference}/${record.id}/show/api_token`
                                             }
-                                            sx={{ "& a": { textDecoration: "none" } }}
                                         />
                                     )}
                                 </Fragment>

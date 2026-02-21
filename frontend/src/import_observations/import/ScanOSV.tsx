@@ -1,12 +1,13 @@
 import UploadIcon from "@mui/icons-material/CloudUpload";
 import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useState } from "react";
-import { ReferenceInput, SimpleForm, WithRecord, useNotify, useRefresh } from "react-admin";
+import { SimpleForm, WithRecord, useNotify, useRefresh } from "react-admin";
 
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import MenuButton from "../../commons/custom_fields/MenuButton";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { getIconAndFontColor } from "../../commons/functions";
-import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
+import { TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 interface ScanOSVProps {
@@ -93,20 +94,12 @@ const ScanOSV = ({ product }: ScanOSVProps) => {
                             render={(product) => (
                                 <Fragment>
                                     {product.has_branches && (
-                                        <ReferenceInput
+                                        <BranchReferenceInput
                                             source="branch"
-                                            reference="branches"
-                                            sort={{ field: "name", order: "ASC" }}
-                                            queryOptions={{ meta: { api_resource: "branch_names" } }}
-                                            filter={{ product: product.id, for_license_components: true }}
-                                            alwaysOn
-                                        >
-                                            <AutocompleteInputWide
-                                                optionText="name"
-                                                label="Branch / Version"
-                                                defaultValue={product.repository_default_branch}
-                                            />
-                                        </ReferenceInput>
+                                            product={product.id}
+                                            defaultValue={product.repository_default_branch}
+                                            for_license_components={true}
+                                        />
                                     )}
                                 </Fragment>
                             )}

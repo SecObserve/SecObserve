@@ -13,6 +13,7 @@ import {
 
 import components from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
@@ -22,15 +23,7 @@ import { PURL_TYPE_CHOICES } from "../types";
 const listFilters = [
     <TextInput source="component_name_version" label="Component" alwaysOn />,
     <AutocompleteInput source="component_purl_type" label="Component type" choices={PURL_TYPE_CHOICES} alwaysOn />,
-    <ReferenceInput
-        source="product"
-        reference="products"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "product_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
+    <ProductReferenceInput alwaysOn />,
     <ReferenceInput
         source="product_group"
         reference="product_groups"

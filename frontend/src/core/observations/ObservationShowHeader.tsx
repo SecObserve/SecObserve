@@ -11,6 +11,7 @@ import {
 } from "react-admin";
 
 import observations from ".";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { useStyles } from "../../commons/layout/themes";
 import ObservationShowDescriptionRecommendation from "./ObservationShowDescriptionRecommendation";
@@ -46,15 +47,7 @@ const ObservationShowHeader = ({ observation }: ObservationShowHeaderProps) => {
                     {in_observation_log && (
                         <Stack direction="row" spacing={4} sx={{ marginBottom: 1 }}>
                             <Labeled label="Product">
-                                <ReferenceField
-                                    source="product_data.id"
-                                    reference="products"
-                                    queryOptions={{ meta: { api_resource: "product_names" } }}
-                                    link="show"
-                                    sx={{ "& a": { textDecoration: "none" } }}
-                                >
-                                    <TextField source="name" />
-                                </ReferenceField>
+                                <ProductReferenceField />
                             </Labeled>
                             {observation.branch && (
                                 <Labeled label="Branch/ Version">
