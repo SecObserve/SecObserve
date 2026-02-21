@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import {
     DateField,
     PrevNextButtons,
-    ReferenceField,
     Show,
     SimpleShowLayout,
     TextField,
@@ -13,6 +12,7 @@ import {
 } from "react-admin";
 
 import notifications from ".";
+import { ObservationReferenceField } from "../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../commons/custom_fields/ProductReferenceField";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import { update_notification_count } from "./notification_count";
@@ -58,12 +58,7 @@ const NotificationShow = () => {
                         {notification?.arguments && <TextField source="arguments" />}
                         {notification?.product && <ProductReferenceField label="Product" />}
                         {notification?.observation && (
-                            <ReferenceField
-                                source="observation"
-                                reference="observations"
-                                link="show"
-                                sx={{ "& a": { textDecoration: "none" } }}
-                            />
+                            <ObservationReferenceField source="observation" label="Observation" />
                         )}
                         {notification?.user_full_name && <TextField source="user_full_name" label="User" />}
                     </SimpleShowLayout>

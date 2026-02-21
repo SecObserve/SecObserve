@@ -12,6 +12,7 @@ import {
 import products from ".";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import OSVLinuxDistributionInput from "../../commons/custom_fields/OSVLinuxDistributionInput";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_automatic_osv_scanning, feature_email, feature_license_management } from "../../commons/functions";
 import {
@@ -75,26 +76,7 @@ export const ProductCreateEditComponent = ({
                 label="Description"
                 maxLength={2048}
             />
-            {!productGroupId && (
-                <ReferenceInput
-                    source="product_group"
-                    reference="product_groups"
-                    queryOptions={{ meta: { api_resource: "product_group_names" } }}
-                    sort={{ field: "name", order: "ASC" }}
-                >
-                    <AutocompleteInputWide optionText="name" />
-                </ReferenceInput>
-            )}
-            {productGroupId && (
-                <ReferenceInput
-                    source="product_group"
-                    reference="product_groups"
-                    queryOptions={{ meta: { api_resource: "product_group_names" } }}
-                    sort={{ field: "name", order: "ASC" }}
-                >
-                    <AutocompleteInputWide optionText="name" defaultValue={productGroupId} disabled={true} />
-                </ReferenceInput>
-            )}
+            <ProductGroupReferenceInput defaultValue={productGroupId} />
             <Stack direction="row" spacing={4}>
                 <TextInputWide source="purl" validate={validate_255} label="PURL" />
                 <TextInputWide source="cpe23" validate={validate_255} label="CPE 2.3" />

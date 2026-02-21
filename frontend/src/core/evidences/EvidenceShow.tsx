@@ -3,7 +3,6 @@ import { JsonViewer, JsonViewerTheme } from "@textea/json-viewer";
 import {
     Labeled,
     PrevNextButtons,
-    ReferenceField,
     Show,
     SimpleShowLayout,
     TextField,
@@ -13,6 +12,7 @@ import {
 } from "react-admin";
 
 import evidences from ".";
+import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { useStyles } from "../../commons/layout/themes";
 import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
@@ -42,14 +42,7 @@ const EvidenceShow = () => {
                     &nbsp;&nbsp;Evidence
                 </Typography>
                 <ProductReferenceField label="Product" />
-                <ReferenceField
-                    source="observation"
-                    reference="observations"
-                    link="show"
-                    sx={{ "& a": { textDecoration: "none" } }}
-                >
-                    <TextField source="title" />
-                </ReferenceField>
+                <ObservationReferenceField source="observation" />
                 <TextField source="name" />
                 <WithRecord
                     render={(evidence) => (

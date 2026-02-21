@@ -10,7 +10,6 @@ import {
     ListContextProvider,
     NullableBooleanInput,
     NumberField,
-    ReferenceInput,
     ResourceContextProvider,
     TextField,
     TextInput,
@@ -21,6 +20,7 @@ import {
 import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
@@ -60,15 +60,7 @@ function listFilters(product: Product) {
     if (!product) {
         filters.push(
             <ProductReferenceInput alwaysOn />,
-            <ReferenceInput
-                source="product_group"
-                reference="product_groups"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "product_group_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" />
-            </ReferenceInput>,
+            <ProductGroupReferenceInput alwaysOn />,
             <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
             <TextInput source="origin_service_name" label="Service" alwaysOn />
         );

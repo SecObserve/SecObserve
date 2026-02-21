@@ -10,7 +10,6 @@ import {
     List,
     NullableBooleanInput,
     NumberField,
-    ReferenceInput,
     TextField,
     TextInput,
     TopToolbar,
@@ -19,6 +18,7 @@ import {
 
 import observations from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
@@ -51,15 +51,7 @@ function listFilters() {
     );
     filters.push(
         <ProductReferenceInput alwaysOn />,
-        <ReferenceInput
-            source="product_group"
-            reference="product_groups"
-            sort={{ field: "name", order: "ASC" }}
-            queryOptions={{ meta: { api_resource: "product_group_names" } }}
-            alwaysOn
-        >
-            <AutocompleteInputMedium optionText="name" />
-        </ReferenceInput>,
+        <ProductGroupReferenceInput alwaysOn />,
         <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
         <TextInput source="origin_service_name" label="Service" />,
         <TextInput source="origin_component_name_version" label="Component" />,

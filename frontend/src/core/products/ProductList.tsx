@@ -6,7 +6,6 @@ import {
     FunctionField,
     List,
     NullableBooleanInput,
-    ReferenceInput,
     TextField,
     TextInput,
     TopToolbar,
@@ -17,6 +16,7 @@ import { PERMISSION_PRODUCT_CREATE } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
 import { humanReadableDate } from "../../commons/functions";
 import { feature_license_management } from "../../commons/functions";
@@ -28,15 +28,7 @@ import { AGE_CHOICES } from "../types";
 
 const listFilters = [
     <TextInput source="name" alwaysOn />,
-    <ReferenceInput
-        source="product_group"
-        reference="product_groups"
-        queryOptions={{ meta: { api_resource: "product_group_names" } }}
-        sort={{ field: "name", order: "ASC" }}
-        alwaysOn
-    >
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
+    <ProductGroupReferenceInput alwaysOn />,
     <NullableBooleanInput source="security_gate_passed" alwaysOn />,
     <AutocompleteInputMedium source="age" choices={AGE_CHOICES} label="Last observation change" alwaysOn />,
 ];

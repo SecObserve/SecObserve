@@ -1,16 +1,9 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
-import {
-    ChipField,
-    DateField,
-    Labeled,
-    RecordContextProvider,
-    ReferenceField,
-    TextField,
-    useRecordContext,
-} from "react-admin";
+import { ChipField, DateField, Labeled, RecordContextProvider, TextField, useRecordContext } from "react-admin";
 
 import observations from ".";
+import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { useStyles } from "../../commons/layout/themes";
@@ -164,15 +157,7 @@ const ObservationShowHeader = ({ observation }: ObservationShowHeaderProps) => {
                         )}
                         {in_observation_log && (
                             <Labeled label="Title">
-                                <ReferenceField
-                                    source="id"
-                                    reference="observations"
-                                    queryOptions={{ meta: { api_resource: "observation_titles" } }}
-                                    link="show"
-                                    sx={{ "& a": { textDecoration: "none" } }}
-                                >
-                                    <TextField source="title" />
-                                </ReferenceField>
+                                <ObservationReferenceField source="id" />
                             </Labeled>
                         )}
                     </Stack>
