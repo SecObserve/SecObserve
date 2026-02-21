@@ -95,7 +95,7 @@ across their software projects, enhancing visibility and improving DevSecOps wor
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | frontend.env[0] | object | `{"name":"API_BASE_URL","value":"https://secobserve.dev/api"}` | Base URL for API |
-| frontend.env[1] | object | `{"name":"OIDC_ENABLED","value":"false"}` | enable OIDC authentication |
+| frontend.env[1] | object | `{"name":"OIDC_ENABLE","value":"false"}` | enable OIDC authentication |
 | frontend.env[2] | object | `{"name":"OIDC_AUTHORITY","value":"https://oidc.secobserve.dev"}` | oidc metadata endpoint |
 | frontend.env[3] | object | `{"name":"OIDC_CLIENT_ID","value":"secobserve"}` | OIDC client ID |
 | frontend.env[4] | object | `{"name":"OIDC_REDIRECT_URI","value":"https://secobserve.dev/"}` | OIDC client redirect URL |
@@ -716,7 +716,7 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
-  "name": "OIDC_ENABLED",
+  "name": "OIDC_ENABLE",
   "value": "false"
 }
 </pre>
