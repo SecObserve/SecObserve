@@ -1,12 +1,6 @@
 name: Check backend
 
-on: 
-  push:
-    paths-ignore:
-      - charts/**
-  pull_request:
-    paths-ignore:
-      - charts/**
+on: [push, pull_request]
 
 permissions: read-all
 
