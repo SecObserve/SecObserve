@@ -102,7 +102,7 @@ spec:
             {{- end }}
           {{- if .Values.frontend.securityContext.enabled }}
           securityContext:
-            {{ omit .Values.frontend.securityContext "enabled" | toYaml | nindent 12 }}
+            {{- omit .Values.frontend.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
 
         - name: backend
@@ -137,7 +137,7 @@ spec:
             {{- end }}
           {{- if .Values.backend.securityContext.enabled }}
           securityContext:
-            {{ omit .Values.backend.securityContext "enabled" | toYaml | nindent 12 }}
+            {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
 
       volumes:
