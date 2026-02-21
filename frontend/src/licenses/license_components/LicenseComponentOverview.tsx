@@ -14,7 +14,9 @@ import {
     useNotify,
 } from "react-admin";
 
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { EvaluationResultField } from "../../commons/custom_fields/EvaluationResultField";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { getSettingListSize } from "../../commons/user_settings/functions";
@@ -43,16 +45,7 @@ const LicenseComponentOverview = ({ product }: LicenseComponentOverviewProps) =>
         const filters = [];
         if (product?.has_branches) {
             filters.push(
-                <ReferenceInput
-                    source="branch"
-                    reference="branches"
-                    queryOptions={{ meta: { api_resource: "branch_names" } }}
-                    sort={{ field: "name", order: "ASC" }}
-                    filter={{ product: product.id, for_license_components: true }}
-                    alwaysOn
-                >
-                    <AutocompleteInputMedium optionText="name" label="Branch / Version" />
-                </ReferenceInput>
+                <BranchReferenceInput source="branch" product={product.id} for_license_components={true} alwaysOn />
             );
         }
         filters.push(<TextInput source="effective_license_name" label="License" alwaysOn />);
@@ -75,18 +68,7 @@ const LicenseComponentOverview = ({ product }: LicenseComponentOverviewProps) =>
             </ReferenceInput>
         );
         if (product?.has_services) {
-            filters.push(
-                <ReferenceInput
-                    source="origin_service"
-                    reference="services"
-                    queryOptions={{ meta: { api_resource: "service_names" } }}
-                    sort={{ field: "name", order: "ASC" }}
-                    filter={{ product: product.id }}
-                    alwaysOn
-                >
-                    <AutocompleteInputMedium label="Service" optionText="name" />
-                </ReferenceInput>
-            );
+            filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
         }
         return filters;
     }

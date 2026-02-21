@@ -6,7 +6,6 @@ import {
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
-    ReferenceField,
     ReferenceManyField,
     Show,
     SingleFieldList,
@@ -17,6 +16,7 @@ import {
 } from "react-admin";
 
 import csafs from ".";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import CSAFUpdate from "./CSAFUpdate";
 
@@ -50,13 +50,7 @@ const CSAFComponent = () => {
                         <Stack spacing={1}>
                             {csaf?.product_data?.name && (
                                 <Labeled>
-                                    <ReferenceField
-                                        source="product"
-                                        reference="products"
-                                        queryOptions={{ meta: { api_resource: "product_names" } }}
-                                        link="show"
-                                        sx={{ "& a": { textDecoration: "none" } }}
-                                    />
+                                    <ProductReferenceField label="Product" />
                                 </Labeled>
                             )}
                             {csaf?.vulnerability_names && (

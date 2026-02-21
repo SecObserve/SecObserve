@@ -13,6 +13,7 @@ import {
 } from "react-admin";
 import { Link } from "react-router-dom";
 
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
 import { useLinkStyles } from "../../commons/layout/themes";
@@ -37,13 +38,7 @@ const MetaData = () => {
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
                             Metadata
                         </Typography>
-                        <ReferenceField
-                            source="product"
-                            reference="products"
-                            queryOptions={{ meta: { api_resource: "product_names" } }}
-                            link="show"
-                            sx={{ "& a": { textDecoration: "none" } }}
-                        />
+                        <ProductReferenceField label="Product" />
                         {observation.branch && <TextField label="Branch / Version" source="branch_name" />}
                         {observation.scanner != "" && <TextField source="scanner" />}
                         <TextField source="parser_data.name" label="Parser name" />

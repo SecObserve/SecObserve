@@ -1,13 +1,14 @@
 import UploadIcon from "@mui/icons-material/Upload";
 import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useState } from "react";
-import { FileField, FileInput, ReferenceInput, SimpleForm, WithRecord, useNotify, useRefresh } from "react-admin";
+import { FileField, FileInput, SimpleForm, WithRecord, useNotify, useRefresh } from "react-admin";
 
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import MenuButton from "../../commons/custom_fields/MenuButton";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_required } from "../../commons/custom_validators";
 import { getIconAndFontColor } from "../../commons/functions";
-import { AutocompleteInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 const FileUploadSBOM = () => {
@@ -124,32 +125,14 @@ const FileUploadSBOM = () => {
                             render={(product) => (
                                 <Fragment>
                                     {product.has_branches && (
-                                        <ReferenceInput
+                                        <BranchReferenceInput
                                             source="branch"
-                                            reference="branches"
-                                            sort={{ field: "name", order: "ASC" }}
-                                            queryOptions={{ meta: { api_resource: "branch_names" } }}
-                                            filter={{ product: product.id }}
-                                            alwaysOn
-                                        >
-                                            <AutocompleteInputWide
-                                                optionText="name"
-                                                label="Branch / Version"
-                                                defaultValue={product.repository_default_branch}
-                                            />
-                                        </ReferenceInput>
+                                            product={product.id}
+                                            defaultValue={product.repository_default_branch}
+                                        />
                                     )}
                                     {product.has_services && (
-                                        <ReferenceInput
-                                            source="service_id"
-                                            reference="services"
-                                            sort={{ field: "name", order: "ASC" }}
-                                            queryOptions={{ meta: { api_resource: "service_names" } }}
-                                            filter={{ product: product.id }}
-                                            alwaysOn
-                                        >
-                                            <AutocompleteInputWide optionText="name" label="Service" />
-                                        </ReferenceInput>
+                                        <ServiceReferenceInput source="service_id" product={product.id} />
                                     )}
                                 </Fragment>
                             )}

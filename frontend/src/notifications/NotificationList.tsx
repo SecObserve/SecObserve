@@ -15,6 +15,7 @@ import {
 
 import notifications from ".";
 import { CustomPagination } from "../commons/custom_fields/CustomPagination";
+import { ProductReferenceInput } from "../commons/custom_fields/ProductReferenceInput";
 import { has_attribute } from "../commons/functions";
 import ListHeader from "../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../commons/layout/themes";
@@ -34,15 +35,7 @@ const listFilters = [
     <TextInput source="name" alwaysOn />,
     <TextInput source="message" alwaysOn />,
     <TextInput source="function" alwaysOn />,
-    <ReferenceInput
-        source="product"
-        reference="products"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "product_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
+    <ProductReferenceInput alwaysOn />,
     <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
         <AutocompleteInputMedium optionText="full_name" />
     </ReferenceInput>,
