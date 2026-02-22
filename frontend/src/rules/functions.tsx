@@ -89,8 +89,6 @@ export const validateRuleForm = (values: any) => {
         }
     }
 
-    console.log(errors);
-
     return errors;
 };
 
