@@ -31,8 +31,10 @@ spec:
         - name: dbchecker
           image: "{{ .Values.dbchecker.image.repository }}{{- if (.Values.dbchecker.image.digest) -}}@{{ .Values.dbchecker.image.digest }}{{- else -}}:{{ .Values.dbchecker.image.tag }} {{- end }}"
           imagePullPolicy: {{ .Values.dbchecker.image.pullPolicy }}
+          {{- if .Values.dbchecker.securityContext.enabled }}
           securityContext:
-            {{- toYaml .Values.dbchecker.securityContext | nindent 12 }}
+            {{- omit .Values.dbchecker.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           command:
             - sh
             - -c
@@ -63,9 +65,9 @@ spec:
       tolerations:
         {{ toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.securityContext }}
+      {{- if .Values.securityContext.enabled }}
       securityContext:
-        {{ toYaml .Values.securityContext | nindent 8 }}
+        {{ omit .Values.securityContext "enabled" | toYaml | nindent 8 }}
       {{- end }}
       containers:
         - name: frontend
@@ -100,7 +102,7 @@ spec:
             {{- end }}
           {{- if .Values.frontend.securityContext.enabled }}
           securityContext:
-            {{ toYaml .Values.frontend.securityContext | nindent 12 }}
+            {{- omit .Values.frontend.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
 
         - name: backend
@@ -135,7 +137,7 @@ spec:
             {{- end }}
           {{- if .Values.backend.securityContext.enabled }}
           securityContext:
-            {{ toYaml .Values.backend.securityContext | nindent 12 }}
+            {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
 
       volumes:
