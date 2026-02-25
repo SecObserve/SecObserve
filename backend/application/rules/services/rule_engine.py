@@ -253,7 +253,7 @@ class Rule_Engine:
 
         return False
 
-    def _check_rule_rego(
+    def _check_rule_rego(  # pylint: disable=too-many-branches
         self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
     ) -> bool:
         jsonpickle.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
