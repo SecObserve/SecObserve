@@ -5,7 +5,11 @@
 With an assessment of an observation the user can change two attributes of an observation:
 
 * The **severity** given by the parser must not necessarily match the severity of the observation for the current product.
-* All observations have initially the **status** `Open`. The result of an investigation how to deal with the observation might say, the observation must not be fixed because it is ...
+* All observations have initially the **status** `Open`. The result of an investigation how to deal with the observation might say,
+    * the product is `Affected` by the observation, 
+
+    or the observation must not be fixed because it is ...
+
     * ... `In review` and needs further investigation.
     * ... already `Resolved`. You have to be aware that the observation will be set back to `Open` if it will be found in a subsequent import.
     * ... a `Duplicate` of another observation.
