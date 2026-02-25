@@ -120,7 +120,11 @@ class Rule_Engine:
             observations = Observation.objects.filter(product=self.product)
 
         observations = (
-            observations.select_related("parser").select_related("general_rule").select_related("product_rule")
+            observations.select_related("parser")
+            .select_related("general_rule")
+            .select_related("product_rule")
+            .select_related("branch")
+            .select_related("origin_service")
         )
 
         for observation in observations:
@@ -257,6 +261,12 @@ class Rule_Engine:
 
         observation_dict = json.loads(jsonpickle.dumps(observation, unpicklable=False, use_decimal=True))
         observation_dict = {k: v for k, v in observation_dict.items() if v is not None and v != ""}
+
+        observation_dict["product_name"] = observation.product.name
+        if observation.branch:
+            observation_dict["branch_name"] = observation.branch.name
+        if observation.origin_service:
+            observation_dict["origin_service_name"] = observation.origin_service.name
 
         rego_interpreter = self.rego_interpreters[rule.pk]
         result = rego_interpreter.query(observation_dict)

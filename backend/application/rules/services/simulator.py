@@ -35,6 +35,7 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
         .select_related("product")
         .select_related("product__product_group")
         .select_related("branch")
+        .select_related("origin_service")
         .select_related("parser")
         .select_related("general_rule")
         .select_related("product_rule")
