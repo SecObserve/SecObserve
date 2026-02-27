@@ -339,6 +339,7 @@ class ProductViewSet(ModelViewSet):
             product=product,
             new_severity=request_serializer.validated_data.get("severity"),
             new_status=request_serializer.validated_data.get("status"),
+            new_priority=request_serializer.validated_data.get("priority"),
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
@@ -587,19 +588,14 @@ class ObservationViewSet(ModelViewSet):
         ):
             raise ValidationError("Cannot create new assessment while last assessment still needs approval")
 
-        new_severity = request_serializer.validated_data.get("severity")
-        new_status = request_serializer.validated_data.get("status")
-        comment = request_serializer.validated_data.get("comment")
-        new_vex_justification = request_serializer.validated_data.get("vex_justification")
-        new_risk_acceptance_expiry_date = request_serializer.validated_data.get("risk_acceptance_expiry_date")
-
         save_assessment(
             observation=observation,
-            new_severity=new_severity,
-            new_status=new_status,
-            comment=comment,
-            new_vex_justification=new_vex_justification,
-            new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
+            new_severity=request_serializer.validated_data.get("severity"),
+            new_status=request_serializer.validated_data.get("status"),
+            new_priority=request_serializer.validated_data.get("priority"),
+            comment=request_serializer.validated_data.get("comment"),
+            new_vex_justification=request_serializer.validated_data.get("vex_justification"),
+            new_risk_acceptance_expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
         )
         set_potential_duplicate_both_ways(observation)
 
@@ -651,6 +647,7 @@ class ObservationViewSet(ModelViewSet):
             product=None,
             new_severity=request_serializer.validated_data.get("severity"),
             new_status=request_serializer.validated_data.get("status"),
+            new_priority=request_serializer.validated_data.get("priority"),
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
