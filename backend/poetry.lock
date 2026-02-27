@@ -1216,16 +1216,16 @@ tornado = ["tornado (>=6.5.0)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "2.25.1"
+version = "2.26.1"
 description = "High-performance HTML to Markdown converter powered by Rust with a clean Python API"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-2.25.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:8e523cc7b3efc9b3b3f785a9cb5b454c71ebf40ff7bd797ce785ff0bfbd612ae"},
-    {file = "html_to_markdown-2.25.1-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:014b5e0e974198ac5d6e0338ba73a70b75e3f81ef0809b52b73b547125daeae0"},
-    {file = "html_to_markdown-2.25.1-cp310-abi3-win_amd64.whl", hash = "sha256:f7015a8be94ac25ba85397ee64038d7d6ca27db30c3027874f82942b3e3a03da"},
-    {file = "html_to_markdown-2.25.1.tar.gz", hash = "sha256:f20cb00d86dd4990a6f8d8a76c6b7e4489041953fb6f753e74919e9a4c0cb931"},
+    {file = "html_to_markdown-2.26.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:6dfe3714d54f54a93bb151e2633a580a7fca6eb4d1f44ede1f4e403b16ddb5d5"},
+    {file = "html_to_markdown-2.26.1-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ae751052b5961279c031e611d51534c0559b3021ee4eb3082c889e04e1c3c646"},
+    {file = "html_to_markdown-2.26.1-cp310-abi3-win_amd64.whl", hash = "sha256:305473c83810b3a9c17227cf8b4813ebe7891fb366b74270feb8751b4400f62a"},
+    {file = "html_to_markdown-2.26.1.tar.gz", hash = "sha256:fc14788776172a683913cdcd5811edaa79bb451d060d4bb35a56506fab7e9203"},
 ]
 
 [[package]]
@@ -3353,4 +3353,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "58b2ad561712b7a8814bfff45ecb650204356b959abeb8156f5743c26b257dcc"
+content-hash = "502c13453dbb19b355cda3308d77df048fbb87b0e2bb2622536b6df481456d44"
