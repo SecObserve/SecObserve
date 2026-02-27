@@ -99,10 +99,10 @@ class TestOIDCAuthentication(BaseTestCase):
 
     # --- _validate_jwt ---
 
-    @patch("jwt.decode")
+    @patch("application.access_control.services.oidc_authentication.decode")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
-    @patch("jwt.PyJWKClient.__init__")
-    @patch("jwt.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     def test_validate_jwt_message(self, get_signing_key_mock, pyjwkclient_mock, jwks_uri_mock, jwt_mock):
         jwks_uri_mock.return_value = "test_jwks_uri"
         pyjwkclient_mock.return_value = None
@@ -138,10 +138,10 @@ class TestOIDCAuthentication(BaseTestCase):
             leeway=9,
         )
 
-    @patch("jwt.decode")
+    @patch("application.access_control.services.oidc_authentication.decode")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
-    @patch("jwt.PyJWKClient.__init__")
-    @patch("jwt.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._create_user")
     def test_validate_jwt_user_not_found(
@@ -191,10 +191,10 @@ class TestOIDCAuthentication(BaseTestCase):
         )
         create_user_mock.assert_called_once_with("test_username", {"preferred_username": "test_username"})
 
-    @patch("jwt.decode")
+    @patch("application.access_control.services.oidc_authentication.decode")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
-    @patch("jwt.PyJWKClient.__init__")
-    @patch("jwt.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._check_user_change")
     def test_validate_jwt_user_found(
