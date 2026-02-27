@@ -6,7 +6,7 @@ import { DateInput, FormDataConsumer, NumberInput, SimpleForm, useNotify, useRef
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
-import { validate_after_today, validate_required } from "../../commons/custom_validators";
+import { validate_after_today } from "../../commons/custom_validators";
 import { justificationIsEnabledForStatus, settings_vex_justification_style } from "../../commons/functions";
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
