@@ -24,7 +24,7 @@ from application.core.services.security_gate import check_security_gate
 from application.core.types import Assessment_Status, Status
 
 
-def observations_bulk_assessment(
+def observations_bulk_assessment(  # pylint: disable=too-many-arguments
     *,
     product: Optional[Product],
     new_severity: str,

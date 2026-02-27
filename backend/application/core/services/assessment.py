@@ -101,7 +101,7 @@ def save_assessment(
         )
 
 
-def _update_observation(
+def _update_observation(  # pylint: disable=too-many-positional-arguments
     observation: Observation,
     new_severity: Optional[str],
     new_status: Optional[str],
