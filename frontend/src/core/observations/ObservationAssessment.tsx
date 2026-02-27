@@ -1,12 +1,12 @@
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
-import { DateInput, FormDataConsumer, SimpleForm, useNotify, useRefresh } from "react-admin";
+import { DateInput, FormDataConsumer, NumberInput, SimpleForm, useNotify, useRefresh } from "react-admin";
 
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
-import { validate_after_today, validate_required } from "../../commons/custom_validators";
+import { validate_after_today } from "../../commons/custom_validators";
 import { justificationIsEnabledForStatus, settings_vex_justification_style } from "../../commons/functions";
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
@@ -38,9 +38,10 @@ const ObservationAssessment = () => {
         }
 
         const patch = {
-            severity: data.current_severity,
-            status: data.current_status,
-            vex_justification: justificationEnabled ? data.current_vex_justification : "",
+            severity: data.severity,
+            status: data.status,
+            priority: data.priority,
+            vex_justification: justificationEnabled ? data.vex_justification : "",
             comment: comment,
             risk_acceptance_expiry_date: data.risk_acceptance_expiry_date,
         };
@@ -82,23 +83,17 @@ const ObservationAssessment = () => {
                         onSubmit={observationUpdate}
                         toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable={true} />}
                     >
+                        <AutocompleteInputMedium source="severity" choices={OBSERVATION_SEVERITY_CHOICES} />
                         <AutocompleteInputMedium
-                            source="current_severity"
-                            choices={OBSERVATION_SEVERITY_CHOICES}
-                            validate={validate_required}
-                            label="Severity"
-                        />
-                        <AutocompleteInputMedium
-                            source="current_status"
+                            source="status"
                             choices={OBSERVATION_STATUS_CHOICES}
-                            validate={validate_required}
-                            label="Status"
                             onChange={(e) => setStatus(e)}
                         />
+                        <NumberInput source="priority" step={1} min={1} max={99} />
                         {justificationEnabled &&
                             settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
                                 <AutocompleteInputWide
-                                    source="current_vex_justification"
+                                    source="vex_justification"
                                     label="VEX justification"
                                     choices={OBSERVATION_VEX_JUSTIFICATION_CHOICES}
                                 />
@@ -106,15 +101,15 @@ const ObservationAssessment = () => {
                         {justificationEnabled &&
                             settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CYCLONEDX && (
                                 <AutocompleteInputWide
-                                    source="current_vex_justification"
+                                    source="vex_justification"
                                     label="VEX justification"
                                     choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
                                 />
                             )}
                         <FormDataConsumer>
                             {({ formData }) =>
-                                formData.current_status &&
-                                formData.current_status == OBSERVATION_STATUS_RISK_ACCEPTED &&
+                                formData.status &&
+                                formData.status == OBSERVATION_STATUS_RISK_ACCEPTED &&
                                 formData.product_data.risk_acceptance_expiry_date_calculated && (
                                     <DateInput
                                         source="risk_acceptance_expiry_date"

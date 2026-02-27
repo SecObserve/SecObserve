@@ -24,11 +24,12 @@ from application.core.services.security_gate import check_security_gate
 from application.core.types import Assessment_Status, Status
 
 
-def observations_bulk_assessment(
+def observations_bulk_assessment(  # pylint: disable=too-many-arguments
     *,
     product: Optional[Product],
     new_severity: str,
     new_status: str,
+    new_priority: Optional[int],
     comment: str,
     observation_ids: list[int],
     new_vex_justification: str,
@@ -40,6 +41,7 @@ def observations_bulk_assessment(
             observation=observation,
             new_severity=new_severity,
             new_status=new_status,
+            new_priority=new_priority,
             comment=comment,
             new_vex_justification=new_vex_justification,
             new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
@@ -91,6 +93,7 @@ def observations_bulk_mark_duplicates(
             observation=duplicate,
             new_severity=None,
             new_status=Status.STATUS_DUPLICATE,
+            new_priority=None,
             comment=comment,
             new_vex_justification="",
             new_risk_acceptance_expiry_date=None,
