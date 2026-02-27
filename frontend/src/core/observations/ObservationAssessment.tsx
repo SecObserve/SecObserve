@@ -83,10 +83,7 @@ const ObservationAssessment = () => {
                         onSubmit={observationUpdate}
                         toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable={true} />}
                     >
-                        <AutocompleteInputMedium
-                            source="severity"
-                            choices={OBSERVATION_SEVERITY_CHOICES}
-                        />
+                        <AutocompleteInputMedium source="severity" choices={OBSERVATION_SEVERITY_CHOICES} />
                         <AutocompleteInputMedium
                             source="status"
                             choices={OBSERVATION_STATUS_CHOICES}
