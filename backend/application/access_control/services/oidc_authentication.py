@@ -60,13 +60,13 @@ class OIDCAuthentication(BaseAuthentication):
             jwks_client = PyJWKClient(jwks_uri)
             signing_key = jwks_client.get_signing_key_from_jwt(token)
             options = Options(
-                verify_signature = True,
-                verify_aud = True,
-                strict_aud = True,
-                require = ["exp"],
-                verify_iat = True,
-                verify_exp = True,
-                verify_nbf = True,
+                verify_signature=True,
+                verify_aud=True,
+                strict_aud=True,
+                require=["exp"],
+                verify_iat=True,
+                verify_exp=True,
+                verify_nbf=True,
             )
             payload = decode(
                 jwt=token,
