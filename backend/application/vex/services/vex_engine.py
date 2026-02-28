@@ -90,17 +90,12 @@ def apply_vex_statement_for_observation(
         observation.vex_statement = vex_statement
 
         # Write observation and observation and push to issue tracker log if something has been changed
-        if (  # pylint: disable=too-many-boolean-expressions
-            (
-                previous_current_status != observation.current_status
-                or previous_vex_status != observation.vex_status
-                or previous_vex_statement != observation.vex_statement
-                or previous_vex_vex_justification != observation.vex_vex_justification
-                or previous_current_vex_justification != observation.current_vex_justification
-            )
-            and previous_vex_status != Status.STATUS_OPEN
-            and observation.vex_status != Status.STATUS_OPEN
-            and observation.current_status != Status.STATUS_OPEN
+        if (
+            previous_current_status != observation.current_status
+            or previous_vex_status != observation.vex_status
+            or previous_vex_statement != observation.vex_statement
+            or previous_vex_vex_justification != observation.vex_vex_justification
+            or previous_current_vex_justification != observation.current_vex_justification
         ):
             _write_observation_log(
                 observation,
@@ -189,6 +184,8 @@ def _get_secobserve_status(vex_status: str) -> str:
         return Status.STATUS_IN_REVIEW
     if vex_status == VEX_Status.VEX_STATUS_FALSE_POSITIVE:
         return Status.STATUS_FALSE_POSITIVE
+    if vex_status == VEX_Status.VEX_STATUS_AFFECTED:
+        return Status.STATUS_AFFECTED
     return Status.STATUS_OPEN
 
 
