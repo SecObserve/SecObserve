@@ -10,6 +10,19 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.49.0
+
+**Security notice**
+
+* The HMAC key to encrypt the JWT to authorize SecObserve users (not OIDC) might not have been initialized properly, which can lead to less secure tokens. With this release it will be initialized with the first use of a token after the update, i.e. the first interaction of a user. All tokens will be unusable and users will have to login again.
+
+**Noteable and breaking changes**
+
+* There is a new status `Affected` for observations and a new concept called *active* observertions. These are observations with the status `Open`, `Affected` and `In review`, because observations in these status need attention. This changed the name of some attributes in the API from `open_STATUS_observation_count` to `active_STATUS_observation_count`.  
+* Additionally there is a new attribute `priority` for observations.That is a value between 1 and 99 which can be set by Rego rules and assessments.
+* General rules and Product rules can now be defined in 2 ways. With a fixed set of fields as before or using the [OPA policy language Rego](https://www.openpolicyagent.org/docs/policy-language), see [Rego rules](../usage/rule_engine.md#rego-rules).
+
+
 ## Release 1.47.0
 
 **Breaking changes**
