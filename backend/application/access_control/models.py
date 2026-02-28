@@ -13,6 +13,7 @@ from django.db.models import (
 )
 from encrypted_model_fields.fields import EncryptedCharField
 
+from application.access_control.services.jwt_secret import create_secret
 from application.access_control.types import (
     ListSize,
     MetricsTimespan,
@@ -95,22 +96,25 @@ class JWT_Secret(Model):
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save object to the database. Removes all other entries if there
-        are any.
+        are any and create a new secret if none is given.
         """
         self.__class__.objects.exclude(id=self.pk).delete()
+        if not self.secret:
+            self.secret = create_secret()
         super().save(*args, **kwargs)
 
     @classmethod
     def load(cls) -> "JWT_Secret":
-        """
-        Load object from the database. Failing that, create a new empty
-        (default) instance of the object and return it (without saving it
-        to the database).
-        """
         try:
+            jwt_secret = cls.objects.get()
+            if not jwt_secret.secret:
+                jwt_secret.secret(create_secret())
+                jwt_secret.save()
             return cls.objects.get()
         except cls.DoesNotExist:
-            return cls()
+            new_jwt_secret = cls()
+            new_jwt_secret.save()
+            return new_jwt_secret
 
 
 class API_Token(Model):
