@@ -3,7 +3,6 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from application.access_control.models import JWT_Secret, User
-from application.access_control.services.jwt_secret import create_secret
 
 
 class TestUser(TestCase):
@@ -45,7 +44,7 @@ class TestJWTSecret(TestCase):
         # Clear any existing JWT_Secret entries
         JWT_Secret.objects.all().delete()
 
-    @patch("application.access_control.models.create_secret")
+    @patch("application.access_control.models.JWT_Secret.create_secret")
     def test_save_method_creates_new_secret_when_none_exists(self, mock_create_secret):
         """Test that save creates a new secret when none exists"""
         jwt_secret = JWT_Secret()
@@ -58,7 +57,7 @@ class TestJWTSecret(TestCase):
         # Verify that only one entry exists in the database
         self.assertEqual(JWT_Secret.objects.count(), 1)
 
-    @patch("application.access_control.models.create_secret")
+    @patch("application.access_control.models.JWT_Secret.create_secret")
     def test_save_method_removes_old_entries(self, mock_create_secret):
         """Test that save removes all other entries when saving a new one"""
         # Create initial entries
@@ -86,7 +85,7 @@ class TestJWTSecret(TestCase):
         self.assertEqual(loaded_secret, existing_secret)
         self.assertEqual(loaded_secret.secret, "existing_secret")
 
-    @patch("application.access_control.models.create_secret")
+    @patch("application.access_control.models.JWT_Secret.create_secret")
     def test_load_method_creates_new_secret_when_none_exists(self, mock_create_secret):
         """Test that load creates a new secret when none exists"""
         # Ensure no secrets exist
@@ -102,3 +101,7 @@ class TestJWTSecret(TestCase):
         # Verify that the secret was saved to the database
         saved_secret = JWT_Secret.objects.get()
         self.assertEqual(saved_secret.secret, "newly_created_secret")
+
+    def test_create_secret(self):
+        secret = JWT_Secret.create_secret()
+        self.assertEqual(32, len(secret))

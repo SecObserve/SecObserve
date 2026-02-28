@@ -1,3 +1,5 @@
+import secrets
+import string
 from typing import Any
 
 from django.contrib.auth.models import AbstractUser
@@ -13,7 +15,6 @@ from django.db.models import (
 )
 from encrypted_model_fields.fields import EncryptedCharField
 
-from application.access_control.services.jwt_secret import create_secret
 from application.access_control.types import (
     ListSize,
     MetricsTimespan,
@@ -100,7 +101,7 @@ class JWT_Secret(Model):
         """
         self.__class__.objects.exclude(id=self.pk).delete()
         if not self.secret:
-            self.secret = create_secret()
+            self.secret = self.create_secret()
         super().save(*args, **kwargs)
 
     @classmethod
@@ -108,13 +109,19 @@ class JWT_Secret(Model):
         try:
             jwt_secret = cls.objects.get()
             if not jwt_secret.secret:
-                jwt_secret.secret(create_secret())
+                jwt_secret.secret(cls.create_secret())
                 jwt_secret.save()
             return cls.objects.get()
         except cls.DoesNotExist:
             new_jwt_secret = cls()
             new_jwt_secret.save()
             return new_jwt_secret
+
+    @classmethod
+    def create_secret(cls) -> str:
+        alphabet = string.ascii_letters + string.digits
+        secret = "".join(secrets.choice(alphabet) for i in range(32))
+        return secret
 
 
 class API_Token(Model):
