@@ -251,6 +251,7 @@ def _get_vulnerabilities_string(vulnerabilities: list[Vulnerability]) -> str:
 def _map_current_status_to_cyclonedx_state(current_status: str) -> Optional[ImpactAnalysisState]:
     mapping = {
         Status.STATUS_OPEN: ImpactAnalysisState.EXPLOITABLE,
+        Status.STATUS_AFFECTED: ImpactAnalysisState.EXPLOITABLE,
         Status.STATUS_RESOLVED: ImpactAnalysisState.RESOLVED,
         Status.STATUS_DUPLICATE: None,
         Status.STATUS_FALSE_POSITIVE: ImpactAnalysisState.FALSE_POSITIVE,

@@ -176,7 +176,7 @@ class BaseTestVEXImport(TestCase):
         purl_sqlparse = "pkg:pypi/sqlparse" if short else "pkg:pypi/sqlparse@0.4.4"
 
         product = Product.objects.get(purl=purl_vex_test)
-        observations = Observation.objects.filter(product=product, current_status=Status.STATUS_OPEN)
+        observations = Observation.objects.filter(product=product, current_status=Status.STATUS_AFFECTED)
         self.assertEqual(11, len(observations))
 
         observation = Observation.objects.get(
