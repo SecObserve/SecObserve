@@ -187,10 +187,8 @@ class TestFileUploadObservations(BaseTestCase):
         if service_name:
             service = Service.objects.get(product=product, name=service_name)
             self.assertEqual(observations[0].origin_service, service)
-            self.assertEqual(observations[0].origin_service_name, service_name)
         else:
             self.assertIsNone(observations[0].origin_service)
-            self.assertEqual(observations[0].origin_service_name, "")
         if docker_image_name_tag:
             self.assertEqual(observations[0].origin_docker_image_name_tag, docker_image_name_tag)
         else:

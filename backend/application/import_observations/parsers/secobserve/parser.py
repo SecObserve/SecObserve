@@ -46,7 +46,6 @@ class SecObserveParser(BaseParser, BaseFileParser):
                 origin_docker_image_tag=uploaded_observation.get("origin_docker_image_tag"),
                 origin_docker_image_name_tag=uploaded_observation.get("origin_docker_image_name_tag"),
                 origin_endpoint_url=uploaded_observation.get("origin_endpoint_url"),
-                origin_service_name=uploaded_observation.get("origin_service_name"),
                 origin_source_file=uploaded_observation.get("origin_source_file"),
                 origin_source_line_start=uploaded_observation.get("origin_source_line_start"),
                 origin_source_line_end=uploaded_observation.get("origin_source_line_end"),

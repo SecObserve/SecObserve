@@ -51,7 +51,6 @@ class TestSecObserveParser(TestCase):
                 observation.origin_docker_image_name_tag,
             )
             self.assertEqual("origin_endpoint_url_1", observation.origin_endpoint_url)
-            self.assertEqual("origin_service_name_1", observation.origin_service_name)
             self.assertEqual("origin_source_file_1", observation.origin_source_file)
             self.assertEqual(10, observation.origin_source_line_start)
             self.assertEqual(11, observation.origin_source_line_end)

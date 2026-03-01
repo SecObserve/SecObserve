@@ -27,6 +27,13 @@ def get_scanner_name(observation: Observation) -> str:
     return scanner_parts[0].strip()
 
 
+def get_origin_service_name(observation: Observation) -> str:
+    if not observation.origin_service:
+        return ""
+
+    return observation.origin_service.name
+
+
 def get_origin_component_name_version(observation: Observation) -> str:
     if not observation.origin_component_name:
         return ""

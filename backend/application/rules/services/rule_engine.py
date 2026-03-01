@@ -200,6 +200,7 @@ class Rule_Engine:
     def _check_rule_fields(
         self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
     ) -> bool:
+        service_name = observation.origin_service.name if observation.origin_service else ""
         if (  # pylint: disable=too-many-boolean-expressions
             (not rule.parser or observation.parser == rule.parser)
             and (not rule.scanner_prefix or observation.scanner.lower().startswith(rule.scanner_prefix.lower()))
@@ -212,7 +213,7 @@ class Rule_Engine:
                 observation.origin_docker_image_name_tag,
             )
             and _check_regex(rule.origin_endpoint_url, observation.origin_endpoint_url)
-            and _check_regex(rule.origin_service_name, observation.origin_service_name)
+            and _check_regex(rule.origin_service_name, service_name)
             and _check_regex(rule.origin_source_file, observation.origin_source_file)
             and _check_regex(
                 rule.origin_cloud_qualified_resource,
