@@ -66,4 +66,4 @@ if [ -z "${GUNICORN_LIMIT_REQUEST_FIELD_SIZE}" ]; then
     GUNICORN_LIMIT_REQUEST_FIELD_SIZE=16380
 fi
 
-gunicorn config.wsgi --bind 0.0.0.0:5000 --timeout 1200 --chdir=/app -w $GUNICORN_WORKERS -k gthread --threads $GUNICORN_THREADS --limit-request-field_size $GUNICORN_LIMIT_REQUEST_FIELD_SIZE
+gunicorn config.wsgi --no-control-socket --bind 0.0.0.0:5000 --timeout 1200 --chdir=/app -w $GUNICORN_WORKERS -k gthread --threads $GUNICORN_THREADS --limit-request-field_size $GUNICORN_LIMIT_REQUEST_FIELD_SIZE
