@@ -39,8 +39,8 @@ def _get_string_to_hash(observation: Observation) -> str:  # pylint: disable=too
     if observation.origin_endpoint_url:
         hash_string += observation.origin_endpoint_url
 
-    if observation.origin_service_name:
-        hash_string += observation.origin_service_name
+    if observation.origin_service:
+        hash_string += observation.origin_service.name
 
     if observation.origin_source_file:
         hash_string += observation.origin_source_file
@@ -193,8 +193,6 @@ def normalize_observation_fields(observation: Observation) -> None:
         observation.recommendation = ""
     if observation.scanner_observation_id is None:
         observation.scanner_observation_id = ""
-    if observation.origin_service_name is None:
-        observation.origin_service_name = ""
     if observation.origin_source_file is None:
         observation.origin_source_file = ""
     if observation.origin_source_file_link is None:

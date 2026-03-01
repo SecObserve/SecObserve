@@ -52,8 +52,8 @@ class BaseIssueTracker:
 
     def _get_origin(self, observation: Observation) -> str:
         origin = ""
-        if observation.origin_service_name:
-            origin += f"{observation.origin_service_name}"
+        if observation.origin_service:
+            origin += f"{observation.origin_service.name}"
         if observation.origin_component_name_version:
             if origin:
                 origin += " / "

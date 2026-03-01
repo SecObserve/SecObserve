@@ -210,7 +210,6 @@ class ObservationFilter(FilterSet):
     origin_docker_image_name_tag_short = CharFilter(
         field_name="origin_docker_image_name_tag_short", lookup_expr="icontains"
     )
-    origin_service_name = CharFilter(field_name="origin_service_name", lookup_expr="icontains")
     origin_endpoint_hostname = CharFilter(field_name="origin_endpoint_hostname", lookup_expr="icontains")
     origin_source_file = CharFilter(field_name="origin_source_file", lookup_expr="icontains")
     origin_cloud_qualified_resource = CharFilter(field_name="origin_cloud_qualified_resource", lookup_expr="icontains")
@@ -241,7 +240,7 @@ class ObservationFilter(FilterSet):
                 "origin_docker_image_name_tag_short",
                 "origin_docker_image_name_tag_short",
             ),
-            ("origin_service_name", "origin_service_name"),
+            ("origin_service__name", "origin_service_name"),
             ("origin_endpoint_hostname", "origin_endpoint_hostname"),
             ("origin_source_file", "origin_source_file"),
             ("origin_source_file", "origin_source_file_short"),
@@ -367,6 +366,7 @@ class ObservationLogFilter(FilterSet):
                 "observation__origin_component_name_version",
                 "observation_data.origin_component_name_version",
             ),
+            ("observation__origin_service__name", "observation_data.origin_service_name"),
             (
                 "observation__origin_docker_image_name_tag_short",
                 "observation_data.origin_docker_image_name_tag_short",
@@ -453,7 +453,7 @@ class PotentialDuplicateFilter(FilterSet):
                 "potential_duplicate_observation.current_status",
             ),
             (
-                "potential_duplicate_observation__origin_service_name",
+                "potential_duplicate_observation__origin_service__name",
                 "potential_duplicate_observation.origin_service_name",
             ),
             (

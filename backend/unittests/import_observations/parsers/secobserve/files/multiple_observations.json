@@ -17,7 +17,6 @@
             "origin_docker_image_tag": "origin_docker_image_tag_1",
             "origin_docker_image_name_tag": "origin_docker_image_name_tag_1",
             "origin_endpoint_url": "origin_endpoint_url_1",
-            "origin_service_name": "origin_service_name_1",
             "origin_source_file": "origin_source_file_1",
             "origin_source_line_start": 10,
             "origin_source_line_end": 11,

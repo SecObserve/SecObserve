@@ -3,21 +3,18 @@ from typing import Optional
 from django.db.models.query import QuerySet
 from huey.contrib.djhuey import db_task
 
-from application.core.models import Branch, Observation, Potential_Duplicate, Product
+from application.core.models import Branch, Observation, Potential_Duplicate, Product, Service
 from application.core.types import Status
 from application.notifications.services.tasks import handle_task_exception
 
 
 @db_task()
-def find_potential_duplicates(product: Product, branch: Optional[Branch], service: Optional[str]) -> None:
+def find_potential_duplicates(product: Product, branch: Optional[Branch], service: Optional[Service]) -> None:
     try:
-        if not service:
-            service = ""
-
         observations = Observation.objects.filter(
             product=product,
             branch=branch,
-            origin_service_name=service,
+            origin_service=service,
         )
 
         for observation in observations:

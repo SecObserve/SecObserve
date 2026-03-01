@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from application.core.models import Observation
+from application.core.models import Observation, Service
 from application.core.types import Severity
 from application.issue_tracker.issue_trackers.base_issue_tracker import BaseIssueTracker
 from unittests.base_test_case import BaseTestCase
@@ -18,7 +18,8 @@ class TestBaseIssueTracker(BaseTestCase):
 
     def test_get_title_service(self):
         issue_tracker = BaseIssueTracker()
-        self.observation_1.origin_service_name = "service_1"
+        service = Service(name="service_1")
+        self.observation_1.origin_service = service
         title = issue_tracker._get_title(self.observation_1)
         self.assertEqual('High vulnerability: "observation_1" in service_1', title)
 
@@ -48,7 +49,8 @@ class TestBaseIssueTracker(BaseTestCase):
 
     def test_get_title_all(self):
         issue_tracker = BaseIssueTracker()
-        self.observation_1.origin_service_name = "service_1"
+        service = Service(name="service_1")
+        self.observation_1.origin_service = service
         self.observation_1.origin_component_name_version = "component_1:1.0.0"
         self.observation_1.origin_docker_image_name_tag_short = "image_1:1.0.0"
         self.observation_1.origin_endpoint_hostname = "hostname_1.example.com"

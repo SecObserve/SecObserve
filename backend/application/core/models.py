@@ -290,7 +290,6 @@ class Observation(Model):
     origin_endpoint_query = TextField(max_length=2048, blank=True)
     origin_endpoint_fragment = TextField(max_length=2048, blank=True)
 
-    origin_service_name = CharField(max_length=255, blank=True)
     origin_service = ForeignKey(Service, on_delete=PROTECT, null=True)
 
     origin_source_file = CharField(max_length=255, blank=True)
@@ -415,7 +414,6 @@ class Observation(Model):
             Index(fields=["origin_component_name_version"]),
             Index(fields=["origin_component_cyclonedx_bom_link"]),
             Index(fields=["origin_docker_image_name_tag_short"]),
-            Index(fields=["origin_service_name"]),
             Index(fields=["origin_endpoint_hostname"]),
             Index(fields=["origin_source_file"]),
             Index(fields=["origin_cloud_qualified_resource"]),
