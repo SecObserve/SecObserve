@@ -6,16 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0079_alter_observation_assessment_status_and_more'),
+        ("core", "0079_alter_observation_assessment_status_and_more"),
     ]
 
     operations = [
         migrations.RemoveIndex(
-            model_name='observation',
-            name='core_observ_origin__43587c_idx',
+            model_name="observation",
+            name="core_observ_origin__43587c_idx",
         ),
         migrations.RemoveField(
-            model_name='observation',
-            name='origin_service_name',
+            model_name="observation",
+            name="origin_service_name",
         ),
     ]

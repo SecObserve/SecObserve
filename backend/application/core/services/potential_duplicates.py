@@ -3,7 +3,13 @@ from typing import Optional
 from django.db.models.query import QuerySet
 from huey.contrib.djhuey import db_task
 
-from application.core.models import Branch, Observation, Potential_Duplicate, Product, Service
+from application.core.models import (
+    Branch,
+    Observation,
+    Potential_Duplicate,
+    Product,
+    Service,
+)
 from application.core.types import Status
 from application.notifications.services.tasks import handle_task_exception
 

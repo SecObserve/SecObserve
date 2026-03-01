@@ -19,12 +19,12 @@ from application.commons.services.functions import get_comma_separated_as_list
 from application.core.api.serializers_helpers import (
     get_branch_name,
     get_origin_component_name_version,
+    get_origin_service_name,
     get_scanner_name,
     validate_cvss3_vector,
     validate_cvss4_vector,
     validate_cvss_and_severity,
     validate_url,
-    get_origin_service_name,
 )
 from application.core.api.serializers_product import (
     NestedProductListSerializer,
