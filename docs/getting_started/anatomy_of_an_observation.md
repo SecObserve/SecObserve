@@ -9,7 +9,12 @@
     * If there is a [rule](../usage/rule_engine.md) configured that matches the observation, it overrides the severity set by the parser.
     * When a user [assesses the observation](../usage/assess_observations.md) and sets a different severity, this severity from the assessment overrides the severity set by a rule and the severity set by the parser.
 * The initial **Status** set by an import is `Open`. It will be set to `Resolved` if the [same observation](../usage/import_observations.md#import-algorithm) is not found in a subsequent import. On the other hand, resolved observations are set back to the status `Open` if they reappear in a later import.  
-As for the severity, if a [rule](../usage/rule_engine.md) matches the observation or a user sets a different status in an [assessment](../usage/assess_observations.md), these changes will override the status set by the import.
+
+    As for the severity, if a [rule](../usage/rule_engine.md) matches the observation or a user sets a different status in an [assessment](../usage/assess_observations.md), these changes will override the status set by the import.
+
+    `Open`, `Affected` and `In review` are the so-called *active* status, because observations in these status need attention. Observations in other status typically don't need attention anymore. 
+
+* The **Priority** *(not shown in the screenshot)* is a number between 1 and 10, to help prioritizing the order of assessing observations. It can be set by [manual assessments](../usage/assess_observations.md) or [rego rules](../usage/rule_engine.md#rego-rules).
 * **Title** and **Description** are short and long explanations what the observation is about.
 * Scanners might suggest a **Recommendation** *(not shown in the screenshot)*.
 * If there is a recommendation for a component with a version number, the **Update impact score** is calculated:

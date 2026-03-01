@@ -3,7 +3,9 @@ import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle } from "
 import { Fragment, useState } from "react";
 import { ReferenceInput, SimpleForm, useNotify, useRefresh } from "react-admin";
 
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import MenuButton from "../../commons/custom_fields/MenuButton";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_255, validate_513, validate_2048, validate_required } from "../../commons/custom_validators";
 import { getIconAndFontColor } from "../../commons/functions";
@@ -110,32 +112,14 @@ const ApiImportObservations = (product: any) => {
                             />
                         </ReferenceInput>
                         {product.product.has_branches && (
-                            <ReferenceInput
+                            <BranchReferenceInput
                                 source="branch"
-                                reference="branches"
-                                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                                sort={{ field: "name", order: "ASC" }}
-                                filter={{ product: product.product.id }}
-                                alwaysOn
-                            >
-                                <AutocompleteInputWide
-                                    optionText="name"
-                                    label="Branch / Version"
-                                    defaultValue={product.product.repository_default_branch}
-                                />
-                            </ReferenceInput>
+                                product={product.product.id}
+                                defaultValue={product.product.repository_default_branch}
+                            />
                         )}
                         {product.product.has_services && (
-                            <ReferenceInput
-                                source="service_id"
-                                reference="services"
-                                sort={{ field: "name", order: "ASC" }}
-                                queryOptions={{ meta: { api_resource: "service_names" } }}
-                                filter={{ product: product.id }}
-                                alwaysOn
-                            >
-                                <AutocompleteInputWide optionText="name" label="Service" />
-                            </ReferenceInput>
+                            <ServiceReferenceInput source="service_id" product={product.product.id} />
                         )}
                         <TextInputWide
                             source="docker_image_name_tag"

@@ -6,11 +6,12 @@ from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log
 
 
-def create_observation_log(
+def create_observation_log(  # pylint: disable=too-many-arguments
     *,
     observation: Observation,
     severity: str,
     status: str,
+    priority: Optional[int] = None,
     comment: str,
     vex_justification: str,
     assessment_status: str,
@@ -21,6 +22,7 @@ def create_observation_log(
         user=_get_user(),
         severity=severity,
         status=status,
+        priority=priority,
         comment=comment,
         vex_justification=vex_justification,
         assessment_status=assessment_status,

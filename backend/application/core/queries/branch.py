@@ -75,12 +75,12 @@ def _add_annotations(queryset: QuerySet, with_annotations: bool) -> QuerySet:
     if not with_annotations:
         return queryset
 
-    subquery_open_critical = _get_observation_subquery(Severity.SEVERITY_CRITICAL)
-    subquery_open_high = _get_observation_subquery(Severity.SEVERITY_HIGH)
-    subquery_open_medium = _get_observation_subquery(Severity.SEVERITY_MEDIUM)
-    subquery_open_low = _get_observation_subquery(Severity.SEVERITY_LOW)
-    subquery_open_none = _get_observation_subquery(Severity.SEVERITY_NONE)
-    subquery_open_unknown = _get_observation_subquery(Severity.SEVERITY_UNKNOWN)
+    subquery_active_critical = _get_observation_subquery(Severity.SEVERITY_CRITICAL)
+    subquery_active_high = _get_observation_subquery(Severity.SEVERITY_HIGH)
+    subquery_active_medium = _get_observation_subquery(Severity.SEVERITY_MEDIUM)
+    subquery_active_low = _get_observation_subquery(Severity.SEVERITY_LOW)
+    subquery_active_none = _get_observation_subquery(Severity.SEVERITY_NONE)
+    subquery_active_unknown = _get_observation_subquery(Severity.SEVERITY_UNKNOWN)
 
     subquery_license_forbidden = _get_license_subquery(License_Policy_Evaluation_Result.RESULT_FORBIDDEN)
     subquery_license_review_required = _get_license_subquery(License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)
@@ -89,12 +89,12 @@ def _add_annotations(queryset: QuerySet, with_annotations: bool) -> QuerySet:
     subquery_license_ignored = _get_license_subquery(License_Policy_Evaluation_Result.RESULT_IGNORED)
 
     queryset = queryset.annotate(
-        open_critical_observation_count=Coalesce(subquery_open_critical, 0),
-        open_high_observation_count=Coalesce(subquery_open_high, 0),
-        open_medium_observation_count=Coalesce(subquery_open_medium, 0),
-        open_low_observation_count=Coalesce(subquery_open_low, 0),
-        open_none_observation_count=Coalesce(subquery_open_none, 0),
-        open_unknown_observation_count=Coalesce(subquery_open_unknown, 0),
+        active_critical_observation_count=Coalesce(subquery_active_critical, 0),
+        active_high_observation_count=Coalesce(subquery_active_high, 0),
+        active_medium_observation_count=Coalesce(subquery_active_medium, 0),
+        active_low_observation_count=Coalesce(subquery_active_low, 0),
+        active_none_observation_count=Coalesce(subquery_active_none, 0),
+        active_unknown_observation_count=Coalesce(subquery_active_unknown, 0),
         forbidden_licenses_count=Coalesce(subquery_license_forbidden, 0),
         review_required_licenses_count=Coalesce(subquery_license_review_required, 0),
         unknown_licenses_count=Coalesce(subquery_license_unknown, 0),
@@ -109,7 +109,7 @@ def _get_observation_subquery(severity: str) -> Subquery:
     return Subquery(
         Observation.objects.filter(
             branch=OuterRef("pk"),
-            current_status=Status.STATUS_OPEN,
+            current_status__in=Status.STATUS_ACTIVE,
             current_severity=severity,
         )
         .order_by()

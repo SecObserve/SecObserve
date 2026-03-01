@@ -69,7 +69,7 @@ services:
       - "8000:8000"
 
   postgres:
-    image: postgres:15.15-alpine
+    image: postgres:15.17-alpine
     volumes:
       - dev_postgres_data:/var/lib/postgresql/data
     environment:
@@ -87,7 +87,7 @@ services:
       - "8025:8025"
 
   keycloak:
-    image: keycloak/keycloak:26.5.2
+    image: keycloak/keycloak:26.5.4
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin

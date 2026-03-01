@@ -49,12 +49,12 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
             return metrics;
         } else {
             return {
-                open_critical: 0,
-                open_high: 0,
-                open_medium: 0,
-                open_low: 0,
-                open_none: 0,
-                open_unknown: 0,
+                active_critical: 0,
+                active_high: 0,
+                active_medium: 0,
+                active_low: 0,
+                active_none: 0,
+                active_unknown: 0,
             };
         }
     }
@@ -94,12 +94,12 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                 let metrics = null;
                 for (let i = getSettingsMetricsTimespanInDays() - 1; i >= 0; i--) {
                     metrics = get_metrics(new Date(Date.now() - i * 24 * 60 * 60 * 1000), result.json);
-                    critical_observations.push(metrics.open_critical);
-                    high_observations.push(metrics.open_high);
-                    medium_observations.push(metrics.open_medium);
-                    low_observations.push(metrics.open_low);
-                    none_observations.push(metrics.open_none);
-                    unknown_observations.push(metrics.open_unknown);
+                    critical_observations.push(metrics.active_critical);
+                    high_observations.push(metrics.active_high);
+                    medium_observations.push(metrics.active_medium);
+                    low_observations.push(metrics.active_low);
+                    none_observations.push(metrics.active_none);
+                    unknown_observations.push(metrics.active_unknown);
                 }
 
                 const data_sets = [
@@ -210,7 +210,7 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                             title: {
                                 display: true,
                                 text:
-                                    "Severities of open observations (last " +
+                                    "Severities of active observations (last " +
                                     getSettingsMetricsTimespanInDays() +
                                     " days)",
                                 color: getFontColor(),

@@ -74,7 +74,6 @@ from application.access_control.queries.user import (
     get_users_without_api_tokens,
 )
 from application.access_control.services.jwt_authentication import create_jwt
-from application.access_control.services.jwt_secret import create_secret
 from application.access_control.services.user_api_token import (
     create_user_api_token,
     revoke_user_api_token,
@@ -338,7 +337,7 @@ class JWTSecretResetView(APIView):
         responses={status.HTTP_204_NO_CONTENT: None},
     )
     def post(self, request: Request) -> Response:
-        jwt_secret = JWT_Secret(secret=create_secret())
+        jwt_secret = JWT_Secret(secret=JWT_Secret.create_secret())
         jwt_secret.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

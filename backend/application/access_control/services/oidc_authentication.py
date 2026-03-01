@@ -3,10 +3,13 @@ import os
 import re
 from typing import Optional
 
-import jwt
 import requests
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
+from jwt.api_jwt import decode
+from jwt.exceptions import PyJWTError
+from jwt.jwks_client import PyJWKClient
+from jwt.types import Options
 from rest_framework.authentication import BaseAuthentication, get_authorization_header
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
@@ -54,18 +57,18 @@ class OIDCAuthentication(BaseAuthentication):
         settings = Settings.load()
         try:
             jwks_uri = self._get_jwks_uri()
-            jwks_client = jwt.PyJWKClient(jwks_uri)
+            jwks_client = PyJWKClient(jwks_uri)
             signing_key = jwks_client.get_signing_key_from_jwt(token)
-            options = {
-                "verify_signature": True,
-                "verify_aud": True,
-                "strict_aud": True,
-                "require": ["exp"],
-                "verify_iat": True,
-                "verify_exp": True,
-                "verify_nbf": True,
-            }
-            payload = jwt.decode(
+            options = Options(
+                verify_signature=True,
+                verify_aud=True,
+                strict_aud=True,
+                require=["exp"],
+                verify_iat=True,
+                verify_exp=True,
+                verify_nbf=True,
+            )
+            payload = decode(
                 jwt=token,
                 options=options,
                 key=signing_key.key,
@@ -74,12 +77,14 @@ class OIDCAuthentication(BaseAuthentication):
                 leeway=settings.oidc_clock_skew,
             )
             username = payload.get(os.environ["OIDC_USERNAME"])
+            if not username:
+                raise AuthenticationFailed("No username found in JWT")
             user = get_user_by_username(username)
             if user:
                 user = self._check_user_change(user, payload)
                 return user
             return self._create_user(username, payload)
-        except jwt.PyJWTError as e:
+        except PyJWTError as e:
             raise AuthenticationFailed(str(e)) from e
 
     def _get_jwks_uri(self) -> str:

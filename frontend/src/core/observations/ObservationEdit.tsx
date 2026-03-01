@@ -6,7 +6,6 @@ import {
     Edit,
     FormDataConsumer,
     NumberInput,
-    ReferenceInput,
     SaveButton,
     SimpleForm,
     TextInput,
@@ -17,7 +16,9 @@ import {
 
 import observations from ".";
 import { PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import {
     validate_0_10,
@@ -147,17 +148,7 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
             <Stack>
                 <TextInputWide source="product_data.name" label="Product" disabled />
                 <WithRecord
-                    render={(branch) => (
-                        <ReferenceInput
-                            source="branch"
-                            reference="branches"
-                            queryOptions={{ meta: { api_resource: "branch_names" } }}
-                            sort={{ field: "name", order: "ASC" }}
-                            filter={{ product: branch.product_data.id }}
-                        >
-                            <AutocompleteInputWide optionText="name" label="Branch / Version" />
-                        </ReferenceInput>
-                    )}
+                    render={(branch) => <BranchReferenceInput source="branch" product={branch.product_data.id} />}
                 />
             </Stack>
 
@@ -218,15 +209,7 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
             <Stack>
                 <WithRecord
                     render={(service) => (
-                        <ReferenceInput
-                            source="origin_service"
-                            reference="services"
-                            queryOptions={{ meta: { api_resource: "service_names" } }}
-                            sort={{ field: "name", order: "ASC" }}
-                            filter={{ product: service.product_data.id }}
-                        >
-                            <AutocompleteInputWide optionText="name" label="Service" />
-                        </ReferenceInput>
+                        <ServiceReferenceInput source="origin_service" product={service.product_data.id} />
                     )}
                 />
                 <Stack direction="row" spacing={2}>

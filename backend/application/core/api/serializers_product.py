@@ -103,12 +103,12 @@ class ProductCoreSerializer(ModelSerializer):
 
 
 class ProductGroupSerializer(ProductCoreSerializer):
-    open_critical_observation_count = IntegerField(read_only=True)
-    open_high_observation_count = IntegerField(read_only=True)
-    open_medium_observation_count = IntegerField(read_only=True)
-    open_low_observation_count = IntegerField(read_only=True)
-    open_none_observation_count = IntegerField(read_only=True)
-    open_unknown_observation_count = IntegerField(read_only=True)
+    active_critical_observation_count = IntegerField(read_only=True)
+    active_high_observation_count = IntegerField(read_only=True)
+    active_medium_observation_count = IntegerField(read_only=True)
+    active_low_observation_count = IntegerField(read_only=True)
+    active_none_observation_count = IntegerField(read_only=True)
+    active_unknown_observation_count = IntegerField(read_only=True)
     forbidden_licenses_count = IntegerField(read_only=True)
     review_required_licenses_count = IntegerField(read_only=True)
     unknown_licenses_count = IntegerField(read_only=True)
@@ -135,12 +135,12 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "description",
             "products_count",
             "permissions",
-            "open_critical_observation_count",
-            "open_high_observation_count",
-            "open_medium_observation_count",
-            "open_low_observation_count",
-            "open_none_observation_count",
-            "open_unknown_observation_count",
+            "active_critical_observation_count",
+            "active_high_observation_count",
+            "active_medium_observation_count",
+            "active_low_observation_count",
+            "active_none_observation_count",
+            "active_unknown_observation_count",
             "repository_branch_housekeeping_active",
             "repository_branch_housekeeping_keep_inactive_days",
             "repository_branch_housekeeping_exempt_branches",
@@ -189,12 +189,12 @@ class ProductNameSerializer(ModelSerializer):
 
 
 class ProductListSerializer(ProductCoreSerializer):
-    open_critical_observation_count = IntegerField(read_only=True)
-    open_high_observation_count = IntegerField(read_only=True)
-    open_medium_observation_count = IntegerField(read_only=True)
-    open_low_observation_count = IntegerField(read_only=True)
-    open_none_observation_count = IntegerField(read_only=True)
-    open_unknown_observation_count = IntegerField(read_only=True)
+    active_critical_observation_count = IntegerField(read_only=True)
+    active_high_observation_count = IntegerField(read_only=True)
+    active_medium_observation_count = IntegerField(read_only=True)
+    active_low_observation_count = IntegerField(read_only=True)
+    active_none_observation_count = IntegerField(read_only=True)
+    active_unknown_observation_count = IntegerField(read_only=True)
     forbidden_licenses_count = IntegerField(read_only=True)
     review_required_licenses_count = IntegerField(read_only=True)
     unknown_licenses_count = IntegerField(read_only=True)
@@ -533,12 +533,12 @@ class ProductApiTokenSerializer(Serializer):
 
 class BranchSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
-    open_critical_observation_count = IntegerField(read_only=True)
-    open_high_observation_count = IntegerField(read_only=True)
-    open_medium_observation_count = IntegerField(read_only=True)
-    open_low_observation_count = IntegerField(read_only=True)
-    open_none_observation_count = IntegerField(read_only=True)
-    open_unknown_observation_count = IntegerField(read_only=True)
+    active_critical_observation_count = IntegerField(read_only=True)
+    active_high_observation_count = IntegerField(read_only=True)
+    active_medium_observation_count = IntegerField(read_only=True)
+    active_low_observation_count = IntegerField(read_only=True)
+    active_none_observation_count = IntegerField(read_only=True)
+    active_unknown_observation_count = IntegerField(read_only=True)
     forbidden_licenses_count = IntegerField(read_only=True)
     review_required_licenses_count = IntegerField(read_only=True)
     unknown_licenses_count = IntegerField(read_only=True)
@@ -578,12 +578,12 @@ class BranchNameSerializer(ModelSerializer):
 
 class ServiceSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
-    open_critical_observation_count = IntegerField(read_only=True)
-    open_high_observation_count = IntegerField(read_only=True)
-    open_medium_observation_count = IntegerField(read_only=True)
-    open_low_observation_count = IntegerField(read_only=True)
-    open_none_observation_count = IntegerField(read_only=True)
-    open_unknown_observation_count = IntegerField(read_only=True)
+    active_critical_observation_count = IntegerField(read_only=True)
+    active_high_observation_count = IntegerField(read_only=True)
+    active_medium_observation_count = IntegerField(read_only=True)
+    active_low_observation_count = IntegerField(read_only=True)
+    active_none_observation_count = IntegerField(read_only=True)
+    active_unknown_observation_count = IntegerField(read_only=True)
     forbidden_licenses_count = IntegerField(read_only=True)
     review_required_licenses_count = IntegerField(read_only=True)
     unknown_licenses_count = IntegerField(read_only=True)

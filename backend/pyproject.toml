@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.48.0"
+version = "1.49.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -10,15 +10,15 @@ package-mode = false
 python = ">= 3.11, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
-gunicorn = "25.0.2"  # https://github.com/benoitc/gunicorn
+gunicorn = "25.1.0"  # https://github.com/benoitc/gunicorn
 django = "5.2.11"  # https://www.djangoproject.com/
-django-environ = "0.12.0"  # https://github.com/joke2k/django-environ
+django-environ = "0.13.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
 django-csp = "4.0"  # https://github.com/mozilla/django-csp
 django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield 
 django-encrypted-model-fields = "0.6.5"  # https://gitlab.com/lansharkconsulting/django/django-encrypted-model-fields
 argon2-cffi = "25.1.0"  # https://github.com/hynek/argon2_cffi
-whitenoise = "6.11.0"  # https://github.com/evansd/whitenoise
+whitenoise = "6.12.0"  # https://github.com/evansd/whitenoise
 django-dirtyfields = "1.9.9"  # https://github.com/romgar/django-dirtyfields
 
 # Django REST Framework
@@ -33,7 +33,7 @@ drf-spectacular-sidecar = "2026.1.1"  # https://github.com/tfranzel/drf-spectacu
 
 # Token authentication
 # ------------------------------------------------------------------------------
-PyJWT = "2.10.1"  # https://github.com/jpadilla/pyjwt
+PyJWT = "2.11.0"  # https://github.com/jpadilla/pyjwt
 
 # HTTP requests
 # ------------------------------------------------------------------------------
@@ -42,7 +42,7 @@ requests = "2.32.5"  # https://github.com/psf/requests
 # Database
 # ------------------------------------------------------------------------------
 pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
-psycopg = { version = "3.3.2", extras = ["binary"] }  # https://github.com/psycopg/psycopg
+psycopg = { version = "3.3.3", extras = ["binary"] }  # https://github.com/psycopg/psycopg
 
 # Dataformats
 # ------------------------------------------------------------------------------
@@ -70,16 +70,18 @@ jira = "3.10.5"  # https://github.com/pycontribs/jira
 # ------------------------------------------------------------------------------
 inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
-py-ocsf-models = "0.8.0"  # https://github.com/prowler-cloud/py-ocsf-models
+py-ocsf-models = "0.8.1"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.3"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.24.5"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "2.26.3"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.6.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
-licenselynx = "2.0.2"  # https://github.com/licenselynx/licenselynx
+licenselynx = "2.1.0"  # https://github.com/licenselynx/licenselynx
+regopy = { version = "1.2.0", markers = "platform_machine == 'x86_64' or platform_machine == 'AMD64'" }  # https://microsoft.github.io/rego-cpp/#python-example
+simplejson = "3.20.2"
 
 # Development dependencies
 # ------------------------------------------------------------------------------
 # Werkzeug = { version = "3.0.4", extras = ["watchdog"], optional = true }  # https://github.com/pallets/werkzeug
-Werkzeug = { version = "3.1.5", optional = true }  # https://github.com/pallets/werkzeug
+Werkzeug = { version = "3.1.6", optional = true }  # https://github.com/pallets/werkzeug
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
@@ -87,7 +89,7 @@ django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzb
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
-coverage = { version = "7.13.3", optional = true }  # https://github.com/nedbat/coveragepy
+coverage = { version = "7.13.4", optional = true }  # https://github.com/nedbat/coveragepy
 django-coverage-plugin = { version = "3.2.0", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies
@@ -95,7 +97,7 @@ django-coverage-plugin = { version = "3.2.0", optional = true }  # https://githu
 flake8 = { version = "7.3.0", optional = true }  # https://github.com/PyCQA/flake8
 flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gforcada/flake8-isort
 black = { version = "26.1.0", optional = true }  # https://github.com/psf/black
-pylint = { version = "4.0.4", optional = true }  # https://github.com/pylint-dev/pylint
+pylint = { version = "4.0.5", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.7.0", optional = true }  # https://github.com/PyCQA/pylint-django
 mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "5.2.9", optional = true }  # https://github.com/typeddjango/django-stubs

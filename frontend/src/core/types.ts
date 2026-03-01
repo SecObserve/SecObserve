@@ -65,10 +65,12 @@ export interface Observation extends RaRecord {
     current_severity: string;
     parser_severity: string;
     assessment_severity: string;
+    rule_rego_severity: string;
     rule_severity: string;
     current_status: string;
     parser_status: string;
     assessment_status: string;
+    rule_rego_status: string;
     rule_status: string;
     scanner_observation_id: string;
     origin_component_name: string;
@@ -142,23 +144,25 @@ export const OBSERVATION_SEVERITY_CHOICES = [
 ];
 
 export const OBSERVATION_STATUS_OPEN = "Open";
+export const OBSERVATION_STATUS_AFFECTED = "Affected";
+export const OBSERVATION_STATUS_IN_REVIEW = "In review";
 export const OBSERVATION_STATUS_RESOLVED = "Resolved";
 export const OBSERVATION_STATUS_DUPLICATE = "Duplicate";
 export const OBSERVATION_STATUS_FALSE_POSITIVE = "False positive";
-export const OBSERVATION_STATUS_IN_REVIEW = "In review";
 export const OBSERVATION_STATUS_NOT_AFFECTED = "Not affected";
 export const OBSERVATION_STATUS_NOT_SECURITY = "Not security";
 export const OBSERVATION_STATUS_RISK_ACCEPTED = "Risk accepted";
 
 export const OBSERVATION_STATUS_CHOICES = [
     { id: OBSERVATION_STATUS_OPEN, name: OBSERVATION_STATUS_OPEN },
+    { id: OBSERVATION_STATUS_AFFECTED, name: OBSERVATION_STATUS_AFFECTED },
+    { id: OBSERVATION_STATUS_IN_REVIEW, name: OBSERVATION_STATUS_IN_REVIEW },
     { id: OBSERVATION_STATUS_RESOLVED, name: OBSERVATION_STATUS_RESOLVED },
     { id: OBSERVATION_STATUS_DUPLICATE, name: OBSERVATION_STATUS_DUPLICATE },
     {
         id: OBSERVATION_STATUS_FALSE_POSITIVE,
         name: OBSERVATION_STATUS_FALSE_POSITIVE,
     },
-    { id: OBSERVATION_STATUS_IN_REVIEW, name: OBSERVATION_STATUS_IN_REVIEW },
     {
         id: OBSERVATION_STATUS_NOT_AFFECTED,
         name: OBSERVATION_STATUS_NOT_AFFECTED,
@@ -171,6 +175,12 @@ export const OBSERVATION_STATUS_CHOICES = [
         id: OBSERVATION_STATUS_RISK_ACCEPTED,
         name: OBSERVATION_STATUS_RISK_ACCEPTED,
     },
+];
+
+export const OBSERVATION_STATUS_ACTIVE = [
+    OBSERVATION_STATUS_OPEN,
+    OBSERVATION_STATUS_AFFECTED,
+    OBSERVATION_STATUS_IN_REVIEW,
 ];
 
 export const AGE_CHOICES = [

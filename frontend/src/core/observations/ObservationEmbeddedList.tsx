@@ -1,7 +1,7 @@
 import { Stack } from "@mui/material";
 import { useEffect } from "react";
 import {
-    AutocompleteInput,
+    AutocompleteArrayInput,
     BooleanField,
     ChipField,
     Datagrid,
@@ -21,7 +21,9 @@ import {
 import { useNavigate } from "react-router";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
@@ -29,8 +31,8 @@ import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_ACTIVE,
     OBSERVATION_STATUS_CHOICES,
-    OBSERVATION_STATUS_OPEN,
     Observation,
     Product,
 } from "../types";
@@ -42,42 +44,20 @@ import { IDENTIFIER_OBSERVATION_EMBEDDED_LIST, setListIdentifier } from "./funct
 function listFilters(product: Product) {
     const filters = [];
     if (product?.has_branches) {
-        filters.push(
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id, for_observations: true }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" label="Branch / Version" />
-            </ReferenceInput>
-        );
+        filters.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
     }
     filters.push(
         <TextInput source="title" alwaysOn />,
-        <AutocompleteInput
+        <AutocompleteArrayInput
             source="current_severity"
             label="Severity"
             choices={OBSERVATION_SEVERITY_CHOICES}
             alwaysOn
         />,
-        <AutocompleteInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
+        <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
     );
     if (product?.has_services) {
-        filters.push(
-            <ReferenceInput
-                source="origin_service"
-                reference="services"
-                queryOptions={{ meta: { api_resource: "service_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium label="Service" optionText="name" />
-            </ReferenceInput>
-        );
+        filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
     }
 
     if (product?.has_component) {
@@ -151,7 +131,7 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
 
     const navigate = useNavigate();
     function get_observations_url(branch_id: Identifier): string {
-        return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A%22Open%22%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
+        return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
     }
     useEffect(() => {
         const current_product_id = localStorage.getItem("observationembeddedlist.product");
@@ -170,7 +150,7 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
         perPage: 25,
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
-        filterDefaultValues: { current_status: OBSERVATION_STATUS_OPEN, branch: product.repository_default_branch },
+        filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE, branch: product.repository_default_branch },
         disableSyncWithLocation: false,
         storeKey: "observations.embedded",
     });
@@ -207,6 +187,9 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
                                 <TextField source="title" />
                                 <SeverityField label="Severity" source="current_severity" />
                                 <ChipField source="current_status" label="Status" />
+                                {has_attribute("current_priority", data, sort) && (
+                                    <ChipField source="current_priority" label="Priority" />
+                                )}
                                 {has_attribute("epss_score", data, sort) && (
                                     <NumberField source="epss_score" label="EPSS" />
                                 )}

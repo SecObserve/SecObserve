@@ -1,6 +1,7 @@
 import hashlib
 import re
 from decimal import Decimal
+from typing import Optional
 from urllib.parse import urlparse
 
 from cvss import CVSS3, CVSS4
@@ -79,6 +80,9 @@ def get_current_severity(observation: Observation) -> str:
     if observation.assessment_severity:
         return observation.assessment_severity
 
+    if observation.rule_rego_severity:
+        return observation.rule_rego_severity
+
     if observation.rule_severity:
         return observation.rule_severity
 
@@ -120,6 +124,9 @@ def get_current_status(observation: Observation) -> str:
     if observation.assessment_status:
         return observation.assessment_status
 
+    if observation.rule_rego_status:
+        return observation.rule_rego_status
+
     if observation.rule_status:
         return observation.rule_status
 
@@ -132,9 +139,25 @@ def get_current_status(observation: Observation) -> str:
     return Status.STATUS_OPEN
 
 
+def get_current_priority(observation: Observation) -> Optional[int]:
+    if observation.assessment_priority:
+        return observation.assessment_priority
+
+    if observation.rule_rego_priority:
+        return observation.rule_rego_priority
+
+    if observation.rule_priority:
+        return observation.rule_priority
+
+    return None
+
+
 def get_current_vex_justification(observation: Observation) -> str:
     if observation.assessment_vex_justification:
         return observation.assessment_vex_justification
+
+    if observation.rule_rego_vex_justification:
+        return observation.rule_rego_vex_justification
 
     if observation.rule_vex_justification:
         return observation.rule_vex_justification
@@ -157,6 +180,7 @@ def normalize_observation_fields(observation: Observation) -> None:
 
     _normalize_severity(observation)
     _normalize_status(observation)
+    observation.current_priority = get_current_priority(observation)
     _normalize_vex_justification(observation)
 
     _normalize_description(observation)
@@ -417,6 +441,8 @@ def _normalize_severity(observation: Observation) -> None:
         observation.assessment_severity = ""
     if observation.rule_severity is None:
         observation.rule_severity = ""
+    if observation.rule_rego_severity is None:
+        observation.rule_rego_severity = ""
     if observation.parser_severity is None:
         observation.parser_severity = ""
     if (
@@ -443,6 +469,8 @@ def _normalize_status(observation: Observation) -> None:
         observation.assessment_status = ""
     if observation.rule_status is None:
         observation.rule_status = ""
+    if observation.rule_rego_status is None:
+        observation.rule_rego_status = ""
     if observation.parser_status is None:
         observation.parser_status = ""
     if observation.vex_status is None:
@@ -458,6 +486,8 @@ def _normalize_vex_justification(observation: Observation) -> None:
         observation.assessment_vex_justification = ""
     if observation.rule_vex_justification is None:
         observation.rule_vex_justification = ""
+    if observation.rule_rego_vex_justification is None:
+        observation.rule_rego_vex_justification = ""
     if observation.parser_vex_justification is None:
         observation.parser_vex_justification = ""
     if observation.vex_vex_justification is None:

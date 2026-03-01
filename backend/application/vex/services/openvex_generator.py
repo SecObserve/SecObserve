@@ -322,7 +322,7 @@ def _prepare_statement(observation: Observation) -> Optional[OpenVEXStatement]:
 
 
 def _map_status(secobserve_status: str) -> Optional[str]:
-    if secobserve_status in (Status.STATUS_OPEN, Status.STATUS_RISK_ACCEPTED):
+    if secobserve_status in (Status.STATUS_OPEN, Status.STATUS_AFFECTED, Status.STATUS_RISK_ACCEPTED):
         return OpenVEX_Status.OPENVEX_STATUS_AFFECTED
 
     if secobserve_status == Status.STATUS_RESOLVED:

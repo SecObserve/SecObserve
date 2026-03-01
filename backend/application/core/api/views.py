@@ -133,7 +133,9 @@ from application.core.services.assessment import (
 )
 from application.core.services.export_observations import (
     export_observations_csv,
+    export_observations_csv_for_product,
     export_observations_excel,
+    export_observations_excel_for_product,
 )
 from application.core.services.observations_bulk_actions import (
     observation_logs_bulk_approval,
@@ -225,11 +227,12 @@ class ProductViewSet(ModelViewSet):
     def export_observations_excel(self, request: Request, pk: int) -> HttpResponse:
         product = self.__get_product(pk)
 
-        status = self.request.query_params.get("status")
-        if status and (status, status) not in Status.STATUS_CHOICES:
-            raise ValidationError(f"Status {status} is not a valid choice")
+        statuses = self.request.query_params.getlist("status")
+        for status in statuses:
+            if status and (status, status) not in Status.STATUS_CHOICES:
+                raise ValidationError(f"Status {status} is not a valid choice")
 
-        workbook = export_observations_excel(product, status)
+        workbook = export_observations_excel_for_product(product, statuses)
 
         with NamedTemporaryFile() as tmp:
             workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
@@ -256,14 +259,15 @@ class ProductViewSet(ModelViewSet):
     def export_observations_csv(self, request: Request, pk: int) -> HttpResponse:
         product = self.__get_product(pk)
 
-        status = self.request.query_params.get("status")
-        if status and (status, status) not in Status.STATUS_CHOICES:
-            raise ValidationError(f"Status {status} is not a valid choice")
+        statuses = self.request.query_params.getlist("status")
+        for status in statuses:
+            if status and (status, status) not in Status.STATUS_CHOICES:
+                raise ValidationError(f"Status {status} is not a valid choice")
 
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = "attachment; filename=observations.csv"
 
-        export_observations_csv(response, product, status)
+        export_observations_csv_for_product(response, product, statuses)
 
         return response
 
@@ -335,6 +339,7 @@ class ProductViewSet(ModelViewSet):
             product=product,
             new_severity=request_serializer.validated_data.get("severity"),
             new_status=request_serializer.validated_data.get("status"),
+            new_priority=request_serializer.validated_data.get("priority"),
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
@@ -544,6 +549,7 @@ class ObservationViewSet(ModelViewSet):
             .select_related("product__product_group")
             .select_related("branch")
             .select_related("parser")
+            .select_related("origin_service")
         )
 
     def perform_destroy(self, instance: Observation) -> None:
@@ -582,19 +588,14 @@ class ObservationViewSet(ModelViewSet):
         ):
             raise ValidationError("Cannot create new assessment while last assessment still needs approval")
 
-        new_severity = request_serializer.validated_data.get("severity")
-        new_status = request_serializer.validated_data.get("status")
-        comment = request_serializer.validated_data.get("comment")
-        new_vex_justification = request_serializer.validated_data.get("vex_justification")
-        new_risk_acceptance_expiry_date = request_serializer.validated_data.get("risk_acceptance_expiry_date")
-
         save_assessment(
             observation=observation,
-            new_severity=new_severity,
-            new_status=new_status,
-            comment=comment,
-            new_vex_justification=new_vex_justification,
-            new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
+            new_severity=request_serializer.validated_data.get("severity"),
+            new_status=request_serializer.validated_data.get("status"),
+            new_priority=request_serializer.validated_data.get("priority"),
+            comment=request_serializer.validated_data.get("comment"),
+            new_vex_justification=request_serializer.validated_data.get("vex_justification"),
+            new_risk_acceptance_expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
         )
         set_potential_duplicate_both_ways(observation)
 
@@ -646,6 +647,7 @@ class ObservationViewSet(ModelViewSet):
             product=None,
             new_severity=request_serializer.validated_data.get("severity"),
             new_status=request_serializer.validated_data.get("status"),
+            new_priority=request_serializer.validated_data.get("priority"),
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
@@ -662,6 +664,47 @@ class ObservationViewSet(ModelViewSet):
     def count_reviews(self, request: Request) -> Response:
         count = get_observations().filter(current_status=Status.STATUS_IN_REVIEW).count()
         return Response(status=HTTP_200_OK, data={"count": count})
+
+    @extend_schema(
+        methods=["GET"],
+        responses={200: None},
+    )
+    @action(detail=False, methods=["get"])
+    def export_excel(self, request: Request) -> HttpResponse:
+        queryset = self._filter_queryset(request)
+        workbook = export_observations_excel(queryset)
+
+        with NamedTemporaryFile() as tmp:
+            workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
+            # export works fine without .flush()
+            tmp.seek(0)
+            stream = tmp.read()
+
+        response = HttpResponse(
+            content=stream,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = "attachment; filename=observations.xlsx"
+        return response
+
+    @extend_schema(
+        methods=["GET"],
+        responses={200: None},
+        parameters=[],
+    )
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request: Request) -> HttpResponse:
+        queryset = self._filter_queryset(request)
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=observations.csv"
+        export_observations_csv(response, queryset)
+        return response
+
+    def _filter_queryset(self, request: Request) -> QuerySet:
+        queryset = self.get_queryset()
+        for backend in self.filter_backends:
+            queryset = backend().filter_queryset(request, queryset, self)
+        return queryset
 
 
 class ObservationTitleViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -949,5 +992,4 @@ def _get_product(product_id: int) -> Product:
     product = get_product_by_id(product_id)
     if not product:
         raise ValidationError(f"Product {product_id} does not exist")
-
     return product

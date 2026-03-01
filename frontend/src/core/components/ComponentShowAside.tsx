@@ -1,7 +1,8 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { Identifier, Labeled, ReferenceField, TextField, WithRecord, useNotify, useRecordContext } from "react-admin";
+import { Identifier, Labeled, TextField, WithRecord, useNotify, useRecordContext } from "react-admin";
 
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import LicenseComponentShowLicense from "../../licenses/license_components/LicenseComponentShowLicense";
 
@@ -62,12 +63,7 @@ const MetaData = () => {
                     </Typography>
                     <Stack spacing={1}>
                         <Labeled label="Product">
-                            <ReferenceField
-                                source="product"
-                                reference="products"
-                                queryOptions={{ meta: { api_resource: "product_names" } }}
-                                sx={{ "& a": { textDecoration: "none" } }}
-                            />
+                            <ProductReferenceField />
                         </Labeled>
                         {component.branch_name && (
                             <Labeled label="Branch">

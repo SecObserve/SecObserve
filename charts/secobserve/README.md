@@ -2,9 +2,9 @@
 
 ## Installing the chart
 
-The chart can be installed as from the OCI repository using `helm install secobserve --version 1.48.0 oci://ghcr.io/SecObserve/charts/secobserve`.
+The chart can be installed as from the OCI repository using `helm install secobserve --version 1.0.19 oci://ghcr.io/SecObserve/charts/secobserve`.
 
-![Version: 1.0.18](https://img.shields.io/badge/Version-1.0.18-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.48.0](https://img.shields.io/badge/AppVersion-1.48.0-informational?style=flat-square)
+![Version: 1.0.19](https://img.shields.io/badge/Version-1.0.19-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.49.0](https://img.shields.io/badge/AppVersion-1.49.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system
 designed for software development teams and cloud-native environments.
@@ -95,7 +95,7 @@ across their software projects, enhancing visibility and improving DevSecOps wor
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | frontend.env[0] | object | `{"name":"API_BASE_URL","value":"https://secobserve.dev/api"}` | Base URL for API |
-| frontend.env[1] | object | `{"name":"OIDC_ENABLED","value":"false"}` | enable OIDC authentication |
+| frontend.env[1] | object | `{"name":"OIDC_ENABLE","value":"false"}` | enable OIDC authentication |
 | frontend.env[2] | object | `{"name":"OIDC_AUTHORITY","value":"https://oidc.secobserve.dev"}` | oidc metadata endpoint |
 | frontend.env[3] | object | `{"name":"OIDC_CLIENT_ID","value":"secobserve"}` | OIDC client ID |
 | frontend.env[4] | object | `{"name":"OIDC_REDIRECT_URI","value":"https://secobserve.dev/"}` | OIDC client redirect URL |
@@ -716,7 +716,7 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
-  "name": "OIDC_ENABLED",
+  "name": "OIDC_ENABLE",
   "value": "false"
 }
 </pre>

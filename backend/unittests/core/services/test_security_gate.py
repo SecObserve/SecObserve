@@ -56,12 +56,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_active=True,
             security_gate_threshold_critical=1,
         )
-        product.open_critical_observation_count = 2
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 2
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -87,12 +87,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_passed=True,
             security_gate_active=False,
         )
-        product.open_critical_observation_count = 2
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 2
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -112,12 +112,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_threshold_critical=3,
             security_gate_threshold_high=1,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 2
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 2
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -144,12 +144,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_passed=True,
             security_gate_active=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 2
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 2
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -170,12 +170,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_threshold_high=3,
             security_gate_threshold_medium=1,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 2
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 2
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -203,12 +203,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_passed=True,
             security_gate_active=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 2
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 2
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -230,12 +230,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_threshold_medium=3,
             security_gate_threshold_low=1,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 2
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 2
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -265,12 +265,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_passed=True,
             security_gate_active=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 2
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 2
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -293,12 +293,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_threshold_low=3,
             security_gate_threshold_none=1,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 2
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 2
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -328,12 +328,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_passed=True,
             security_gate_active=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 2
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 2
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -357,12 +357,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_threshold_none=3,
             security_gate_threshold_unknown=1,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 2
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 2
 
         get_product_mock.return_value = product
 
@@ -393,12 +393,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_passed=True,
             security_gate_active=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 2
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 2
 
         get_product_mock.return_value = product
 
@@ -423,12 +423,12 @@ class TestSecurityGate(BaseTestCase):
             security_gate_threshold_none=3,
             security_gate_threshold_unknown=3,
         )
-        product.open_critical_observation_count = 2
-        product.open_high_observation_count = 2
-        product.open_medium_observation_count = 2
-        product.open_low_observation_count = 2
-        product.open_none_observation_count = 2
-        product.open_unknown_observation_count = 2
+        product.active_critical_observation_count = 2
+        product.active_high_observation_count = 2
+        product.active_medium_observation_count = 2
+        product.active_low_observation_count = 2
+        product.active_none_observation_count = 2
+        product.active_unknown_observation_count = 2
 
         get_product_mock.return_value = product
 
@@ -449,12 +449,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=False,
         )
-        product.open_critical_observation_count = 2
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 2
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -475,12 +475,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 2
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 2
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -502,12 +502,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 2
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 2
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -530,12 +530,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 2
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 2
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -559,12 +559,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 2
-        product.open_unknown_observation_count = 0
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 2
+        product.active_unknown_observation_count = 0
 
         get_product_mock.return_value = product
 
@@ -589,12 +589,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=False,
         )
-        product.open_critical_observation_count = 0
-        product.open_high_observation_count = 0
-        product.open_medium_observation_count = 0
-        product.open_low_observation_count = 0
-        product.open_none_observation_count = 0
-        product.open_unknown_observation_count = 2
+        product.active_critical_observation_count = 0
+        product.active_high_observation_count = 0
+        product.active_medium_observation_count = 0
+        product.active_low_observation_count = 0
+        product.active_none_observation_count = 0
+        product.active_unknown_observation_count = 2
 
         get_product_mock.return_value = product
 
@@ -619,12 +619,12 @@ class TestSecurityGate(BaseTestCase):
             id=999,
             security_gate_passed=True,
         )
-        product.open_critical_observation_count = 2
-        product.open_high_observation_count = 2
-        product.open_medium_observation_count = 2
-        product.open_low_observation_count = 2
-        product.open_none_observation_count = 2
-        product.open_unknown_observation_count = 2
+        product.active_critical_observation_count = 2
+        product.active_high_observation_count = 2
+        product.active_medium_observation_count = 2
+        product.active_low_observation_count = 2
+        product.active_none_observation_count = 2
+        product.active_unknown_observation_count = 2
 
         get_product_mock.return_value = product
 

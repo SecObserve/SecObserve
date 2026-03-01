@@ -19,6 +19,7 @@ def expire_risk_acceptances() -> str:
                 observation=observation,
                 new_severity="",
                 new_status=Status.STATUS_OPEN,
+                new_priority=None,
                 comment="Risk acceptance has expired.",
                 new_vex_justification="",
                 new_risk_acceptance_expiry_date=None,

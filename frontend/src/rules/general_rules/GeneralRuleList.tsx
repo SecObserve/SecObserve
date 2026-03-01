@@ -79,10 +79,11 @@ const GeneralRuleList = () => {
                     bulkActionButtons={is_superuser() && <BulkActionButtons />}
                 >
                     <RuleNameURLField source="name" />
-                    <TextField source="new_severity" />
-                    <TextField source="new_status" />
+                    <ChipField source="type" />
                     {feature_general_rules_need_approval_enabled() && <ChipField source="approval_status" />}
                     <BooleanField source="enabled" />
+                    <TextField source="new_severity" />
+                    <TextField source="new_status" />
                     <ReferenceField
                         source="parser"
                         reference="parsers"

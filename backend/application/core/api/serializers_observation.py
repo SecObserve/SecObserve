@@ -489,6 +489,7 @@ class ObservationAssessmentSerializer(Serializer):
         required=False,
         allow_blank=True,
     )
+    priority = IntegerField(min_value=1, max_value=99, required=False, allow_null=True)
     risk_acceptance_expiry_date = DateField(required=False, allow_null=True)
     comment = CharField(max_length=4096, required=True)
 
@@ -504,6 +505,7 @@ class ObservationBulkDeleteSerializer(Serializer):
 class ObservationBulkAssessmentSerializer(Serializer):
     severity = ChoiceField(choices=Severity.SEVERITY_CHOICES, required=False)
     status = ChoiceField(choices=Status.STATUS_CHOICES, required=False)
+    priority = IntegerField(min_value=1, max_value=99, required=False, allow_null=True)
     comment = CharField(max_length=4096, required=True)
     observations = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
     vex_justification = ChoiceField(

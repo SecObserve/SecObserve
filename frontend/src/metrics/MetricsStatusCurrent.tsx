@@ -6,6 +6,7 @@ import { PolarArea } from "react-chartjs-2";
 
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import {
+    OBSERVATION_STATUS_AFFECTED,
     OBSERVATION_STATUS_DUPLICATE,
     OBSERVATION_STATUS_FALSE_POSITIVE,
     OBSERVATION_STATUS_IN_REVIEW,
@@ -30,10 +31,11 @@ const MetricsStatusCurrent = (props: MetricsStatusCurrentProps) => {
     const chart_data = {
         labels: [
             OBSERVATION_STATUS_OPEN,
+            OBSERVATION_STATUS_AFFECTED,
+            OBSERVATION_STATUS_IN_REVIEW,
             OBSERVATION_STATUS_RESOLVED,
             OBSERVATION_STATUS_DUPLICATE,
             OBSERVATION_STATUS_FALSE_POSITIVE,
-            OBSERVATION_STATUS_IN_REVIEW,
             OBSERVATION_STATUS_NOT_AFFECTED,
             OBSERVATION_STATUS_NOT_SECURITY,
             OBSERVATION_STATUS_RISK_ACCEPTED,
@@ -43,14 +45,15 @@ const MetricsStatusCurrent = (props: MetricsStatusCurrentProps) => {
                 label: "Status of observations",
                 data: data,
                 backgroundColor: [
-                    "#1f2c33",
-                    "#3d5766",
-                    "#79adcc",
-                    "#bcb7b6",
-                    "#ffc09f",
-                    "#ffd799",
-                    "#ffee93",
-                    "#fcf5c7",
+                    "#642915",
+                    "#963e20",
+                    "#c7522a",
+                    "#e5c185",
+                    "#fbf2c4",
+                    "#74a892",
+                    "#008585",
+                    "#006464",
+                    "#004343",
                 ],
             },
         ],
@@ -74,10 +77,11 @@ const MetricsStatusCurrent = (props: MetricsStatusCurrentProps) => {
             .then((result) => {
                 const new_data = [
                     result.json.open,
+                    result.json.affected,
+                    result.json.in_review,
                     result.json.resolved,
                     result.json.duplicate,
                     result.json.false_positive,
-                    result.json.in_review,
                     result.json.not_affected,
                     result.json.not_security,
                     result.json.risk_accepted,

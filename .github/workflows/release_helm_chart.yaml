@@ -1,6 +1,7 @@
 name: Publish released chart
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -27,10 +28,12 @@ jobs:
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor}}@users.noreply.github.com"
 
+      - name: downcase repo owner for image
+        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
       - name: Run chart-releaser
         uses: bitdeps/helm-oci-charts-releaser@caedceea2a5ab997c7e5469a999811dbb3d5b070 # v0.1.5
         with:
-          oci_registry: ghcr.io/${{ github.repository_owner }}/charts
+          oci_registry: ghcr.io/${{ env.REPO_OWNER }}/charts
           oci_username: ${{ github.actor}}
           oci_password: ${{ secrets.GITHUB_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}

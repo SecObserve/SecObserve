@@ -15,3 +15,13 @@ class Rule_Status:
         (RULE_STATUS_APPROVED, RULE_STATUS_APPROVED),
         (RULE_STATUS_REJECTED, RULE_STATUS_REJECTED),
     ]
+
+
+class Rule_Type:
+    RULE_TYPE_FIELDS = "Fields"
+    RULE_TYPE_REGO = "Rego"
+
+    RULE_TYPE_CHOICES = [
+        (RULE_TYPE_FIELDS, RULE_TYPE_FIELDS),
+        (RULE_TYPE_REGO, RULE_TYPE_REGO),
+    ]

@@ -1,3 +1,4 @@
+import platform
 from typing import Optional
 
 from rest_framework.serializers import (
@@ -16,7 +17,7 @@ from application.core.api.serializers_observation import ObservationListSerializ
 from application.core.api.serializers_product import NestedProductSerializer
 from application.core.models import Product
 from application.rules.models import Rule
-from application.rules.types import Rule_Status
+from application.rules.types import Rule_Status, Rule_Type
 
 
 class GeneralRuleSerializer(ModelSerializer):
@@ -50,9 +51,22 @@ class GeneralRuleSerializer(ModelSerializer):
 
         return value
 
+    def validate_type(self, value: str) -> str:
+        if value == Rule_Type.RULE_TYPE_REGO and platform.machine() not in ["x86_64", "AMD64"]:
+            raise ValidationError("Rego rules are only supported on 'x86_64' or 'AMD64' architectures")
+
+        return value
+
     def validate(self, attrs: dict) -> dict:
-        if not attrs.get("parser") and not attrs.get("scanner_prefix"):
+        if (
+            attrs.get("type") == Rule_Type.RULE_TYPE_FIELDS
+            and not attrs.get("parser")
+            and not attrs.get("scanner_prefix")
+        ):
             raise ValidationError("Either Parser or Scanner Prefix must be set")
+
+        if attrs.get("type") == Rule_Type.RULE_TYPE_REGO and not attrs.get("rego_module"):
+            raise ValidationError("Rego module must be set")
 
         return super().validate(attrs)
 
@@ -101,8 +115,15 @@ class ProductRuleSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs: dict) -> dict:
-        if not attrs.get("parser") and not attrs.get("scanner_prefix"):
+        if (
+            attrs.get("type") == Rule_Type.RULE_TYPE_FIELDS
+            and not attrs.get("parser")
+            and not attrs.get("scanner_prefix")
+        ):
             raise ValidationError("Either Parser or Scanner Prefix must be set")
+
+        if attrs.get("type") == Rule_Type.RULE_TYPE_REGO and not attrs.get("rego_module"):
+            raise ValidationError("Rego module must be set")
 
         return super().validate(attrs)
 

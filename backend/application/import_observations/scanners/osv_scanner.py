@@ -232,12 +232,6 @@ def _do_scan(
         slice_actual += 1
 
     if len(osv_components) != len(results):
-
-        print("---------------------------------------")
-        print(osv_components)
-        print(results)
-        print("---------------------------------------")
-
         raise OSVException(  # pylint: disable=broad-exception-raised
             "Number of results is different than number of components"
         )

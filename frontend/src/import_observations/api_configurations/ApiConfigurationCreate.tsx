@@ -13,6 +13,8 @@ import {
 import { useWatch } from "react-hook-form";
 
 import AddButton from "../../commons/custom_fields/AddButton";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import {
     validate_255,
@@ -158,26 +160,8 @@ const ApiConfigurationCreate = ({ id }: ApiConfigurationCreateProps) => {
         if (automatic_import_enabled) {
             return (
                 <Fragment>
-                    <ReferenceInput
-                        source="automatic_import_branch"
-                        reference="branches"
-                        queryOptions={{ meta: { api_resource: "branch_names" } }}
-                        sort={{ field: "name", order: "ASC" }}
-                        filter={{ product: id }}
-                        alwaysOn
-                    >
-                        <AutocompleteInputWide optionText="name" label="Branch / Version" />
-                    </ReferenceInput>
-                    <ReferenceInput
-                        source="automatic_import_service"
-                        reference="services"
-                        queryOptions={{ meta: { api_resource: "service_names" } }}
-                        sort={{ field: "name", order: "ASC" }}
-                        filter={{ product: id }}
-                        alwaysOn
-                    >
-                        <AutocompleteInputWide optionText="name" label="Service" />
-                    </ReferenceInput>
+                    <BranchReferenceInput source="automatic_import_branch" product={id} />
+                    <ServiceReferenceInput source="automatic_import_service" product={id} alwaysOn />
                     <TextInputWide
                         source="automatic_import_docker_image_name_tag"
                         label="Docker image name:tag"

@@ -60,7 +60,7 @@ const ProductGroupEmbeddedList = ({ license_policy }: ProductGroupEmbeddedListPr
                     >
                         <TextField source="name" />
                         <TextField source="products_count" label="Products" />
-                        <ObservationsCountField label="Open observations" withLabel={false} />
+                        <ObservationsCountField label="Active observations" withLabel={false} />
                         {feature_license_management() && (
                             <LicensesCountField label="Licenses / Components" withLabel={false} />
                         )}

@@ -85,14 +85,15 @@ const ProductRuleEmbeddedList = ({ product }: ProductRuleEmbeddedListProps) => {
                         resource="product_rules"
                     >
                         <RuleNameURLField source="name" />
-                        <TextField source="new_severity" />
-                        <TextField source="new_status" />
+                        <ChipField source="type" />
                         {product &&
                             (product.product_rules_need_approval ||
                                 product.product_group_product_rules_need_approval) && (
                                 <ChipField source="approval_status" />
                             )}
                         <BooleanField source="enabled" />
+                        <TextField source="new_severity" />
+                        <TextField source="new_status" />
                         <ReferenceField
                             source="parser"
                             reference="parsers"

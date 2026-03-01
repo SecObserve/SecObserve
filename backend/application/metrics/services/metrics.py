@@ -16,10 +16,8 @@ from application.metrics.services.age import get_days
 def calculate_product_metrics() -> str:
 
     num_products = 0
-
     for product in Product.objects.filter(is_product_group=False):
-        if calculate_metrics_for_product(product):
-            num_products += 1
+        num_products += bool(calculate_metrics_for_product(product))
 
     product_metrics_status = Product_Metrics_Status.load()
     product_metrics_status.last_calculated = timezone.now()
@@ -49,13 +47,14 @@ def calculate_metrics_for_product(  # pylint: disable=too-many-branches
             Product_Metrics.objects.create(
                 product=product,
                 date=iteration_date,
-                open_critical=latest_product_metrics.open_critical,
-                open_high=latest_product_metrics.open_high,
-                open_medium=latest_product_metrics.open_medium,
-                open_low=latest_product_metrics.open_low,
-                open_none=latest_product_metrics.open_none,
-                open_unknown=latest_product_metrics.open_unknown,
+                active_critical=latest_product_metrics.active_critical,
+                active_high=latest_product_metrics.active_high,
+                active_medium=latest_product_metrics.active_medium,
+                active_low=latest_product_metrics.active_low,
+                active_none=latest_product_metrics.active_none,
+                active_unknown=latest_product_metrics.active_unknown,
                 open=latest_product_metrics.open,
+                affected=latest_product_metrics.affected,
                 resolved=latest_product_metrics.resolved,
                 duplicate=latest_product_metrics.duplicate,
                 false_positive=latest_product_metrics.false_positive,
@@ -73,13 +72,14 @@ def calculate_metrics_for_product(  # pylint: disable=too-many-branches
             product=product,
             date=today,
             defaults={
-                "open_critical": 0,
-                "open_high": 0,
-                "open_medium": 0,
-                "open_low": 0,
-                "open_none": 0,
-                "open_unknown": 0,
+                "active_critical": 0,
+                "active_high": 0,
+                "active_medium": 0,
+                "active_low": 0,
+                "active_none": 0,
+                "active_unknown": 0,
                 "open": 0,
+                "affected": 0,
                 "resolved": 0,
                 "duplicate": 0,
                 "false_positive": 0,
@@ -96,20 +96,23 @@ def calculate_metrics_for_product(  # pylint: disable=too-many-branches
         ).values("current_severity", "current_status")
 
         for observation in observations:
+            if observation.get("current_status") in Status.STATUS_ACTIVE:
+                if observation.get("current_severity") == Severity.SEVERITY_CRITICAL:
+                    todays_product_metrics.active_critical += 1
+                elif observation.get("current_severity") == Severity.SEVERITY_HIGH:
+                    todays_product_metrics.active_high += 1
+                elif observation.get("current_severity") == Severity.SEVERITY_MEDIUM:
+                    todays_product_metrics.active_medium += 1
+                elif observation.get("current_severity") == Severity.SEVERITY_LOW:
+                    todays_product_metrics.active_low += 1
+                elif observation.get("current_severity") == Severity.SEVERITY_NONE:
+                    todays_product_metrics.active_none += 1
+                elif observation.get("current_severity") == Severity.SEVERITY_UNKNOWN:
+                    todays_product_metrics.active_unknown += 1
             if observation.get("current_status") == Status.STATUS_OPEN:
                 todays_product_metrics.open += 1
-                if observation.get("current_severity") == Severity.SEVERITY_CRITICAL:
-                    todays_product_metrics.open_critical += 1
-                elif observation.get("current_severity") == Severity.SEVERITY_HIGH:
-                    todays_product_metrics.open_high += 1
-                elif observation.get("current_severity") == Severity.SEVERITY_MEDIUM:
-                    todays_product_metrics.open_medium += 1
-                elif observation.get("current_severity") == Severity.SEVERITY_LOW:
-                    todays_product_metrics.open_low += 1
-                elif observation.get("current_severity") == Severity.SEVERITY_NONE:
-                    todays_product_metrics.open_none += 1
-                elif observation.get("current_severity") == Severity.SEVERITY_UNKNOWN:
-                    todays_product_metrics.open_unknown += 1
+            elif observation.get("current_status") == Status.STATUS_AFFECTED:
+                todays_product_metrics.affected += 1
             elif observation.get("current_status") == Status.STATUS_RESOLVED:
                 todays_product_metrics.resolved += 1
             elif observation.get("current_status") == Status.STATUS_DUPLICATE:
@@ -157,13 +160,16 @@ def get_product_metrics_timeline(product: Optional[Product], age: str) -> dict:
     for product_metric in product_metrics:
         if not product or product.is_product_group:
             response_metric = response_data.get(product_metric.date.isoformat(), {})
-            response_metric["open_critical"] = response_metric.get("open_critical", 0) + product_metric.open_critical
-            response_metric["open_high"] = response_metric.get("open_high", 0) + product_metric.open_high
-            response_metric["open_medium"] = response_metric.get("open_medium", 0) + product_metric.open_medium
-            response_metric["open_low"] = response_metric.get("open_low", 0) + product_metric.open_low
-            response_metric["open_none"] = response_metric.get("open_none", 0) + product_metric.open_none
-            response_metric["open_unknown"] = response_metric.get("open_unknown", 0) + product_metric.open_unknown
+            response_metric["active_critical"] = (
+                response_metric.get("active_critical", 0) + product_metric.active_critical
+            )
+            response_metric["active_high"] = response_metric.get("active_high", 0) + product_metric.active_high
+            response_metric["active_medium"] = response_metric.get("active_medium", 0) + product_metric.active_medium
+            response_metric["active_low"] = response_metric.get("active_low", 0) + product_metric.active_low
+            response_metric["active_none"] = response_metric.get("active_none", 0) + product_metric.active_none
+            response_metric["active_unknown"] = response_metric.get("active_unknown", 0) + product_metric.active_unknown
             response_metric["open"] = response_metric.get("open", 0) + product_metric.open
+            response_metric["affected"] = response_metric.get("affected", 0) + product_metric.affected
             response_metric["resolved"] = response_metric.get("resolved", 0) + product_metric.resolved
             response_metric["duplicate"] = response_metric.get("duplicate", 0) + product_metric.duplicate
             response_metric["false_positive"] = response_metric.get("false_positive", 0) + product_metric.false_positive
@@ -174,13 +180,14 @@ def get_product_metrics_timeline(product: Optional[Product], age: str) -> dict:
             response_data[product_metric.date.isoformat()] = response_metric
         else:
             response_metric = {}
-            response_metric["open_critical"] = product_metric.open_critical
-            response_metric["open_high"] = product_metric.open_high
-            response_metric["open_medium"] = product_metric.open_medium
-            response_metric["open_low"] = product_metric.open_low
-            response_metric["open_none"] = product_metric.open_none
-            response_metric["open_unknown"] = product_metric.open_unknown
+            response_metric["active_critical"] = product_metric.active_critical
+            response_metric["active_high"] = product_metric.active_high
+            response_metric["active_medium"] = product_metric.active_medium
+            response_metric["active_low"] = product_metric.active_low
+            response_metric["active_none"] = product_metric.active_none
+            response_metric["active_unknown"] = product_metric.active_unknown
             response_metric["open"] = product_metric.open
+            response_metric["affected"] = product_metric.affected
             response_metric["resolved"] = product_metric.resolved
             response_metric["duplicate"] = product_metric.duplicate
             response_metric["false_positive"] = product_metric.false_positive
@@ -203,13 +210,14 @@ def get_product_metrics_current(product: Optional[Product]) -> dict:
     response_data: dict = _initialize_response_data()
     if len(product_metrics) > 0:
         for product_metric in product_metrics:
-            response_data["open_critical"] += product_metric.open_critical
-            response_data["open_high"] += product_metric.open_high
-            response_data["open_medium"] += product_metric.open_medium
-            response_data["open_low"] += product_metric.open_low
-            response_data["open_none"] += product_metric.open_none
-            response_data["open_unknown"] += product_metric.open_unknown
+            response_data["active_critical"] += product_metric.active_critical
+            response_data["active_high"] += product_metric.active_high
+            response_data["active_medium"] += product_metric.active_medium
+            response_data["active_low"] += product_metric.active_low
+            response_data["active_none"] += product_metric.active_none
+            response_data["active_unknown"] += product_metric.active_unknown
             response_data["open"] += product_metric.open
+            response_data["affected"] += product_metric.affected
             response_data["resolved"] += product_metric.resolved
             response_data["duplicate"] += product_metric.duplicate
             response_data["false_positive"] += product_metric.false_positive
@@ -223,13 +231,14 @@ def get_product_metrics_current(product: Optional[Product]) -> dict:
 
 def _initialize_response_data() -> dict:
     response_data: dict = {}
-    response_data["open_critical"] = 0
-    response_data["open_high"] = 0
-    response_data["open_medium"] = 0
-    response_data["open_low"] = 0
-    response_data["open_none"] = 0
-    response_data["open_unknown"] = 0
+    response_data["active_critical"] = 0
+    response_data["active_high"] = 0
+    response_data["active_medium"] = 0
+    response_data["active_low"] = 0
+    response_data["active_none"] = 0
+    response_data["active_unknown"] = 0
     response_data["open"] = 0
+    response_data["affected"] = 0
     response_data["resolved"] = 0
     response_data["duplicate"] = 0
     response_data["false_positive"] = 0
@@ -245,7 +254,7 @@ def get_codecharta_metrics(product: Product) -> list[dict]:
     observations = Observation.objects.filter(
         product=product,
         branch=product.repository_default_branch,
-        current_status=Status.STATUS_OPEN,
+        current_status__in=Status.STATUS_ACTIVE,
     )
     for observation in observations:
         if observation.origin_source_file:

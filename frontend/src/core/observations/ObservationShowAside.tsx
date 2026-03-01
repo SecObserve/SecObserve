@@ -13,6 +13,7 @@ import {
 } from "react-admin";
 import { Link } from "react-router-dom";
 
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
 import { useLinkStyles } from "../../commons/layout/themes";
@@ -37,13 +38,7 @@ const MetaData = () => {
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
                             Metadata
                         </Typography>
-                        <ReferenceField
-                            source="product"
-                            reference="products"
-                            queryOptions={{ meta: { api_resource: "product_names" } }}
-                            link="show"
-                            sx={{ "& a": { textDecoration: "none" } }}
-                        />
+                        <ProductReferenceField label="Product" />
                         {observation.branch && <TextField label="Branch / Version" source="branch_name" />}
                         {observation.scanner != "" && <TextField source="scanner" />}
                         <TextField source="parser_data.name" label="Parser name" />
@@ -58,7 +53,16 @@ const MetaData = () => {
                             <ReferenceField
                                 source="general_rule"
                                 reference="general_rules"
-                                label="General rule name"
+                                label="General fields rule name"
+                                link="show"
+                                sx={{ "& a": { textDecoration: "none" } }}
+                            />
+                        )}
+                        {observation.general_rule_rego != null && (
+                            <ReferenceField
+                                source="general_rule_rego"
+                                reference="general_rules"
+                                label="General rego rule name"
                                 link="show"
                                 sx={{ "& a": { textDecoration: "none" } }}
                             />
@@ -67,7 +71,16 @@ const MetaData = () => {
                             <ReferenceField
                                 source="product_rule"
                                 reference="product_rules"
-                                label="Product rule name"
+                                label="Product fields rule name"
+                                link="show"
+                                sx={{ "& a": { textDecoration: "none" } }}
+                            />
+                        )}
+                        {observation.product_rule_rego != null && (
+                            <ReferenceField
+                                source="product_rule_rego"
+                                reference="product_rules"
+                                label="Product rego rule name"
                                 link="show"
                                 sx={{ "& a": { textDecoration: "none" } }}
                             />

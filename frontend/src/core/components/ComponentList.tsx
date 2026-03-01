@@ -5,7 +5,6 @@ import {
     Datagrid,
     List,
     NullableBooleanInput,
-    ReferenceInput,
     TextField,
     TextInput,
     WithListContext,
@@ -13,53 +12,21 @@ import {
 
 import components from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
     <TextInput source="component_name_version" label="Component" alwaysOn />,
     <AutocompleteInput source="component_purl_type" label="Component type" choices={PURL_TYPE_CHOICES} alwaysOn />,
-    <ReferenceInput
-        source="product"
-        reference="products"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "product_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
-    <ReferenceInput
-        source="product_group"
-        reference="product_groups"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "product_group_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
-    <ReferenceInput
-        source="branch"
-        reference="branches"
-        sort={{ field: "name", order: "ASC" }}
-        queryOptions={{ meta: { api_resource: "branch_names" } }}
-        alwaysOn
-    >
-        <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
-    </ReferenceInput>,
-    <ReferenceInput
-        label="Service"
-        source="origin_service"
-        queryOptions={{ meta: { api_resource: "service_names" } }}
-        reference="services"
-        sort={{ field: "name", order: "ASC" }}
-        alwaysOn
-    >
-        <AutocompleteInputWide label="Service" optionText="name_with_product" />
-        <NullableBooleanInput source="has_observations" label="Open observations" alwaysOn />
-    </ReferenceInput>,
+    <ProductReferenceInput alwaysOn />,
+    <ProductGroupReferenceInput alwaysOn />,
+    <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+    <TextInput source="origin_service_name" label="Service" alwaysOn />,
+    <NullableBooleanInput source="has_observations" label="Active observations" alwaysOn />,
 ];
 
 const ComponentList = () => {
@@ -89,7 +56,7 @@ const ComponentList = () => {
                             {has_attribute("origin_service_name", data, sort) && (
                                 <TextField source="origin_service_name" label="Service" />
                             )}
-                            <BooleanField source="has_observations" label="Open observations" />
+                            <BooleanField source="has_observations" label="Active observations" />
                         </Datagrid>
                     )}
                 />

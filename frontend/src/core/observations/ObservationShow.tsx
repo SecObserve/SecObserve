@@ -24,7 +24,7 @@ import VulnerabilityIdField from "../../commons/custom_fields/VulnerabilityIdFie
 import { get_cvss3_url, get_cvss4_url, get_cwe_url } from "../../commons/functions";
 import AssessmentApproval from "../observation_logs/AssessmentApproval";
 import ObservationLogEmbeddedList from "../observation_logs/ObservationLogEmbeddedList";
-import { OBSERVATION_STATUS_IN_REVIEW, OBSERVATION_STATUS_OPEN } from "../types";
+import { OBSERVATION_STATUS_ACTIVE, OBSERVATION_STATUS_IN_REVIEW } from "../types";
 import ObservationAssessment from "./ObservationAssessment";
 import ObservationRemoveAssessment from "./ObservationRemoveAssessment";
 import ObservationsShowAside from "./ObservationShowAside";
@@ -48,7 +48,7 @@ const ShowActions = () => {
 
     if (localStorage.getItem(IDENTIFIER_OBSERVATION_LIST) === "true") {
         filter = {};
-        filterDefaultValues = { current_status: OBSERVATION_STATUS_OPEN };
+        filterDefaultValues = { current_status: OBSERVATION_STATUS_ACTIVE };
         storeKey = "observations.list";
     } else if (observation && localStorage.getItem(IDENTIFIER_OBSERVATION_EMBEDDED_LIST) === "true") {
         filter = { product: observation.product };
@@ -56,7 +56,7 @@ const ShowActions = () => {
     } else if (localStorage.getItem(IDENTIFIER_OBSERVATION_DASHBOARD_LIST) === "true") {
         filter = {
             age: "Past 7 days",
-            current_status: OBSERVATION_STATUS_OPEN,
+            current_status: OBSERVATION_STATUS_ACTIVE,
         };
         storeKey = "observations.dashboard";
     } else if (observation && localStorage.getItem(IDENTIFIER_OBSERVATION_REVIEW_LIST_PRODUCT) === "true") {
@@ -72,7 +72,7 @@ const ShowActions = () => {
             origin_service: observation.origin_service,
             origin_component_name_version: observation.origin_component_name_version,
             origin_component_purl_type: observation.origin_component_purl_type,
-            current_status: OBSERVATION_STATUS_OPEN,
+            current_status: OBSERVATION_STATUS_ACTIVE,
         };
         storeKey = "observations.component";
     }

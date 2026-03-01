@@ -4,6 +4,7 @@ import { BooleanField, Labeled, NumberField, ReferenceField, TextField, WithReco
 
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import OSVLinuxDistributionField from "../../commons/custom_fields/OSVLinuxDistributionField";
+import { ProductGroupReferenceField } from "../../commons/custom_fields/ProductGroupReferenceField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_email } from "../../commons/functions";
 import { Product } from "../types";
@@ -29,15 +30,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                 )}
                 {product.product_group && (
                     <Labeled label="Product group">
-                        <ReferenceField
-                            source="product_group"
-                            reference="product_groups"
-                            queryOptions={{ meta: { api_resource: "product_group_names" } }}
-                            link="show"
-                            sx={{ "& a": { textDecoration: "none" } }}
-                        >
-                            <TextField source="name" />
-                        </ReferenceField>
+                        <ProductGroupReferenceField />
                     </Labeled>
                 )}
                 {product.purl && (

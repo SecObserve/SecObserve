@@ -2,6 +2,11 @@
 # @section -- Pod
 replicaCount: 1
 
+# -- securityContext to use for the pod
+# @section -- Pod
+securityContext:
+  enabled: false
+
 # @section -- Frontend
 frontend:
   image:
@@ -37,9 +42,9 @@ frontend:
 
     # -- enable OIDC authentication
     # @section -- Frontend
-    - { name: OIDC_ENABLED, value: "false" }
+    - { name: OIDC_ENABLE, value: "false" }
 
-    # -- oidc metadata endpoint
+    # -- oidc issuer
     # @section -- Frontend
     - { name: OIDC_AUTHORITY, value: https://oidc.secobserve.dev }
 
@@ -369,6 +374,7 @@ dbchecker:
   # -- SecurityContext for the dbchecker container
   # @section -- dbchecker
   securityContext:
+    enabled: true
     allowPrivilegeEscalation: false
     runAsUser: 1001
     runAsGroup: 1001

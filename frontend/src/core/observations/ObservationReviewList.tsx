@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import {
+    AutocompleteArrayInput,
     AutocompleteInput,
     BooleanField,
     ChipField,
@@ -9,7 +10,6 @@ import {
     ListContextProvider,
     NullableBooleanInput,
     NumberField,
-    ReferenceInput,
     ResourceContextProvider,
     TextField,
     TextInput,
@@ -18,10 +18,14 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
@@ -42,67 +46,27 @@ import {
 function listFilters(product: Product) {
     const filters = [];
     if (product?.has_branches) {
-        filters.push(
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" label="Branch / Version" />
-            </ReferenceInput>
-        );
+        filters.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
     }
     filters.push(
         <TextInput source="title" alwaysOn />,
-        <AutocompleteInput source="current_severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />
+        <AutocompleteArrayInput
+            source="current_severity"
+            label="Severity"
+            choices={OBSERVATION_SEVERITY_CHOICES}
+            alwaysOn
+        />
     );
     if (!product) {
         filters.push(
-            <ReferenceInput
-                source="product"
-                reference="products"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "product_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" />
-            </ReferenceInput>,
-            <ReferenceInput
-                source="product_group"
-                reference="product_groups"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "product_group_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium optionText="name" />
-            </ReferenceInput>,
-            <ReferenceInput
-                source="branch"
-                reference="branches"
-                sort={{ field: "name", order: "ASC" }}
-                queryOptions={{ meta: { api_resource: "branch_names" } }}
-                alwaysOn
-            >
-                <AutocompleteInputWide optionText="name_with_product" label="Branch / Version" />
-            </ReferenceInput>
+            <ProductReferenceInput alwaysOn />,
+            <ProductGroupReferenceInput alwaysOn />,
+            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+            <TextInput source="origin_service_name" label="Service" alwaysOn />
         );
     }
     if (product?.has_services) {
-        filters.push(
-            <ReferenceInput
-                source="origin_service"
-                reference="services"
-                queryOptions={{ meta: { api_resource: "service_names" } }}
-                sort={{ field: "name", order: "ASC" }}
-                filter={{ product: product.id }}
-                alwaysOn
-            >
-                <AutocompleteInputMedium label="Service" optionText="name" />
-            </ReferenceInput>
-        );
+        filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
     }
 
     if (!product || product?.has_component) {
@@ -218,6 +182,9 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                 <TextField source="title" />
                                 <SeverityField label="Severity" source="current_severity" />
                                 <ChipField source="current_status" label="Status" />
+                                {has_attribute("current_priority", data, sort) && (
+                                    <ChipField source="current_priority" label="Priority" />
+                                )}
                                 {has_attribute("epss_score", data, sort) && (
                                     <NumberField source="epss_score" label="EPSS" />
                                 )}

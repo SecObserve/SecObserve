@@ -23,7 +23,7 @@ def get_vulnerability_ecosystem(vulnerability_name: str) -> str:
 
 
 def map_status(secobserve_status: str) -> Optional[str]:
-    if secobserve_status in (Status.STATUS_OPEN, Status.STATUS_RISK_ACCEPTED):
+    if secobserve_status in (Status.STATUS_OPEN, Status.STATUS_AFFECTED, Status.STATUS_RISK_ACCEPTED):
         return CSAF_Status.CSAF_STATUS_AFFECTED
 
     if secobserve_status == Status.STATUS_RESOLVED:

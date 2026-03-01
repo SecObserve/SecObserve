@@ -44,7 +44,7 @@ const ObservationsCountField = (props: ObservationsProps) => {
                     padding: 8,
                 }}
             >
-                {record.open_critical_observation_count}
+                {record.active_critical_observation_count}
             </span>
             <span
                 style={{
@@ -53,7 +53,7 @@ const ObservationsCountField = (props: ObservationsProps) => {
                     padding: 8,
                 }}
             >
-                {record.open_high_observation_count}
+                {record.active_high_observation_count}
             </span>
             <span
                 style={{
@@ -62,7 +62,7 @@ const ObservationsCountField = (props: ObservationsProps) => {
                     padding: 8,
                 }}
             >
-                {record.open_medium_observation_count}
+                {record.active_medium_observation_count}
             </span>
             <span
                 style={{
@@ -71,7 +71,7 @@ const ObservationsCountField = (props: ObservationsProps) => {
                     padding: 8,
                 }}
             >
-                {record.open_low_observation_count}
+                {record.active_low_observation_count}
             </span>
             <span
                 style={{
@@ -80,7 +80,7 @@ const ObservationsCountField = (props: ObservationsProps) => {
                     padding: 8,
                 }}
             >
-                {record.open_none_observation_count}
+                {record.active_none_observation_count}
             </span>
             <span
                 style={{
@@ -89,7 +89,7 @@ const ObservationsCountField = (props: ObservationsProps) => {
                     padding: 8,
                 }}
             >
-                {record.open_unknown_observation_count}
+                {record.active_unknown_observation_count}
             </span>
         </div>
     ) : null;

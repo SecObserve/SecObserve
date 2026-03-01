@@ -5,7 +5,6 @@ import {
     DateInput,
     FormDataConsumer,
     NumberInput,
-    ReferenceInput,
     SimpleForm,
     TextInput,
     useCreate,
@@ -14,7 +13,10 @@ import {
 } from "react-admin";
 
 import AddButton from "../../commons/custom_fields/AddButton";
+import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
+import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import {
@@ -170,23 +172,8 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                                 Product
                             </Typography>
                             <Stack>
-                                <ReferenceInput
-                                    source="product"
-                                    reference="products"
-                                    queryOptions={{ meta: { api_resource: "product_names" } }}
-                                    sort={{ field: "name", order: "ASC" }}
-                                >
-                                    <AutocompleteInputWide optionText="name" defaultValue={id} disabled={true} />
-                                </ReferenceInput>
-                                <ReferenceInput
-                                    source="branch"
-                                    reference="branches"
-                                    queryOptions={{ meta: { api_resource: "branch_names" } }}
-                                    sort={{ field: "name", order: "ASC" }}
-                                    filter={{ product: id }}
-                                >
-                                    <AutocompleteInputWide optionText="name" label="Branch / Version" />
-                                </ReferenceInput>
+                                <ProductReferenceInput defaultValue={id} disabled={true} />
+                                <BranchReferenceInput source="branch" product={id} />
                             </Stack>
 
                             <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
@@ -256,15 +243,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                                 Origins
                             </Typography>
                             <Stack>
-                                <ReferenceInput
-                                    source="origin_service"
-                                    reference="services"
-                                    queryOptions={{ meta: { api_resource: "service_names" } }}
-                                    sort={{ field: "name", order: "ASC" }}
-                                    filter={{ product: id }}
-                                >
-                                    <AutocompleteInputWide optionText="name" label="Service" />
-                                </ReferenceInput>
+                                <ServiceReferenceInput source="origin_service" product={id} />
                                 <Stack direction="row" spacing={2}>
                                     <TextInputWide
                                         source="origin_component_name"
