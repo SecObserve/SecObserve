@@ -8,7 +8,7 @@ on:
         description: 'SecObserve release (without the v)'
         required: true
 
-permissions: read-all
+permissions: {}
 
 jobs:
   generate_sboms:
@@ -23,6 +23,7 @@ jobs:
         name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           ref: 'v${{ github.event.inputs.release }}'
       - 
         name: Install programs

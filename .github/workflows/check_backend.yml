@@ -2,16 +2,20 @@ name: Check backend
 
 on: [push, pull_request]
 
-permissions: read-all
+permissions: {}
 
 env:
   POETRY_NO_INTERACTION: 1
 
 jobs:
   code_quality:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -55,9 +59,13 @@ jobs:
           lint-imports --no-cache
 
   unittests:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: Unittests
         run: |
           docker build -f docker/backend/unittests/django/Dockerfile -t secobserve_backend_unittests:latest .
@@ -74,6 +82,8 @@ jobs:
           retention-days: 1
 
   check_code_sonarqube_backend:
+    permissions:
+      contents: read
     if: github.repository == 'SecObserve/SecObserve' && (github.ref == 'refs/heads/dev' || github.event_name == 'pull_request')
     needs: [unittests]
     runs-on: ubuntu-latest
@@ -81,6 +91,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0  
       - name: Download a single artifact
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
