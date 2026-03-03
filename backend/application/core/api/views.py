@@ -233,7 +233,6 @@ class ProductViewSet(ModelViewSet):
                 raise ValidationError(f"Status {status} is not a valid choice")
 
         workbook = export_observations_excel_for_product(product, statuses)
-
         with NamedTemporaryFile() as tmp:
             workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
             # export works fine without .flush()
@@ -276,7 +275,6 @@ class ProductViewSet(ModelViewSet):
         product = self.__get_product(pk)
 
         workbook = export_license_components_excel(product)
-
         with NamedTemporaryFile() as tmp:
             workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
             # export works fine without .flush()
@@ -740,6 +738,7 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             .select_related("observation__product")
             .select_related("observation__branch")
             .select_related("observation__parser")
+            .select_related("observation__origin_service")
             .select_related("user")
         )
 
@@ -813,7 +812,6 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             id__in=request_serializer.validated_data.get("observation_logs"),
             user=get_current_user(),
         ).delete()
-
         if result[0] == 0:
             raise ValidationError("No assessments were deleted. You can only delete your own assessments.")
 
@@ -826,7 +824,7 @@ class EvidenceViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     queryset = Evidence.objects.none()
 
     def get_queryset(self) -> QuerySet[Evidence]:
-        return get_evidences().select_related("observation__product")
+        return get_evidences().select_related("observation").select_related("observation__product")
 
 
 class PotentialDuplicateViewSet(GenericViewSet, ListModelMixin):
@@ -835,7 +833,14 @@ class PotentialDuplicateViewSet(GenericViewSet, ListModelMixin):
     queryset = Potential_Duplicate.objects.none()
 
     def get_queryset(self) -> QuerySet[Potential_Duplicate]:
-        return get_potential_duplicates()
+        return (
+            get_potential_duplicates()
+            .select_related("observation")
+            .select_related("observation__product")
+            .select_related("observation__branch")
+            .select_related("observation__parser")
+            .select_related("observation__origin_service")
+        )
 
 
 class PURLTypeOneView(APIView):
@@ -899,7 +904,6 @@ class ProductApiTokenViewset(ViewSet):
             raise ValidationError("Product is required")
         if not product_id.isdigit():
             raise ValidationError("Product id must be an integer")
-
         product = _get_product(int(str(product_id)))
         user_has_permission_or_403(product, Permissions.Product_View)
         tokens = get_product_api_tokens(product)

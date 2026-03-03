@@ -15,7 +15,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
-import { OBSERVATION_STATUS_OPEN, Observation } from "../types";
+import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
 import ObservationBulkDuplicatesButton from "./ObservationBulkDuplicatesButton";
 
 const ShowObservations = (id: any, resource: any, record: any) => {
@@ -36,7 +36,7 @@ const BulkActionButtons = (observation: any) => (
 
 const PotentialDuplicatesList = ({ observation }: PotentialDuplicatesListProps) => {
     const listContext = useListController({
-        filter: { observation: Number(observation.id), status: OBSERVATION_STATUS_OPEN },
+        filter: { observation: Number(observation.id), status: OBSERVATION_STATUS_ACTIVE },
         perPage: 25,
         resource: "potential_duplicates",
         sort: { field: "potential_duplicate_observation.current_severity", order: "ASC" },
