@@ -740,6 +740,7 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             .select_related("observation__product")
             .select_related("observation__branch")
             .select_related("observation__parser")
+            .select_related("observation__origin_service")
             .select_related("user")
         )
 
@@ -826,7 +827,7 @@ class EvidenceViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     queryset = Evidence.objects.none()
 
     def get_queryset(self) -> QuerySet[Evidence]:
-        return get_evidences().select_related("observation__product")
+        return get_evidences().select_related("observation").select_related("observation__product")
 
 
 class PotentialDuplicateViewSet(GenericViewSet, ListModelMixin):
@@ -835,7 +836,14 @@ class PotentialDuplicateViewSet(GenericViewSet, ListModelMixin):
     queryset = Potential_Duplicate.objects.none()
 
     def get_queryset(self) -> QuerySet[Potential_Duplicate]:
-        return get_potential_duplicates()
+        return (
+            get_potential_duplicates()
+            .select_related("observation")
+            .select_related("observation__product")
+            .select_related("observation__branch")
+            .select_related("observation__parser")
+            .select_related("observation__origin_service")
+        )
 
 
 class PURLTypeOneView(APIView):
