@@ -89,6 +89,7 @@ class ObservationSerializer(ModelSerializer):
     evidences = NestedEvidenceSerializer(many=True)
     origin_service_name = SerializerMethodField()
     origin_source_file_url = SerializerMethodField()
+    origin_cloud_resource_url = SerializerMethodField()
     issue_tracker_issue_url = SerializerMethodField()
     assessment_needs_approval = SerializerMethodField()
     vulnerability_id_aliases = SerializerMethodField()
@@ -111,6 +112,9 @@ class ObservationSerializer(ModelSerializer):
 
     def get_origin_source_file_url(self, observation: Observation) -> Optional[str]:
         return _get_origin_source_file_url(observation)
+
+    def get_origin_cloud_resource_url(self, observation: Observation) -> Optional[str]:
+        return _get_origin_cloud_resource_url(observation)
 
     def get_issue_tracker_issue_url(self, observation: Observation) -> Optional[str]:
         issue_url = None
@@ -158,6 +162,7 @@ class ObservationListSerializer(ModelSerializer):
     origin_component_name_version = SerializerMethodField()
     origin_source_file_short = SerializerMethodField()
     origin_source_file_url = SerializerMethodField()
+    origin_cloud_resource_url = SerializerMethodField()
     vulnerability_id_aliases = SerializerMethodField()
     cve_found_in = SerializerMethodField()
 
@@ -192,6 +197,9 @@ class ObservationListSerializer(ModelSerializer):
     def get_origin_source_file_url(self, observation: Observation) -> Optional[str]:
         return _get_origin_source_file_url(observation)
 
+    def get_origin_cloud_resource_url(self, observation: Observation) -> Optional[str]:
+        return _get_origin_cloud_resource_url(observation)
+
     def get_vulnerability_id_aliases(self, observation: Observation) -> list[dict[str, str]]:
         return _get_vulnerability_id_aliases(observation)
 
@@ -220,6 +228,22 @@ def _get_origin_source_file_url(observation: Observation) -> Optional[str]:
             origin_source_file_url = _create_common_url(observation, origin_source_file_url)
 
     return origin_source_file_url
+
+
+def _get_origin_cloud_resource_url(observation: Observation) -> Optional[str]:
+    if (
+        observation.origin_cloud_provider.lower() == "github"
+        and observation.origin_cloud_account_subscription_project
+        and observation.origin_cloud_resource
+    ):
+        if observation.origin_cloud_resource_type.lower() == "githubrepository":
+            return (
+                f"https://github.com/{observation.origin_cloud_account_subscription_project}/"
+                + f"{observation.origin_cloud_resource}"
+            )
+        if observation.origin_cloud_resource_type.lower() == "githuborganization":
+            return f"https://github.com/{observation.origin_cloud_resource}"
+    return None
 
 
 def _create_azure_devops_url(observation: Observation, origin_source_file_url: str) -> str:
