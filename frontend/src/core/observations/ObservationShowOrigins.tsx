@@ -203,7 +203,12 @@ const ObservationShowOrigins = ({ observation, showDependencies, elevated }: Obs
                                     )}
                                     {observation.origin_cloud_resource != "" && (
                                         <Labeled>
-                                            <TextField source="origin_cloud_resource" label="Resource" />
+                                            <TextUrlField
+                                                text={observation.origin_cloud_resource}
+                                                url={observation.origin_cloud_resource_url}
+                                                label="Resource"
+                                                new_tab={true}
+                                            />
                                         </Labeled>
                                     )}
                                 </Stack>

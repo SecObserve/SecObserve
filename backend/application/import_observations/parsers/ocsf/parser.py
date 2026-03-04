@@ -128,12 +128,14 @@ def get_origins(finding: DetectionFinding) -> list[Origin]:
             )
     elif finding.cloud:
         account_name = ""
-        if finding.cloud.account:
+        if finding.finding_info.uid.startswith("prowler-github") and finding.cloud.region:
+            account_name = finding.cloud.region
+        elif finding.cloud.account:
             account_name = finding.cloud.account.name
         for resource in finding.resources:
             origins.append(
                 Origin(
-                    origin_cloud_provider=finding.cloud.provider.capitalize(),
+                    origin_cloud_provider=get_provider(finding.cloud.provider),
                     origin_cloud_account_subscription_project=account_name,
                     origin_cloud_resource=resource.name,
                     origin_cloud_resource_type=resource.type,
@@ -141,6 +143,14 @@ def get_origins(finding: DetectionFinding) -> list[Origin]:
             )
 
     return origins
+
+
+def get_provider(provider: str) -> str:
+    if provider.lower() == "github":
+        return "GitHub"
+    if provider.lower() == "aws":
+        return "AWS"
+    return provider.capitalize()
 
 
 def get_description(finding: DetectionFinding) -> str:

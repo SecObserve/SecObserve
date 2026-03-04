@@ -1,17 +1,20 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from rest_framework.serializers import ValidationError
 
 from application.access_control.models import Authorization_Group
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
+from application.core.api.serializers_observation import (
+    _get_origin_cloud_resource_url,
+)
 from application.core.api.serializers_product import (
     BranchSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductMemberSerializer,
     ProductSerializer,
 )
-from application.core.models import Product
+from application.core.models import Observation, Product
 from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
 
@@ -384,3 +387,108 @@ class TestProductAuthorizationGroupMemberSerializer(BaseTestCase):
         mock_product_authorization_group_member.assert_called_with(self.product_1, self.authorization_group_1)
         mock_highest_user_role.assert_called_with(self.product_1, self.user_internal)
         mock_user.assert_called_once()
+
+
+class TestObservationSerializer(BaseTestCase):
+    def test_github_repository_url_generation(self):
+        """Test that GitHub repository URLs are generated correctly"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "github"
+        observation.origin_cloud_account_subscription_project = "owner/repo"
+        observation.origin_cloud_resource = "my-repo"
+        observation.origin_cloud_resource_type = "githubrepository"
+
+        result = _get_origin_cloud_resource_url(observation)
+        expected = "https://github.com/owner/repo/my-repo"
+        self.assertEqual(result, expected)
+
+    def test_github_organization_url_generation(self):
+        """Test that GitHub organization URLs are generated correctly"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "github"
+        observation.origin_cloud_account_subscription_project = "owner/repo"
+        observation.origin_cloud_resource = "my-org"
+        observation.origin_cloud_resource_type = "githuborganization"
+
+        result = _get_origin_cloud_resource_url(observation)
+        expected = "https://github.com/my-org"
+        self.assertEqual(result, expected)
+
+    def test_case_insensitive_provider(self):
+        """Test that provider name is case insensitive"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "GITHUB"
+        observation.origin_cloud_account_subscription_project = "owner/repo"
+        observation.origin_cloud_resource = "my-repo"
+        observation.origin_cloud_resource_type = "githubrepository"
+
+        result = _get_origin_cloud_resource_url(observation)
+        expected = "https://github.com/owner/repo/my-repo"
+        self.assertEqual(result, expected)
+
+    def test_case_insensitive_resource_type(self):
+        """Test that resource type is case insensitive"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "github"
+        observation.origin_cloud_account_subscription_project = "owner/repo"
+        observation.origin_cloud_resource = "my-repo"
+        observation.origin_cloud_resource_type = "GITHUBREPOSITORY"
+
+        result = _get_origin_cloud_resource_url(observation)
+        expected = "https://github.com/owner/repo/my-repo"
+        self.assertEqual(result, expected)
+
+    def test_non_github_provider_returns_none(self):
+        """Test that non-GitHub providers return None"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "aws"
+        observation.origin_cloud_account_subscription_project = "account"
+        observation.origin_cloud_resource = "resource"
+        observation.origin_cloud_resource_type = "githubrepository"
+
+        result = _get_origin_cloud_resource_url(observation)
+        self.assertIsNone(result)
+
+    def test_missing_account_subscription_project_returns_none(self):
+        """Test that missing account/subscription/project returns None"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "github"
+        observation.origin_cloud_account_subscription_project = None
+        observation.origin_cloud_resource = "resource"
+        observation.origin_cloud_resource_type = "githubrepository"
+
+        result = _get_origin_cloud_resource_url(observation)
+        self.assertIsNone(result)
+
+    def test_missing_resource_returns_none(self):
+        """Test that missing resource returns None"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "github"
+        observation.origin_cloud_account_subscription_project = "account"
+        observation.origin_cloud_resource = None
+        observation.origin_cloud_resource_type = "githubrepository"
+
+        result = _get_origin_cloud_resource_url(observation)
+        self.assertIsNone(result)
+
+    def test_unsupported_resource_type_returns_none(self):
+        """Test that unsupported resource types return None"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = "github"
+        observation.origin_cloud_account_subscription_project = "account"
+        observation.origin_cloud_resource = "resource"
+        observation.origin_cloud_resource_type = "unsupportedtype"
+
+        result = _get_origin_cloud_resource_url(observation)
+        self.assertIsNone(result)
+
+    def test_empty_strings_returns_none(self):
+        """Test that empty strings return None"""
+        observation = Mock(spec=Observation)
+        observation.origin_cloud_provider = ""
+        observation.origin_cloud_account_subscription_project = ""
+        observation.origin_cloud_resource = ""
+        observation.origin_cloud_resource_type = ""
+
+        result = _get_origin_cloud_resource_url(observation)
+        self.assertIsNone(result)
