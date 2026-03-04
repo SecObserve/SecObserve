@@ -5,18 +5,17 @@ from rest_framework.serializers import ValidationError
 from application.access_control.models import Authorization_Group
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
+from application.core.api.serializers_observation import (
+    _get_origin_cloud_resource_url,
+)
 from application.core.api.serializers_product import (
     BranchSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductMemberSerializer,
     ProductSerializer,
 )
-from application.core.models import Product
+from application.core.models import Observation, Product
 from application.core.types import Severity, Status
-from application.core.api.serializers_observation import (
-    _get_origin_cloud_resource_url,
-)
-from application.core.models import Observation
 from unittests.base_test_case import BaseTestCase
 
 
