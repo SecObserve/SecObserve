@@ -41,10 +41,6 @@ function is_invalid_url(urlString: string): boolean {
 const TextUrlField = (props: TextUrlFieldProps) => {
     const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
 
-    console.log("---")
-    console.log(props.text)
-    console.log(props.url)
-
     return (
         <Fragment>
             {props.new_tab === true && is_valid_url(props.url) && (
