@@ -7,16 +7,20 @@ from application.access_control.api.views import (
     UserViewSet,
 )
 from application.background_tasks.api.views import PeriodicTaskViewSet
-from application.core.api.views import (
-    BranchNameViewSet,
-    BranchViewSet,
-    ComponentNameViewSet,
-    ComponentViewSet,
+from application.core.api.views_observation import (
     EvidenceViewSet,
     ObservationLogViewSet,
     ObservationTitleViewSet,
     ObservationViewSet,
     PotentialDuplicateViewSet,
+)
+from application.core.api.views_others import (
+    ComponentNameViewSet,
+    ComponentViewSet,
+)
+from application.core.api.views_product import (
+    BranchNameViewSet,
+    BranchViewSet,
     ProductApiTokenViewset,
     ProductAuthorizationGroupMemberViewSet,
     ProductGroupNameViewSet,

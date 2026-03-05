@@ -19,7 +19,7 @@ from application.commons.api.views import (
     VersionView,
 )
 from application.commons.views import empty_view
-from application.core.api.views import PURLTypeManyView, PURLTypeOneView
+from application.core.api.views_others import PURLTypeManyView, PURLTypeOneView
 from application.import_observations.api.views import (
     ApiImportObservationsById,
     ApiImportObservationsByName,

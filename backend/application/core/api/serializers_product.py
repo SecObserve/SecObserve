@@ -6,7 +6,6 @@ from rest_framework.serializers import (
     CharField,
     DateField,
     IntegerField,
-    ListField,
     ModelSerializer,
     Serializer,
     SerializerMethodField,
@@ -607,13 +606,3 @@ class ServiceNameSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
-
-
-class PURLTypeElementSerializer(Serializer):
-    id = CharField()
-    name = CharField()
-
-
-class PURLTypeSerializer(Serializer):
-    count = IntegerField()
-    results = ListField(child=PURLTypeElementSerializer())
