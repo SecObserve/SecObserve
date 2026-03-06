@@ -102,7 +102,7 @@ jobs:
         working-directory: ./sbom
         run: |
           sed -i "s|REPLACE_VERSION|$VERSION|g" ./configuration/patch_complete.json
-          cyclonedx merge --hierarchical --name "SecObserve" --version "$VERSION" --input-files sbom_backend_application_"$VERSION".json sbom_frontend_application_"$VERSION".json sbom_backend_container_"$VERSION".json sbom_frontend_container_"$VERSION".json --output-version 1.6 --output-format json \
+          cyclonedx merge --hierarchical --name "SecObserve" --version "$VERSION" --input-files sbom_backend_application_"$VERSION".json sbom_frontend_application_"$VERSION".json sbom_backend_container_"$VERSION".json sbom_frontend_container_"$VERSION".json --output-version v1_6 --output-format json \
             | sbom-utility trim --keys=declarations,definitions --quiet --input-file - \
             | sbom-utility patch --patch-file ./configuration/patch_supplier.json --quiet --input-file - \
             | sbom-utility patch --patch-file ./configuration/patch_complete.json --quiet --input-file - --output-file sbom_"$VERSION".json
