@@ -31,7 +31,7 @@ jobs:
           CDXGEN_VERSION: 12.1.1
           TRIVY_VERSION: 0.69.3
           SBOM_UTILITY_VERSION: 0.18.1
-          CYCLONE_DX_CLI_VERSION: 0.30.0
+          CYCLONE_DX_CLI_VERSION: 0.29.1
         run: |
           npm install -g @cyclonedx/cdxgen@"$CDXGEN_VERSION"
           cd /usr/local/bin
