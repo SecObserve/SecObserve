@@ -1,14 +1,6 @@
 import { Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
-import {
-    BooleanField,
-    Labeled,
-    NumberField,
-    ReferenceField,
-    TextArrayField,
-    TextField,
-    WithRecord,
-} from "react-admin";
+import { BooleanField, Labeled, NumberField, ReferenceField, TextArrayField, TextField, WithRecord } from "react-admin";
 
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import OSVLinuxDistributionField from "../../commons/custom_fields/OSVLinuxDistributionField";
