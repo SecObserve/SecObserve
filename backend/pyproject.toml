@@ -85,7 +85,7 @@ Werkzeug = { version = "3.1.6", optional = true }  # https://github.com/pallets/
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
-django-silk = { version = "5.4.3", optional = true }  # https://github.com/jazzband/django-silk
+django-silk = { version = "5.5.0", optional = true }  # https://github.com/jazzband/django-silk
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
