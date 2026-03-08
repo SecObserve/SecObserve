@@ -16,6 +16,7 @@ import {
     Tab,
     TabbedShowLayout,
     TabbedShowLayoutTabs,
+    TextArrayField,
     TextField,
     TopToolbar,
     WithRecord,
@@ -156,7 +157,10 @@ const ProductGroupShow = () => {
                                 )}
                                 {((feature_email() && product_group.notification_email_to) ||
                                     product_group.notification_ms_teams_webhook ||
-                                    product_group.notification_slack_webhook) && (
+                                    product_group.notification_slack_webhook ||
+                                    product_group.observation_notification_min_severity ||
+                                    product_group.observation_notification_status_list ||
+                                    product_group.observation_notification_min_priority) && (
                                     <Fragment>
                                         <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
                                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
@@ -176,6 +180,22 @@ const ProductGroupShow = () => {
                                             {product_group.notification_slack_webhook && (
                                                 <Labeled label="Slack">
                                                     <TextField source="notification_slack_webhook" />
+                                                </Labeled>
+                                            )}
+                                            {product_group.observation_notification_min_severity && (
+                                                <Labeled label="Minimum severity for observation notifications">
+                                                    <TextField source="observation_notification_min_severity" />
+                                                </Labeled>
+                                            )}
+                                            {product_group.observation_notification_status_list &&
+                                                product_group.observation_notification_status_list.length > 0 && (
+                                                    <Labeled label="Statuses for observation notifications">
+                                                        <TextArrayField source="observation_notification_status_list" />
+                                                    </Labeled>
+                                                )}
+                                            {product_group.observation_notification_min_priority && (
+                                                <Labeled label="Minimum priority for observation notifications">
+                                                    <TextField source="observation_notification_min_priority" />
                                                 </Labeled>
                                             )}
                                         </Stack>

@@ -608,4 +608,5 @@ def _get_excludes():
         "parser",
         "product",
         "identity_hash",
+        "observation_notified",
     ]

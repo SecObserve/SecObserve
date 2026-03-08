@@ -1,26 +1,28 @@
+import unittest
 from datetime import datetime, timedelta
-from unittest.mock import ANY, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
+from django.test import TestCase
 from requests import Response
 
+from application.access_control.models import User
 from application.commons.models import Settings
 from application.commons.services.functions import get_classname
-from application.notifications.models import Notification
+from application.core.models import Observation, Product
+from application.notifications.models import Notification, Observation_Notified
 from application.notifications.services.send_notifications import (
     LAST_EXCEPTIONS,
-    _create_notification_message,
     _get_first_name,
     _get_notification_email_to,
     _get_notification_ms_teams_webhook,
     _get_notification_slack_webhook,
     _get_stack_trace,
     _ratelimit_exception,
+    _send_observation_notifications,
     get_base_url_frontend,
-    send_email_notification,
     send_exception_notification,
-    send_msteams_notification,
+    send_observation_notification,
     send_product_security_gate_notification,
-    send_slack_notification,
     send_task_exception_notification,
 )
 from unittests.base_test_case import BaseTestCase
@@ -656,282 +658,6 @@ class TestPushNotifications(BaseTestCase):
             type=Notification.TYPE_TASK,
         )
 
-    # --- send_email_notification ---
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.send_mail")
-    def test_send_email_notification_empty_message(self, mock_send_email, mock_create_message):
-        mock_create_message.return_value = None
-
-        send_email_notification("test@example.com", "subject", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_send_email.assert_not_called()
-
-    @patch("application.commons.models.Settings.load")
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.send_mail")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_email_notification_exception(
-        self,
-        mock_format,
-        mock_logger,
-        mock_send_email,
-        mock_create_message,
-        mock_settings_load,
-    ):
-        settings = Settings()
-        settings.email_from = "secobserve@example.com"
-        mock_settings_load.return_value = settings
-        mock_create_message.return_value = "test_message"
-        mock_send_email.side_effect = Exception("test_exception")
-
-        with patch.dict(
-            "os.environ",
-            {
-                "EMAIL_HOST": "mail.example.com",
-            },
-        ):
-            send_email_notification("test@example.com", "subject", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_send_email.assert_called_with(
-            subject="subject",
-            message="test_message",
-            from_email="secobserve@example.com",
-            recipient_list=["test@example.com"],
-            fail_silently=False,
-        )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
-
-    @patch("application.commons.models.Settings.load")
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.send_mail")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_msteams_notification_success(
-        self,
-        mock_format,
-        mock_logger,
-        mock_send_email,
-        mock_create_message,
-        mock_settings_load,
-    ):
-        settings = Settings()
-        settings.email_from = "secobserve@example.com"
-        mock_settings_load.return_value = settings
-        mock_create_message.return_value = "test_message"
-
-        send_email_notification("test@example.com", "subject", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_send_email.assert_called_with(
-            subject="subject",
-            message="test_message",
-            from_email="secobserve@example.com",
-            recipient_list=["test@example.com"],
-            fail_silently=False,
-        )
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
-
-    # --- send_msteams_notification ---
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    def test_send_msteams_notification_empty_message(self, mock_request, mock_create_message):
-        mock_create_message.return_value = None
-
-        send_msteams_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_not_called()
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_msteams_notification_exception(self, mock_format, mock_logger, mock_request, mock_create_message):
-        mock_create_message.return_value = "test_message"
-        mock_request.side_effect = Exception("test_exception")
-
-        send_msteams_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_called_with(method="POST", url="test_webhook", data="test_message", timeout=60)
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_msteams_notification_not_ok(self, mock_format, mock_logger, mock_request, mock_create_message):
-        mock_create_message.return_value = "test_message"
-        response = Response()
-        response.status_code = 400
-        mock_request.return_value = response
-
-        send_msteams_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_called_with(method="POST", url="test_webhook", data="test_message", timeout=60)
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_msteams_notification_success(self, mock_format, mock_logger, mock_request, mock_create_message):
-        mock_create_message.return_value = "test_message"
-        response = Response()
-        response.status_code = 200
-        mock_request.return_value = response
-
-        send_msteams_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_called_with(method="POST", url="test_webhook", data="test_message", timeout=60)
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
-
-    # --- send_slack_notification ---
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    def test_send_slack_notification_empty_message(self, mock_request, mock_create_message):
-        mock_create_message.return_value = None
-
-        send_slack_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_not_called()
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_slack_notification_exception(self, mock_format, mock_logger, mock_request, mock_create_message):
-        mock_create_message.return_value = "test_message"
-        mock_request.side_effect = Exception("test_exception")
-
-        send_slack_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_called_with(method="POST", url="test_webhook", data="test_message", timeout=60)
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_slack_notification_not_ok(self, mock_format, mock_logger, mock_request, mock_create_message):
-        mock_create_message.return_value = "test_message"
-        response = Response()
-        response.status_code = 400
-        mock_request.return_value = response
-
-        send_slack_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_called_with(method="POST", url="test_webhook", data="test_message", timeout=60)
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
-
-    @patch("application.notifications.services.send_notifications._create_notification_message")
-    @patch("application.notifications.services.send_notifications.requests.request")
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_send_slack_notification_success(self, mock_format, mock_logger, mock_request, mock_create_message):
-        mock_create_message.return_value = "test_message"
-        response = Response()
-        response.status_code = 200
-        mock_request.return_value = response
-
-        send_slack_notification("test_webhook", "test_template")
-
-        mock_create_message.assert_called_with("test_template")
-        mock_request.assert_called_with(method="POST", url="test_webhook", data="test_message", timeout=60)
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
-
-    # --- _create_notification_message ---
-
-    @patch("application.notifications.services.send_notifications.logger.error")
-    @patch("application.notifications.services.send_notifications.format_log_message")
-    def test_create_notification_message_not_found(self, mock_format, mock_logging):
-        message = _create_notification_message("invalid_template_name.tpl")
-        self.assertIsNone(message)
-        mock_logging.assert_called_once()
-        mock_format.assert_called_once()
-
-    def test_create_notification_message_security_gate(self):
-        message = _create_notification_message(
-            "msteams_product_security_gate.tpl",
-            product=self.product_1,
-            security_gate_status="security_gate_passed",
-            product_url="product_url",
-        )
-
-        expected_message = """{
-    "@type": "MessageCard",
-    "@context": "https://schema.org/extensions",
-    "title": "Security gate for product product_1 has changed to security_gate_passed",
-    "summary": "Security gate for product product_1 has changed to security_gate_passed",
-    "potentialAction": [
-        {
-            "@type": "OpenUri",
-            "name": "View Product product_1",
-            "targets": [
-                {
-                    "os": "default",
-                    "uri": "product_url"
-                }
-            ]
-        }
-    ]
-}
-"""
-        self.assertEqual(expected_message, message)
-
-    def test_create_notification_message_exception(self):
-        exception = Exception("test_exception")
-        message = _create_notification_message(
-            "msteams_exception.tpl",
-            exception_class=get_classname(exception),
-            exception_message=str(exception),
-            date_time=datetime(2022, 12, 31, 23, 59, 59),
-        )
-
-        expected_message = """{
-    "@type": "MessageCard",
-    "@context": "https://schema.org/extensions",
-    "title": "Exception builtins.Exception has occured",
-    "summary": "Exception builtins.Exception has occured",
-    "sections": [{
-        "facts": [{
-            "name": "Exception class:",
-            "value": "builtins.Exception"
-        }, {
-            "name": "Exception message:",
-            "value": "test_exception"
-        }, {
-            "name": "Timestamp:",
-            "value": "2022-12-31 23:59:59.000000"
-        }, {
-            "name": "Trace:",
-            "value": ""
-        }],
-        "markdown": true
-    }],
-}
-"""
-        self.assertEqual(expected_message, message)
-
     # --- get_base_url_frontend ---
 
     @patch("application.commons.models.Settings.load")
@@ -1083,3 +809,337 @@ class TestPushNotifications(BaseTestCase):
 
     def test_get_notification_slack_webhook_product_webhook_empty(self):
         self.assertEqual(None, _get_notification_slack_webhook(self.product_1))
+
+    ## --- send_observation_notification ---
+
+
+@patch("application.notifications.services.send_notifications._get_observation_notification_min_severity")
+@patch("application.notifications.services.send_notifications._get_observation_notification_statuses")
+@patch("application.notifications.services.send_notifications._get_observation_notification_min_priority")
+@patch("application.notifications.services.send_notifications.Observation_Notified")
+@patch("application.notifications.services.send_notifications._send_observation_notifications")
+@patch("application.notifications.services.send_notifications.get_current_user")
+def test_send_observation_notification_new_notification(
+    self,
+    mock_get_current_user,
+    mock_send_notifications,
+    mock_observation_notified,
+    mock_get_priority,
+    mock_get_statuses,
+    mock_get_severity,
+):
+    # Setup mock objects
+    mock_observation = MagicMock(spec=Observation)
+    mock_observation.pk = 1
+    mock_observation.title = "Test Observation"
+    mock_observation.current_severity = "HIGH"
+    mock_observation.current_status = "OPEN"
+    mock_observation.current_priority = 2
+    mock_observation.product = MagicMock(spec=Product)
+    mock_observation.numerical_severity = 3
+
+    mock_get_severity.return_value = "HIGH"
+    mock_get_statuses.return_value = ["OPEN"]
+    mock_get_priority.return_value = 3
+
+    # Mock the Observation_Notified.DoesNotExist exception
+    mock_observation_notified.objects.get.side_effect = Observation_Notified.DoesNotExist
+
+    # Mock the return value of get_current_user
+    mock_get_current_user.return_value = MagicMock(spec=User)
+
+    # Call the function
+    send_observation_notification(mock_observation)
+
+    # Verify the calls
+    mock_observation_notified.objects.get.assert_called_once_with(observation=mock_observation)
+    mock_send_notifications.assert_called_once_with(
+        mock_observation, 'New notification for observation "Test Observation"'
+    )
+    mock_observation_notified.assert_called_once_with(observation=mock_observation)
+    mock_observation_notified().save.assert_called_once()
+
+    @patch("application.notifications.services.send_notifications._get_observation_notification_min_severity")
+    @patch("application.notifications.services.send_notifications._get_observation_notification_statuses")
+    @patch("application.notifications.services.send_notifications._get_observation_notification_min_priority")
+    @patch("application.notifications.services.send_notifications.Observation_Notified")
+    @patch("application.notifications.services.send_notifications._send_observation_notifications")
+    @patch("application.notifications.services.send_notifications.get_current_user")
+    def test_send_observation_notification_existing_notification_with_changes(
+        self,
+        mock_get_current_user,
+        mock_send_notifications,
+        mock_observation_notified,
+        mock_get_priority,
+        mock_get_statuses,
+        mock_get_severity,
+    ):
+        # Setup mock objects
+        mock_observation = MagicMock(spec=Observation)
+        mock_observation.pk = 1
+        mock_observation.title = "Test Observation"
+        mock_observation.current_severity = "HIGH"
+        mock_observation.current_status = "OPEN"
+        mock_observation.current_priority = 2
+        mock_observation.product = MagicMock(spec=Product)
+        mock_observation.numerical_severity = 3
+
+        mock_get_severity.return_value = "HIGH"
+        mock_get_statuses.return_value = ["OPEN"]
+        mock_get_priority.return_value = 3
+
+        # Mock existing observation_notified object with different values
+        mock_observation_notified_instance = MagicMock(spec=Observation_Notified)
+        mock_observation_notified_instance.severity = "LOW"
+        mock_observation_notified_instance.status = "OPEN"
+        mock_observation_notified_instance.priority = 2
+        mock_observation_notified.objects.get.return_value = mock_observation_notified_instance
+
+        # Mock the return value of get_current_user
+        mock_get_current_user.return_value = MagicMock(spec=User)
+
+        # Call the function
+        send_observation_notification(mock_observation)
+
+        # Verify the calls
+        mock_observation_notified.objects.get.assert_called_once_with(observation=mock_observation)
+        mock_send_notifications.assert_called_once_with(mock_observation, 'Change in observation "Test Observation"')
+        mock_observation_notified_instance.save.assert_called_once()
+
+    @patch("application.notifications.services.send_notifications._get_observation_notification_min_severity")
+    @patch("application.notifications.services.send_notifications._get_observation_notification_statuses")
+    @patch("application.notifications.services.send_notifications._get_observation_notification_min_priority")
+    @patch("application.notifications.services.send_notifications.Observation_Notified")
+    @patch("application.notifications.services.send_notifications._send_observation_notifications")
+    @patch("application.notifications.services.send_notifications.get_current_user")
+    def test_send_observation_notification_no_notification_needed(
+        self,
+        mock_get_current_user,
+        mock_send_notifications,
+        mock_observation_notified,
+        mock_get_priority,
+        mock_get_statuses,
+        mock_get_severity,
+    ):
+        # Setup mock objects
+        mock_observation = MagicMock(spec=Observation)
+        mock_observation.pk = 1
+        mock_observation.title = "Test Observation"
+        mock_observation.current_severity = "HIGH"
+        mock_observation.current_status = "OPEN"
+        mock_observation.current_priority = 4
+        mock_observation.product = MagicMock(spec=Product)
+        mock_observation.numerical_severity = 3
+
+        mock_get_severity.return_value = "LOW"
+        mock_get_statuses.return_value = ["OPEN"]
+        mock_get_priority.return_value = 3
+
+        # Mock existing observation_notified object
+        mock_observation_notified_instance = MagicMock(spec=Observation_Notified)
+        mock_observation_notified.objects.get.return_value = mock_observation_notified_instance
+
+        # Call the function
+        send_observation_notification(mock_observation)
+
+        # Verify the calls
+        mock_observation_notified.objects.get.assert_called_once_with(observation=mock_observation)
+        mock_send_notifications.assert_called_once_with(
+            mock_observation, 'Observation "Test Observation" fell out of notifications'
+        )
+        mock_observation_notified_instance.delete.assert_called_once()
+
+
+@patch("application.notifications.services.send_notifications._get_observation_notification_min_severity")
+@patch("application.notifications.services.send_notifications._get_observation_notification_statuses")
+@patch("application.notifications.services.send_notifications._get_observation_notification_min_priority")
+@patch("application.notifications.services.send_notifications.Observation_Notified")
+@patch("application.notifications.services.send_notifications._send_observation_notifications")
+@patch("application.notifications.services.send_notifications.get_current_user")
+def test_send_observation_notification_no_existing_notification(
+    self,
+    mock_get_current_user,
+    mock_send_notifications,
+    mock_observation_notified,
+    mock_get_priority,
+    mock_get_statuses,
+    mock_get_severity,
+):
+    # Setup mock objects
+    mock_observation = MagicMock(spec=Observation)
+    mock_observation.pk = 1
+    mock_observation.title = "Test Observation"
+    mock_observation.current_severity = "HIGH"
+    mock_observation.current_status = "OPEN"
+    mock_observation.current_priority = 2
+    mock_observation.product = MagicMock(spec=Product)
+    mock_observation.numerical_severity = 3
+
+    mock_get_severity.return_value = "HIGH"  # This should match or exceed the min severity
+    mock_get_statuses.return_value = ["OPEN"]  # This should include the current status
+    mock_get_priority.return_value = 2  # This should match or exceed the min priority
+
+    # Mock the Observation_Notified.DoesNotExist exception - this is what happens when no record exists
+    mock_observation_notified.objects.get.side_effect = Observation_Notified.DoesNotExist
+
+    # Mock the return value of get_current_user
+    mock_get_current_user.return_value = MagicMock(spec=User)
+
+    # Call the function
+    send_observation_notification(mock_observation)
+
+    # Verify the calls
+    mock_observation_notified.objects.get.assert_called_once_with(observation=mock_observation)
+    # Should send a new notification when no existing record
+    mock_send_notifications.assert_called_once_with(
+        mock_observation, 'New notification for observation "Test Observation"'
+    )
+    # Should create a new Observation_Notified record
+    mock_observation_notified.assert_called_once_with(observation=mock_observation)
+    mock_observation_notified().save.assert_called_once()
+
+    ## --- send_observation_notification ---
+
+    @patch("application.notifications.services.send_notifications.Settings")
+    @patch("application.notifications.services.send_notifications._get_notification_email_to")
+    @patch("application.notifications.services.send_notifications._get_email_to_addresses")
+    @patch("application.notifications.services.send_notifications._get_first_name")
+    @patch("application.notifications.services.send_notifications.send_email_notification")
+    @patch("application.notifications.services.send_notifications.send_msteams_notification")
+    @patch("application.notifications.services.send_notifications.send_slack_notification")
+    @patch("application.notifications.services.send_notifications.get_base_url_frontend")
+    @patch("application.notifications.services.send_notifications.Notification")
+    def test_send_observation_notifications_with_all_channels(
+        self,
+        mock_notification_model,
+        mock_get_base_url,
+        mock_send_slack,
+        mock_send_msteams,
+        mock_send_email,
+        mock_get_first_name,
+        mock_get_email_addresses,
+        mock_get_notification_email_to,
+        mock_settings,
+    ):
+        # Setup mock objects
+        mock_observation = MagicMock(spec=Observation)
+        mock_observation.pk = 1
+        mock_observation.title = "Test Observation"
+        mock_observation.product = MagicMock(spec=Product)
+
+        mock_settings_instance = MagicMock(spec=Settings)
+        mock_settings_instance.email_from = "noreply@example.com"
+        mock_settings.load.return_value = mock_settings_instance
+
+        mock_get_notification_email_to.return_value = "test@example.com"
+        mock_get_email_addresses.return_value = ["test@example.com"]
+        mock_get_first_name.return_value = "Test"
+        mock_get_base_url.return_value = "https://example.com"
+
+        # Call the function
+        _send_observation_notifications(mock_observation, "Test notification")
+
+        # Verify the calls
+        mock_settings.load.assert_called_once()
+        mock_get_notification_email_to.assert_called_once_with(mock_observation.product)
+        mock_get_email_addresses.assert_called_once_with("test@example.com")
+        mock_send_email.assert_called_once()
+        mock_send_msteams.assert_called_once()
+        mock_send_slack.assert_called_once()
+        mock_notification_model.objects.create.assert_called_once()
+
+    @patch("application.notifications.services.send_notifications.Settings")
+    @patch("application.notifications.services.send_notifications._get_notification_email_to")
+    @patch("application.notifications.services.send_notifications._get_email_to_addresses")
+    @patch("application.notifications.services.send_notifications._get_first_name")
+    @patch("application.notifications.services.send_notifications.send_email_notification")
+    @patch("application.notifications.services.send_notifications.send_msteams_notification")
+    @patch("application.notifications.services.send_notifications.send_slack_notification")
+    @patch("application.notifications.services.send_notifications.get_base_url_frontend")
+    @patch("application.notifications.services.send_notifications.Notification")
+    def test_send_observation_notifications_with_no_email(
+        self,
+        mock_notification_model,
+        mock_get_base_url,
+        mock_send_slack,
+        mock_send_msteams,
+        mock_send_email,
+        mock_get_first_name,
+        mock_get_email_addresses,
+        mock_get_notification_email_to,
+        mock_settings,
+    ):
+        # Setup mock objects
+        mock_observation = MagicMock(spec=Observation)
+        mock_observation.pk = 1
+        mock_observation.title = "Test Observation"
+        mock_observation.product = MagicMock(spec=Product)
+
+        mock_settings_instance = MagicMock(spec=Settings)
+        mock_settings_instance.email_from = None
+        mock_settings.load.return_value = mock_settings_instance
+
+        mock_get_notification_email_to.return_value = "test@example.com"
+        mock_get_email_addresses.return_value = ["test@example.com"]
+        mock_get_first_name.return_value = "Test"
+        mock_get_base_url.return_value = "https://example.com"
+
+        # Call the function
+        _send_observation_notifications(mock_observation, "Test notification")
+
+        # Verify the calls
+        mock_settings.load.assert_called_once()
+        mock_get_notification_email_to.assert_called_once_with(mock_observation.product)
+        mock_get_email_addresses.assert_called_once_with("test@example.com")
+        mock_send_email.assert_not_called()
+        mock_send_msteams.assert_called_once()
+        mock_send_slack.assert_called_once()
+        mock_notification_model.objects.create.assert_called_once()
+
+    @patch("application.notifications.services.send_notifications.Settings")
+    @patch("application.notifications.services.send_notifications._get_notification_email_to")
+    @patch("application.notifications.services.send_notifications._get_email_to_addresses")
+    @patch("application.notifications.services.send_notifications._get_first_name")
+    @patch("application.notifications.services.send_notifications.send_email_notification")
+    @patch("application.notifications.services.send_notifications.send_msteams_notification")
+    @patch("application.notifications.services.send_notifications.send_slack_notification")
+    @patch("application.notifications.services.send_notifications.get_base_url_frontend")
+    @patch("application.notifications.services.send_notifications.Notification")
+    def test_send_observation_notifications_with_no_recipients(
+        self,
+        mock_notification_model,
+        mock_get_base_url,
+        mock_send_slack,
+        mock_send_msteams,
+        mock_send_email,
+        mock_get_first_name,
+        mock_get_email_addresses,
+        mock_get_notification_email_to,
+        mock_settings,
+    ):
+        # Setup mock objects
+        mock_observation = MagicMock(spec=Observation)
+        mock_observation.pk = 1
+        mock_observation.title = "Test Observation"
+        mock_observation.product = MagicMock(spec=Product)
+
+        mock_settings_instance = MagicMock(spec=Settings)
+        mock_settings_instance.email_from = "noreply@example.com"
+        mock_settings.load.return_value = mock_settings_instance
+
+        mock_get_notification_email_to.return_value = "test@example.com"
+        mock_get_email_addresses.return_value = []
+        mock_get_first_name.return_value = "Test"
+        mock_get_base_url.return_value = "https://example.com"
+
+        # Call the function
+        _send_observation_notifications(mock_observation, "Test notification")
+
+        # Verify the calls
+        mock_settings.load.assert_called_once()
+        mock_get_notification_email_to.assert_called_once_with(mock_observation.product)
+        mock_get_email_addresses.assert_called_once_with("test@example.com")
+        mock_send_email.assert_not_called()
+        mock_send_msteams.assert_called_once()
+        mock_send_slack.assert_called_once()
+        mock_notification_model.objects.create.assert_called_once()

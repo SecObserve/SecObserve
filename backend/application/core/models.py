@@ -86,6 +86,12 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     notification_slack_webhook = TextField(max_length=2048, blank=True)
     notification_email_to = CharField(max_length=255, blank=True)
 
+    observation_notification_min_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
+    observation_notification_statuses = CharField(max_length=255, blank=True)
+    observation_notification_min_priority = IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(99)], null=True
+    )
+
     issue_tracker_active = BooleanField(default=False)
     issue_tracker_type = CharField(max_length=12, choices=Issue_Tracker.ISSUE_TRACKER_TYPE_CHOICES, blank=True)
     issue_tracker_base_url = CharField(max_length=255, blank=True)

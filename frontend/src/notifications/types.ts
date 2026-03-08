@@ -2,6 +2,7 @@ import { Identifier, RaRecord } from "react-admin";
 
 export const TYPE_CHOICES = [
     { id: "Exception", name: "Exception" },
+    { id: "Observation", name: "Observation" },
     { id: "Security gate", name: "Security gate" },
     { id: "Task", name: "Task" },
 ];
