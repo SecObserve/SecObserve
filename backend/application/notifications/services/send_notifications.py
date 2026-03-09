@@ -105,10 +105,10 @@ def send_observation_notification(observation: Observation) -> None:
     ):
         try:
             observation_notified = Observation_Notified.objects.get(observation=observation)
-            now_notification = False
+            new_notification = False
         except Observation_Notified.DoesNotExist:
             observation_notified = Observation_Notified(observation=observation)
-            now_notification = True
+            new_notification = True
 
         if (
             observation.current_severity != observation_notified.severity
@@ -117,7 +117,7 @@ def send_observation_notification(observation: Observation) -> None:
         ):
             first_line = (
                 f'New notification for observation "{observation.title}"'
-                if now_notification
+                if new_notification
                 else f'Change in observation "{observation.title}"'
             )
 
