@@ -1081,7 +1081,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_teams.assert_not_called()
         mock_send_slack.assert_not_called()
         mock_notification_create.assert_called_with(
-            name=f'New notification for observation',
+            name=f"New notification for observation",
             product=self.observation_1.product,
             observation=self.observation_1,
             user=self.user_internal,
