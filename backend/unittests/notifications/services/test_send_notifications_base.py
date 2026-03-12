@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from unittest.mock import patch
 
@@ -70,6 +71,7 @@ class TestPushNotifications(BaseTestCase):
     @patch("application.notifications.services.send_notifications_base.send_mail")
     @patch("application.notifications.services.send_notifications_base.logger.error")
     @patch("application.notifications.services.send_notifications_base.format_log_message")
+    @patch.dict(os.environ, {"EMAIL_HOST": "email.example.org"})
     def test_send_email_notification_success(
         self,
         mock_format,
