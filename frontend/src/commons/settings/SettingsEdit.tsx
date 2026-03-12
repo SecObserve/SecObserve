@@ -1,6 +1,7 @@
 import { Divider, Grid, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    AutocompleteArrayInput,
     BooleanInput,
     Edit,
     FormDataConsumer,
@@ -19,9 +20,12 @@ import {
     validate_1_4096,
     validate_1_999999,
     validate_255,
+    validate_2048,
 } from "../../commons/custom_validators";
 import ListHeader from "../../commons/layout/ListHeader";
-import { TextInputExtraWide, TextInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium, TextInputExtraWide, TextInputWide } from "../../commons/layout/themes";
+import { OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../../core/types";
+import { SCANNER_TYPE_CHOICES } from "../../import_observations/types";
 import { feature_email } from "../functions";
 import { VEX_JUSTIFICATION_TYPE_CHOICES } from "../types";
 
@@ -42,6 +46,11 @@ const SettingsEdit = () => {
         data.exception_email_to ??= "";
         data.exception_ms_teams_webhook ??= "";
         data.exception_slack_webhook ??= "";
+        data.observation_title_notification_email_to ??= "";
+        data.observation_title_notification_ms_teams_webhook ??= "";
+        data.observation_title_notification_slack_webhook ??= "";
+        data.observation_title_notification_min_severity ??= "";
+        data.observation_title_notification_parser_type ??= "";
         return data;
     };
 
@@ -232,7 +241,7 @@ const SettingsEdit = () => {
 
                     <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
-                        Integrations
+                        Notifications
                     </Typography>
                     <TextInputWide
                         source="base_url_frontend"
@@ -253,25 +262,19 @@ const SettingsEdit = () => {
                     {feature_email() && (
                         <TextInputExtraWide
                             source="exception_email_to"
-                            label="Exception email to"
+                            label="Comma separated email addresses to send exception notifications"
                             validate={validate_255}
-                            helperText="Comma separated email addresses to send exception notifications"
-                            sx={{ marginBottom: 2 }}
                         />
                     )}
                     <TextInputExtraWide
                         source="exception_ms_teams_webhook"
-                        label="Exception MS Teams webhook"
-                        validate={validate_255}
-                        helperText="MS Teams webhook to send exception notifications"
-                        sx={{ marginBottom: 2 }}
+                        label="MS Teams webhook to send exception notifications"
+                        validate={validate_2048}
                     />
                     <TextInputExtraWide
                         source="exception_slack_webhook"
-                        label="Exception Slack webhook"
-                        validate={validate_255}
-                        helperText="Slack webhook to send exception notifications"
-                        sx={{ marginBottom: 2 }}
+                        label="Slack webhook to send exception notifications"
+                        validate={validate_2048}
                     />
                     <NumberInput
                         source="exception_rate_limit"
@@ -281,6 +284,49 @@ const SettingsEdit = () => {
                         validate={validate_0_999999}
                         helperText="Timedelta in seconds when to send the same exception the next time"
                         sx={{ marginBottom: 2 }}
+                    />
+                    {feature_email() && (
+                        <TextInputExtraWide
+                            source="observation_title_notification_email_to"
+                            label="Comma separated email to addresses to send observation title notifications"
+                            validate={validate_255}
+                        />
+                    )}
+                    <TextInputExtraWide
+                        source="observation_title_notification_ms_teams_webhook"
+                        label="Webhook URL to send observation title notifications to MS Teams"
+                        validate={validate_2048}
+                    />
+                    <TextInputExtraWide
+                        source="observation_title_notification_slack_webhook"
+                        label="Webhook URL to send observation title notifications to Slack"
+                        validate={validate_2048}
+                    />
+                    <AutocompleteInputMedium
+                        source="observation_title_notification_min_severity"
+                        label="Minimum severity for observation title notifications"
+                        choices={OBSERVATION_SEVERITY_CHOICES}
+                        sx={{ width: "27em" }}
+                    />
+                    <AutocompleteArrayInput
+                        source="observation_title_notification_status_list"
+                        label="Statuses for observation title notifications"
+                        choices={OBSERVATION_STATUS_CHOICES}
+                        sx={{ width: "27em" }}
+                    />
+                    <NumberInput
+                        source="observation_title_notification_min_priority"
+                        label="Minimum priority for observation title notifications"
+                        step={1}
+                        min={1}
+                        max={99}
+                        sx={{ width: "27em" }}
+                    />
+                    <AutocompleteInputMedium
+                        source="observation_title_notification_parser_type"
+                        label="Parser type for observation title notifications"
+                        choices={SCANNER_TYPE_CHOICES}
+                        sx={{ width: "27em" }}
                     />
 
                     <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />

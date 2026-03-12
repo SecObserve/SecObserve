@@ -1,6 +1,16 @@
 import { Box, Grid, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
-import { BooleanField, EditButton, Labeled, NumberField, Show, TextField, TopToolbar, WithRecord } from "react-admin";
+import {
+    BooleanField,
+    EditButton,
+    Labeled,
+    NumberField,
+    Show,
+    TextArrayField,
+    TextField,
+    TopToolbar,
+    WithRecord,
+} from "react-admin";
 
 import settings from ".";
 import ListHeader from "../../commons/layout/ListHeader";
@@ -163,23 +173,59 @@ const SettingsShowComponent = () => {
                                 </Labeled>
                             )}
                             {feature_email() && settings.exception_email_to && (
-                                <Labeled label="Exception email to">
+                                <Labeled label="Exception email to for exception notifications">
                                     <TextField source="exception_email_to" />
                                 </Labeled>
                             )}
                             {settings.exception_ms_teams_webhook && (
-                                <Labeled label="Exception MS Teams webhook">
+                                <Labeled label="Exception MS Teams webhook for exception notifications">
                                     <TextField source="exception_ms_teams_webhook" />
                                 </Labeled>
                             )}
                             {settings.exception_slack_webhook && (
-                                <Labeled label="Exception Slack webhook">
+                                <Labeled label="Exception Slack webhook for exception notifications">
                                     <TextField source="exception_slack_webhook" />
                                 </Labeled>
                             )}
                             <Labeled label="Exception rate limit">
                                 <NumberField source="exception_rate_limit" />
                             </Labeled>
+                            {feature_email() && settings.observation_title_notification_email_to && (
+                                <Labeled label="Email to addresses for observation title notifications">
+                                    <TextField source="observation_title_notification_email_to" />
+                                </Labeled>
+                            )}
+                            {settings.observation_title_notification_ms_teams_webhook && (
+                                <Labeled label="MS Teams webhook for observation title notifications">
+                                    <TextField source="observation_title_notification_ms_teams_webhook" />
+                                </Labeled>
+                            )}
+                            {settings.observation_title_notification_slack_webhook && (
+                                <Labeled label="Slack webhook for observation titles notifications">
+                                    <TextField source="observation_title_notification_slack_webhook" />
+                                </Labeled>
+                            )}
+                            {settings.observation_title_notification_min_severity && (
+                                <Labeled label="Minimum severity for observation title notifications">
+                                    <TextField source="observation_title_notification_min_severity" />
+                                </Labeled>
+                            )}
+                            {settings.observation_title_notification_status_list &&
+                                settings.observation_title_notification_status_list.length > 0 && (
+                                    <Labeled label="Statuses for observation title notifications">
+                                        <TextArrayField source="observation_title_notification_status_list" />
+                                    </Labeled>
+                                )}
+                            {settings.observation_title_notification_min_priority && (
+                                <Labeled label="Minimum priority for observation title notifications">
+                                    <TextField source="observation_title_notification_min_priority" />
+                                </Labeled>
+                            )}
+                            {settings.observation_title_notification_parser_type && (
+                                <Labeled label="Parser type for observation title notifications">
+                                    <TextField source="observation_title_notification_parser_type" />
+                                </Labeled>
+                            )}
                         </Stack>
                     </Paper>
 

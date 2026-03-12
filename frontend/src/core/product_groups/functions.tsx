@@ -89,10 +89,9 @@ export const ProductGroupCreateEditComponent = ({
             </Typography>
             <Stack spacing={1}>
                 {feature_email() && (
-                    <TextInputWide
+                    <TextInputExtraWide
                         source="notification_email_to"
-                        label="Email"
-                        helperText="Comma separated email to addresses to send notifications via email"
+                        label="Comma separated email to addresses to send notifications via email"
                         validate={validate_255}
                     />
                 )}

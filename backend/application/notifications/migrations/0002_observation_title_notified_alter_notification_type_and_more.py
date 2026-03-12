@@ -70,6 +70,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("Exception", "Exception"),
                     ("Observation", "Observation"),
+                    ("Observation title", "Observation title"),
                     ("Security gate", "Security gate"),
                     ("Task", "Task"),
                 ],

@@ -4,8 +4,11 @@ from typing import Optional
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log
-from application.notifications.services.send_notifications import (
+from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
+)
+from application.notifications.services.send_notifications_observation_title import (
+    send_observation_title_notification,
 )
 
 
@@ -43,6 +46,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     observation.product.save()
 
     send_observation_notification(observation)
+    send_observation_title_notification(observation)
 
     return observation_log
 

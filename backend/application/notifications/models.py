@@ -18,12 +18,14 @@ from application.core.types import Severity, Status
 class Notification(Model):
     TYPE_EXCEPTION = "Exception"
     TYPE_OBSERVATION = "Observation"
+    TYPE_OBSERVATION_TITLE = "Observation title"
     TYPE_SECURITY_GATE = "Security gate"
     TYPE_TASK = "Task"
 
     TYPE_CHOICES = [
         (TYPE_EXCEPTION, TYPE_EXCEPTION),
         (TYPE_OBSERVATION, TYPE_OBSERVATION),
+        (TYPE_OBSERVATION_TITLE, TYPE_OBSERVATION_TITLE),
         (TYPE_SECURITY_GATE, TYPE_SECURITY_GATE),
         (TYPE_TASK, TYPE_TASK),
     ]

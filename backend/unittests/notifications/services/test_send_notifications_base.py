@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta
-from unittest.mock import ANY, call, patch
+from datetime import datetime
+from unittest.mock import patch
 
 from requests import Response
 
 from application.commons.models import Settings
 from application.commons.services.functions import get_classname
-from application.notifications.models import Notification
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
     send_email_notification,
@@ -71,7 +70,7 @@ class TestPushNotifications(BaseTestCase):
     @patch("application.notifications.services.send_notifications_base.send_mail")
     @patch("application.notifications.services.send_notifications_base.logger.error")
     @patch("application.notifications.services.send_notifications_base.format_log_message")
-    def test_send_msteams_notification_success(
+    def test_send_email_notification_success(
         self,
         mock_format,
         mock_logger,
