@@ -7,10 +7,13 @@ from django.db.models import (
     CharField,
     IntegerField,
     Model,
+    TextField,
 )
 
 from application.commons.services.request_cache import cache_for_request
 from application.commons.types import VEX_Justification_Styles
+from application.core.types import Severity
+from application.import_observations.types import Parser_Type
 
 
 class Settings(Model, DirtyFieldsMixin):
@@ -68,13 +71,13 @@ class Settings(Model, DirtyFieldsMixin):
         help_text="Base URL of the frontend, used to set links in notifications correctly",
     )
 
-    exception_ms_teams_webhook = CharField(
-        max_length=255,
+    exception_ms_teams_webhook = TextField(
+        max_length=2048,
         blank=True,
         help_text="MS Teams webhook to send exception notifications",
     )
-    exception_slack_webhook = CharField(
-        max_length=255,
+    exception_slack_webhook = TextField(
+        max_length=2048,
         blank=True,
         help_text="Slack webhook to send exception notifications",
     )
@@ -93,6 +96,18 @@ class Settings(Model, DirtyFieldsMixin):
         blank=True,
         help_text="Comma separated email addresses to send exception notifications",
     )
+
+    observation_title_notification_ms_teams_webhook = TextField(max_length=2048, blank=True)
+    observation_title_notification_slack_webhook = TextField(max_length=2048, blank=True)
+    observation_title_notification_email_to = CharField(max_length=255, blank=True)
+    observation_title_notification_min_severity = CharField(
+        max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True
+    )
+    observation_title_notification_statuses = CharField(max_length=255, blank=True)
+    observation_title_notification_min_priority = IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(99)], null=True
+    )
+    observation_title_notification_parser_type = CharField(max_length=16, choices=Parser_Type.TYPE_CHOICES, blank=True)
 
     background_product_metrics_interval_minutes = IntegerField(
         default=5,

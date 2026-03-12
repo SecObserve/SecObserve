@@ -34,5 +34,7 @@ export const transform_product_group_and_product = (data: any, description: stri
         data.risk_acceptance_expiry_days ||= null;
     }
 
+    data.observation_notification_min_severity ??= "";
+
     return data;
 };

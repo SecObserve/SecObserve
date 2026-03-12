@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import {
-    AutocompleteInput,
     BooleanInput,
     ChipField,
     Datagrid,
@@ -31,7 +30,7 @@ const messageShortened = (message: string | null) => {
 };
 
 const listFilters = [
-    <AutocompleteInput source="type" choices={TYPE_CHOICES} alwaysOn />,
+    <AutocompleteInputMedium source="type" choices={TYPE_CHOICES} alwaysOn />,
     <TextInput source="name" alwaysOn />,
     <TextInput source="message" alwaysOn />,
     <TextInput source="function" alwaysOn />,

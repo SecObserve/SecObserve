@@ -1,11 +1,12 @@
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.serializers import (
     CharField,
     DateField,
     IntegerField,
+    ListField,
     ModelSerializer,
     Serializer,
     SerializerMethodField,
@@ -55,6 +56,11 @@ from application.rules.types import Rule_Status
 
 class ProductCoreSerializer(ModelSerializer):
     permissions = SerializerMethodField()
+    observation_notification_status_list = ListField(
+        child=CharField(),
+        required=False,
+        allow_empty=True,
+    )
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
         return get_permissions_for_role(get_highest_user_role(obj))
@@ -99,6 +105,38 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["security_gate_threshold_unknown"] = None
 
         return super().validate(attrs)
+
+    def validate_observation_notification_status_list(self, value: list[str]) -> list[str]:
+        if not isinstance(value, list):
+            raise ValidationError("Status list must be a list of strings")
+
+        invalid_statuses = []
+        for status in value:
+            if status not in Status.STATUS_LIST:
+                invalid_statuses.append(status)
+
+        if invalid_statuses:
+            raise ValidationError(f"Invalid statuses: {', '.join(invalid_statuses)}")
+
+        return value
+
+    def to_representation(self, instance: Product) -> dict[str, Any]:
+        data = super().to_representation(instance)
+
+        data["observation_notification_status_list"] = (
+            instance.observation_notification_statuses.split(",") if instance.observation_notification_statuses else []
+        )
+        return data
+
+    def to_internal_value(self, data: dict) -> dict:
+        validated_data = super().to_internal_value(data)
+
+        if "observation_notification_status_list" in validated_data:
+            statuses = validated_data["observation_notification_status_list"]
+            if isinstance(statuses, list):
+                validated_data["observation_notification_statuses"] = ",".join(statuses)
+
+        return validated_data
 
 
 class ProductGroupSerializer(ProductCoreSerializer):
@@ -165,6 +203,9 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "unknown_licenses_count",
             "allowed_licenses_count",
             "ignored_licenses_count",
+            "observation_notification_min_severity",
+            "observation_notification_status_list",
+            "observation_notification_min_priority",
         ]
 
     def create(self, validated_data: dict) -> Product:
@@ -205,7 +246,7 @@ class ProductListSerializer(ProductCoreSerializer):
 
     class Meta:
         model = Product
-        exclude = ["is_product_group", "members", "authorization_group_members"]
+        exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
 
     def get_product_group_name(self, obj: Product) -> str:
         if not obj.product_group:
@@ -240,7 +281,7 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     class Meta:
         model = Product
         read_only_fields = ["repository_default_branch"]
-        exclude = ["is_product_group", "members", "authorization_group_members"]
+        exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
 
     def get_product_group_repository_branch_housekeeping_active(self, obj: Product) -> Optional[bool]:
         if not obj.product_group:
