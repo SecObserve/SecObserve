@@ -53,7 +53,7 @@
         "not op_mini all"
     ],
     "devDependencies": {
-        "@eslint/eslintrc": "3.3.4",
+        "@eslint/eslintrc": "3.3.5",
         "@eslint/js": "9.39.4",
         "@microsoft/eslint-formatter-sarif": "3.1.0",
         "@trivago/prettier-plugin-sort-imports": "6.0.2",
