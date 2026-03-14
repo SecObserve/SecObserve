@@ -23,7 +23,7 @@
         "markdown-to-jsx": "9.7.6",
         "marked": "17.0.4",
         "mermaid": "11.13.0",
-        "oidc-client-ts": "3.4.1",
+        "oidc-client-ts": "3.5.0",
         "packageurl-js": "2.0.1",
         "prop-types": "15.8.1",
         "query-string": "9.3.1",
