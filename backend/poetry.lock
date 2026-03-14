@@ -3035,30 +3035,30 @@ files = [
 
 [[package]]
 name = "spdx-tools"
-version = "0.8.3"
+version = "0.8.5"
 description = "SPDX parser and tools."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "spdx-tools-0.8.3.tar.gz", hash = "sha256:68b8f9ce2893b5216bd90b2e63f1c821c2884e4ebc4fd295ebbf1fa8b8a94b93"},
-    {file = "spdx_tools-0.8.3-py3-none-any.whl", hash = "sha256:638fd9bd8be61901316eb6d063574e16d5403a1870073ec4d9241426a997501a"},
+    {file = "spdx_tools-0.8.5-py3-none-any.whl", hash = "sha256:7c2d5865941be9d2e898f5b084e8d5422dd298dc5a29320ddb198fec304f59c4"},
+    {file = "spdx_tools-0.8.5.tar.gz", hash = "sha256:be600beb2f762f0116025e05490d399e724f668bef84025a7c421bb266688bdb"},
 ]
 
 [package.dependencies]
 beartype = "*"
 click = "*"
-license-expression = "*"
+license_expression = "*"
 ply = "*"
 pyyaml = "*"
 rdflib = "*"
-semantic-version = "*"
+semantic_version = "*"
 uritools = "*"
 xmltodict = "*"
 
 [package.extras]
 code-style = ["black", "flake8", "isort"]
-development = ["black", "flake8", "isort", "networkx", "pytest"]
+development = ["black", "flake8", "isort", "networkx", "pyshacl", "pytest"]
 graph-generation = ["networkx", "pygraphviz"]
 test = ["pyshacl", "pytest", "tzdata"]
 
@@ -3353,4 +3353,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "abcb4c08fe973456546af30f27203290c914ea7575fbfcbfb84fe0d640869399"
+content-hash = "49b2ca7b2fc22f31413ec421e8b97fc61a5610565cd93cb3bd25f7519b8a131b"
