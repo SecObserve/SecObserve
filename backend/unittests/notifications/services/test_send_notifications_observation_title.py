@@ -131,6 +131,23 @@ class TestSendObservationTitleNotification(BaseTestCase):
     @patch(f"{MODULE}.Observation_Title_Notified")
     @patch(f"{MODULE}.Severity")
     @patch(f"{MODULE}.Settings")
+    def test_priority_filter_blocks_no_priority(self, mock_settings_cls, mock_severity, mock_otn, mock_send):
+        """Observation with no priority is blocked."""
+        settings = _make_settings(min_priority=2)
+        mock_settings_cls.load.return_value = settings
+        mock_otn.DoesNotExist = Exception
+        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
+
+        # no priority in observation -> blocked
+        observation = _make_observation(current_priority=None)
+        send_observation_title_notification(observation)
+
+        mock_send.assert_not_called()
+
+    @patch(f"{MODULE}._send_observation_title_notifications")
+    @patch(f"{MODULE}.Observation_Title_Notified")
+    @patch(f"{MODULE}.Severity")
+    @patch(f"{MODULE}.Settings")
     def test_parser_type_filter_blocks_wrong_type(self, mock_settings_cls, mock_severity, mock_otn, mock_send):
         """Observation with a different parser type than the filter is blocked."""
         settings = _make_settings(min_severity="Critical", parser_type="DAST")

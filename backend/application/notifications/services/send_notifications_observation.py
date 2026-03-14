@@ -46,8 +46,7 @@ def send_observation_notification(observation: Observation) -> None:
         )
         and (
             not observation_notification_min_priority
-            or not observation.current_priority
-            or observation.current_priority <= observation_notification_min_priority
+            or (observation.current_priority and observation.current_priority <= observation_notification_min_priority)
         )
     ):
         try:

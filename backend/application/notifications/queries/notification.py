@@ -51,7 +51,12 @@ def get_notifications() -> QuerySet[Notification]:
                 | Q(authorization_group_member=True)
                 | Q(product_group_authorization_group_member=True)
             )
-            & (Q(type=Notification.TYPE_SECURITY_GATE) | Q(type=Notification.TYPE_TASK))
+            & (
+                Q(type=Notification.TYPE_SECURITY_GATE)
+                | Q(type=Notification.TYPE_TASK)
+                | Q(type=Notification.TYPE_OBSERVATION)
+                | Q(type=Notification.TYPE_OBSERVATION_TITLE)
+            )
         )
 
     return notifications

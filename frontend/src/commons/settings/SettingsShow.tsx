@@ -159,7 +159,7 @@ const SettingsShowComponent = () => {
 
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                            Integrations
+                            Notifications
                         </Typography>
                         <Stack spacing={2}>
                             {settings.base_url_frontend && (
