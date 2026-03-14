@@ -171,7 +171,7 @@ export const RuleShowComponent = ({ rule }: any) => {
                     {rule.rego_module && (
                         <Labeled label="Rego module">
                             <SyntaxHighlighter
-                                language="javascript"
+                                language="rego"
                                 style={getRegoTheme()}
                                 wrapLongLines
                                 customStyle={{ lineHeight: "1.43", fontSize: "0.875rem" }}
