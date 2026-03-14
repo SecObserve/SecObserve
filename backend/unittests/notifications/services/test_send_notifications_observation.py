@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, call, patch
 
 from application.commons.models import Settings
+from application.core.types import Status
 from application.notifications.models import Notification, Observation_Notified
 from application.notifications.services.send_notifications_observation import (
     _send_observation_notifications,
@@ -33,6 +34,35 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_statuses.return_value = None
         mock_get_min_priority.return_value = None
         mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+
+        send_observation_notification(self.observation_1)
+
+        mock_send_notifications.assert_not_called()
+        mock_observation_notified_get.assert_called_once_with(observation=self.observation_1)
+
+    @patch("application.notifications.services.send_notifications_observation._send_observation_notifications")
+    @patch(
+        "application.notifications.services.send_notifications_observation._get_observation_notification_min_priority"
+    )
+    @patch("application.notifications.services.send_notifications_observation._get_observation_notification_statuses")
+    @patch(
+        "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
+    )
+    @patch("application.notifications.models.Observation_Notified.objects.get")
+    def test_send_observation_notification_no_priority_in_observation(
+        self,
+        mock_observation_notified_get,
+        mock_get_min_severity,
+        mock_get_statuses,
+        mock_get_min_priority,
+        mock_send_notifications,
+    ):
+        mock_get_min_severity.return_value = None
+        mock_get_statuses.return_value = None
+        mock_get_min_priority.return_value = 2
+        mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+        self.observation_1.current_status = Status.STATUS_OPEN
+        self.observation_1.current_priority = None
 
         send_observation_notification(self.observation_1)
 

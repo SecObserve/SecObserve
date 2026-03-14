@@ -48,8 +48,10 @@ def send_observation_title_notification(observation: Observation) -> None:
         )
         and (
             not observation_title_notification_min_priority
-            or not observation.current_priority
-            or observation.current_priority <= observation_title_notification_min_priority
+            or (
+                observation.current_priority
+                and observation.current_priority <= observation_title_notification_min_priority
+            )
         )
         and (
             not observation_title_notification_parser_type
