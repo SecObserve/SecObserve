@@ -4,6 +4,7 @@ from typing import Optional
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log
+from application.core.types import Assessment_Status
 from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
 )
@@ -45,8 +46,12 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     observation.product.last_observation_change = observation_log.created
     observation.product.save()
 
-    send_observation_notification(observation)
-    send_observation_title_notification(observation)
+    if assessment_status in (
+        Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+        Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+    ):
+        send_observation_notification(observation)
+        send_observation_title_notification(observation)
 
     return observation_log
 
