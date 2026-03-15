@@ -48,14 +48,15 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
             .then((result: any) => {
                 setCount(result.json.count);
                 setData(result.json.results);
+                setLoading(false);
             })
             .catch((error) => {
                 setOpen(false);
                 notify(error.message, {
                     type: "warning",
                 });
+                setLoading(false);
             });
-        setLoading(false);
     };
 
     const handleOpen = () => {
@@ -79,7 +80,6 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
 
     const listContext = useList({
         data,
-        isLoading: loading,
     });
 
     return (
