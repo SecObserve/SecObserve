@@ -18,7 +18,7 @@ import {
     WithListContext,
     useListController,
 } from "react-admin";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
@@ -40,6 +40,19 @@ import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationBulkDeleteButton from "./ObservationBulkDeleteButton";
 import ObservationExpand from "./ObservationExpand";
 import { IDENTIFIER_OBSERVATION_EMBEDDED_LIST, setListIdentifier } from "./functions";
+
+function hasObservationListParams(search: string): boolean {
+    const searchParams = new URLSearchParams(search);
+
+    return (
+        searchParams.has("filter") ||
+        searchParams.has("displayedFilters") ||
+        searchParams.has("page") ||
+        searchParams.has("perPage") ||
+        searchParams.has("sort") ||
+        searchParams.has("order")
+    );
+}
 
 function listFilters(product: Product) {
     const filters = [];
@@ -129,6 +142,7 @@ const BulkActionButtons = (product: any) => (
 const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) => {
     setListIdentifier(IDENTIFIER_OBSERVATION_EMBEDDED_LIST);
 
+    const location = useLocation();
     const navigate = useNavigate();
     function get_observations_url(branch_id: Identifier): string {
         return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
@@ -141,9 +155,11 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
             localStorage.removeItem("RaStore.license_components.overview");
             localStorage.removeItem("RaStore.vulnerability_checks.embedded");
             localStorage.setItem("observationembeddedlist.product", product.id);
-            navigate(get_observations_url(product.repository_default_branch));
+            if (product.repository_default_branch && !hasObservationListParams(location.search)) {
+                navigate(get_observations_url(product.repository_default_branch), { replace: true });
+            }
         }
-    }, [product, navigate]);
+    }, [location.search, navigate, product.id, product.repository_default_branch]);
 
     const listContext = useListController({
         filter: { product: Number(product.id) },
