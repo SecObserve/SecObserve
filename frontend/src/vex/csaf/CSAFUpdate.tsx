@@ -1,10 +1,11 @@
 import EditIcon from "@mui/icons-material/Edit";
-import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
 import { Fragment, useState } from "react";
 import { SimpleForm, useNotify, useRefresh } from "react-admin";
 
 import axios_instance from "../../access_control/auth_provider/axios_instance";
 import EditButton from "../../commons/custom_fields/EditButton";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_required, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
@@ -107,11 +108,7 @@ const CSAFUpdate = () => {
                     </SimpleForm>
                 </DialogContent>
             </Dialog>
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </Fragment>
     );
 };

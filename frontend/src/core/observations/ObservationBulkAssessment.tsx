@@ -1,5 +1,5 @@
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
-import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
 import {
     DateInput,
@@ -14,6 +14,7 @@ import {
 
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_after_today } from "../../commons/custom_validators";
 import {
@@ -172,11 +173,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                     </SimpleForm>
                 </DialogContent>
             </Dialog>
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={loading && open} />
         </Fragment>
     );
 };

@@ -1,8 +1,8 @@
-import { Backdrop, CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { Confirm, useListContext, useNotify, useRefresh, useUnselectAll } from "react-admin";
 
 import RemoveButton from "../../commons/custom_fields/RemoveButton";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 type LicenseComponentBulkDeleteButtonProps = {
@@ -64,11 +64,7 @@ const LicenseComponentBulkDeleteButton = (props: LicenseComponentBulkDeleteButto
                 onConfirm={handleConfirm}
                 onClose={handleDialogClose}
             />
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </>
     );
 };

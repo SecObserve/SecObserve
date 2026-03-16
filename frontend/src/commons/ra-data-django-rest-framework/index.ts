@@ -61,6 +61,8 @@ function createOptionsFromTokenOIDC() {
 }
 
 export async function httpClient(url: string, options?: fetchUtils.Options | undefined) {
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
     if (oidc_signed_in()) {
         return updateRefreshToken()
             .then(() => {

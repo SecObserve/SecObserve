@@ -1,8 +1,9 @@
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Backdrop, Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 import { Fragment, useState } from "react";
 import { Confirm, useListContext, useNotify, useRefresh, useUnselectAll } from "react-admin";
 
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 type AssessmentDeleteApprovalProps = {
@@ -56,23 +57,19 @@ const AssessmentDeleteApproval = ({ storeKey }: AssessmentDeleteApprovalProps) =
             <Button
                 onClick={handleOpen}
                 size="small"
-                sx={{ paddingTop: "0px", paddingBottom: "2px" }}
+                sx={{ paddingTop: "0px", paddingBottom: "2px", color: "#d32f2f" }}
                 startIcon={<DeleteIcon />}
             >
                 Delete
             </Button>
             <Confirm
-                isOpen={open}
+                isOpen={open && !loading}
                 title="Delete assessments"
                 content={"Are you sure you want to delete the selected assessments?"}
                 onConfirm={assessmentDelete}
                 onClose={handleCancel}
             />
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={loading && open} />
         </Fragment>
     );
 };
