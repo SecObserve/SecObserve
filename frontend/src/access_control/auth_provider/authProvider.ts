@@ -40,18 +40,17 @@ const authProvider: AuthProvider = {
         }
     },
     logout: async () => {
-    localStorage.removeItem("jwt");
-    localStorage.removeItem("user");
-    localStorage.removeItem("notification_count");
-    if (oidc_signed_in()) {
-        // ✅ Fire BEFORE anything else — AdminApp unmounts immediately
-        window.dispatchEvent(new Event("oidc-logout-start"));
-        queryClient.clear();
-        const user_manager = new UserManager(oidcConfig);
-        user_manager.signoutRedirect();
-        return new Promise<void>(() => {});
-    }
-    return Promise.resolve();    },
+        localStorage.removeItem("jwt");
+        localStorage.removeItem("user");
+        localStorage.removeItem("notification_count");
+
+        if (oidc_signed_in()) {
+            const user_manager = new UserManager(oidcConfig);
+            return user_manager.signoutRedirect();
+        }
+
+        return Promise.resolve();
+    },
     checkError: async (error) => {
         if (error.status === 401) {
             if (location.hash !== "#/login") {

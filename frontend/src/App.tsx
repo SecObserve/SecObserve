@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Admin, CustomRoutes, Resource, addRefreshAuthToAuthProvider, addRefreshAuthToDataProvider } from "react-admin";
 import { useAuth } from "react-oidc-context";
 import { AuthProvider } from "react-oidc-context";
@@ -51,16 +51,19 @@ const defaultTheme = getTheme();
 const AdminApp = () => {
     const auth = useAuth();
     const initialLoadDone = useRef(false);
-    const [loggingOut, setLoggingOut] = useState(false);
 
     useEffect(() => {
-        const handler = () => setLoggingOut(true);
-        window.addEventListener("oidc-logout-start", handler);
-        return () => window.removeEventListener("oidc-logout-start", handler);
-    }, []);
-
-    // Unmount immediately when logout begins — before OIDC fires state changes
-    if (loggingOut) return null;
+        const unsubscribeQuery = queryClient.getQueryCache().subscribe((event) => {
+            console.log("Query event:", event.type, JSON.stringify(event.query.queryKey));
+        });
+        const unsubscribeMutation = queryClient.getMutationCache().subscribe((event) => {
+            console.log("Mutation event:", event.type, JSON.stringify(event.mutation?.options.mutationKey));
+        });
+        return () => {
+            unsubscribeQuery();
+            unsubscribeMutation();
+        };
+    }, []); // empty deps = subscribe once, unsubscribe on unmount
 
     if (auth.isLoading && !initialLoadDone.current) return null;
 
