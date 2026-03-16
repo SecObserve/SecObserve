@@ -49,6 +49,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     if assessment_status in (
         Assessment_Status.ASSESSMENT_STATUS_APPROVED,
         Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+        Assessment_Status.ASSESSMENT_STATUS_REMOVED,
     ):
         send_observation_notification(observation)
         send_observation_title_notification(observation)
