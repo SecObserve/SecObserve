@@ -1,5 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Divider, Typography } from "@mui/material";
 import { Fragment, useState } from "react";
 import {
     ArrayInput,
@@ -15,6 +15,7 @@ import axios_instance from "../../access_control/auth_provider/axios_instance";
 import AddButton from "../../commons/custom_fields/AddButton";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_255, validate_required, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
@@ -157,11 +158,7 @@ const CSAFCreate = () => {
                     </CreateBase>
                 </DialogContent>
             </Dialog>
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </Fragment>
     );
 };

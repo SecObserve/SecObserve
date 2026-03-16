@@ -1,11 +1,12 @@
 import UploadIcon from "@mui/icons-material/Upload";
-import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useState } from "react";
 import { FileField, FileInput, SimpleForm, WithRecord, useNotify, useRefresh } from "react-admin";
 
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import MenuButton from "../../commons/custom_fields/MenuButton";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_required } from "../../commons/custom_validators";
 import { getIconAndFontColor } from "../../commons/functions";
@@ -140,11 +141,7 @@ const FileUploadSBOM = () => {
                     </SimpleForm>
                 </DialogContent>
             </Dialog>
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </Fragment>
     );
 };
