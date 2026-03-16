@@ -165,7 +165,7 @@ def _get_assessments_need_approval(product: Product) -> bool:
 
 
 def remove_assessment(observation: Observation, comment: str) -> bool:
-    if observation.assessment_severity or observation.assessment_status:
+    if observation.assessment_severity or observation.assessment_status or observation.assessment_priority:
         observation.assessment_severity = ""
         observation.assessment_status = ""
         observation.assessment_priority = None
