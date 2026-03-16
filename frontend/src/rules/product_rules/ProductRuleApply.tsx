@@ -1,8 +1,9 @@
 import GeneralRuleIcon from "@mui/icons-material/Rule";
-import { Backdrop, Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 import { useState } from "react";
 import { Confirm, useNotify, useRefresh } from "react-admin";
 
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 type ProductRuleApplyProps = {
@@ -59,11 +60,7 @@ const ProductRuleApply = (props: ProductRuleApplyProps) => {
                 onConfirm={handleConfirm}
                 onClose={handleDialogClose}
             />
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </>
     );
 };

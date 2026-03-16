@@ -1,9 +1,9 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
-import { Backdrop, CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { Confirm, useListContext, useNotify, useRefresh, useUnselectAll } from "react-admin";
 
 import SmallButton from "../commons/custom_fields/SmallButton";
+import { Spinner } from "../commons/custom_fields/Spinner";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import { update_notification_count } from "./notification_count";
 
@@ -59,11 +59,7 @@ const NotificationBulkMarkAsViewedButton = () => {
                 onConfirm={handleConfirm}
                 onClose={handleDialogClose}
             />
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </>
     );
 };
