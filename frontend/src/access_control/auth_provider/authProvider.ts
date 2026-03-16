@@ -2,8 +2,14 @@ import { UserManager } from "oidc-client-ts";
 import { AuthProvider } from "react-admin";
 
 import { set_settings_in_local_storage } from "../../commons/functions";
+import { queryClient } from "../../commons/queryClient";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { oidcConfig, oidcStorageKey, oidc_signed_in } from "./oidc";
+
+let _isLoggingOut = false;
+export function getIsLoggingOut(): boolean {
+    return _isLoggingOut;
+}
 
 const authProvider: AuthProvider = {
     login: async ({ username, password }) => {
@@ -39,6 +45,9 @@ const authProvider: AuthProvider = {
         }
     },
     logout: async () => {
+        _isLoggingOut = true;
+        queryClient.clear();
+
         localStorage.removeItem("jwt");
         localStorage.removeItem("user");
         localStorage.removeItem("notification_count");
@@ -48,6 +57,7 @@ const authProvider: AuthProvider = {
             return user_manager.signoutRedirect();
         }
 
+        _isLoggingOut = false;
         return Promise.resolve();
     },
     checkError: async (error) => {
@@ -64,6 +74,10 @@ const authProvider: AuthProvider = {
         }
     },
     checkAuth: () => {
+        if (_isLoggingOut) {
+            return Promise.resolve();
+        }
+
         if (oidc_signed_in() || jwt_signed_in()) {
             return Promise.resolve();
         }
@@ -74,7 +88,7 @@ const authProvider: AuthProvider = {
 
         return Promise.reject({ message: false });
     },
-    getPermissions: () => Promise.reject(),
+    getPermissions: () => Promise.resolve(null),
     getIdentity: async () => {
         const id = 0;
         let fullName = "";
