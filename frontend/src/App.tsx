@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { Admin, CustomRoutes, Resource, addRefreshAuthToAuthProvider, addRefreshAuthToDataProvider } from "react-admin";
 import { useAuth } from "react-oidc-context";
 import { AuthProvider } from "react-oidc-context";
 import { Route } from "react-router";
 
 import AccessControlAdministration from "./access_control/access_control_administration/AccessControlAdministration";
-import authProvider from "./access_control/auth_provider/authProvider";
+import authProvider, { getIsLoggingOut } from "./access_control/auth_provider/authProvider";
 import { oidcConfig, updateRefreshToken } from "./access_control/auth_provider/oidc";
 import authorization_groups from "./access_control/authorization_groups";
 import { Login } from "./access_control/login";
@@ -52,32 +52,13 @@ const AdminApp = () => {
     const auth = useAuth();
     const initialLoadDone = useRef(false);
 
-    useEffect(() => {
-        const unsubscribeQuery = queryClient.getQueryCache().subscribe((event) => {
-            console.log("Query event:", event.type, JSON.stringify(event.query.queryKey));
-        });
-        const unsubscribeMutation = queryClient.getMutationCache().subscribe((event) => {
-            console.log("Mutation event:", event.type, JSON.stringify(event.mutation?.options.mutationKey));
-        });
-        return () => {
-            unsubscribeQuery();
-            unsubscribeMutation();
-        };
-    }, []); // empty deps = subscribe once, unsubscribe on unmount
-
     if (auth.isLoading && !initialLoadDone.current) return null;
 
     if (!auth.isLoading) {
         initialLoadDone.current = true;
     }
 
-    //     queryClient.getQueryCache().subscribe((event) => {
-    //     console.log("Query event:", event.type, JSON.stringify(event.query.queryKey));
-    // });
-
-    // queryClient.getMutationCache().subscribe((event) => {
-    //     console.log("Mutation event:", event.type, JSON.stringify(event.mutation?.options.mutationKey));
-    // });
+    if (getIsLoggingOut()) return null;
 
     return (
         <Admin

@@ -6,6 +6,11 @@ import { queryClient } from "../../commons/queryClient";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { oidcConfig, oidcStorageKey, oidc_signed_in } from "./oidc";
 
+let _isLoggingOut = false;
+export function getIsLoggingOut(): boolean {
+    return _isLoggingOut;
+}
+
 const authProvider: AuthProvider = {
     login: async ({ username, password }) => {
         if (oidc_signed_in()) {
@@ -40,6 +45,9 @@ const authProvider: AuthProvider = {
         }
     },
     logout: async () => {
+        _isLoggingOut = true;
+        queryClient.clear();
+
         localStorage.removeItem("jwt");
         localStorage.removeItem("user");
         localStorage.removeItem("notification_count");
@@ -49,6 +57,7 @@ const authProvider: AuthProvider = {
             return user_manager.signoutRedirect();
         }
 
+        _isLoggingOut = false;
         return Promise.resolve();
     },
     checkError: async (error) => {
@@ -65,6 +74,10 @@ const authProvider: AuthProvider = {
         }
     },
     checkAuth: () => {
+        if (_isLoggingOut) {
+            return Promise.resolve();
+        }
+
         if (oidc_signed_in() || jwt_signed_in()) {
             return Promise.resolve();
         }
