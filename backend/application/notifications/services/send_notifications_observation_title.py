@@ -1,3 +1,5 @@
+from typing import Optional
+
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
 from application.commons.services.functions import get_base_url_frontend
@@ -15,7 +17,7 @@ from application.notifications.services.send_notifications_base import (
 )
 
 
-def send_observation_title_notification(observation: Observation) -> None:
+def send_observation_title_notification(observation: Observation, observation_new: Optional[bool] = False) -> None:
     settings = Settings.load()
 
     observation_title_notification_min_severity = settings.observation_title_notification_min_severity
@@ -89,7 +91,7 @@ def send_observation_title_notification(observation: Observation) -> None:
             observation_title_notified.status = observation.current_status
             observation_title_notified.priority = observation.current_priority
             observation_title_notified.save()
-    else:
+    elif not observation_new:
         try:
             observation_title_notified = Observation_Title_Notified.objects.get(title=observation.title)
         except Observation_Title_Notified.DoesNotExist:
