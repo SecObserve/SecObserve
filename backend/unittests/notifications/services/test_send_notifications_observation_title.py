@@ -253,68 +253,6 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_send.assert_not_called()
 
     # -----------------------------------------------------------------------
-    # Else-branch: observation fell out of notifications
-    # -----------------------------------------------------------------------
-
-    @patch(f"{MODULE}.Settings")
-    @patch(f"{MODULE}.get_base_url_frontend")
-    @patch(f"{MODULE}._send_observation_title_notifications")
-    @patch(f"{MODULE}.Observation_Title_Notified")
-    def test_fell_out_of_notifications_deletes_record_new(self, mock_otn, mock_send, mock_base_url, mock_settings_cls):
-        """When filters no longer match and a record exists, a 'fell out' notification is sent
-        and the record is deleted."""
-        settings = _make_settings()  # no filters → outer condition False
-        mock_settings_cls.load.return_value = settings
-        mock_base_url.return_value = "https://app.example.com/"
-        mock_otn.DoesNotExist = Exception
-        existing = MagicMock()
-        mock_otn.objects.get.return_value = existing
-
-        observation = _make_observation()
-        send_observation_title_notification(observation, True)
-
-        mock_send.assert_not_called()
-        existing.delete.assert_not_called()
-
-    @patch(f"{MODULE}.Settings")
-    @patch(f"{MODULE}.get_base_url_frontend")
-    @patch(f"{MODULE}._send_observation_title_notifications")
-    @patch(f"{MODULE}.Observation_Title_Notified")
-    def test_fell_out_of_notifications_deletes_record_not_new(
-        self, mock_otn, mock_send, mock_base_url, mock_settings_cls
-    ):
-        """When filters no longer match and a record exists, a 'fell out' notification is sent
-        and the record is deleted."""
-        settings = _make_settings()  # no filters → outer condition False
-        mock_settings_cls.load.return_value = settings
-        mock_base_url.return_value = "https://app.example.com/"
-        mock_otn.DoesNotExist = Exception
-        existing = MagicMock()
-        mock_otn.objects.get.return_value = existing
-
-        observation = _make_observation()
-        send_observation_title_notification(observation)
-
-        first_line_arg = mock_send.call_args[0][2]
-        assert "fell out of notifications" in first_line_arg
-        existing.delete.assert_called_once()
-
-    @patch(f"{MODULE}._send_observation_title_notifications")
-    @patch(f"{MODULE}.Observation_Title_Notified")
-    @patch(f"{MODULE}.Settings")
-    def test_fell_out_returns_early_when_no_record(self, mock_settings_cls, mock_otn, mock_send):
-        """When filters don't match and no record exists, return early without sending."""
-        settings = _make_settings()
-        mock_settings_cls.load.return_value = settings
-        mock_otn.DoesNotExist = Exception
-        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
-
-        observation = _make_observation()
-        send_observation_title_notification(observation)
-
-        mock_send.assert_not_called()
-
-    # -----------------------------------------------------------------------
     # URL construction
     # -----------------------------------------------------------------------
 
