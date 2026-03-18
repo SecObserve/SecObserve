@@ -110,7 +110,8 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                 product.notification_ms_teams_webhook ||
                 product.notification_slack_webhook ||
                 product.observation_notification_min_severity ||
-                product.observation_notification_status_list ||
+                (product.observation_notification_status_list &&
+                    product.observation_notification_status_list.length > 0) ||
                 product.observation_notification_min_priority) && (
                 <Fragment>
                     <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
