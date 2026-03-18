@@ -23,7 +23,7 @@ django-dirtyfields = "1.9.9"  # https://github.com/romgar/django-dirtyfields
 
 # Django REST Framework
 # ------------------------------------------------------------------------------
-djangorestframework = "3.16.1"  # https://github.com/encode/django-rest-framework
+djangorestframework = "3.17.0"  # https://github.com/encode/django-rest-framework
 django-cors-headers = "4.9.0" # https://github.com/adamchainz/django-cors-headers
 
 # OpenAPI 3
