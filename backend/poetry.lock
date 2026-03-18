@@ -957,20 +957,20 @@ formatting = ["autopep8"]
 
 [[package]]
 name = "django-stubs"
-version = "5.2.9"
+version = "6.0.1"
 description = "Mypy stubs for Django"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "django_stubs-5.2.9-py3-none-any.whl", hash = "sha256:2317a7130afdaa76f6ff7f623650d7f3bf1b6c86a60f95840e14e6ec6de1a7cd"},
-    {file = "django_stubs-5.2.9.tar.gz", hash = "sha256:c192257120b08785cfe6f2f1c91f1797aceae8e9daa689c336e52c91e8f6a493"},
+    {file = "django_stubs-6.0.1-py3-none-any.whl", hash = "sha256:d885044bd0876610f3eb969d6b5ed22f386002a879fdcb369cd8efa0502dbbce"},
+    {file = "django_stubs-6.0.1.tar.gz", hash = "sha256:e1ca63634221b57a55e16562b9b6d1849aeee2cabfd0fc026084dbe8aa893366"},
 ]
 
 [package.dependencies]
 django = "*"
-django-stubs-ext = ">=5.2.9"
+django-stubs-ext = ">=6.0.1"
 types-pyyaml = "*"
 typing-extensions = ">=4.11.0"
 
@@ -981,15 +981,15 @@ redis = ["redis", "types-redis"]
 
 [[package]]
 name = "django-stubs-ext"
-version = "5.2.9"
+version = "6.0.1"
 description = "Monkey-patching and extensions for django-stubs"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "django_stubs_ext-5.2.9-py3-none-any.whl", hash = "sha256:230c51575551b0165be40177f0f6805f1e3ebf799b835c85f5d64c371ca6cf71"},
-    {file = "django_stubs_ext-5.2.9.tar.gz", hash = "sha256:6db4054d1580657b979b7d391474719f1a978773e66c7070a5e246cd445a25a9"},
+    {file = "django_stubs_ext-6.0.1-py3-none-any.whl", hash = "sha256:17415759b9a3f4b4da7998ac3b08c7dc5137f9a019490b918aece1a8a4c2ade4"},
+    {file = "django_stubs_ext-6.0.1.tar.gz", hash = "sha256:633b280f89c0cbb7e3ce2f2f842e0acc43d8091378e75f84921d6be675d052dc"},
 ]
 
 [package.dependencies]
@@ -3353,4 +3353,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.11, < 3.15"
-content-hash = "19363a34fad07f6fc3ef75c148770a8b9d81163fd30d2bababebcf4799459888"
+content-hash = "bde2f7878ae4fb0b292b8dfdd55ddc7ce84b3b39df3da0290931faa1268b0e95"
