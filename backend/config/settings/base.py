@@ -6,7 +6,7 @@ from pathlib import Path
 from socket import gethostbyname, gethostname
 
 import environ
-from csp.constants import NONE, SELF
+from django.utils.csp import CSP
 
 from application.__init__ import __version__
 
@@ -178,12 +178,12 @@ MIDDLEWARE = [
     # Deactivated LocaleMiddleware to ensure English messages
     # "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "csp.middleware.CSPMiddleware",
     "application.commons.services.global_request.GlobalRequestMiddleware",
     "application.commons.services.request_cache.RequestCacheMiddleware",
     "application.commons.services.security_headers.SecurityHeadersMiddleware",
@@ -274,14 +274,13 @@ SECURE_BROWSER_XSS_FILTER = False
 # https://docs.djangoproject.com/en/dev/ref/settings/#x-frame-options
 X_FRAME_OPTIONS = "DENY"
 # https://django-csp.readthedocs.io/en/latest/configuration.html
-CONTENT_SECURITY_POLICY = {
-    "DIRECTIVES": {
-        "script-src": [SELF],
-        "object-src": [NONE],
-        "frame-ancestors": [SELF],
-        "form-action": [SELF],
-        "base-uri": [NONE],
-    },
+SECURE_CSP = {
+    "base-uri": [CSP.NONE],
+    "default-src": [CSP.SELF],
+    "form-action": [CSP.SELF],
+    "frame-ancestors": [CSP.SELF],
+    "object-src": [CSP.NONE],
+    "script-src": [CSP.SELF],
 }
 # https://docs.djangoproject.com/en/dev/ref/middleware/#http-strict-transport-security
 SECURE_HSTS_SECONDS = 31536000

@@ -32,7 +32,7 @@
             "matchPackageNames": [
                 "django"
             ],
-            "allowedVersions": "<5.3"
+            "allowedVersions": "<6.1"
         },
         {
             "matchPackageNames": [
