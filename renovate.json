@@ -32,13 +32,13 @@
             "matchPackageNames": [
                 "django"
             ],
-            "allowedVersions": "<5.3"
+            "allowedVersions": "<6.1"
         },
         {
             "matchPackageNames": [
                 "node"
             ],
-            "allowedVersions": "<23"
+            "allowedVersions": "<25"
         },
         {
             "matchPackageNames": [

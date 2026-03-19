@@ -470,7 +470,7 @@ description = "Cross-platform colored terminal text."
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 groups = ["main"]
-markers = "(sys_platform == \"win32\" or platform_system == \"Windows\") and (extra == \"dev\" or extra == \"code-quality\" or platform_system == \"Windows\")"
+markers = "sys_platform == \"win32\" and (extra == \"dev\" or extra == \"code-quality\") or platform_system == \"Windows\""
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -760,24 +760,24 @@ profile = ["gprof2dot (>=2022.7.29)"]
 
 [[package]]
 name = "django"
-version = "5.2.12"
+version = "6.0.3"
 description = "A high-level Python web framework that encourages rapid development and clean, pragmatic design."
 optional = false
-python-versions = ">=3.10"
+python-versions = ">=3.12"
 groups = ["main"]
 files = [
-    {file = "django-5.2.12-py3-none-any.whl", hash = "sha256:4853482f395c3a151937f6991272540fcbf531464f254a347bf7c89f53c8cff7"},
-    {file = "django-5.2.12.tar.gz", hash = "sha256:6b809af7165c73eff5ce1c87fdae75d4da6520d6667f86401ecf55b681eb1eeb"},
+    {file = "django-6.0.3-py3-none-any.whl", hash = "sha256:2e5974441491ddb34c3f13d5e7a9f97b07ba03bf70234c0a9c68b79bbb235bc3"},
+    {file = "django-6.0.3.tar.gz", hash = "sha256:90be765ee756af8a6cbd6693e56452404b5ad15294f4d5e40c0a55a0f4870fe1"},
 ]
 
 [package.dependencies]
-asgiref = ">=3.8.1"
-sqlparse = ">=0.3.1"
+asgiref = ">=3.9.1"
+sqlparse = ">=0.5.0"
 tzdata = {version = "*", markers = "sys_platform == \"win32\""}
 
 [package.extras]
-argon2 = ["argon2-cffi (>=19.1.0)"]
-bcrypt = ["bcrypt"]
+argon2 = ["argon2-cffi (>=23.1.0)"]
+bcrypt = ["bcrypt (>=4.1.1)"]
 
 [[package]]
 name = "django-cors-headers"
@@ -811,28 +811,6 @@ files = [
 [package.dependencies]
 coverage = "*"
 Django = "*"
-
-[[package]]
-name = "django-csp"
-version = "4.0"
-description = "Django Content Security Policy support."
-optional = false
-python-versions = "*"
-groups = ["main"]
-files = [
-    {file = "django_csp-4.0-py3-none-any.whl", hash = "sha256:d5a0a05463a6b75a4f1fc1828c58c89af8db9364d09fc6e12f122b4d7f3d00dc"},
-    {file = "django_csp-4.0.tar.gz", hash = "sha256:b27010bb702eb20a3dad329178df2b61a2b82d338b70fbdc13c3a3bd28712833"},
-]
-
-[package.dependencies]
-django = ">=4.2"
-packaging = "*"
-
-[package.extras]
-dev = ["django-stubs[compatible-mypy]", "jinja2 (>=2.9.6)", "mypy", "pre-commit", "pytest", "pytest-cov", "pytest-django", "pytest-ruff", "sphinx", "sphinx-rtd-theme", "tox", "tox-gh-actions", "types-setuptools"]
-jinja2 = ["jinja2 (>=2.9.6)"]
-tests = ["jinja2 (>=2.9.6)", "pytest", "pytest-cov", "pytest-django", "pytest-ruff"]
-typing = ["django-stubs[compatible-mypy]", "jinja2 (>=2.9.6)", "mypy", "pytest", "pytest-django", "types-setuptools"]
 
 [[package]]
 name = "django-dirtyfields"
@@ -1335,7 +1313,6 @@ prompt_toolkit = ">=3.0.41,<3.1.0"
 pygments = ">=2.11.0"
 stack_data = ">=0.6.0"
 traitlets = ">=5.13.0"
-typing_extensions = {version = ">=4.6", markers = "python_version < \"3.12\""}
 
 [package.extras]
 all = ["argcomplete (>=3.0)", "ipython[doc,matplotlib,terminal,test,test-extra]"]
@@ -1489,7 +1466,7 @@ description = "Mypyc runtime library"
 optional = true
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "platform_python_implementation != \"PyPy\" and extra == \"code-quality\""
+markers = "extra == \"code-quality\" and platform_python_implementation != \"PyPy\""
 files = [
     {file = "librt-0.8.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:db63cf3586a24241e89ca1ce0b56baaec9d371a328bd186c529b27c914c9a1ef"},
     {file = "librt-0.8.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ba9d9e60651615bc614be5e21a82cdb7b1769a029369cf4b4d861e4f19686fb6"},
@@ -2384,10 +2361,7 @@ files = [
 [package.dependencies]
 astroid = ">=4.0.2,<=4.1.dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
-dill = [
-    {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
-    {version = ">=0.3.6", markers = "python_version == \"3.11\""},
-]
+dill = {version = ">=0.3.7", markers = "python_version >= \"3.12\""}
 isort = ">=5,<5.13 || >5.13,<9"
 mccabe = ">=0.6,<0.8"
 platformdirs = ">=2.2"
@@ -3352,5 +3326,5 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">= 3.11, < 3.15"
-content-hash = "ecd3a6e3ab3a14e3d46a62886ee37e4f075cfaf49b3a08eb56f5e99d32e1a1c2"
+python-versions = ">= 3.12, < 3.15"
+content-hash = "dbaaebed8a699a1246951f9d929d6286e68b067312857ed6c13d348b54453398"
