@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from application.core.models import Product
 from application.core.types import Severity
-from application.import_observations.parsers.ocsf.parser import OCSFParser
+from application.import_observations.parsers.ocsf.parser import OCSFParser, get_provider
 from application.import_observations.services.parser_detector import detect_parser
 
 
@@ -155,3 +155,22 @@ class TestOCSFParser(TestCase):
             self.assertEqual("cert-manager-namespace", observation.origin_kubernetes_namespace)
             self.assertEqual("KubernetesPod", observation.origin_kubernetes_resource_type)
             self.assertEqual("cert-manager", observation.origin_kubernetes_resource_name)
+
+    def test_github_provider(self):
+        """Test that 'github' returns 'GitHub'"""
+        self.assertEqual(get_provider("github"), "GitHub")
+        self.assertEqual(get_provider("GitHub"), "GitHub")
+        self.assertEqual(get_provider("GITHUB"), "GitHub")
+
+    def test_aws_provider(self):
+        """Test that 'aws' returns 'AWS'"""
+        self.assertEqual(get_provider("aws"), "AWS")
+        self.assertEqual(get_provider("Aws"), "AWS")
+        self.assertEqual(get_provider("AWS"), "AWS")
+
+    def test_other_providers(self):
+        """Test that other providers are capitalized"""
+        self.assertEqual(get_provider("azure"), "Azure")
+        self.assertEqual(get_provider("google"), "Google")
+        self.assertEqual(get_provider("microsoft"), "Microsoft")
+        self.assertEqual(get_provider("oracle"), "Oracle")

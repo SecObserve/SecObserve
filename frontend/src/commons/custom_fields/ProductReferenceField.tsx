@@ -1,4 +1,8 @@
+import { Typography } from "@mui/material";
 import { ReferenceField } from "ra-ui-materialui";
+
+import { useLinkStyles } from "../layout/themes";
+import { getResolvedSettingTheme } from "../user_settings/functions";
 
 interface ProductReferenceFieldProps {
     link?: any;
@@ -6,6 +10,7 @@ interface ProductReferenceFieldProps {
 }
 
 export const ProductReferenceField = ({ link, label }: ProductReferenceFieldProps) => {
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
     label = label === undefined ? "Product" : label;
 
     return (
@@ -16,6 +21,19 @@ export const ProductReferenceField = ({ link, label }: ProductReferenceFieldProp
             link={link}
             sx={{ "& a": { textDecoration: "none" } }}
             label={label}
+            render={({ error, isPending, referenceRecord }) => {
+                if (isPending) {
+                    return <Typography variant="body2">Loading...</Typography>;
+                }
+                if (error) {
+                    return <Typography variant="body2">{error.message}</Typography>;
+                }
+                return (
+                    <Typography variant="body2" className={classes.link}>
+                        {referenceRecord?.name}
+                    </Typography>
+                );
+            }}
         />
     );
 };

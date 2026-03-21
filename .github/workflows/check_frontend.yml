@@ -2,14 +2,18 @@ name: Check frontend
 
 on: [push, pull_request]
 
-permissions: read-all
+permissions: {}
 
 jobs:
   code_quality:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: 24
 
@@ -29,9 +33,13 @@ jobs:
           npx eslint src
 
   end_to_end_tests:
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
       - name: End-to-end tests
         working-directory: .
         run: |
@@ -42,6 +50,8 @@ jobs:
           docker compose -f docker-compose-playwright.yml up --abort-on-container-exit --exit-code-from playwright
 
   check_code_sonarqube_frontend:
+    permissions:
+      contents: read
     if: github.repository == 'SecObserve/SecObserve' && (github.ref == 'refs/heads/dev' || github.event_name == 'pull_request')
     runs-on: ubuntu-latest
     steps:
@@ -49,6 +59,7 @@ jobs:
         name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          persist-credentials: false
           fetch-depth: 0  
       - 
         name: Run SonarQube scan for frontend

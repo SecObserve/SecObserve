@@ -1,5 +1,9 @@
 from rest_framework.serializers import (
+    CharField,
+    IntegerField,
+    ListField,
     ModelSerializer,
+    Serializer,
     SerializerMethodField,
 )
 
@@ -48,3 +52,13 @@ class ComponentNameSerializer(ModelSerializer):
     class Meta:
         model = Component
         fields = ["id", "component_name_version"]
+
+
+class PURLTypeElementSerializer(Serializer):
+    id = CharField()
+    name = CharField()
+
+
+class PURLTypeSerializer(Serializer):
+    count = IntegerField()
+    results = ListField(child=PURLTypeElementSerializer())

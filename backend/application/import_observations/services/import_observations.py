@@ -547,8 +547,6 @@ def _prepare_imported_observation(import_parameters: ImportParameters, imported_
     imported_observation.api_configuration_name = import_parameters.api_configuration_name
     imported_observation.import_last_seen = timezone.now()
     imported_observation.origin_service = import_parameters.service
-    if import_parameters.service:
-        imported_observation.origin_service_name = import_parameters.service.name
     if import_parameters.docker_image_name_tag:
         imported_observation.origin_docker_image_name_tag = import_parameters.docker_image_name_tag
     if import_parameters.endpoint_url:

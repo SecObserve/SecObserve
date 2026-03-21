@@ -10,7 +10,7 @@ networks:
 services:
 
   traefik:
-    image: "traefik:v3.6.9"
+    image: "traefik:v3.6.11"
     container_name: "prod_traefik"
     command:
       - "--log.level=INFO"
@@ -35,7 +35,7 @@ services:
       - traefik
 
   frontend:
-    image: ghcr.io/secobserve/secobserve-frontend:1.49.0
+    image: ghcr.io/secobserve/secobserve-frontend:1.50.0
     container_name: "prod_secobserve_frontend"
     labels:
       - "traefik.enable=true"
@@ -55,7 +55,7 @@ services:
       - traefik
 
   backend:
-    image: ghcr.io/secobserve/secobserve-backend:1.49.0
+    image: ghcr.io/secobserve/secobserve-backend:1.50.0
     container_name: "prod_secobserve_backend"
     labels:
       - "traefik.enable=true"

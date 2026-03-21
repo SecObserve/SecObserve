@@ -94,9 +94,9 @@ const ShowActions = () => {
                     <ObservationAssessment />
                 )}
                 {observation?.product_data?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) &&
-                    (observation?.assessment_severity || observation?.assessment_status) && (
-                        <ObservationRemoveAssessment />
-                    )}
+                    (observation?.assessment_severity ||
+                        observation?.assessment_status ||
+                        observation?.assessment_priority) && <ObservationRemoveAssessment />}
                 {observation?.parser_data?.type == "Manual" &&
                     observation?.product_data?.permissions?.includes(PERMISSION_OBSERVATION_EDIT) && <EditButton />}
                 {observation?.assessment_needs_approval &&

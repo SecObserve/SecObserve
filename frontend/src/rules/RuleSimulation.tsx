@@ -1,14 +1,5 @@
 import CachedIcon from "@mui/icons-material/Cached";
-import {
-    Backdrop,
-    Button,
-    CircularProgress,
-    Dialog,
-    DialogContent,
-    DialogTitle,
-    Stack,
-    Typography,
-} from "@mui/material";
+import { Button, Dialog, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
 import {
     ChipField,
@@ -22,6 +13,7 @@ import {
 
 import { SeverityField } from "../commons/custom_fields/SeverityField";
 import SmallButton from "../commons/custom_fields/SmallButton";
+import { Spinner } from "../commons/custom_fields/Spinner";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import { getSettingListSize } from "../commons/user_settings/functions";
 import ObservationExpand from "../core/observations/ObservationExpand";
@@ -48,14 +40,15 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
             .then((result: any) => {
                 setCount(result.json.count);
                 setData(result.json.results);
+                setLoading(false);
             })
             .catch((error) => {
                 setOpen(false);
                 notify(error.message, {
                     type: "warning",
                 });
+                setLoading(false);
             });
-        setLoading(false);
     };
 
     const handleOpen = () => {
@@ -79,7 +72,6 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
 
     const listContext = useList({
         data,
-        isLoading: loading,
     });
 
     return (
@@ -121,11 +113,7 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
                     </Stack>
                 </DialogContent>
             </Dialog>
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={loading && open} />
         </Fragment>
     );
 };

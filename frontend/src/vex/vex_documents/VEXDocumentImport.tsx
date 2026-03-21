@@ -1,9 +1,10 @@
 import UploadIcon from "@mui/icons-material/Upload";
-import { Backdrop, CircularProgress, Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useState } from "react";
 import { FileField, FileInput, SimpleForm, useNotify, useRefresh } from "react-admin";
 
 import SmallButton from "../../commons/custom_fields/SmallButton";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_required } from "../../commons/custom_validators";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
@@ -78,11 +79,7 @@ const VEXDocumentImport = () => {
                     </SimpleForm>
                 </DialogContent>
             </Dialog>
-            {loading ? (
-                <Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={open}>
-                    <CircularProgress color="primary" />
-                </Backdrop>
-            ) : null}
+            <Spinner open={open && loading} />
         </Fragment>
     );
 };

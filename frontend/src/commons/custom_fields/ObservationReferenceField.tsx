@@ -1,4 +1,8 @@
-import { ReferenceField } from "ra-ui-materialui";
+import { Typography } from "@mui/material";
+import { ReferenceField } from "react-admin";
+
+import { useLinkStyles } from "../layout/themes";
+import { getResolvedSettingTheme } from "../user_settings/functions";
 
 interface ObservationReferenceFieldProps {
     source: string;
@@ -6,6 +10,7 @@ interface ObservationReferenceFieldProps {
 }
 
 export const ObservationReferenceField = ({ source, label }: ObservationReferenceFieldProps) => {
+    const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
     label = label === undefined ? "Observation" : label;
 
     return (
@@ -16,6 +21,19 @@ export const ObservationReferenceField = ({ source, label }: ObservationReferenc
             link="show"
             sx={{ "& a": { textDecoration: "none" } }}
             label={label}
+            render={({ error, isPending, referenceRecord }) => {
+                if (isPending) {
+                    return <Typography variant="body2">Loading...</Typography>;
+                }
+                if (error) {
+                    return <Typography variant="body2">{error.message}</Typography>;
+                }
+                return (
+                    <Typography variant="body2" className={classes.link}>
+                        {referenceRecord?.title}
+                    </Typography>
+                );
+            }}
         />
     );
 };

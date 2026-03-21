@@ -21,6 +21,12 @@ from application.core.types import Assessment_Status, Status
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
+from application.notifications.services.send_notifications_observation import (
+    send_observation_notification,
+)
+from application.notifications.services.send_notifications_observation_title import (
+    send_observation_title_notification,
+)
 
 
 def save_assessment(
@@ -159,7 +165,7 @@ def _get_assessments_need_approval(product: Product) -> bool:
 
 
 def remove_assessment(observation: Observation, comment: str) -> bool:
-    if observation.assessment_severity or observation.assessment_status:
+    if observation.assessment_severity or observation.assessment_status or observation.assessment_priority:
         observation.assessment_severity = ""
         observation.assessment_status = ""
         observation.assessment_priority = None
@@ -218,6 +224,9 @@ def assessment_approval(observation_log: Observation_Log, assessment_status: str
 
         check_security_gate(observation_log.observation.product)
         push_observation_to_issue_tracker(observation_log.observation, get_current_user())
+
+        send_observation_notification(observation_log.observation)
+        send_observation_title_notification(observation_log.observation)
 
     observation_log.approval_user = approval_user
     observation_log.approval_remark = approval_remark

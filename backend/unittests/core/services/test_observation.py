@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from application.core.models import Observation
+from application.core.models import Observation, Service
 from application.core.services.observation import (
     _get_string_to_hash,
     _normalize_update_impact_score_and_fix_available,
@@ -35,13 +35,15 @@ class TestObservation(BaseTestCase):
         self.assertEqual("empty", _get_string_to_hash(observation))
 
     def test_get_string_to_hash_full(self):
+        service = Service(name="service_name")
+
         observation = Observation(
             title="full",
             origin_component_name_version="component_name:version",
             origin_docker_image_name="docker_image_name",
             origin_docker_image_name_tag="docker_image_name:tag",
             origin_endpoint_url="endpoint_url",
-            origin_service_name="service_name",
+            origin_service=service,
             origin_source_file="source_file",
             origin_source_line_start=1,
             origin_source_line_end=999,
@@ -606,4 +608,5 @@ def _get_excludes():
         "parser",
         "product",
         "identity_hash",
+        "observation_notified",
     ]

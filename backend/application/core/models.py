@@ -86,6 +86,12 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     notification_slack_webhook = TextField(max_length=2048, blank=True)
     notification_email_to = CharField(max_length=255, blank=True)
 
+    observation_notification_min_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
+    observation_notification_statuses = CharField(max_length=255, blank=True)
+    observation_notification_min_priority = IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(99)], null=True
+    )
+
     issue_tracker_active = BooleanField(default=False)
     issue_tracker_type = CharField(max_length=12, choices=Issue_Tracker.ISSUE_TRACKER_TYPE_CHOICES, blank=True)
     issue_tracker_base_url = CharField(max_length=255, blank=True)
@@ -290,7 +296,6 @@ class Observation(Model):
     origin_endpoint_query = TextField(max_length=2048, blank=True)
     origin_endpoint_fragment = TextField(max_length=2048, blank=True)
 
-    origin_service_name = CharField(max_length=255, blank=True)
     origin_service = ForeignKey(Service, on_delete=PROTECT, null=True)
 
     origin_source_file = CharField(max_length=255, blank=True)
@@ -415,7 +420,6 @@ class Observation(Model):
             Index(fields=["origin_component_name_version"]),
             Index(fields=["origin_component_cyclonedx_bom_link"]),
             Index(fields=["origin_docker_image_name_tag_short"]),
-            Index(fields=["origin_service_name"]),
             Index(fields=["origin_endpoint_hostname"]),
             Index(fields=["origin_source_file"]),
             Index(fields=["origin_cloud_qualified_resource"]),
