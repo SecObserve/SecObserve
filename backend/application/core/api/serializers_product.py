@@ -135,6 +135,7 @@ class ProductCoreSerializer(ModelSerializer):
             statuses = validated_data["observation_notification_status_list"]
             if isinstance(statuses, list):
                 validated_data["observation_notification_statuses"] = ",".join(statuses)
+            validated_data.pop("observation_notification_status_list")
 
         return validated_data
 
