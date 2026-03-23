@@ -10,6 +10,7 @@ import {
     List,
     NullableBooleanInput,
     NumberField,
+    NumberInput,
     TextField,
     TextInput,
     TopToolbar,
@@ -48,9 +49,8 @@ function listFilters() {
             choices={OBSERVATION_SEVERITY_CHOICES}
             alwaysOn
         />,
-        <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
-    );
-    filters.push(
+        <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
+        <NumberInput source="current_priority" label="Priority" step={1} min={1} max={99} sx={{ width: "7em" }} />,
         <ProductReferenceInput alwaysOn />,
         <ProductGroupReferenceInput alwaysOn />,
         <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
