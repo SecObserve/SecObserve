@@ -1595,14 +1595,14 @@ dev = ["Sphinx (>=5.0.2)", "doc8 (>=0.11.2)", "pytest (>=7.0.1)", "pytest-xdist 
 
 [[package]]
 name = "licenselynx"
-version = "2.1.0"
+version = "2.1.1"
 description = "Deterministically map license strings to its canonical identifier"
 optional = false
 python-versions = ">=3.11"
 groups = ["main"]
 files = [
-    {file = "licenselynx-2.1.0-py3-none-any.whl", hash = "sha256:d87029a97a7de4af9fbd6041d1439222277e028e514fffc763d5fc4d8a6c58b6"},
-    {file = "licenselynx-2.1.0.tar.gz", hash = "sha256:0b05f8376e2e648d4aa4ae07ab14e90f04de13a19a2a089a87d762af02f34cd6"},
+    {file = "licenselynx-2.1.1-py3-none-any.whl", hash = "sha256:6541e85f8654c90c774060c93818b027bad121a6169f4cb93b14264bdb56cdc5"},
+    {file = "licenselynx-2.1.1.tar.gz", hash = "sha256:34fcfb9e365d0e35c8d3ec21e1b26eb1f2d7c4cd4ec768983194a4a0e9870899"},
 ]
 
 [[package]]
@@ -3342,4 +3342,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.12, < 3.15"
-content-hash = "2dd308bd66f29c27351303bcebdf691daefae944e55521f83b145f890d6aa00b"
+content-hash = "0ffceb735470d80f594e541274c36fed3a4250c958e3e95875e443cb982a233a"
