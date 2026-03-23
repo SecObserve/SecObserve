@@ -127,7 +127,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                             choices={OBSERVATION_STATUS_CHOICES}
                             onChange={(e) => setStatus(e)}
                         />
-                        <NumberInput source="priority" step={1} min={1} max={99} />
+                        <NumberInput source="priority" step={1} min={1} max={99} sx={{ width: "7em" }} />
                         {justificationEnabled &&
                             settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
                                 <AutocompleteInputWide
