@@ -66,7 +66,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/observations/bulk_assessment/";
         }
         const assessment_data = {
-            severity: data.current_severity,
+            severity: data.severity,
             status: data.status,
             priority: data.priority,
             comment: comment,
@@ -117,7 +117,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                         toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable={true} />}
                     >
                         <AutocompleteInputMedium
-                            source="current_severity"
+                            source="severity"
                             label="Severity"
                             choices={OBSERVATION_SEVERITY_CHOICES}
                         />
