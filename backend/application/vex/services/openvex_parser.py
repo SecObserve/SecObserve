@@ -82,7 +82,7 @@ def _process_vex_statements(data: dict, openvex_document: VEX_Document) -> tuple
         openvex_statement.vulnerability_id = statement.get("vulnerability", {}).get("name")
         if not openvex_statement.vulnerability_id:
             raise ValidationError(f"vulnerability[{statement_counter}]/name is missing")
-        openvex_statement.description = statement.get("vulnerability", {}).get("description")
+        openvex_statement.description = statement.get("vulnerability", {}).get("description", "")
         openvex_statement.status = statement.get("status", "")
         if not openvex_statement.status:
             raise ValidationError(f"status[{statement_counter}] is missing")
