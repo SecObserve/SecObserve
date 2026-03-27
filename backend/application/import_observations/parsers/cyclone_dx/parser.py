@@ -354,8 +354,9 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         aliases = []
         references = vulnerability.get("references", [])
         for reference in references:
-            if reference.get("id"):
-                aliases.append(reference.get("id"))
+            reference_id = reference.get("id")
+            if reference_id and reference_id != vulnerability.get("id") and reference_id not in aliases:
+                aliases.append(reference_id)
         if aliases:
             return ", ".join(aliases)
         return ""
