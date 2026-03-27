@@ -3164,9 +3164,21 @@
       ],
       "references": [
         {
+          "id": "CVE-2023-29469",
+          "source": {
+            "name": "name 0"
+          }
+        },
+        {
           "id": "GHSA-35m5-8cvj-8783",
           "source": {
             "name": "name 1"
+          }
+        },
+        {
+          "id": "GHSA-35m5-8cvj-8783",
+          "source": {
+            "name": "name 1a"
           }
         },
         {
