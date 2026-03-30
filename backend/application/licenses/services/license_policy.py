@@ -166,6 +166,8 @@ def apply_license_policy_product(
     if branch:
         components = components.filter(branch=branch)
 
+    evaluation_result_changed = False
+
     paginator = Paginator(components, 1000)
     for page_number in paginator.page_range:
         page = paginator.page(page_number)
@@ -186,12 +188,17 @@ def apply_license_policy_product(
 
             if evaluation_result_before != component.evaluation_result:
                 component.last_change = timezone.now()
+                evaluation_result_changed = True
 
             updates.append(component)
 
         License_Component.objects.bulk_update(
             updates, ["evaluation_result", "numerical_evaluation_result", "last_change"]
         )
+
+    if evaluation_result_changed:
+        product.last_license_change = timezone.now()
+        product.save()
 
 
 def apply_license_policy_to_component(

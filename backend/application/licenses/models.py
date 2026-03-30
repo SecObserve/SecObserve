@@ -1,5 +1,6 @@
 from typing import Any
 
+from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
@@ -85,7 +86,7 @@ class License_Group_Authorization_Group_Member(Model):
         return f"{self.license_group} / {self.authorization_group}"
 
 
-class License_Component(Model):
+class License_Component(Model, DirtyFieldsMixin):
     identity_hash = CharField(max_length=64)
 
     product = ForeignKey(Product, related_name="license_components", on_delete=PROTECT)

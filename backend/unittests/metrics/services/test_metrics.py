@@ -6,7 +6,7 @@ from django.utils import timezone
 from application.core.types import Severity, Status
 from application.metrics.services.metrics import (
     _initialize_response_data,
-    calculate_metrics_for_product,
+    calculate_observation_metrics_for_product,
     calculate_product_metrics,
     get_codecharta_metrics,
     get_product_metrics_current,
@@ -148,7 +148,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         mock_pm_objects.update_or_create.return_value = (todays_metrics, True)
         mock_obs_objects.filter.return_value.values.return_value = []
 
-        result = calculate_metrics_for_product(self.product_1)
+        result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
         mock_pm_objects.update_or_create.assert_called_once()
@@ -180,7 +180,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         ]
         mock_obs_objects.filter.return_value.values.return_value = observations
 
-        result = calculate_metrics_for_product(self.product_1)
+        result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
         self.assertEqual(todays_metrics.active_critical, 1)
@@ -222,7 +222,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         ]
         mock_obs_objects.filter.return_value.values.return_value = observations
 
-        result = calculate_metrics_for_product(self.product_1)
+        result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
         self.assertEqual(todays_metrics.open, 1)
@@ -265,7 +265,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         created_metrics = []
         mock_pm_objects.create.side_effect = lambda **kwargs: created_metrics.append(kwargs)
 
-        result = calculate_metrics_for_product(self.product_1)
+        result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
         self.assertEqual(len(created_metrics), 1)
@@ -292,7 +292,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         created_metrics = []
         mock_pm_objects.create.side_effect = lambda **kwargs: created_metrics.append(kwargs)
 
-        result = calculate_metrics_for_product(self.product_1)
+        result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
         self.assertEqual(len(created_metrics), 3)
@@ -314,7 +314,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         latest_metrics = ProductMetricsStub(date=today)
         mock_get_latest.return_value = latest_metrics
 
-        result = calculate_metrics_for_product(self.product_1)
+        result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertFalse(result)
         mock_pm_objects.create.assert_not_called()
@@ -324,13 +324,13 @@ class TestGetLatestProductMetrics(BaseTestCase):
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
     def test_returns_latest_metrics(self, mock_pm_objects):
         from application.metrics.services.metrics import (
-            _get_latest_product_metrics,
+            _get_latest_product_observation_metrics,
         )
 
         expected_metrics = ProductMetricsStub(date=date(2025, 6, 15))
         mock_pm_objects.filter.return_value.latest.return_value = expected_metrics
 
-        result = _get_latest_product_metrics(self.product_1)
+        result = _get_latest_product_observation_metrics(self.product_1)
 
         self.assertEqual(result, expected_metrics)
         mock_pm_objects.filter.assert_called_once_with(product=self.product_1)
@@ -340,12 +340,12 @@ class TestGetLatestProductMetrics(BaseTestCase):
     def test_returns_none_when_no_metrics(self, mock_pm_objects):
         from application.metrics.models import Product_Metrics
         from application.metrics.services.metrics import (
-            _get_latest_product_metrics,
+            _get_latest_product_observation_metrics,
         )
 
         mock_pm_objects.filter.return_value.latest.side_effect = Product_Metrics.DoesNotExist
 
-        result = _get_latest_product_metrics(self.product_1)
+        result = _get_latest_product_observation_metrics(self.product_1)
 
         self.assertIsNone(result)
 
