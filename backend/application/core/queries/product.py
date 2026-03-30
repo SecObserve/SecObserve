@@ -1,5 +1,4 @@
 from datetime import date
-from re import L, sub
 from typing import Optional
 
 from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Subquery, Sum

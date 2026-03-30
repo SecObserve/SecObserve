@@ -192,16 +192,16 @@ def calculate_license_metrics_for_product(  # pylint: disable=too-many-branches
             branch=product.repository_default_branch,
         ).values("evaluation_result")
 
-        for license in licenses:
-            if license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_ALLOWED:
+        for my_license in licenses:
+            if my_license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_ALLOWED:
                 todays_product_metrics.allowed += 1
-            elif license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_FORBIDDEN:
+            elif my_license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_FORBIDDEN:
                 todays_product_metrics.forbidden += 1
-            elif license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_IGNORED:
+            elif my_license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_IGNORED:
                 todays_product_metrics.ignored += 1
-            elif license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED:
+            elif my_license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED:
                 todays_product_metrics.review_required += 1
-            elif license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_UNKNOWN:
+            elif my_license.get("evaluation_result") == License_Policy_Evaluation_Result.RESULT_UNKNOWN:
                 todays_product_metrics.unknown += 1
 
         todays_product_metrics.save()
