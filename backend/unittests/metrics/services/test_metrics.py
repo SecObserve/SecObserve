@@ -41,9 +41,10 @@ class TestInitializeResponseData(BaseTestCase):
 
 class TestCalculateProductMetrics(BaseTestCase):
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
-    @patch("application.metrics.services.metrics.calculate_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
-    def test_calculate_product_metrics_no_products(self, mock_product_objects, mock_calc, mock_status_load):
+    def test_calculate_product_metrics_no_products(self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load):
         mock_product_objects.filter.return_value = []
 
         status = ProductMetricsStatusStub()
@@ -58,10 +59,11 @@ class TestCalculateProductMetrics(BaseTestCase):
 
     @patch("application.metrics.services.metrics.timezone")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
-    @patch("application.metrics.services.metrics.calculate_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_one_product(
-        self, mock_product_objects, mock_calc, mock_status_load, mock_timezone
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone
     ):
         mock_product_objects.filter.return_value = [self.product_1]
         mock_calc.return_value = True
@@ -80,10 +82,11 @@ class TestCalculateProductMetrics(BaseTestCase):
 
     @patch("application.metrics.services.metrics.timezone")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
-    @patch("application.metrics.services.metrics.calculate_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_multiple_products(
-        self, mock_product_objects, mock_calc, mock_status_load, mock_timezone
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone
     ):
         product_2 = type(self.product_1)
         product_2.name = "product_2"
@@ -106,10 +109,11 @@ class TestCalculateProductMetrics(BaseTestCase):
 
     @patch("application.metrics.services.metrics.timezone")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
-    @patch("application.metrics.services.metrics.calculate_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_some_without_changes(
-        self, mock_product_objects, mock_calc, mock_status_load, mock_timezone
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone
     ):
         product_2 = type(self.product_1)
         product_2.name = "product_2"
@@ -118,6 +122,7 @@ class TestCalculateProductMetrics(BaseTestCase):
             product_2,
         ]
         mock_calc.side_effect = [True, False]
+        mock_calc_license.side_effect = [True, False]
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
@@ -133,7 +138,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 class TestCalculateMetricsForProduct(BaseTestCase):
     @patch("application.metrics.services.metrics.Observation.objects")
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
-    @patch("application.metrics.services.metrics._get_latest_product_metrics")
+    @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
     @patch("application.metrics.services.metrics.timezone")
     def test_no_previous_metrics_no_observations(
         self, mock_timezone, mock_get_latest, mock_pm_objects, mock_obs_objects
@@ -156,7 +161,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
 
     @patch("application.metrics.services.metrics.Observation.objects")
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
-    @patch("application.metrics.services.metrics._get_latest_product_metrics")
+    @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
     @patch("application.metrics.services.metrics.timezone")
     def test_observations_today_with_all_severities(
         self, mock_timezone, mock_get_latest, mock_pm_objects, mock_obs_objects
@@ -195,7 +200,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
 
     @patch("application.metrics.services.metrics.Observation.objects")
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
-    @patch("application.metrics.services.metrics._get_latest_product_metrics")
+    @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
     @patch("application.metrics.services.metrics.timezone")
     def test_observations_today_with_all_statuses(
         self, mock_timezone, mock_get_latest, mock_pm_objects, mock_obs_objects
@@ -243,7 +248,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         self.assertEqual(todays_metrics.active_low, 0)
 
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
-    @patch("application.metrics.services.metrics._get_latest_product_metrics")
+    @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
     @patch("application.metrics.services.metrics.timezone")
     def test_no_changes_today_copies_previous_metrics(self, mock_timezone, mock_get_latest, mock_pm_objects):
         today = date(2025, 6, 15)
@@ -278,7 +283,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         self.assertEqual(created_metrics[0]["resolved"], 2)
 
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
-    @patch("application.metrics.services.metrics._get_latest_product_metrics")
+    @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
     @patch("application.metrics.services.metrics.timezone")
     def test_no_changes_today_fills_gap_days(self, mock_timezone, mock_get_latest, mock_pm_objects):
         today = date(2025, 6, 15)
@@ -304,7 +309,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
             self.assertEqual(m["open"], 1)
 
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
-    @patch("application.metrics.services.metrics._get_latest_product_metrics")
+    @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
     @patch("application.metrics.services.metrics.timezone")
     def test_no_changes_today_metrics_already_up_to_date(self, mock_timezone, mock_get_latest, mock_pm_objects):
         today = date(2025, 6, 15)

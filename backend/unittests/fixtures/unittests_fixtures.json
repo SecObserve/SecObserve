@@ -206,6 +206,7 @@
             "apply_general_rules": true,
             "notification_ms_teams_webhook": "",
             "last_observation_change": "2022-12-16T16:13:18.283Z",
+            "last_license_change": "2022-12-16T16:13:18.283Z",
             "product_group": 3
         }
     },
@@ -227,7 +228,8 @@
             "security_gate_threshold_unknown": null,
             "apply_general_rules": true,
             "notification_ms_teams_webhook": "",
-            "last_observation_change": "2022-12-16T16:13:18.283Z"
+            "last_observation_change": "2022-12-16T16:13:18.283Z",
+            "last_license_change": "2022-12-16T16:13:18.283Z"
         }
     },
     {
@@ -248,6 +250,7 @@
             "apply_general_rules": true,
             "notification_ms_teams_webhook": "",
             "last_observation_change": "2022-12-16T16:13:18.283Z",
+            "last_license_change": "2022-12-16T16:13:18.283Z",
             "is_product_group": true
         }
     },
@@ -269,6 +272,7 @@
             "apply_general_rules": true,
             "notification_ms_teams_webhook": "",
             "last_observation_change": "2022-12-16T16:13:18.283Z",
+            "last_license_change": "2022-12-16T16:13:18.283Z",
             "is_product_group": true
         }
     },
