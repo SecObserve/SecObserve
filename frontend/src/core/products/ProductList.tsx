@@ -9,6 +9,7 @@ import {
     TextField,
     TextInput,
     TopToolbar,
+    WithListContext,
 } from "react-admin";
 
 import products from ".";
@@ -19,7 +20,7 @@ import ObservationsCountField from "../../commons/custom_fields/ObservationsCoun
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
 import { humanReadableDate } from "../../commons/functions";
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
@@ -64,25 +65,35 @@ const ProductList = () => {
                 disableSyncWithLocation={false}
                 storeKey="products.list"
             >
-                <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
-                    <TextField source="name" />
-                    <TextField source="product_group_name" label="Product Group" />
-                    <TextField
-                        source="repository_default_branch_name"
-                        label="Default branch / version"
-                        sortable={false}
-                    />
-                    <SecurityGateTextField label="Security gate" />
-                    <ObservationsCountField label="Active observations" withLabel={false} />
-                    {feature_license_management() && (
-                        <LicensesCountField label="Licenses / Components" withLabel={false} />
+                <WithListContext
+                    render={({ data, sort }) => (
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                            <TextField source="name" />
+                            {has_attribute("product_group_name", data, sort) && (
+                                <TextField source="product_group_name" label="Product Group" />
+                            )}
+                            {has_attribute("repository_default_branch_name", data, sort) && (
+                                <TextField
+                                    source="repository_default_branch_name"
+                                    label="Default branch / version"
+                                    sortable={false}
+                                />
+                            )}
+                            {has_attribute("security_gate_passed", data, sort) && (
+                                <SecurityGateTextField label="Security gate" />
+                            )}
+                            <ObservationsCountField label="Active observations" withLabel={false} />
+                            {feature_license_management() && has_attribute("all_licenses_count", data, sort) && (
+                                <LicensesCountField label="Licenses / Components" withLabel={false} />
+                            )}
+                            <FunctionField<Product>
+                                label="Last observation change"
+                                sortBy="last_observation_change"
+                                render={(record) => (record ? humanReadableDate(record.last_observation_change) : "")}
+                            />
+                        </Datagrid>
                     )}
-                    <FunctionField<Product>
-                        label="Last observation change"
-                        sortBy="last_observation_change"
-                        render={(record) => (record ? humanReadableDate(record.last_observation_change) : "")}
-                    />
-                </Datagrid>
+                />
             </List>
         </Fragment>
     );
