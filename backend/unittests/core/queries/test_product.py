@@ -74,17 +74,13 @@ class TestGetProducts(BaseTestCase):
     def test_no_user_with_observation_annotations(self, mock_user):
         mock_user.return_value = None
 
-        self.assertEqual(
-            0, len(get_products(is_product_group=False, with_observation_annotations=True))
-        )
+        self.assertEqual(0, len(get_products(is_product_group=False, with_observation_annotations=True)))
 
     @patch("application.core.queries.product.get_current_user")
     def test_no_user_with_metrics_annotations(self, mock_user):
         mock_user.return_value = None
 
-        self.assertEqual(
-            0, len(get_products(is_product_group=False, with_metrics_annotations=True))
-        )
+        self.assertEqual(0, len(get_products(is_product_group=False, with_metrics_annotations=True)))
 
     # --- Superuser, is_product_group variations ---
 
@@ -420,13 +416,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_auth_group")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product = Product.objects.get(name="db_product_internal")
-        Product_Authorization_Group_Member.objects.create(
-            product=product, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product, authorization_group=auth_group, role=1)
 
         products = get_products()
 
@@ -442,13 +434,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_auth_group_filter")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product = Product.objects.get(name="db_product_internal")
-        Product_Authorization_Group_Member.objects.create(
-            product=product, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product, authorization_group=auth_group, role=1)
 
         products = get_products(is_product_group=False)
 
@@ -463,13 +451,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_auth_group_obs")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product = Product.objects.get(name="db_product_internal")
-        Product_Authorization_Group_Member.objects.create(
-            product=product, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product, authorization_group=auth_group, role=1)
         branch = Branch.objects.get(product=product, is_default_branch=True)
         self._create_observation(product, branch, Severity.SEVERITY_MEDIUM)
 
@@ -486,13 +470,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_pg_auth_group")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product_group = Product.objects.get(name="db_product_group")
-        Product_Authorization_Group_Member.objects.create(
-            product=product_group, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product_group, authorization_group=auth_group, role=1)
 
         products = get_products()
 
@@ -509,13 +489,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_pg_auth_group_filter")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product_group = Product.objects.get(name="db_product_group")
-        Product_Authorization_Group_Member.objects.create(
-            product=product_group, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product_group, authorization_group=auth_group, role=1)
 
         products = get_products(is_product_group=False)
 
@@ -530,13 +506,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_pg_auth_group_true")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product_group = Product.objects.get(name="db_product_group")
-        Product_Authorization_Group_Member.objects.create(
-            product=product_group, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product_group, authorization_group=auth_group, role=1)
 
         products = get_products(is_product_group=True)
 
@@ -551,13 +523,9 @@ class TestGetProducts(BaseTestCase):
         mock_user.return_value = user
 
         auth_group = Authorization_Group.objects.create(name="test_pg_auth_group_metrics")
-        Authorization_Group_Member.objects.create(
-            authorization_group=auth_group, user=user, is_manager=False
-        )
+        Authorization_Group_Member.objects.create(authorization_group=auth_group, user=user, is_manager=False)
         product_group = Product.objects.get(name="db_product_group")
-        Product_Authorization_Group_Member.objects.create(
-            product=product_group, authorization_group=auth_group, role=1
-        )
+        Product_Authorization_Group_Member.objects.create(product=product_group, authorization_group=auth_group, role=1)
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
@@ -598,15 +566,11 @@ class TestGetProducts(BaseTestCase):
         user = User.objects.create(username="no_membership_user_obs", is_superuser=False)
         mock_user.return_value = user
 
-        self.assertEqual(
-            0, len(get_products(is_product_group=False, with_observation_annotations=True))
-        )
+        self.assertEqual(0, len(get_products(is_product_group=False, with_observation_annotations=True)))
 
     @patch("application.core.queries.product.get_current_user")
     def test_no_membership_with_metrics_annotations(self, mock_user):
         user = User.objects.create(username="no_membership_user_met", is_superuser=False)
         mock_user.return_value = user
 
-        self.assertEqual(
-            0, len(get_products(is_product_group=False, with_metrics_annotations=True))
-        )
+        self.assertEqual(0, len(get_products(is_product_group=False, with_metrics_annotations=True)))

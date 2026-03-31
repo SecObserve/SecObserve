@@ -451,9 +451,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
     @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
     @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
     @patch("application.metrics.services.metrics.timezone")
-    def test_no_previous_metrics_no_licenses(
-        self, mock_timezone, mock_get_latest, mock_plm_objects, mock_lc_objects
-    ):
+    def test_no_previous_metrics_no_licenses(self, mock_timezone, mock_get_latest, mock_plm_objects, mock_lc_objects):
         today = date(2025, 6, 15)
         mock_timezone.localdate.return_value = today
         self.product_1.last_license_change = datetime(2025, 6, 15, 10, 0, 0)
