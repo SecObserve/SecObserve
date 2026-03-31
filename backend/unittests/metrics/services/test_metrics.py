@@ -44,7 +44,9 @@ class TestCalculateProductMetrics(BaseTestCase):
     @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
     @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
-    def test_calculate_product_metrics_no_products(self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load):
+    def test_calculate_product_metrics_no_products(
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load
+    ):
         mock_product_objects.filter.return_value = []
 
         status = ProductMetricsStatusStub()

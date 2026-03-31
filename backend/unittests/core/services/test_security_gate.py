@@ -68,7 +68,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
@@ -99,7 +101,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_called()
         notification_save_mock.assert_called()
 
@@ -124,7 +128,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
@@ -156,7 +162,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_called()
         notification_save_mock.assert_called()
 
@@ -182,7 +190,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
@@ -215,7 +225,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_called()
         notification_save_mock.assert_called()
 
@@ -242,7 +254,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
@@ -277,7 +291,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_called()
         notification_save_mock.assert_called()
 
@@ -305,7 +321,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
@@ -340,7 +358,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_called()
         notification_save_mock.assert_called()
 
@@ -369,7 +389,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.get_product_by_id")
     @patch("application.core.models.Product.save")
@@ -405,7 +427,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_called()
         notification_save_mock.assert_called()
 
@@ -435,7 +459,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertTrue(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
         product_save_mock.assert_not_called()
 
     @patch("application.commons.models.Settings.load")
@@ -461,7 +487,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.commons.models.Settings.load")
     @patch("application.core.services.security_gate.get_product_by_id")
@@ -487,7 +515,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.commons.models.Settings.load")
     @patch("application.core.services.security_gate.get_product_by_id")
@@ -514,7 +544,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.commons.models.Settings.load")
     @patch("application.core.services.security_gate.get_product_by_id")
@@ -542,7 +574,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.commons.models.Settings.load")
     @patch("application.core.services.security_gate.get_product_by_id")
@@ -571,7 +605,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.commons.models.Settings.load")
     @patch("application.core.services.security_gate.get_product_by_id")
@@ -601,7 +637,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.commons.models.Settings.load")
     @patch("application.core.services.security_gate.get_product_by_id")
@@ -631,7 +669,9 @@ class TestSecurityGate(BaseTestCase):
         check_security_gate(product)
 
         self.assertTrue(product.security_gate_passed)
-        get_product_mock.assert_called_once_with(product_id=999, is_product_group=False, with_observation_annotations=True)
+        get_product_mock.assert_called_once_with(
+            product_id=999, is_product_group=False, with_observation_annotations=True
+        )
 
     @patch("application.core.services.security_gate.check_security_gate")
     def test_check_security_gate_observation_same_branch(self, mock):
