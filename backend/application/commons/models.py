@@ -231,6 +231,8 @@ class Settings(Model, DirtyFieldsMixin):
         help_text="Time margin in seconds for checks of issued at, not before and expiration of OIDC tokens",
     )
 
+    observation_count_from_metrics = BooleanField(default=False)
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save object to the database. Removes all other entries if there

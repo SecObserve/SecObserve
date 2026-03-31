@@ -106,6 +106,9 @@ const SettingsShowComponent = () => {
                                     <Labeled label="Enable automatic OSV scanning">
                                         <BooleanField source="feature_automatic_osv_scanning" />
                                     </Labeled>
+                                    <Labeled label="Calculate observation count from metrics">
+                                        <BooleanField source="observation_count_from_metrics" />
+                                    </Labeled>
                                 </Stack>
                             </Grid>
                         </Grid>

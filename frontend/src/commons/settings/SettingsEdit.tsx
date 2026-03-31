@@ -159,6 +159,10 @@ const SettingsEdit = () => {
                                     source="feature_automatic_osv_scanning"
                                     label="Enable automatic OSV scanning"
                                 />
+                                <BooleanInput
+                                    source="observation_count_from_metrics"
+                                    label="Calculate observation count from metrics"
+                                />
                             </Stack>
                         </Grid>
                     </Grid>

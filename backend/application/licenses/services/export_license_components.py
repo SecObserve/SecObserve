@@ -38,6 +38,10 @@ def _get_excludes() -> list[str]:
         "unsaved_declared_licenses",
         "unsaved_concluded_licenses",
         "unsaved_evidences",
+        "compare_function",
+        "normalise_function",
+        "ENABLE_M2M_CHECK",
+        "FIELDS_TO_CHECK",
     ]
 
 

@@ -28,6 +28,7 @@ from application.access_control.api.serializers import (
 from application.access_control.queries.api_token import get_api_token_by_id
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
 from application.core.api.filters import (
     BranchFilter,
@@ -118,7 +119,12 @@ class ProductGroupViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Product]:
-        return get_products(is_product_group=True, with_annotations=True)
+        settings = Settings.load()
+        return get_products(
+            is_product_group=True,
+            with_observation_annotations=not settings.observation_count_from_metrics,
+            with_metrics_annotations=settings.observation_count_from_metrics,
+        )
 
 
 class ProductGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -142,8 +148,13 @@ class ProductViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Product]:
+        settings = Settings.load()
         return (
-            get_products(is_product_group=False, with_annotations=True)
+            get_products(
+                is_product_group=False,
+                with_observation_annotations=not settings.observation_count_from_metrics,
+                with_metrics_annotations=settings.observation_count_from_metrics,
+            )
             .select_related("product_group")
             .select_related("product_group__license_policy")
             .select_related("repository_default_branch")

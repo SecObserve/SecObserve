@@ -93,7 +93,9 @@ def _calculate_active_product_security_gate(product: Product) -> bool:
             product.security_gate_threshold_unknown if product.security_gate_threshold_unknown else 0
         )
 
-    annotated_product = get_product_by_id(product_id=product.pk, is_product_group=False, with_annotations=True)
+    annotated_product = get_product_by_id(
+        product_id=product.pk, is_product_group=False, with_observation_annotations=True
+    )
     if not annotated_product:
         raise ValueError(f"Product {product.pk} not found while calculating security gate.")
 
@@ -123,7 +125,9 @@ def _calculate_active_product_security_gate(product: Product) -> bool:
 def _calculate_active_config_security_gate(product: Product) -> bool:
     settings = Settings.load()
 
-    annotated_product = get_product_by_id(product_id=product.pk, is_product_group=False, with_annotations=True)
+    annotated_product = get_product_by_id(
+        product_id=product.pk, is_product_group=False, with_observation_annotations=True
+    )
     if not annotated_product:
         raise ValueError(f"Product {product.pk} not found while calculating security gate.")
 

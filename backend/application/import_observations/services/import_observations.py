@@ -510,6 +510,9 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
         vulnerability_check.last_import_licenses_updated = len(components_updated)
         vulnerability_check.last_import_licenses_deleted = components_deleted
 
+        vulnerability_check.product.last_license_change = timezone.now()
+        vulnerability_check.product.save()
+
     if scanner:
         vulnerability_check.scanner = scanner
     vulnerability_check.save()
