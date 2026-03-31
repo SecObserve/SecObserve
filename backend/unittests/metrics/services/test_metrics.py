@@ -1,11 +1,11 @@
-from datetime import date, datetime, timedelta
-from unittest.mock import call, patch
-
-from django.utils import timezone
+from datetime import date, datetime
+from unittest.mock import patch
 
 from application.core.types import Severity, Status
+from application.licenses.types import License_Policy_Evaluation_Result
 from application.metrics.services.metrics import (
     _initialize_response_data,
+    calculate_license_metrics_for_product,
     calculate_observation_metrics_for_product,
     calculate_product_metrics,
     get_codecharta_metrics,
@@ -40,13 +40,15 @@ class TestInitializeResponseData(BaseTestCase):
 
 
 class TestCalculateProductMetrics(BaseTestCase):
+    @patch("application.metrics.services.metrics.Settings.load")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
     @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
     @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_no_products(
-        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_settings_load
     ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=True)
         mock_product_objects.filter.return_value = []
 
         status = ProductMetricsStatusStub()
@@ -57,16 +59,19 @@ class TestCalculateProductMetrics(BaseTestCase):
         self.assertEqual(result, "Calculated metrics for 0 products.")
         mock_product_objects.filter.assert_called_once_with(is_product_group=False)
         mock_calc.assert_not_called()
+        mock_calc_license.assert_not_called()
         mock_status_load.assert_called_once()
 
+    @patch("application.metrics.services.metrics.Settings.load")
     @patch("application.metrics.services.metrics.timezone")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
     @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
     @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_one_product(
-        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone, mock_settings_load
     ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=True)
         mock_product_objects.filter.return_value = [self.product_1]
         mock_calc.return_value = True
 
@@ -80,16 +85,19 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         self.assertEqual(result, "Calculated metrics for 1 product.")
         mock_calc.assert_called_once_with(self.product_1)
+        mock_calc_license.assert_called_once_with(self.product_1)
         self.assertEqual(status.last_calculated, now)
 
+    @patch("application.metrics.services.metrics.Settings.load")
     @patch("application.metrics.services.metrics.timezone")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
     @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
     @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_multiple_products(
-        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone, mock_settings_load
     ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=True)
         product_2 = type(self.product_1)
         product_2.name = "product_2"
         mock_product_objects.filter.return_value = [
@@ -108,15 +116,18 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         self.assertEqual(result, "Calculated metrics for 2 products.")
         self.assertEqual(mock_calc.call_count, 2)
+        self.assertEqual(mock_calc_license.call_count, 2)
 
+    @patch("application.metrics.services.metrics.Settings.load")
     @patch("application.metrics.services.metrics.timezone")
     @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
     @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
     @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
     @patch("application.metrics.services.metrics.Product.objects")
     def test_calculate_product_metrics_some_without_changes(
-        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone, mock_settings_load
     ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=True)
         product_2 = type(self.product_1)
         product_2.name = "product_2"
         mock_product_objects.filter.return_value = [
@@ -135,6 +146,84 @@ class TestCalculateProductMetrics(BaseTestCase):
         result = calculate_product_metrics()
 
         self.assertEqual(result, "Calculated metrics for 1 product.")
+        self.assertEqual(mock_calc_license.call_count, 2)
+
+    @patch("application.metrics.services.metrics.Settings.load")
+    @patch("application.metrics.services.metrics.timezone")
+    @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
+    @patch("application.metrics.services.metrics.Product.objects")
+    def test_calculate_product_metrics_license_management_disabled(
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone, mock_settings_load
+    ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=False)
+        mock_product_objects.filter.return_value = [self.product_1]
+        mock_calc.return_value = True
+
+        now = datetime(2025, 6, 15, 12, 0, 0)
+        mock_timezone.now.return_value = now
+
+        status = ProductMetricsStatusStub()
+        mock_status_load.return_value = status
+
+        result = calculate_product_metrics()
+
+        self.assertEqual(result, "Calculated metrics for 1 product.")
+        mock_calc.assert_called_once_with(self.product_1)
+        mock_calc_license.assert_not_called()
+        self.assertEqual(status.last_calculated, now)
+
+    @patch("application.metrics.services.metrics.Settings.load")
+    @patch("application.metrics.services.metrics.timezone")
+    @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
+    @patch("application.metrics.services.metrics.Product.objects")
+    def test_calculate_product_metrics_license_disabled_no_observation_changes(
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone, mock_settings_load
+    ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=False)
+        mock_product_objects.filter.return_value = [self.product_1]
+        mock_calc.return_value = False
+
+        now = datetime(2025, 6, 15, 12, 0, 0)
+        mock_timezone.now.return_value = now
+
+        status = ProductMetricsStatusStub()
+        mock_status_load.return_value = status
+
+        result = calculate_product_metrics()
+
+        self.assertEqual(result, "Calculated metrics for 0 products.")
+        mock_calc.assert_called_once_with(self.product_1)
+        mock_calc_license.assert_not_called()
+
+    @patch("application.metrics.services.metrics.Settings.load")
+    @patch("application.metrics.services.metrics.timezone")
+    @patch("application.metrics.services.metrics.Product_Metrics_Status.load")
+    @patch("application.metrics.services.metrics.calculate_observation_metrics_for_product")
+    @patch("application.metrics.services.metrics.calculate_license_metrics_for_product")
+    @patch("application.metrics.services.metrics.Product.objects")
+    def test_calculate_product_metrics_only_license_changes(
+        self, mock_product_objects, mock_calc_license, mock_calc, mock_status_load, mock_timezone, mock_settings_load
+    ):
+        mock_settings_load.return_value = SettingsStub(feature_license_management=True)
+        mock_product_objects.filter.return_value = [self.product_1]
+        mock_calc.return_value = False
+        mock_calc_license.return_value = True
+
+        now = datetime(2025, 6, 15, 12, 0, 0)
+        mock_timezone.now.return_value = now
+
+        status = ProductMetricsStatusStub()
+        mock_status_load.return_value = status
+
+        result = calculate_product_metrics()
+
+        self.assertEqual(result, "Calculated metrics for 1 product.")
+        mock_calc.assert_called_once_with(self.product_1)
+        mock_calc_license.assert_called_once_with(self.product_1)
 
 
 class TestCalculateMetricsForProduct(BaseTestCase):
@@ -353,6 +442,170 @@ class TestGetLatestProductMetrics(BaseTestCase):
         mock_pm_objects.filter.return_value.latest.side_effect = Product_Metrics.DoesNotExist
 
         result = _get_latest_product_observation_metrics(self.product_1)
+
+        self.assertIsNone(result)
+
+
+class TestCalculateLicenseMetricsForProduct(BaseTestCase):
+    @patch("application.metrics.services.metrics.License_Component.objects")
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
+    @patch("application.metrics.services.metrics.timezone")
+    def test_no_previous_metrics_no_licenses(
+        self, mock_timezone, mock_get_latest, mock_plm_objects, mock_lc_objects
+    ):
+        today = date(2025, 6, 15)
+        mock_timezone.localdate.return_value = today
+        self.product_1.last_license_change = datetime(2025, 6, 15, 10, 0, 0)
+
+        mock_get_latest.return_value = None
+
+        todays_metrics = ProductLicenseMetricsStub()
+        mock_plm_objects.update_or_create.return_value = (todays_metrics, True)
+        mock_lc_objects.filter.return_value.values.return_value = []
+
+        result = calculate_license_metrics_for_product(self.product_1)
+
+        self.assertTrue(result)
+        mock_plm_objects.update_or_create.assert_called_once()
+        todays_metrics.assert_save_called(self)
+
+    @patch("application.metrics.services.metrics.License_Component.objects")
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
+    @patch("application.metrics.services.metrics.timezone")
+    def test_licenses_today_with_all_evaluation_results(
+        self, mock_timezone, mock_get_latest, mock_plm_objects, mock_lc_objects
+    ):
+        today = date(2025, 6, 15)
+        mock_timezone.localdate.return_value = today
+        self.product_1.last_license_change = datetime(2025, 6, 15, 10, 0, 0)
+
+        mock_get_latest.return_value = None
+
+        todays_metrics = ProductLicenseMetricsStub()
+        mock_plm_objects.update_or_create.return_value = (todays_metrics, True)
+
+        licenses = [
+            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_ALLOWED},
+            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_FORBIDDEN},
+            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_IGNORED},
+            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED},
+            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_UNKNOWN},
+        ]
+        mock_lc_objects.filter.return_value.values.return_value = licenses
+
+        result = calculate_license_metrics_for_product(self.product_1)
+
+        self.assertTrue(result)
+        self.assertEqual(todays_metrics.allowed, 1)
+        self.assertEqual(todays_metrics.forbidden, 1)
+        self.assertEqual(todays_metrics.ignored, 1)
+        self.assertEqual(todays_metrics.review_required, 1)
+        self.assertEqual(todays_metrics.unknown, 1)
+
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
+    @patch("application.metrics.services.metrics.timezone")
+    def test_no_changes_today_copies_previous_metrics(self, mock_timezone, mock_get_latest, mock_plm_objects):
+        today = date(2025, 6, 15)
+        yesterday = date(2025, 6, 14)
+        mock_timezone.localdate.return_value = today
+        self.product_1.last_license_change = datetime(2025, 6, 14, 10, 0, 0)
+
+        latest_metrics = ProductLicenseMetricsStub(
+            date=yesterday,
+            allowed=5,
+            forbidden=3,
+            ignored=2,
+            review_required=1,
+            unknown=4,
+        )
+        mock_get_latest.return_value = latest_metrics
+
+        created_metrics = []
+        mock_plm_objects.create.side_effect = lambda **kwargs: created_metrics.append(kwargs)
+
+        result = calculate_license_metrics_for_product(self.product_1)
+
+        self.assertTrue(result)
+        self.assertEqual(len(created_metrics), 1)
+        self.assertEqual(created_metrics[0]["date"], today)
+        self.assertEqual(created_metrics[0]["allowed"], 5)
+        self.assertEqual(created_metrics[0]["forbidden"], 3)
+        self.assertEqual(created_metrics[0]["ignored"], 2)
+        self.assertEqual(created_metrics[0]["review_required"], 1)
+        self.assertEqual(created_metrics[0]["unknown"], 4)
+
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
+    @patch("application.metrics.services.metrics.timezone")
+    def test_no_changes_today_fills_gap_days(self, mock_timezone, mock_get_latest, mock_plm_objects):
+        today = date(2025, 6, 15)
+        three_days_ago = date(2025, 6, 12)
+        mock_timezone.localdate.return_value = today
+        self.product_1.last_license_change = datetime(2025, 6, 12, 10, 0, 0)
+
+        latest_metrics = ProductLicenseMetricsStub(date=three_days_ago, allowed=2, forbidden=1)
+        mock_get_latest.return_value = latest_metrics
+
+        created_metrics = []
+        mock_plm_objects.create.side_effect = lambda **kwargs: created_metrics.append(kwargs)
+
+        result = calculate_license_metrics_for_product(self.product_1)
+
+        self.assertTrue(result)
+        self.assertEqual(len(created_metrics), 3)
+        self.assertEqual(created_metrics[0]["date"], date(2025, 6, 13))
+        self.assertEqual(created_metrics[1]["date"], date(2025, 6, 14))
+        self.assertEqual(created_metrics[2]["date"], date(2025, 6, 15))
+        for m in created_metrics:
+            self.assertEqual(m["allowed"], 2)
+            self.assertEqual(m["forbidden"], 1)
+
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
+    @patch("application.metrics.services.metrics.timezone")
+    def test_no_changes_today_metrics_already_up_to_date(self, mock_timezone, mock_get_latest, mock_plm_objects):
+        today = date(2025, 6, 15)
+        mock_timezone.localdate.return_value = today
+        self.product_1.last_license_change = datetime(2025, 6, 14, 10, 0, 0)
+
+        latest_metrics = ProductLicenseMetricsStub(date=today)
+        mock_get_latest.return_value = latest_metrics
+
+        result = calculate_license_metrics_for_product(self.product_1)
+
+        self.assertFalse(result)
+        mock_plm_objects.create.assert_not_called()
+
+
+class TestGetLatestProductLicenseMetrics(BaseTestCase):
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    def test_returns_latest_metrics(self, mock_plm_objects):
+        from application.metrics.services.metrics import (
+            _get_latest_product_license_metrics,
+        )
+
+        expected_metrics = ProductLicenseMetricsStub(date=date(2025, 6, 15))
+        mock_plm_objects.filter.return_value.latest.return_value = expected_metrics
+
+        result = _get_latest_product_license_metrics(self.product_1)
+
+        self.assertEqual(result, expected_metrics)
+        mock_plm_objects.filter.assert_called_once_with(product=self.product_1)
+        mock_plm_objects.filter.return_value.latest.assert_called_once_with("date")
+
+    @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
+    def test_returns_none_when_no_metrics(self, mock_plm_objects):
+        from application.metrics.models import Product_License_Metrics
+        from application.metrics.services.metrics import (
+            _get_latest_product_license_metrics,
+        )
+
+        mock_plm_objects.filter.return_value.latest.side_effect = Product_License_Metrics.DoesNotExist
+
+        result = _get_latest_product_license_metrics(self.product_1)
 
         self.assertIsNone(result)
 
@@ -713,6 +966,11 @@ class TestGetCodechartaMetrics(BaseTestCase):
 # --- Stubs ---
 
 
+class SettingsStub:
+    def __init__(self, feature_license_management=True):
+        self.feature_license_management = feature_license_management
+
+
 class ProductMetricsStatusStub:
     def __init__(self):
         self.last_calculated = None
@@ -758,6 +1016,31 @@ class ProductMetricsStub:
         self.not_affected = not_affected
         self.not_security = not_security
         self.risk_accepted = risk_accepted
+        self._saved = False
+
+    def save(self):
+        self._saved = True
+
+    def assert_save_called(self, test_case):
+        test_case.assertTrue(self._saved)
+
+
+class ProductLicenseMetricsStub:
+    def __init__(
+        self,
+        date=None,
+        allowed=0,
+        forbidden=0,
+        ignored=0,
+        review_required=0,
+        unknown=0,
+    ):
+        self.date = date
+        self.allowed = allowed
+        self.forbidden = forbidden
+        self.ignored = ignored
+        self.review_required = review_required
+        self.unknown = unknown
         self._saved = False
 
     def save(self):
