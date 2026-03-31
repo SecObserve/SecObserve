@@ -1,12 +1,12 @@
 import { Fragment } from "react";
-import { CreateButton, Datagrid, List, TextField, TextInput, TopToolbar } from "react-admin";
+import { CreateButton, Datagrid, List, TextField, TextInput, TopToolbar, WithListContext } from "react-admin";
 
 import product_groups from ".";
 import { PERMISSION_PRODUCT_GROUP_CREATE } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 
@@ -34,14 +34,18 @@ const ProductGroupList = () => {
                 disableSyncWithLocation={false}
                 storeKey="product_groups.list"
             >
-                <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
-                    <TextField source="name" />
-                    <TextField source="products_count" label="Products" sortable={false} />
-                    <ObservationsCountField label="Active observations" withLabel={false} />
-                    {feature_license_management() && (
-                        <LicensesCountField label="Licenses / Components" withLabel={false} />
+                <WithListContext
+                    render={({ data, sort }) => (
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
+                            <TextField source="name" />
+                            <TextField source="products_count" label="Products" sortable={false} />
+                            <ObservationsCountField label="Active observations" withLabel={false} />
+                            {feature_license_management() && has_attribute("all_licenses_count", data, sort) && (
+                                <LicensesCountField label="Licenses / Components" withLabel={false} />
+                            )}
+                        </Datagrid>
                     )}
-                </Datagrid>
+                />
             </List>
         </Fragment>
     );
