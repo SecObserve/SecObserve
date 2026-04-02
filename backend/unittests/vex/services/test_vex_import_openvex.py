@@ -31,8 +31,6 @@ class TestVEXImportOpenVEX(BaseTestVEXImport):
                 document_id="https://openvex.example.com/so_openvex_2020_0002",
                 author="SecObserve",
             )
-            self.check_vex_document_without_component_purl(
-                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_OPENVEX
-            )
+            self.check_vex_document_without_component_purl(vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_OPENVEX)
 
             self.check_product()

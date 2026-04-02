@@ -74,9 +74,7 @@ class TestVEXImportCSAF(BaseTestVEXImport):
                 document_id="https://csaf.example.com/so_2020_0002_0001",
                 author="SecObserve",
             )
-            self.check_vex_document_without_component_purl(
-                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF
-            )
+            self.check_vex_document_without_component_purl(vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF)
 
             self.check_product()
 
@@ -106,9 +104,7 @@ class TestVEXImportCSAF(BaseTestVEXImport):
                 document_id="https://csaf.example.com/so_2020_0002_0001",
                 author="SecObserve",
             )
-            self.check_vex_document_without_component_purl(
-                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF
-            )
+            self.check_vex_document_without_component_purl(vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF)
 
             self.check_product(short=True)
 
