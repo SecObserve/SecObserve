@@ -6,10 +6,12 @@ import {
     ResourceContextProvider,
     TextField,
     TextInput,
+    WithListContext,
     useListController,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { VEX_STATUS_CHOICES } from "../types";
@@ -48,18 +50,28 @@ const VEXStatementEmbeddedList = ({ vex_document }: VEXStatementEmbeddedListProp
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters()} />
-                    <Datagrid
-                        size={getSettingListSize()}
-                        rowClick={ShowVEXStatement}
-                        bulkActionButtons={false}
-                        resource="vex/vex_statements"
-                    >
-                        <TextField source="vulnerability_id" label="Vulnerability ID" />
-                        <ChipField source="status" />
-                        <TextField source="product_purl" label="Product" />
-                        <TextField source="component_purl" label="Component" />
-                        <TextField source="component_cyclonedx_bom_link" label="CycloneDX BOM Link" />
-                    </Datagrid>
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                rowClick={ShowVEXStatement}
+                                bulkActionButtons={false}
+                                resource="vex/vex_statements"
+                            >
+                                <TextField source="vulnerability_id" label="Vulnerability ID" />
+                                <ChipField source="status" />
+                                {has_attribute("product_purl", data, sort) && (
+                                    <TextField source="product_purl" label="Product" />
+                                )}
+                                {has_attribute("component_purl", data, sort) && (
+                                    <TextField source="component_purl" label="Component" />
+                                )}
+                                {has_attribute("component_cyclonedx_bom_link", data, sort) && (
+                                    <TextField source="component_cyclonedx_bom_link" label="CycloneDX BOM Link" />
+                                )}
+                            </Datagrid>
+                        )}
+                    />
                     <CustomPagination />
                 </div>
             </ListContextProvider>
