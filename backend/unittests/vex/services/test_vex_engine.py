@@ -1,12 +1,12 @@
-from unittest.mock import MagicMock, call, patch
 from unittest import TestCase
+from unittest.mock import MagicMock, call, patch
 
 from application.vex.services.vex_engine import VEX_Engine
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_settings(feature_vex: bool = True) -> MagicMock:
     settings = MagicMock()
@@ -67,9 +67,7 @@ class TestVEXEngineInit(TestCase):
 
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_no_purl_on_product_or_branch_loads_no_statements(
-        self, mock_settings_cls, mock_vex_statement_cls
-    ):
+    def test_no_purl_on_product_or_branch_loads_no_statements(self, mock_settings_cls, mock_vex_statement_cls):
         """When neither product nor branch have a PURL, vex_statements stays empty."""
         mock_settings_cls.load.return_value = _make_settings()
         product = _make_product(purl="")
@@ -81,9 +79,7 @@ class TestVEXEngineInit(TestCase):
 
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_invalid_purl_loads_no_statements(
-        self, mock_settings_cls, mock_vex_statement_cls
-    ):
+    def test_invalid_purl_loads_no_statements(self, mock_settings_cls, mock_vex_statement_cls):
         """An unparseable PURL must not raise and must leave vex_statements empty."""
         mock_settings_cls.load.return_value = _make_settings()
         product = _make_product(purl="not-a-valid-purl")
@@ -95,9 +91,7 @@ class TestVEXEngineInit(TestCase):
 
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_uses_product_purl_when_no_branch(
-        self, mock_settings_cls, mock_vex_statement_cls
-    ):
+    def test_uses_product_purl_when_no_branch(self, mock_settings_cls, mock_vex_statement_cls):
         """When branch is None the product PURL drives the DB query."""
         mock_settings_cls.load.return_value = _make_settings()
         expected_statements = [MagicMock(), MagicMock()]
@@ -107,16 +101,12 @@ class TestVEXEngineInit(TestCase):
         engine = VEX_Engine(product=product, branch=None)
 
         # The filter must use the version-stripped search PURL
-        mock_vex_statement_cls.objects.filter.assert_called_once_with(
-            product_purl__startswith="pkg:pypi/requests"
-        )
+        mock_vex_statement_cls.objects.filter.assert_called_once_with(product_purl__startswith="pkg:pypi/requests")
         assert engine.vex_statements == expected_statements
 
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_uses_branch_purl_when_present(
-        self, mock_settings_cls, mock_vex_statement_cls
-    ):
+    def test_uses_branch_purl_when_present(self, mock_settings_cls, mock_vex_statement_cls):
         """When the branch has a PURL it should take precedence over the product PURL."""
         mock_settings_cls.load.return_value = _make_settings()
         mock_vex_statement_cls.objects.filter.return_value = []
@@ -125,15 +115,11 @@ class TestVEXEngineInit(TestCase):
 
         engine = VEX_Engine(product=product, branch=branch)
 
-        mock_vex_statement_cls.objects.filter.assert_called_once_with(
-            product_purl__startswith="pkg:pypi/myapp"
-        )
+        mock_vex_statement_cls.objects.filter.assert_called_once_with(product_purl__startswith="pkg:pypi/myapp")
 
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_falls_back_to_product_purl_when_branch_purl_empty(
-        self, mock_settings_cls, mock_vex_statement_cls
-    ):
+    def test_falls_back_to_product_purl_when_branch_purl_empty(self, mock_settings_cls, mock_vex_statement_cls):
         """A branch with an empty PURL must fall back to the product PURL."""
         mock_settings_cls.load.return_value = _make_settings()
         mock_vex_statement_cls.objects.filter.return_value = []
@@ -142,15 +128,11 @@ class TestVEXEngineInit(TestCase):
 
         engine = VEX_Engine(product=product, branch=branch)
 
-        mock_vex_statement_cls.objects.filter.assert_called_once_with(
-            product_purl__startswith="pkg:pypi/requests"
-        )
+        mock_vex_statement_cls.objects.filter.assert_called_once_with(product_purl__startswith="pkg:pypi/requests")
 
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_stores_product_and_branch_attributes(
-        self, mock_settings_cls, mock_vex_statement_cls
-    ):
+    def test_stores_product_and_branch_attributes(self, mock_settings_cls, mock_vex_statement_cls):
         """product and branch must be stored on the instance."""
         mock_settings_cls.load.return_value = _make_settings()
         mock_vex_statement_cls.objects.filter.return_value = []
@@ -188,9 +170,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
     @patch(f"{MODULE}.write_observation_log_no_vex_statement")
     @patch(f"{MODULE}._apply_vex_statement_for_observation")
     @patch(f"{MODULE}.Settings")
-    def test_returns_early_when_feature_vex_disabled(
-        self, mock_settings_cls, mock_apply, mock_log
-    ):
+    def test_returns_early_when_feature_vex_disabled(self, mock_settings_cls, mock_apply, mock_log):
         mock_settings_cls.load.return_value = _make_settings(feature_vex=False)
         engine = self._make_engine()
         obs = _make_observation()
@@ -208,9 +188,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
     @patch(f"{MODULE}._apply_vex_statement_for_observation", return_value=True)
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_bom_link_match_stops_further_search(
-        self, mock_settings_cls, mock_vex_statement_cls, mock_apply, mock_log
-    ):
+    def test_bom_link_match_stops_further_search(self, mock_settings_cls, mock_vex_statement_cls, mock_apply, mock_log):
         """A BOM-link match must prevent the product-level statements from being tried."""
         mock_settings_cls.load.return_value = _make_settings()
         bom_stmt = MagicMock()
@@ -231,9 +209,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
     @patch(f"{MODULE}._apply_vex_statement_for_observation", return_value=True)
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_bom_link_breaks_after_first_match(
-        self, mock_settings_cls, mock_vex_statement_cls, mock_apply, mock_log
-    ):
+    def test_bom_link_breaks_after_first_match(self, mock_settings_cls, mock_vex_statement_cls, mock_apply, mock_log):
         """Only the first matching BOM statement must be applied."""
         mock_settings_cls.load.return_value = _make_settings()
         bom_stmt1, bom_stmt2 = MagicMock(), MagicMock()
@@ -361,8 +337,9 @@ class TestApplyVEXStatementsForObservation(TestCase):
         # Only one filter call may exist (the BOM-link call is skipped too since
         # bom_link is empty); no component fallback query
         for filter_call in mock_vex_statement_cls.objects.filter.call_args_list:
-            assert "product_purl__startswith" not in str(filter_call) or \
-                   filter_call != call(product_purl__startswith="not-a-valid-purl", component_purl="")
+            assert "product_purl__startswith" not in str(filter_call) or filter_call != call(
+                product_purl__startswith="not-a-valid-purl", component_purl=""
+            )
 
     # ------------------------------------------------------------------
     # "No VEX statement found" log path
@@ -436,9 +413,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
     @patch(f"{MODULE}._apply_vex_statement_for_observation", return_value=True)
     @patch(f"{MODULE}.VEX_Statement")
     @patch(f"{MODULE}.Settings")
-    def test_log_not_called_when_match_found(
-        self, mock_settings_cls, mock_vex_statement_cls, mock_apply, mock_log
-    ):
+    def test_log_not_called_when_match_found(self, mock_settings_cls, mock_vex_statement_cls, mock_apply, mock_log):
         """When a VEX statement is matched, the no-statement log must NOT fire."""
         mock_settings_cls.load.return_value = _make_settings()
         mock_vex_statement_cls.objects.filter.return_value = []
