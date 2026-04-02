@@ -7,6 +7,7 @@ from application.vex.services.vex_engine import VEX_Engine
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_settings(feature_vex: bool = True) -> MagicMock:
     settings = MagicMock()
     settings.feature_vex = feature_vex
