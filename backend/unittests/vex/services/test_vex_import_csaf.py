@@ -63,3 +63,67 @@ class TestVEXImportCSAF(BaseTestVEXImport):
             self.check_vex_document(vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF, short=True)
 
             self.check_product(short=True)
+
+    def test_import_without_component_long_long(self):
+        self.load_vex_test()
+
+        with open(path.dirname(__file__) + "/files/so_csaf_without_component.json") as testfile:
+            import_vex(testfile)
+
+            vex_document = VEX_Document.objects.get(
+                document_id="https://csaf.example.com/so_2020_0002_0001",
+                author="SecObserve",
+            )
+            self.check_vex_document_without_component_purl(
+                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF
+            )
+
+            self.check_product()
+
+    def test_import_without_component_long_short(self):
+        self.load_vex_test()
+
+        with open(path.dirname(__file__) + "/files/so_csaf_without_component_short.json") as testfile:
+            import_vex(testfile)
+
+            vex_document = VEX_Document.objects.get(
+                document_id="https://csaf.example.com/so_2020_0002_0001",
+                author="SecObserve",
+            )
+            self.check_vex_document_without_component_purl(
+                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF, short=True
+            )
+
+            self.check_product()
+
+    def test_import_without_component_short_long(self):
+        self.load_vex_test(short=True)
+
+        with open(path.dirname(__file__) + "/files/so_csaf_without_component.json") as testfile:
+            import_vex(testfile)
+
+            vex_document = VEX_Document.objects.get(
+                document_id="https://csaf.example.com/so_2020_0002_0001",
+                author="SecObserve",
+            )
+            self.check_vex_document_without_component_purl(
+                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF
+            )
+
+            self.check_product(short=True)
+
+    def test_import_without_component_short_short(self):
+        self.load_vex_test(short=True)
+
+        with open(path.dirname(__file__) + "/files/so_csaf_without_component_short.json") as testfile:
+            import_vex(testfile)
+
+            vex_document = VEX_Document.objects.get(
+                document_id="https://csaf.example.com/so_2020_0002_0001",
+                author="SecObserve",
+            )
+            self.check_vex_document_without_component_purl(
+                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF, short=True
+            )
+
+            self.check_product(short=True)

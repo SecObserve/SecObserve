@@ -20,3 +20,19 @@ class TestVEXImportOpenVEX(BaseTestVEXImport):
             self.check_vex_document(vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_OPENVEX)
 
             self.check_product()
+
+    def test_import_without_component(self):
+        self.load_vex_test()
+
+        with open(path.dirname(__file__) + "/files/so_openvex_without_component.json") as testfile:
+            import_vex(testfile)
+
+            vex_document = VEX_Document.objects.get(
+                document_id="https://openvex.example.com/so_openvex_2020_0002",
+                author="SecObserve",
+            )
+            self.check_vex_document_without_component_purl(
+                vex_document, VEX_Document_Type.VEX_DOCUMENT_TYPE_OPENVEX
+            )
+
+            self.check_product()

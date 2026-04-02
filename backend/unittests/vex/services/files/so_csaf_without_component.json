@@ -1,0 +1,528 @@
+{
+    "document": {
+        "category": "csaf_vex",
+        "csaf_version": "2.0",
+        "distribution": {
+            "tlp": {
+                "label": "WHITE"
+            }
+        },
+        "publisher": {
+            "category": "vendor",
+            "name": "SecObserve",
+            "namespace": "https://csaf.example.com"
+        },
+        "title": "VEX unit tests",
+        "tracking": {
+            "current_release_date": "2024-07-14T11:12:19.671919+00:00",
+            "generator": {
+                "engine": {
+                    "name": "SecObserve",
+                    "version": "1.50.0"
+                }
+            },
+            "id": "so_2020_0002_0001",
+            "initial_release_date": "2024-07-14T11:12:19.671904+00:00",
+            "revision_history": [
+                {
+                    "date": "2024-07-14T11:12:19.671919+00:00",
+                    "number": "1",
+                    "summary": "Initial release"
+                }
+            ],
+            "status": "final",
+            "version": "1"
+        }
+    },
+    "product_tree": {
+        "branches": [
+            {
+                "branches": [
+                    {
+                        "category": "product_version",
+                        "name": "cryptography:41.0.5",
+                        "product": {
+                            "name": "cryptography:41.0.5",
+                            "product_id": "pkg:pypi/cryptography@41.0.5",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/cryptography@41.0.5"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "gunicorn:21.2.0",
+                        "product": {
+                            "name": "gunicorn:21.2.0",
+                            "product_id": "pkg:pypi/gunicorn@21.2.0",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/gunicorn@21.2.0"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "black:23.11.0",
+                        "product": {
+                            "name": "black:23.11.0",
+                            "product_id": "pkg:pypi/black@23.11.0",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/black@23.11.0"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "django:4.2.8",
+                        "product": {
+                            "name": "django:4.2.8",
+                            "product_id": "pkg:pypi/django@4.2.8",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/django@4.2.8"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "werkzeug:3.0.1",
+                        "product": {
+                            "name": "werkzeug:3.0.1",
+                            "product_id": "pkg:pypi/werkzeug@3.0.1",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/werkzeug@3.0.1"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "requests:2.31.0",
+                        "product": {
+                            "name": "requests:2.31.0",
+                            "product_id": "pkg:pypi/requests@2.31.0",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/requests@2.31.0"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "idna:3.6",
+                        "product": {
+                            "name": "idna:3.6",
+                            "product_id": "pkg:pypi/idna@3.6",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/idna@3.6"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "urllib3:2.1.0",
+                        "product": {
+                            "name": "urllib3:2.1.0",
+                            "product_id": "pkg:pypi/urllib3@2.1.0",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/urllib3@2.1.0"
+                            }
+                        }
+                    },
+                    {
+                        "category": "product_version",
+                        "name": "sqlparse:0.4.4",
+                        "product": {
+                            "name": "sqlparse:0.4.4",
+                            "product_id": "pkg:pypi/sqlparse@0.4.4",
+                            "product_identification_helper": {
+                                "purl": "pkg:pypi/sqlparse@0.4.4"
+                            }
+                        }
+                    }
+                ],
+                "category": "product_family",
+                "name": "_components_"
+            }
+        ]
+    },
+    "vulnerabilities": [
+        {
+            "cve": "CVE-2023-49083",
+            "flags": [
+                {
+                    "label": "vulnerable_code_cannot_be_controlled_by_adversary",
+                    "product_ids": [
+                        "pkg:pypi/cryptography@41.0.5"
+                    ]
+                }
+            ],
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "cryptography is a package designed to expose cryptographic primitives and recipes to Python developers. Calling `load_pem_pkcs7_certificates` or `load_der_pkcs7_certificates` could lead to a NULL-pointer dereference and segfault. Exploitation of this vulnerability poses a serious risk of Denial of Service (DoS) for any application attempting to deserialize a PKCS7 blob/certificate. The consequences extend to potential disruptions in system availability and stability. This vulnerability has been patched in version 41.0.6."
+                }
+            ],
+            "product_status": {
+                "known_not_affected": [
+                    "pkg:pypi/cryptography@41.0.5"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-49083"
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2023-50782",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "A flaw was found in the python-cryptography package. This issue may allow a remote attacker to decrypt captured messages in TLS servers that use RSA key exchanges, which may lead to exposure of confidential or sensitive data."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/cryptography@41.0.5"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-50782"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade cryptography to version 42.0.0",
+                    "product_ids": [
+                        "pkg:pypi/cryptography@41.0.5"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-0727",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "Issue summary: Processing a maliciously formatted PKCS12 file may lead OpenSSL\nto crash leading to a potential Denial of Service attack\n\nImpact summary: Applications loading files in the PKCS12 format from untrusted\nsources might terminate abruptly.\n\nA file in PKCS12 format can contain certificates and keys and may come from an\nuntrusted source. The PKCS12 specification allows certain fields to be NULL, but\nOpenSSL does not correctly check for this case. This can lead to a NULL pointer\ndereference that results in OpenSSL crashing. If an application processes PKCS12\nfiles from an untrusted source using the OpenSSL APIs then that application will\nbe vulnerable to this issue.\n\nOpenSSL APIs that are vulnerable to this are: PKCS12_parse(),\nPKCS12_unpack_p7data(), PKCS12_unpack_p7encdata(), PKCS12_unpack_authsafes()\nand PKCS12_newpass().\n\nWe have also fixed a similar issue in SMIME_write_PKCS7(). However since this\nfunction is related to writing data we do not consider it security significant.\n\nThe FIPS modules in 3.2, 3.1 and 3.0 are not affected by this issue."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/cryptography@41.0.5"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-0727"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade cryptography to version 42.0.2",
+                    "product_ids": [
+                        "pkg:pypi/cryptography@41.0.5"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-1135",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "Gunicorn fails to properly validate Transfer-Encoding headers, leading to HTTP Request Smuggling (HRS) vulnerabilities. By crafting requests with conflicting Transfer-Encoding headers, attackers can bypass security restrictions and access restricted endpoints. This issue is due to Gunicorn's handling of Transfer-Encoding headers, where it incorrectly processes requests with multiple, conflicting Transfer-Encoding headers, treating them as chunked regardless of the final encoding specified. This vulnerability allows for a range of attacks including cache poisoning, session manipulation, and data exposure."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/gunicorn@21.2.0"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-1135"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade gunicorn to version 22.0.0",
+                    "product_ids": [
+                        "pkg:pypi/gunicorn@21.2.0"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-21503",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "Versions of the package black before 24.3.0 are vulnerable to Regular Expression Denial of Service (ReDoS) via the lines_with_leading_tabs_expanded function in the strings.py file. An attacker could exploit this vulnerability by crafting a malicious input that causes a denial of service.\r\rExploiting this vulnerability is possible when running Black on untrusted input, or if you habitually put thousands of leading tab characters in your docstrings."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/black@23.11.0"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-21503"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade black to version 24.3.0",
+                    "product_ids": [
+                        "pkg:pypi/black@23.11.0"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-24680",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "An issue was discovered in Django 3.2 before 3.2.24, 4.2 before 4.2.10, and Django 5.0 before 5.0.2. The intcomma template filter was subject to a potential denial-of-service attack when used with very long strings."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/django@4.2.8"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-24680"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade django to version 3.2.24, 4.2.10, 5.0.2",
+                    "product_ids": [
+                        "pkg:pypi/django@4.2.8"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-26130",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "cryptography is a package designed to expose cryptographic primitives and recipes to Python developers. Starting in version 38.0.0 and prior to version 42.0.4, if `pkcs12.serialize_key_and_certificates` is called with both a certificate whose public key did not match the provided private key and an `encryption_algorithm` with `hmac_hash` set (via `PrivateFormat.PKCS12.encryption_builder().hmac_hash(...)`, then a NULL pointer dereference would occur, crashing the Python process. This has been resolved in version 42.0.4, the first version in which a `ValueError` is properly raised."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/cryptography@41.0.5"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-26130"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade cryptography to version 42.0.4",
+                    "product_ids": [
+                        "pkg:pypi/cryptography@41.0.5"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-27351",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "In Django 3.2 before 3.2.25, 4.2 before 4.2.11, and 5.0 before 5.0.3, the django.utils.text.Truncator.words() method (with html=True) and the truncatewords_html template filter are subject to a potential regular expression denial-of-service attack via a crafted string. NOTE: this issue exists because of an incomplete fix for CVE-2019-14232 and CVE-2023-43665."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/django@4.2.8"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-27351"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade django to version 3.2.25, 4.2.11, 5.0.3",
+                    "product_ids": [
+                        "pkg:pypi/django@4.2.8"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-34069",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "Werkzeug is a comprehensive WSGI web application library. The debugger in affected versions of Werkzeug can allow an attacker to execute code on a developer's machine under some circumstances. This requires the attacker to get the developer to interact with a domain and subdomain they control, and enter the debugger PIN, but if they are successful it allows access to the debugger even if it is only running on localhost. This also requires the attacker to guess a URL in the developer's application that will trigger the debugger. This vulnerability is fixed in 3.0.3."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/werkzeug@3.0.1"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-34069"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade werkzeug to version 3.0.3",
+                    "product_ids": [
+                        "pkg:pypi/werkzeug@3.0.1"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-35195",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "Requests is a HTTP library. Prior to 2.32.0, when making requests through a Requests `Session`, if the first request is made with `verify=False` to disable cert verification, all subsequent requests to the same host will continue to ignore cert verification regardless of changes to the value of `verify`. This behavior will continue for the lifecycle of the connection in the connection pool. This vulnerability is fixed in 2.32.0."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/requests@2.31.0"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-35195"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade requests to version 2.32.0",
+                    "product_ids": [
+                        "pkg:pypi/requests@2.31.0"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-3651",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "A flaw was found in the python-idna library. A malicious argument was sent to the idna.encode() function can trigger an uncontrolled resource consumption, resulting in a denial of service."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/idna@3.6"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-3651"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade idna to version 3.7",
+                    "product_ids": [
+                        "pkg:pypi/idna@3.6"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-37891",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": " urllib3 is a user-friendly HTTP client library for Python. When using urllib3's proxy support with `ProxyManager`, the `Proxy-Authorization` header is only sent to the configured proxy, as expected. However, when sending HTTP requests *without* using urllib3's proxy support, it's possible to accidentally configure the `Proxy-Authorization` header even though it won't have any effect as the request is not using a forwarding proxy or a tunneling proxy. In those cases, urllib3 doesn't treat the `Proxy-Authorization` HTTP header as one carrying authentication material and thus doesn't strip the header on cross-origin redirects. Because this is a highly unlikely scenario, we believe the severity of this vulnerability is low for almost all users. Out of an abundance of caution urllib3 will automatically strip the `Proxy-Authorization` header during cross-origin redirects to avoid the small chance that users are doing this on accident. Users should use urllib3's proxy support or disable automatic redirects to achieve safe processing of the `Proxy-Authorization` header, but we still decided to strip the header by default in order to further protect users who aren't using the correct approach. We believe the number of usages affected by this advisory is low. It requires all of the following to be true to be exploited: 1. Setting the `Proxy-Authorization` header without using urllib3's built-in proxy support. 2. Not disabling HTTP redirects. 3. Either not using an HTTPS origin server or for the proxy or target origin to redirect to a malicious origin. Users are advised to update to either version 1.26.19 or version 2.2.2. Users unable to upgrade may use the `Proxy-Authorization` header with urllib3's `ProxyManager`, disable HTTP redirects using `redirects=False` when sending requests, or not user the `Proxy-Authorization` header as mitigations."
+                }
+            ],
+            "product_status": {
+                "known_affected": [
+                    "pkg:pypi/urllib3@2.1.0"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-37891"
+                }
+            ],
+            "remediations": [
+                {
+                    "category": "mitigation",
+                    "details": "Upgrade urllib3 to version 1.26.19, 2.2.2",
+                    "product_ids": [
+                        "pkg:pypi/urllib3@2.1.0"
+                    ]
+                }
+            ]
+        },
+        {
+            "cve": "CVE-2024-4340",
+            "notes": [
+                {
+                    "category": "description",
+                    "text": "Passing a heavily nested list to sqlparse.parse() leads to a Denial of Service due to RecursionError."
+                }
+            ],
+            "product_status": {
+                "under_investigation": [
+                    "pkg:pypi/sqlparse@0.4.4"
+                ]
+            },
+            "references": [
+                {
+                    "category": "external",
+                    "summary": "Security Advisory",
+                    "url": "https://nvd.nist.gov/vuln/detail/CVE-2024-4340"
+                }
+            ]
+        }
+    ]
+}
