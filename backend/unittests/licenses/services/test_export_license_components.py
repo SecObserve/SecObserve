@@ -131,4 +131,5 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             1,
             "",
         ]
+
         self.assertEqual(expected_values, actual_values)

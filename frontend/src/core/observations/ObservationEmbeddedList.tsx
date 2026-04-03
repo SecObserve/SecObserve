@@ -11,6 +11,7 @@ import {
     ListContextProvider,
     NullableBooleanInput,
     NumberField,
+    NumberInput,
     ReferenceInput,
     ResourceContextProvider,
     TextField,
@@ -69,6 +70,19 @@ function listFilters(product: Product) {
         />,
         <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
     );
+    if (product?.has_priorities) {
+        filters.push(
+            <NumberInput
+                source="current_priority"
+                label="Priority"
+                step={1}
+                min={1}
+                max={99}
+                sx={{ width: "7em" }}
+                alwaysOn
+            />
+        );
+    }
     if (product?.has_services) {
         filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
     }

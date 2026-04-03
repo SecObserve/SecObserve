@@ -14,7 +14,7 @@
     "lockFileMaintenance": {
         "enabled": true
     },
-    "rebaseWhen": "conflicted",
+    "minimumReleaseAge": "3 days",
     "pip_requirements": {
         "managerFilePatterns": [
             "/mkdocs_requirements.txt/",
@@ -32,7 +32,7 @@
             "matchPackageNames": [
                 "django"
             ],
-            "allowedVersions": "<6.1"
+            "allowedVersions": "<7"
         },
         {
             "matchPackageNames": [
@@ -52,5 +52,6 @@
             ],
             "allowedVersions": "<9"
         }
-    ]
+    ],
+    "rebaseWhen": "conflicted"
 }

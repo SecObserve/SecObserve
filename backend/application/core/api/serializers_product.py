@@ -153,8 +153,12 @@ class ProductGroupSerializer(ProductCoreSerializer):
     allowed_licenses_count = IntegerField(read_only=True)
     ignored_licenses_count = IntegerField(read_only=True)
 
+    all_licenses_count = SerializerMethodField()
     products_count = SerializerMethodField()
     product_rule_approvals = SerializerMethodField()
+
+    def get_all_licenses_count(self, obj: Product) -> Optional[int]:
+        return _get_all_licenses_count(obj)
 
     def get_products_count(self, obj: Product) -> int:
         return obj.products.count()
@@ -204,6 +208,7 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "unknown_licenses_count",
             "allowed_licenses_count",
             "ignored_licenses_count",
+            "all_licenses_count",
             "observation_notification_min_severity",
             "observation_notification_status_list",
             "observation_notification_min_priority",
@@ -242,12 +247,16 @@ class ProductListSerializer(ProductCoreSerializer):
     allowed_licenses_count = IntegerField(read_only=True)
     ignored_licenses_count = IntegerField(read_only=True)
 
+    all_licenses_count = SerializerMethodField()
     product_group_name = SerializerMethodField()
     repository_default_branch_name = SerializerMethodField()
 
     class Meta:
         model = Product
         exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
+
+    def get_all_licenses_count(self, obj: Product) -> Optional[int]:
+        return _get_all_licenses_count(obj)
 
     def get_product_group_name(self, obj: Product) -> str:
         if not obj.product_group:
@@ -278,6 +287,7 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     has_api_configurations = SerializerMethodField()
     has_branch_osv_linux_distribution = SerializerMethodField()
     has_concluded_comments = SerializerMethodField()
+    has_priorities = SerializerMethodField()
 
     class Meta:
         model = Product
@@ -360,6 +370,9 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     def get_has_concluded_comments(self, obj: Product) -> bool:
         return License_Component.objects.filter(product=obj).exclude(manual_concluded_comment="").exists()
+
+    def get_has_priorities(self, obj: Product) -> bool:
+        return Observation.objects.filter(product=obj).filter(current_priority__isnull=False).exists()
 
     def validate(self, attrs: dict) -> dict:  # pylint: disable=too-many-branches
         # There are quite a lot of branches, but at least they are not nested too much
@@ -648,3 +661,16 @@ class ServiceNameSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
+
+
+def _get_all_licenses_count(product: Product) -> Optional[int]:
+    all_licenses_count = (
+        int(product.forbidden_licenses_count or 0)
+        + int(product.review_required_licenses_count or 0)
+        + int(product.unknown_licenses_count or 0)
+        + int(product.allowed_licenses_count or 0)
+        + int(product.ignored_licenses_count or 0)
+    )
+    if all_licenses_count:
+        return all_licenses_count
+    return None

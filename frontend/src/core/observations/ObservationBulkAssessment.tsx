@@ -66,7 +66,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/observations/bulk_assessment/";
         }
         const assessment_data = {
-            severity: data.current_severity,
+            severity: data.severity,
             status: data.status,
             priority: data.priority,
             comment: comment,
@@ -117,7 +117,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                         toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable={true} />}
                     >
                         <AutocompleteInputMedium
-                            source="current_severity"
+                            source="severity"
                             label="Severity"
                             choices={OBSERVATION_SEVERITY_CHOICES}
                         />
@@ -127,7 +127,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                             choices={OBSERVATION_STATUS_CHOICES}
                             onChange={(e) => setStatus(e)}
                         />
-                        <NumberInput source="priority" step={1} min={1} max={99} />
+                        <NumberInput source="priority" step={1} min={1} max={99} sx={{ width: "7em" }} />
                         {justificationEnabled &&
                             settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
                                 <AutocompleteInputWide

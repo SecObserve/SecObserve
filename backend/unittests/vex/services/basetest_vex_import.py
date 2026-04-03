@@ -170,6 +170,83 @@ class BaseTestVEXImport(TestCase):
         self.assertTrue(found_0727)
         self.assertTrue(found_4340)
 
+    def check_vex_document_without_component_purl(
+        self, vex_document: VEX_Document, document_type: str, short: bool = False
+    ) -> None:
+        self.assertEqual(document_type, vex_document.type)
+        self.assertEqual("1", vex_document.version)
+
+        if document_type == VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF:
+            self.assertEqual("vendor", vex_document.role)
+            self.assertEqual("2024-07-14T11:12:19.671904+00:00", vex_document.initial_release_date.isoformat())
+            self.assertEqual("2024-07-14T11:12:19.671919+00:00", vex_document.current_release_date.isoformat())
+        elif document_type == VEX_Document_Type.VEX_DOCUMENT_TYPE_OPENVEX:
+            self.assertEqual("vendor", vex_document.role)
+            self.assertEqual("2024-07-14T11:17:57.668593+00:00", vex_document.initial_release_date.isoformat())
+            self.assertEqual("2024-07-14T11:17:57.668609+00:00", vex_document.current_release_date.isoformat())
+
+        vex_statements = VEX_Statement.objects.filter(document=vex_document)
+        self.assertEqual(13, len(vex_statements))
+
+        for vex_statement in vex_statements:
+            self.assertEqual("", vex_statement.component_purl)
+            self.assertEqual("", vex_statement.component_cyclonedx_bom_link)
+
+        purl_cryptography = "pkg:pypi/cryptography" if short else "pkg:pypi/cryptography@41.0.5"
+        purl_sqlparse = "pkg:pypi/sqlparse" if short else "pkg:pypi/sqlparse@0.4.4"
+
+        found_49083 = False
+        found_0727 = False
+        found_4340 = False
+
+        for vex_statement in vex_statements:
+            if vex_statement.vulnerability_id == "CVE-2023-49083":
+                found_49083 = True
+                self.assertTrue(
+                    vex_statement.description.startswith(
+                        "cryptography is a package designed to expose cryptographic primitives and recipes to Python developers."
+                    )
+                )
+                self.assertEqual(VEX_Status.VEX_STATUS_NOT_AFFECTED, vex_statement.status)
+                self.assertEqual(
+                    VEX_Justification.JUSTIFICATION_VULNERABLE_CODE_CANNOT_BE_CONTROLLED_BY_ADVERSARY,
+                    vex_statement.justification,
+                )
+                if document_type == VEX_Document_Type.VEX_DOCUMENT_TYPE_CSAF:
+                    self.assertEqual("", vex_statement.impact)
+                else:
+                    self.assertEqual("Not affected for VEX test case", vex_statement.impact)
+                self.assertEqual("", vex_statement.remediation)
+                self.assertEqual(purl_cryptography, vex_statement.product_purl)
+
+            if vex_statement.vulnerability_id == "CVE-2024-0727":
+                found_0727 = True
+                self.assertTrue(
+                    vex_statement.description.startswith(
+                        "Issue summary: Processing a maliciously formatted PKCS12 file"
+                    )
+                )
+                self.assertEqual(VEX_Status.VEX_STATUS_AFFECTED, vex_statement.status)
+                self.assertEqual("", vex_statement.justification)
+                self.assertEqual("", vex_statement.impact)
+                self.assertEqual("Upgrade cryptography to version 42.0.2", vex_statement.remediation)
+                self.assertEqual(purl_cryptography, vex_statement.product_purl)
+
+            if vex_statement.vulnerability_id == "CVE-2024-4340":
+                found_4340 = True
+                self.assertTrue(
+                    vex_statement.description.startswith("Passing a heavily nested list to sqlparse.parse()")
+                )
+                self.assertEqual(VEX_Status.VEX_STATUS_UNDER_INVESTIGATION, vex_statement.status)
+                self.assertEqual("", vex_statement.justification)
+                self.assertEqual("", vex_statement.impact)
+                self.assertEqual("", vex_statement.remediation)
+                self.assertEqual(purl_sqlparse, vex_statement.product_purl)
+
+        self.assertTrue(found_49083)
+        self.assertTrue(found_0727)
+        self.assertTrue(found_4340)
+
     def check_product(self, short: bool = False) -> None:
         purl_vex_test = "pkg:github/SecObserve/VEX_Test" if short else "pkg:github/SecObserve/VEX_Test@v1.7.0"
         purl_cryptography = "pkg:pypi/cryptography" if short else "pkg:pypi/cryptography@41.0.5"

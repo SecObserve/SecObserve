@@ -104,6 +104,7 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     issue_tracker_minimum_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
 
     last_observation_change = DateTimeField(default=timezone.now)
+    last_license_change = DateTimeField(default=timezone.now)
 
     assessments_need_approval = BooleanField(default=False)
     new_observations_in_review = BooleanField(default=False)
@@ -418,6 +419,7 @@ class Observation(Model):
             Index(fields=["current_priority"]),
             Index(fields=["vulnerability_id"]),
             Index(fields=["origin_component_name_version"]),
+            Index(fields=["origin_component_purl"]),
             Index(fields=["origin_component_cyclonedx_bom_link"]),
             Index(fields=["origin_docker_image_name_tag_short"]),
             Index(fields=["origin_endpoint_hostname"]),

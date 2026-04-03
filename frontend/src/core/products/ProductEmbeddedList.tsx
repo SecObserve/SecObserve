@@ -6,6 +6,7 @@ import {
     ResourceContextProvider,
     TextField,
     TextInput,
+    WithListContext,
     useListController,
 } from "react-admin";
 
@@ -13,7 +14,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
-import { humanReadableDate } from "../../commons/functions";
+import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { feature_license_management } from "../../commons/functions";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { Product } from "../types";
@@ -66,37 +67,39 @@ const ProductEmbeddedList = ({ product_group, license_policy }: ProductEmbeddedL
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters()} />
-                    <Datagrid
-                        size={getSettingListSize()}
-                        rowClick={showProduct}
-                        bulkActionButtons={false}
-                        resource="products"
-                    >
-                        <TextField source="name" />
-                        <TextField
-                            source="repository_default_branch_name"
-                            label="Default branch / version"
-                            sortable={false}
-                        />
-                        <SecurityGateTextField label="Security gate" />
-                        <ObservationsCountField label="Active observations" withLabel={false} />
-                        {feature_license_management() &&
-                            ((product_group &&
-                                product_group.forbidden_licenses_count +
-                                    product_group.review_required_licenses_count +
-                                    product_group.unknown_licenses_count +
-                                    product_group.allowed_licenses_count +
-                                    product_group.ignored_licenses_count >
-                                    0) ||
-                                license_policy) && (
-                                <LicensesCountField label="Licenses / Components" withLabel={false} />
-                            )}
-                        <FunctionField<Product>
-                            label="Last observation change"
-                            sortBy="last_observation_change"
-                            render={(record) => (record ? humanReadableDate(record.last_observation_change) : "")}
-                        />
-                    </Datagrid>
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                rowClick={showProduct}
+                                bulkActionButtons={false}
+                                resource="products"
+                            >
+                                <TextField source="name" />
+                                {has_attribute("repository_default_branch_name", data, sort) && (
+                                    <TextField
+                                        source="repository_default_branch_name"
+                                        label="Default branch / version"
+                                        sortable={false}
+                                    />
+                                )}
+                                {has_attribute("security_gate_passed", data, sort) && (
+                                    <SecurityGateTextField label="Security gate" />
+                                )}
+                                <ObservationsCountField label="Active observations" withLabel={false} />
+                                {feature_license_management() && has_attribute("all_licenses_count", data, sort) && (
+                                    <LicensesCountField label="Licenses / Components" withLabel={false} />
+                                )}
+                                <FunctionField<Product>
+                                    label="Last observation change"
+                                    sortBy="last_observation_change"
+                                    render={(record) =>
+                                        record ? humanReadableDate(record.last_observation_change) : ""
+                                    }
+                                />
+                            </Datagrid>
+                        )}
+                    />
                     <CustomPagination />
                 </div>
             </ListContextProvider>
