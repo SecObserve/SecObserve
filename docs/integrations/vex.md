@@ -55,8 +55,13 @@ When observations are imported, the VEX statements will be applied to the refere
 
 For **CSAF**, **OpenVEX** and **CycloneDX integrated** VEX documents, the reference is determined by PURLs. 
 
-* First, the relevant products are determined by the product PURL. The PURL of the product or the PURL of a branch must match the product PURL in the VEX statements.  
-* Second, the relevant observations are determined by their Vulnerability ID and optionally the component PURL. The Vulnerability ID of the observation must be the same as the Vulnerability ID of the VEX statements. If the VEX statement contains a component PURL, this must match the vulnerability PURL in the component PURL of the observation.
+* If the VEX statement contains **both a product PURL and a component PURL**:
+    * First, the relevant products are determined by the product PURL. The PURL of the product or the PURL of a branch must match the product PURL in the VEX statements.  
+    * Second, the relevant observations are determined by their Vulnerability ID and optionally the component PURL. The Vulnerability ID of the observation must be the same as the Vulnerability ID of the VEX statements. If the VEX statement contains a component PURL, this must match the vulnerability PURL in the component PURL of the observation.
+
+* If the VEX statement contains **only a product PURL**:
+    * All observations with the same Vulnerability ID where the VEX statement's product PURL matches the PURL of the observation's product or the PURL of the observation's branch.
+    * All observations with the same Vulnerability ID where the VEX statement's product PURL matches the PURL of the observation's component.
 
 For **CycloneDX dedicated** VEX documents, the reference is determined by a [BOM-link](https://cyclonedx.org/capabilities/bomlink/). These documents contain only vulnerability and VEX information with references to components in a separate SBOM. Therefore it is a precondition to have imported the corresponding SBOM before. Then the observations are determined by the Vulnerability ID and the BOM-link.
 

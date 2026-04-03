@@ -61,10 +61,10 @@ const VEXStatementEmbeddedList = ({ vex_document }: VEXStatementEmbeddedListProp
                                 <TextField source="vulnerability_id" label="Vulnerability ID" />
                                 <ChipField source="status" />
                                 {has_attribute("product_purl", data, sort) && (
-                                    <TextField source="product_purl" label="Product" />
+                                    <TextField source="product_purl" label="Product PURL" />
                                 )}
                                 {has_attribute("component_purl", data, sort) && (
-                                    <TextField source="component_purl" label="Component" />
+                                    <TextField source="component_purl" label="Component PURL" />
                                 )}
                                 {has_attribute("component_cyclonedx_bom_link", data, sort) && (
                                     <TextField source="component_cyclonedx_bom_link" label="CycloneDX BOM Link" />
