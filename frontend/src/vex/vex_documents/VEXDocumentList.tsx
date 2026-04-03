@@ -1,8 +1,18 @@
 import { Fragment } from "react";
-import { BulkDeleteButton, Datagrid, DateField, List, TextField, TextInput, TopToolbar } from "react-admin";
+import {
+    BulkDeleteButton,
+    Datagrid,
+    DateField,
+    List,
+    TextField,
+    TextInput,
+    TopToolbar,
+    WithListContext,
+} from "react-admin";
 
 import vex_documents from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import VEXDocumentImport from "./VEXDocumentImport";
@@ -38,14 +48,18 @@ const VEXDocumentList = () => {
                 storeKey="vex_documents.list"
                 empty={false}
             >
-                <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
-                    <TextField source="type" />
-                    <TextField source="document_id" label="Document ID" />
-                    <TextField source="version" />
-                    <DateField source="current_release_date" label="Current release" />
-                    <TextField source="author" sx={{ wordBreak: "break-word" }} />
-                    <TextField source="role" />
-                </Datagrid>
+                <WithListContext
+                    render={({ data, sort }) => (
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                            <TextField source="type" />
+                            <TextField source="document_id" label="Document ID" />
+                            <TextField source="version" />
+                            <DateField source="current_release_date" label="Current release" />
+                            <TextField source="author" sx={{ wordBreak: "break-word" }} />
+                            {has_attribute("role", data, sort) && <TextField source="role" />}
+                        </Datagrid>
+                    )}
+                />
             </List>
         </Fragment>
     );
