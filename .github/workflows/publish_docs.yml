@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - chore/docs_copyright
+      - fix/deploy_docs
 
 permissions: {}
 
@@ -20,10 +20,6 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: 3.x
-      - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
-        with:
-          key: ${{ github.ref }}
-          path: .cache
       - run: pip install -r mkdocs_requirements.txt
       # MkDocs does not support adding non-installed (local) plugins via configuration alone.
       # By setting PYTHONPATH to mkdocs_plugins, we ensure MkDocs can import custom plugins from this directory.
