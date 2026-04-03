@@ -59,8 +59,8 @@ const VEXStatementShow = () => {
                         {vex_statement.justification && <TextField source="justification" />}
                         {vex_statement.impact && <TextField source="impact" />}
                         {vex_statement.remediation && <TextField source="remediation" />}
-                        {vex_statement.product_purl && <TextField source="product_purl" label="Product" />}
-                        {vex_statement.component_purl && <TextField source="component_purl" label="Component" />}
+                        {vex_statement.product_purl && <TextField source="product_purl" label="Product PURL" />}
+                        {vex_statement.component_purl && <TextField source="component_purl" label="Component PURL" />}
                         {vex_statement.component_cyclonedx_bom_link && (
                             <TextField source="component_cyclonedx_bom_link" label="CycloneDX BOM Link" />
                         )}
