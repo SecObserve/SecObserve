@@ -471,12 +471,9 @@ class LicensePolicySerializer(ModelSerializer):
     def to_representation(self, instance: License_Policy) -> dict[str, Any]:
         data = super().to_representation(instance)
 
-        ignore_component_types_str = instance.ignore_component_types or ""
-        ignore_component_type_keys = [key.strip() for key in ignore_component_types_str.split(",") if key.strip()]
-
-        data["ignore_component_type_list"] = [
-            value for key in ignore_component_type_keys if (value := PURL_Type.PURL_TYPE_CHOICES.get(key))
-        ]
+        data["ignore_component_type_list"] = (
+            instance.ignore_component_types.split(",") if instance.ignore_component_types else []
+        )
         return data
 
     def to_internal_value(self, data: dict) -> dict:
