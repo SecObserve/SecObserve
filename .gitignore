@@ -27,3 +27,4 @@ __pycache__
 /site/
 charts/secobserve/charts/postgresql-16.7.27.tgz
 charts/secobserve/my_values.yaml
+.kilo/

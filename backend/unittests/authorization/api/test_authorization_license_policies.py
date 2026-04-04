@@ -39,7 +39,7 @@ class TestAuthorizationLicensePolicies(TestAuthorizationBase):
             )
         )
 
-        expected_data = "{'id': 1002, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': True, 'has_authorization_groups': False, 'name': 'internal_write_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}"
+        expected_data = "{'id': 1002, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': True, 'has_authorization_groups': False, 'name': 'internal_write_manager', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None, 'ignore_component_type_list': []}"
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -147,7 +147,7 @@ class TestAuthorizationLicensePolicies(TestAuthorizationBase):
         )
 
         post_data = {"name": "new_license_policy"}
-        expected_data = "{'id': 1005, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': False, 'has_users': True, 'has_authorization_groups': False, 'name': 'new_license_policy', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None}"
+        expected_data = "{'id': 1005, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': False, 'has_users': True, 'has_authorization_groups': False, 'name': 'new_license_policy', 'description': '', 'is_public': False, 'ignore_component_types': '', 'parent': None, 'ignore_component_type_list': []}"
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -174,7 +174,7 @@ class TestAuthorizationLicensePolicies(TestAuthorizationBase):
             )
         )
 
-        expected_data = "{'id': 1002, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': True, 'has_authorization_groups': False, 'name': 'internal_write_manager', 'description': 'changed', 'is_public': False, 'ignore_component_types': '', 'parent': None}"
+        expected_data = "{'id': 1002, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': True, 'has_authorization_groups': False, 'name': 'internal_write_manager', 'description': 'changed', 'is_public': False, 'ignore_component_types': '', 'parent': None, 'ignore_component_type_list': []}"
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -200,7 +200,7 @@ class TestAuthorizationLicensePolicies(TestAuthorizationBase):
             )
         )
 
-        expected_data = "{'id': 1004, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_manager', 'description': 'changed', 'is_public': False, 'ignore_component_types': '', 'parent': None}"
+        expected_data = "{'id': 1004, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': False, 'has_authorization_groups': True, 'name': 'authorization_group_manager', 'description': 'changed', 'is_public': False, 'ignore_component_types': '', 'parent': None, 'ignore_component_type_list': []}"
         self._test_api(
             APITest(
                 "db_product_group_user",
@@ -239,7 +239,7 @@ class TestAuthorizationLicensePolicies(TestAuthorizationBase):
         )
 
         post_data = {"name": "copied_license_policy"}
-        expected_data = "{'id': 1006, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': True, 'has_authorization_groups': False, 'name': 'copied_license_policy', 'description': 'changed', 'is_public': False, 'ignore_component_types': '', 'parent': None}"
+        expected_data = "{'id': 1006, 'parent_name': '', 'is_parent': False, 'is_manager': True, 'has_products': False, 'has_product_groups': False, 'has_items': True, 'has_users': True, 'has_authorization_groups': False, 'name': 'copied_license_policy', 'description': 'changed', 'is_public': False, 'ignore_component_types': '', 'parent': None, 'ignore_component_type_list': []}"
         self._test_api(
             APITest(
                 "db_internal_write",
