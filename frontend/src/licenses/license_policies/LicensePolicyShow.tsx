@@ -8,6 +8,7 @@ import {
     PrevNextButtons,
     ReferenceField,
     Show,
+    TextArrayField,
     TextField,
     TopToolbar,
     WithRecord,
@@ -85,8 +86,8 @@ const LicensePolicyComponent = () => {
                                 </Labeled>
                             )}
                             {license_policy.ignore_component_types && (
-                                <Labeled>
-                                    <TextField source="ignore_component_types" />
+                                <Labeled label="Ignore component types">
+                                    <TextArrayField source="ignore_component_type_list" />
                                 </Labeled>
                             )}
                             <Labeled label="Public">

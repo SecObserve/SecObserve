@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from django.core.validators import MinValueValidator
 from license_expression import get_spdx_licensing
@@ -383,6 +383,12 @@ class LicensePolicyListSerializer(ModelSerializer):
 
 
 class LicensePolicySerializer(ModelSerializer):
+    ignore_component_type_list = ListField(
+        child=CharField(),
+        required=False,
+        allow_empty=True,
+    )
+
     parent_name = SerializerMethodField()
     is_parent = SerializerMethodField()
     is_manager = SerializerMethodField()
@@ -447,6 +453,39 @@ class LicensePolicySerializer(ModelSerializer):
             raise ValidationError("A child cannot be a parent itself")
 
         return value
+
+    def validate_ignore_component_type_list(self, value: list[str]) -> list[str]:
+        if not isinstance(value, list):
+            raise ValidationError("Ignore component type list must be a list of strings")
+
+        ignore_component_types = []
+        for component_type in value:
+            if component_type not in PURL_Type.PURL_TYPE_CHOICES:
+                ignore_component_types.append(component_type)
+
+        if ignore_component_types:
+            raise ValidationError(f"Invalid component types: {', '.join(ignore_component_types)}")
+
+        return value
+
+    def to_representation(self, instance: License_Policy) -> dict[str, Any]:
+        data = super().to_representation(instance)
+
+        data["ignore_component_type_list"] = (
+            instance.ignore_component_types.split(",") if instance.ignore_component_types else []
+        )
+        return data
+
+    def to_internal_value(self, data: dict) -> dict:
+        validated_data = super().to_internal_value(data)
+
+        if "ignore_component_type_list" in validated_data:
+            component_types = validated_data["ignore_component_type_list"]
+            if isinstance(component_types, list):
+                validated_data["ignore_component_types"] = ",".join(component_types)
+            validated_data.pop("ignore_component_type_list")
+
+        return validated_data
 
     def update(self, instance: License_Policy, validated_data: dict) -> License_Policy:
         parent = validated_data.get("parent")

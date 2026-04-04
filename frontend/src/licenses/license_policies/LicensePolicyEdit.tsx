@@ -1,6 +1,7 @@
 import { Typography } from "@mui/material";
 import { Fragment, useState } from "react";
 import {
+    AutocompleteArrayInput,
     BooleanInput,
     DeleteButton,
     Edit,
@@ -16,6 +17,7 @@ import license_policies from ".";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import { validate_255, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
+import { PURL_TYPE_CHOICES } from "../../core/types";
 
 const CustomToolbar = () => {
     return (
@@ -68,7 +70,12 @@ const LicensePolicyEditForm = ({ setDescription }: LicensePolicyEditFormProps) =
                     </Fragment>
                 )}
             />
-            <TextInputWide source="ignore_component_types" validate={validate_255} />
+            <AutocompleteArrayInput
+                source="ignore_component_type_list"
+                choices={PURL_TYPE_CHOICES}
+                validate={validate_255}
+                sx={{ width: "30em" }}
+            />
             <BooleanInput source="is_public" label="Public" />
         </SimpleForm>
     );
@@ -78,7 +85,6 @@ const LicensePolicyEdit = () => {
 
     const transform = (data: any) => {
         data.description = description;
-        data.ignore_component_types ??= "";
         return data;
     };
 
