@@ -22,7 +22,7 @@
         "humanize-duration": "3.33.2",
         "markdown-to-jsx": "9.7.13",
         "marked": "17.0.5",
-        "mermaid": "11.13.0",
+        "mermaid": "11.14.0",
         "oidc-client-ts": "3.5.0",
         "packageurl-js": "2.0.1",
         "prop-types": "15.8.1",
