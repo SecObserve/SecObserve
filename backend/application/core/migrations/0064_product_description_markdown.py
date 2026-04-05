@@ -2,7 +2,7 @@ import logging
 
 from django.core.paginator import Paginator
 from django.db import migrations
-from html_to_markdown import convert_to_markdown
+from html_to_markdown import convert
 
 logger = logging.getLogger("secobserve.migration")
 
@@ -17,7 +17,7 @@ def convert_product_description_to_markdown(apps, schema_editor):
         updates = []
 
         for product in page.object_list:
-            product.description = convert_to_markdown(product.description)
+            product.description = convert(product.description).get("content")
             updates.append(product)
 
         Product.objects.bulk_update(updates, ["description"])
