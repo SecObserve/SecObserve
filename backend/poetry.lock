@@ -1077,14 +1077,14 @@ sidecar = ["drf-spectacular-sidecar"]
 
 [[package]]
 name = "drf-spectacular-sidecar"
-version = "2026.3.1"
+version = "2026.4.1"
 description = "Serve self-contained distribution builds of Swagger UI and Redoc with Django"
 optional = false
 python-versions = ">=3.6"
 groups = ["main"]
 files = [
-    {file = "drf_spectacular_sidecar-2026.3.1-py3-none-any.whl", hash = "sha256:864edb83e022e13e3941c325c3cc0c954c843fa2e1d0bc95e81887664b2d3dad"},
-    {file = "drf_spectacular_sidecar-2026.3.1.tar.gz", hash = "sha256:5b7fedad66e3851f2f442480792c08115d79217959d01645b93d3d2258938be1"},
+    {file = "drf_spectacular_sidecar-2026.4.1-py3-none-any.whl", hash = "sha256:c72cd012e82414c6cc66f442670b9173af81138f1321fb27e8799b49ecdfeaad"},
+    {file = "drf_spectacular_sidecar-2026.4.1.tar.gz", hash = "sha256:2ccd2ec2faa7ecbca566f04b13cd2ce2f8558d697efcce25be013730063e11dd"},
 ]
 
 [package.dependencies]
@@ -3343,4 +3343,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.12, < 3.15"
-content-hash = "b60a77c791c99ef627d90795aa3c900a49dc024503e46c375f0f0b2d23125de8"
+content-hash = "f6492f196ffec474f7f1b51cf5eb13a14e271cf3701099e7780ab405474dd0bc"
