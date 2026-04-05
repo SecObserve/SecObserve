@@ -84,7 +84,7 @@ const Evidences = () => {
                             <Typography variant="h6" sx={{ paddingLeft: 2, paddingTop: 1, marginBottom: 1 }}>
                                 Evidences
                             </Typography>
-                            <ArrayField source="evidences" label={false}>
+                            <ArrayField source="evidences">
                                 <Datagrid
                                     bulkActionButtons={false}
                                     header={EmptyDatagridHeader}
