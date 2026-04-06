@@ -64,7 +64,7 @@ const BranchCreate = ({ product }: BranchCreateProps) => {
                 <DialogContent>
                     <CreateBase resource="branches">
                         <SimpleForm onSubmit={create_branch} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
-                            <TextInputWide source="name" validate={validate_required_255} />
+                            <TextInputWide source="name" validate={validate_required_255} autoFocus />
                             <BooleanInput
                                 source="is_default_branch"
                                 label="Default branch / version"

@@ -85,7 +85,7 @@ const CycloneDXUpdate = () => {
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
                             Document
                         </Typography>
-                        <TextInputWide source="author" validate={validate_255} />
+                        <TextInputWide source="author" validate={validate_255} autoFocus />
                         <TextInputWide source="manufacturer" validate={validate_255} />
                     </SimpleForm>
                 </DialogContent>

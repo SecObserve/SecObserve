@@ -50,7 +50,7 @@ const ServiceCreate = ({ product }: ServiceCreateProps) => {
                 <DialogContent>
                     <CreateBase resource="services">
                         <SimpleForm onSubmit={create_service} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
-                            <TextInputWide source="name" validate={validate_required_255} />
+                            <TextInputWide source="name" validate={validate_required_255} autoFocus />
                         </SimpleForm>
                     </CreateBase>
                 </DialogContent>

@@ -39,9 +39,10 @@ interface MarkdownEditProps {
     setValue: (value: string) => void;
     overlayContainer?: HTMLDivElement | null;
     maxLength?: number;
+    autoFocus?: boolean;
 }
 
-const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLength }: MarkdownEditProps) => {
+const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLength, autoFocus }: MarkdownEditProps) => {
     const mdxeditor_theme = getTheme() == "dark" ? "dark-theme" : "light-theme";
     const codemirror_theme = getTheme() == "dark" ? basicDark : basicLight;
 
@@ -96,6 +97,7 @@ const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLeng
                 markdown={initialValue}
                 onChange={(markdown) => setValue(markdown ?? "")}
                 plugins={allPlugins()}
+                autoFocus={autoFocus}
             />
         </Labeled>
     );

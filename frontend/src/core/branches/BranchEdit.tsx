@@ -77,7 +77,7 @@ const BranchEdit = ({ product }: BranchEditProps) => {
                 <DialogTitle>Edit branch / version</DialogTitle>
                 <DialogContent>
                     <SimpleForm onSubmit={branch_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
-                        <TextInputWide source="name" validate={validate_required_255} />
+                        <TextInputWide source="name" validate={validate_required_255} autoFocus />
                         <BooleanInput source="is_default_branch" label="Default branch / version" />
                         <TextInputWide source="purl" label="PURL" validate={validate_255} />
                         <TextInputWide source="cpe23" label="CPE 2.3" validate={validate_255} />

@@ -53,7 +53,7 @@ const ServiceEdit = () => {
                 <DialogTitle>Edit service</DialogTitle>
                 <DialogContent>
                     <SimpleForm onSubmit={service_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
-                        <TextInputWide source="name" validate={validate_required_255} />
+                        <TextInputWide source="name" validate={validate_required_255} autoFocus />
                     </SimpleForm>
                 </DialogContent>
             </Dialog>
