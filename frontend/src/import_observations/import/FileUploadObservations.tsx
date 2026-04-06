@@ -130,7 +130,6 @@ const FileUploadObservations = () => {
                             multiple={true}
                             options={{ maxFiles: 10 }}
                             placeholder={<p>Drop some files to upload, or click to select some.</p>}
-                            au
                         >
                             <FileField source="src" title="title" />
                         </FileInput>
