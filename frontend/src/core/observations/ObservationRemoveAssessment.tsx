@@ -67,6 +67,7 @@ const ObservationRemoveAssessment = () => {
                             label="Comment *"
                             overlayContainer={dialogRef.current ?? null}
                             maxLength={4096}
+                            autoFocus
                         />
                     </SimpleForm>
                 </DialogContent>

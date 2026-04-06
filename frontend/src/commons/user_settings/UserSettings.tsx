@@ -73,7 +73,7 @@ const UserSettings = () => {
                 <Stack sx={{ width: "100%" }}>
                     <Typography variant="subtitle1">Theme</Typography>
                     <FormControl>
-                        <RadioGroup defaultValue={getSettingTheme()} name="radio-buttons-group-theme" row>
+                        <RadioGroup defaultValue={getSettingTheme()} name="radio-buttons-group-theme" row autoFocus>
                             <FormControlLabel
                                 value="light"
                                 control={<Radio />}

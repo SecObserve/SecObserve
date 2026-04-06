@@ -60,7 +60,7 @@ const LicenseGroupCopy = ({ license_group }: LicenseGroupCopyProps) => {
                                 />
                             }
                         >
-                            <TextInputWide source="new_name" label="Name" validate={validate_required} />
+                            <TextInputWide source="new_name" label="Name" validate={validate_required} autoFocus />
                         </SimpleForm>
                     </CreateBase>
                 </DialogContent>
