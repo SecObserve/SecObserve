@@ -82,7 +82,7 @@ const OpenVEXUpdate = () => {
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
                             Document
                         </Typography>
-                        <TextInputWide source="author" validate={validate_required_255} />
+                        <TextInputWide source="author" validate={validate_required_255} autoFocus />
                         <TextInputWide source="role" validate={validate_required_255} />
                     </SimpleForm>
                 </DialogContent>

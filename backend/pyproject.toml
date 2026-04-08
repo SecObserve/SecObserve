@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SecObserve"
-version = "1.51.0"
+version = "1.51.1"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [ "Stefan Fleckenstein", ]
@@ -28,7 +28,7 @@ django-cors-headers = "4.9.0" # https://github.com/adamchainz/django-cors-header
 # OpenAPI 3
 # ------------------------------------------------------------------------------
 drf-spectacular = "0.29.0" # https://github.com/tfranzel/drf-spectacular
-drf-spectacular-sidecar = "2026.3.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
+drf-spectacular-sidecar = "2026.4.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
 
 # Token authentication
 # ------------------------------------------------------------------------------
@@ -71,16 +71,16 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.8.1"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.5"  # https://github.com/spdx/tools-python
-html-to-markdown = "2.30.0"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "3.1.0"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.7.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
-licenselynx = "2.1.3"  # https://github.com/licenselynx/licenselynx
+licenselynx = "2.2.0"  # https://github.com/licenselynx/licenselynx
 regopy = { version = "1.3.0", markers = "platform_machine == 'x86_64' or platform_machine == 'AMD64'" }  # https://microsoft.github.io/rego-cpp/#python-example
 simplejson = "3.20.2"
 
 # Development dependencies
 # ------------------------------------------------------------------------------
 # Werkzeug = { version = "3.0.4", extras = ["watchdog"], optional = true }  # https://github.com/pallets/werkzeug
-Werkzeug = { version = "3.1.7", optional = true }  # https://github.com/pallets/werkzeug
+Werkzeug = { version = "3.1.8", optional = true }  # https://github.com/pallets/werkzeug
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
@@ -89,7 +89,7 @@ django-silk = { version = "5.5.0", optional = true }  # https://github.com/jazzb
 # Unittest dependencies
 # ------------------------------------------------------------------------------
 coverage = { version = "7.13.5", optional = true }  # https://github.com/nedbat/coveragepy
-django-coverage-plugin = { version = "3.2.0", optional = true }  # https://github.com/nedbat/django_coverage_plugin
+django-coverage-plugin = { version = "3.2.2", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies
 # ------------------------------------------------------------------------------
@@ -98,9 +98,9 @@ flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gfor
 black = { version = "26.3.1", optional = true }  # https://github.com/psf/black
 pylint = { version = "4.0.5", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.7.0", optional = true }  # https://github.com/PyCQA/pylint-django
-mypy = { version = "1.19.1", optional = true }  # https://github.com/python/mypy
-django-stubs = { version = "6.0.1", optional = true }  # https://github.com/typeddjango/django-stubs
-djangorestframework-stubs = { version = "3.16.8", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
+mypy = { version = "1.20.0", optional = true }  # https://github.com/python/mypy
+django-stubs = { version = "6.0.2", optional = true }  # https://github.com/typeddjango/django-stubs
+djangorestframework-stubs = { version = "3.16.9", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.1.0.20251220", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 

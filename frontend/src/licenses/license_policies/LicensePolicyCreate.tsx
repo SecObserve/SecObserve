@@ -1,11 +1,12 @@
 import { Typography } from "@mui/material";
 import { useState } from "react";
-import { BooleanInput, Create, ReferenceInput, SimpleForm } from "react-admin";
+import { AutocompleteArrayInput, BooleanInput, Create, ReferenceInput, SimpleForm } from "react-admin";
 
 import license_policies from ".";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import { validate_255, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
+import { PURL_TYPE_CHOICES } from "../../core/types";
 
 const LicensePolicyCreate = () => {
     const [description, setDescription] = useState("");
@@ -32,7 +33,12 @@ const LicensePolicyCreate = () => {
                 >
                     <AutocompleteInputWide optionText="name" />
                 </ReferenceInput>
-                <TextInputWide source="ignore_component_types" validate={validate_255} />
+                <AutocompleteArrayInput
+                    source="ignore_component_type_list"
+                    choices={PURL_TYPE_CHOICES}
+                    validate={validate_255}
+                    sx={{ width: "30em" }}
+                />
                 <BooleanInput source="is_public" label="Public" />
             </SimpleForm>
         </Create>
