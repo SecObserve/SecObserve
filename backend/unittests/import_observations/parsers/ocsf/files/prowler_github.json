@@ -1,0 +1,128 @@
+[
+    {
+        "message": "Repository documentation branch deletion setting could not be checked in default branch (main) due to insufficient permissions. Requires Administration: Read and Write permission.",
+        "metadata": {
+            "event_code": "repository_branch_delete_on_merge_enabled",
+            "product": {
+                "name": "Prowler",
+                "uid": "prowler",
+                "vendor_name": "Prowler",
+                "version": "5.22.0"
+            },
+            "profiles": [
+                "cloud",
+                "datetime"
+            ],
+            "version": "1.5.0"
+        },
+        "severity_id": 2,
+        "severity": "Low",
+        "status": "New",
+        "status_code": "FAIL",
+        "status_detail": "Repository documentation branch deletion setting could not be checked in default branch (main) due to insufficient permissions. Requires Administration: Read and Write permission.",
+        "status_id": 1,
+        "unmapped": {
+            "related_url": "",
+            "categories": [
+                "software-supply-chain"
+            ],
+            "depends_on": [],
+            "related_to": [],
+            "additional_urls": [
+                "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/managing-the-automatic-deletion-of-branches",
+                "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+            ],
+            "notes": "",
+            "compliance": {
+                "CIS-1.0": [
+                    "1.1.8"
+                ]
+            },
+            "scan_id": "019d737c-5598-768c-8d33-c309105d4b3a",
+            "provider_uid": "exampleorg",
+            "provider": "github"
+        },
+        "activity_name": "Create",
+        "activity_id": 1,
+        "finding_info": {
+            "created_time": 1775755421,
+            "created_time_dt": "2026-04-09T18:23:41.464880",
+            "desc": "**GitHub repository** setting that enables **automatic deletion of head branches** when pull requests merge into the default branch (`delete_branch_on_merge`).",
+            "title": "Repository deletes branches after pull request merge",
+            "types": [],
+            "uid": "prowler-github-repository_branch_delete_on_merge_enabled-exampleorg-exampleorg-documentation"
+        },
+        "resources": [
+            {
+                "region": "exampleorg",
+                "data": {
+                    "details": "",
+                    "metadata": {
+                        "id": 288963554,
+                        "name": "documentation",
+                        "owner": "exampleorg",
+                        "full_name": "exampleorg/documentation",
+                        "immutable_releases_enabled": false,
+                        "default_branch": {
+                            "name": "main",
+                            "protected": true,
+                            "default_branch": true,
+                            "require_pull_request": true,
+                            "approval_count": 1,
+                            "required_linear_history": true,
+                            "allow_force_pushes": false,
+                            "branch_deletion": false,
+                            "status_checks": true,
+                            "enforce_admins": true,
+                            "require_code_owner_reviews": false,
+                            "require_signed_commits": false,
+                            "conversation_resolution": true
+                        },
+                        "private": false,
+                        "archived": false,
+                        "pushed_at": "2026-04-07 07:52:50+00:00",
+                        "securitymd": false,
+                        "codeowners_exists": false,
+                        "secret_scanning_enabled": false,
+                        "dependabot_alerts_enabled": true,
+                        "delete_branch_on_merge": null
+                    }
+                },
+                "group": {
+                    "name": "repository"
+                },
+                "labels": [],
+                "name": "documentation",
+                "type": "NotDefined",
+                "uid": "345435435"
+            }
+        ],
+        "category_name": "Findings",
+        "category_uid": 2,
+        "class_name": "Detection Finding",
+        "class_uid": 2004,
+        "cloud": {
+            "account": {
+                "name": "exampleorg",
+                "type": "Other",
+                "type_id": 99,
+                "uid": "exampleorg",
+                "labels": []
+            },
+            "org": {},
+            "provider": "github",
+            "region": "exampleorg"
+        },
+        "remediation": {
+            "desc": "Enable **automatic head-branch deletion** after merges to minimize stale refs and confusion.\n- Enforce **least privilege** for branch creation\n- Apply **branch protection** and rulesets\n- Prefer short-lived feature branches with periodic pruning\n- Guard CI to avoid runs from obsolete branches",
+            "references": [
+                "https://hub.prowler.com/check/repository_branch_delete_on_merge_enabled"
+            ]
+        },
+        "risk_details": "Without automatic deletion, merged branches persist, weakening **integrity** and **confidentiality**: outdated code may be reused, secret remnants can linger, and reviews become ambiguous. Stale refs can still trigger CI with obsolete workflows, raising risks of supply-chain tampering and faulty deployments.",
+        "time": 1775755421,
+        "time_dt": "2026-04-09T18:23:41.464880",
+        "type_uid": 200401,
+        "type_name": "Detection Finding: Create"
+    }
+]
