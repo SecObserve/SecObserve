@@ -138,7 +138,9 @@ def get_origins(finding: DetectionFinding) -> list[Origin]:
                     origin_cloud_provider=get_provider(finding.cloud.provider),
                     origin_cloud_account_subscription_project=account_name,
                     origin_cloud_resource=resource.name,
-                    origin_cloud_resource_type=resource.type,
+                    origin_cloud_resource_type=(
+                        resource.type if resource.type != "NotDefined" else resource.group.name.capitalize()
+                    ),
                 )
             )
 
@@ -192,7 +194,7 @@ def get_references(finding: DetectionFinding) -> list[str]:
 def get_scanner(finding: DetectionFinding) -> str:
     scanner = ""
 
-    if finding.metadata and finding.metadata.product and finding.metadata.product:
+    if finding.metadata and finding.metadata.product and finding.metadata.product.name:
         scanner = finding.metadata.product.name
         if finding.metadata.product.version:
             scanner += f" / {finding.metadata.product.version}"
