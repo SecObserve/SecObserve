@@ -1,6 +1,6 @@
-<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.5 Chrome/138.0.7204.251 Electron/37.6.1 Safari/537.36" version="28.2.5">
   <diagram id="STATmjy3AcgogcaYLQfj" name="Seite-1">
-    <mxGraphModel dx="1426" dy="962" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1360" dy="963" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -28,8 +28,8 @@
         <mxCell id="j-LpTXnSDLAkQ5Fwcx-e-10" value="&lt;b&gt;DAST&lt;br&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;Cryptolyzer&lt;br&gt;DrHeader&lt;br&gt;ZAP" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontColor=#FFFFFF;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;convertToSvg=0;" parent="1" vertex="1">
           <mxGeometry x="734" y="516" width="90" height="100" as="geometry" />
         </mxCell>
-        <mxCell id="j-LpTXnSDLAkQ5Fwcx-e-11" value="&lt;b&gt;Cloud&lt;br&gt;Infastructure&lt;/b&gt;&lt;br&gt;&lt;br&gt;Prowler&lt;br&gt;Azure Defender&lt;div&gt;Trivy Operator&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontColor=#FFFFFF;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;convertToSvg=0;" parent="1" vertex="1">
-          <mxGeometry x="827.0923076923076" y="516" width="110" height="100" as="geometry" />
+        <mxCell id="j-LpTXnSDLAkQ5Fwcx-e-11" value="&lt;b&gt;Cloud&lt;br&gt;Infastructure&lt;/b&gt;&lt;br&gt;&lt;br&gt;Kubescape&lt;br&gt;&lt;div&gt;Prowler&lt;br&gt;Azure Defender&lt;div&gt;Trivy Operator&lt;/div&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontColor=#FFFFFF;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;convertToSvg=0;" parent="1" vertex="1">
+          <mxGeometry x="832.0923076923076" y="516" width="100" height="110" as="geometry" />
         </mxCell>
         <mxCell id="j-LpTXnSDLAkQ5Fwcx-e-12" value="&lt;b&gt;Secrets&lt;br&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;GitLeaks&lt;div&gt;Trivy (Operator)&lt;br&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=top;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=12;fontColor=#FFFFFF;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;convertToSvg=0;" parent="1" vertex="1">
           <mxGeometry x="615" y="516" width="120" height="90" as="geometry" />
