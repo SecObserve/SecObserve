@@ -20,7 +20,7 @@ import OSVLinuxDistributionField from "../../commons/custom_fields/OSVLinuxDistr
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { feature_license_management, has_attribute } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import BranchDelete from "./BranchDelete";
 import BranchEdit from "./BranchEdit";
 import DefaultBranch from "./DefaultBranch";
@@ -41,7 +41,7 @@ type BranchEmbeddedListProps = {
 const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "branches",
         sort: { field: "last_import", order: "DESC" },
         disableSyncWithLocation: true,

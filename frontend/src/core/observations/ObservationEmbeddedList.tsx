@@ -28,7 +28,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -177,7 +177,7 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
 
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
         filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE, branch: product.repository_default_branch },

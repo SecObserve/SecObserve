@@ -18,7 +18,7 @@ import {
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import LicenseGroupLicenseAdd from "./LicenseGroupLicenseAdd";
 import LicenseGroupLicenseRemove from "./LicenseGroupLicenseRemove";
 
@@ -47,7 +47,7 @@ type LicenseGroupLicenseEmbeddedListProps = {
 const LicenseGroupLicenseEmbeddedList = ({ license_group }: LicenseGroupLicenseEmbeddedListProps) => {
     const listContext = useListController({
         filter: { license_groups: Number(license_group.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "licenses",
         sort: { field: "spdx_id", order: "ASC" },
         filterDefaultValues: {},

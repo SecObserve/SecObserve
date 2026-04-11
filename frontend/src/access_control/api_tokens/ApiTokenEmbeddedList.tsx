@@ -12,7 +12,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { PERMISSION_PRODUCT_API_TOKEN_REVOKE, ROLE_CHOICES } from "../../access_control/types";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import ApiTokenRevoke from "./ApiTokenRevoke";
 
 type ApiTokenEmbeddedListProps = {
@@ -30,7 +30,7 @@ const ApiTokenEmbeddedList = ({ type, product, user }: ApiTokenEmbeddedListProps
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: resource,
         sort: sort,
         disableSyncWithLocation: true,

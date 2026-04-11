@@ -12,7 +12,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import { feature_license_management } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 interface ProductGroupEmbeddedListProps {
     license_policy: any;
@@ -33,7 +33,7 @@ const ProductGroupEmbeddedList = ({ license_policy }: ProductGroupEmbeddedListPr
     }
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_groups",
         sort: { field: "name", order: "ASC" },
         filterDefaultValues: {},

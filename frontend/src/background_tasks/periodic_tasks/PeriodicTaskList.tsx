@@ -6,7 +6,7 @@ import periodic_tasks from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { PeriodicTaskStatusField } from "../../commons/custom_fields/PeriodicTaskStatusField";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { PERIODIC_TASKS_STATUS_CHOICES } from "../types";
 
 const listFilters = [
@@ -19,7 +19,7 @@ const PeriodicTaskList = () => {
         <Fragment>
             <ListHeader icon={periodic_tasks.icon} title="Periodic Tasks" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "start_time", order: "DESC" }}

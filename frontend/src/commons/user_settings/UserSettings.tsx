@@ -23,10 +23,12 @@ import {
     getSettingListSize,
     getSettingMetricsTimespan,
     getSettingPackageInfoPreference,
+    getSettingRowsPerPage,
     getSettingTheme,
     resolveTheme,
     saveSettingListSize,
     saveSettingPackageInfoPreference,
+    saveSettingRowsPerPage,
     saveSettingTheme,
     saveSettingsMetricsTimespan,
 } from "./functions";
@@ -167,6 +169,38 @@ const UserSettings = () => {
                                 control={<Radio />}
                                 label="365"
                                 onClick={() => saveSettingsMetricsTimespan(METRICS_TIMESPAN_365_DAYS)}
+                            />
+                        </RadioGroup>
+                    </FormControl>
+
+                    <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
+                        Rows per page
+                    </Typography>
+                    <FormControl>
+                        <RadioGroup defaultValue={getSettingRowsPerPage()} name="radio-buttons-group-rows-per-page" row>
+                            <FormControlLabel
+                                value={10}
+                                control={<Radio />}
+                                label="10"
+                                onClick={() => saveSettingRowsPerPage(10)}
+                            />
+                            <FormControlLabel
+                                value={25}
+                                control={<Radio />}
+                                label="25"
+                                onClick={() => saveSettingRowsPerPage(25)}
+                            />
+                            <FormControlLabel
+                                value={50}
+                                control={<Radio />}
+                                label="50"
+                                onClick={() => saveSettingRowsPerPage(50)}
+                            />
+                            <FormControlLabel
+                                value={100}
+                                control={<Radio />}
+                                label="100"
+                                onClick={() => saveSettingRowsPerPage(100)}
                             />
                         </RadioGroup>
                     </FormControl>

@@ -16,7 +16,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import openvex from "../../vex/openvex";
 import { OpenVEX } from "../../vex/types";
 import OpenVEXCreate from "./OpenVEXCreate";
@@ -37,7 +37,7 @@ const OpenVEXList = () => {
         <Fragment>
             <ListHeader icon={openvex.icon} title="Exported OpenVEX documents" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "timestamp", order: "DESC" }}

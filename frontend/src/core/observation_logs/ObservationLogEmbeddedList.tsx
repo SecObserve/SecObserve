@@ -12,7 +12,7 @@ import {
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { has_attribute } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 type ObservationLogEmbeddedListProps = {
     observation: any;
@@ -21,7 +21,7 @@ type ObservationLogEmbeddedListProps = {
 const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListProps) => {
     const listContext = useListController({
         filter: { observation: Number(observation.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "observation_logs",
         sort: { field: "created", order: "DESC" },
         disableSyncWithLocation: true,

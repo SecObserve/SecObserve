@@ -13,7 +13,7 @@ import {
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { VEX_STATUS_CHOICES } from "../types";
 
 const ShowVEXStatement = (id: any) => {
@@ -34,7 +34,7 @@ type VEXStatementEmbeddedListProps = {
 const VEXStatementEmbeddedList = ({ vex_document }: VEXStatementEmbeddedListProps) => {
     const listContext = useListController({
         filter: { document: Number(vex_document.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "vex/vex_statements",
         sort: { field: "vulnerability_id", order: "ASC" },
         disableSyncWithLocation: false,

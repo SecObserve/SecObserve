@@ -23,7 +23,7 @@ import { humanReadableDate } from "../../commons/functions";
 import { feature_license_management, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { Product } from "../types";
 import { AGE_CHOICES } from "../types";
 
@@ -57,7 +57,7 @@ const ProductList = () => {
         <Fragment>
             <ListHeader icon={products.icon} title="Products" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "name", order: "ASC" }}

@@ -26,7 +26,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -147,7 +147,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
         filterDefaultValues: filterDefaultValues,

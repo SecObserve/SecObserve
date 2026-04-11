@@ -11,7 +11,7 @@ import {
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const showLicense = (id: any) => {
     return "../../../../licenses/" + id + "/show";
@@ -34,7 +34,7 @@ const LicenseEmbeddedList = ({ license_group }: LicenseEmbeddedListProps) => {
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "licenses",
         sort: { field: "spdx_id", order: "ASC" },
         disableSyncWithLocation: false,

@@ -15,7 +15,7 @@ import {
 import { AuthorizationGroupNameURLField } from "../../commons/custom_fields/AuthorizationGroupNameURLField";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import LicensePolicyAuthorizationGroupMemberAdd from "./LicensePolicyAuthorizationGroupMemberAdd";
 import LicensePolicyAuthorizationGroupMemberEdit from "./LicensePolicyAuthorizationGroupMemberEdit";
 import LicensePolicyAuthorizationGroupMemberRemove from "./LicensePolicyAuthorizationGroupMemberRemove";
@@ -36,7 +36,7 @@ const LicensePolicyAuthorizationGroupMemberEmbeddedList = ({
 }: LicensePolicyAuthorizationGroupMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { license_policy: Number(license_policy.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_policy_authorization_group_members",
         sort: { field: "authorization_group_data.name", order: "ASC" },
         filterDefaultValues: {},

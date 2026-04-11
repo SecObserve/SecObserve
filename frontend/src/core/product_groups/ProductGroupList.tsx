@@ -8,7 +8,7 @@ import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import { feature_license_management, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const listFilters = [<TextInput source="name" alwaysOn />];
 
@@ -26,7 +26,7 @@ const ProductGroupList = () => {
         <Fragment>
             <ListHeader icon={product_groups.icon} title="Product Groups" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "name", order: "ASC" }}

@@ -18,7 +18,7 @@ import {
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 
@@ -58,7 +58,7 @@ type ProductRuleEmbeddedListProps = {
 const ProductRuleEmbeddedList = ({ product }: ProductRuleEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_rules",
         sort: { field: "name", order: "ASC" },
         disableSyncWithLocation: true,
