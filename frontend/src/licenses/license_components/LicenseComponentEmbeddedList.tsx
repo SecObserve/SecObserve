@@ -19,7 +19,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { EvaluationResultField } from "../../commons/custom_fields/EvaluationResultField";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentBulkDeleteButton from "./LicenseComponentBulkDeleteButton";
 
@@ -132,7 +132,7 @@ const LicenseComponentEmbeddedList = ({
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_components",
         sort: { field: "evaluation_result", order: "ASC" },
         filterDefaultValues: filterDefaultValues,

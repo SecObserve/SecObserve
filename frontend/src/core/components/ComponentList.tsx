@@ -16,7 +16,7 @@ import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductG
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
@@ -34,7 +34,7 @@ const ComponentList = () => {
         <Fragment>
             <ListHeader icon={components.icon} title="Components" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "component_name_version_type", order: "ASC" }}

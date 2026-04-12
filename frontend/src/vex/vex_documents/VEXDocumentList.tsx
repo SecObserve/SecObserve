@@ -14,7 +14,7 @@ import vex_documents from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import VEXDocumentImport from "./VEXDocumentImport";
 
 const listFilters = [
@@ -39,7 +39,7 @@ const VEXDocumentList = () => {
         <Fragment>
             <ListHeader icon={vex_documents.icon} title="Imported VEX documents" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "document_id", order: "ASC" }}

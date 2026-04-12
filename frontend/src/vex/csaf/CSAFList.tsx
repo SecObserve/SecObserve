@@ -16,7 +16,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import csaf from "../../vex/csaf";
 import { CSAF } from "../../vex/types";
 import CSAFCreate from "./CSAFCreate";
@@ -37,7 +37,7 @@ const CSAFList = () => {
         <Fragment>
             <ListHeader icon={csaf.icon} title="Exported CSAF documents" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "tracking_initial_release_date", order: "DESC" }}

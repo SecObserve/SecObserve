@@ -15,7 +15,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -65,7 +65,7 @@ const ObservationsComponentList = ({ component }: ObservationsComponentListProps
             origin_component_cpe: component.component_cpe,
             origin_component_cyclonedx_bom_link: component.component_cyclonedx_bom_link,
         },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
         filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE },

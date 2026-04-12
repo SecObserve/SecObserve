@@ -10,6 +10,8 @@ from django.db.models import (
     DateField,
     ForeignKey,
     Index,
+    IntegerChoices,
+    IntegerField,
     ManyToManyField,
     Model,
 )
@@ -23,9 +25,17 @@ from application.access_control.types import (
 )
 
 
+class RowsPerPageChoices(IntegerChoices):
+    TEN = 10
+    TWENTYFIVE = 25
+    FIFTY = 50
+    HUNDRED = 100
+
+
 class User(AbstractUser):
     full_name = CharField(max_length=301, blank=True)
     is_external = BooleanField(default=False)
+
     setting_theme = CharField(max_length=6, choices=Theme.THEME_CHOICES, default=Theme.THEME_LIGHT)
     setting_list_size = CharField(max_length=6, choices=ListSize.LIST_SIZE_CHOICES, default=ListSize.LIST_SIZE_MEDIUM)
     setting_package_info_preference = CharField(
@@ -36,6 +46,8 @@ class User(AbstractUser):
     setting_metrics_timespan = CharField(
         max_length=8, choices=MetricsTimespan.METRICS_TIMESPAN_CHOICES, default=MetricsTimespan.METRICS_TIMESPAN_7_DAYS
     )
+    setting_rows_per_page = IntegerField(choices=RowsPerPageChoices, default=25)
+
     oidc_groups_hash = CharField(max_length=64, blank=True)
     is_oidc_user = BooleanField(default=False)
 

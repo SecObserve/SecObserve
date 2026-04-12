@@ -15,7 +15,7 @@ import {
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import AuthorizationGroupMemberAdd from "./AuthorizationGroupMemberAdd";
 import AuthorizationGroupMemberEdit from "./AuthorizationGroupMemberEdit";
 import AuthorizationGroupMemberRemove from "./AuthorizationGroupMemberRemove";
@@ -35,7 +35,7 @@ type AuthorizationGroupMemberEmbeddedListProps = {
 const AuthorizationGroupMemberEmbeddedList = ({ authorization_group }: AuthorizationGroupMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { authorization_group: Number(authorization_group.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "authorization_group_members",
         sort: { field: "user_data.full_name", order: "ASC" },
         filterDefaultValues: {},

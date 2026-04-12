@@ -15,7 +15,7 @@ import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { feature_license_management } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import ServiceDelete from "./ServiceDelete";
 import ServiceEdit from "./ServiceEdit";
 
@@ -48,7 +48,7 @@ interface ServiceEmbeddedListProps {
 const ServiceEmbeddedList = ({ product }: ServiceEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "services",
         sort: { field: "name", order: "ASC" },
         disableSyncWithLocation: true,

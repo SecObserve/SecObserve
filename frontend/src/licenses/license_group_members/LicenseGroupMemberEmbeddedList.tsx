@@ -15,7 +15,7 @@ import {
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import LicenseGroupMemberAdd from "./LicenseGroupMemberAdd";
 import LicenseGroupMemberEdit from "./LicenseGroupMemberEdit";
 import LicenseGroupMemberRemove from "./LicenseGroupMemberRemove";
@@ -35,7 +35,7 @@ type LicenseGroupMemberEmbeddedListProps = {
 const LicenseGroupMemberEmbeddedList = ({ license_group }: LicenseGroupMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { license_group: Number(license_group.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_group_members",
         sort: { field: "user_data.full_name", order: "ASC" },
         filterDefaultValues: {},

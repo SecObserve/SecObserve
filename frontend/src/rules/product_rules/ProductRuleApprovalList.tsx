@@ -14,7 +14,7 @@ import {
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { RULE_STATUS_NEEDS_APPROVAL } from "../types";
 
 function listFilters() {
@@ -33,7 +33,7 @@ type ProductRuleApprovalListProps = {
 const ProductRuleApprovalList = ({ product }: ProductRuleApprovalListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id), approval_status: RULE_STATUS_NEEDS_APPROVAL },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_rules",
         sort: { field: "name", order: "ASC" },
         disableSyncWithLocation: true,

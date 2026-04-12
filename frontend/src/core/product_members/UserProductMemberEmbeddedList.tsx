@@ -11,7 +11,7 @@ import {
 
 import { ROLE_CHOICES } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 type UserProductMemberEmbeddedListProps = {
     user: any;
@@ -32,7 +32,7 @@ const showProduct = (id: Identifier, resource: string, record: RaRecord) => {
 const UserProductMemberEmbeddedList = ({ user, is_product_group }: UserProductMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { user: Number(user.id), is_product_group: is_product_group },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_members",
         sort: { field: "product_data.name", order: "ASC" },
         disableSyncWithLocation: true,
