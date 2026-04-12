@@ -147,14 +147,9 @@ export function getSettingsMetricsTimespanInDays(): number {
 }
 
 export async function saveSettingRowsPerPage(setting_rows_per_page: number) {
-    console.log(setting_rows_per_page);
-
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     user.setting_rows_per_page = setting_rows_per_page;
     localStorage.setItem("user", JSON.stringify(user));
-
-    console.log(JSON.stringify(user));
-
     saveSetting({ setting_rows_per_page: setting_rows_per_page });
 }
 
