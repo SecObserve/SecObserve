@@ -53,5 +53,6 @@
             "allowedVersions": "<9"
         }
     ],
+    "postUpdateOptions": ["npmInstallTwice"],
     "rebaseWhen": "conflicted"
 }
