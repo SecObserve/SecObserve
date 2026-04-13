@@ -433,7 +433,7 @@ class EvidenceFilter(FilterSet):
 
 
 class PotentialDuplicateFilter(FilterSet):
-    status = ChoiceFilter(
+    status = MultipleChoiceFilter(
         field_name="potential_duplicate_observation__current_status",
         choices=Status.STATUS_CHOICES,
     )
