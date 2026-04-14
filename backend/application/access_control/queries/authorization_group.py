@@ -10,7 +10,7 @@ def get_authorization_groups() -> QuerySet[Authorization_Group]:
     if user is None:
         return Authorization_Group.objects.none()
 
-    authorization_groups = Authorization_Group.objects.all()
+    authorization_groups = Authorization_Group.objects.all().order_by("id")
 
     if user.is_superuser:
         return authorization_groups

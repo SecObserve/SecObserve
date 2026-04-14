@@ -30,7 +30,7 @@ def get_observations() -> QuerySet[Observation]:
     if user is None:
         return Observation.objects.none()
 
-    observations = Observation.objects.all()
+    observations = Observation.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
@@ -87,7 +87,7 @@ def get_observations_for_vulnerability_check(
             upload_filename="",
             api_configuration_name="",
             origin_service__name=service,
-        )
+        ).order_by("id")
 
     return Observation.objects.filter(
         product=product,
@@ -96,7 +96,7 @@ def get_observations_for_vulnerability_check(
         upload_filename="",
         api_configuration_name="",
         origin_service__isnull=True,
-    )
+    ).order_by("id")
 
 
 def get_evidences() -> QuerySet[Evidence]:
@@ -105,7 +105,7 @@ def get_evidences() -> QuerySet[Evidence]:
     if user is None:
         return Evidence.objects.none()
 
-    evidences = Evidence.objects.all()
+    evidences = Evidence.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)
@@ -148,7 +148,7 @@ def get_potential_duplicates() -> QuerySet[Potential_Duplicate]:
     if user is None:
         return Potential_Duplicate.objects.none()
 
-    potential_duplicates = Potential_Duplicate.objects.all()
+    potential_duplicates = Potential_Duplicate.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)
@@ -198,7 +198,7 @@ def get_observation_logs() -> QuerySet[Observation_Log]:
     if user is None:
         return Observation_Log.objects.none()
 
-    observation_logs = Observation_Log.objects.all()
+    observation_logs = Observation_Log.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)

@@ -9,7 +9,7 @@ from application.rules.models import Rule
 
 
 def get_general_rules() -> QuerySet[Rule]:
-    return Rule.objects.filter(product__isnull=True)
+    return Rule.objects.filter(product__isnull=True).order_by("id")
 
 
 def get_general_rule_by_id(general_rule_id: int) -> Optional[Rule]:
@@ -25,7 +25,7 @@ def get_product_rules() -> QuerySet[Rule]:
     if user is None:
         return Rule.objects.none()
 
-    product_rules = Rule.objects.filter(product__isnull=False)
+    product_rules = Rule.objects.filter(product__isnull=False).order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

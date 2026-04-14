@@ -30,7 +30,7 @@ def get_components() -> QuerySet[Component]:
     if user is None:
         return Component.objects.none()
 
-    components = Component.objects.all()
+    components = Component.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

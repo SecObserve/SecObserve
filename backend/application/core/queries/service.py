@@ -37,7 +37,7 @@ def get_services(with_annotations: bool = False) -> QuerySet[Service]:
     if user is None:
         return Service.objects.none()
 
-    services = Service.objects.all()
+    services = Service.objects.all().order_by("id")
     services = _add_annotations(services, with_annotations)
 
     if not user.is_superuser:

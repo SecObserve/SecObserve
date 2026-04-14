@@ -14,7 +14,7 @@ def get_openvex_s() -> QuerySet[OpenVEX]:
     if user is None:
         return OpenVEX.objects.none()
 
-    openvex_s = OpenVEX.objects.all()
+    openvex_s = OpenVEX.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

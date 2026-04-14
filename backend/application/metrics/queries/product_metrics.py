@@ -13,7 +13,7 @@ def get_product_metrics() -> QuerySet[Product_Metrics]:
     if user is None:
         return Product_Metrics.objects.none()
 
-    product_metrics = Product_Metrics.objects.all()
+    product_metrics = Product_Metrics.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
