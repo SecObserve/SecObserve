@@ -3,10 +3,13 @@ from tempfile import NamedTemporaryFile
 from typing import Optional
 
 from django.http import HttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
 from rest_framework.views import APIView
 
 from application.authorization.services.authorization import user_has_permission_or_403
@@ -15,6 +18,10 @@ from application.commons.models import Settings
 from application.core.models import Product
 from application.core.queries.product import get_product_by_id
 from application.core.types import Severity
+from application.metrics.api.serializers import (
+    ProductMetricsSerializer,
+    ProductMetricsStatusSerializer,
+)
 from application.metrics.models import Product_Metrics_Status
 from application.metrics.services.export_metrics import (
     export_product_metrics_csv,
@@ -28,6 +35,11 @@ from application.metrics.services.metrics import (
 
 
 class ProductMetricsTimelineView(APIView):
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={HTTP_200_OK: dict},
+    )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> Response:
         product = _get_and_check_product(request)
@@ -36,6 +48,11 @@ class ProductMetricsTimelineView(APIView):
 
 
 class ProductMetricsCurrentView(APIView):
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={HTTP_200_OK: ProductMetricsSerializer},
+    )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> Response:
         product = _get_and_check_product(request)
@@ -43,6 +60,13 @@ class ProductMetricsCurrentView(APIView):
 
 
 class ProductMetricsExportExcelView(APIView):
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={
+            (HTTP_200_OK, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"): OpenApiTypes.BINARY
+        },
+    )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> HttpResponse:
         product = _get_and_check_product(request)
@@ -65,6 +89,11 @@ class ProductMetricsExportExcelView(APIView):
 
 
 class ProductMetricsExportCsvView(APIView):
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={(HTTP_200_OK, "text/csv"): OpenApiTypes.BINARY},
+    )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> HttpResponse:
         product = _get_and_check_product(request)
@@ -78,6 +107,11 @@ class ProductMetricsExportCsvView(APIView):
 
 
 class ProductMetricsExportCodeChartaView(APIView):
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={(HTTP_200_OK, "text/csv"): OpenApiTypes.BINARY},
+    )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> HttpResponse:
         product = _get_and_check_product(request)
@@ -111,6 +145,11 @@ class ProductMetricsExportCodeChartaView(APIView):
 
 
 class ProductMetricsStatusView(APIView):
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={HTTP_200_OK: ProductMetricsStatusSerializer},
+    )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> Response:
         settings = Settings.load()

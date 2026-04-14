@@ -403,6 +403,7 @@ class ScanOSVProductView(APIView):
     @extend_schema(
         request=None,
         responses={status.HTTP_200_OK: APIImportObservationsResponseSerializer},
+        operation_id="products_scan_osv_create",
     )
     @action(detail=True, methods=["post"])
     def post(self, request: Request, product_id: int) -> Response:
@@ -428,6 +429,7 @@ class ScanOSVBranchView(APIView):
     @extend_schema(
         request=None,
         responses={status.HTTP_200_OK: APIImportObservationsResponseSerializer},
+        operation_id="products_branch_scan_osv_create",
     )
     @action(detail=True, methods=["post"])
     def post(self, request: Request, product_id: int, branch_id: int) -> Response:
