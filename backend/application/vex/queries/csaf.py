@@ -14,7 +14,7 @@ def get_csafs() -> QuerySet[CSAF]:
     if user is None:
         return CSAF.objects.none()
 
-    csafs = CSAF.objects.all()
+    csafs = CSAF.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

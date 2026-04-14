@@ -12,7 +12,7 @@ def get_license_component_evidences() -> QuerySet[License_Component_Evidence]:
     if user is None:
         return License_Component_Evidence.objects.none()
 
-    components = License_Component_Evidence.objects.all()
+    components = License_Component_Evidence.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("license_component__product_id"), user=user)

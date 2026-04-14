@@ -29,7 +29,7 @@ def get_product_members() -> QuerySet[Product_Member]:
     if user is None:
         return Product_Member.objects.none()
 
-    product_members = Product_Member.objects.exclude(user__username__startswith="-product-")
+    product_members = Product_Member.objects.exclude(user__username__startswith="-product-").order_by("id")
 
     if user.is_superuser:
         return product_members
@@ -53,7 +53,7 @@ def get_product_authorization_group_members() -> QuerySet[Product_Authorization_
     if user is None:
         return Product_Authorization_Group_Member.objects.none()
 
-    product_authorization_group_members = Product_Authorization_Group_Member.objects.all()
+    product_authorization_group_members = Product_Authorization_Group_Member.objects.all().order_by("id")
 
     if user.is_superuser:
         return product_authorization_group_members

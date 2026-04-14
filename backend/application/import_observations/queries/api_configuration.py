@@ -34,7 +34,7 @@ def get_api_configurations() -> QuerySet[Api_Configuration]:
     if user is None:
         return Api_Configuration.objects.none()
 
-    api_configurations = Api_Configuration.objects.all()
+    api_configurations = Api_Configuration.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

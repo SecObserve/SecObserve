@@ -28,7 +28,7 @@ def get_authorization_group_members() -> QuerySet[Authorization_Group_Member]:
     if user is None:
         return Authorization_Group_Member.objects.none()
 
-    authorization_group_members = Authorization_Group_Member.objects.all()
+    authorization_group_members = Authorization_Group_Member.objects.all().order_by("id")
 
     if user.is_superuser:
         return authorization_group_members

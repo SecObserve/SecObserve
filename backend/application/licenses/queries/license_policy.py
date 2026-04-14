@@ -21,7 +21,7 @@ def get_license_policies() -> QuerySet[License_Policy]:
     if user is None:
         return License_Policy.objects.none()
 
-    license_policies = License_Policy.objects.all()
+    license_policies = License_Policy.objects.all().order_by("id")
 
     if user.is_superuser:
         return license_policies

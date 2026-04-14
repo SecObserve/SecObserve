@@ -19,7 +19,7 @@ def get_api_tokens() -> QuerySet[API_Token_Multiple]:
     if user is None:
         return API_Token_Multiple.objects.none()
 
-    api_tokens = API_Token_Multiple.objects.all()
+    api_tokens = API_Token_Multiple.objects.all().order_by("id")
 
     if user.is_superuser:
         return api_tokens
@@ -33,7 +33,7 @@ def get_api_tokens_for_user(given_user: User) -> QuerySet[API_Token_Multiple]:
     if current_user is None:
         return API_Token_Multiple.objects.none()
 
-    api_tokens = API_Token_Multiple.objects.filter(user=given_user)
+    api_tokens = API_Token_Multiple.objects.filter(user=given_user).order_by("id")
 
     if current_user.is_superuser:
         return api_tokens
