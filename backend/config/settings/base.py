@@ -414,6 +414,19 @@ SPECTACULAR_SETTINGS = {
     "REDOC_DIST": "SIDECAR",
     "SWAGGER_UI_SETTINGS": {"docExpansion": "none"},
     "ENUM_GENERATE_CHOICE_DESCRIPTION": False,
+    "ENUM_NAME_OVERRIDES": {
+        "ApprovalStatusEnum": "application.core.types.Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL",
+        "AssessmentStatusEnum": "application.core.types.Assessment_Status.ASSESSMENT_STATUS_CHOICES",
+        "NotificationTypeEnum": "application.notifications.models.Notification.TYPE_CHOICES",
+        "ParserTypeEnum": "application.import_observations.types.Parser_Type.TYPE_CHOICES",
+        "PotentialDuplicateTypeEnum": "application.core.models.Potential_Duplicate.POTENTIAL_DUPLICATE_TYPES",
+        "RuleStatusEnum": "application.rules.types.Rule_Status.RULE_STATUS_CHOICES",
+        "RuleTypeEnum": "application.rules.types.Rule_Type.RULE_TYPE_CHOICES",
+        "SeverityEnum": "application.core.types.Severity.SEVERITY_CHOICES",
+        "Status82cEnum": "application.core.types.Status.STATUS_CHOICES",
+        "VexDocumentTypeEnum": "application.vex.types.VEX_Document_Type.VEX_DOCUMENT_TYPE_CHOICES",
+        "VexJustificationEnum": "application.core.types.VEX_Justification.VEX_JUSTIFICATION_CHOICES",
+    },
 }
 
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")

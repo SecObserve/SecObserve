@@ -516,6 +516,9 @@ class ProductApiTokenViewset(ViewSet):
         return response
 
     @extend_schema(
+        parameters=[
+            OpenApiParameter(name="id", location=OpenApiParameter.PATH, required=True, type=int),
+        ],
         responses={HTTP_204_NO_CONTENT: None},
     )
     def destroy(self, request: Request, pk: int) -> Response:
