@@ -236,12 +236,12 @@ def _get_origin_cloud_resource_url(observation: Observation) -> Optional[str]:
         and observation.origin_cloud_account_subscription_project
         and observation.origin_cloud_resource
     ):
-        if observation.origin_cloud_resource_type.lower() == "githubrepository":
+        if "repository" in observation.origin_cloud_resource_type.lower():
             return (
                 f"https://github.com/{observation.origin_cloud_account_subscription_project}/"
                 + f"{observation.origin_cloud_resource}"
             )
-        if observation.origin_cloud_resource_type.lower() == "githuborganization":
+        if "organization" in observation.origin_cloud_resource_type.lower():
             return f"https://github.com/{observation.origin_cloud_resource}"
     return None
 
