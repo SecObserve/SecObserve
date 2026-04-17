@@ -64,7 +64,7 @@ const LicenseComponentOverview = ({ product }: LicenseComponentOverviewProps) =>
                 filter={{ product: product.id, for_license_components: true }}
                 alwaysOn
             >
-                <AutocompleteInputMedium optionText="name" label="Component type" />
+                <AutocompleteInputMedium optionText="name" label="Ecosystem" />
             </ReferenceInput>
         );
         if (product?.has_services) {

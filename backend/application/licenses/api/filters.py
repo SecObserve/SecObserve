@@ -110,6 +110,15 @@ class LicenseComponentFilter(FilterSet):
             ("component_name_version", "component_name_version_type"),
             (
                 (
+                    "component_type",
+                    "numerical_evaluation_result",
+                    "effective_license_name",
+                    "component_name_version",
+                ),
+                "component_type",
+            ),
+            (
+                (
                     "component_purl_type",
                     "numerical_evaluation_result",
                     "effective_license_name",
@@ -150,6 +159,7 @@ class LicenseComponentFilter(FilterSet):
             "effective_non_spdx_license",
             "evaluation_result",
             "component_name_version",
+            "component_type",
             "component_purl_type",
             "origin_service",
             "manual_concluded_comment",

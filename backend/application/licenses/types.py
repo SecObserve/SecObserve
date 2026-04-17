@@ -22,4 +22,36 @@ class License_Policy_Evaluation_Result:
     }
 
 
+class Component_Type:
+    TYPE_APPLICATION = "Application"
+    TYPE_FRAMEWORK = "Framework"
+    TYPE_LIBRARY = "Library"
+    TYPE_CONTAINER = "Container"
+    TYPE_PLATFORM = "Platform"
+    TYPE_OPERATING_SYSTEM = "Operating system"
+    TYPE_DEVICE = "Device"
+    TYPE_DEVICE_DRIVER = "Device driver"
+    TYPE_FIRMWARE = "Firmware"
+    TYPE_FILE = "File"
+    TYPE_MACHINE_LEARNING_MODEL = "Machine learning model"
+    TYPE_DATA = "Data"
+    TYPE_CRYPROGHRAPHIC_ASSET = "Cryptographic asset"
+
+    TYPE_CHOICES = [
+        (TYPE_APPLICATION, TYPE_APPLICATION),
+        (TYPE_FRAMEWORK, TYPE_FRAMEWORK),
+        (TYPE_LIBRARY, TYPE_LIBRARY),
+        (TYPE_CONTAINER, TYPE_CONTAINER),
+        (TYPE_PLATFORM, TYPE_PLATFORM),
+        (TYPE_OPERATING_SYSTEM, TYPE_OPERATING_SYSTEM),
+        (TYPE_DEVICE, TYPE_DEVICE),
+        (TYPE_DEVICE_DRIVER, TYPE_DEVICE_DRIVER),
+        (TYPE_FIRMWARE, TYPE_FIRMWARE),
+        (TYPE_FILE, TYPE_FILE),
+        (TYPE_MACHINE_LEARNING_MODEL, TYPE_MACHINE_LEARNING_MODEL),
+        (TYPE_DATA, TYPE_DATA),
+        (TYPE_CRYPROGHRAPHIC_ASSET, TYPE_CRYPROGHRAPHIC_ASSET),
+    ]
+
+
 NO_LICENSE_INFORMATION = "No license information"

@@ -64,12 +64,7 @@ function listFilters() {
         <TextInput source="scanner" alwaysOn />,
         <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,
         <NullableBooleanInput source="has_potential_duplicates" label="Duplicates" alwaysOn />,
-        <AutocompleteInput
-            source="origin_component_purl_type"
-            label="Component type"
-            choices={PURL_TYPE_CHOICES}
-            alwaysOn
-        />
+        <AutocompleteInput source="origin_component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />
     );
     if (feature_exploit_information()) {
         filters.push(<NullableBooleanInput source="cve_known_exploited" label="CVE exploited" alwaysOn />);

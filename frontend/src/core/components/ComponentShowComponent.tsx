@@ -38,6 +38,11 @@ const ComponentShowComponent = ({ component, icon }: ComponentShowComponentProps
                             </Labeled>
                         )}
                     </Stack>
+                    {component.component_type !== "" && (
+                        <Labeled>
+                            <TextField source="component_type" label="Component type" />
+                        </Labeled>
+                    )}
                     {component.component_purl !== "" && get_component_purl_url(component.component_purl) === null && (
                         <Labeled>
                             <TextField source="component_purl" label="Component PURL" />

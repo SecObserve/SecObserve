@@ -381,6 +381,7 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
             effective_license_expression_before = existing_component.effective_license_expression
             effective_multiple_licenses_before = existing_component.effective_multiple_licenses
             evaluation_result_before = existing_component.evaluation_result
+            existing_component.component_type = unsaved_component.component_type
             existing_component.component_purl = unsaved_component.component_purl
             existing_component.component_purl_type = unsaved_component.component_purl_type
             existing_component.component_cpe = unsaved_component.component_cpe
@@ -456,6 +457,7 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
     License_Component.objects.bulk_update(
         components_updated,
         [
+            "component_type",
             "component_purl",
             "component_purl_type",
             "component_cpe",
@@ -576,6 +578,7 @@ def _process_current_observation(
     observation_before.found = imported_observation.found
     observation_before.scanner = imported_observation.scanner
 
+    observation_before.origin_component_type = imported_observation.origin_component_type
     observation_before.origin_component_dependencies = imported_observation.origin_component_dependencies
 
     previous_severity = observation_before.current_severity

@@ -79,6 +79,7 @@ WITH CombinedData AS (
         origin_component_name AS component_name,
         origin_component_version AS component_version,
         origin_component_name_version AS component_name_version,
+        origin_component_type AS component_type,
         origin_component_purl AS component_purl,
         origin_component_purl_type AS component_purl_type,
         origin_component_cpe AS component_cpe,
@@ -96,6 +97,7 @@ WITH CombinedData AS (
         component_name AS component_name,
         component_version AS component_version,
         component_name_version AS component_name_version,
+        component_type AS component_type,
         component_purl AS component_purl,
         component_purl_type AS component_purl_type,
         component_cpe AS component_cpe,
@@ -109,6 +111,7 @@ ObservationFlag AS (
         branch_id,
         origin_service_id,
         origin_component_name_version AS component_name_version,
+        origin_component_type AS component_type,
         origin_component_purl AS component_purl,
         origin_component_cpe AS component_cpe,
         origin_component_dependencies AS component_dependencies,
@@ -124,6 +127,7 @@ SELECT
             CAST(COALESCE(cd.branch_id, 222) as CHAR(255)),
             CAST(COALESCE(cd.origin_service_id, 333) as CHAR(255)),
             COALESCE(cd.component_name_version, 'no_name_version'),
+            COALESCE(cd.component_type, 'no_type'),
             COALESCE(cd.component_purl, 'no_purl'),
             COALESCE(cd.component_cpe, 'no_cpe'),
             COALESCE(cd.component_dependencies, 'no_dependencies'),
@@ -136,6 +140,7 @@ SELECT
     cd.component_name AS component_name,
     cd.component_version AS component_version,
     cd.component_name_version AS component_name_version,
+    cd.component_type AS component_type,
     cd.component_purl AS component_purl,
     cd.component_purl_type AS component_purl_type,
     cd.component_cpe AS component_cpe,
@@ -155,6 +160,7 @@ LEFT JOIN ObservationFlag ON
         )
     AND cd.component_name_version = ObservationFlag.component_name_version
     AND cd.component_purl = ObservationFlag.component_purl
+    AND cd.component_type = ObservationFlag.component_type
     AND cd.component_cpe = ObservationFlag.component_cpe
     AND cd.component_dependencies = ObservationFlag.component_dependencies
     AND cd.component_cyclonedx_bom_link = ObservationFlag.component_cyclonedx_bom_link

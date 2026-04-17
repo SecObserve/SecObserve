@@ -96,7 +96,7 @@ function listFilters(product: Product) {
                 filter={{ product: product.id, for_observations: true }}
                 alwaysOn
             >
-                <AutocompleteInputMedium optionText="name" label="Component type" />
+                <AutocompleteInputMedium optionText="name" label="Ecosystem" />
             </ReferenceInput>
         );
     }
