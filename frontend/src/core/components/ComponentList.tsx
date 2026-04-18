@@ -1,13 +1,5 @@
 import { Fragment } from "react";
-import {
-    BooleanField,
-    Datagrid,
-    List,
-    NullableBooleanInput,
-    TextField,
-    TextInput,
-    WithListContext,
-} from "react-admin";
+import { BooleanField, Datagrid, List, NullableBooleanInput, TextField, TextInput, WithListContext } from "react-admin";
 
 import components from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";

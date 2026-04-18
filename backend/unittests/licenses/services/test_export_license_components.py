@@ -32,7 +32,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         i = 0
         for row in worksheet.rows:
             i += 1
-            self.assertEqual(45, len(row))
+            self.assertEqual(46, len(row))
         self.assertEqual(2, i)
 
         actual_values = []
@@ -49,6 +49,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "Component name version",
             "Component purl",
             "Component purl type",
+            "Component type",
             "Component version",
             "Created",
             "Effective license expression",
@@ -92,6 +93,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "",
             "internal_component",
             "internal_component:1.0.0",
+            "",
             "",
             "",
             "1.0.0",
