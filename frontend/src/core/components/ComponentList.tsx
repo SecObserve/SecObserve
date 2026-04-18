@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import {
-    AutocompleteInput,
     BooleanField,
     Datagrid,
     List,
@@ -23,7 +22,7 @@ import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
     <TextInput source="component_name_version" label="Component" alwaysOn />,
-    <AutocompleteInput source="component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
+    <AutocompleteInputMedium source="component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
     <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
     <ProductReferenceInput alwaysOn />,
     <ProductGroupReferenceInput alwaysOn />,

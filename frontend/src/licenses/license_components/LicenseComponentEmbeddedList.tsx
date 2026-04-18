@@ -21,7 +21,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
-import { EVALUATION_RESULT_CHOICES } from "../types";
+import { COMPONENT_TYPE_CHOICES, EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentBulkDeleteButton from "./LicenseComponentBulkDeleteButton";
 
 type LicenseComponentEmbeddedListProps = {
@@ -74,6 +74,7 @@ const LicenseComponentEmbeddedList = ({
                 alwaysOn
             />,
             <TextInput source="component_name_version" label="Component" alwaysOn />,
+            <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
             <ReferenceInput
                 source="component_purl_type"
                 reference="purl_types"
