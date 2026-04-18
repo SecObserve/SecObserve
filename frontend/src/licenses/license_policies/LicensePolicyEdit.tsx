@@ -72,6 +72,7 @@ const LicensePolicyEditForm = ({ setDescription }: LicensePolicyEditFormProps) =
             />
             <AutocompleteArrayInput
                 source="ignore_component_type_list"
+                label="Ignore ecosystems"
                 choices={PURL_TYPE_CHOICES}
                 validate={validate_255}
                 sx={{ width: "30em" }}

@@ -31,6 +31,7 @@ class TestCycloneDXParser(TestCase):
             self.assertEqual(Severity.SEVERITY_MEDIUM, observation.parser_severity)
             self.assertEqual("python", observation.origin_component_name)
             self.assertEqual("3.11.3", observation.origin_component_version)
+            self.assertEqual("Application", observation.origin_component_type)
             self.assertEqual("pkg:generic/python@3.11.3", observation.origin_component_purl)
             self.assertEqual(
                 "cpe:2.3:a:python_software_foundation:python:3.11.3:*:*:*:*:*:*:*",
@@ -72,6 +73,7 @@ class TestCycloneDXParser(TestCase):
             self.assertEqual("CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H", observation.cvss3_vector)
             self.assertEqual("mariadb-client", observation.origin_component_name)
             self.assertEqual("10.6.12-r0", observation.origin_component_version)
+            self.assertEqual("Library", observation.origin_component_type)
             self.assertEqual(
                 "pkg:apk/alpine/mariadb-client@10.6.12-r0?arch=x86_64&upstream=mariadb&distro=alpine-3.17.3",
                 observation.origin_component_purl,
@@ -166,6 +168,7 @@ class TestCycloneDXParser(TestCase):
             self.assertEqual("CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:N/A:H", observation.cvss3_vector)
             self.assertEqual("libxml2", observation.origin_component_name)
             self.assertEqual("2.10.3-r1", observation.origin_component_version)
+            self.assertEqual("Library", observation.origin_component_type)
             self.assertEqual(
                 "pkg:apk/alpine/libxml2@2.10.3-r1?distro=3.17.3",
                 observation.origin_component_purl,
@@ -235,6 +238,7 @@ icu-data-en:72.1-r1 --> icu-libs:72.1-r1"""
             license_component = license_components[10]
             self.assertEqual("c-ares", license_component.component_name)
             self.assertEqual("1.18.1-r1", license_component.component_version)
+            self.assertEqual("Library", license_component.component_type)
             self.assertEqual("pkg:apk/alpine/c-ares@1.18.1-r1?distro=3.17.3", license_component.component_purl)
             self.assertEqual("", license_component.component_cpe)
             self.assertEqual(

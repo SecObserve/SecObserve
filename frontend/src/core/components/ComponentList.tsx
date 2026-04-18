@@ -1,14 +1,5 @@
 import { Fragment } from "react";
-import {
-    AutocompleteInput,
-    BooleanField,
-    Datagrid,
-    List,
-    NullableBooleanInput,
-    TextField,
-    TextInput,
-    WithListContext,
-} from "react-admin";
+import { BooleanField, Datagrid, List, NullableBooleanInput, TextField, TextInput, WithListContext } from "react-admin";
 
 import components from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
@@ -16,12 +7,15 @@ import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductG
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { COMPONENT_TYPE_CHOICES } from "../../licenses/types";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
     <TextInput source="component_name_version" label="Component" alwaysOn />,
-    <AutocompleteInput source="component_purl_type" label="Component type" choices={PURL_TYPE_CHOICES} alwaysOn />,
+    <AutocompleteInputMedium source="component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
+    <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
     <ProductReferenceInput alwaysOn />,
     <ProductGroupReferenceInput alwaysOn />,
     <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
@@ -46,6 +40,7 @@ const ComponentList = () => {
                     render={({ data, sort }) => (
                         <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
                             <TextField source="component_name_version_type" label="Component" />
+                            <TextField source="component_type" label="Type" />
                             <TextField source="product_name" label="Product" />
                             {has_attribute("product_group_name", data, sort) && (
                                 <TextField source="product_group_name" label="Group" />

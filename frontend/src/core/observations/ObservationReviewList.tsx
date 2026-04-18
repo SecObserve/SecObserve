@@ -74,7 +74,7 @@ function listFilters(product: Product) {
         filters.push(
             <AutocompleteInput
                 source="origin_component_purl_type"
-                label="Component type"
+                label="Ecosystem"
                 choices={PURL_TYPE_CHOICES}
                 alwaysOn
             />

@@ -57,6 +57,11 @@ const ObservationShowOrigins = ({ observation, showDependencies, elevated }: Obs
                                             <TextField source="origin_component_version" label="Component version" />
                                         </Labeled>
                                     )}
+                                    {observation.origin_component_type != "" && (
+                                        <Labeled>
+                                            <TextField source="origin_component_type" label="Component type" />
+                                        </Labeled>
+                                    )}
                                     {observation.origin_component_purl !== "" &&
                                         get_component_purl_url(observation.origin_component_purl) === null && (
                                             <Labeled>
