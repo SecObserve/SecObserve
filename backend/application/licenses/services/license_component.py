@@ -44,6 +44,8 @@ def prepare_license_component(component: License_Component, spdx_cache: SPDXLice
         component.component_name = ""
     if component.component_version is None:
         component.component_version = ""
+    if component.component_type is None:
+        component.component_type = ""
     if component.component_purl is None:
         component.component_purl = ""
     if component.component_cpe is None:

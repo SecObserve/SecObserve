@@ -18,7 +18,7 @@ import { ProductReferenceInput } from "../commons/custom_fields/ProductReference
 import { has_attribute } from "../commons/functions";
 import ListHeader from "../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../commons/layout/themes";
-import { getSettingListSize } from "../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../commons/user_settings/functions";
 import NotificationBulkMarkAsViewedButton from "./NotificationBulkMarkAsViewedButton";
 import { TYPE_CHOICES } from "./types";
 
@@ -48,7 +48,7 @@ const NotificationList = () => {
         <Fragment>
             <ListHeader icon={notifications.icon} title="Notifications" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 filterDefaultValues={{ exclude_already_viewed: true }}

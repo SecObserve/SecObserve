@@ -11,7 +11,7 @@ import {
 
 import { ROLE_CHOICES } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 type UserProductAuthorizationGroupMemberEmbeddedListProps = {
     authorization_group: any;
@@ -35,7 +35,7 @@ const UserProductAuthorizationGroupMemberEmbeddedList = ({
 }: UserProductAuthorizationGroupMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { authorization_group: Number(authorization_group.id), is_product_group: is_product_group },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_authorization_group_members",
         sort: { field: "product_data.name", order: "ASC" },
         disableSyncWithLocation: true,

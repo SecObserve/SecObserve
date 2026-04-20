@@ -34,6 +34,7 @@ class PURLTypeOneView(APIView):
         methods=["GET"],
         request=None,
         responses={HTTP_200_OK: PURLTypeSerializer},
+        operation_id="purl_types_retrieve",
     )
     @action(detail=True, methods=["get"])
     def get(self, request: Request, purl_type_id: str) -> Response:
@@ -53,6 +54,7 @@ class PURLTypeManyView(APIView):
         methods=["GET"],
         request=None,
         responses={HTTP_200_OK: PURLTypeSerializer},
+        operation_id="purl_types_list",
     )
     @action(detail=False, methods=["get"])
     def get(self, request: Request) -> Response:

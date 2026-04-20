@@ -4,7 +4,7 @@ import { AutocompleteInput, Datagrid, List, TextField, TextInput } from "react-a
 import parsers from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { PARSER_SOURCE_CHOICES, SCANNER_TYPE_CHOICES } from "../types";
 
 const listFilters = [
@@ -18,7 +18,7 @@ const ParserList = () => {
         <Fragment>
             <ListHeader icon={parsers.icon} title="Parsers" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "name", order: "ASC" }}

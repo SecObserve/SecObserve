@@ -91,7 +91,7 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                 const none_observations = [];
                 const unknown_observations = [];
 
-                let metrics = null;
+                let metrics;
                 for (let i = getSettingsMetricsTimespanInDays() - 1; i >= 0; i--) {
                     metrics = get_metrics(new Date(Date.now() - i * 24 * 60 * 60 * 1000), result.json);
                     critical_observations.push(metrics.active_critical);

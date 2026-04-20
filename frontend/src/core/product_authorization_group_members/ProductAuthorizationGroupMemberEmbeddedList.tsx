@@ -15,7 +15,7 @@ import {
 } from "../../access_control/types";
 import { AuthorizationGroupNameURLField } from "../../commons/custom_fields/AuthorizationGroupNameURLField";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import ProductAuthorizationGroupMemberDelete from "./ProductAuthorizationGroupMemberDelete";
 import ProductAuthorizationGroupMemberEdit from "./ProductAuthorizationGroupMemberEdit";
 
@@ -26,7 +26,7 @@ type ProductAuthorizationGroupMemberEmbeddedListProps = {
 const ProductAuthorizationGroupMemberEmbeddedList = ({ product }: ProductAuthorizationGroupMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_authorization_group_members",
         sort: { field: "authorization_group_data.name", order: "ASC" },
         disableSyncWithLocation: true,

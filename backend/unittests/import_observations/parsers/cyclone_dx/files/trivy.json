@@ -1913,20 +1913,20 @@
       ]
     },
     {
-      "bom-ref": "pkg:apk/alpine/nghttp2-libs@1.51.1-r0?distro=3.17.3",
+      "bom-ref": "pkg:apk/alpine/nghttp2-libs@1.52.0-r0?distro=3.17.3",
       "type": "library",
       "name": "nghttp2-libs",
-      "version": "1.51.1-r0",
+      "version": "1.52.0-r0",
       "licenses": [
         {
           "expression": "MIT"
         }
       ],
-      "purl": "pkg:apk/alpine/nghttp2-libs@1.51.1-r0?distro=3.17.3",
+      "purl": "pkg:apk/alpine/nghttp2-libs@1.52.0-r0?distro=3.17.3",
       "properties": [
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "nghttp2-libs@1.51.1-r0"
+          "value": "nghttp2-libs@1.52.0-r0"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -1938,7 +1938,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "1.51.1-r0"
+          "value": "1.52.0-r0"
         },
         {
           "name": "aquasecurity:trivy:LayerDiffID",
@@ -3078,7 +3078,7 @@
         "pkg:apk/alpine/musl-utils@1.2.3-r4?distro=3.17.3",
         "pkg:apk/alpine/ncurses-libs@6.3_p20221119-r0?distro=3.17.3",
         "pkg:apk/alpine/ncurses-terminfo-base@6.3_p20221119-r0?distro=3.17.3",
-        "pkg:apk/alpine/nghttp2-libs@1.51.1-r0?distro=3.17.3",
+        "pkg:apk/alpine/nghttp2-libs@1.52.0-r0?distro=3.17.3",
         "pkg:apk/alpine/nginx@1.22.1-r1?distro=3.17.3",
         "pkg:apk/alpine/nginx-module-geoip@1.22.1-r1?distro=3.17.3",
         "pkg:apk/alpine/nginx-module-image-filter@1.22.1-r1?distro=3.17.3",

@@ -37,7 +37,7 @@ def get_branches(with_annotations: bool = False) -> QuerySet[Branch]:
     if user is None:
         return Branch.objects.none()
 
-    branches = Branch.objects.all()
+    branches = Branch.objects.all().order_by("id")
     branches = _add_annotations(branches, with_annotations)
 
     if not user.is_superuser:

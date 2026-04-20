@@ -13,7 +13,7 @@ import {
 import CreateButton from "../../commons/custom_fields/CreateButton";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { is_external } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const showLicenseGroup = (id: any) => {
     return "../../../../license_groups/" + id + "/show";
@@ -34,7 +34,7 @@ const LicenseGroupEmbeddedList = ({ license }: LicenseGroupEmbeddedListProps) =>
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_groups",
         sort: { field: "name", order: "ASC" },
         disableSyncWithLocation: false,

@@ -69,7 +69,7 @@ def get_products(
     if user is None:
         return Product.objects.none()
 
-    products = Product.objects.all()
+    products = Product.objects.all().order_by("id")
 
     if is_product_group is not None:
         products = _add_annotations(products, is_product_group, with_observation_annotations, with_metrics_annotations)

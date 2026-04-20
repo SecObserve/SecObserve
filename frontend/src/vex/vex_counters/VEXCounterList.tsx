@@ -4,7 +4,7 @@ import { BulkDeleteButton, Datagrid, List, NumberField, NumberInput, TextField, 
 import vex_counters from ".";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const listFilters = [<TextInput source="document_id_prefix" alwaysOn />, <NumberInput source="year" alwaysOn />];
 
@@ -19,7 +19,7 @@ const VEXCounterList = () => {
         <Fragment>
             <ListHeader icon={vex_counters.icon} title="VEX Counters" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "document_id_prefix", order: "ASC" }}

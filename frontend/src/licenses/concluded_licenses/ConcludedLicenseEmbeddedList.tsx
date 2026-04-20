@@ -14,7 +14,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { AGE_CHOICES } from "../../core/types";
 
 const showLicense = (id: any) => {
@@ -43,7 +43,7 @@ const listFilters = [
 const ConcludedLicenseEmbeddedList = () => {
     const listContext = useListController({
         filter: {},
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "concluded_licenses",
         sort: { field: "product_data.name", order: "ASC" },
         disableSyncWithLocation: false,

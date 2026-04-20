@@ -16,7 +16,7 @@ import ObservationsCountField from "../../commons/custom_fields/ObservationsCoun
 import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { feature_license_management } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { Product } from "../types";
 
 interface ProductEmbeddedListProps {
@@ -46,7 +46,7 @@ const ProductEmbeddedList = ({ product_group, license_policy }: ProductEmbeddedL
     }
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "products",
         sort: { field: "name", order: "ASC" },
         filterDefaultValues: {},

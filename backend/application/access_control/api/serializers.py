@@ -53,6 +53,7 @@ class UserListSerializer(ModelSerializer):
             "setting_list_size",
             "setting_package_info_preference",
             "setting_metrics_timespan",
+            "setting_rows_per_page",
             "permissions",
             "oidc_groups_hash",
             "is_oidc_user",
@@ -75,6 +76,7 @@ class UserListSerializer(ModelSerializer):
             data.pop("setting_list_size")
             data.pop("setting_package_info_preference")
             data.pop("setting_metrics_timespan")
+            data.pop("setting_rows_per_page")
             data.pop("permissions")
             data.pop("oidc_groups_hash")
             data.pop("is_oidc_user")
@@ -133,6 +135,7 @@ class UserSerializer(UserListSerializer):
             "setting_list_size",
             "setting_package_info_preference",
             "setting_metrics_timespan",
+            "setting_rows_per_page",
             "permissions",
             "oidc_groups_hash",
             "is_oidc_user",
@@ -277,6 +280,7 @@ class UserSettingsSerializer(ModelSerializer):
             "setting_list_size",
             "setting_package_info_preference",
             "setting_metrics_timespan",
+            "setting_rows_per_page",
         ]
 
 

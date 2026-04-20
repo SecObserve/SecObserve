@@ -25,7 +25,7 @@ import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -64,12 +64,7 @@ function listFilters() {
         <TextInput source="scanner" alwaysOn />,
         <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,
         <NullableBooleanInput source="has_potential_duplicates" label="Duplicates" alwaysOn />,
-        <AutocompleteInput
-            source="origin_component_purl_type"
-            label="Component type"
-            choices={PURL_TYPE_CHOICES}
-            alwaysOn
-        />
+        <AutocompleteInput source="origin_component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />
     );
     if (feature_exploit_information()) {
         filters.push(<NullableBooleanInput source="cve_known_exploited" label="CVE exploited" alwaysOn />);
@@ -94,7 +89,7 @@ const ObservationList = () => {
         <Fragment>
             <ListHeader icon={observations.icon} title="Observations" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters()}
                 sort={{ field: "current_severity", order: "ASC" }}

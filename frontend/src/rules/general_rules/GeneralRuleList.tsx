@@ -22,7 +22,7 @@ import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { feature_general_rules_need_approval_enabled, is_superuser } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 
@@ -65,7 +65,7 @@ const GeneralRuleList = () => {
         <Fragment>
             <ListHeader icon={general_rules.icon} title="General Rules" />
             <List
-                perPage={25}
+                perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
                 sort={{ field: "name", order: "ASC" }}

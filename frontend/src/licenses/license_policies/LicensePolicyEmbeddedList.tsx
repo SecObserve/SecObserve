@@ -15,7 +15,7 @@ import CreateButton from "../../commons/custom_fields/CreateButton";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { is_external } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const showLicensePolicy = (id: any) => {
     return "../../../../license_policies/" + id + "/show";
@@ -54,7 +54,7 @@ const LicensePolicyEmbeddedList = ({ license, license_group }: LicensePolicyEmbe
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_policies",
         sort: { field: "name", order: "ASC" },
         disableSyncWithLocation: false,

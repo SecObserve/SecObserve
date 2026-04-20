@@ -35,6 +35,7 @@ class TestOSVParser(BaseTestCase):
             component_name="json",
             component_version="20190722",
             component_name_version="json:20190722",
+            component_type="Library",
             component_purl="pkg:maven/org.json/json@20190722?type=jar",
             component_purl_type="maven",
             component_cpe="cpe:/a:org.json:json:20190722",
@@ -48,6 +49,7 @@ class TestOSVParser(BaseTestCase):
             component_name="Django",
             component_version="5.1.2",
             component_name_version="Django:5.1.2",
+            component_type="Framework",
             component_purl="pkg:pypi/django@5.1.2",
             component_purl_type="pypi",
             component_dependencies="django_dependencies",
@@ -99,6 +101,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
         self.assertEqual("GHSA-3vqj-43w4-2q58", observation.vulnerability_id_aliases)
         self.assertEqual("json", observation.origin_component_name)
         self.assertEqual("20190722", observation.origin_component_version)
+        self.assertEqual("Library", observation.origin_component_type)
         self.assertEqual(
             "pkg:maven/org.json/json@20190722?type=jar",
             observation.origin_component_purl,
@@ -325,7 +328,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
     def test_get_linux_package_osv_ecosystem_alpine_2(self):
         parser = OSVParser()
         package_osv_ecosystem = parser._get_linux_package_osv_ecosystem(
-            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.51.1-r12?arch=x86_64&distro=3.21.3"),
+            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.52.0-r12?arch=x86_64&distro=3.21.3"),
             None,
         )
         self.assertEqual("Alpine:v3.21", package_osv_ecosystem)

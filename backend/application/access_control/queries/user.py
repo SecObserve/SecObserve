@@ -37,7 +37,7 @@ def get_users() -> QuerySet[User]:
     if user is None:
         return User.objects.none()
 
-    users = User.objects.all()
+    users = User.objects.all().order_by("id")
 
     if user.is_superuser or not user.is_external:
         return users
@@ -53,7 +53,7 @@ def get_users_without_api_tokens() -> QuerySet[User]:
     if user is None:
         return User.objects.none()
 
-    users = User.objects.exclude(username__startswith="-product-")
+    users = User.objects.exclude(username__startswith="-product-").order_by("id")
 
     if user.is_superuser:
         return users

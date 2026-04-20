@@ -18,9 +18,10 @@ import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenc
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { EvaluationResultField } from "../../commons/custom_fields/EvaluationResultField";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
+import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
-import { EVALUATION_RESULT_CHOICES } from "../types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { COMPONENT_TYPE_CHOICES, EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentBulkDeleteButton from "./LicenseComponentBulkDeleteButton";
 
 type LicenseComponentEmbeddedListProps = {
@@ -73,13 +74,14 @@ const LicenseComponentEmbeddedList = ({
                 alwaysOn
             />,
             <TextInput source="component_name_version" label="Component" alwaysOn />,
+            <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
             <ReferenceInput
                 source="component_purl_type"
                 reference="purl_types"
                 filter={{ product: product.id, for_license_components: true }}
                 alwaysOn
             >
-                <AutocompleteInputMedium optionText="name" label="Component type" />
+                <AutocompleteInputMedium optionText="name" label="Ecosystem" />
             </ReferenceInput>
         );
         if (product?.has_services) {
@@ -132,7 +134,7 @@ const LicenseComponentEmbeddedList = ({
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_components",
         sort: { field: "evaluation_result", order: "ASC" },
         filterDefaultValues: filterDefaultValues,
@@ -156,39 +158,48 @@ const LicenseComponentEmbeddedList = ({
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     {!expand && <FilterForm filters={listFilters()} />}
-                    <Datagrid
-                        size={getSettingListSize()}
-                        rowClick={showLicenseComponent}
-                        bulkActionButtons={
-                            product?.permissions.includes(PERMISSION_COMPONENT_LICENSE_DELETE) && (
-                                <BulkActionButtons product={product} />
-                            )
-                        }
-                        resource="license_components"
-                    >
-                        {!expand && product?.has_branches && (
-                            <TextField source="branch_name" label="Branch / Version" />
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                rowClick={showLicenseComponent}
+                                bulkActionButtons={
+                                    product?.permissions.includes(PERMISSION_COMPONENT_LICENSE_DELETE) && (
+                                        <BulkActionButtons product={product} />
+                                    )
+                                }
+                                resource="license_components"
+                            >
+                                {!expand && product?.has_branches && (
+                                    <TextField source="branch_name" label="Branch / Version" />
+                                )}
+                                <FunctionField
+                                    label="License"
+                                    sortBy="effective_license_name"
+                                    render={(record: any) => (
+                                        <span style={{ fontStyle: licenseNameStyle(record.effective_license_type) }}>
+                                            {record.effective_license_name}
+                                        </span>
+                                    )}
+                                />
+                                {!expand && (
+                                    <EvaluationResultField
+                                        source="evaluation_result"
+                                        label="Evaluation result"
+                                        sortable={true}
+                                    />
+                                )}
+                                <TextField source="component_name_version_type" label="Component" />
+                                {has_attribute("component_type", data, sort) && (
+                                    <TextField source="component_type" label="Type" />
+                                )}
+                                {has_attribute("origin_service_name", data, sort) && (
+                                    <TextField source="origin_service_name" label="Service" />
+                                )}
+                                {product?.has_concluded_comments && <TextField source="manual_concluded_comment" />}
+                            </Datagrid>
                         )}
-                        <FunctionField
-                            label="License"
-                            sortBy="effective_license_name"
-                            render={(record: any) => (
-                                <span style={{ fontStyle: licenseNameStyle(record.effective_license_type) }}>
-                                    {record.effective_license_name}
-                                </span>
-                            )}
-                        />
-                        {!expand && (
-                            <EvaluationResultField
-                                source="evaluation_result"
-                                label="Evaluation result"
-                                sortable={true}
-                            />
-                        )}
-                        <TextField source="component_name_version_type" label="Component" />
-                        {product?.has_services && <TextField source="origin_service_name" label="Service" />}
-                        {product?.has_concluded_comments && <TextField source="manual_concluded_comment" />}
-                    </Datagrid>
+                    />
                     <WithListContext
                         render={({ total }) => (
                             <Fragment>{((expand && total && total > 25) || !expand) && <CustomPagination />}</Fragment>

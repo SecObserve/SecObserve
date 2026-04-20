@@ -26,7 +26,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_vex_enabled, has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
 import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
@@ -105,8 +105,7 @@ type ObservationLogApprovalListProps = {
 };
 
 const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps) => {
-    let filter = {};
-    filter = { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
+    let filter: Record<string, any> = { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
     if (product) {
         filter = { ...filter, product: Number(product.id) };
     }
@@ -116,7 +115,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
     }
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "observation_logs",
         sort: { field: "created", order: "ASC" },
         disableSyncWithLocation: true,

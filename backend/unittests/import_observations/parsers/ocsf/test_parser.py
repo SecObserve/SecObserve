@@ -156,6 +156,42 @@ class TestOCSFParser(TestCase):
             self.assertEqual("KubernetesPod", observation.origin_kubernetes_resource_type)
             self.assertEqual("cert-manager", observation.origin_kubernetes_resource_name)
 
+    def test_prowler_github(self):
+        with open(path.dirname(__file__) + "/files/prowler_github.json") as testfile:
+
+            self.maxDiff = None
+
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("OCSF (Open Cybersecurity Schema Framework)", parser.name)
+            self.assertIsInstance(parser_instance, OCSFParser)
+
+            observations, scanner = parser_instance.get_observations(data, Product(name="product"), None)
+
+            self.assertEqual("Prowler / 5.22.0", scanner)
+            self.assertEqual(1, len(observations))
+
+            observation = observations[0]
+            self.assertEqual("Prowler / 5.22.0", observation.scanner)
+            self.assertEqual(
+                "Repository deletes branches after pull request merge",
+                observation.title,
+            )
+            self.assertTrue(observation.description.startswith("**GitHub repository** setting that enables"))
+            self.assertTrue(
+                observation.recommendation.startswith(
+                    "Enable **automatic head-branch deletion** after merges to minimize stale refs and confusion."
+                ),
+            )
+            self.assertEqual(Severity.SEVERITY_LOW, observation.parser_severity)
+            self.assertEqual("GitHub", observation.origin_cloud_provider)
+            self.assertEqual("exampleorg", observation.origin_cloud_account_subscription_project)
+            self.assertEqual("documentation", observation.origin_cloud_resource)
+            self.assertEqual("Repository", observation.origin_cloud_resource_type)
+            self.assertEqual("", observation.origin_kubernetes_cluster)
+            self.assertEqual("", observation.origin_kubernetes_namespace)
+            self.assertEqual("", observation.origin_kubernetes_resource_type)
+            self.assertEqual("", observation.origin_kubernetes_resource_name)
+
     def test_github_provider(self):
         """Test that 'github' returns 'GitHub'"""
         self.assertEqual(get_provider("github"), "GitHub")

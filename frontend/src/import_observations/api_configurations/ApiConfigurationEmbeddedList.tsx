@@ -15,7 +15,7 @@ import {
 import { PERMISSION_API_CONFIGURATION_DELETE, PERMISSION_API_CONFIGURATION_EDIT } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import APIConfigurationDelete from "./ApiConfigurationDelete";
 import ApiConfigurationEdit from "./ApiConfigurationEdit";
 
@@ -39,7 +39,7 @@ type ApiConfigurationEmbeddedListProps = {
 const ApiConfigurationEmbeddedList = ({ product }: ApiConfigurationEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "api_configurations",
         sort: { field: "name", order: "ASC" },
         disableSyncWithLocation: true,

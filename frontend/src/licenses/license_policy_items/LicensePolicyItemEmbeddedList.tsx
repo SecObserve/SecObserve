@@ -20,7 +20,7 @@ import { EvaluationResultField } from "../../commons/custom_fields/EvaluationRes
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { EVALUATION_RESULT_CHOICES } from "../types";
 import LicensePolicyItemAdd from "./LicensePolicyItemAdd";
 import LicensePolicyItemEdit from "./LicensePolicyItemEdit";
@@ -79,7 +79,7 @@ type LicensePolicyItemEmbeddedListProps = {
 const LicensePolicyItemEmbeddedList = ({ license_policy }: LicensePolicyItemEmbeddedListProps) => {
     const listContext = useListController({
         filter: { license_policy: Number(license_policy.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "license_policy_items",
         sort: { field: "evaluation_result", order: "ASC" },
         filterDefaultValues: {},

@@ -21,7 +21,7 @@ def get_concluded_licenses() -> QuerySet[Concluded_License]:
     if user is None:
         return Concluded_License.objects.none()
 
-    components = Concluded_License.objects.all()
+    components = Concluded_License.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

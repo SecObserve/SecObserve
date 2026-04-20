@@ -26,7 +26,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -74,7 +74,7 @@ function listFilters(product: Product) {
         filters.push(
             <AutocompleteInput
                 source="origin_component_purl_type"
-                label="Component type"
+                label="Ecosystem"
                 choices={PURL_TYPE_CHOICES}
                 alwaysOn
             />
@@ -135,8 +135,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
         setListIdentifier(IDENTIFIER_OBSERVATION_REVIEW_LIST);
     }
 
-    let filter = {};
-    filter = { current_status: OBSERVATION_STATUS_IN_REVIEW };
+    let filter: Record<string, any> = { current_status: OBSERVATION_STATUS_IN_REVIEW };
     let filterDefaultValues = {};
     let storeKey = "observations.review";
     if (product) {
@@ -147,7 +146,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
 
     const listContext = useListController({
         filter: filter,
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
         filterDefaultValues: filterDefaultValues,

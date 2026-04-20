@@ -11,8 +11,25 @@ from application.import_observations.parsers.base_parser import (
 )
 from application.import_observations.types import Parser_Filetype, Parser_Type
 from application.licenses.models import License_Component
+from application.licenses.types import Component_Type
 
 logger = logging.getLogger("secobserve.import_observations.cyclone_dx.dependencies")
+
+type_mapping = {
+    "application": Component_Type.TYPE_APPLICATION,
+    "framework": Component_Type.TYPE_FRAMEWORK,
+    "library": Component_Type.TYPE_LIBRARY,
+    "container": Component_Type.TYPE_CONTAINER,
+    "platform": Component_Type.TYPE_PLATFORM,
+    "operating-system": Component_Type.TYPE_OPERATING_SYSTEM,
+    "device": Component_Type.TYPE_DEVICE,
+    "device-driver": Component_Type.TYPE_DEVICE_DRIVER,
+    "firmware": Component_Type.TYPE_FIRMWARE,
+    "file": Component_Type.TYPE_FILE,
+    "machine-learning-model": Component_Type.TYPE_MACHINE_LEARNING_MODEL,
+    "data": Component_Type.TYPE_DATA,
+    "cryptographic-asset": Component_Type.TYPE_CRYPROGHRAPHIC_ASSET,
+}
 
 
 @dataclass
@@ -92,6 +109,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
             model_component = License_Component(
                 component_name=component.name,
                 component_version=component.version,
+                component_type=component.type,
                 component_purl=component.purl,
                 component_cpe=component.cpe,
                 component_cyclonedx_bom_link=component.cyclonedx_bom_link,
@@ -189,7 +207,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
             bom_ref=bom_ref,
             name=component_data.get("name", ""),
             version=component_data.get("version", ""),
-            type=component_data.get("type", ""),
+            type=type_mapping.get(component_data.get("type", ""), ""),
             purl=component_data.get("purl", ""),
             cpe=component_data.get("cpe", ""),
             cyclonedx_bom_link=bom_link,
@@ -234,6 +252,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
                             vulnerability_id_aliases=self._get_aliases(vulnerability),
                             origin_component_name=component.name,
                             origin_component_version=component.version,
+                            origin_component_type=component.type,
                             origin_component_purl=component.purl,
                             origin_component_cpe=component.cpe,
                             origin_component_cyclonedx_bom_link=component.cyclonedx_bom_link,

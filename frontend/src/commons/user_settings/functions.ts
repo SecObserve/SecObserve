@@ -146,6 +146,27 @@ export function getSettingsMetricsTimespanInDays(): number {
     }
 }
 
+export async function saveSettingRowsPerPage(setting_rows_per_page: number) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.setting_rows_per_page = setting_rows_per_page;
+    localStorage.setItem("user", JSON.stringify(user));
+    saveSetting({ setting_rows_per_page: setting_rows_per_page });
+}
+
+export function getSettingRowsPerPage(): number {
+    let rows_per_page = 25;
+
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        if (user_json.setting_rows_per_page !== undefined) {
+            rows_per_page = user_json.setting_rows_per_page;
+        }
+    }
+
+    return rows_per_page;
+}
+
 function saveSetting(setting: any) {
     const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/users/my_settings/";
 

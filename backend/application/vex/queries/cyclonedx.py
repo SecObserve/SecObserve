@@ -14,7 +14,7 @@ def get_cyclonedx_s() -> QuerySet[CycloneDX]:
     if user is None:
         return CycloneDX.objects.none()
 
-    cyclonedx_s = CycloneDX.objects.all()
+    cyclonedx_s = CycloneDX.objects.all().order_by("id")
 
     if not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

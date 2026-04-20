@@ -15,7 +15,7 @@ import {
 } from "../../access_control/types";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import ProductMemberDelete from "./ProductMemberDelete";
 import ProductMemberEdit from "./ProductMemberEdit";
 
@@ -26,7 +26,7 @@ type ProductMemberEmbeddedListProps = {
 const ProductMemberEmbeddedList = ({ product }: ProductMemberEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
-        perPage: 25,
+        perPage: getSettingRowsPerPage(),
         resource: "product_members",
         sort: { field: "user_data.full_name", order: "ASC" },
         disableSyncWithLocation: true,

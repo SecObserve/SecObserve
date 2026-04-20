@@ -31,6 +31,7 @@ from application.core.types import (
     VEX_Justification,
 )
 from application.issue_tracker.types import Issue_Tracker
+from application.licenses.types import Component_Type
 
 
 class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-attributes
@@ -276,6 +277,7 @@ class Observation(Model):
     origin_component_name = CharField(max_length=255, blank=True)
     origin_component_version = CharField(max_length=255, blank=True)
     origin_component_name_version = CharField(max_length=513, blank=True)
+    origin_component_type = CharField(max_length=24, choices=Component_Type.TYPE_CHOICES, blank=True)
     origin_component_purl = CharField(max_length=255, blank=True)
     origin_component_purl_type = CharField(max_length=16, blank=True)
     origin_component_cpe = CharField(max_length=255, blank=True)
@@ -539,6 +541,7 @@ class Component(Model):
     component_name = CharField(max_length=255)
     component_version = CharField(max_length=255, blank=True)
     component_name_version = CharField(max_length=513, blank=True)
+    component_type = CharField(max_length=24, blank=True)
     component_purl = CharField(max_length=255, blank=True)
     component_purl_type = CharField(max_length=16, blank=True)
     component_cpe = CharField(max_length=255, blank=True)

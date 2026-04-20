@@ -21,6 +21,7 @@ from application.access_control.models import Authorization_Group, User
 from application.core.models import Branch, Product, Service
 from application.licenses.types import (
     NO_LICENSE_INFORMATION,
+    Component_Type,
     License_Policy_Evaluation_Result,
 )
 
@@ -96,6 +97,7 @@ class License_Component(Model, DirtyFieldsMixin):
     component_name = CharField(max_length=255)
     component_version = CharField(max_length=255, blank=True)
     component_name_version = CharField(max_length=513, blank=True)
+    component_type = CharField(max_length=24, choices=Component_Type.TYPE_CHOICES, blank=True)
     component_purl = CharField(max_length=255, blank=True)
     component_purl_type = CharField(max_length=16, blank=True)
     component_cpe = CharField(max_length=255, blank=True)

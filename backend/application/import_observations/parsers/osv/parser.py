@@ -144,6 +144,7 @@ class OSVParser(BaseParser):
                         vulnerability_id_aliases=vulnerability_id_aliases,
                         origin_component_name=osv_component.license_component.component_name,
                         origin_component_version=osv_component.license_component.component_version,
+                        origin_component_type=osv_component.license_component.component_type,
                         origin_component_purl=osv_component.license_component.component_purl,
                         origin_component_cpe=osv_component.license_component.component_cpe,
                         origin_component_cyclonedx_bom_link=osv_component.license_component.component_cyclonedx_bom_link,  # noqa: E501 pylint: disable=line-too-long

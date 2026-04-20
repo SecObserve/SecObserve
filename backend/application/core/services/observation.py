@@ -266,6 +266,8 @@ def _normalize_origin_component(observation: Observation) -> None:  # pylint: di
         observation.origin_component_name = ""
     if observation.origin_component_version is None:
         observation.origin_component_version = ""
+    if observation.origin_component_type is None:
+        observation.origin_component_type = ""
     if observation.origin_component_purl is None:
         observation.origin_component_purl = ""
     if observation.origin_component_cpe is None:

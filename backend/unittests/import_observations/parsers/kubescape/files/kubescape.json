@@ -1,0 +1,1579 @@
+{
+    "generationTime": "0001-01-01T00:00:00Z",
+    "clusterAPIServerInfo": {
+        "major": "1",
+        "minor": "35",
+        "emulationMajor": "1",
+        "emulationMinor": "35",
+        "minCompatibilityMajor": "1",
+        "minCompatibilityMinor": "34",
+        "gitVersion": "v1.35.0",
+        "gitCommit": "66452049f3d692768c39c797b21b793dce80314e",
+        "gitTreeState": "clean",
+        "buildDate": "2025-12-17T12:32:07Z",
+        "goVersion": "go1.25.5",
+        "compiler": "gc",
+        "platform": "linux/amd64"
+    },
+    "clusterCloudProvider": "",
+    "customerGUID": "",
+    "clusterName": "",
+    "summaryDetails": {
+    },
+    "resources": [
+        {
+            "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+            "object": {
+                "kind": "ServiceAccount",
+                "name": "tool1-operator-serviceaccount",
+                "namespace": "operators",
+                "relatedObjects": [
+                    {
+                        "apiVersion": "rbac.authorization.k8s.io/v1",
+                        "kind": "ClusterRoleBinding",
+                        "metadata": {
+                            "annotations": {
+                                "meta.helm.sh/release-name": "tool1-operator",
+                                "meta.helm.sh/release-namespace": "operators"
+                            },
+                            "creationTimestamp": "2026-03-30T12:41:38Z",
+                            "labels": {
+                                "app.kubernetes.io/instance": "tool1-operator",
+                                "app.kubernetes.io/managed-by": "Helm",
+                                "app.kubernetes.io/name": "tool1-operator",
+                                "app.kubernetes.io/version": "26.3.0",
+                                "helm.sh/chart": "tool1-operator-26.3.0"
+                            },
+                            "managedFields": [
+                                {
+                                    "apiVersion": "rbac.authorization.k8s.io/v1",
+                                    "fieldsType": "FieldsV1",
+                                    "fieldsV1": {
+                                        "f:metadata": {
+                                            "f:annotations": {
+                                                ".": {},
+                                                "f:meta.helm.sh/release-name": {},
+                                                "f:meta.helm.sh/release-namespace": {}
+                                            },
+                                            "f:labels": {
+                                                ".": {},
+                                                "f:app.kubernetes.io/instance": {},
+                                                "f:app.kubernetes.io/managed-by": {},
+                                                "f:app.kubernetes.io/name": {},
+                                                "f:app.kubernetes.io/version": {},
+                                                "f:helm.sh/chart": {}
+                                            }
+                                        },
+                                        "f:roleRef": {},
+                                        "f:subjects": {}
+                                    },
+                                    "manager": "ctl",
+                                    "operation": "Update",
+                                    "time": "2026-03-30T12:41:38Z"
+                                }
+                            ],
+                            "name": "tool1-operator-clusterrolebinding",
+                            "resourceVersion": "668",
+                            "uid": "005302cd-e5fb-4ad2-969e-b39ac9c78a6b"
+                        },
+                        "roleRef": {
+                            "apiGroup": "rbac.authorization.k8s.io",
+                            "kind": "ClusterRole",
+                            "name": "tool1-operator-clusterrole"
+                        },
+                        "subjects": [
+                            {
+                                "kind": "ServiceAccount",
+                                "name": "tool1-operator-serviceaccount",
+                                "namespace": "operators"
+                            }
+                        ]
+                    },
+                    {
+                        "apiVersion": "rbac.authorization.k8s.io/v1",
+                        "kind": "ClusterRole",
+                        "metadata": {
+                            "annotations": {
+                                "meta.helm.sh/release-name": "tool1-operator",
+                                "meta.helm.sh/release-namespace": "operators"
+                            },
+                            "creationTimestamp": "2026-03-30T12:41:38Z",
+                            "labels": {
+                            },
+                            "managedFields": [
+                                {
+                                    "apiVersion": "rbac.authorization.k8s.io/v1",
+                                    "fieldsType": "FieldsV1",
+                                    "fieldsV1": {
+                                        "f:metadata": {
+                                            "f:annotations": {
+                                                ".": {},
+                                                "f:meta.helm.sh/release-name": {},
+                                                "f:meta.helm.sh/release-namespace": {}
+                                            },
+                                            "f:labels": {
+                                            }
+                                        },
+                                        "f:rules": {}
+                                    },
+                                    "manager": "ctl",
+                                    "operation": "Update",
+                                    "time": "2026-03-30T12:41:38Z"
+                                }
+                            ],
+                            "name": "tool1-operator-clusterrole",
+                            "resourceVersion": "659",
+                            "uid": "82d256bb-2bef-4c73-a7e0-fe8d8d9ed178"
+                        },
+                        "rules": [
+                            {
+                                "apiGroups": [
+                                    ""
+                                ],
+                                "resources": [
+                                    "nodes"
+                                ],
+                                "verbs": [
+                                    "list",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    ""
+                                ],
+                                "resources": [
+                                    "nodes/proxy"
+                                ],
+                                "verbs": [
+                                    "get"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    ""
+                                ],
+                                "resources": [
+                                    "pods",
+                                    "configmaps",
+                                    "secrets",
+                                    "services",
+                                    "endpoints",
+                                    "serviceaccounts"
+                                ],
+                                "verbs": [
+                                    "create",
+                                    "delete",
+                                    "get",
+                                    "list",
+                                    "patch",
+                                    "update",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    "rbac.authorization.k8s.io"
+                                ],
+                                "resources": [
+                                    "rolebindings"
+                                ],
+                                "verbs": [
+                                    "create",
+                                    "delete",
+                                    "get",
+                                    "list",
+                                    "patch",
+                                    "update",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    "apps"
+                                ],
+                                "resources": [
+                                    "daemonsets"
+                                ],
+                                "verbs": [
+                                    "get",
+                                    "create",
+                                    "delete",
+                                    "list",
+                                    "patch",
+                                    "update",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    "batch"
+                                ],
+                                "resources": [
+                                    "jobs"
+                                ],
+                                "verbs": [
+                                    "create",
+                                    "get",
+                                    "list",
+                                    "patch",
+                                    "update",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    "apiextensions.k8s.io"
+                                ],
+                                "resources": [
+                                    "customresourcedefinitions"
+                                ],
+                                "verbs": [
+                                    "get",
+                                    "create",
+                                    "patch",
+                                    "list",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    "events.k8s.io"
+                                ],
+                                "resources": [
+                                    "events"
+                                ],
+                                "verbs": [
+                                    "create",
+                                    "patch"
+                                ]
+                            },
+                            {
+                                "verbs": [
+                                    "get",
+                                    "list",
+                                    "patch",
+                                    "watch"
+                                ]
+                            },
+                            {
+                                "verbs": [
+                                    "patch"
+                                ]
+                            },
+                            {
+                                "apiGroups": [
+                                    "rbac.authorization.k8s.io"
+                                ],
+                                "resourceNames": [
+                                    "tool1-clusterrole"
+                                ],
+                                "resources": [
+                                    "clusterroles"
+                                ],
+                                "verbs": [
+                                    "bind"
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+            "object": {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "metadata": {
+                    "annotations": {
+                        "deployment.kubernetes.io/revision": "1",
+                        "meta.helm.sh/release-name": "tool2-operator",
+                        "meta.helm.sh/release-namespace": "operators"
+                    },
+                    "creationTimestamp": "2026-03-30T12:41:38Z",
+                    "generation": 1,
+                    "labels": {
+                    },
+                    "name": "tool2-operator-deployment",
+                    "namespace": "operators",
+                    "resourceVersion": "93941",
+                    "uid": "64e05ccf-3d09-4731-a3e9-578423cf61d6"
+                },
+                "spec": {
+                    "progressDeadlineSeconds": 600,
+                    "replicas": 1,
+                    "revisionHistoryLimit": 10,
+                    "selector": {
+                        "matchLabels": {
+                            "app.kubernetes.io/instance": "tool2-operator",
+                            "app.kubernetes.io/name": "tool2-operator"
+                        }
+                    },
+                    "strategy": {
+                        "type": "Recreate"
+                    },
+                    "template": {
+                        "metadata": {
+                            "annotations": {
+                            },
+                            "labels": {
+                            }
+                        },
+                        "spec": {
+                            "containers": [
+                                {
+                                    "name": "tool2-operator",
+                                    "env": [
+                                        {
+                                            "name": "OPERATOR_IMAGE",
+                                            "value": "XXXXXX",
+                                            "valueFrom": {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.annotations['internal.tech/image']"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "name": "OPERATOR_NAMESPACE",
+                                            "value": "XXXXXX",
+                                            "valueFrom": {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "metadata.namespace"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "name": "OPERATOR_SERVICE_NAME",
+                                            "value": "XXXXXX"
+                                        },
+                                        {
+                                            "name": "KUBERNETES_NODE_NAME",
+                                            "value": "XXXXXX",
+                                            "valueFrom": {
+                                                "fieldRef": {
+                                                    "apiVersion": "v1",
+                                                    "fieldPath": "spec.nodeName"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "resources": {
+                                        "limits": {
+                                            "cpu": "100m",
+                                            "memory": "128Mi"
+                                        },
+                                        "requests": {
+                                            "cpu": "100m",
+                                            "memory": "128Mi"
+                                        }
+                                    },
+                                    "volumeMounts": [
+                                        {
+                                            "name": "config-spec",
+                                            "mountPath": "/etc/tool2-operator/config-spec"
+                                        }
+                                    ],
+                                    "terminationMessagePath": "/dev/termination-log",
+                                    "terminationMessagePolicy": "File",
+                                    "imagePullPolicy": "IfNotPresent",
+                                    "securityContext": {}
+                                }
+                            ],
+                            "dnsPolicy": "ClusterFirst",
+                            "restartPolicy": "Always",
+                            "schedulerName": "default-scheduler",
+                            "securityContext": {},
+                            "serviceAccount": "tool2-operator-serviceaccount",
+                            "serviceAccountName": "tool2-operator-serviceaccount",
+                            "terminationGracePeriodSeconds": 30,
+                            "volumes": [
+                                {
+                                    "configMap": {
+                                        "defaultMode": 420,
+                                        "name": "tool2-operator-configmap"
+                                    },
+                                    "name": "config-spec"
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "attributes": null,
+    "results": [
+        {
+            "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+            "controls": [
+                {
+                    "controlID": "C-0002",
+                    "name": "Prevent containers from allowing command execution",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "exec-into-container-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0035",
+                    "name": "Administrative Roles",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-list-all-cluster-admins-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0015",
+                    "name": "List Kubernetes secrets",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-can-list-get-secrets-v1",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].resources[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[3]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[6]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].resources[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[3]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[6]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0014",
+                    "name": "Access Kubernetes dashboard",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-access-dashboard-subject-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Low"
+                },
+                {
+                    "controlID": "C-0063",
+                    "name": "Portforwarding privileges",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-can-portforward-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0187",
+                    "name": "Minimize wildcard use in Roles and ClusterRoles",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-list-all-cluster-admins-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0188",
+                    "name": "Minimize access to create pods",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-can-create-pod",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].resources[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].resources[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0265",
+                    "name": "Authenticated user has sensitive permissions",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "system-authenticated-allowed-to-take-over-cluster",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0007",
+                    "name": "Roles with delete capabilities",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-excessive-delete-rights-v1",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].resources[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].resources[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].resources[3]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[1]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].resources[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].resources[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].resources[3]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[1]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[4].resources[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[4].verbs[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[4].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[4].resources[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[4].verbs[2]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[4].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0031",
+                    "name": "Delete Kubernetes events",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-can-delete-k8s-events-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0037",
+                    "name": "CoreDNS poisoning",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-can-update-configmap-v1",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].resources[1]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[4]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].verbs[5]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "failedPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].resources[1]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[4]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].verbs[5]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[1].rules[2].apiGroups[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].subjects[0]",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                },
+                                {
+                                    "resourceID": "/operators/ServiceAccount/tool1-operator-serviceaccount/rbac.authorization.k8s.io/v1//ClusterRole/tool1-operator-clusterrole/rbac.authorization.k8s.io/v1//ClusterRoleBinding/tool1-operator-clusterrolebinding",
+                                    "reviewPath": "relatedObjects[0].roleRef.name",
+                                    "fixPath": {
+                                        "path": "",
+                                        "value": ""
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0053",
+                    "name": "Access container service account",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "access-container-service-account-v1",
+                            "status": "failed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                }
+            ]
+        },
+        {
+            "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+            "controls": [
+                {
+                    "controlID": "C-0045",
+                    "name": "Writable hostPath mount",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "alert-rw-hostpath",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0034",
+                    "name": "Automatic mapping of service account",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "automount-service-account",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0044",
+                    "name": "Container hostPort",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "container-hostPort",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0013",
+                    "name": "Non-root containers",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "non-root-containers",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.runAsNonRoot",
+                                        "value": "true"
+                                    }
+                                },
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.runAsGroup",
+                                        "value": "1000"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0270",
+                    "name": "Ensure CPU limits are set",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "resources-cpu-limits",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0014",
+                    "name": "Access Kubernetes dashboard",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-access-dashboard-wl-v1",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Low"
+                },
+                {
+                    "controlID": "C-0016",
+                    "name": "Allow privilege escalation",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-allow-privilege-escalation",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation",
+                                        "value": "false"
+                                    }
+                                },
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.privileged",
+                                        "value": "false"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0017",
+                    "name": "Immutable container filesystem",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "immutable-container-filesystem",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem",
+                                        "value": "true"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Low"
+                },
+                {
+                    "controlID": "C-0046",
+                    "name": "Insecure capabilities",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "controlConfigurations": {
+                                "insecureCapabilities": [
+                                    "SETPCAP",
+                                    "NET_ADMIN",
+                                    "NET_RAW",
+                                    "SYS_MODULE",
+                                    "SYS_RAWIO",
+                                    "SYS_PTRACE",
+                                    "SYS_ADMIN",
+                                    "SYS_BOOT",
+                                    "MAC_OVERRIDE",
+                                    "MAC_ADMIN",
+                                    "PERFMON",
+                                    "ALL",
+                                    "BPF"
+                                ]
+                            },
+                            "name": "insecure-capabilities",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0041",
+                    "name": "HostNetwork access",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "host-network-access",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0057",
+                    "name": "Privileged container",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "rule-privilege-escalation",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0020",
+                    "name": "Mount service principal",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "alert-mount-potential-credentials-paths",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0292",
+                    "name": "Nginx Ingress Controller End of Life",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "detect-nginx-ingress-controller-eol",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0256",
+                    "name": "External facing",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "exposure-to-internet",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0048",
+                    "name": "HostPath mount",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "alert-any-hostpath",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0030",
+                    "name": "Ingress and Egress blocked",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "ingress-and-egress-blocked",
+                            "status": "failed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0038",
+                    "name": "Host PID/IPC privileges",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "host-pid-ipc-privileges",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0260",
+                    "name": "Missing network policy",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "ensure_network_policy_configured_in_labels",
+                            "status": "failed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0055",
+                    "name": "Linux hardening",
+                    "status": {
+                        "status": "failed"
+                    },
+                    "rules": [
+                        {
+                            "name": "linux-hardening",
+                            "status": "failed",
+                            "subStatus": "",
+                            "paths": [
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.seccompProfile",
+                                        "value": "YOUR_VALUE"
+                                    }
+                                },
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.seLinuxOptions",
+                                        "value": "YOUR_VALUE"
+                                    }
+                                },
+                                {
+                                    "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                                    "fixPath": {
+                                        "path": "spec.template.spec.containers[0].securityContext.capabilities.drop[0]",
+                                        "value": "YOUR_VALUE"
+                                    }
+                                }
+                            ]
+                        }
+                    ],
+                    "severity": "Medium"
+                },
+                {
+                    "controlID": "C-0012",
+                    "name": "Applications credentials in configuration files",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "controlConfigurations": {
+                                "sensitiveKeyNames": [
+                                    "aws_secret_access_key",
+                                    "azure_batchai_storage_key",
+                                    "azure_batch_key",
+                                    "secret",
+                                    "key",
+                                    "password",
+                                    "pwd",
+                                    "token",
+                                    "jwt",
+                                    "bearer",
+                                    "credential"
+                                ],
+                                "sensitiveKeyNamesAllowed": [],
+                                "sensitiveValues": [
+                                    "BEGIN \\w+ PRIVATE KEY",
+                                    "PRIVATE KEY",
+                                    "eyJhbGciO",
+                                    "JWT",
+                                    "Bearer",
+                                    "_key_",
+                                    "_secret_"
+                                ],
+                                "sensitiveValuesAllowed": []
+                            },
+                            "name": "rule-credentials-in-env-var",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                },
+                {
+                    "controlID": "C-0271",
+                    "name": "Ensure memory limits are set",
+                    "status": {
+                        "status": "passed"
+                    },
+                    "rules": [
+                        {
+                            "name": "resources-memory-limits",
+                            "status": "passed",
+                            "subStatus": ""
+                        }
+                    ],
+                    "severity": "High"
+                }
+            ],
+            "prioritizedResource": {
+                "resourceID": "apps/v1/operators/Deployment/tool2-operator-deployment",
+                "priorityVector": [
+                    {
+                        "attackTrackName": "workload-external-track",
+                        "type": "control",
+                        "vector": [
+                            {
+                                "controlID": "C-0260",
+                                "category": "Lateral Movement (Network)",
+                                "tags": [
+                                    "security"
+                                ]
+                            }
+                        ],
+                        "score": 5.5,
+                        "severity": 2
+                    },
+                    {
+                        "attackTrackName": "workload-external-track",
+                        "type": "control",
+                        "vector": [
+                            {
+                                "controlID": "C-0017",
+                                "category": "Persistence",
+                                "tags": [
+                                    "security",
+                                    "compliance",
+                                    "smartRemediation"
+                                ]
+                            }
+                        ],
+                        "score": 3.3000000000000003,
+                        "severity": 1
+                    }
+                ],
+                "score": 8.8,
+                "severity": 2
+            }
+        }
+    ],
+    "metadata": {
+        "targetMetadata": {
+            "clusterContextMetadata": {
+                "namespaceToNumberOfResources": {
+                    "default": 29,
+                    "kube-node-lease": 2,
+                    "kube-public": 7,
+                    "kube-system": 69,
+                    "local-path-storage": 7
+                },
+                "contextName": "kind-quickstart",
+                "numberOfWorkerNodes": 1
+            }
+        },
+        "clusterMetadata": {},
+        "scanMetadata": {
+            "targetType": "Framework",
+            "kubescapeVersion": "v3.0.48",
+            "formatVersion": "v2",
+            "formats": [
+                "json"
+            ],
+            "targetNames": [
+                "clusterscan",
+                "mitre",
+                "nsa"
+            ],
+            "failThreshold": 100
+        }
+    }
+}
