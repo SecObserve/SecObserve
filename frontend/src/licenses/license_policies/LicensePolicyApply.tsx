@@ -35,7 +35,7 @@ const LicensePolicyApply = ({ license_policy, product }: LicensePolicyApplyProps
 
     const handleConfirm = async () => {
         setLoading(true);
-        let url = "";
+        let url;
         if (product) {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/license_policies/apply_product/?product=" + product.id;
         } else {

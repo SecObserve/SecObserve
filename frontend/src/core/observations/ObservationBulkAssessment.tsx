@@ -59,7 +59,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
             return;
         }
         setLoading(true);
-        let url = "";
+        let url;
         if (product) {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/products/" + product.id + "/observations_bulk_assessment/";
         } else {

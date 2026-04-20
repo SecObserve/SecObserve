@@ -26,8 +26,8 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
     const handleClose = () => setOpen(false);
 
     const handleApiTokenRevoke = async (data: any) => {
-        let method = "";
-        let url = "";
+        let method;
+        let url;
         let revoke_data = undefined;
 
         if (type === "product") {
