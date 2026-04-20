@@ -34,7 +34,7 @@ const ScanOSV = ({ product }: ScanOSVProps) => {
     const scanOSV = async (data: any) => {
         setLoading(true);
 
-        let url = "";
+        let url;
         if (data.branch) {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/products/" + product.id + "/" + data.branch + "/scan_osv/";
         } else {

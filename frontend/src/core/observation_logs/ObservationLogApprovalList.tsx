@@ -105,8 +105,7 @@ type ObservationLogApprovalListProps = {
 };
 
 const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps) => {
-    let filter = {};
-    filter = { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
+    let filter = { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
     if (product) {
         filter = { ...filter, product: Number(product.id) };
     }

@@ -45,8 +45,8 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
     };
 
     const handleApiTokenCreate = async (data: any) => {
-        let url = "";
-        let create_data = undefined;
+        let url;
+        let create_data;
         if (type === "product") {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/product_api_tokens/";
             create_data = {
