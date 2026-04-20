@@ -135,7 +135,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
         setListIdentifier(IDENTIFIER_OBSERVATION_REVIEW_LIST);
     }
 
-    let filter = { current_status: OBSERVATION_STATUS_IN_REVIEW };
+    let filter: Record<string, any> = { current_status: OBSERVATION_STATUS_IN_REVIEW };
     let filterDefaultValues = {};
     let storeKey = "observations.review";
     if (product) {
