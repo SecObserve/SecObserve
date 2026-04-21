@@ -1,0 +1,276 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.0 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.3.0">
+  <diagram name="Page-1" id="VX-3E3aqqD7pf1Rg54WV">
+    <mxGraphModel dx="1426" dy="1362" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="WVNzOD9NnC_pYr7xRJHe-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="260" width="160" x="240" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="WVNzOD9NnC_pYr7xRJHe-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="180" width="160" x="240" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="WVNzOD9NnC_pYr7xRJHe-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="180" width="160" x="240" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="WVNzOD9NnC_pYr7xRJHe-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="100" width="160" x="240" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="WVNzOD9NnC_pYr7xRJHe-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="100" width="160" x="240" y="-20" as="geometry" />
+        </mxCell>
+        <mxCell id="nvJj6j3gVg4nusngmV69-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="180" width="300" x="760" y="-180" as="geometry" />
+        </mxCell>
+        <mxCell id="thoTgJwvwBRAFEuy037D-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="180" width="300" x="760" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="thoTgJwvwBRAFEuy037D-29" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="180" width="300" x="760" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="thoTgJwvwBRAFEuy037D-31" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="180" width="300" x="760" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="thoTgJwvwBRAFEuy037D-33" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#CCCCD0;arcSize=6;fontColor=#333333;strokeColor=none;" value="" vertex="1">
+          <mxGeometry height="260" width="300" x="760" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-14" edge="1" parent="1" source="NQz_Nwzh-ESSq-r7xiTD-1" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="thoTgJwvwBRAFEuy037D-26" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="650" y="410" as="sourcePoint" />
+            <mxPoint x="770" y="105" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-26" connectable="0" parent="NQz_Nwzh-ESSq-r7xiTD-14" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" value="Export" vertex="1">
+          <mxGeometry relative="1" x="0.1123" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-18" edge="1" parent="1" source="NQz_Nwzh-ESSq-r7xiTD-1" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="thoTgJwvwBRAFEuy037D-29" value="Issues&lt;br&gt;Code link">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="690" y="450" as="sourcePoint" />
+            <mxPoint x="810" y="145" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-16" edge="1" parent="1" source="NQz_Nwzh-ESSq-r7xiTD-1" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="thoTgJwvwBRAFEuy037D-31" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="670" y="430" as="sourcePoint" />
+            <mxPoint x="790" y="125" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="thoTgJwvwBRAFEuy037D-32" connectable="0" parent="NQz_Nwzh-ESSq-r7xiTD-16" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;font data-font-src=&quot;https://fonts.googleapis.com/css?family=Poppins&quot; face=&quot;Poppins&quot;&gt;Notifications&lt;/font&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.1687" y="-6" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="Microsoft Teams" link="https://secobserve.github.io/SecObserve/integrations/notifications/" id="NQz_Nwzh-ESSq-r7xiTD-2">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="440" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="Email" link="https://secobserve.github.io/SecObserve/integrations/notifications/" id="NQz_Nwzh-ESSq-r7xiTD-4">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="520" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="GitLab" link="https://secobserve.github.io/SecObserve/integrations/issue_trackers/" id="NQz_Nwzh-ESSq-r7xiTD-5">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="240" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="CodeCharta" link="https://secobserve.github.io/SecObserve/integrations/codecharta/" id="NQz_Nwzh-ESSq-r7xiTD-10">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="120" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="Microsoft Excel" link="https://secobserve.github.io/SecObserve/integrations/observations_export/" id="NQz_Nwzh-ESSq-r7xiTD-11">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="40" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="CSV" link="https://secobserve.github.io/SecObserve/integrations/observations_export/" id="NQz_Nwzh-ESSq-r7xiTD-12">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="40" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="Jira (Cloud)" link="https://secobserve.github.io/SecObserve/integrations/issue_trackers/" id="ckfRxN6suAOy0oSwesAX-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="320" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="Azure DevOps" link="https://secobserve.github.io/SecObserve/integrations/source_code_repositories/" id="t_NOycPIsL9wbnrStvVd-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="320" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="Slack" link="https://secobserve.github.io/SecObserve/integrations/notifications/" id="vnX0cciMQJ_0wqG728EC-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="440" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="NVD" link="https://secobserve.github.io/SecObserve/integrations/links/#vulnerabilities" id="thoTgJwvwBRAFEuy037D-23">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="640" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="thoTgJwvwBRAFEuy037D-24" edge="1" parent="1" source="NQz_Nwzh-ESSq-r7xiTD-1" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.75;exitY=1;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="thoTgJwvwBRAFEuy037D-33" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="650" y="400" as="sourcePoint" />
+            <mxPoint x="770" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="thoTgJwvwBRAFEuy037D-25" connectable="0" parent="thoTgJwvwBRAFEuy037D-24" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;font data-font-src=&quot;https://fonts.googleapis.com/css?family=Poppins&quot; face=&quot;Poppins&quot;&gt;Information&lt;br&gt;links&lt;/font&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.6752" y="-3" as="geometry">
+            <mxPoint x="-32" y="-82" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="GitHub" link="https://secobserve.github.io/SecObserve/integrations/issue_trackers/" id="NQz_Nwzh-ESSq-r7xiTD-3">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="240" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="GitHub&lt;br&gt;Advisories" link="https://secobserve.github.io/SecObserve/integrations/links/#vulnerabilities" id="thoTgJwvwBRAFEuy037D-34">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="640" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="open/source/&lt;br&gt;insights" link="https://secobserve.github.io/SecObserve/integrations/links/#components" id="thoTgJwvwBRAFEuy037D-37">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="720" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="CycloneDX&amp;nbsp; (VEX)" link="https://secobserve.github.io/SecObserve/integrations/vex/" id="qOO4yE6-o5YvLIt4YbO8-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="-80" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="OpenVEX" link="https://secobserve.github.io/SecObserve/integrations/vex/" id="qOO4yE6-o5YvLIt4YbO8-2">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="-160" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="nvJj6j3gVg4nusngmV69-2" edge="1" parent="1" source="NQz_Nwzh-ESSq-r7xiTD-1" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;startArrow=classic;startFill=1;" target="nvJj6j3gVg4nusngmV69-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="650" y="311" as="sourcePoint" />
+            <mxPoint x="770" y="120" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="nvJj6j3gVg4nusngmV69-3" connectable="0" parent="nvJj6j3gVg4nusngmV69-2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" value="Import/&lt;br&gt;Export" vertex="1">
+          <mxGeometry relative="1" x="0.1123" as="geometry">
+            <mxPoint x="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00467F;strokeColor=none;fontColor=#ffffff;fontStyle=1" value="SecObserve" vertex="1">
+          <mxGeometry height="60" width="120" x="520" y="280" as="geometry" />
+        </mxCell>
+        <UserObject label="OpenID Connect Providers" link="https://secobserve.github.io/SecObserve/integrations/oidc_authentication/" id="NQz_Nwzh-ESSq-r7xiTD-6">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="ScanCode&lt;br&gt;LicenseDB" link="https://secobserve.github.io/SecObserve/integrations/license_data/#scancode-licensedb" id="NQz_Nwzh-ESSq-r7xiTD-7">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="720" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="Open Source&lt;br&gt;Vulnerability&lt;br&gt;Scanners" link="https://secobserve.github.io/SecObserve/usage/import_observations/" id="NQz_Nwzh-ESSq-r7xiTD-8">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="240" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-20" edge="1" parent="1" source="WVNzOD9NnC_pYr7xRJHe-5" style="endArrow=classic;html=1;rounded=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="NQz_Nwzh-ESSq-r7xiTD-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="650" y="305" as="sourcePoint" />
+            <mxPoint x="770" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="&lt;div&gt;Licenses,&lt;/div&gt;License&amp;nbsp;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Groups&lt;/span&gt;" id="NQz_Nwzh-ESSq-r7xiTD-24">
+          <mxCell connectable="0" parent="NQz_Nwzh-ESSq-r7xiTD-20" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" vertex="1">
+            <mxGeometry relative="1" x="0.14" y="-3" as="geometry">
+              <mxPoint as="offset" />
+            </mxGeometry>
+          </mxCell>
+        </UserObject>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-22" edge="1" parent="1" source="WVNzOD9NnC_pYr7xRJHe-1" style="endArrow=classic;html=1;rounded=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="NQz_Nwzh-ESSq-r7xiTD-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="590" y="450" as="sourcePoint" />
+            <mxPoint x="590" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NQz_Nwzh-ESSq-r7xiTD-23" connectable="0" parent="NQz_Nwzh-ESSq-r7xiTD-22" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" value="Authentication" vertex="1">
+          <mxGeometry relative="1" x="-0.16" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="SPDX&lt;br&gt;Licenses" link="https://secobserve.github.io/SecObserve/integrations/license_data/#spdx-licenses" id="bolqJ5kDSpF7zOIxnR-b-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="640" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="bolqJ5kDSpF7zOIxnR-b-2" edge="1" parent="1" source="WVNzOD9NnC_pYr7xRJHe-4" style="endArrow=classic;html=1;rounded=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" target="NQz_Nwzh-ESSq-r7xiTD-1" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="590" y="470" as="sourcePoint" />
+            <mxPoint x="590" y="350" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="bolqJ5kDSpF7zOIxnR-b-3" connectable="0" parent="bolqJ5kDSpF7zOIxnR-b-2" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;" value="Scores,&lt;br&gt;Exploits" vertex="1">
+          <mxGeometry relative="1" x="0.14" y="-3" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="EPSS" link="https://secobserve.github.io/SecObserve/integrations/epss/" id="XJ2QC1-pdl4xAl0XCKq4-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="440" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="txpyq0Q0yciagI06FU9S-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" value="FIRST.org&lt;br&gt;CVSS calculator" vertex="1">
+          <mxGeometry height="60" width="120" x="780" y="800" as="geometry" />
+        </mxCell>
+        <UserObject label="cvss-bt" link="https://secobserve.github.io/SecObserve/integrations/exploit_information/" id="--HBhNgYsgPL_KuHosSr-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="520" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="--HBhNgYsgPL_KuHosSr-2" edge="1" parent="1" source="WVNzOD9NnC_pYr7xRJHe-2" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="NQz_Nwzh-ESSq-r7xiTD-1" value="Components">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="260" as="sourcePoint" />
+            <mxPoint x="530" y="320" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="OSV&lt;div&gt;(osv.dev)&lt;/div&gt;" link="https://secobserve.github.io/SecObserve/integrations/osv_scan/" id="1I7h-LTILfmmEbJF3iAp-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="320" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="1I7h-LTILfmmEbJF3iAp-2" edge="1" parent="1" source="WVNzOD9NnC_pYr7xRJHe-3" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="NQz_Nwzh-ESSq-r7xiTD-1" value="Vulnerabilities">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="400" y="260" as="sourcePoint" />
+            <mxPoint x="460" y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <UserObject label="SBOM&amp;nbsp;&lt;br&gt;(CycloneDX,&lt;div&gt;SPDX)&lt;/div&gt;" link="https://secobserve.github.io/SecObserve/usage/upload_sbom/" id="NrV2D-DwwKztVQpS6tq9-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="120" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="ecosyste.ms" link="https://secobserve.github.io/SecObserve/integrations/links/#components" id="AHC2kW-Rb-wY8LM5nEDL-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="920" y="720" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="CSAF&amp;nbsp; (VEX)" link="https://secobserve.github.io/SecObserve/integrations/vex/" id="tgnb8spmxpV9_iQ_0n24-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="780" y="-160" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <UserObject label="LicenseLynx" id="AbK41Gvr9_5DvI5BOl-s-1">
+          <mxCell parent="1" style="rounded=0;whiteSpace=wrap;html=1;fontFamily=Poppins;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DPoppins;fillColor=#00B3F0;strokeColor=none;fontColor=#ffffff;fontStyle=1" vertex="1">
+            <mxGeometry height="60" width="120" x="260" y="800" as="geometry" />
+          </mxCell>
+        </UserObject>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
