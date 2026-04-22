@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND
 from rest_framework.viewsets import GenericViewSet
 
+from application.access_control.models import User
 from application.notifications.api.filters import NotificationFilter
 from application.notifications.api.permissions import UserHasNotificationPermission
 from application.notifications.api.serializers import (
@@ -67,8 +68,10 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
         if not get_notification_by_id(pk):
             return Response(status=HTTP_404_NOT_FOUND)
 
+        user = request.user if isinstance(request.user, User) else None
+
         Notification_Viewed.objects.update_or_create(
             notification_id=pk,
-            user=request.user,
+            user=user,
         )
         return Response(status=HTTP_204_NO_CONTENT)
