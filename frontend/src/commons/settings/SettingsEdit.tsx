@@ -193,6 +193,17 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
+                    <Grid container spacing={2} width={"100%"}>
+                        <Grid size={3}>
+                            <Stack spacing={2}>
+                                <BooleanInput
+                                    source="feature_cross_scanner_deduplication"
+                                    label="Enable cross scanner deduplication"
+                                />
+                            </Stack>
+                        </Grid>
+                        <Grid size={3}>
+                            <Stack spacing={2}>
                     <NumberInput
                         source="risk_acceptance_expiry_days"
                         label="Risk acceptance expiry (days)"
@@ -202,6 +213,9 @@ const SettingsEdit = () => {
                         helperText="Days before risk acceptance expires, 0 means no expiry"
                         sx={{ marginBottom: 2 }}
                     />
+                            </Stack>
+                        </Grid>
+                    </Grid>
 
                     <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>

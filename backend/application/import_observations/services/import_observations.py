@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -66,6 +67,8 @@ from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
+
+logger = logging.getLogger("secobserve.import_observations")
 
 SBOM_BULK_BATCH_SIZE = 100
 
@@ -309,17 +312,18 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
                 observations_this_run.add(observation_before.identity_hash)
                 vulnerability_check_observations.add(observation_before)
             else:
-                _process_new_observation(imported_observation, settings)
+                if not _deduplicate_cross_scanner(imported_observation, settings):
+                    _process_new_observation(imported_observation, settings)
 
-                rule_engine.apply_rules_for_observation(imported_observation)
-                vex_engine.apply_vex_statements_for_observation(imported_observation)
+                    rule_engine.apply_rules_for_observation(imported_observation)
+                    vex_engine.apply_vex_statements_for_observation(imported_observation)
 
-                if imported_observation.current_status in Status.STATUS_ACTIVE:
-                    observations_new += 1
+                    if imported_observation.current_status in Status.STATUS_ACTIVE:
+                        observations_new += 1
 
-                # Add identity_hash to set of observations in this run to detect duplicates in this run
-                observations_this_run.add(imported_observation.identity_hash)
-                vulnerability_check_observations.add(imported_observation)
+                    # Add identity_hash to set of observations in this run to detect duplicates in this run
+                    observations_this_run.add(imported_observation.identity_hash)
+                    vulnerability_check_observations.add(imported_observation)
 
     observations_resolved = _resolve_unimported_observations(observations_before)
     vulnerability_check_observations.update(observations_resolved)
@@ -697,6 +701,36 @@ def _process_new_observation(imported_observation: Observation, settings: Settin
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
+
+
+def _deduplicate_cross_scanner(observation: Observation, settings: Settings) -> bool:
+    if not settings.feature_cross_scanner_deduplication:
+        return False
+
+    duplicate_found = (
+        Observation.objects.filter(
+            product=observation.product,
+            title=observation.title,
+            branch=observation.branch,
+            origin_service=observation.origin_service,
+            origin_component_name_version=observation.origin_component_name_version,
+            origin_docker_image_name_tag=observation.origin_docker_image_name_tag,
+            origin_endpoint_url=observation.origin_endpoint_url,
+            origin_source_file=observation.origin_source_file,
+            origin_source_line_start=observation.origin_source_line_start,
+            origin_source_line_end=observation.origin_source_line_end,
+            origin_cloud_qualified_resource=observation.origin_cloud_qualified_resource,
+            origin_kubernetes_qualified_resource=observation.origin_kubernetes_qualified_resource,
+        )
+        .exclude(scanner=observation.scanner)
+        .exists()
+    )
+
+    if duplicate_found:
+        logger.info("Cross scanner deduplication / Observation already saved: %s", observation.title)
+        return True
+
+    return False
 
 
 def _resolve_unimported_observations(

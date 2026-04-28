@@ -130,9 +130,22 @@ const SettingsShowComponent = () => {
                                 </Stack>
                             </Grid>
                         </Grid>
+                        <Grid container spacing={2} width={"100%"} sx={{ marginBottom: 2 }}>
+                            <Grid size={3}>
+                                <Stack spacing={2}>
+                                    <Labeled label="Enable cross scanner deduplication">
+                                        <BooleanField source="feature_cross_scanner_deduplication" />
+                                    </Labeled>
+                                </Stack>
+                            </Grid>
+                            <Grid size={3}>
+                                <Stack spacing={2}>
                         <Labeled label="Risk acceptance expiry (days)">
                             <NumberField source="risk_acceptance_expiry_days" />
                         </Labeled>
+                                </Stack>
+                            </Grid>
+                        </Grid>
                     </Paper>
 
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
