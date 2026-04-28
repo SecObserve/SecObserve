@@ -204,15 +204,15 @@ const SettingsEdit = () => {
                         </Grid>
                         <Grid size={3}>
                             <Stack spacing={2}>
-                    <NumberInput
-                        source="risk_acceptance_expiry_days"
-                        label="Risk acceptance expiry (days)"
-                        min={0}
-                        step={1}
-                        validate={validate_0_999999}
-                        helperText="Days before risk acceptance expires, 0 means no expiry"
-                        sx={{ marginBottom: 2 }}
-                    />
+                                <NumberInput
+                                    source="risk_acceptance_expiry_days"
+                                    label="Risk acceptance expiry (days)"
+                                    min={0}
+                                    step={1}
+                                    validate={validate_0_999999}
+                                    helperText="Days before risk acceptance expires, 0 means no expiry"
+                                    sx={{ marginBottom: 2 }}
+                                />
                             </Stack>
                         </Grid>
                     </Grid>

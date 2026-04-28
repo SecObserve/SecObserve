@@ -140,9 +140,9 @@ const SettingsShowComponent = () => {
                             </Grid>
                             <Grid size={3}>
                                 <Stack spacing={2}>
-                        <Labeled label="Risk acceptance expiry (days)">
-                            <NumberField source="risk_acceptance_expiry_days" />
-                        </Labeled>
+                                    <Labeled label="Risk acceptance expiry (days)">
+                                        <NumberField source="risk_acceptance_expiry_days" />
+                                    </Labeled>
                                 </Stack>
                             </Grid>
                         </Grid>
