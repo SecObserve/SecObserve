@@ -27,6 +27,7 @@ from application.import_observations.parsers.dependency_track.parser import (
 from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
+    _deduplicate_cross_scanner,
     api_import_observations,
     file_upload_observations,
 )
@@ -56,10 +57,12 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_with_branch(
         self,
         mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
         mock_find_potential_duplicates,
         mock_apply_exploit_information,
         mock_apply_epss,
@@ -68,6 +71,7 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
 
         self._file_upload_observations(
             Branch.objects.get(id=1),
@@ -75,6 +79,7 @@ class TestFileUploadObservations(BaseTestCase):
             "test_docker_image_name_tag",
             "test_endpoint_url",
             "test_kubernetes_cluster",
+            False,
         )
 
         product = Product.objects.get(id=1)
@@ -83,6 +88,7 @@ class TestFileUploadObservations(BaseTestCase):
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count, 3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
     @patch("application.commons.services.global_request.get_current_request")
@@ -91,10 +97,12 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
-    def test_file_upload_observations_without_branch(
+    def test_file_upload_observations_with_branch_cross_scanner_deduplication(
         self,
         mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
         mock_find_potential_duplicates,
         mock_apply_exploit_information,
         mock_apply_epss,
@@ -103,17 +111,59 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = True
+
+        self._file_upload_observations(
+            Branch.objects.get(id=1),
+            "test_service",
+            "test_docker_image_name_tag",
+            "test_endpoint_url",
+            "test_kubernetes_cluster",
+            True,
+        )
+
+        product = Product.objects.get(id=1)
+        mock_check_security_gate.assert_has_calls([call(product)])
+        self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 1)
+        self.assertEqual(mock_apply_epss.call_count, 0)
+        self.assertEqual(mock_apply_exploit_information.call_count, 0)
+        self.assertEqual(mock_find_potential_duplicates.call_count, 1)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count, 3)
+        self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 0)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_without_branch(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
         product = Product.objects.get(id=1)
         product.repository_default_branch = None
         product.save()
 
-        self._file_upload_observations(None, None, None, None, None)
+        self._file_upload_observations(None, None, None, None, None, False)
 
         mock_check_security_gate.assert_has_calls([call(product), call(product)])
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count, 3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
     @patch("application.commons.services.global_request.get_current_request")
@@ -122,10 +172,12 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_different_branch(
         self,
         mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
         mock_find_potential_duplicates,
         mock_apply_exploit_information,
         mock_apply_epss,
@@ -134,18 +186,22 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
         product = Product.objects.get(id=1)
 
-        self._file_upload_observations(None, None, None, None, None)
+        self._file_upload_observations(None, None, None, None, None, False)
 
         mock_check_security_gate.assert_not_called()
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count, 3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
-    def _file_upload_observations(self, branch, service_name, docker_image_name_tag, endpoint_url, kubernetes_cluster):
+    def _file_upload_observations(
+        self, branch, service_name, docker_image_name_tag, endpoint_url, kubernetes_cluster, deduplicate_cross_scanner
+    ):
         # --- First import ---
 
         file_upload_parameters = FileUploadParameters(
@@ -169,7 +225,10 @@ class TestFileUploadObservations(BaseTestCase):
             deleted_license_objects,
         ) = file_upload_observations(file_upload_parameters)
 
-        self.assertEqual(new_observations, 2)
+        if deduplicate_cross_scanner:
+            self.assertEqual(new_observations, 0)
+        else:
+            self.assertEqual(new_observations, 2)
         self.assertEqual(updated_observations, 0)
         self.assertEqual(resolved_observations, 0)
         self.assertEqual(new_license_objects, 0)
@@ -179,7 +238,13 @@ class TestFileUploadObservations(BaseTestCase):
         product = Product.objects.get(id=1)
 
         observations = Observation.objects.filter(product=1).order_by("id")
-        self.assertEqual(len(observations), 3)
+        if deduplicate_cross_scanner:
+            self.assertEqual(len(observations), 0)
+        else:
+            self.assertEqual(len(observations), 3)
+
+        if deduplicate_cross_scanner:
+            return
 
         self.assertEqual(observations[0].product, product)
         self.assertEqual(observations[0].branch, branch)
@@ -1177,6 +1242,80 @@ class APIImportObservation(BaseTestCase):
                 "scanner": "test_scanner",
             },
         )
+
+
+class TestDeduplicateCrossScanner(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        # Create an observation with all origin fields set
+        self.observation = Observation(
+            product=self.product_1,
+            title="test_observation",
+            branch=self.branch_1,
+            scanner="scanner_1",
+            origin_service=self.service_1,
+            origin_component_name_version="component_1",
+            origin_docker_image_name_tag="docker_1",
+            origin_endpoint_url="https://example.com",
+            origin_source_file="/path/to/file",
+            origin_source_line_start=1,
+            origin_source_line_end=10,
+            origin_cloud_qualified_resource="cloud_resource",
+            origin_kubernetes_qualified_resource="k8s_resource",
+        )
+
+    @patch("application.import_observations.services.import_observations.logger")
+    def test_deduplicate_cross_scanner_disabled(self, mock_logger):
+        """Test when feature is disabled, returns False without checking DB."""
+        settings = type("Settings", (), {"feature_cross_scanner_deduplication": False})()
+        result = _deduplicate_cross_scanner(self.observation, settings)
+
+        self.assertFalse(result)
+        mock_logger.info.assert_not_called()
+
+    @patch("application.import_observations.services.import_observations.logger")
+    @patch.object(Observation.objects, "filter")
+    def test_deduplicate_cross_scanner_enabled_with_duplicate(self, mock_filter, mock_logger):
+        """Test when feature is enabled and a duplicate exists."""
+        # Mock the filter chain
+        mock_filter_instance = mock_filter.return_value
+        mock_filter_instance.exclude.return_value.exists.return_value = True
+
+        settings = type("Settings", (), {"feature_cross_scanner_deduplication": True})()
+        result = _deduplicate_cross_scanner(self.observation, settings)
+
+        self.assertTrue(result)
+        mock_filter.assert_called_once_with(
+            product=self.observation.product,
+            title=self.observation.title,
+            branch=self.observation.branch,
+            origin_service=self.observation.origin_service,
+            origin_component_name_version=self.observation.origin_component_name_version,
+            origin_docker_image_name_tag=self.observation.origin_docker_image_name_tag,
+            origin_endpoint_url=self.observation.origin_endpoint_url,
+            origin_source_file=self.observation.origin_source_file,
+            origin_source_line_start=self.observation.origin_source_line_start,
+            origin_source_line_end=self.observation.origin_source_line_end,
+            origin_cloud_qualified_resource=self.observation.origin_cloud_qualified_resource,
+            origin_kubernetes_qualified_resource=self.observation.origin_kubernetes_qualified_resource,
+        )
+        mock_filter_instance.exclude.assert_called_once_with(scanner=self.observation.scanner)
+        mock_logger.info.assert_called_once()
+        self.assertIn("test_observation", mock_logger.info.call_args[0][1])
+
+    @patch.object(Observation.objects, "filter")
+    def test_deduplicate_cross_scanner_enabled_no_duplicate(self, mock_filter):
+        """Test when feature is enabled and no duplicate exists."""
+        # Mock the filter chain
+        mock_filter_instance = mock_filter.return_value
+        mock_filter_instance.exclude.return_value.exists.return_value = False
+
+        settings = type("Settings", (), {"feature_cross_scanner_deduplication": True})()
+        result = _deduplicate_cross_scanner(self.observation, settings)
+
+        self.assertFalse(result)
+        mock_filter.assert_called_once()
+        mock_filter_instance.exclude.assert_called_once()
 
 
 class RequestMock:
