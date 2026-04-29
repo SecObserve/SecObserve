@@ -47,6 +47,10 @@ A flowchart visualizes the import algorithm:
 
 *[1]: The tag of the docker image is not part of the `identity hash` to allow updates of the docker image without creating a new observation.*
 
+## Cross-scanner deduplication
+
+Sometimes it makes sense to run different scanners on the same target, e.g. Trivy and Grype for the same Docker container, to make sure not to miss a vulnerability. When the parameter **Enable cross scanner deduplication** in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) is activated, then the second imported observation with for the same product / branch / service / origin and a different scanner will not be stored, but a log entry is written.
+
 ## Initial status of observations
 
 The initial status of imported observations is `Open` by default. If the attribute **Status "In review" for new observations** in a Product or a Product Group is set to `true`, the initial status of new observations will be `In review` for the respective Product or all Products of the Product Group.
