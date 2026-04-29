@@ -57,10 +57,12 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_with_branch(
         self,
         mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
         mock_find_potential_duplicates,
         mock_apply_exploit_information,
         mock_apply_epss,
@@ -69,6 +71,7 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
 
         self._file_upload_observations(
             Branch.objects.get(id=1),
@@ -84,6 +87,7 @@ class TestFileUploadObservations(BaseTestCase):
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count ,3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
     @patch("application.commons.services.global_request.get_current_request")
@@ -92,10 +96,12 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_without_branch(
         self,
         mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
         mock_find_potential_duplicates,
         mock_apply_exploit_information,
         mock_apply_epss,
@@ -104,6 +110,7 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
         product = Product.objects.get(id=1)
         product.repository_default_branch = None
         product.save()
@@ -115,6 +122,7 @@ class TestFileUploadObservations(BaseTestCase):
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count ,3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
     @patch("application.commons.services.global_request.get_current_request")
@@ -123,10 +131,12 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.apply_epss")
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_different_branch(
         self,
         mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
         mock_find_potential_duplicates,
         mock_apply_exploit_information,
         mock_apply_epss,
@@ -135,6 +145,7 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
         product = Product.objects.get(id=1)
 
         self._file_upload_observations(None, None, None, None, None)
@@ -144,6 +155,7 @@ class TestFileUploadObservations(BaseTestCase):
         self.assertEqual(mock_apply_epss.call_count, 4)
         self.assertEqual(mock_apply_exploit_information.call_count, 4)
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
+        self.assertEqual(mock_deduplicate_cross_scanner.call_count ,3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
     def _file_upload_observations(self, branch, service_name, docker_image_name_tag, endpoint_url, kubernetes_cluster):
