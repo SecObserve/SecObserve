@@ -40,7 +40,7 @@ requests = "2.33.1"  # https://github.com/psf/requests
 
 # Database
 # ------------------------------------------------------------------------------
-pymysql = "1.1.2"  # https://github.com/PyMySQL/PyMySQL
+pymysql = "1.1.3"  # https://github.com/PyMySQL/PyMySQL
 psycopg = { version = "3.3.3", extras = ["binary"] }  # https://github.com/psycopg/psycopg
 
 # Dataformats
