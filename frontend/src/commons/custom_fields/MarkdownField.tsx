@@ -1,10 +1,21 @@
 import Markdown from "markdown-to-jsx";
 import { marked } from "marked";
-import { Fragment } from "react";
+import { Fragment, HTMLAttributes } from "react";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 
 import { useLinkStyles } from "../../commons/layout/themes";
+import { getPrismTheme } from "../functions";
 import { getResolvedSettingTheme } from "../user_settings/functions";
 import LabeledTextField from "./LabeledTextField";
+
+declare global {
+    interface Window {
+        hljs?: {
+            highlightElement: (el: HTMLElement) => void;
+        };
+    }
+}
+export {};
 
 interface MarkdownProps {
     content: string;
@@ -45,6 +56,31 @@ function isMarkdownValue(value: string): boolean {
     return isMarkdown;
 }
 
+type CodeProps = HTMLAttributes<HTMLElement>;
+
+function SyntaxHighlightedCode({ className, children, ...rest }: CodeProps) {
+    // markdown-to-jsx tags fenced blocks with `lang-<language>`.
+    // Inline code (`like this`) has no such class — render it as-is.
+    const match = /lang-(\w+)/.exec(className ?? "");
+    if (!match) {
+        return (
+            <code className={className} {...rest}>
+                {children}
+            </code>
+        );
+    }
+
+    return (
+        <SyntaxHighlighter
+            language={match[1]}
+            style={getPrismTheme()}
+            PreTag="div" // markdown-to-jsx already wraps fenced blocks in <pre>; avoid nesting
+        >
+            {String(children).replace(/\n$/, "")}
+        </SyntaxHighlighter>
+    );
+}
+
 const MarkdownField = (props: MarkdownProps) => {
     const { classes } = useLinkStyles({ setting_theme: getResolvedSettingTheme() });
 
@@ -64,6 +100,7 @@ const MarkdownField = (props: MarkdownProps) => {
                                     className: classes.link,
                                 },
                             },
+                            code: SyntaxHighlightedCode,
                         },
                     }}
                 >

@@ -1,5 +1,6 @@
 import { PackageURL } from "packageurl-js";
 import { SortPayload } from "ra-core";
+import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import {
@@ -395,4 +396,13 @@ export function has_attribute(attribute: string, data: any, sort: SortPayload | 
             return value !== null && value !== undefined && value !== "";
         }
     });
+}
+
+export function getPrismTheme() {
+    const theme = getResolvedSettingTheme();
+    if (theme === "dark") {
+        return oneDark;
+    } else {
+        return oneLight;
+    }
 }

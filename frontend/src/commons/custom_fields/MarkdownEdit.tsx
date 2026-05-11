@@ -10,9 +10,12 @@ import {
     ListsToggle,
     MDXEditor,
     Separator,
+    codeBlockPlugin,
+    codeMirrorPlugin,
     diffSourcePlugin,
     headingsPlugin,
     imagePlugin,
+    insertCodeBlock$,
     linkDialogPlugin,
     linkPlugin,
     listsPlugin,
@@ -22,6 +25,7 @@ import {
     tablePlugin,
     thematicBreakPlugin,
     toolbarPlugin,
+    usePublisher,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
 // @ts-expect-error Types are expected but none could be found
@@ -42,6 +46,20 @@ interface MarkdownEditProps {
     autoFocus?: boolean;
 }
 
+const InsertCodeBlockButton = () => {
+    const insertCodeBlock = usePublisher(insertCodeBlock$);
+    return (
+        <button
+            type="button"
+            className="mdxeditor-toolbar-button" // picks up the editor's toolbar styles
+            title="Insert Code Block"
+            onClick={() => insertCodeBlock({ language: "txt" })}
+        >
+            {"</>"}
+        </button>
+    );
+};
+
 const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLength, autoFocus }: MarkdownEditProps) => {
     const mdxeditor_theme = getTheme() == "dark" ? "dark-theme" : "light-theme";
     const codemirror_theme = getTheme() == "dark" ? basicDark : basicLight;
@@ -60,6 +78,8 @@ const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLeng
                     <ListsToggle />
                     <Separator />
                     <BlockTypeSelect />
+                    <Separator />
+                    <InsertCodeBlockButton />
                     <Separator />
                     <CreateLink />
                     <InsertImage />
@@ -85,6 +105,26 @@ const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLeng
             codeMirrorExtensions: [codemirror_theme],
         }),
         maxLengthPlugin(maxLength),
+        codeBlockPlugin({ defaultCodeBlockLanguage: "txt" }),
+        codeMirrorPlugin({
+            codeBlockLanguages: {
+                js: "JavaScript",
+                ts: "TypeScript",
+                python: "Python",
+                java: "Java",
+                csharp: "C#",
+                cpp: "C++",
+                go: "Go",
+                rust: "Rust",
+                php: "PHP",
+                sql: "SQL",
+                json: "JSON",
+                yaml: "YAML",
+                xml: "XML",
+                txt: "Text",
+            },
+            codeMirrorExtensions: [codemirror_theme],
+        }),
     ];
 
     return (
