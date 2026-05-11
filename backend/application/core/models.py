@@ -248,7 +248,7 @@ class Observation(Model):
     branch = ForeignKey(Branch, on_delete=CASCADE, null=True)
     parser = ForeignKey("import_observations.Parser", on_delete=PROTECT)
     title = CharField(max_length=255)
-    description = TextField(max_length=2048, blank=True)
+    description = TextField(max_length=4096, blank=True)
     recommendation = TextField(max_length=2048, blank=True)
 
     current_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES)
