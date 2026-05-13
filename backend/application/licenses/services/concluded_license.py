@@ -4,6 +4,11 @@ from application.licenses.models import Concluded_License, License_Component
 from application.licenses.types import NO_LICENSE_INFORMATION
 
 
+class NoUserError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+
+
 class ConcludeLicenseApplicator:
     def __init__(self, product: Product) -> None:
         self.product_name_version: dict[str, Concluded_License] = {}
@@ -115,6 +120,10 @@ def update_concluded_license(component: License_Component) -> None:
         except Concluded_License.DoesNotExist:
             pass
     else:
+        user = get_current_user()
+        if not user:
+            raise NoUserError("No user found")
+
         concluded_license, _ = Concluded_License.objects.update_or_create(
             product=component.product,
             component_purl_type=component.component_purl_type,
@@ -124,7 +133,7 @@ def update_concluded_license(component: License_Component) -> None:
                 "manual_concluded_spdx_license": component.manual_concluded_spdx_license,
                 "manual_concluded_license_expression": component.manual_concluded_license_expression,
                 "manual_concluded_non_spdx_license": component.manual_concluded_non_spdx_license,
-                "user": get_current_user(),
+                "user": user,
             },
         )
         component.manual_concluded_comment = f"Set manually by {str(concluded_license.user)}"
