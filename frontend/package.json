@@ -37,7 +37,7 @@
         "react-oidc-context": "3.3.1",
         "react-syntax-highlighter": "16.1.1",
         "runtime-env-cra": "file:lib/runtime-env-cra",
-        "tss-react": "4.9.20"
+        "tss-react": "4.9.21"
     },
     "scripts": {
         "start": "NODE_ENV=development ./node_modules/runtime-env-cra/lib/index.js --config-name=./public/runtime-env.js && vite",
