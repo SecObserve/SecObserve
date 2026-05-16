@@ -7,6 +7,7 @@ from rest_framework.serializers import (
     ChoiceField,
     DateField,
     IntegerField,
+    JSONField,
     ListField,
     ModelSerializer,
     Serializer,
@@ -326,6 +327,7 @@ class ObservationUpdateSerializer(ModelSerializer):
         actual_severity = instance.current_severity
         actual_status = instance.current_status
         actual_vex_justification = instance.current_vex_justification
+        actual_vex_remediations = instance.current_vex_remediations
         actual_risk_acceptance_expiry_date = instance.risk_acceptance_expiry_date
 
         instance.origin_component_name = ""
@@ -344,6 +346,13 @@ class ObservationUpdateSerializer(ModelSerializer):
             if actual_vex_justification != observation.current_vex_justification
             else ""
         )
+        log_vex_remediations = (
+            observation.current_vex_remediations
+            if actual_vex_remediations != observation.current_vex_remediations
+            else ""
+        )
+        if log_vex_remediations == None:
+            log_vex_remediations = ""
         log_risk_acceptance_expiry_date = (
             observation.risk_acceptance_expiry_date
             if actual_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
@@ -357,6 +366,7 @@ class ObservationUpdateSerializer(ModelSerializer):
                 status=log_status,
                 comment="Observation changed manually",
                 vex_justification=log_vex_justification,
+                vex_remediations=log_vex_remediations,
                 assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
                 risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
             )
@@ -443,6 +453,9 @@ class ObservationCreateSerializer(ModelSerializer):
             status=observation.current_status,
             comment="Observation created manually",
             vex_justification=observation.current_vex_justification,
+            vex_remediations=(
+                str(observation.current_vex_remediations) if observation.current_vex_remediations is not None else ""
+            ),
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation.risk_acceptance_expiry_date,
         )
@@ -507,6 +520,7 @@ class ObservationAssessmentSerializer(Serializer):
         required=False,
         allow_blank=True,
     )
+    vex_remediations = JSONField(required=False)
     priority = IntegerField(min_value=1, max_value=99, required=False, allow_null=True)
     risk_acceptance_expiry_date = DateField(required=False, allow_null=True)
     comment = CharField(max_length=4096, required=True)
@@ -531,6 +545,7 @@ class ObservationBulkAssessmentSerializer(Serializer):
         required=False,
         allow_blank=True,
     )
+    vex_remediations = JSONField(required=False)
     risk_acceptance_expiry_date = DateField(required=False, allow_null=True)
 
 

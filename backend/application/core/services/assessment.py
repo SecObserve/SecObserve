@@ -11,6 +11,7 @@ from application.core.services.observation import (
     get_current_severity,
     get_current_status,
     get_current_vex_justification,
+    get_current_vex_remediations,
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
@@ -37,6 +38,7 @@ def save_assessment(
     new_priority: Optional[int],
     comment: str,
     new_vex_justification: Optional[str],
+    new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
 ) -> None:
 
@@ -46,6 +48,11 @@ def save_assessment(
     log_vex_justification = (
         new_vex_justification
         if new_vex_justification and new_vex_justification != observation.current_vex_justification
+        else ""
+    )
+    log_vex_remediations = (
+        new_vex_remediations
+        if new_vex_remediations and new_vex_remediations != observation.current_vex_remediations
         else ""
     )
     log_risk_acceptance_expiry_date = (
@@ -63,6 +70,7 @@ def save_assessment(
             or (log_status and log_status != observation.current_status)
             or (log_priority and log_priority != observation.current_priority)
             or (log_vex_justification and log_vex_justification != observation.current_vex_justification)
+            or (log_vex_remediations and log_vex_remediations != observation.current_vex_remediations)
         )
         and new_status != Status.STATUS_IN_REVIEW
         else Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED
@@ -78,6 +86,7 @@ def save_assessment(
             new_status,
             new_priority,
             new_vex_justification,
+            new_vex_remediations,
             new_risk_acceptance_expiry_date,
         )
 
@@ -88,6 +97,7 @@ def save_assessment(
             priority=log_priority,
             comment=comment,
             vex_justification=log_vex_justification,
+            vex_remediations=log_vex_remediations,
             assessment_status=assessment_status,
             risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
         )
@@ -102,6 +112,7 @@ def save_assessment(
             priority=log_priority,
             comment=comment,
             vex_justification=log_vex_justification,
+            vex_remediations=log_vex_remediations,
             assessment_status=assessment_status,
             risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
         )
@@ -113,6 +124,7 @@ def _update_observation(  # pylint: disable=too-many-positional-arguments
     new_status: Optional[str],
     new_priority: Optional[int],
     new_vex_justification: Optional[str],
+    new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
 ) -> None:
     previous_current_severity = observation.current_severity
@@ -139,6 +151,12 @@ def _update_observation(  # pylint: disable=too-many-positional-arguments
         observation.assessment_vex_justification = new_vex_justification
         observation.current_vex_justification = get_current_vex_justification(observation)
 
+    previous_current_vex_remediations = observation.current_vex_remediations
+    previous_assessment_vex_remediations = observation.assessment_vex_remediations
+    if new_vex_remediations and new_vex_remediations != observation.current_vex_remediations:
+        observation.assessment_vex_remediations = new_vex_remediations
+        observation.current_vex_remediations = get_current_vex_remediations(observation)
+
     previous_risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date
     observation.risk_acceptance_expiry_date = (
         new_risk_acceptance_expiry_date if observation.current_status == Status.STATUS_RISK_ACCEPTED else None
@@ -153,6 +171,8 @@ def _update_observation(  # pylint: disable=too-many-positional-arguments
         or previous_assessment_priority != observation.assessment_priority
         or previous_current_vex_justification != observation.current_vex_justification
         or previous_assessment_vex_justification != observation.assessment_vex_justification
+        or previous_current_vex_remediations != observation.current_vex_remediations
+        or previous_assessment_vex_remediations != observation.assessment_vex_remediations
         or previous_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
     ):
         observation.save()
@@ -170,11 +190,14 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
         observation.assessment_status = ""
         observation.assessment_priority = None
         observation.assessment_vex_justification = ""
+        observation.assessment_vex_remediations = ""
+
         observation.current_severity = get_current_severity(observation)
         previous_status = observation.current_status
         observation.current_status = get_current_status(observation)
         observation.current_priority = get_current_status(observation)
         observation.current_vex_justification = get_current_vex_justification(observation)
+        observation.current_vex_remediations = get_current_vex_remediations(observation)
 
         if observation.current_status == Status.STATUS_RISK_ACCEPTED:
             if previous_status != Status.STATUS_RISK_ACCEPTED:
@@ -189,6 +212,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
             priority=None,
             comment=comment,
             vex_justification="",
+            vex_remediations="",
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
             risk_acceptance_expiry_date=observation.risk_acceptance_expiry_date,
         )
@@ -219,6 +243,7 @@ def assessment_approval(observation_log: Observation_Log, assessment_status: str
             new_status=observation_log.status,
             new_priority=observation_log.priority,
             new_vex_justification=observation_log.vex_justification,
+            new_vex_remediations=observation_log.vex_remediations,
             new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
         )
 

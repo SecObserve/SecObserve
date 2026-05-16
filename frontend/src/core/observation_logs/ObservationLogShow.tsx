@@ -1,7 +1,9 @@
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayField,
     ChipField,
+    Datagrid,
     DateField,
     Labeled,
     NumberField,
@@ -66,6 +68,15 @@ const ShowActions = () => {
     );
 };
 
+const VEXRemediationHeader = () => (
+    <TableHead>
+        <TableRow>
+            <TableCell>Category</TableCell>
+            <TableCell>Text</TableCell>
+        </TableRow>
+    </TableHead>
+);
+
 const ObservationLogComponent = () => {
     return (
         <WithRecord
@@ -108,6 +119,20 @@ const ObservationLogComponent = () => {
                             {observation_log.vex_justification && (
                                 <Labeled label="VEX justification">
                                     <TextField source="vex_justification" />
+                                </Labeled>
+                            )}
+                            {observation_log.vex_remediations && (
+                                <Labeled label="VEX remediations">
+                                    <ArrayField source="vex_remediations">
+                                        <Datagrid
+                                            bulkActionButtons={false}
+                                            header={VEXRemediationHeader}
+                                            sx={{ paddingBottom: 2 }}
+                                        >
+                                            <TextField source="category" />
+                                            <TextField source="text" />
+                                        </Datagrid>
+                                    </ArrayField>
                                 </Labeled>
                             )}
                             {observation_log.general_rule != null && (

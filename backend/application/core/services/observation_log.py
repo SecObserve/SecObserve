@@ -21,6 +21,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     priority: Optional[int] = None,
     comment: str,
     vex_justification: str,
+    vex_remediations: str,
     assessment_status: str,
     risk_acceptance_expiry_date: Optional[date],
 ) -> Observation_Log:
@@ -32,6 +33,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
         priority=priority,
         comment=comment,
         vex_justification=vex_justification,
+        vex_remediations=vex_remediations,
         assessment_status=assessment_status,
         general_rule=observation.general_rule,
         product_rule=observation.product_rule,

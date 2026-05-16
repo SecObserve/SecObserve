@@ -16,6 +16,7 @@ from django.db.models import (
     ForeignKey,
     Index,
     IntegerField,
+    JSONField,
     ManyToManyField,
     Model,
     TextField,
@@ -398,6 +399,13 @@ class Observation(Model):
     assessment_vex_justification = CharField(
         max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True
     )
+
+    current_vex_remediations = JSONField(blank=True, null=True)
+    vex_vex_remediations = JSONField(blank=True, null=True)
+    rule_vex_remediations = JSONField(blank=True, null=True)
+    rule_rego_vex_remediations = JSONField(blank=True, null=True)
+    assessment_vex_remediations = JSONField(blank=True, null=True)
+
     vex_statement = ForeignKey(
         "vex.VEX_Statement",
         related_name="vex_statements",
@@ -453,6 +461,7 @@ class Observation_Log(Model):
     comment = TextField(max_length=4096)
     created = DateTimeField(auto_now_add=True)
     vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
+    vex_remediations = JSONField(blank=True, null=True)
     assessment_status = CharField(
         max_length=16,
         choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES,
