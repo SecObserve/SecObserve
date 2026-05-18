@@ -1,20 +1,65 @@
-from unittest.mock import call, patch
+import gzip
+from decimal import Decimal
+from unittest.mock import Mock, call, patch
 
 from django.core.management import call_command
 
 from application.core.models import Observation
-from application.epss.models import EPSS_Score
+from application.epss.models import EPSS_Score, EPSS_Status
 from application.epss.services.epss import (
     apply_epss,
     epss_apply_observations,
+    import_epss,
 )
 from unittests.base_test_case import BaseTestCase
 
 
 class TestEPSS(BaseTestCase):
+    @patch("application.epss.services.epss.requests.get")
+    def test_import_epss_updates_existing_score(self, mock_get):
+        EPSS_Score.objects.create(cve="CVE-2025-5642", epss_score=0.10000, epss_percentile=0.20000)
+        mock_get.return_value = self._mock_epss_response(
+            b"#model_version:v2024.03.14,score_date:2026-05-18\n"
+            b"cve,epss,percentile\n"
+            b"CVE-2025-5642,0.30000,0.40000\n"
+        )
+
+        message = import_epss()
+
+        score = EPSS_Score.objects.get(cve="CVE-2025-5642")
+        self.assertEqual(score.epss_score, Decimal("0.30000"))
+        self.assertEqual(score.epss_percentile, Decimal("0.40000"))
+        self.assertEqual(EPSS_Score.objects.count(), 1)
+        self.assertEqual(message, "Imported 1 EPSS scores.")
+
+    @patch("application.epss.services.epss.requests.get")
+    def test_import_epss_deduplicates_feed_and_keeps_last_score(self, mock_get):
+        mock_get.return_value = self._mock_epss_response(
+            b"#model_version:v2024.03.14,score_date:2026-05-18\n"
+            b"cve,epss,percentile\n"
+            b"CVE-2025-5642,0.10000,0.20000\n"
+            b"CVE-2025-5642,0.30000,0.40000\n"
+        )
+
+        message = import_epss()
+
+        score = EPSS_Score.objects.get(cve="CVE-2025-5642")
+        self.assertEqual(score.epss_score, Decimal("0.30000"))
+        self.assertEqual(score.epss_percentile, Decimal("0.40000"))
+        self.assertEqual(EPSS_Score.objects.count(), 1)
+        self.assertEqual(EPSS_Status.load().score_date.isoformat(), "2026-05-18")
+        self.assertEqual(message, "Imported 1 EPSS scores.")
+
+    @staticmethod
+    def _mock_epss_response(content: bytes) -> Mock:
+        response = Mock()
+        response.content = gzip.compress(content)
+        response.raise_for_status.return_value = None
+        return response
+
     @classmethod
     @patch("application.core.signals.get_current_user")
-    def setUpClass(self, mock_user):
+    def setUpClass(cls, mock_user):
         mock_user.return_value = None
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
         super().setUpClass()

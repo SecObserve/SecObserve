@@ -4,6 +4,7 @@ from datetime import datetime
 
 import requests
 from django.core.paginator import Paginator
+from django.db import connection
 
 from application.core.models import Observation
 from application.core.types import Status
@@ -19,11 +20,7 @@ def import_epss() -> str:
     response.raise_for_status()
     extracted_data = gzip.decompress(response.content)
 
-    EPSS_Score.objects.all().delete()
-
-    counter = 0
-    scores = []
-    num_epss_scores = 0
+    scores_by_cve: dict[str, EPSS_Score] = {}
     for line in extracted_data.split(b"\n"):
         decoded_line = line.decode()
 
@@ -37,23 +34,67 @@ def import_epss() -> str:
         if decoded_line.startswith("CVE"):
             elements = decoded_line.split(",")
             if len(elements) == 3:
-                scores.append(
-                    EPSS_Score(
-                        cve=elements[0],
-                        epss_score=elements[1],
-                        epss_percentile=elements[2],
-                    )
+                scores_by_cve[elements[0]] = EPSS_Score(
+                    cve=elements[0],
+                    epss_score=elements[1],
+                    epss_percentile=elements[2],
                 )
-                num_epss_scores += 1
-                counter += 1
-            if counter == 1000:
-                EPSS_Score.objects.bulk_create(scores)
-                counter = 0
-                scores = []
-    if scores:
-        EPSS_Score.objects.bulk_create(scores)
 
-    return f"Imported {num_epss_scores} EPSS scores."
+    _upsert_epss_scores(list(scores_by_cve.values()))
+
+    return f"Imported {len(scores_by_cve)} EPSS scores."
+
+
+def _upsert_epss_scores(scores: list[EPSS_Score]) -> None:
+    if not scores:
+        return
+
+    update_fields = ["epss_score", "epss_percentile"]
+    if connection.features.supports_update_conflicts_with_target:
+        EPSS_Score.objects.bulk_create(
+            scores,
+            batch_size=1000,
+            update_conflicts=True,
+            update_fields=update_fields,
+            unique_fields=["cve"],
+        )
+        return
+
+    if connection.features.supports_update_conflicts:
+        EPSS_Score.objects.bulk_create(
+            scores,
+            batch_size=1000,
+            update_conflicts=True,
+            update_fields=update_fields,
+        )
+        return
+
+    _bulk_update_or_create_epss_scores(scores, update_fields)
+
+
+def _bulk_update_or_create_epss_scores(scores: list[EPSS_Score], update_fields: list[str]) -> None:
+    for score_batch in _chunks(scores, 1000):
+        cves = [score.cve for score in score_batch]
+        existing_scores = {score.cve: score for score in EPSS_Score.objects.filter(cve__in=cves)}
+        scores_to_update = []
+        scores_to_create = []
+
+        for score in score_batch:
+            if existing_score := existing_scores.get(score.cve):
+                existing_score.epss_score = score.epss_score
+                existing_score.epss_percentile = score.epss_percentile
+                scores_to_update.append(existing_score)
+            else:
+                scores_to_create.append(score)
+
+        if scores_to_update:
+            EPSS_Score.objects.bulk_update(scores_to_update, update_fields)
+        if scores_to_create:
+            EPSS_Score.objects.bulk_create(scores_to_create, ignore_conflicts=True)
+
+
+def _chunks(scores: list[EPSS_Score], chunk_size: int) -> list[list[EPSS_Score]]:
+    return [scores[index : index + chunk_size] for index in range(0, len(scores), chunk_size)]
 
 
 def epss_apply_observations() -> str:
