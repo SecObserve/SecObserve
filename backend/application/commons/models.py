@@ -233,6 +233,8 @@ class Settings(Model, DirtyFieldsMixin):
 
     observation_count_from_metrics = BooleanField(default=False)
 
+    feature_cross_scanner_deduplication = BooleanField(default=False)
+
     def save(self, *args: Any, **kwargs: Any) -> None:
         """
         Save object to the database. Removes all other entries if there

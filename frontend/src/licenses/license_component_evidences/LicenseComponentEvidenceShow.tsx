@@ -41,9 +41,11 @@ const LicenseComponentEvidenceShow = () => {
                     <license_component_evidences.icon />
                     &nbsp;&nbsp;License Component Evidence
                 </Typography>
-                <ProductReferenceField
-                    link={(record: any, reference: any) => `/${reference}/${record.id}/show/licenses`}
-                />
+                <Labeled label="Product">
+                    <ProductReferenceField
+                        link={(record: any, reference: any) => `/${reference}/${record.id}/show/licenses`}
+                    />
+                </Labeled>
                 <ReferenceField
                     source="license_component"
                     reference="license_components"

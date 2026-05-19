@@ -48,3 +48,23 @@
 .cm-content {
     font-size: 1rem;
 }
+
+/* Code block language selector trigger */
+.dark-theme [class*="_selectTrigger"] {
+    background-color: #2d2d2d !important;
+    color: #cccccc !important;
+    border-color: #555555 !important;
+}
+
+/* Dropdown list container */
+.dark-theme [class*="_selectContent"],
+.dark-theme [class*="_selectDropdown"] {
+    background-color: #2d2d2d !important;
+    color: #cccccc !important;
+    border-color: #555555 !important;
+}
+
+/* Individual options */
+.dark-theme [class*="_selectItem"]:hover {
+    background-color: #3d3d3d !important;
+}

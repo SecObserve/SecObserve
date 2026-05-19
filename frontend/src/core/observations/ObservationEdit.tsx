@@ -130,7 +130,7 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
                     initialValue={observation ? observation.description : ""}
                     setValue={setDescription}
                     label="Description"
-                    maxLength={2048}
+                    maxLength={4096}
                 />
                 <MarkdownEdit
                     initialValue={observation ? observation.recommendation : ""}

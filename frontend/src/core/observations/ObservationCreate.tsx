@@ -155,7 +155,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                                     setValue={setDescription}
                                     label="Description"
                                     overlayContainer={dialogRef.current ?? null}
-                                    maxLength={2048}
+                                    maxLength={4096}
                                 />
                                 <MarkdownEdit
                                     initialValue=""

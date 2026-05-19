@@ -1,8 +1,10 @@
+import logging
 import os
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
 from django.core.files.base import File
+from django.db import connection
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -66,6 +68,8 @@ from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
+
+logger = logging.getLogger("secobserve.import_observations")
 
 SBOM_BULK_BATCH_SIZE = 100
 
@@ -309,17 +313,18 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
                 observations_this_run.add(observation_before.identity_hash)
                 vulnerability_check_observations.add(observation_before)
             else:
-                _process_new_observation(imported_observation, settings)
+                if not _deduplicate_cross_scanner(imported_observation, settings):
+                    _process_new_observation(imported_observation, settings)
 
-                rule_engine.apply_rules_for_observation(imported_observation)
-                vex_engine.apply_vex_statements_for_observation(imported_observation)
+                    rule_engine.apply_rules_for_observation(imported_observation)
+                    vex_engine.apply_vex_statements_for_observation(imported_observation)
 
-                if imported_observation.current_status in Status.STATUS_ACTIVE:
-                    observations_new += 1
+                    if imported_observation.current_status in Status.STATUS_ACTIVE:
+                        observations_new += 1
 
-                # Add identity_hash to set of observations in this run to detect duplicates in this run
-                observations_this_run.add(imported_observation.identity_hash)
-                vulnerability_check_observations.add(imported_observation)
+                    # Add identity_hash to set of observations in this run to detect duplicates in this run
+                    observations_this_run.add(imported_observation.identity_hash)
+                    vulnerability_check_observations.add(imported_observation)
 
     observations_resolved = _resolve_unimported_observations(observations_before)
     vulnerability_check_observations.update(observations_resolved)
@@ -339,7 +344,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     return observations_new, observations_updated, len(observations_resolved)
 
 
-def process_license_components(  # pylint: disable=too-many-statements disable=too-many-locals
+def process_license_components(  # pylint: disable=too-many-statements disable=too-many-locals disable=too-many-branches
     license_components: list[License_Component],
     scanner: str,
     vulnerability_check: Vulnerability_Check,
@@ -492,8 +497,29 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
     )
 
     inserted_components = License_Component.objects.bulk_create(components_new, SBOM_BULK_BATCH_SIZE)
-    for inserted_component in inserted_components:
-        license_component_evidences += _process_license_evidences(inserted_component, inserted_component)
+
+    if connection.vendor == "mysql":
+        # MySQL doesn't support RETURNING, so bulk_create returns objects without PKs.
+        # Re-fetch by identity_hash to get real PKs before creating evidences.
+        components_needing_evidences = [c for c in components_new if c.unsaved_evidences]
+        if components_needing_evidences:
+            inserted_hashes = [c.identity_hash for c in components_needing_evidences]
+            inserted_by_hash = {
+                c.identity_hash: c
+                for c in License_Component.objects.filter(
+                    identity_hash__in=inserted_hashes,
+                    product=vulnerability_check.product,
+                    branch=vulnerability_check.branch,
+                    upload_filename=vulnerability_check.filename,
+                )
+            }
+            for component in components_needing_evidences:
+                db_component = inserted_by_hash.get(component.identity_hash)
+                if db_component:
+                    license_component_evidences += _process_license_evidences(component, db_component)
+    else:
+        for inserted_component in inserted_components:
+            license_component_evidences += _process_license_evidences(inserted_component, inserted_component)
 
     License_Component_Evidence.objects.bulk_create(license_component_evidences, SBOM_BULK_BATCH_SIZE)
 
@@ -697,6 +723,36 @@ def _process_new_observation(imported_observation: Observation, settings: Settin
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
+
+
+def _deduplicate_cross_scanner(observation: Observation, settings: Settings) -> bool:
+    if not settings.feature_cross_scanner_deduplication:
+        return False
+
+    duplicate_found = (
+        Observation.objects.filter(
+            product=observation.product,
+            title=observation.title,
+            branch=observation.branch,
+            origin_service=observation.origin_service,
+            origin_component_name_version=observation.origin_component_name_version,
+            origin_docker_image_name_tag=observation.origin_docker_image_name_tag,
+            origin_endpoint_url=observation.origin_endpoint_url,
+            origin_source_file=observation.origin_source_file,
+            origin_source_line_start=observation.origin_source_line_start,
+            origin_source_line_end=observation.origin_source_line_end,
+            origin_cloud_qualified_resource=observation.origin_cloud_qualified_resource,
+            origin_kubernetes_qualified_resource=observation.origin_kubernetes_qualified_resource,
+        )
+        .exclude(scanner=observation.scanner)
+        .exists()
+    )
+
+    if duplicate_found:
+        logger.info("Cross scanner deduplication / Observation already saved: %s", observation.title)
+        return True
+
+    return False
 
 
 def _resolve_unimported_observations(
