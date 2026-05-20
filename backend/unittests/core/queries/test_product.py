@@ -1,7 +1,8 @@
-from datetime import date
 from unittest.mock import patch
 
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from application.access_control.models import (
@@ -15,7 +16,7 @@ from application.core.models import (
     Product,
     Product_Authorization_Group_Member,
 )
-from application.core.queries.product import get_products
+from application.core.queries.product import get_products, populate_product_count_annotations
 from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.metrics.models import Product_License_Metrics, Product_Metrics
@@ -160,6 +161,57 @@ class TestGetProducts(BaseTestCase):
         product_group_admin = products.get(name="db_product_group_admin_only")
         self.assertEqual(0, product_group_admin.active_critical_observation_count)
 
+    @patch("application.core.queries.product.get_current_user")
+    def test_populate_product_count_annotations_batch_counts_products(self, mock_user):
+        mock_user.return_value = User.objects.get(username="db_admin")
+        product = Product.objects.get(name="db_product_internal")
+        branch = Branch.objects.get(product=product, is_default_branch=True)
+        other_branch = Branch.objects.filter(product=product, is_default_branch=False).first()
+        self._create_observation(product, branch, Severity.SEVERITY_CRITICAL)
+        self._create_observation(product, branch, Severity.SEVERITY_HIGH)
+        self._create_observation(product, other_branch, Severity.SEVERITY_MEDIUM)
+
+        products = list(get_products(is_product_group=False))
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            populate_product_count_annotations(products, is_product_group=False)
+
+        observation_queries = [
+            query for query in captured_queries.captured_queries if "core_observation" in query["sql"]
+        ]
+        self.assertEqual(1, len(observation_queries))
+
+        product_internal = next(product_item for product_item in products if product_item.name == "db_product_internal")
+        self.assertEqual(1, product_internal.active_critical_observation_count)
+        self.assertEqual(1, product_internal.active_high_observation_count)
+        self.assertEqual(0, product_internal.active_medium_observation_count)
+
+    @patch("application.core.queries.product.get_current_user")
+    def test_populate_product_count_annotations_batch_counts_product_groups(self, mock_user):
+        mock_user.return_value = User.objects.get(username="db_admin")
+        product = Product.objects.get(name="db_product_internal")
+        branch = Branch.objects.get(product=product, is_default_branch=True)
+        self._create_observation(product, branch, Severity.SEVERITY_CRITICAL)
+        self._create_observation(product, branch, Severity.SEVERITY_CRITICAL)
+
+        product_groups = list(get_products(is_product_group=True))
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            populate_product_count_annotations(product_groups, is_product_group=True)
+
+        observation_queries = [
+            query for query in captured_queries.captured_queries if "core_observation" in query["sql"]
+        ]
+        self.assertEqual(1, len(observation_queries))
+
+        product_group = next(product_item for product_item in product_groups if product_item.name == "db_product_group")
+        self.assertEqual(2, product_group.active_critical_observation_count)
+
+        product_group_admin = next(
+            product_item for product_item in product_groups if product_item.name == "db_product_group_admin_only"
+        )
+        self.assertEqual(0, product_group_admin.active_critical_observation_count)
+
     # --- Superuser, with_metrics_annotations ---
 
     @patch("application.core.queries.product.get_current_user")
@@ -168,7 +220,7 @@ class TestGetProducts(BaseTestCase):
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
             active_critical=10,
             active_high=20,
             active_medium=30,
@@ -200,7 +252,7 @@ class TestGetProducts(BaseTestCase):
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
             active_critical=5,
             active_high=15,
         )
@@ -241,11 +293,11 @@ class TestGetProducts(BaseTestCase):
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
         )
         Product_License_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
             forbidden=3,
             review_required=5,
             unknown=7,
@@ -307,7 +359,7 @@ class TestGetProducts(BaseTestCase):
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
             active_critical=8,
         )
 
@@ -398,7 +450,7 @@ class TestGetProducts(BaseTestCase):
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
             active_critical=12,
         )
 
@@ -529,7 +581,7 @@ class TestGetProducts(BaseTestCase):
         product = Product.objects.get(name="db_product_internal")
         Product_Metrics.objects.create(
             product=product,
-            date=date.today(),
+            date=timezone.localdate(),
             active_low=25,
         )
 

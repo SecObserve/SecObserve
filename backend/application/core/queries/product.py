@@ -1,9 +1,10 @@
-from datetime import date
+from collections.abc import Sequence
 from typing import Optional
 
 from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
+from django.utils import timezone
 
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
@@ -45,9 +46,16 @@ def get_product_by_id(
     try:
         if is_product_group is None:
             return _add_annotations(Product.objects.all(), False, False, False).get(id=product_id)
-        return _add_annotations(
-            Product.objects.all(), is_product_group, with_observation_annotations, with_metrics_annotations
-        ).get(id=product_id, is_product_group=is_product_group)
+        product = Product.objects.get(id=product_id, is_product_group=is_product_group)
+        if with_observation_annotations or with_metrics_annotations:
+            settings = Settings.load()
+            populate_product_count_annotations(
+                [product],
+                is_product_group=is_product_group,
+                use_metrics=with_metrics_annotations and not with_observation_annotations,
+                include_license_counts=settings.feature_license_management,
+            )
+        return product
     except Product.DoesNotExist:
         return None
 
@@ -105,6 +113,174 @@ def get_products(
         products = products.filter(is_product_group=is_product_group)
 
     return products
+
+
+def populate_product_count_annotations(
+    products: Sequence[Product],
+    is_product_group: bool,
+    use_metrics: bool = False,
+    include_license_counts: bool = False,
+) -> None:
+    product_ids = [product.pk for product in products if product.pk]
+    if not product_ids:
+        return
+
+    _initialize_observation_count_annotations(products)
+    if include_license_counts:
+        _initialize_license_count_annotations(products)
+    else:
+        _clear_license_count_annotations(products)
+
+    if use_metrics:
+        _populate_observation_counts_from_metrics(products, is_product_group, product_ids)
+        if include_license_counts:
+            _populate_license_counts_from_metrics(products, is_product_group, product_ids)
+    else:
+        _populate_observation_counts_from_observations(products, is_product_group, product_ids)
+        if include_license_counts:
+            _populate_license_counts_from_components(products, is_product_group, product_ids)
+
+
+def populate_product_group_product_counts(product_groups: Sequence[Product]) -> None:
+    product_group_ids = [product_group.pk for product_group in product_groups if product_group.pk]
+    if not product_group_ids:
+        return
+
+    product_groups_by_id = {product_group.pk: product_group for product_group in product_groups}
+    for product_group in product_groups:
+        product_group.products_count_value = 0
+
+    counts = (
+        Product.objects.filter(product_group_id__in=product_group_ids)
+        .values("product_group_id")
+        .annotate(count=Count("pk"))
+    )
+    for count in counts:
+        product_group = product_groups_by_id.get(count["product_group_id"])
+        if product_group:
+            product_group.products_count_value = count["count"]
+
+
+def _initialize_observation_count_annotations(products: Sequence[Product]) -> None:
+    for product in products:
+        for metric_field in SEVERITY_MAPPING.values():
+            setattr(product, f"{metric_field}_observation_count", 0)
+
+
+def _initialize_license_count_annotations(products: Sequence[Product]) -> None:
+    for product in products:
+        for metric_field in EVALUATION_RESULT_MAPPING.values():
+            setattr(product, f"{metric_field}_licenses_count", 0)
+
+
+def _clear_license_count_annotations(products: Sequence[Product]) -> None:
+    for product in products:
+        for metric_field in EVALUATION_RESULT_MAPPING.values():
+            setattr(product, f"{metric_field}_licenses_count", None)
+
+
+def _populate_observation_counts_from_observations(
+    products: Sequence[Product],
+    is_product_group: bool,
+    product_ids: list[int],
+) -> None:
+    products_by_id = {product.pk: product for product in products}
+    grouping_field = "product__product_group_id" if is_product_group else "product_id"
+    product_filter = (
+        {"product__product_group_id__in": product_ids} if is_product_group else {"product_id__in": product_ids}
+    )
+
+    counts = (
+        Observation.objects.filter(
+            _get_default_branch_filter(),
+            current_status__in=Status.STATUS_ACTIVE,
+            **product_filter,
+        )
+        .values(grouping_field, "current_severity")
+        .annotate(count=Count("pk"))
+    )
+    for count in counts:
+        product = products_by_id.get(count[grouping_field])
+        metric_field = SEVERITY_MAPPING.get(count["current_severity"])
+        if product and metric_field:
+            setattr(product, f"{metric_field}_observation_count", count["count"])
+
+
+def _populate_observation_counts_from_metrics(
+    products: Sequence[Product],
+    is_product_group: bool,
+    product_ids: list[int],
+) -> None:
+    products_by_id = {product.pk: product for product in products}
+    grouping_field = "product__product_group_id" if is_product_group else "product_id"
+    product_filter = (
+        {"product__product_group_id__in": product_ids} if is_product_group else {"product_id__in": product_ids}
+    )
+    metric_fields = tuple(SEVERITY_MAPPING.values())
+
+    counts = (
+        Product_Metrics.objects.filter(date=timezone.localdate(), **product_filter)
+        .values(grouping_field)
+        .annotate(**{metric_field: Sum(metric_field) for metric_field in metric_fields})
+    )
+    for count in counts:
+        product = products_by_id.get(count[grouping_field])
+        if product:
+            for metric_field in metric_fields:
+                setattr(product, f"{metric_field}_observation_count", count[metric_field] or 0)
+
+
+def _populate_license_counts_from_components(
+    products: Sequence[Product],
+    is_product_group: bool,
+    product_ids: list[int],
+) -> None:
+    products_by_id = {product.pk: product for product in products}
+    grouping_field = "product__product_group_id" if is_product_group else "product_id"
+    product_filter = (
+        {"product__product_group_id__in": product_ids} if is_product_group else {"product_id__in": product_ids}
+    )
+
+    counts = (
+        License_Component.objects.filter(_get_default_branch_filter(), **product_filter)
+        .values(grouping_field, "evaluation_result")
+        .annotate(count=Count("pk"))
+    )
+    for count in counts:
+        product = products_by_id.get(count[grouping_field])
+        metric_field = EVALUATION_RESULT_MAPPING.get(count["evaluation_result"])
+        if product and metric_field:
+            setattr(product, f"{metric_field}_licenses_count", count["count"])
+
+
+def _populate_license_counts_from_metrics(
+    products: Sequence[Product],
+    is_product_group: bool,
+    product_ids: list[int],
+) -> None:
+    products_by_id = {product.pk: product for product in products}
+    grouping_field = "product__product_group_id" if is_product_group else "product_id"
+    product_filter = (
+        {"product__product_group_id__in": product_ids} if is_product_group else {"product_id__in": product_ids}
+    )
+    metric_fields = tuple(EVALUATION_RESULT_MAPPING.values())
+
+    counts = (
+        Product_License_Metrics.objects.filter(date=timezone.localdate(), **product_filter)
+        .values(grouping_field)
+        .annotate(**{metric_field: Sum(metric_field) for metric_field in metric_fields})
+    )
+    for count in counts:
+        product = products_by_id.get(count[grouping_field])
+        if product:
+            for metric_field in metric_fields:
+                setattr(product, f"{metric_field}_licenses_count", count[metric_field] or 0)
+
+
+def _get_default_branch_filter() -> Q:
+    return Q(branch__is_default_branch=True) | (
+        Q(branch__isnull=True) & Q(product__repository_default_branch__isnull=True)
+    )
 
 
 def _add_annotations(
@@ -332,14 +508,16 @@ def _get_product_group_observation_subquery(severity: str) -> Subquery:
 
 def _get_product_metrics_subquery(severity: str) -> Subquery:
     return Subquery(
-        Product_Metrics.objects.filter(product=OuterRef("pk"), date=date.today()).values(SEVERITY_MAPPING[severity]),
+        Product_Metrics.objects.filter(product=OuterRef("pk"), date=timezone.localdate()).values(
+            SEVERITY_MAPPING[severity]
+        ),
         output_field=IntegerField(),
     )
 
 
 def _get_product_group_metrics_subquery(severity: str) -> Subquery:
     return Subquery(
-        Product_Metrics.objects.filter(product__product_group=OuterRef("pk"), date=date.today())
+        Product_Metrics.objects.filter(product__product_group=OuterRef("pk"), date=timezone.localdate())
         .values("product__product_group")
         .annotate(total=Sum(SEVERITY_MAPPING[severity]))
         .values("total"),
@@ -387,7 +565,7 @@ def _get_product_group_license_subquery(evaluation_result: str) -> Subquery:
 
 def _get_product_license_metrics_subquery(evaluation_result: str) -> Subquery:
     return Subquery(
-        Product_License_Metrics.objects.filter(product=OuterRef("pk"), date=date.today()).values(
+        Product_License_Metrics.objects.filter(product=OuterRef("pk"), date=timezone.localdate()).values(
             EVALUATION_RESULT_MAPPING[evaluation_result]
         ),
         output_field=IntegerField(),
@@ -396,7 +574,7 @@ def _get_product_license_metrics_subquery(evaluation_result: str) -> Subquery:
 
 def _get_product_group_license_metrics_subquery(evaluation_result: str) -> Subquery:
     return Subquery(
-        Product_License_Metrics.objects.filter(product__product_group=OuterRef("pk"), date=date.today())
+        Product_License_Metrics.objects.filter(product__product_group=OuterRef("pk"), date=timezone.localdate())
         .values("product__product_group")
         .annotate(total=Sum(EVALUATION_RESULT_MAPPING[evaluation_result]))
         .values("total"),

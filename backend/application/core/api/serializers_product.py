@@ -246,6 +246,10 @@ class ProductGroupListSerializer(ProductCoreSerializer):
         return _get_all_licenses_count(obj)
 
     def get_products_count(self, obj: Product) -> int:
+        products_count = getattr(obj, "products_count_value", None)
+        if products_count is not None:
+            return products_count
+
         return obj.products.count()
 
     def get_product_rule_approvals(self, obj: Product) -> int:
