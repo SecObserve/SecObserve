@@ -351,7 +351,7 @@ class ObservationUpdateSerializer(ModelSerializer):
             if actual_vex_remediations != observation.current_vex_remediations
             else ""
         )
-        if log_vex_remediations == None:
+        if log_vex_remediations is None:
             log_vex_remediations = ""
         log_risk_acceptance_expiry_date = (
             observation.risk_acceptance_expiry_date

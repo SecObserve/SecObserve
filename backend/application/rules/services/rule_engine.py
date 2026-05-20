@@ -362,7 +362,7 @@ def _write_observation_log(
         if observation_before.current_vex_remediations != observation.current_vex_remediations
         else ""
     )
-    if vex_remediations == None:
+    if vex_remediations is None:
         vex_remediations = ""
     risk_acceptance_expiry_date = (
         observation.risk_acceptance_expiry_date

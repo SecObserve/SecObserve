@@ -30,7 +30,7 @@ from application.notifications.services.send_notifications_observation_title imp
 )
 
 
-def save_assessment(
+def save_assessment(  # pylint: disable=too-many-arguments
     *,
     observation: Observation,
     new_severity: Optional[str],

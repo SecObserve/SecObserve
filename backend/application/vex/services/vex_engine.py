@@ -8,6 +8,7 @@ from application.core.models import Branch, Observation, Product
 from application.core.services.observation import (
     get_current_status,
     get_current_vex_justification,
+    get_current_vex_remediations,
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
@@ -107,6 +108,9 @@ def _apply_vex_statement_for_observation(
         observation.current_vex_justification = get_current_vex_justification(observation)
 
         observation.vex_statement = vex_statement
+
+        if vex_statement.remediation:
+            observation.recommendation = vex_statement.remediation
 
         # Write observation and observation and push to issue tracker log if something has been changed
         if (
@@ -249,6 +253,7 @@ def _write_observation_log(
         status=status,
         comment=comment,
         vex_justification=vex_justification,
+        vex_remediations="",
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
     )
@@ -261,15 +266,23 @@ def write_observation_log_no_vex_statement(
     observation.vex_status = ""
     previous_status = observation.current_status
     observation.current_status = get_current_status(observation)
+    log_status = observation.current_status if previous_status != observation.current_status else ""
 
     observation.vex_vex_justification = ""
     previous_vex_justification = observation.current_vex_justification
     observation.current_vex_justification = get_current_vex_justification(observation)
-
-    log_status = observation.current_status if previous_status != observation.current_status else ""
     log_vex_justification = (
         observation.current_vex_justification
         if previous_vex_justification != observation.current_vex_justification
+        else ""
+    )
+
+    observation.vex_vex_remediations = ""
+    previous_vex_remediations = observation.current_vex_remediations
+    observation.current_vex_remediations = get_current_vex_remediations(observation)
+    log_vex_remediations = (
+        observation.current_vex_remediations
+        if previous_vex_remediations != observation.current_vex_remediations
         else ""
     )
 
@@ -290,6 +303,7 @@ def write_observation_log_no_vex_statement(
         status=log_status,
         comment=log_comment,
         vex_justification=log_vex_justification,
+        vex_remediations=log_vex_remediations,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
     )
