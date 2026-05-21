@@ -14,8 +14,7 @@ class TestValidateVexRemediations(BaseTestCase):
         self.assertIsNone(result)
 
     def test_validate_vex_remediations_empty_item(self):
-        value = [{}]
-        result = validate_vex_remediations(value)
+        result = validate_vex_remediations([{}])
         self.assertIsNone(result)
 
     def test_validate_vex_remediations_valid_single_item(self):
