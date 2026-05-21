@@ -13,6 +13,11 @@ class TestValidateVexRemediations(BaseTestCase):
         result = validate_vex_remediations([])
         self.assertIsNone(result)
 
+    def test_validate_vex_remediations_empty_item(self):
+        value = [{}]
+        result = validate_vex_remediations(value)
+        self.assertIsNone(result)
+
     def test_validate_vex_remediations_valid_single_item(self):
         value = [{"category": "fixed", "text": "This issue is fixed."}]
         result = validate_vex_remediations(value)
