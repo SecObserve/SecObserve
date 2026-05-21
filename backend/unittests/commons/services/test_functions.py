@@ -79,7 +79,9 @@ class TestValidateVexRemediations(BaseTestCase):
 
     def test_validate_vex_remediations_mixed_valid_and_invalid_items(self):
         with self.assertRaises(ValidationError):
-            validate_vex_remediations([
-                {"category": "fixed", "text": "Valid item."},
-                {"category": 123, "text": "Invalid category."},
-            ])
+            validate_vex_remediations(
+                [
+                    {"category": "fixed", "text": "Valid item."},
+                    {"category": 123, "text": "Invalid category."},
+                ]
+            )
