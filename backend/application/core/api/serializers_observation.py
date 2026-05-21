@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 from django.utils import timezone
@@ -16,7 +16,10 @@ from rest_framework.serializers import (
 )
 
 from application.access_control.services.current_user import get_current_user
-from application.commons.services.functions import get_comma_separated_as_list
+from application.commons.services.functions import (
+    get_comma_separated_as_list,
+    validate_vex_remediations,
+)
 from application.core.api.serializers_helpers import (
     get_branch_name,
     get_origin_component_name_version,
@@ -349,10 +352,8 @@ class ObservationUpdateSerializer(ModelSerializer):
         log_vex_remediations = (
             observation.current_vex_remediations
             if actual_vex_remediations != observation.current_vex_remediations
-            else ""
+            else None
         )
-        if log_vex_remediations is None:
-            log_vex_remediations = ""
         log_risk_acceptance_expiry_date = (
             observation.risk_acceptance_expiry_date
             if actual_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
@@ -454,7 +455,7 @@ class ObservationCreateSerializer(ModelSerializer):
             comment="Observation created manually",
             vex_justification=observation.current_vex_justification,
             vex_remediations=(
-                str(observation.current_vex_remediations) if observation.current_vex_remediations is not None else ""
+                str(observation.current_vex_remediations) if observation.current_vex_remediations is not None else None
             ),
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation.risk_acceptance_expiry_date,
@@ -520,10 +521,13 @@ class ObservationAssessmentSerializer(Serializer):
         required=False,
         allow_blank=True,
     )
-    vex_remediations = JSONField(required=False)
+    vex_remediations = JSONField(required=False, allow_null=True)
     priority = IntegerField(min_value=1, max_value=99, required=False, allow_null=True)
     risk_acceptance_expiry_date = DateField(required=False, allow_null=True)
     comment = CharField(max_length=4096, required=True)
+
+    def validate_vex_remediations(self, value: Any) -> Optional[list[dict]]:
+        return validate_vex_remediations(value)
 
 
 class ObservationRemoveAssessmentSerializer(Serializer):
@@ -545,8 +549,11 @@ class ObservationBulkAssessmentSerializer(Serializer):
         required=False,
         allow_blank=True,
     )
-    vex_remediations = JSONField(required=False)
+    vex_remediations = JSONField(required=False, allow_null=True)
     risk_acceptance_expiry_date = DateField(required=False, allow_null=True)
+
+    def validate_vex_remediations(self, value: Any) -> Optional[list[dict]]:
+        return validate_vex_remediations(value)
 
 
 class ObservationBulkMarkDuplicatesSerializer(Serializer):

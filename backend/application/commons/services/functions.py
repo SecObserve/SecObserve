@@ -1,7 +1,8 @@
-from typing import Any
+from typing import Any, Optional
 
 from django.apps import apps
 from django.db.models.fields import CharField, TextField
+from rest_framework.exceptions import ValidationError
 
 from application.commons.models import Settings
 
@@ -46,3 +47,40 @@ def clip_fields(application: str, model: str, my_object: Any) -> None:
 def get_comma_separated_as_list(comma_separated_string: str) -> list[str]:
     return_list = comma_separated_string.split(",") if comma_separated_string else []
     return [x.strip() for x in return_list]
+
+
+def validate_vex_remediations(value: Any) -> Optional[list[dict]]:
+    """
+    Validate that vex_remediations is either None or a list of dictionaries
+    where each dictionary contains 'category' and 'text' fields with string values.
+    """
+    if value is None:
+        return value
+
+    items = []
+
+    if not isinstance(value, list):
+        raise ValidationError("vex_remediations must be a list or null.")
+
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValidationError("Each item must be a dictionary.")
+
+        if "category" not in item and "text" not in item:
+            continue
+
+        if "category" not in item or "text" not in item:
+            raise ValidationError("Each item must contain the fields 'category' and 'text'.")
+
+        if not isinstance(item["category"], str):
+            raise ValidationError("The 'category' field must be a string.")
+
+        if not isinstance(item["text"], str):
+            raise ValidationError("The 'text' field must be a string.")
+
+        items.append(item)
+
+    if items:
+        return items
+
+    return None

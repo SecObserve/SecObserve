@@ -171,7 +171,7 @@ def get_current_vex_justification(observation: Observation) -> str:
     return ""
 
 
-def get_current_vex_remediations(observation: Observation) -> str:
+def get_current_vex_remediations(observation: Observation) -> Optional[str]:
     if observation.assessment_vex_remediations:
         return observation.assessment_vex_remediations
 
@@ -184,7 +184,7 @@ def get_current_vex_remediations(observation: Observation) -> str:
     if observation.vex_vex_remediations:
         return observation.vex_vex_remediations
 
-    return ""
+    return None
 
 
 def normalize_observation_fields(observation: Observation) -> None:
@@ -514,15 +514,6 @@ def _normalize_vex_justification(observation: Observation) -> None:
 
 
 def _normalize_vex_remediations(observation: Observation) -> None:
-    if observation.current_vex_remediations is None:
-        observation.current_vex_remediations = ""
-    if observation.assessment_vex_remediations is None:
-        observation.assessment_vex_remediations = ""
-    if observation.rule_vex_remediations is None:
-        observation.rule_vex_remediations = ""
-    if observation.vex_vex_remediations is None:
-        observation.vex_vex_remediations = ""
-
     observation.current_vex_remediations = get_current_vex_remediations(observation)
 
 

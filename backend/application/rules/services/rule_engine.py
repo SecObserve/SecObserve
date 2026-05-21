@@ -76,8 +76,8 @@ class Rule_Engine:
         observation.rule_rego_priority = None
         observation.rule_vex_justification = ""
         observation.rule_rego_vex_justification = ""
-        observation.rule_vex_remediations = ""
-        observation.rule_rego_vex_remediations = ""
+        observation.rule_vex_remediations = None
+        observation.rule_rego_vex_remediations = None
         observation.general_rule = None
         observation.general_rule_rego = None
         observation.product_rule = None
@@ -360,10 +360,8 @@ def _write_observation_log(
     vex_remediations = (
         observation.current_vex_remediations
         if observation_before.current_vex_remediations != observation.current_vex_remediations
-        else ""
+        else None
     )
-    if vex_remediations is None:
-        vex_remediations = ""
     risk_acceptance_expiry_date = (
         observation.risk_acceptance_expiry_date
         if observation_before.risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
@@ -433,7 +431,7 @@ def _write_observation_log_no_rule(
     log_vex_remediations = (
         observation.current_vex_remediations
         if previous_vex_remediations != observation.current_vex_remediations
-        else ""
+        else None
     )
 
     log_risk_acceptance_expiry_date = (

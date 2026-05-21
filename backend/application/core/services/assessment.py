@@ -53,7 +53,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     log_vex_remediations = (
         new_vex_remediations
         if new_vex_remediations and new_vex_remediations != observation.current_vex_remediations
-        else ""
+        else None
     )
     log_risk_acceptance_expiry_date = (
         new_risk_acceptance_expiry_date
@@ -190,7 +190,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
         observation.assessment_status = ""
         observation.assessment_priority = None
         observation.assessment_vex_justification = ""
-        observation.assessment_vex_remediations = ""
+        observation.assessment_vex_remediations = None
 
         observation.current_severity = get_current_severity(observation)
         previous_status = observation.current_status
@@ -212,7 +212,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
             priority=None,
             comment=comment,
             vex_justification="",
-            vex_remediations="",
+            vex_remediations=None,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
             risk_acceptance_expiry_date=observation.risk_acceptance_expiry_date,
         )

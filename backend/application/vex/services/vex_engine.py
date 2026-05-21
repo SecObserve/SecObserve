@@ -253,7 +253,7 @@ def _write_observation_log(
         status=status,
         comment=comment,
         vex_justification=vex_justification,
-        vex_remediations="",
+        vex_remediations=None,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
     )
@@ -277,13 +277,13 @@ def write_observation_log_no_vex_statement(
         else ""
     )
 
-    observation.vex_vex_remediations = ""
+    observation.vex_vex_remediations = None
     previous_vex_remediations = observation.current_vex_remediations
     observation.current_vex_remediations = get_current_vex_remediations(observation)
     log_vex_remediations = (
         observation.current_vex_remediations
         if previous_vex_remediations != observation.current_vex_remediations
-        else ""
+        else None
     )
 
     if previous_vex_statement:

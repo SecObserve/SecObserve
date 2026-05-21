@@ -248,7 +248,7 @@ def get_current_modifying_observation_log(
     try:
         return Observation_Log.objects.filter(
             Q(observation_id=observation.id)
-            & (~Q(status="") | ~Q(severity="") | ~Q(vex_justification="") | (~Q(vex_remediations="")))
+            & (~Q(status="") | ~Q(severity="") | ~Q(vex_justification="") | (~Q(vex_remediations__isnull=True)))
         ).latest("created")
     except Observation_Log.DoesNotExist:
         return None

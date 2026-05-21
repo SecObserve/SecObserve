@@ -57,7 +57,7 @@ const ObservationAssessment = () => {
             status: data.status,
             priority: data.priority,
             vex_justification: justificationEnabled ? data.vex_justification : "",
-            vex_remediations: remediationsEnabled ? data.vex_remediations : "",
+            vex_remediations: remediationsEnabled ? data.vex_remediations : null,
             comment: comment,
             risk_acceptance_expiry_date: data.risk_acceptance_expiry_date,
         };

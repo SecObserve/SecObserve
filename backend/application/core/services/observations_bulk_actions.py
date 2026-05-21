@@ -33,7 +33,7 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
     comment: str,
     observation_ids: list[int],
     new_vex_justification: str,
-    new_vex_remediations: str,
+    new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
 ) -> None:
     observations = _check_observations(product, observation_ids)
@@ -98,7 +98,7 @@ def observations_bulk_mark_duplicates(
             new_priority=None,
             comment=comment,
             new_vex_justification="",
-            new_vex_remediations="",
+            new_vex_remediations=None,
             new_risk_acceptance_expiry_date=None,
         )
 

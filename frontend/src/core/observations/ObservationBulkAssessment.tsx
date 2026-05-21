@@ -76,7 +76,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
             priority: data.priority,
             comment: comment,
             vex_justification: justificationEnabled ? data.vex_justification : "",
-            vex_remediations: remediationsEnabled ? data.vex_remediations : "",
+            vex_remediations: remediationsEnabled ? data.vex_remediations : null,
             observations: selectedIds,
             risk_acceptance_expiry_date: data.risk_acceptance_expiry_date,
         };

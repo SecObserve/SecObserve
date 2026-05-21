@@ -355,8 +355,8 @@ export const non_duplicate_transform = (data: any, description: string) => {
             data.new_vex_justification = "";
         }
 
-        if (!remediationsAreEnabledForStatus(data.new_status) || data.new_vex_remediations == null) {
-            data.new_vex_remediations = "";
+        if (!remediationsAreEnabledForStatus(data.new_status)) {
+            data.new_vex_remediations = null;
         }
 
         data.scanner_prefix ??= "";

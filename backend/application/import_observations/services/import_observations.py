@@ -671,7 +671,7 @@ def _process_current_observation(
             status=status,
             comment="Updated by parser",
             vex_justification="",
-            vex_remediations="",
+            vex_remediations=None,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
         )
@@ -721,7 +721,7 @@ def _process_new_observation(imported_observation: Observation, settings: Settin
         status=imported_observation.current_status,
         comment="Set by parser",
         vex_justification="",
-        vex_remediations="",
+        vex_remediations=None,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
@@ -781,7 +781,7 @@ def _resolve_unimported_observations(
                 status=observation.current_status,
                 comment="Observation not found in latest scan",
                 vex_justification="",
-                vex_remediations="",
+                vex_remediations=None,
                 assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
                 risk_acceptance_expiry_date=None,
             )
