@@ -2508,14 +2508,14 @@ pylint = ">=1.7"
 
 [[package]]
 name = "pymysql"
-version = "1.1.3"
+version = "1.2.0"
 description = "Pure Python MySQL Driver"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pymysql-1.1.3-py3-none-any.whl", hash = "sha256:8164ba62c552f6105f3b11753352d0f16b90d1703ba67d81923d5a8a5d1c5289"},
-    {file = "pymysql-1.1.3.tar.gz", hash = "sha256:e70ebf2047a4edf6138cf79c68ad418ef620af65900aa585c5e8bfc95044d43a"},
+    {file = "pymysql-1.2.0-py3-none-any.whl", hash = "sha256:62169ce6d5510f08e140c5e7990ee884a9764024e4a9a27b2cc11f1099322ae0"},
+    {file = "pymysql-1.2.0.tar.gz", hash = "sha256:6c7b17ca686988104d7426c27895b455cdeea3e9d3ceb1270f0c3704fead8c33"},
 ]
 
 [package.extras]
@@ -3413,4 +3413,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.12, < 3.15"
-content-hash = "839e4e3442c66c9dcb9e9af6a868a1550e181d41ce0020e303098095bbc7dde4"
+content-hash = "f36077aec76bd7010e9887eebfd2b3d79f84b7b559e39182a3712fce4d140623"
