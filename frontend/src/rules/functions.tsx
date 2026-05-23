@@ -586,9 +586,10 @@ export const RuleCreateEditComponent = ({
                 <BooleanInput source="enabled" defaultValue={true} />
 
                 <AutocompleteInputMedium source="type" choices={RULE_TYPE_CHOICES} validate={validate_required} />
-                <SeverityStatusInput initialStatus={initialStatus} />
 
+                <SeverityStatusInput initialStatus={initialStatus} />
                 <FieldsInput />
+                
                 <RegoModuleInput />
             </Stack>
         </Fragment>
