@@ -58,13 +58,6 @@ class GeneralRuleSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs: dict) -> dict:
-        if (
-            attrs.get("type") == Rule_Type.RULE_TYPE_FIELDS
-            and not attrs.get("parser")
-            and not attrs.get("scanner_prefix")
-        ):
-            raise ValidationError("Either Parser or Scanner Prefix must be set")
-
         if attrs.get("type") == Rule_Type.RULE_TYPE_REGO and not attrs.get("rego_module"):
             raise ValidationError("Rego module must be set")
 
@@ -115,13 +108,6 @@ class ProductRuleSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs: dict) -> dict:
-        if (
-            attrs.get("type") == Rule_Type.RULE_TYPE_FIELDS
-            and not attrs.get("parser")
-            and not attrs.get("scanner_prefix")
-        ):
-            raise ValidationError("Either Parser or Scanner Prefix must be set")
-
         if attrs.get("type") == Rule_Type.RULE_TYPE_REGO and not attrs.get("rego_module"):
             raise ValidationError("Rego module must be set")
 

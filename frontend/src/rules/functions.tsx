@@ -62,16 +62,9 @@ export const validateRuleForm = (values: any) => {
         errors.name = "Name is required";
     }
 
-    if (values.type === RULE_TYPE_FIELDS) {
-        if (!values.new_severity && !values.new_status) {
-            errors.new_severity = "Either New severity or New status must be set";
-            errors.new_status = "Either New severity or New status must be set";
-        }
-
-        if (!values.parser && !values.scanner_prefix) {
-            errors.parser = "Either Parser or Scanner prefix must be set";
-            errors.scanner_prefix = "Either Parser or Scanner prefix must be set";
-        }
+    if (values.type === RULE_TYPE_FIELDS && !values.new_severity && !values.new_status) {
+        errors.new_severity = "Either New severity or New status must be set";
+        errors.new_status = "Either New severity or New status must be set";
     }
 
     if (values.type === RULE_TYPE_REGO) {
@@ -143,41 +136,6 @@ export const RuleShowComponent = ({ rule }: any) => {
                         />
                     </Labeled>
 
-                    {rule.new_severity && (
-                        <Labeled label="New severity">
-                            <TextField source="new_severity" />
-                        </Labeled>
-                    )}
-                    {rule.new_status && (
-                        <Labeled label="New status">
-                            <TextField source="new_status" />
-                        </Labeled>
-                    )}
-                    {feature_vex_enabled() && rule.new_vex_justification && (
-                        <Labeled label="New VEX justification">
-                            <TextField source="new_vex_justification" />
-                        </Labeled>
-                    )}
-
-                    {rule.rego_module && (
-                        <Labeled label="Rego module">
-                            <SyntaxHighlighter
-                                language="rego"
-                                style={getPrismTheme()}
-                                wrapLongLines
-                                customStyle={{ lineHeight: "1.43", fontSize: "0.875rem" }}
-                                codeTagProps={{
-                                    style: {
-                                        lineHeight: "inherit",
-                                        fontSize: "inherit",
-                                    },
-                                }}
-                            >
-                                {rule.rego_module}
-                            </SyntaxHighlighter>
-                        </Labeled>
-                    )}
-
                     <Labeled label="Enabled">
                         <BooleanField source="enabled" />
                     </Labeled>
@@ -188,6 +146,53 @@ export const RuleShowComponent = ({ rule }: any) => {
                     )}
                 </Stack>
             </Paper>
+
+            {(rule.new_severity || rule.new_status || (feature_vex_enabled() && rule.new_vex_justification)) && (
+                <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
+                    <Stack spacing={1}>
+                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                            Fields to be changed
+                        </Typography>
+                        {rule.new_severity && (
+                            <Labeled label="New severity">
+                                <TextField source="new_severity" />
+                            </Labeled>
+                        )}
+                        {rule.new_status && (
+                            <Labeled label="New status">
+                                <TextField source="new_status" />
+                            </Labeled>
+                        )}
+                        {feature_vex_enabled() && rule.new_vex_justification && (
+                            <Labeled label="New VEX justification">
+                                <TextField source="new_vex_justification" />
+                            </Labeled>
+                        )}
+                    </Stack>
+                </Paper>
+            )}
+
+            {rule.rego_module && (
+                <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                        Rego module
+                    </Typography>
+                    <SyntaxHighlighter
+                        language="rego"
+                        style={getPrismTheme()}
+                        wrapLongLines
+                        customStyle={{ lineHeight: "1.43", fontSize: "0.875rem" }}
+                        codeTagProps={{
+                            style: {
+                                lineHeight: "inherit",
+                                fontSize: "inherit",
+                            },
+                        }}
+                    >
+                        {rule.rego_module}
+                    </SyntaxHighlighter>
+                </Paper>
+            )}
 
             {rule && (rule.parser || rule.scanner_prefix || rule.title || rule.description_observation) && (
                 <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
@@ -384,6 +389,12 @@ const SeverityStatusInput = ({ initialStatus }: SeverityStatusInputProps) => {
     if (type === RULE_TYPE_FIELDS) {
         return (
             <Fragment>
+                <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+
+                <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                    Fields to be changed
+                </Typography>
+
                 <AutocompleteInputMedium source="new_severity" choices={OBSERVATION_SEVERITY_CHOICES} />
                 <AutocompleteInputMedium
                     source="new_status"
@@ -417,7 +428,19 @@ const RegoModuleInput = () => {
     if (type === RULE_TYPE_REGO) {
         return (
             <Stack sx={{ marginBottom: 2 }}>
-                <TextInputExtraWide multiline={true} source="rego_module" validate={validate_required} minRows={3} />
+                <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+
+                <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                    Rego module
+                </Typography>
+
+                <TextInputExtraWide
+                    multiline={true}
+                    source="rego_module"
+                    validate={validate_required}
+                    minRows={3}
+                    label={false}
+                />
                 <TextUrlField url="https://play.openpolicyagent.org/" text="Rego playground" new_tab={true} />
             </Stack>
         );
@@ -560,14 +583,15 @@ export const RuleCreateEditComponent = ({
                     overlayContainer={dialogRef?.current ?? null}
                 />
 
-                <AutocompleteInputMedium source="type" choices={RULE_TYPE_CHOICES} validate={validate_required} />
-                <SeverityStatusInput initialStatus={initialStatus} />
-                <RegoModuleInput />
-
                 <BooleanInput source="enabled" defaultValue={true} />
-            </Stack>
 
-            <FieldsInput />
+                <AutocompleteInputMedium source="type" choices={RULE_TYPE_CHOICES} validate={validate_required} />
+
+                <SeverityStatusInput initialStatus={initialStatus} />
+                <FieldsInput />
+
+                <RegoModuleInput />
+            </Stack>
         </Fragment>
     );
 };
