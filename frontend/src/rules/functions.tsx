@@ -589,7 +589,7 @@ export const RuleCreateEditComponent = ({
 
                 <SeverityStatusInput initialStatus={initialStatus} />
                 <FieldsInput />
-                
+
                 <RegoModuleInput />
             </Stack>
         </Fragment>
