@@ -4,6 +4,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import { Badge, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "react-admin";
+import PivotTableChartIcon from "@mui/icons-material/PivotTableChart";
 
 import administration from "../../access_control/access_control_administration";
 import periodic_tasks from "../../background_tasks/periodic_tasks";
@@ -106,6 +107,13 @@ const Menu = ({ dense = false }: MenuProps) => {
                     <Badge badgeContent={get_notification_count()} color="secondary" sx={{ marginLeft: 3 }} />
                 )}
             </MenuItemLink>
+            <MenuItemLink
+                to="/pivot_table"
+                state={{ _scrollToTop: true }}
+                primaryText="Pivot Table"
+                leftIcon={<PivotTableChartIcon />}
+                dense={dense}
+            />
             {feature_vex_enabled() && (
                 <SubMenu
                     handleToggle={() => handleToggle("menuVEX")}
