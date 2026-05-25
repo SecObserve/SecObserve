@@ -183,6 +183,20 @@ export const RuleShowComponent = ({ rule }: any) => {
                                 <TextField source="new_vex_justification" />
                             </Labeled>
                         )}
+                        {feature_vex_enabled() && rule.new_vex_remediations && (
+                            <Labeled label="New VEX remediations">
+                                <ArrayField source="new_vex_remediations">
+                                    <Datagrid
+                                        bulkActionButtons={false}
+                                        header={VEXRemediationHeader}
+                                        sx={{ paddingBottom: 2 }}
+                                    >
+                                        <TextField source="category" />
+                                        <TextField source="text" />
+                                    </Datagrid>
+                                </ArrayField>
+                            </Labeled>
+                        )}
                     </Stack>
                 </Paper>
             )}
