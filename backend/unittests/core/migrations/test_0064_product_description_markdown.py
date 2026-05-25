@@ -28,5 +28,5 @@ class TestMarkdownConversion(BaseTestCase):
 
 [SecObserve](https://secobserve.github.io/SecObserve/)
 """,
-            markdown_description.get("content"),
+            markdown_description.content,
         )
