@@ -1,5 +1,4 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
-import PivotTableChartIcon from "@mui/icons-material/PivotTableChart";
 import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Badge, Box } from "@mui/material";
@@ -107,13 +106,6 @@ const Menu = ({ dense = false }: MenuProps) => {
                     <Badge badgeContent={get_notification_count()} color="secondary" sx={{ marginLeft: 3 }} />
                 )}
             </MenuItemLink>
-            <MenuItemLink
-                to="/pivot_table"
-                state={{ _scrollToTop: true }}
-                primaryText="Pivot Table"
-                leftIcon={<PivotTableChartIcon />}
-                dense={dense}
-            />
             {feature_vex_enabled() && (
                 <SubMenu
                     handleToggle={() => handleToggle("menuVEX")}
