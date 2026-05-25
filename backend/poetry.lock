@@ -1254,16 +1254,18 @@ tornado = ["tornado (>=6.5.0)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "3.1.0"
-description = "High-performance HTML to Markdown converter powered by Rust with a clean Python API"
+version = "3.4.0"
+description = "High-performance HTML to Markdown converter"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-3.1.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:861e09ca6d0d37748afc356856b963ffd55dab4e5b75482113d5283e73b2300b"},
-    {file = "html_to_markdown-3.1.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:fc97f9eb2729945deaac408294849d03bbb9ccac11174698e717c5d5209284a5"},
-    {file = "html_to_markdown-3.1.0-cp310-abi3-win_amd64.whl", hash = "sha256:77c0f1ec70f5b72e9e4fae0b193b100276b9c97bf297124214026e6c1892c56e"},
-    {file = "html_to_markdown-3.1.0.tar.gz", hash = "sha256:cbb28541a61df95fe28473af2c06749272352b7544a3c344cf1f5f7588a5ccfc"},
+    {file = "html_to_markdown-3.4.0-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:58c98e3fe34b81c767096567ba91992e6ae4e66e272c490d308467ea0a1778d6"},
+    {file = "html_to_markdown-3.4.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:4f8e444a9f47ff25fcfe1dde42a9123a8e7619b556c22e99d3c9ddb06236b4e7"},
+    {file = "html_to_markdown-3.4.0-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:7679a0815688bd86326d73760d653e6ed53d43bf4312c3fc71992f62e4427832"},
+    {file = "html_to_markdown-3.4.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:57090642966c1ec67ccb851387c63c9c500153d23f0b9bf81e64ff01c46ca1d1"},
+    {file = "html_to_markdown-3.4.0-cp310-cp310-win_amd64.whl", hash = "sha256:85ef60342922074227936ece6f6746836d50a17fc38ec6cb4bba6a12810b38c5"},
+    {file = "html_to_markdown-3.4.0.tar.gz", hash = "sha256:3e7e0813cc871c7abe2d5ea927e9038374bea339e8dd72f3b4c2f1c0b8e51672"},
 ]
 
 [[package]]
@@ -3410,4 +3412,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.12, < 3.15"
-content-hash = "80feb3542ffd0b322b9c7c0fb38f7ab565466cae5bbdcf9932e7da6d9f3a5b3c"
+content-hash = "9e745595a489029e603f2b51b073bcaaa96086bf08b7964138682185e1fbb368"
