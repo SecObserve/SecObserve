@@ -13,6 +13,7 @@ import users from "./access_control/users";
 import periodic_tasks from "./background_tasks/periodic_tasks";
 import { Layout } from "./commons/layout";
 import { darkTheme, lightTheme } from "./commons/layout/themes";
+import PivotTable from "./commons/pivot_table/PivotTable";
 import { queryClient } from "./commons/queryClient";
 import drfProvider from "./commons/ra-data-django-rest-framework";
 import settings from "./commons/settings";
@@ -83,6 +84,7 @@ const AdminApp = () => {
                 <Route path="/license/license_groups" element={<LicenseAdministration />} />
                 <Route path="/license/license_policies" element={<LicenseAdministration />} />
                 <Route path="/license/concluded_licenses" element={<LicenseAdministration />} />
+                <Route path="/pivot_table" element={<PivotTable />} />
                 <Route path="/reviews" element={<Reviews />} />
                 <Route path="/reviews/observation_reviews" element={<Reviews />} />
                 <Route path="/reviews/observation_log_approvals" element={<Reviews />} />
