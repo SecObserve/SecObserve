@@ -11,6 +11,62 @@ import { useSearchParams } from "react-router-dom";
 import axios_instance from "../../access_control/auth_provider/axios_instance";
 import "./PivotTable.css";
 
+// Whitelist of default aggregator names provided by react-pivottable
+const DEFAULT_AGGREGATORS = [
+    "Count",
+    "Count Unique Values",
+    "List Unique Values",
+    "Sum",
+    "Integer Sum",
+    "Average",
+    "Median",
+    "Sample Variance",
+    "Sample Standard Deviation",
+    "Minimum",
+    "Maximum",
+    "First",
+    "Last",
+    "Sum over Sum",
+    "Sum as Fraction of Total",
+    "Sum as Fraction of Rows",
+    "Sum as Fraction of Columns",
+    "Count as Fraction of Total",
+    "Count as Fraction of Rows",
+    "Count as Fraction of Columns",
+] as const;
+
+// Whitelist of pivot config fields that are plain-data and safe to JSON.stringify.
+// react-pivottable's onChange passes back the entire merged props (including
+// `aggregators`, `renderers`, `sorters`, `derivedAttributes` — all objects of
+// functions). JSON.stringify silently drops functions, so persisting those keys
+// would store empty objects that override the library defaults on reload.
+const PERSISTED_KEYS = [
+    "rows",
+    "cols",
+    "vals",
+    "rendererName",
+    "valueFilter",
+    "rowOrder",
+    "colOrder",
+    "unusedAttrsVertical",
+    "menuLimit",
+    "hiddenAttributes",
+    "hiddenFromAggregators",
+    "hiddenFromDragDrop",
+] as const;
+
+const sanitizePivotConfig = (raw: Record<string, unknown>): Record<string, unknown> => {
+    const sanitized: Record<string, unknown> = {};
+    for (const k of PERSISTED_KEYS) {
+        if (k in raw) sanitized[k] = raw[k];
+    }
+    const aggName = raw.aggregatorName;
+    if (typeof aggName === "string" && (DEFAULT_AGGREGATORS as readonly string[]).includes(aggName)) {
+        sanitized.aggregatorName = aggName;
+    }
+    return sanitized;
+};
+
 const PivotTable = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -42,7 +98,7 @@ const PivotTable = () => {
         if (paramsKey === lastLoadedParamsKey) return; // already loaded for this key
 
         const saved = localStorage.getItem(paramsKey);
-        setPivotConfig(saved ? JSON.parse(saved) : {});
+        setPivotConfig(saved ? sanitizePivotConfig(JSON.parse(saved)) : {});
         setLastLoadedParamsKey(paramsKey);
     }, [paramsKey]);
 
@@ -53,47 +109,8 @@ const PivotTable = () => {
         localStorage.setItem(paramsKey, JSON.stringify(pivotConfig));
     }, [paramsKey, pivotConfig]);
 
-    // Whitelist of default aggregator names provided by react-pivottable
-    const DEFAULT_AGGREGATORS = [
-        "Count",
-        "Count Unique Values",
-        "List Unique Values",
-        "Sum",
-        "Integer Sum",
-        "Average",
-        "Median",
-        "Sample Variance",
-        "Sample Standard Deviation",
-        "Minimum",
-        "Maximum",
-        "First",
-        "Last",
-        "Sum over Sum",
-        "Sum as Fraction of Total",
-        "Sum as Fraction of Rows",
-        "Sum as Fraction of Columns",
-        "Count as Fraction of Total",
-        "Count as Fraction of Rows",
-        "Count as Fraction of Columns",
-    ] as const;
-
-    // Extract only the configuration fields; exclude data / config / aggregatorFunc
-    // which can be large or non-serializable. Only preserve aggregatorName
-    // if it matches a known default so we never save an unknown aggregator.
     const handlePivotChange = useCallback((newState: Record<string, unknown>) => {
-        const {
-            data: _data,
-            config: _config,
-            aggregatorFunc: _aggregatorFunc,
-            aggregatorName: _savedAggName,
-            ...configOnly
-        } = newState as Record<string, unknown>;
-
-        const aggName = typeof _savedAggName === "string" ? _savedAggName : undefined;
-        if (aggName && DEFAULT_AGGREGATORS.includes(aggName)) {
-            (configOnly as any).aggregatorName = aggName;
-        }
-        setPivotConfig(configOnly);
+        setPivotConfig(sanitizePivotConfig(newState));
     }, []);
 
     const onDrop = useCallback(
