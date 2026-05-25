@@ -348,6 +348,10 @@ table.pvtTable tbody tr td {
     background: #383838;
 }
 
+.pvt-dark .pvtAxisContainer li.pvtPlaceholder {
+    border: 2px dashed #b0bec5;
+}
+
 .pvt-dark .pvtAxisContainer li span.pvtAttr {
     background: #3a3a3a;
     border-color: #4a4a4a;
