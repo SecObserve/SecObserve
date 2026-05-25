@@ -1,6 +1,6 @@
 import PivotTableChartIcon from "@mui/icons-material/PivotTableChart";
 import UploadIcon from "@mui/icons-material/Upload";
-import { Box, CircularProgress, Paper, Typography } from "@mui/material";
+import { Box, CircularProgress, Paper, Typography, useTheme } from "@mui/material";
 import Papa from "papaparse";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useNotify } from "react-admin";
@@ -9,7 +9,6 @@ import PivotTableUI from "react-pivottable/PivotTableUI";
 import { useSearchParams } from "react-router-dom";
 
 import axios_instance from "../../access_control/auth_provider/axios_instance";
-import { getResolvedSettingTheme } from "../user_settings/functions";
 import "./PivotTable.css";
 
 // Whitelist of default aggregator names provided by react-pivottable
@@ -72,6 +71,7 @@ const PivotTable = () => {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchParams] = useSearchParams();
+    const theme = useTheme();
     const notify = useNotify();
 
     const hasQueryParams = searchParams.toString().length > 0;
@@ -201,7 +201,7 @@ const PivotTable = () => {
     });
 
     return (
-        <Paper sx={{ marginTop: 2, padding: 2 }} className={getResolvedSettingTheme() === "dark" ? "pvt-dark" : undefined}>
+        <Paper sx={{ marginTop: 2, padding: 2 }} className={theme.palette.mode === "dark" ? "pvt-dark" : undefined}>
             <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 2 }}>
                 <Fragment>
                     <PivotTableChartIcon />
