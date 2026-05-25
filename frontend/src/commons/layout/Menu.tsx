@@ -1,10 +1,10 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
+import PivotTableChartIcon from "@mui/icons-material/PivotTableChart";
 import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Badge, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "react-admin";
-import PivotTableChartIcon from "@mui/icons-material/PivotTableChart";
 
 import administration from "../../access_control/access_control_administration";
 import periodic_tasks from "../../background_tasks/periodic_tasks";
