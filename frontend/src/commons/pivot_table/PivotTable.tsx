@@ -92,6 +92,7 @@ const PivotTable = () => {
     useEffect(() => {
         if (!paramsKey) {
             setPivotConfig({});
+            setData([]);
             setLastLoadedParamsKey(null);
             return;
         }
@@ -203,7 +204,7 @@ const PivotTable = () => {
             <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 2 }}>
                 <Fragment>
                     <PivotTableChartIcon />
-                    &nbsp;&nbsp;Pivot Table
+                    &nbsp;&nbsp;{hasQueryParams ? "Pivot Table for Observations" : "Pivot Table"}
                 </Fragment>
             </Typography>
 
