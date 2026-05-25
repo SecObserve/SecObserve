@@ -9,6 +9,7 @@ import PivotTableUI from "react-pivottable/PivotTableUI";
 import { useSearchParams } from "react-router-dom";
 
 import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { getResolvedSettingTheme } from "../user_settings/functions";
 import "./PivotTable.css";
 
 // Whitelist of default aggregator names provided by react-pivottable
@@ -200,7 +201,7 @@ const PivotTable = () => {
     });
 
     return (
-        <Paper sx={{ marginTop: 2, padding: 2 }}>
+        <Paper sx={{ marginTop: 2, padding: 2 }} className={getResolvedSettingTheme() === "dark" ? "pvt-dark" : undefined}>
             <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 2 }}>
                 <Fragment>
                     <PivotTableChartIcon />

@@ -323,3 +323,132 @@ table.pvtTable tbody tr td {
 .pvtRendererArea {
     padding: 5px;
 }
+
+/* Dark mode overrides */
+.pvt-dark .pvtUi {
+    color: #e0e0e0;
+}
+
+.pvt-dark table.pvtTable thead tr th,
+.pvt-dark table.pvtTable tbody tr th {
+    background-color: #3a3a3a;
+    border-color: #4a4a4a;
+    color: #e0e0e0;
+}
+
+.pvt-dark table.pvtTable tbody tr td {
+    color: #e0e0e0;
+    background-color: #2c2c2c;
+    border-color: #4a4a4a;
+}
+
+.pvt-dark .pvtAxisContainer,
+.pvt-dark .pvtVals {
+    border-color: #4a4a4a;
+    background: #383838;
+}
+
+.pvt-dark .pvtAxisContainer li span.pvtAttr {
+    background: #3a3a3a;
+    border-color: #4a4a4a;
+    color: #e0e0e0;
+}
+
+.pvt-dark .pvtDropdownCurrent {
+    border-color: #4a4a4a;
+    background: #2c2c2c;
+    color: #e0e0e0;
+}
+
+.pvt-dark .pvtDropdownMenu {
+    background: #2c2c2c;
+    border-color: #4a4a4a;
+    border-top-color: #4a4a4a;
+}
+
+.pvt-dark .pvtDropdownValue {
+    color: #e0e0e0;
+}
+
+.pvt-dark .pvtDropdownActiveValue {
+    background: #424242;
+}
+
+.pvt-dark .pvtDropdownIcon {
+    color: #78909c;
+}
+
+.pvt-dark .pvtTriangle {
+    color: #b0bec5;
+}
+
+.pvt-dark .pvtDragHandle {
+    color: #78909c;
+}
+
+.pvt-dark .pvtButton {
+    color: #b0bec5;
+    background: #383838;
+    border-color: #4a4a4a;
+}
+
+.pvt-dark .pvtButton:hover {
+    background: #4a4a4a;
+    border-color: #78909c;
+}
+
+.pvt-dark .pvtButton:active {
+    background: #555555;
+}
+
+.pvt-dark .pvtFilterBox {
+    border-color: #4a4a4a;
+    background-color: #2c2c2c;
+}
+
+.pvt-dark .pvtFilterBox button {
+    color: #e0e0e0;
+}
+
+.pvt-dark .pvtFilterBox input[type="text"] {
+    color: #e0e0e0;
+    background-color: #383838;
+    border-color: #4a4a4a;
+}
+
+.pvt-dark .pvtFilterBox input {
+    border-color: #4a4a4a;
+    color: #e0e0e0;
+    background-color: #383838;
+}
+
+.pvt-dark .pvtFilterBox input:focus {
+    border-color: #6ed2f0;
+}
+
+.pvt-dark .pvtCheckContainer {
+    border-top-color: #4a4a4a;
+}
+
+.pvt-dark .pvtCheckContainer p.selected {
+    background: #424242;
+}
+
+.pvt-dark .pvtAxisContainer li.pvtPlaceholder {
+    border-color: #4a4a4a;
+}
+
+.pvt-dark .pvtRenderers select,
+.pvt-dark .pvtVals select {
+    background-color: #2c2c2c;
+    color: #e0e0e0;
+    border-color: #4a4a4a;
+}
+
+.pvt-dark .pvtFilterBox h4 {
+    color: #e0e0e0;
+}
+
+.pvt-dark .pvtFilterBox p {
+    color: #e0e0e0;
+}
