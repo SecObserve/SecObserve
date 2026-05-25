@@ -5,7 +5,7 @@ import Papa from "papaparse";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { useNotify } from "react-admin";
 import { useDropzone } from "react-dropzone";
-import PivotTableUI from "react-pivottable/PivotTableUI";
+import PivotTableUI, { PivotTableUIProps } from "react-pivottable/PivotTableUI";
 import { useSearchParams } from "react-router-dom";
 
 import axios_instance from "../../access_control/auth_provider/axios_instance";
@@ -111,8 +111,8 @@ const PivotTable = () => {
         localStorage.setItem(paramsKey, JSON.stringify(pivotConfig));
     }, [paramsKey, pivotConfig]);
 
-    const handlePivotChange = useCallback((newState: Record<string, unknown>) => {
-        setPivotConfig(sanitizePivotConfig(newState));
+    const handlePivotChange = useCallback((newState: PivotTableUIProps) => {
+        setPivotConfig(sanitizePivotConfig(newState as unknown as Record<string, unknown>));
     }, []);
 
     const onDrop = useCallback(
@@ -162,7 +162,7 @@ const PivotTable = () => {
 
                 if (!isMounted) return;
 
-                const results = Papa.parse(csvText, {
+                Papa.parse(csvText, {
                     header: true,
                     skipEmptyLines: true,
                     dynamicTyping: true,
@@ -173,11 +173,9 @@ const PivotTable = () => {
                             });
                         }
                         setData(results.data);
+                        setLoading(false);
                     },
                 });
-
-                setData(results.data);
-                setLoading(false);
             } catch (err) {
                 if (!isMounted) return;
                 notify(err instanceof Error ? err.message : "Failed to load data", {
