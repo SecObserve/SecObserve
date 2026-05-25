@@ -12,13 +12,89 @@ import axios_instance from "../../access_control/auth_provider/axios_instance";
 import "./PivotTable.css";
 
 const PivotTable = () => {
-    const [pivotState, setPivotState] = useState({});
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchParams] = useSearchParams();
     const notify = useNotify();
 
     const hasQueryParams = searchParams.toString().length > 0;
+
+    // Derive a stable, canonical key from the search params to scope pivot state per query
+    const paramsKey = (() => {
+        if (!hasQueryParams) return null;
+        const sorted = new URLSearchParams(searchParams.toString());
+        sorted.sort();
+        return `pivot_state:${sorted.toString()}`;
+    })();
+
+    // Only track pivot _configuration_ (rows, cols, vals, aggregatorName, filters, …).
+    // The actual dataset lives in `data` state and must NOT be serialized (it overflows localStorage).
+    const [pivotConfig, setPivotConfig] = useState<Record<string, unknown>>({});
+    const [lastLoadedParamsKey, setLastLoadedParamsKey] = useState<string | null>(null);
+
+    // Load stored config (for the current paramsKey) whenever it changes
+    useEffect(() => {
+        if (!paramsKey) {
+            setPivotConfig({});
+            setLastLoadedParamsKey(null);
+            return;
+        }
+        if (paramsKey === lastLoadedParamsKey) return; // already loaded for this key
+
+        const saved = localStorage.getItem(paramsKey);
+        setPivotConfig(saved ? JSON.parse(saved) : {});
+        setLastLoadedParamsKey(paramsKey);
+    }, [paramsKey]);
+
+    // Persist pivot config to localStorage whenever it changes
+    useEffect(() => {
+        if (!paramsKey) return;
+        if (Object.keys(pivotConfig).length === 0) return;
+        localStorage.setItem(paramsKey, JSON.stringify(pivotConfig));
+    }, [paramsKey, pivotConfig]);
+
+    // Whitelist of default aggregator names provided by react-pivottable
+    const DEFAULT_AGGREGATORS = [
+        "Count",
+        "Count Unique Values",
+        "List Unique Values",
+        "Sum",
+        "Integer Sum",
+        "Average",
+        "Median",
+        "Sample Variance",
+        "Sample Standard Deviation",
+        "Minimum",
+        "Maximum",
+        "First",
+        "Last",
+        "Sum over Sum",
+        "Sum as Fraction of Total",
+        "Sum as Fraction of Rows",
+        "Sum as Fraction of Columns",
+        "Count as Fraction of Total",
+        "Count as Fraction of Rows",
+        "Count as Fraction of Columns",
+    ] as const;
+
+    // Extract only the configuration fields; exclude data / config / aggregatorFunc
+    // which can be large or non-serializable. Only preserve aggregatorName
+    // if it matches a known default so we never save an unknown aggregator.
+    const handlePivotChange = useCallback((newState: Record<string, unknown>) => {
+        const {
+            data: _data,
+            config: _config,
+            aggregatorFunc: _aggregatorFunc,
+            aggregatorName: _savedAggName,
+            ...configOnly
+        } = newState as Record<string, unknown>;
+
+        const aggName = typeof _savedAggName === "string" ? _savedAggName : undefined;
+        if (aggName && DEFAULT_AGGREGATORS.includes(aggName)) {
+            (configOnly as any).aggregatorName = aggName;
+        }
+        setPivotConfig(configOnly);
+    }, []);
 
     const onDrop = useCallback(
         (acceptedFiles: File[]) => {
@@ -151,8 +227,8 @@ const PivotTable = () => {
                 <PivotTableUI
                     data={data}
                     unusedOrientationCutoff={Infinity}
-                    onChange={(newState: any) => setPivotState(newState)}
-                    {...pivotState}
+                    onChange={handlePivotChange}
+                    {...pivotConfig}
                 />
             )}
         </Paper>
