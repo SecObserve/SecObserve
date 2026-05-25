@@ -291,7 +291,13 @@ def _prepare_statement(observation: Observation) -> Optional[OpenVEXStatement]:
     openvex_status_notes = None
 
     if openvex_status == OpenVEX_Status.OPENVEX_STATUS_AFFECTED:
-        if observation.recommendation:
+        observation_log = get_current_modifying_observation_log(observation)
+        if observation_log and observation_log.vex_remediations:
+            statements = []
+            for remediation in observation_log.vex_remediations:
+                statements.append(f"{remediation["category"]}: {remediation["text"]}")
+            openvex_action_statement = "; ".join(statements)
+        elif observation.recommendation:
             openvex_action_statement = observation.recommendation
         else:
             openvex_action_statement = "No recommendation for remediation or mitigation available"

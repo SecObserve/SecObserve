@@ -10,9 +10,11 @@ import {
     OBSERVATION_SEVERITY_MEDIUM,
     OBSERVATION_SEVERITY_NONE,
     OBSERVATION_SEVERITY_UNKNOWN,
+    OBSERVATION_STATUS_AFFECTED,
     OBSERVATION_STATUS_FALSE_POSITIVE,
     OBSERVATION_STATUS_NOT_AFFECTED,
     OBSERVATION_STATUS_NOT_SECURITY,
+    OBSERVATION_STATUS_RISK_ACCEPTED,
 } from "../core/types";
 import {
     EVALUATION_RESULT_ALLOWED,
@@ -354,6 +356,15 @@ export const justificationIsEnabledForStatus = (status: string) => {
         OBSERVATION_STATUS_FALSE_POSITIVE,
     ].includes(status);
     return vex_enabled && justification_recommended_for_status;
+};
+
+export const remediationsAreEnabledForStatus = (status: string) => {
+    const vex_enabled = feature_vex_enabled();
+    const remediations_recommended_for_status = [
+        OBSERVATION_STATUS_RISK_ACCEPTED,
+        OBSERVATION_STATUS_AFFECTED,
+    ].includes(status);
+    return vex_enabled && remediations_recommended_for_status;
 };
 
 export const is_superuser = () => {

@@ -1,14 +1,18 @@
-import { Box, Divider, Paper, Stack, Typography } from "@mui/material";
+import { Box, Divider, Paper, Stack, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { RefObject } from "react";
 import { Fragment, useState } from "react";
 import {
+    ArrayField,
+    ArrayInput,
     BooleanField,
     BooleanInput,
     ChipField,
+    Datagrid,
     DateField,
     Labeled,
     ReferenceField,
     ReferenceInput,
+    SimpleFormIterator,
     TextField,
     useRecordContext,
 } from "react-admin";
@@ -33,6 +37,7 @@ import {
     feature_vex_enabled,
     getPrismTheme,
     justificationIsEnabledForStatus,
+    remediationsAreEnabledForStatus,
     settings_vex_justification_style,
 } from "../commons/functions";
 import {
@@ -48,6 +53,7 @@ import {
     OBSERVATION_SEVERITY_CHOICES,
     OBSERVATION_STATUS_CHOICES,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
+    OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../core/types";
 import general_rules from "./general_rules";
 import product_rules from "./product_rules";
@@ -89,6 +95,15 @@ function getProductLabel(product_data: any): string {
     }
     return "Product";
 }
+
+const VEXRemediationHeader = () => (
+    <TableHead>
+        <TableRow>
+            <TableCell>Category</TableCell>
+            <TableCell>Text</TableCell>
+        </TableRow>
+    </TableHead>
+);
 
 export const RuleShowComponent = ({ rule }: any) => {
     const { classes } = useStyles();
@@ -166,6 +181,20 @@ export const RuleShowComponent = ({ rule }: any) => {
                         {feature_vex_enabled() && rule.new_vex_justification && (
                             <Labeled label="New VEX justification">
                                 <TextField source="new_vex_justification" />
+                            </Labeled>
+                        )}
+                        {feature_vex_enabled() && rule.new_vex_remediations && (
+                            <Labeled label="New VEX remediations">
+                                <ArrayField source="new_vex_remediations">
+                                    <Datagrid
+                                        bulkActionButtons={false}
+                                        header={VEXRemediationHeader}
+                                        sx={{ paddingBottom: 2 }}
+                                    >
+                                        <TextField source="category" />
+                                        <TextField source="text" />
+                                    </Datagrid>
+                                </ArrayField>
                             </Labeled>
                         )}
                     </Stack>
@@ -335,8 +364,13 @@ export const non_duplicate_transform = (data: any, description: string) => {
         data.description_observation ??= "";
         data.new_severity ??= "";
         data.new_status ??= "";
+
         if (!justificationIsEnabledForStatus(data.new_status) || data.new_vex_justification == null) {
             data.new_vex_justification = "";
+        }
+
+        if (!remediationsAreEnabledForStatus(data.new_status)) {
+            data.new_vex_remediations = null;
         }
 
         data.scanner_prefix ??= "";
@@ -384,6 +418,7 @@ interface SeverityStatusInputProps {
 const SeverityStatusInput = ({ initialStatus }: SeverityStatusInputProps) => {
     const [status, setStatus] = useState(initialStatus);
     const justificationEnabled = justificationIsEnabledForStatus(status);
+    const remediationsEnabled = remediationsAreEnabledForStatus(status);
     const type = useWatch({ name: "type" });
 
     if (type === RULE_TYPE_FIELDS) {
@@ -414,6 +449,18 @@ const SeverityStatusInput = ({ initialStatus }: SeverityStatusInputProps) => {
                         label="New VEX justification"
                         choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
                     />
+                )}
+                {remediationsEnabled && (
+                    <ArrayInput source="new_vex_remediations" defaultValue={""} label="New VEX remediations">
+                        <SimpleFormIterator disableReordering inline>
+                            <AutocompleteInputMedium
+                                source="category"
+                                label=""
+                                choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                            />
+                            <TextInputWide source="text" multiline={true} minRows={3} />
+                        </SimpleFormIterator>
+                    </ArrayInput>
                 )}
             </Fragment>
         );
