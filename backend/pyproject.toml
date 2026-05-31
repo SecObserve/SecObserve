@@ -47,7 +47,7 @@ psycopg = { version = "3.3.4", extras = ["binary"] }  # https://github.com/psyco
 # ------------------------------------------------------------------------------
 defusedcsv = "3.0.0"  # https://github.com/raphaelm/defusedcsv
 openpyxl = "3.1.5"  # https://foss.heptapod.net/openpyxl/openpyxl
-jsonpickle = "4.1.1"  # https://github.com/jsonpickle/jsonpickle
+jsonpickle = "4.1.2"  # https://github.com/jsonpickle/jsonpickle
 pyyaml = "6.0.3"  # https://github.com/yaml/pyyaml
 
 # Field specifications
