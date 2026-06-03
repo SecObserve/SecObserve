@@ -75,7 +75,7 @@ SBOM_BULK_BATCH_SIZE = 100
 
 
 @dataclass
-class ImportParameters:
+class ImportParameters:  # pylint: disable=too-many-instance-attributes
     product: Product
     branch: Optional[Branch]
     service: Optional[Service]
@@ -85,11 +85,14 @@ class ImportParameters:
     docker_image_name_tag: str
     endpoint_url: str
     kubernetes_cluster: str
+    kubernetes_namespace: str
+    kubernetes_resource_type: str
+    kubernetes_resource_name: str
     imported_observations: list[Observation]
 
 
 @dataclass
-class FileUploadParameters:
+class FileUploadParameters:  # pylint: disable=too-many-instance-attributes
     product: Product
     branch: Optional[Branch]
     file: File
@@ -97,6 +100,9 @@ class FileUploadParameters:
     docker_image_name_tag: str
     endpoint_url: str
     kubernetes_cluster: str
+    kubernetes_namespace: str
+    kubernetes_resource_type: str
+    kubernetes_resource_name: str
     suppress_licenses: bool
     sbom: bool
 
@@ -109,6 +115,9 @@ class ApiImportParameters:
     docker_image_name_tag: str
     endpoint_url: str
     kubernetes_cluster: str
+    kubernetes_namespace: str
+    kubernetes_resource_type: str
+    kubernetes_resource_name: str
 
 
 def file_upload_observations(
@@ -147,6 +156,9 @@ def file_upload_observations(
             docker_image_name_tag=file_upload_parameters.docker_image_name_tag,
             endpoint_url=file_upload_parameters.endpoint_url,
             kubernetes_cluster=file_upload_parameters.kubernetes_cluster,
+            kubernetes_namespace=file_upload_parameters.kubernetes_namespace,
+            kubernetes_resource_type=file_upload_parameters.kubernetes_resource_type,
+            kubernetes_resource_name=file_upload_parameters.kubernetes_resource_name,
             imported_observations=imported_observations,
         )
 
@@ -228,6 +240,9 @@ def api_import_observations(
         docker_image_name_tag=api_import_parameters.docker_image_name_tag,
         endpoint_url=api_import_parameters.endpoint_url,
         kubernetes_cluster=api_import_parameters.kubernetes_cluster,
+        kubernetes_namespace=api_import_parameters.kubernetes_namespace,
+        kubernetes_resource_type=api_import_parameters.kubernetes_resource_type,
+        kubernetes_resource_name=api_import_parameters.kubernetes_resource_name,
         imported_observations=imported_observations,
     )
 
@@ -584,6 +599,12 @@ def _prepare_imported_observation(import_parameters: ImportParameters, imported_
         imported_observation.origin_endpoint_url = import_parameters.endpoint_url
     if import_parameters.kubernetes_cluster:
         imported_observation.origin_kubernetes_cluster = import_parameters.kubernetes_cluster
+    if import_parameters.kubernetes_namespace:
+        imported_observation.origin_kubernetes_namespace = import_parameters.kubernetes_namespace
+    if import_parameters.kubernetes_resource_type:
+        imported_observation.origin_kubernetes_resource_type = import_parameters.kubernetes_resource_type
+    if import_parameters.kubernetes_resource_name:
+        imported_observation.origin_kubernetes_resource_name = import_parameters.kubernetes_resource_name
 
 
 def _process_current_observation(

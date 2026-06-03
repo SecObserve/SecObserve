@@ -143,6 +143,9 @@ def _api_import_observations(
     docker_image_name_tag = request_serializer.validated_data.get("docker_image_name_tag")
     endpoint_url = request_serializer.validated_data.get("endpoint_url")
     kubernetes_cluster = request_serializer.validated_data.get("kubernetes_cluster")
+    kubernetes_namespace = request_serializer.validated_data.get("kubernetes_namespace")
+    kubernetes_resource_type = request_serializer.validated_data.get("kubernetes_resource_type")
+    kubernetes_resource_name = request_serializer.validated_data.get("kubernetes_resource_name")
 
     api_import_parameters = ApiImportParameters(
         api_configuration=api_configuration,
@@ -151,6 +154,9 @@ def _api_import_observations(
         docker_image_name_tag=docker_image_name_tag,
         endpoint_url=endpoint_url,
         kubernetes_cluster=kubernetes_cluster,
+        kubernetes_namespace=kubernetes_namespace,
+        kubernetes_resource_type=kubernetes_resource_type,
+        kubernetes_resource_name=kubernetes_resource_name,
     )
 
     (
@@ -287,13 +293,16 @@ def _get_service_name(product: Product, request_serializer: Serializer) -> str:
     return service_name
 
 
-def _file_upload_observations(
+def _file_upload_observations(  # pylint: disable=too-many-locals
     request_serializer: Serializer, product: Product, branch: Optional[Branch], service_name: str
 ) -> dict[str, int]:
     file = request_serializer.validated_data.get("file")
     docker_image_name_tag = request_serializer.validated_data.get("docker_image_name_tag")
     endpoint_url = request_serializer.validated_data.get("endpoint_url")
     kubernetes_cluster = request_serializer.validated_data.get("kubernetes_cluster")
+    kubernetes_namespace = request_serializer.validated_data.get("kubernetes_namespace")
+    kubernetes_resource_type = request_serializer.validated_data.get("kubernetes_resource_type")
+    kubernetes_resource_name = request_serializer.validated_data.get("kubernetes_resource_name")
     suppress_licenses = request_serializer.validated_data.get("suppress_licenses", False)
 
     file_upload_parameters = FileUploadParameters(
@@ -304,6 +313,9 @@ def _file_upload_observations(
         docker_image_name_tag=docker_image_name_tag,
         endpoint_url=endpoint_url,
         kubernetes_cluster=kubernetes_cluster,
+        kubernetes_namespace=kubernetes_namespace,
+        kubernetes_resource_type=kubernetes_resource_type,
+        kubernetes_resource_name=kubernetes_resource_name,
         suppress_licenses=suppress_licenses,
         sbom=False,
     )
@@ -345,6 +357,9 @@ def _file_upload_sbom(
         docker_image_name_tag="",
         endpoint_url="",
         kubernetes_cluster="",
+        kubernetes_namespace="",
+        kubernetes_resource_type="",
+        kubernetes_resource_name="",
         suppress_licenses=False,
         sbom=True,
     )

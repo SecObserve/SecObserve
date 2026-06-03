@@ -52,6 +52,9 @@ def task_api_import() -> str:
                     docker_image_name_tag=api_configuration.automatic_import_docker_image_name_tag,
                     endpoint_url=api_configuration.automatic_import_endpoint_url,
                     kubernetes_cluster=api_configuration.automatic_import_kubernetes_cluster,
+                    kubernetes_namespace="",
+                    kubernetes_resource_type="",
+                    kubernetes_resource_name="",
                 )
                 (
                     observations_new,

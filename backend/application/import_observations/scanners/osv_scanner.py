@@ -168,6 +168,9 @@ def scan_license_components(
         docker_image_name_tag="",
         endpoint_url="",
         kubernetes_cluster="",
+        kubernetes_namespace="",
+        kubernetes_resource_type="",
+        kubernetes_resource_name="",
         imported_observations=observations,
     )
     numbers: Tuple[int, int, int] = _process_data(import_parameters, Settings.load())
