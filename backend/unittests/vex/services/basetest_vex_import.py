@@ -30,6 +30,9 @@ class BaseTestVEXImport(TestCase):
                 docker_image_name_tag="",
                 endpoint_url="",
                 kubernetes_cluster="",
+                kubernetes_namespace="",
+                kubernetes_resource_type="",
+                kubernetes_resource_name="",
                 suppress_licenses=False,
                 sbom=False,
             )
