@@ -22,6 +22,7 @@ from django.db.models import (
     TextField,
 )
 from django.utils import timezone
+from encrypted_model_fields.fields import EncryptedCharField
 
 from application.access_control.models import Authorization_Group, User
 from application.core.types import (
@@ -98,7 +99,8 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     issue_tracker_type = CharField(max_length=12, choices=Issue_Tracker.ISSUE_TRACKER_TYPE_CHOICES, blank=True)
     issue_tracker_base_url = CharField(max_length=255, blank=True)
     issue_tracker_username = CharField(max_length=255, blank=True)
-    issue_tracker_api_key = CharField(max_length=255, blank=True)
+    issue_tracker_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
+    # We treat EncryptedCharField as a regular CharField
     issue_tracker_project_id = CharField(max_length=255, blank=True)
     issue_tracker_labels = CharField(max_length=255, blank=True)
     issue_tracker_issue_type = CharField(max_length=255, blank=True)

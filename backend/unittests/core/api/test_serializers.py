@@ -1,4 +1,4 @@
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from rest_framework.serializers import ValidationError
 
@@ -17,6 +17,25 @@ from application.core.api.serializers_product import (
 from application.core.models import Observation, Product
 from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
+
+
+class TestProductSerializer(BaseTestCase):
+    @patch("application.core.api.serializers_product.user_has_permission")
+    def test_issue_tracker_api_key_hidden_without_edit(self, mock_permissions):
+        self.product_1.issue_tracker_api_key = "secret-token"
+        self.product_1.repository_default_branch = None
+        self.product_1.save()
+
+        mock_permissions.return_value = False
+        data = ProductSerializer(self.product_1).data
+        self.assertNotIn("issue_tracker_api_key", data)
+
+        mock_permissions.return_value = True
+        data = ProductSerializer(self.product_1).data
+        self.assertEqual("secret-token", data["issue_tracker_api_key"])
+        mock_permissions.assert_has_calls(
+            [call(self.product_1, Permissions.Product_Edit), call(self.product_1, Permissions.Product_Edit)]
+        )
 
 
 class TestBranchSerializer(BaseTestCase):
