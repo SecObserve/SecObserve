@@ -61,7 +61,8 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
         responses={HTTP_204_NO_CONTENT: None},
     )
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
-    def mark_as_viewed(self, request: Request, pk: int) -> Response:
+    def mark_as_viewed(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        # pk is needed in the signature
         notification = self.get_object()
 
         user = request.user if isinstance(request.user, User) else None
