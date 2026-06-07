@@ -10,6 +10,7 @@ import LabeledTextField from "../../commons/custom_fields/LabeledTextField";
 import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 mermaid.initialize({
+    securityLevel: "strict",
     flowchart: {
         padding: 10,
     },
@@ -108,7 +109,7 @@ const MermaidDependencies = ({ dependencies }: ComponentShowProps) => {
         if (dependencies && mermaidRef.current) {
             const element = mermaidRef.current;
             element.removeAttribute("data-processed");
-            element.innerHTML = createMermaidGraph(dependencies);
+            element.textContent = createMermaidGraph(dependencies);
             mermaid.run({ nodes: [element] });
         }
     }, [dependencies, theme]);
