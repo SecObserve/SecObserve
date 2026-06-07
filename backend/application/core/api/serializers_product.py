@@ -18,7 +18,10 @@ from application.access_control.api.serializers import (
     UserListSerializer,
 )
 from application.access_control.services.current_user import get_current_user
-from application.authorization.services.authorization import get_highest_user_role
+from application.authorization.services.authorization import (
+    get_highest_user_role,
+    user_has_permission,
+)
 from application.authorization.services.roles_permissions import (
     Permissions,
     Roles,
@@ -122,6 +125,10 @@ class ProductCoreSerializer(ModelSerializer):
 
     def to_representation(self, instance: Product) -> dict[str, Any]:
         data = super().to_representation(instance)
+
+        # Only users who can edit a product are allowed to see the issue tracker API key
+        if not user_has_permission(instance, Permissions.Product_Edit):
+            data.pop("issue_tracker_api_key", None)
 
         data["observation_notification_status_list"] = (
             instance.observation_notification_statuses.split(",") if instance.observation_notification_statuses else []
