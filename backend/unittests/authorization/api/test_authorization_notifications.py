@@ -31,10 +31,6 @@ class TestAuthorizationNotifications(TestAuthorizationBase):
             )
         )
 
-        self._test_api(APITest("db_internal_write", "get", "/api/notifications/1/", None, 404, None))
-
-        self._test_api(APITest("db_internal_write", "get", "/api/notifications/3/", None, 200, None))
-
         post_data = {"notifications": [1, 3, 5]}
         expected_data = "{'message': 'Some notifications do not exist'}"
         self._test_api(

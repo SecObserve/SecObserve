@@ -8,7 +8,7 @@ from rest_framework.mixins import DestroyModelMixin, ListModelMixin, RetrieveMod
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.status import HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND
+from rest_framework.status import HTTP_204_NO_CONTENT
 from rest_framework.viewsets import GenericViewSet
 
 from application.access_control.models import User
@@ -19,10 +19,7 @@ from application.notifications.api.serializers import (
     NotificationSerializer,
 )
 from application.notifications.models import Notification, Notification_Viewed
-from application.notifications.queries.notification import (
-    get_notification_by_id,
-    get_notifications,
-)
+from application.notifications.queries.notification import get_notifications
 from application.notifications.services.notification import bulk_mark_as_viewed
 
 
@@ -63,15 +60,14 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
         request=None,
         responses={HTTP_204_NO_CONTENT: None},
     )
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated])
     def mark_as_viewed(self, request: Request, pk: int) -> Response:
-        if not get_notification_by_id(pk):
-            return Response(status=HTTP_404_NOT_FOUND)
+        notification = self.get_object()
 
         user = request.user if isinstance(request.user, User) else None
 
         Notification_Viewed.objects.update_or_create(
-            notification_id=pk,
+            notification_id=notification.pk,
             user=user,
         )
         return Response(status=HTTP_204_NO_CONTENT)

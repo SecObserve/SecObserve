@@ -8,6 +8,7 @@ from rest_framework.status import (
 )
 from rest_framework.test import APIClient
 
+from application.access_control.models import User
 from application.access_control.queries.user import get_user_by_username
 from application.notifications.models import Notification_Viewed
 from unittests.base_test_case import BaseTestCase
@@ -53,15 +54,28 @@ class TestViews(BaseTestCase):
         self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
 
     @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_notification_mark_as_viewed_not_found_for_user(self, mock_authentication):
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+
+        user = User.objects.get(username="db_internal_write")
+        mock_authentication.return_value = user, None
+
+        api_client = APIClient()
+        response = api_client.post("/api/notifications/2/mark_as_viewed/")
+
+        self.assertEqual(HTTP_404_NOT_FOUND, response.status_code)
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
     def test_notification_mark_as_viewed_successful(self, mock_authentication):
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
 
-        mock_authentication.return_value = self.user_internal, None
+        user = User.objects.get(username="db_internal_write")
+        mock_authentication.return_value = user, None
 
         api_client = APIClient()
-        response = api_client.post("/api/notifications/1/mark_as_viewed/")
+        response = api_client.post("/api/notifications/3/mark_as_viewed/")
 
         self.assertEqual(HTTP_204_NO_CONTENT, response.status_code)
 
-        notification_viewed = Notification_Viewed.objects.get(notification_id=1, user=self.user_internal)
+        notification_viewed = Notification_Viewed.objects.get(notification_id=3, user=user)
         self.assertIsNotNone(notification_viewed)
