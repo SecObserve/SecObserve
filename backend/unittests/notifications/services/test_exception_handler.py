@@ -47,7 +47,10 @@ class TestExceptionHandler(BaseTestCase):
     @patch("application.notifications.api.exception_handler.logger.error")
     @patch("application.notifications.api.exception_handler.format_log_message")
     @patch("application.notifications.api.exception_handler.send_exception_notification")
-    def test_no_response(self, mock_notify, mock_format, mock_logging):
+    @patch("application.notifications.api.exception_handler.get_current_username")
+    def test_no_response(self, mock_username, mock_notify, mock_format, mock_logging):
+        mock_username.return_value = "user_internal@example.com"
+
         exception = Exception("Something unexpected has happened")
         response = custom_exception_handler(exception, None)
 
@@ -60,7 +63,10 @@ class TestExceptionHandler(BaseTestCase):
 
     @patch("application.notifications.api.exception_handler.logger.warning")
     @patch("application.notifications.api.exception_handler.format_log_message")
-    def test_authentication_failed(self, mock_format, mock_logging):
+    @patch("application.notifications.api.exception_handler.get_current_username")
+    def test_authentication_failed(self, mock_username, mock_format, mock_logging):
+        mock_username.return_value = "user_internal@example.com"
+
         exception = AuthenticationFailed("Authentication has failed")
         response = custom_exception_handler(exception, None)
 
@@ -72,7 +78,10 @@ class TestExceptionHandler(BaseTestCase):
 
     @patch("application.notifications.api.exception_handler.logger.warning")
     @patch("application.notifications.api.exception_handler.format_log_message")
-    def test_permission_denied(self, mock_format, mock_logging):
+    @patch("application.notifications.api.exception_handler.get_current_username")
+    def test_permission_denied(self, mock_username, mock_format, mock_logging):
+        mock_username.return_value = "user_internal@example.com"
+
         exception = PermissionDenied("Not authentication")
         response = custom_exception_handler(exception, None)
 
@@ -97,7 +106,10 @@ class TestExceptionHandler(BaseTestCase):
     @patch("application.notifications.api.exception_handler.logger.error")
     @patch("application.notifications.api.exception_handler.format_log_message")
     @patch("application.notifications.api.exception_handler.send_exception_notification")
-    def test_server_error(self, mock_notification, mock_format, mock_logging):
+    @patch("application.notifications.api.exception_handler.get_current_username")
+    def test_server_error(self, mock_username, mock_notification, mock_format, mock_logging):
+        mock_username.return_value = "user_internal@example.com"
+
         exception = APIException(Exception("Not authentication"))
         response = custom_exception_handler(exception, None)
 
