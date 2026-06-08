@@ -8,9 +8,26 @@ from defusedcsv import csv
 from django.db.models.query import QuerySet
 from django.http import HttpResponse
 from openpyxl import Workbook
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.styles import Font
 
 logger = logging.getLogger("secobserve.commons")
+
+
+def _escape_formula(value: Any) -> Any:
+    if not value or not isinstance(value, str):
+        return value
+
+    # Removing illegal XML characters: Excel cannot handle certain control
+    # characters (such as ASCII 0-31)
+    cleaned = ILLEGAL_CHARACTERS_RE.sub("", value)
+
+    # Neutralize spreadsheet formula injection in string cells, matching what
+    # defusedcsv does for CSV: prefix a leading formula trigger with a quote.
+    if cleaned[0] in ("=", "+", "-", "@", "\t", "\r"):
+        cleaned = "'" + cleaned
+
+    return cleaned
 
 
 def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_keys: list[str]) -> Workbook:
@@ -43,6 +60,7 @@ def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_key
                         value = str(getattr(current_object, key))
                     if value and isinstance(value, datetime):
                         value = value.replace(tzinfo=None)
+                    value = _escape_formula(value)
                     try:
                         worksheet.cell(row=row_num, column=col_num, value=value)
                     except Exception as e:
