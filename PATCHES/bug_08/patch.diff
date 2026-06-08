@@ -1,0 +1,269 @@
+--- a/backend/application/notifications/services/send_notifications_base.py
++++ b/backend/application/notifications/services/send_notifications_base.py
+@@ -39,7 +39,6 @@ def send_email_notification(notification_email_to: str, subject: str, template:
+ @task()
+ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
+     notification_message = _create_notification_message(template, **kwargs)
+     if notification_message:
+-        notification_message = notification_message.replace("&quot;", '\\"')
+         try:
+             response = requests.request(
+@@ -61,9 +60,7 @@ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None
+ @task()
+ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
+     notification_message = _create_notification_message(template, **kwargs)
+     if notification_message:
+-        notification_message = notification_message.replace("&#x27;", "\\'")
+-        notification_message = notification_message.replace("&quot;", '\\"')
+         try:
+             response = requests.request(
+                 method="POST",
+--- a/backend/application/notifications/templates/slack_observation.tpl
++++ b/backend/application/notifications/templates/slack_observation.tpl
+@@ -1,4 +1,4 @@
+ {
+ 	"type": "mrkdwn",
+-	"text": "*{{ first_line }}*\n\nProduct: {{ observation.product.name }}\n\nSeverity: {{ observation.current_severity }}\n\nStatus: {{ observation.current_status }}\n\n{% if observation.current_priority %}Priority: {{ observation.current_priority }}{% endif %}\n\nURL: {{ observation_url }}"
++	"text": "*{{ first_line|escapejs }}*\n\nProduct: {{ observation.product.name|escapejs }}\n\nSeverity: {{ observation.current_severity|escapejs }}\n\nStatus: {{ observation.current_status|escapejs }}\n\n{% if observation.current_priority %}Priority: {{ observation.current_priority|escapejs }}{% endif %}\n\nURL: {{ observation_url|escapejs }}"
+ }
+--- a/backend/application/notifications/templates/slack_observation_title.tpl
++++ b/backend/application/notifications/templates/slack_observation_title.tpl
+@@ -1,4 +1,4 @@
+ {
+ 	"type": "mrkdwn",
+-	"text": "*{{ first_line }}*\n\nSeverity: {{ observation.current_severity }}\n\nStatus: {{ observation.current_status }}\n\n{% if observation.current_priority %}Priority: {{ observation.current_priority }}{% endif %}\n\nURL: {{ url }}"
++	"text": "*{{ first_line|escapejs }}*\n\nSeverity: {{ observation.current_severity|escapejs }}\n\nStatus: {{ observation.current_status|escapejs }}\n\n{% if observation.current_priority %}Priority: {{ observation.current_priority|escapejs }}{% endif %}\n\nURL: {{ url|escapejs }}"
+ }
+--- a/backend/application/notifications/templates/slack_exception.tpl
++++ b/backend/application/notifications/templates/slack_exception.tpl
+@@ -1,4 +1,4 @@
+ {
+ 	"type": "mrkdwn",
+-	"text": "*Exception {{ exception_class }} has occured*\n\n*Exception class:*\n{{ exception_class }}\n\n*Exception message:*\n{{ exception_message }}\n\n*Timestamp:*\n{{ date_time|date:"Y-m-d H:i:s.u" }}\n\n*Trace:*\n{{ exception_trace }}"
++	"text": "*Exception {{ exception_class|escapejs }} has occured*\n\n*Exception class:*\n{{ exception_class|escapejs }}\n\n*Exception message:*\n{{ exception_message|escapejs }}\n\n*Timestamp:*\n{{ date_time|date:"Y-m-d H:i:s.u"|escapejs }}\n\n*Trace:*\n{{ exception_trace|escapejs }}"
+ }
+--- a/backend/application/notifications/templates/slack_task_exception.tpl
++++ b/backend/application/notifications/templates/slack_task_exception.tpl
+@@ -1,4 +1,4 @@
+ {
+ 	"type": "mrkdwn",
+-	"text": "*Exception {{ exception_class }} has occured while processing background task*\n\n*Function:*\n{{ function }}\n\n*Arguments:*\n{{ arguments }}\n\n*User:*\n{{ user.full_name }}\n\n*Exception class:*\n{{ exception_class }}\n\n*Exception message:*\n{{ exception_message }}\n\n*Timestamp:*\n{{ date_time|date:"Y-m-d H:i:s.u" }}\n\n*Trace:*\n{{ exception_trace }}"
++	"text": "*Exception {{ exception_class|escapejs }} has occured while processing background task*\n\n*Function:*\n{{ function|escapejs }}\n\n*Arguments:*\n{{ arguments|escapejs }}\n\n*User:*\n{{ user.full_name|escapejs }}\n\n*Exception class:*\n{{ exception_class|escapejs }}\n\n*Exception message:*\n{{ exception_message|escapejs }}\n\n*Timestamp:*\n{{ date_time|date:"Y-m-d H:i:s.u"|escapejs }}\n\n*Trace:*\n{{ exception_trace|escapejs }}"
+ }
+--- a/backend/application/notifications/templates/slack_product_security_gate.tpl
++++ b/backend/application/notifications/templates/slack_product_security_gate.tpl
+@@ -1,4 +1,4 @@
+ {
+ 	"type": "mrkdwn",
+-	"text": "*Security gate for product {{ product.name }} has changed to {{ security_gate_status }}*\n\nView Product <{{ product_url }}|{{ product.name }}>"
++	"text": "*Security gate for product {{ product.name|escapejs }} has changed to {{ security_gate_status|escapejs }}*\n\nView Product <{{ product_url|escapejs }}|{{ product.name|escapejs }}>"
+ }
+--- a/backend/application/notifications/templates/msteams_observation.tpl
++++ b/backend/application/notifications/templates/msteams_observation.tpl
+@@ -1,21 +1,21 @@
+ {
+     "@type": "MessageCard",
+     "@context": "https://schema.org/extensions",
+-    "title": "{{ first_line }}",
+-    "summary": "{{ first_line }}",
++    "title": "{{ first_line|escapejs }}",
++    "summary": "{{ first_line|escapejs }}",
+     "sections": [{
+         "facts": [{
+             "name": "Product:",
+-            "value": "{{ observation.product.name }}"
++            "value": "{{ observation.product.name|escapejs }}"
+         }, {
+             "name": "Severity:",
+-            "value": "{{ observation.current_severity }}"
++            "value": "{{ observation.current_severity|escapejs }}"
+         }, {
+             "name": "Status:",
+-            "value": "{{ observation.current_status }}"
++            "value": "{{ observation.current_status|escapejs }}"
+         }, {
+             "name": "Priority:",
+-            "value": "{{ observation.current_priority }}"
++            "value": "{{ observation.current_priority|escapejs }}"
+         }],
+         "markdown": true
+     }],
+@@ -22,11 +22,11 @@
+     "potentialAction": [
+         {
+             "@type": "OpenUri",
+-            "name": "View observation {{ observation.title }}",
++            "name": "View observation {{ observation.title|escapejs }}",
+             "targets": [
+                 {
+                     "os": "default",
+-                    "uri": "{{ observation_url }}"
++                    "uri": "{{ observation_url|escapejs }}"
+                 }
+             ]
+         }
+--- a/backend/application/notifications/templates/msteams_observation_title.tpl
++++ b/backend/application/notifications/templates/msteams_observation_title.tpl
+@@ -1,18 +1,18 @@
+ {
+     "@type": "MessageCard",
+     "@context": "https://schema.org/extensions",
+-    "title": "{{ first_line }}",
+-    "summary": "{{ first_line }}",
++    "title": "{{ first_line|escapejs }}",
++    "summary": "{{ first_line|escapejs }}",
+     "sections": [{
+         "facts": [{
+             "name": "Severity:",
+-            "value": "{{ observation.current_severity }}"
++            "value": "{{ observation.current_severity|escapejs }}"
+         }, {
+             "name": "Status:",
+-            "value": "{{ observation.current_status }}"
++            "value": "{{ observation.current_status|escapejs }}"
+         }, {
+             "name": "Priority:",
+-            "value": "{{ observation.current_priority }}"
++            "value": "{{ observation.current_priority|escapejs }}"
+         }],
+         "markdown": true
+     }],
+@@ -19,11 +19,11 @@
+     "potentialAction": [
+         {
+             "@type": "OpenUri",
+-            "name": "View observation title {{ observation.title }}",
++            "name": "View observation title {{ observation.title|escapejs }}",
+             "targets": [
+                 {
+                     "os": "default",
+-                    "uri": "{{ url }}"
++                    "uri": "{{ url|escapejs }}"
+                 }
+             ]
+         }
+--- a/backend/application/notifications/templates/msteams_product_security_gate.tpl
++++ b/backend/application/notifications/templates/msteams_product_security_gate.tpl
+@@ -1,16 +1,16 @@
+ {
+     "@type": "MessageCard",
+     "@context": "https://schema.org/extensions",
+-    "title": "Security gate for product {{ product.name }} has changed to {{ security_gate_status }}",
+-    "summary": "Security gate for product {{ product.name }} has changed to {{ security_gate_status }}",
++    "title": "Security gate for product {{ product.name|escapejs }} has changed to {{ security_gate_status|escapejs }}",
++    "summary": "Security gate for product {{ product.name|escapejs }} has changed to {{ security_gate_status|escapejs }}",
+     "potentialAction": [
+         {
+             "@type": "OpenUri",
+-            "name": "View Product {{ product.name }}",
++            "name": "View Product {{ product.name|escapejs }}",
+             "targets": [
+                 {
+                     "os": "default",
+-                    "uri": "{{ product_url }}"
++                    "uri": "{{ product_url|escapejs }}"
+                 }
+             ]
+         }
+--- a/backend/application/notifications/templates/msteams_exception.tpl
++++ b/backend/application/notifications/templates/msteams_exception.tpl
+@@ -1,21 +1,21 @@
+ {
+     "@type": "MessageCard",
+     "@context": "https://schema.org/extensions",
+-    "title": "Exception {{ exception_class }} has occured",
+-    "summary": "Exception {{ exception_class }} has occured",
++    "title": "Exception {{ exception_class|escapejs }} has occured",
++    "summary": "Exception {{ exception_class|escapejs }} has occured",
+     "sections": [{
+         "facts": [{
+             "name": "Exception class:",
+-            "value": "{{ exception_class }}"
++            "value": "{{ exception_class|escapejs }}"
+         }, {
+             "name": "Exception message:",
+-            "value": "{{ exception_message }}"
++            "value": "{{ exception_message|escapejs }}"
+         }, {
+             "name": "Timestamp:",
+-            "value": "{{ date_time|date:"Y-m-d H:i:s.u" }}"
++            "value": "{{ date_time|date:"Y-m-d H:i:s.u"|escapejs }}"
+         }, {
+             "name": "Trace:",
+-            "value": "{{ exception_trace }}"
++            "value": "{{ exception_trace|escapejs }}"
+         }],
+         "markdown": true
+     }],
+--- a/backend/application/notifications/templates/msteams_task_exception.tpl
++++ b/backend/application/notifications/templates/msteams_task_exception.tpl
+@@ -1,30 +1,30 @@
+ {
+     "@type": "MessageCard",
+     "@context": "https://schema.org/extensions",
+-    "title": "Exception {{ exception_class }} has occured while processing background task",
+-    "summary": "Exception {{ exception_class }} has occured",
++    "title": "Exception {{ exception_class|escapejs }} has occured while processing background task",
++    "summary": "Exception {{ exception_class|escapejs }} has occured",
+     "sections": [{
+         "facts": [{
+             "name": "Function:",
+-            "value": "{{ function }}"
++            "value": "{{ function|escapejs }}"
+         }, {
+             "name": "Arguments:",
+-            "value": "{{ arguments }}"
++            "value": "{{ arguments|escapejs }}"
+         }, {
+             "name": "User:",
+-            "value": "{{ user.full_name }}"
++            "value": "{{ user.full_name|escapejs }}"
+         }, {
+             "name": "Exception class:",
+-            "value": "{{ exception_class }}"
++            "value": "{{ exception_class|escapejs }}"
+         }, {
+             "name": "Exception message:",
+-            "value": "{{ exception_message }}"
++            "value": "{{ exception_message|escapejs }}"
+         }, {
+             "name": "Timestamp:",
+-            "value": "{{ date_time|date:"Y-m-d H:i:s.u" }}"
++            "value": "{{ date_time|date:"Y-m-d H:i:s.u"|escapejs }}"
+         }, {
+             "name": "Trace:",
+-            "value": "{{ exception_trace }}"
++            "value": "{{ exception_trace|escapejs }}"
+         }],
+         "markdown": true
+     }],
+--- a/backend/unittests/notifications/services/test_send_notifications_base.py
++++ b/backend/unittests/notifications/services/test_send_notifications_base.py
+@@ -1,4 +1,5 @@
+ import os
++import json
+ from datetime import datetime
+ from unittest.mock import patch
+ 
+@@ -291,3 +292,21 @@ class TestPushNotifications(BaseTestCase):
+ }
+ """
+         self.assertEqual(expected_message, message)
++
++    def test_create_notification_message_backslash_breakout(self):
++        # A backslash in an import-derived title must not break JSON string
++        # parity in the hand-built Slack/Teams payloads (template-injection f013).
++        self.observation_1.title = 'evil\\", "extra": "x'
++        message = _create_notification_message(
++            "msteams_observation.tpl",
++            observation=self.observation_1,
++            observation_url="observation_url",
++            first_line='New notification for observation "evil\\", "extra": "x"',
++        )
++        # Before the fix the rendered payload is not valid JSON because the
++        # trailing backslash escapes the closing quote; after the fix it parses.
++        parsed = json.loads(message)
++        self.assertNotIn(
++            "extra",
++            [action["name"] for action in parsed["potentialAction"]][0].split("View observation ")[-1][:4],
++        )

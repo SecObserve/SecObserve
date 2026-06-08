@@ -1,0 +1,21 @@
+--- a/backend/application/core/services/assessment.py
++++ b/backend/application/core/services/assessment.py
+@@ def save_assessment(  # pylint: disable=too-many-arguments
+     assessment_status = (
+         Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
+         if _get_assessments_need_approval(observation.product)
+         and (
+             (log_severity and log_severity != observation.current_severity)
+-            or (log_status and log_status != observation.current_status)
++            or (
++                log_status
++                and log_status != observation.current_status
++                and new_status != Status.STATUS_IN_REVIEW
++            )
+             or (log_priority and log_priority != observation.current_priority)
+             or (log_vex_justification and log_vex_justification != observation.current_vex_justification)
+             or (log_vex_remediations and log_vex_remediations != observation.current_vex_remediations)
+         )
+-        and new_status != Status.STATUS_IN_REVIEW
+         else Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED
+     )

@@ -1,0 +1,136 @@
+--- a/backend/application/notifications/services/send_notifications_base.py
++++ b/backend/application/notifications/services/send_notifications_base.py
+@@ -1,5 +1,7 @@
+ import logging
++import socket
+ from typing import Any, Optional
++from urllib.parse import urlsplit
+ 
+ import environ
+ import requests
+@@ -36,11 +38,14 @@ def send_email_notification(notification_email_to: str, subject: str, template:
+ 
+ 
+ @task()
+ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
++    if not _validate_webhook_url(webhook):
++        return
+     notification_message = _create_notification_message(template, **kwargs)
+     if notification_message:
+         notification_message = notification_message.replace(""", '\\"')
+         try:
+             response = requests.request(
+                 method="POST",
+                 url=webhook,
+                 data=notification_message,
++                allow_redirects=False,
+                 timeout=60,
+             )
+             response.raise_for_status()
+@@ -59,11 +64,14 @@ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None
+ 
+ 
+ @task()
+ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
++    if not _validate_webhook_url(webhook):
++        return
+     notification_message = _create_notification_message(template, **kwargs)
+     if notification_message:
+         notification_message = notification_message.replace("'", "\\'")
+         notification_message = notification_message.replace(""", '\\"')
+         try:
+             response = requests.request(
+                 method="POST",
+                 url=webhook,
+                 data=notification_message,
++                allow_redirects=False,
+                 timeout=60,
+             )
+             response.raise_for_status()
+@@ -81,6 +89,38 @@ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
+             )
+ 
+ 
++def _validate_webhook_url(webhook: str) -> bool:
++    split_url = urlsplit(webhook)
++    if split_url.scheme != "https" or not split_url.hostname:
++        logger.error(
++            format_log_message(
++                message=f"Webhook URL must use https and a valid host: {webhook}",
++            )
++        )
++        return False
++
++    try:
++        address_infos = socket.getaddrinfo(split_url.hostname, split_url.port or 443, proto=socket.IPPROTO_TCP)
++    except socket.gaierror as e:
++        logger.error(
++            format_log_message(
++                message=f"Could not resolve webhook host: {webhook}",
++                exception=e,
++            )
++        )
++        return False
++
++    for address_info in address_infos:
++        ip_address = ipaddress.ip_address(address_info[4][0])
++        if (
++            ip_address.is_private
++            or ip_address.is_loopback
++            or ip_address.is_link_local
++            or ip_address.is_reserved
++            or ip_address.is_multicast
++            or ip_address.is_unspecified
++        ):
++            logger.error(
++                format_log_message(
++                    message=f"Webhook host resolves to a non-public address, refusing request: {webhook}",
++                )
++            )
++            return False
++
++    return True
++
++
+ def _create_notification_message(template: str, **kwargs: Any) -> Optional[str]:
+     try:
+         return render_to_string(template, kwargs)
+--- a/backend/application/notifications/services/send_notifications_base.py
++++ b/backend/application/notifications/services/send_notifications_base.py
+@@ -1,4 +1,5 @@
+ import logging
++import ipaddress
+ import socket
+ from typing import Any, Optional
+ from urllib.parse import urlsplit
+--- a/backend/unittests/notifications/services/test_send_notifications_base.py
++++ b/backend/unittests/notifications/services/test_send_notifications_base.py
+@@ -100,6 +100,18 @@ class TestPushNotifications(BaseTestCase):
+ 
+     # --- send_msteams_notification ---
+ 
++    @patch("application.notifications.services.send_notifications_base._create_notification_message")
++    @patch("application.notifications.services.send_notifications_base.requests.request")
++    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
++    def test_send_msteams_notification_internal_host_blocked(
++        self, mock_getaddrinfo, mock_request, mock_create_message
++    ):
++        mock_getaddrinfo.return_value = [(2, 1, 6, "", ("127.0.0.1", 443))]
++
++        send_msteams_notification("https://localhost/webhook", "test_template")
++
++        mock_create_message.assert_not_called()
++        mock_request.assert_not_called()
++
+     @patch("application.notifications.services.send_notifications_base._create_notification_message")
+     @patch("application.notifications.services.send_notifications_base.requests.request")
+     def test_send_msteams_notification_empty_message(self, mock_request, mock_create_message):
+@@ -105,7 +117,7 @@ class TestPushNotifications(BaseTestCase):
+     def test_send_msteams_notification_empty_message(self, mock_request, mock_create_message):
+         mock_create_message.return_value = None
+ 
+-        send_msteams_notification("test_webhook", "test_template")
++        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+ 
+         mock_create_message.assert_called_with("test_template")
+         mock_request.assert_not_called()

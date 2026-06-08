@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 from unittest.mock import patch
 
@@ -291,4 +292,29 @@ class TestPushNotifications(BaseTestCase):
     }],
 }
 """
+
+        print("---------------------------------------------")
+        print(message)
+        print("---------------------------------------------")
+        print(expected_message)
+        print("---------------------------------------------")
+
         self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_backslash_breakout(self):
+        # A backslash in an import-derived title must not break JSON string
+        # parity in the hand-built Slack/Teams payloads (template-injection f013).
+        self.observation_1.title = 'evil\\", "extra": "x'
+        message = _create_notification_message(
+            "msteams_observation.tpl",
+            observation=self.observation_1,
+            observation_url="observation_url",
+            first_line='New notification for observation "evil\\", "extra": "x"',
+        )
+        # Before the fix the rendered payload is not valid JSON because the
+        # trailing backslash escapes the closing quote; after the fix it parses.
+        parsed = json.loads(message)
+        self.assertNotIn(
+            "extra",
+            [action["name"] for action in parsed["potentialAction"]][0].split("View observation ")[-1][:4],
+        )

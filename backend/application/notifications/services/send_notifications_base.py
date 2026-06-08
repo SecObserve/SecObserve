@@ -40,7 +40,6 @@ def send_email_notification(notification_email_to: str, subject: str, template: 
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        notification_message = notification_message.replace("&quot;", '\\"')
         try:
             response = requests.request(
                 method="POST",
@@ -62,8 +61,6 @@ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> Non
 def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        notification_message = notification_message.replace("&#x27;", "\\'")
-        notification_message = notification_message.replace("&quot;", '\\"')
         try:
             response = requests.request(
                 method="POST",

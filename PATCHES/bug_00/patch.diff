@@ -1,0 +1,36 @@
+--- a/backend/application/core/api/serializers_product.py
++++ b/backend/application/core/api/serializers_product.py
+@@ -122,6 +122,11 @@ class ProductCoreSerializer(ModelSerializer):
+     def to_representation(self, instance: Product) -> dict[str, Any]:
+         data = super().to_representation(instance)
+ 
++        # Only users who can edit a product are allowed to see the issue tracker API key
++        permissions = data.get("permissions") or []
++        if Permissions.Product_Edit not in permissions:
++            data.pop("issue_tracker_api_key", None)
++
+         data["observation_notification_status_list"] = (
+             instance.observation_notification_statuses.split(",") if instance.observation_notification_statuses else []
+         )
+         return data
+--- a/backend/unittests/core/api/test_serializers.py
++++ b/backend/unittests/core/api/test_serializers.py
+@@ -34,6 +34,32 @@ class TestBranchSerializer(BaseTestCase):
+         mock_highest_user_role.assert_called_with(self.product_1)
+         mock_permissions.assert_called_with(Roles.Writer)
+ 
++    @patch("application.core.api.serializers_product.get_highest_user_role")
++    @patch("application.core.api.serializers_product.get_permissions_for_role")
++    def test_issue_tracker_api_key_hidden_without_edit(self, mock_permissions, mock_highest_user_role):
++        mock_highest_user_role.return_value = Roles.Reader
++        product = Product()
++        product.issue_tracker_api_key = "secret-token"
++
++        mock_permissions.return_value = [Permissions.Product_View]
++        data = ProductSerializer(product).data
++        self.assertNotIn("issue_tracker_api_key", data)
++
++        mock_permissions.return_value = [Permissions.Product_View, Permissions.Product_Edit]
++        data = ProductSerializer(product).data
++        self.assertEqual("secret-token", data["issue_tracker_api_key"])
++

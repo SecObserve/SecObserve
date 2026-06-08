@@ -1,0 +1,11 @@
+--- a/docker-compose-prod-postgres.yml
++++ b/docker-compose-prod-postgres.yml
+@@ -82,7 +82,7 @@
+       # --- Security ---
+       ALLOWED_HOSTS: ${SO_ALLOWED_HOSTS:-secobserve-backend.localhost}
+       CORS_ALLOWED_ORIGINS: ${SO_CORS_ALLOWED_ORIGINS:-http://secobserve.localhost}
+-      DJANGO_SECRET_KEY: ${SO_DJANGO_SECRET_KEY:-NxYPEF5lNGgk3yonndjSbwP77uNJxOvfKTjF5aVBqsHktNlf1wfJHHvJ8iifk32r}
++      DJANGO_SECRET_KEY: ${SO_DJANGO_SECRET_KEY:?SO_DJANGO_SECRET_KEY must be set to a unique, randomly generated value per deployment}
+       FIELD_ENCRYPTION_KEY: ${SO_FIELD_ENCRYPTION_KEY:-DtlkqVb3wlaVdJK_BU-3mB4wwuuf8xx8YNInajiJ7GU=}
+       # --- OpenID Connect ---
+       OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-}

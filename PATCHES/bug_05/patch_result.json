@@ -1,0 +1,22 @@
+{
+  "id": "f015",
+  "source": "TRIAGE.json#f015",
+  "title": "mark_as_viewed unscoped lookup allows cross-product notification existence probing",
+  "file": "backend/application/notifications/api/views.py",
+  "line": 67,
+  "category": "idor",
+  "severity": "MEDIUM",
+  "owner_hint": "?",
+  "mode": "static",
+  "verified": "static_review_only",
+  "review": "ACCEPT",
+  "style_score": 9,
+  "out_of_scope_hunks": [
+    "none"
+  ],
+  "rationale": "Root cause: backend/application/notifications/api/views.py:68 \u2014 `mark_as_viewed` resolved the notification with `get_notification_by_id(pk)`, an unscoped `Notification.objects.get(id=...)` that never runs object-level permissions, so any authenticated user got 204 for any existing id and 404 otherwise (an existence/IDOR oracle across products). The fix replaces it with `self.get_object()`, which `GenericViewSet` resolves against the scoped `get_queryset()` (`get_notifications()`, filtered to the user's products/types) and then runs `check_object_permissions` \u2192 `UserHasNotificationPermission.has_object_permission`. Out-of-scope ids now raise `Http404` (and disallowed-but-visible objects raise 403), collapsing the oracle to the same response a non-existent id produces within the user's scope. `notification_id=pk` is changed to `notification.pk` to write from the authorized object. The now-unused `get_notification_by_id` import is dropped (the function itself is left in queries/notification.py; it has no other callers but removing a public query helper is out of scope for this fix). `HTTP_404_NOT_FOUND` remains imported and used elsewhere is no longer referenced in this function but the import line is shared and untouched \u2014 note it is now only an import; left as-is to keep the diff minimal, though a linter may flag it.",
+  "variants_checked": "Grepped `get_notification_by_id` across backend: only two references \u2014 the import and the single call site in `NotificationViewSet.mark_as_viewed` (views.py:68). No sibling unscoped call sites. `bulk_mark_as_viewed` (views.py:52) routes through `NotificationBulkSerializer` + service-layer `bulk_mark_as_viewed`, which the existing test (id set [1,3,5]) shows already rejects out-of-scope ids with 400, so it is not part of this oracle.",
+  "bypass_considered": "Tried: pass an id that exists and is inside the user's scoped queryset but for which `has_object_permission` would deny (e.g. relying only on queryset filtering). `self.get_object()` defends both layers \u2014 it pulls from `get_queryset()` (scope filter) AND calls `check_object_permissions`, so an id outside scope 404s before permission check and an in-scope id still must pass `Permissions.Product_View`. Also considered guessing a non-existent id vs a real out-of-scope id: both now return 404, so timing/status no longer distinguishes existence. No remaining variation reaches `update_or_create` for an unauthorized notification.",
+  "test_note": "Added to backend/unittests/authorization/api/test_authorization_notifications.py inside `_test_authorization_notifications` (runs under both product-member and authorization-group-member contexts). New case: POST `/api/notifications/1/mark_as_viewed/` as `db_internal_write` expects 404 \u2014 this returned 204 before the change (the oracle) and 404 after. A companion in-scope case (notification 3 \u2192 204) guards against over-restriction. Uses the existing `APITest`/`_test_api` harness and fixtures.",
+  "review_reason": "The diff replaces the unscoped `get_notification_by_id(pk)` existence check (queries/notification.py:11-15, `Notification.objects.get`) in `mark_as_viewed` (views.py:67) with `self.get_object()`, which runs against the membership-scoped `get_queryset()`\u2192`get_notifications()` (queries/notification.py:18-62), closing the IDOR/existence-oracle and writing via the authorized `notification.pk`. It is a root-cause fix on the exact vulnerable path, adds no new input surface, and drops the now-unused import cleanly. Added tests assert /1/mark_as_viewed/\u2192404 and /3/\u2192204, mirroring the existing scoping test at test_authorization_notifications.py:34."
+}
