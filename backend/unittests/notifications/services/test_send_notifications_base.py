@@ -283,7 +283,7 @@ class TestPushNotifications(BaseTestCase):
             "value": "test_exception"
         }, {
             "name": "Timestamp:",
-            "value": "2022-12-31 23:59:59.000000"
+            "value": "2022\\u002D12\\u002D31 23:59:59.000000"
         }, {
             "name": "Trace:",
             "value": ""
@@ -292,12 +292,6 @@ class TestPushNotifications(BaseTestCase):
     }],
 }
 """
-
-        print("---------------------------------------------")
-        print(message)
-        print("---------------------------------------------")
-        print(expected_message)
-        print("---------------------------------------------")
 
         self.assertEqual(expected_message, message)
 
