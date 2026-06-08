@@ -111,7 +111,7 @@ def _validate_webhook_url(webhook: str) -> bool:
     for address_info in address_infos:
         ip_addr = ipaddress.ip_address(address_info[4][0])
         if (
-            ip_addr.is_private
+            ip_addr.is_private  # pylint: disable=too-many-boolean-expressions
             or ip_addr.is_loopback
             or ip_addr.is_link_local
             or ip_addr.is_reserved
