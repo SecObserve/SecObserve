@@ -33,6 +33,7 @@ class TestObservationsBulkActions(BaseTestCase):
             comment="comment",
             observation_ids=[1, 2],
             new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
+            new_vex_remediations="remediation",
             new_risk_acceptance_expiry_date=date(2024, 7, 1),
         )
 
@@ -45,6 +46,7 @@ class TestObservationsBulkActions(BaseTestCase):
                 new_priority=1,
                 comment="comment",
                 new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
+                new_vex_remediations="remediation",
                 new_risk_acceptance_expiry_date=date(2024, 7, 1),
             ),
             call(
@@ -54,6 +56,7 @@ class TestObservationsBulkActions(BaseTestCase):
                 new_priority=1,
                 comment="comment",
                 new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
+                new_vex_remediations="remediation",
                 new_risk_acceptance_expiry_date=date(2024, 7, 1),
             ),
         ]

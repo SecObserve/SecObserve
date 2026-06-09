@@ -152,6 +152,7 @@ class ObservationViewSet(ModelViewSet):
             new_priority=request_serializer.validated_data.get("priority"),
             comment=request_serializer.validated_data.get("comment"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
+            new_vex_remediations=request_serializer.validated_data.get("vex_remediations"),
             new_risk_acceptance_expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
         )
         set_potential_duplicate_both_ways(observation)
@@ -208,6 +209,7 @@ class ObservationViewSet(ModelViewSet):
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
+            new_vex_remediations=request_serializer.validated_data.get("vex_remediations"),
             new_risk_acceptance_expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
         )
         return Response(status=HTTP_204_NO_CONTENT)

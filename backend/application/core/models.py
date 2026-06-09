@@ -16,11 +16,13 @@ from django.db.models import (
     ForeignKey,
     Index,
     IntegerField,
+    JSONField,
     ManyToManyField,
     Model,
     TextField,
 )
 from django.utils import timezone
+from encrypted_model_fields.fields import EncryptedCharField
 
 from application.access_control.models import Authorization_Group, User
 from application.core.types import (
@@ -97,7 +99,8 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     issue_tracker_type = CharField(max_length=12, choices=Issue_Tracker.ISSUE_TRACKER_TYPE_CHOICES, blank=True)
     issue_tracker_base_url = CharField(max_length=255, blank=True)
     issue_tracker_username = CharField(max_length=255, blank=True)
-    issue_tracker_api_key = CharField(max_length=255, blank=True)
+    issue_tracker_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
+    # We treat EncryptedCharField as a regular CharField
     issue_tracker_project_id = CharField(max_length=255, blank=True)
     issue_tracker_labels = CharField(max_length=255, blank=True)
     issue_tracker_issue_type = CharField(max_length=255, blank=True)
@@ -398,6 +401,13 @@ class Observation(Model):
     assessment_vex_justification = CharField(
         max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True
     )
+
+    current_vex_remediations = JSONField(blank=True, null=True)
+    vex_vex_remediations = JSONField(blank=True, null=True)
+    rule_vex_remediations = JSONField(blank=True, null=True)
+    rule_rego_vex_remediations = JSONField(blank=True, null=True)
+    assessment_vex_remediations = JSONField(blank=True, null=True)
+
     vex_statement = ForeignKey(
         "vex.VEX_Statement",
         related_name="vex_statements",
@@ -453,6 +463,7 @@ class Observation_Log(Model):
     comment = TextField(max_length=4096)
     created = DateTimeField(auto_now_add=True)
     vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
+    vex_remediations = JSONField(blank=True, null=True)
     assessment_status = CharField(
         max_length=16,
         choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES,

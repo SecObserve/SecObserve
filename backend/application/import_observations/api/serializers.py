@@ -23,26 +23,29 @@ from application.import_observations.services.import_observations import (
 )
 
 
-class FileUploadObservationsByIdRequestSerializer(Serializer):
+class ObservationOriginFieldsMixin(Serializer):
+    docker_image_name_tag = CharField(max_length=513, required=False)
+    endpoint_url = CharField(max_length=2048, required=False)
+    kubernetes_cluster = CharField(max_length=255, required=False)
+    kubernetes_namespace = CharField(max_length=255, required=False)
+    kubernetes_resource_type = CharField(max_length=255, required=False)
+    kubernetes_resource_name = CharField(max_length=255, required=False)
+
+
+class FileUploadObservationsByIdRequestSerializer(ObservationOriginFieldsMixin):
     file = FileField(max_length=255)
     product = IntegerField(validators=[MinValueValidator(0)])
     branch = IntegerField(validators=[MinValueValidator(0)], required=False)
     service = CharField(max_length=255, required=False)
     service_id = IntegerField(validators=[MinValueValidator(0)], required=False)
-    docker_image_name_tag = CharField(max_length=513, required=False)
-    endpoint_url = CharField(max_length=2048, required=False)
-    kubernetes_cluster = CharField(max_length=255, required=False)
     suppress_licenses = BooleanField(required=False)
 
 
-class FileUploadObservationsByNameRequestSerializer(Serializer):
+class FileUploadObservationsByNameRequestSerializer(ObservationOriginFieldsMixin):
     file = FileField(max_length=255)
     product_name = CharField(max_length=255)
     branch_name = CharField(max_length=255, required=False)
     service = CharField(max_length=255, required=False)
-    docker_image_name_tag = CharField(max_length=513, required=False)
-    endpoint_url = CharField(max_length=2048, required=False)
-    kubernetes_cluster = CharField(max_length=255, required=False)
     suppress_licenses = BooleanField(required=False)
 
 
@@ -61,23 +64,19 @@ class FileUploadSBOMByNameRequestSerializer(Serializer):
     service = CharField(max_length=255, required=False)
 
 
-class ApiImportObservationsByIdRequestSerializer(Serializer):
+class ApiImportObservationsByIdRequestSerializer(ObservationOriginFieldsMixin):
     api_configuration = IntegerField(validators=[MinValueValidator(0)])
     branch = IntegerField(validators=[MinValueValidator(0)], required=False)
     service = CharField(max_length=255, required=False, allow_blank=True)
     service_id = IntegerField(validators=[MinValueValidator(0)], required=False)
     docker_image_name_tag = CharField(max_length=513, required=False, allow_blank=True)
     endpoint_url = CharField(max_length=2048, required=False, allow_blank=True)
-    kubernetes_cluster = CharField(max_length=255, required=False)
 
 
-class ApiImportObservationsByNameRequestSerializer(Serializer):
+class ApiImportObservationsByNameRequestSerializer(ObservationOriginFieldsMixin):
     api_configuration_name = CharField(max_length=255)
     branch_name = CharField(max_length=255, required=False)
     service = CharField(max_length=255, required=False)
-    docker_image_name_tag = CharField(max_length=513, required=False)
-    endpoint_url = CharField(max_length=2048, required=False)
-    kubernetes_cluster = CharField(max_length=255, required=False)
 
 
 class FileImportObservationsResponseSerializer(Serializer):

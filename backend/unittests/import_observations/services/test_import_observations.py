@@ -79,6 +79,9 @@ class TestFileUploadObservations(BaseTestCase):
             "test_docker_image_name_tag",
             "test_endpoint_url",
             "test_kubernetes_cluster",
+            "test_kubernetes_namespace",
+            "test_kubernetes_resource_type",
+            "test_kubernetes_resource_name",
             False,
         )
 
@@ -119,6 +122,9 @@ class TestFileUploadObservations(BaseTestCase):
             "test_docker_image_name_tag",
             "test_endpoint_url",
             "test_kubernetes_cluster",
+            "test_kubernetes_namespace",
+            "test_kubernetes_resource_type",
+            "test_kubernetes_resource_name",
             True,
         )
 
@@ -156,7 +162,7 @@ class TestFileUploadObservations(BaseTestCase):
         product.repository_default_branch = None
         product.save()
 
-        self._file_upload_observations(None, None, None, None, None, False)
+        self._file_upload_observations(None, None, None, None, None, None, None, None, False)
 
         mock_check_security_gate.assert_has_calls([call(product), call(product)])
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
@@ -189,7 +195,7 @@ class TestFileUploadObservations(BaseTestCase):
         mock_deduplicate_cross_scanner.return_value = False
         product = Product.objects.get(id=1)
 
-        self._file_upload_observations(None, None, None, None, None, False)
+        self._file_upload_observations(None, None, None, None, None, None, None, None, False)
 
         mock_check_security_gate.assert_not_called()
         self.assertEqual(mock_push_observations_to_issue_tracker.call_count, 2)
@@ -200,7 +206,16 @@ class TestFileUploadObservations(BaseTestCase):
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
 
     def _file_upload_observations(
-        self, branch, service_name, docker_image_name_tag, endpoint_url, kubernetes_cluster, deduplicate_cross_scanner
+        self,
+        branch,
+        service_name,
+        docker_image_name_tag,
+        endpoint_url,
+        kubernetes_cluster,
+        kubernetes_namespace,
+        kubernetes_resource_type,
+        kubernetes_resource_name,
+        deduplicate_cross_scanner,
     ):
         # --- First import ---
 
@@ -212,6 +227,9 @@ class TestFileUploadObservations(BaseTestCase):
             docker_image_name_tag=docker_image_name_tag,
             endpoint_url=endpoint_url,
             kubernetes_cluster=kubernetes_cluster,
+            kubernetes_namespace=kubernetes_namespace,
+            kubernetes_resource_type=kubernetes_resource_type,
+            kubernetes_resource_name=kubernetes_resource_name,
             suppress_licenses=False,
             sbom=False,
         )
@@ -266,6 +284,18 @@ class TestFileUploadObservations(BaseTestCase):
             self.assertEqual(observations[0].origin_kubernetes_cluster, kubernetes_cluster)
         else:
             self.assertEqual(observations[0].origin_kubernetes_cluster, "")
+        if kubernetes_namespace:
+            self.assertEqual(observations[0].origin_kubernetes_namespace, kubernetes_namespace)
+        else:
+            self.assertEqual(observations[0].origin_kubernetes_namespace, "")
+        if kubernetes_resource_type:
+            self.assertEqual(observations[0].origin_kubernetes_resource_type, kubernetes_resource_type)
+        else:
+            self.assertEqual(observations[0].origin_kubernetes_resource_type, "")
+        if kubernetes_resource_name:
+            self.assertEqual(observations[0].origin_kubernetes_resource_name, kubernetes_resource_name)
+        else:
+            self.assertEqual(observations[0].origin_kubernetes_resource_name, "")
 
         self.assertEqual(observations[0].current_status, Status.STATUS_OPEN)
         self.assertEqual(observations[1].current_status, Status.STATUS_OPEN)
@@ -325,6 +355,9 @@ class TestFileUploadObservations(BaseTestCase):
             docker_image_name_tag=docker_image_name_tag,
             endpoint_url=endpoint_url,
             kubernetes_cluster=kubernetes_cluster,
+            kubernetes_namespace=kubernetes_namespace,
+            kubernetes_resource_type=kubernetes_resource_type,
+            kubernetes_resource_name=kubernetes_resource_name,
             suppress_licenses=False,
             sbom=False,
         )
@@ -422,6 +455,9 @@ class TestFileUploadObservations(BaseTestCase):
             "test_docker_image_name_tag",
             "test_endpoint_url",
             "test_kubernetes_cluster",
+            "test_kubernetes_namespace",
+            "test_kubernetes_resource_type",
+            "test_kubernetes_resource_name",
             suppress_licenses=False,
             sbom=True,
         )
@@ -462,6 +498,9 @@ class TestFileUploadObservations(BaseTestCase):
             "test_docker_image_name_tag",
             "test_endpoint_url",
             "test_kubernetes_cluster",
+            "test_kubernetes_namespace",
+            "test_kubernetes_resource_type",
+            "test_kubernetes_resource_name",
             suppress_licenses=True,
             sbom=False,
         )
@@ -498,6 +537,9 @@ class TestFileUploadObservations(BaseTestCase):
             "test_docker_image_name_tag",
             "test_endpoint_url",
             "test_kubernetes_cluster",
+            "test_kubernetes_namespace",
+            "test_kubernetes_resource_type",
+            "test_kubernetes_resource_name",
             suppress_licenses=False,
             sbom=True,
         )
@@ -509,6 +551,9 @@ class TestFileUploadObservations(BaseTestCase):
         docker_image_name_tag,
         endpoint_url,
         kubernetes_cluster,
+        kubernetes_namespace,
+        kubernetes_resource_type,
+        kubernetes_resource_name,
         suppress_licenses,
         sbom,
     ):
@@ -535,6 +580,9 @@ class TestFileUploadObservations(BaseTestCase):
             docker_image_name_tag=docker_image_name_tag,
             endpoint_url=endpoint_url,
             kubernetes_cluster=kubernetes_cluster,
+            kubernetes_namespace=kubernetes_namespace,
+            kubernetes_resource_type=kubernetes_resource_type,
+            kubernetes_resource_name=kubernetes_resource_name,
             suppress_licenses=suppress_licenses,
             sbom=sbom,
         )
@@ -574,7 +622,7 @@ class TestFileUploadObservations(BaseTestCase):
             )
             self.assertEqual(license_components[1].component_purl_type, "pypi")
             self.assertEqual(license_components[1].component_cpe, "")
-            dependencies = """SecObserve:1.53.0 --> argon2-cffi:23.1.0
+            dependencies = """SecObserve:1.54.0 --> argon2-cffi:23.1.0
 argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             self.assertEqual(license_components[1].component_dependencies, dependencies)
             self.assertEqual(license_components[1].effective_spdx_license, License.objects.get(spdx_id="MIT"))
@@ -681,6 +729,9 @@ argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             docker_image_name_tag=docker_image_name_tag,
             endpoint_url=endpoint_url,
             kubernetes_cluster=kubernetes_cluster,
+            kubernetes_namespace=kubernetes_namespace,
+            kubernetes_resource_type=kubernetes_resource_type,
+            kubernetes_resource_name=kubernetes_resource_name,
             suppress_licenses=suppress_licenses,
             sbom=sbom,
         )
@@ -916,6 +967,9 @@ argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             docker_image_name_tag=docker_image_name_tag,
             endpoint_url=endpoint_url,
             kubernetes_cluster=kubernetes_cluster,
+            kubernetes_namespace=kubernetes_namespace,
+            kubernetes_resource_type=kubernetes_resource_type,
+            kubernetes_resource_name=kubernetes_resource_name,
             suppress_licenses=suppress_licenses,
             sbom=sbom,
         )
@@ -1099,6 +1153,9 @@ argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             docker_image_name_tag=docker_image_name_tag,
             endpoint_url=endpoint_url,
             kubernetes_cluster=kubernetes_cluster,
+            kubernetes_namespace=kubernetes_namespace,
+            kubernetes_resource_type=kubernetes_resource_type,
+            kubernetes_resource_name=kubernetes_resource_name,
             suppress_licenses=suppress_licenses,
             sbom=sbom,
         )
@@ -1187,6 +1244,9 @@ class APIImportObservation(BaseTestCase):
             docker_image_name_tag="",
             endpoint_url="",
             kubernetes_cluster="",
+            kubernetes_namespace="",
+            kubernetes_resource_type="",
+            kubernetes_resource_name="",
         )
 
         with self.assertRaises(ValidationError) as e:
@@ -1219,6 +1279,9 @@ class APIImportObservation(BaseTestCase):
             docker_image_name_tag="",
             endpoint_url="",
             kubernetes_cluster="",
+            kubernetes_namespace="",
+            kubernetes_resource_type="",
+            kubernetes_resource_name="",
         )
 
         numbers = api_import_observations(parameters)

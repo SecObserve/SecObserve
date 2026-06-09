@@ -1,13 +1,15 @@
 import { faFileCsv, faFileExcel } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DownloadIcon from "@mui/icons-material/Download";
-import { ListItemIcon } from "@mui/material";
+import PivotTableChartIcon from "@mui/icons-material/PivotTableChart";
+import { Divider, ListItemIcon } from "@mui/material";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import queryString from "query-string";
 import { Fragment, MouseEvent, useState } from "react";
 import { useListContext, useNotify } from "react-admin";
+import { useNavigate } from "react-router-dom";
 
 import axios_instance from "../../access_control/auth_provider/axios_instance";
 import { getIconAndFontColor } from "../../commons/functions";
@@ -16,6 +18,7 @@ const ExportMenu = () => {
     const notify = useNotify();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+    const navigate = useNavigate();
     const { filterValues, sort } = useListContext();
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -122,6 +125,18 @@ const ExportMenu = () => {
                         <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
                     </ListItemIcon>
                     Observations / CSV
+                </MenuItem>
+                <Divider />
+                <MenuItem
+                    onClick={() => {
+                        navigate("/pivot_table?" + queryParams());
+                        handleClose();
+                    }}
+                >
+                    <ListItemIcon>
+                        <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
+                    </ListItemIcon>
+                    Observations / Pivot Table
                 </MenuItem>
             </Menu>
         </Fragment>

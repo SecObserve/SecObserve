@@ -1,5 +1,8 @@
+import ipaddress
 import logging
+import socket
 from typing import Any, Optional
+from urllib.parse import urlsplit
 
 import environ
 import requests
@@ -38,14 +41,16 @@ def send_email_notification(notification_email_to: str, subject: str, template: 
 
 @task()
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
+    if not _validate_webhook_url(webhook):
+        return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        notification_message = notification_message.replace("&quot;", '\\"')
         try:
             response = requests.request(
                 method="POST",
                 url=webhook,
                 data=notification_message,
+                allow_redirects=False,
                 timeout=60,
             )
             response.raise_for_status()
@@ -60,15 +65,16 @@ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> Non
 
 @task()
 def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
+    if not _validate_webhook_url(webhook):
+        return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        notification_message = notification_message.replace("&#x27;", "\\'")
-        notification_message = notification_message.replace("&quot;", '\\"')
         try:
             response = requests.request(
                 method="POST",
                 url=webhook,
                 data=notification_message,
+                allow_redirects=False,
                 timeout=60,
             )
             response.raise_for_status()
@@ -79,6 +85,47 @@ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
                     exception=e,
                 )
             )
+
+
+def _validate_webhook_url(webhook: str) -> bool:
+    split_url = urlsplit(webhook)
+    if split_url.scheme != "https" or not split_url.hostname:
+        logger.error(
+            format_log_message(
+                message=f"Webhook URL must use https and a valid host: {webhook}",
+            )
+        )
+        return False
+
+    try:
+        address_infos = socket.getaddrinfo(split_url.hostname, split_url.port or 443, proto=socket.IPPROTO_TCP)
+    except socket.gaierror as e:
+        logger.error(
+            format_log_message(
+                message=f"Could not resolve webhook host: {webhook}",
+                exception=e,
+            )
+        )
+        return False
+
+    for address_info in address_infos:
+        ip_addr = ipaddress.ip_address(address_info[4][0])
+        if (
+            ip_addr.is_private  # pylint: disable=too-many-boolean-expressions
+            or ip_addr.is_loopback
+            or ip_addr.is_link_local
+            or ip_addr.is_reserved
+            or ip_addr.is_multicast
+            or ip_addr.is_unspecified
+        ):
+            logger.error(
+                format_log_message(
+                    message=f"Webhook host resolves to a non-public address, refusing request: {webhook}",
+                )
+            )
+            return False
+
+    return True
 
 
 def _create_notification_message(template: str, **kwargs: Any) -> Optional[str]:

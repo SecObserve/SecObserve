@@ -17,7 +17,7 @@ def convert_product_description_to_markdown(apps, schema_editor):
         updates = []
 
         for product in page.object_list:
-            product.description = convert(product.description).get("content")
+            product.description = convert(product.description).content
             updates.append(product)
 
         Product.objects.bulk_update(updates, ["description"])

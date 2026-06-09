@@ -291,6 +291,7 @@ class ProductViewSet(ModelViewSet):
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
+            new_vex_remediations=request_serializer.validated_data.get("vex_remediations"),
             new_risk_acceptance_expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
         )
         return Response(status=HTTP_204_NO_CONTENT)

@@ -1,5 +1,5 @@
 import platform
-from typing import Optional
+from typing import Any, Optional
 
 from rest_framework.serializers import (
     CharField,
@@ -13,6 +13,7 @@ from rest_framework.serializers import (
     ValidationError,
 )
 
+from application.commons.services.functions import validate_vex_remediations
 from application.core.api.serializers_observation import ObservationListSerializer
 from application.core.api.serializers_product import NestedProductSerializer
 from application.core.models import Product
@@ -57,14 +58,10 @@ class GeneralRuleSerializer(ModelSerializer):
 
         return value
 
-    def validate(self, attrs: dict) -> dict:
-        if (
-            attrs.get("type") == Rule_Type.RULE_TYPE_FIELDS
-            and not attrs.get("parser")
-            and not attrs.get("scanner_prefix")
-        ):
-            raise ValidationError("Either Parser or Scanner Prefix must be set")
+    def validate_new_vex_remediations(self, value: Any) -> Optional[list[dict]]:
+        return validate_vex_remediations(value)
 
+    def validate(self, attrs: dict) -> dict:
         if attrs.get("type") == Rule_Type.RULE_TYPE_REGO and not attrs.get("rego_module"):
             raise ValidationError("Rego module must be set")
 
@@ -115,13 +112,6 @@ class ProductRuleSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs: dict) -> dict:
-        if (
-            attrs.get("type") == Rule_Type.RULE_TYPE_FIELDS
-            and not attrs.get("parser")
-            and not attrs.get("scanner_prefix")
-        ):
-            raise ValidationError("Either Parser or Scanner Prefix must be set")
-
         if attrs.get("type") == Rule_Type.RULE_TYPE_REGO and not attrs.get("rego_module"):
             raise ValidationError("Rego module must be set")
 

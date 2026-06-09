@@ -8,6 +8,7 @@ from django.db.models import (
     DateTimeField,
     ForeignKey,
     Index,
+    JSONField,
     Model,
     TextField,
 )
@@ -41,6 +42,7 @@ class Rule(Model):
     new_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     new_status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     new_vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
+    new_vex_remediations = JSONField(blank=True, null=True)
 
     rego_module = TextField(blank=True)
 

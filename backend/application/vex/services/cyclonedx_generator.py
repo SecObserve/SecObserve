@@ -210,6 +210,16 @@ def _create_vulnerabilities(
 
         vulnerability = vulnerabilities.get(f"{observation.vulnerability_id}_{analysis_hash}")
         if not vulnerability:
+            recommendation = None
+            if analysis.state in [ImpactAnalysisState.EXPLOITABLE, ImpactAnalysisState.IN_TRIAGE]:
+                observation_log = get_current_modifying_observation_log(observation)
+                if observation_log and observation_log.vex_remediations:
+                    statements = []
+                    for remediation in observation_log.vex_remediations:
+                        statements.append(f"{remediation["category"]}: {remediation["text"]}")
+                    recommendation = "; ".join(statements)
+                elif observation.recommendation:
+                    recommendation = observation.recommendation
             vulnerability = Vulnerability(
                 bom_ref=BomRef(
                     value=str(
@@ -220,12 +230,7 @@ def _create_vulnerabilities(
                 ),
                 id=observation.vulnerability_id,
                 description=observation.description if observation.description else None,
-                recommendation=(
-                    observation.recommendation
-                    if observation.recommendation
-                    and analysis.state in [ImpactAnalysisState.EXPLOITABLE, ImpactAnalysisState.IN_TRIAGE]
-                    else None
-                ),
+                recommendation=recommendation,
                 analysis=analysis,
             )
             vulnerabilities[f"{observation.vulnerability_id}_{analysis_hash}"] = vulnerability

@@ -2,10 +2,12 @@ import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
 import {
+    ArrayInput,
     DateInput,
     FormDataConsumer,
     NumberInput,
     SimpleForm,
+    SimpleFormIterator,
     useListContext,
     useNotify,
     useRefresh,
@@ -19,10 +21,11 @@ import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave
 import { validate_after_today } from "../../commons/custom_validators";
 import {
     justificationIsEnabledForStatus,
+    remediationsAreEnabledForStatus,
     settings_risk_acceptance_expiry_date,
     settings_vex_justification_style,
 } from "../../commons/functions";
-import { AutocompleteInputMedium, AutocompleteInputWide } from "../../commons/layout/themes";
+import { AutocompleteInputMedium, AutocompleteInputWide, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX, VEX_JUSTIFICATION_TYPE_CYCLONEDX } from "../../commons/types";
 import {
@@ -32,6 +35,7 @@ import {
     OBSERVATION_STATUS_OPEN,
     OBSERVATION_STATUS_RISK_ACCEPTED,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
+    OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
 
 type ObservationBulkAssessmentButtonProps = {
@@ -45,6 +49,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
     const [open, setOpen] = useState(false);
     const [status, setStatus] = useState(OBSERVATION_STATUS_OPEN);
     const justificationEnabled = justificationIsEnabledForStatus(status);
+    const remediationsEnabled = remediationsAreEnabledForStatus(status);
     const refresh = useRefresh();
     const [loading, setLoading] = useState(false);
     const notify = useNotify();
@@ -71,6 +76,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
             priority: data.priority,
             comment: comment,
             vex_justification: justificationEnabled ? data.vex_justification : "",
+            vex_remediations: remediationsEnabled ? data.vex_remediations : null,
             observations: selectedIds,
             risk_acceptance_expiry_date: data.risk_acceptance_expiry_date,
         };
@@ -144,6 +150,18 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                                     choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
                                 />
                             )}
+                        {remediationsEnabled && (
+                            <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations">
+                                <SimpleFormIterator disableReordering inline>
+                                    <AutocompleteInputMedium
+                                        source="category"
+                                        label=""
+                                        choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                                    />
+                                    <TextInputWide source="text" multiline={true} minRows={3} />
+                                </SimpleFormIterator>
+                            </ArrayInput>
+                        )}
                         <FormDataConsumer>
                             {({ formData }) =>
                                 formData.status &&

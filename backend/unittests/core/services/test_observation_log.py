@@ -30,6 +30,7 @@ class TestObservationLog(BaseTestCase):
             status="status",
             comment="comment",
             vex_justification="vex_justification",
+            vex_remediations="vex_remediation",
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=date(2024, 7, 1),
         )
@@ -40,6 +41,7 @@ class TestObservationLog(BaseTestCase):
         self.assertEqual("status", observation_log.status)
         self.assertEqual("comment", observation_log.comment)
         self.assertEqual("vex_justification", observation_log.vex_justification)
+        self.assertEqual("vex_remediation", observation_log.vex_remediations)
         self.assertEqual(
             Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             observation_log.assessment_status,
