@@ -137,7 +137,7 @@ const ObservationList = () => {
                             {has_attribute("origin_docker_image_name_tag_short", data, sort) && (
                                 <TextField
                                     source="origin_docker_image_name_tag_short"
-                                    label="Cont."
+                                    label="Container"
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
@@ -158,14 +158,14 @@ const ObservationList = () => {
                             {has_attribute("origin_cloud_qualified_resource", data, sort) && (
                                 <TextField
                                     source="origin_cloud_qualified_resource"
-                                    label="Cloud res."
+                                    label="Cloud resource"
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
                             {has_attribute("origin_kubernetes_qualified_resource", data, sort) && (
                                 <TextField
                                     source="origin_kubernetes_qualified_resource"
-                                    label="Kube. res."
+                                    label="Kubernetes resource"
                                     sx={{ wordBreak: "break-word" }}
                                 />
                             )}
