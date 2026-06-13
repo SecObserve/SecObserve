@@ -195,9 +195,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
 
                 if unrecommended_cipher_suites:
                     endpoint_url = self.get_endpoint_url(cipher.get("target", {}))
-                    description = "**Unrecommended cipher suites:**\n* " + "\n* ".join(
-                        unrecommended_cipher_suites
-                    )
+                    description = "**Unrecommended cipher suites:**\n* " + "\n* ".join(unrecommended_cipher_suites)
                     observation = Observation(
                         title="Unrecommended " + protocol_name + " cipher suites",
                         description=description,
@@ -232,9 +230,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
             return None
 
         endpoint_url = self.get_endpoint_url(curves.get("target", {}))
-        description = "**Unrecommended elliptic curves:**\n* " + "\n* ".join(
-            unrecommended_curves
-        )
+        description = "**Unrecommended elliptic curves:**\n* " + "\n* ".join(unrecommended_curves)
         observation = Observation(
             title="Unrecommended elliptic curves",
             description=description,
@@ -267,9 +263,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
             return None
 
         endpoint_url = self.get_endpoint_url(signature_algorithms.get("target", {}))
-        description = "**Unrecommended signature algorithms:**\n* " + "\n* ".join(
-            unrecommended_signature_algorithms
-        )
+        description = "**Unrecommended signature algorithms:**\n* " + "\n* ".join(unrecommended_signature_algorithms)
         observation = Observation(
             title="Unrecommended signature algorithms",
             description=description,
