@@ -33,8 +33,8 @@
                 "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
                 "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
                 "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
-                "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
-                "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
+                "ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+                "ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"
             ],
             "cipher_suite_preference": false,
             "long_cipher_suite_list_intolerance": false
@@ -50,7 +50,7 @@
             "cipher_suites": [
                 "TLS_AES_128_GCM_SHA256",
                 "TLS_AES_256_GCM_SHA384",
-                "TLS_CHACHA20_POLY1305_SHA256",
+                "CHACHA20_POLY1305_SHA256",
                 "TLS_AES_128_CCM_SHA256"
             ],
             "cipher_suite_preference": false,

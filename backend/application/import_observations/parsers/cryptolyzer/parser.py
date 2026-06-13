@@ -22,7 +22,7 @@ TLS12_RECOMMENDED_CIPHERS = [
     "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
     "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
     "TLS_DHE_DSS_WITH_AES_128_CBC_SHA256",
-    "TLS_DHE_DSS_WITH_AES_256_CBC_",
+    "TLS_DHE_DSS_WITH_AES_256_CBC_SHA256",
     "TLS_DHE_DSS_WITH_AES_128_GCM_SHA256",
     "TLS_DHE_DSS_WITH_AES_256_GCM_SHA384",
     "TLS_DHE_RSA_WITH_AES_128_CBC_SHA256",
@@ -31,22 +31,6 @@ TLS12_RECOMMENDED_CIPHERS = [
     "TLS_DHE_RSA_WITH_AES_256_GCM_SHA384",
     "TLS_DHE_RSA_WITH_AES_128_CCM",
     "TLS_DHE_RSA_WITH_AES_256_CCM",
-    "TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256",
-    "TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384",
-    "TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256",
-    "TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384",
-    "TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256",
-    "TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384",
-    "TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256",
-    "TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384",
-    "TLS_DH_DSS_WITH_AES_128_CBC_SHA256",
-    "TLS_DH_DSS_WITH_AES_256_CBC_SHA256",
-    "TLS_DH_DSS_WITH_AES_128_GCM_SHA256",
-    "TLS_DH_DSS_WITH_AES_256_GCM_SHA384",
-    "TLS_DH_RSA_WITH_AES_128_CBC_SHA256",
-    "TLS_DH_RSA_WITH_AES_256_CBC_SHA256",
-    "TLS_DH_RSA_WITH_AES_128_GCM_SHA256",
-    "TLS_DH_RSA_WITH_AES_256_GCM_SHA384",
     "TLS_ECDHE_PSK_WITH_AES_128_CBC_SHA256",
     "TLS_ECDHE_PSK_WITH_AES_256_CBC_SHA384",
     "TLS_ECDHE_PSK_WITH_AES_128_GCM_SHA256",
@@ -58,59 +42,61 @@ TLS12_RECOMMENDED_CIPHERS = [
     "TLS_DHE_PSK_WITH_AES_256_GCM_SHA384",
     "TLS_DHE_PSK_WITH_AES_128_CCM",
     "TLS_DHE_PSK_WITH_AES_256_CCM",
-    "TLS_RSA_PSK_WITH_AES_128_CBC_SHA256",
-    "TLS_RSA_PSK_WITH_AES_256_CBC_SHA384",
-    "TLS_RSA_PSK_WITH_AES_128_GCM_SHA256",
-    "TLS_RSA_PSK_WITH_AES_256_GCM_SHA384",
+    "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256",
+    "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
 ]
 
 TLS13_RECOMMENDED_CIPHERS = [
     "TLS_AES_128_GCM_SHA256",
     "TLS_AES_256_GCM_SHA384",
     "TLS_AES_128_CCM_SHA256",
+    "TLS_CHACHA20_POLY1305_SHA256",
 ]
 
 RECOMMENDED_ELLIPTIC_CURVES = [
-    "brainpoolP256r1tls13",
-    "brainpoolP384r1tls13",
-    "brainpoolP512r1tls13",
-    "brainpoolP256r1",
-    "brainpoolP384r1",
-    "brainpoolP512r1",
-    "secp256r1",
-    "prime256v1",  # equivalent to secp256r1 according to RFC 4492
-    "secp384r1",
-    "secp521r1",
-    "ffdhe2048",
-    "ffdhe3072",
-    "ffdhe4096",
+    "BRAINPOOLP256R1TLS13",
+    "BRAINPOOLP384R1TLS13",
+    "BRAINPOOLP512R1TLS13",
+    "BRAINPOOLP256R1",
+    "BRAINPOOLP384R1",
+    "BRAINPOOLP512R1",
+    "SECP256R1",
+    "PRIME256V1",  # equivalent to secp256r1 according to RFC 4492
+    "SECP384R1",
+    "SECP521R1",
+    "FFDHE3072",
+    "FFDHE4096",
+    "X25519_ML_KEM_768",
+    "X25519_KYBER_768_R3",
+    "X25519",
 ]
 
 RECOMMENDED_SIGNATURE_ALGORITHMS = [
-    "rsa_sha256",
-    "rsa_sha384",
-    "rsa_sha512",
-    "dsa_sha256",
-    "dsa_sha384",
-    "dsa_sha512",
-    "ecdsa_sha256",
-    "ecdsa_sha384",
-    "ecdsa_sha512",
-    "rsa_pss_rsae_sha256",
-    "rsa_pss_rsae_sha384",
-    "rsa_pss_rsae_sha512",
-    "rsa_pss_pss_sha256",
-    "rsa_pss_pss_sha384",
-    "rsa_pss_pss_sha512",
-    "ecdsa_secp256r1_sha256",
-    "ecdsa_secp384r1_sha384",
-    "ecdsa_secp521r1_sha512",
-    "ecdsa_brainpoolP256r1tls13_sha256",
-    "ecdsa_brainpoolP384r1tls13_sha384",
-    "ecdsa_brainpoolP512r1tls13_sha512",
+    "RSA_SHA256",
+    "RSA_SHA384",
+    "RSA_SHA512",
+    "DSA_SHA256",
+    "DSA_SHA384",
+    "DSA_SHA512",
+    "ECDSA_SHA256",
+    "ECDSA_SHA384",
+    "ECDSA_SHA512",
+    "RSA_PSS_RSAE_SHA256",
+    "RSA_PSS_RSAE_SHA384",
+    "RSA_PSS_RSAE_SHA512",
+    "RSA_PSS_PSS_SHA256",
+    "RSA_PSS_PSS_SHA384",
+    "RSA_PSS_PSS_SHA512",
+    "ECDSA_SECP256R1_SHA256",
+    "ECDSA_SECP384R1_SHA384",
+    "ECDSA_SECP521R1_SHA512",
+    "ECDSA_BRAINPOOLP256R1TLS13_SHA256",
+    "ECDSA_BRAINPOOLP384R1TLS13_SHA384",
+    "ECDSA_BRAINPOOLP512R1TLS13_SHA512",
 ]
 
 BSI_LINK = "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-2.pdf?__blob=publicationFile&v=5"  # noqa: E501 pylint: disable=line-too-long
+TLS_REF_LINK = "https://docs.tlsref.org"
 
 
 class CryptoLyzerParser(BaseParser, BaseFileParser):
@@ -168,7 +154,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
             versions.remove("tls1_2")
         if "tls1_3" in versions:
             versions.remove("tls1_3")
-        description = "**Weak protocols according to BSI recommendations:**\n* " + "\n* ".join(versions)
+        description = "**Weak protocols:**\n* " + "\n* ".join(versions)
 
         if not versions:
             return None
@@ -181,7 +167,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
             scanner=self.get_name(),
         )
 
-        observation.unsaved_references = [BSI_LINK]
+        observation.unsaved_references = [BSI_LINK, TLS_REF_LINK]
 
         evidence = []
         evidence.append("Result")
@@ -209,7 +195,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
 
                 if unrecommended_cipher_suites:
                     endpoint_url = self.get_endpoint_url(cipher.get("target", {}))
-                    description = "**Unrecommended cipher suites according to BSI recommendations:**\n* " + "\n* ".join(
+                    description = "**Unrecommended cipher suites:**\n* " + "\n* ".join(
                         unrecommended_cipher_suites
                     )
                     observation = Observation(
@@ -225,7 +211,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
                     evidence.append(dumps(cipher))
                     observation.unsaved_evidences.append(evidence)
 
-                    observation.unsaved_references = [BSI_LINK]
+                    observation.unsaved_references = [BSI_LINK, TLS_REF_LINK]
 
                     return observation
 
@@ -239,14 +225,14 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
         unrecommended_curves = []
         inner_curves = curves.get("curves", {})
         for inner_curve in inner_curves:
-            if inner_curve.lower() not in RECOMMENDED_ELLIPTIC_CURVES:
+            if inner_curve.upper() not in RECOMMENDED_ELLIPTIC_CURVES:
                 unrecommended_curves.append(inner_curve)
 
         if not unrecommended_curves:
             return None
 
         endpoint_url = self.get_endpoint_url(curves.get("target", {}))
-        description = "**Unrecommended elliptic curves according to BSI recommendations:**\n* " + "\n* ".join(
+        description = "**Unrecommended elliptic curves:**\n* " + "\n* ".join(
             unrecommended_curves
         )
         observation = Observation(
@@ -262,7 +248,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
         evidence.append(dumps(curves))
         observation.unsaved_evidences.append(evidence)
 
-        observation.unsaved_references = [BSI_LINK]
+        observation.unsaved_references = [BSI_LINK, TLS_REF_LINK]
 
         return observation
 
@@ -274,14 +260,14 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
         unrecommended_signature_algorithms = []
         inner_signature_algorithms = signature_algorithms.get("sig_algos", {})
         for inner_signature_algorithm in inner_signature_algorithms:
-            if inner_signature_algorithm.lower() not in RECOMMENDED_SIGNATURE_ALGORITHMS:
+            if inner_signature_algorithm.upper() not in RECOMMENDED_SIGNATURE_ALGORITHMS:
                 unrecommended_signature_algorithms.append(inner_signature_algorithm)
 
         if not unrecommended_signature_algorithms:
             return None
 
         endpoint_url = self.get_endpoint_url(signature_algorithms.get("target", {}))
-        description = "**Unrecommended signature algorithms according to BSI recommendations:**\n* " + "\n* ".join(
+        description = "**Unrecommended signature algorithms:**\n* " + "\n* ".join(
             unrecommended_signature_algorithms
         )
         observation = Observation(
@@ -297,7 +283,7 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
         evidence.append(dumps(signature_algorithms))
         observation.unsaved_evidences.append(evidence)
 
-        observation.unsaved_references = [BSI_LINK]
+        observation.unsaved_references = [BSI_LINK, TLS_REF_LINK]
 
         return observation
 
