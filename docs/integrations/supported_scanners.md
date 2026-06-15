@@ -44,7 +44,8 @@ These scanners have been tested with SecObserve:
 | [tfsec](https://aquasecurity.github.io/tfsec) | SARIF | File |
 | [Trivy](https://aquasecurity.github.io/trivy) | SARIF | File |
 | **Secrets** |
-| [Gitleaks](https://gitleaks.io) | SARIF | File |
+| [Betterleaks](https://betterleaks.com) | Betterleaks | File |
+| [Gitleaks](https://gitleaks.io) | Gitleask | File |
 | [Trivy](https://aquasecurity.github.io/trivy) | SARIF | File |
 | **DAST** |
 | [CryptoLyzer](https://gitlab.com/coroner/cryptolyzer) ^2)^ | CryptoLyzer | File |
