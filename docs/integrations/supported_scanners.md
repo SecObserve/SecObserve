@@ -59,7 +59,7 @@ These scanners have been tested with SecObserve:
 
 ^1)^ This is the exception to the rule. Even though SARIF is more suited for static code analysis, it works for Dependency Check.
 
-^2)^ The CryptoLyzer parser checks the results (TLS versions, cipher suites, elliptic curves and signature algorithms) against BSI (Bundesamt für Sicherheit in der Informationssicherheit) recommendations.
+^2)^ The CryptoLyzer parser checks the results (TLS versions, cipher suites, elliptic curves and signature algorithms) against BSI (Bundesamt für Sicherheit in der Informationssicherheit) and [TLSRef](https://tlsref.org/) recommendations.
 
  ^3)^ The results of Azure Defender for Cloud have to be exported manually in CSV format from the Azure Portal.
 
