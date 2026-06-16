@@ -204,6 +204,8 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "security_gate_threshold_none",
             "security_gate_threshold_unknown",
             "assessments_need_approval",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
             "product_rules_need_approval",
             "risk_acceptance_expiry_active",
             "risk_acceptance_expiry_days",
@@ -281,6 +283,8 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     product_group_repository_branch_housekeeping_active = SerializerMethodField()
     product_group_security_gate_active = SerializerMethodField()
     product_group_assessments_need_approval = SerializerMethodField()
+    product_group_assessment_approvers = SerializerMethodField()
+    product_group_assessment_approver_authorization_groups = SerializerMethodField()
     observation_reviews = SerializerMethodField()
     observation_log_approvals = SerializerMethodField()
     has_services = SerializerMethodField()
@@ -315,6 +319,16 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         if not obj.product_group:
             return False
         return obj.product_group.assessments_need_approval
+
+    def get_product_group_assessment_approvers(self, obj: Product) -> list[int]:
+        if not obj.product_group:
+            return []
+        return list(obj.product_group.assessment_approvers.values_list("id", flat=True))
+
+    def get_product_group_assessment_approver_authorization_groups(self, obj: Product) -> list[int]:
+        if not obj.product_group:
+            return []
+        return list(obj.product_group.assessment_approver_authorization_groups.values_list("id", flat=True))
 
     def get_observation_reviews(self, obj: Product) -> int:
         return Observation.objects.filter(product=obj, current_status=Status.STATUS_IN_REVIEW).count()
@@ -453,7 +467,12 @@ class NestedProductSerializer(ModelSerializer):
 
     class Meta:
         model = Product
-        exclude = ["members", "authorization_group_members"]
+        exclude = [
+            "members",
+            "authorization_group_members",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
+        ]
 
     def get_permissions(self, product: Product) -> Optional[set[Permissions]]:
         return get_permissions_for_role(get_highest_user_role(product))
@@ -486,6 +505,8 @@ class NestedProductListSerializer(ModelSerializer):
         exclude = [
             "members",
             "authorization_group_members",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
             "is_product_group",
             "new_observations_in_review",
         ]

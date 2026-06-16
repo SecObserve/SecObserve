@@ -6,6 +6,7 @@ import {
     FormDataConsumer,
     NullableBooleanInput,
     NumberInput,
+    ReferenceArrayInput,
     ReferenceInput,
 } from "react-admin";
 
@@ -14,6 +15,7 @@ import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_email, feature_license_management } from "../../commons/functions";
 import {
+    AutocompleteArrayInputWide,
     AutocompleteInputMedium,
     AutocompleteInputWide,
     TextInputExtraWide,
@@ -197,6 +199,28 @@ export const ProductGroupCreateEditComponent = ({
                 Review
             </Typography>
             <BooleanInput source="assessments_need_approval" label="Assessments need approval" defaultValue={false} />
+            <ReferenceArrayInput
+                source="assessment_approvers"
+                reference="users"
+                sort={{ field: "full_name", order: "ASC" }}
+            >
+                <AutocompleteArrayInputWide
+                    label="Assessment approvers"
+                    optionText="full_name"
+                    helperText="Only these users may approve assessments. Applies to all products in this group. Leave empty to allow anyone with approval permission."
+                />
+            </ReferenceArrayInput>
+            <ReferenceArrayInput
+                source="assessment_approver_authorization_groups"
+                reference="authorization_groups"
+                sort={{ field: "name", order: "ASC" }}
+            >
+                <AutocompleteArrayInputWide
+                    label="Assessment approver groups"
+                    optionText="name"
+                    helperText="Members of these authorization groups may approve assessments for all products in this group."
+                />
+            </ReferenceArrayInput>
             <BooleanInput source="product_rules_need_approval" label="Rules need approval" defaultValue={false} />
             <BooleanInput
                 source="new_observations_in_review"
