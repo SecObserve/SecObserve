@@ -14,7 +14,7 @@ There is a ratelimiting active to prevent flooding of notifications, if a series
 
 #### Settings in SecObserve
 
-The field `EMAIL_FROM` needs to be set in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) to be able to send notifications to email addresses for both events. 
+The field `EMAIL_FROM` needs to be set in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) to be able to send notifications to email addresses for both events. The SMTP server used to deliver these emails is configured with the `EMAIL_*` [environment variables](../getting_started/configuration.md#backend) when deploying the backend. 
 
 #### Notifications for observations, observation titles and security gates
 
