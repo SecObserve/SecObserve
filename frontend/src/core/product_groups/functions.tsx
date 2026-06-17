@@ -199,28 +199,36 @@ export const ProductGroupCreateEditComponent = ({
                 Review
             </Typography>
             <BooleanInput source="assessments_need_approval" label="Assessments need approval" defaultValue={false} />
-            <ReferenceArrayInput
-                source="assessment_approvers"
-                reference="users"
-                sort={{ field: "full_name", order: "ASC" }}
-            >
-                <AutocompleteArrayInputWide
-                    label="Assessment approvers"
-                    optionText="full_name"
-                    helperText="Only these users may approve assessments. Applies to all products in this group. Leave empty to allow anyone with approval permission."
-                />
-            </ReferenceArrayInput>
-            <ReferenceArrayInput
-                source="assessment_approver_authorization_groups"
-                reference="authorization_groups"
-                sort={{ field: "name", order: "ASC" }}
-            >
-                <AutocompleteArrayInputWide
-                    label="Assessment approver groups"
-                    optionText="name"
-                    helperText="Members of these authorization groups may approve assessments for all products in this group."
-                />
-            </ReferenceArrayInput>
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.assessments_need_approval && (
+                        <Fragment>
+                            <ReferenceArrayInput
+                                source="assessment_approvers"
+                                reference="users"
+                                sort={{ field: "full_name", order: "ASC" }}
+                            >
+                                <AutocompleteArrayInputWide
+                                    label="Assessment approvers"
+                                    optionText="full_name"
+                                    helperText="Users allowed to approve assessments for all products in this group. Empty = anyone with permission."
+                                />
+                            </ReferenceArrayInput>
+                            <ReferenceArrayInput
+                                source="assessment_approver_authorization_groups"
+                                reference="authorization_groups"
+                                sort={{ field: "name", order: "ASC" }}
+                            >
+                                <AutocompleteArrayInputWide
+                                    label="Assessment approver groups"
+                                    optionText="name"
+                                    helperText="Groups whose members may approve assessments for all products in this group."
+                                />
+                            </ReferenceArrayInput>
+                        </Fragment>
+                    )
+                }
+            </FormDataConsumer>
             <BooleanInput source="product_rules_need_approval" label="Rules need approval" defaultValue={false} />
             <BooleanInput
                 source="new_observations_in_review"

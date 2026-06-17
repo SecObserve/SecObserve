@@ -43,6 +43,20 @@ Be aware, that the user who has created the assessment is not allowed to approve
 
 ![Assessment approval](../assets/images/screenshot_assessment_approval.png){ width="60%" style="display: block; margin: 0 auto" }
 
+### Restricting who may approve
+
+By default, any user with the permission to approve (role `Writer`, `Maintainer` or `Owner`) may approve another user's assessment. In larger organizations the approval often has to be done by a dedicated, independent party, for example a security team. To enforce this, designated approvers can be configured per product. The fields are shown once **Assessments need approval** is enabled:
+
+* **Assessment approvers**: individual users that are allowed to approve assessments.
+* **Assessment approver groups**: authorization groups whose members are allowed to approve assessments.
+
+The behavior is:
+
+* If both fields are left empty, nothing changes: anyone with the approval permission (except the author of the assessment) may approve.
+* If at least one approver or approver group is configured, only those users – directly or as a member of a configured group – may approve or reject assessments. The approval permission and the rule that users cannot approve their own assessment still apply.
+
+Like **Assessments need approval**, the setting can also be configured for a product group and is then inherited by all products in that group; the effective approvers are the combination of the product's and the product group's approvers. The restriction applies to both single and bulk approvals.
+
 ## Reviews
 
 To make it easier to find observations with the status `In Review` or assessements needing an approval, a tab is shown for the product, if reviews or approvals are pending:
