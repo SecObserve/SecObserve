@@ -14,7 +14,12 @@ There is a ratelimiting active to prevent flooding of notifications, if a series
 
 #### Settings in SecObserve
 
-The field `EMAIL_FROM` needs to be set in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) to be able to send notifications to email addresses for both events. 
+The field `EMAIL_FROM` needs to be set in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) to be able to send notifications to email addresses for both events.
+
+Email configuration is split into two layers:
+
+* **SMTP transport** (which mail server to use, how to connect): configured with the `EMAIL_*` [environment variables](../getting_started/configuration.md#backend) at deployment time. These are Django settings that are read once at startup, so they are intentionally **not** editable in the administration UI. Email notifications are only enabled when `EMAIL_HOST` or `EMAIL_PORT` is set; if neither is set, the email notification options are not available.
+* **Addresses** (who emails are sent from and to): configured at runtime in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) (`EMAIL_FROM`, `EXCEPTION_EMAIL_TO`) and in the `Email` field of a product.
 
 #### Notifications for observations, observation titles and security gates
 
