@@ -291,7 +291,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                             </Labeled>
                         )}
                         {product.assessment_approvers && product.assessment_approvers.length > 0 && (
-                            <Labeled label="Assessment approvers">
+                            <Labeled label="Designated approvers">
                                 <ReferenceArrayField source="assessment_approvers" reference="users">
                                     <SingleFieldList linkType={false}>
                                         <ChipField source="full_name" size="small" />
@@ -301,7 +301,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                         )}
                         {product.assessment_approver_authorization_groups &&
                             product.assessment_approver_authorization_groups.length > 0 && (
-                                <Labeled label="Assessment approver groups">
+                                <Labeled label="Designated approver groups">
                                     <ReferenceArrayField
                                         source="assessment_approver_authorization_groups"
                                         reference="authorization_groups"
@@ -314,7 +314,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                             )}
                         {product.product_group_assessment_approvers &&
                             product.product_group_assessment_approvers.length > 0 && (
-                                <Labeled label="Assessment approvers (from product group)">
+                                <Labeled label="Designated approvers (from product group)">
                                     <ReferenceArrayField source="product_group_assessment_approvers" reference="users">
                                         <SingleFieldList linkType={false}>
                                             <ChipField source="full_name" size="small" />
@@ -324,7 +324,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                             )}
                         {product.product_group_assessment_approver_authorization_groups &&
                             product.product_group_assessment_approver_authorization_groups.length > 0 && (
-                                <Labeled label="Assessment approver groups (from product group)">
+                                <Labeled label="Designated approver groups (from product group)">
                                     <ReferenceArrayField
                                         source="product_group_assessment_approver_authorization_groups"
                                         reference="authorization_groups"

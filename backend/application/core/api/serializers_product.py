@@ -42,6 +42,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.assessment import is_user_designated_assessment_approver
 from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
@@ -57,6 +58,23 @@ from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
 
+def get_product_permissions_for_user(product: Product) -> Optional[set[Permissions]]:
+    """Permissions of the current user for a product, including the designated-approver grant.
+
+    The base set comes from the user's highest role. Designated assessment approvers are
+    additionally granted Observation_Assessment so the frontend exposes the assessment controls,
+    mirroring the object-level authorization check.
+    """
+    permissions = get_permissions_for_role(get_highest_user_role(product))
+    if (
+        permissions is not None
+        and Permissions.Observation_Assessment not in permissions
+        and is_user_designated_assessment_approver(product)
+    ):
+        permissions = permissions | {Permissions.Observation_Assessment}
+    return permissions
+
+
 class ProductCoreSerializer(ModelSerializer):
     permissions = SerializerMethodField()
     observation_notification_status_list = ListField(
@@ -66,7 +84,7 @@ class ProductCoreSerializer(ModelSerializer):
     )
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
-        return get_permissions_for_role(get_highest_user_role(obj))
+        return get_product_permissions_for_user(obj)
 
     class Meta:
         model = Product
@@ -475,7 +493,7 @@ class NestedProductSerializer(ModelSerializer):
         ]
 
     def get_permissions(self, product: Product) -> Optional[set[Permissions]]:
-        return get_permissions_for_role(get_highest_user_role(product))
+        return get_product_permissions_for_user(product)
 
     def get_product_group_assessments_need_approval(self, obj: Product) -> bool:
         if not obj.product_group:

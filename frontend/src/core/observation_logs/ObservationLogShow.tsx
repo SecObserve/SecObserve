@@ -191,17 +191,17 @@ const ObservationLogComponent = () => {
                                     />
                                 </Labeled>
                                 {observation_log.approval_user_full_name && (
-                                    <Labeled label="Approved/rejected by">
+                                    <Labeled label="Assessment by">
                                         <TextField source="approval_user_full_name" />
                                     </Labeled>
                                 )}
                                 {observation_log.approval_remark && (
-                                    <Labeled label="Approval/rejection remark">
+                                    <Labeled label="Assessment remark">
                                         <TextField source="approval_remark" />
                                     </Labeled>
                                 )}
                                 {observation_log.approval_date && (
-                                    <Labeled label="Approval/rejection date">
+                                    <Labeled label="Date">
                                         <DateField source="approval_date" showTime />
                                     </Labeled>
                                 )}

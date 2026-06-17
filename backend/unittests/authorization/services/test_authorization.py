@@ -56,6 +56,53 @@ class TestAuthorization(BaseTestCase):
         )
         mock.assert_called_with(self.product_1, self.user_internal)
 
+    # --- Observation_Assessment grant for designated approvers ---
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_assessment_granted_to_designated_approver(self, mock_role, mock_approver):
+        mock_role.return_value = Roles.Writer
+        mock_approver.return_value = True
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Assessment, self.user_internal))
+        mock_approver.assert_called_with(self.product_1, self.user_internal)
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_assessment_denied_to_non_approver_writer(self, mock_role, mock_approver):
+        mock_role.return_value = Roles.Writer
+        mock_approver.return_value = False
+        self.assertFalse(user_has_permission(self.product_1, Permissions.Observation_Assessment, self.user_internal))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_assessment_role_grant_short_circuits(self, mock_role, mock_approver):
+        mock_role.return_value = Roles.Maintainer
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Assessment, self.user_internal))
+        mock_approver.assert_not_called()
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_assessment_granted_to_approver_without_role(self, mock_role, mock_approver):
+        mock_role.return_value = None
+        mock_approver.return_value = True
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Assessment, self.user_internal))
+        mock_approver.assert_called_with(self.product_1, self.user_internal)
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_assessment_denied_to_non_approver_without_role(self, mock_role, mock_approver):
+        mock_role.return_value = None
+        mock_approver.return_value = False
+        self.assertFalse(user_has_permission(self.product_1, Permissions.Observation_Assessment, self.user_internal))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approver_does_not_grant_other_permissions(self, mock_role, mock_approver):
+        mock_role.return_value = Roles.Writer
+        mock_approver.return_value = True
+        self.assertFalse(user_has_permission(self.product_1, Permissions.Observation_Edit, self.user_internal))
+        mock_approver.assert_not_called()
+
     # --- Product_Group ---
 
     @patch("application.authorization.services.authorization.get_highest_user_role")

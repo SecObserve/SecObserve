@@ -47,8 +47,8 @@ Be aware, that the user who has created the assessment is not allowed to approve
 
 By default, any user with the permission to approve (role `Writer`, `Maintainer` or `Owner`) may approve another user's assessment. In larger organizations the approval often has to be done by a dedicated, independent party, for example a security team. To enforce this, designated approvers can be configured per product. The fields are shown once **Assessments need approval** is enabled:
 
-* **Assessment approvers**: individual users that are allowed to approve assessments.
-* **Assessment approver groups**: authorization groups whose members are allowed to approve assessments.
+* **Designated approvers**: individual users that are allowed to approve assessments.
+* **Designated approver groups**: authorization groups whose members are allowed to approve assessments.
 
 The behavior is:
 
@@ -56,6 +56,8 @@ The behavior is:
 * If at least one approver or approver group is configured, only those users – directly or as a member of a configured group – may approve or reject assessments. The approval permission and the rule that users cannot approve their own assessment still apply.
 
 Like **Assessments need approval**, the setting can also be configured for a product group and is then inherited by all products in that group; the effective approvers are the combination of the product's and the product group's approvers. The restriction applies to both single and bulk approvals.
+
+The `Writer` role cannot assess observations on its own. However, any user configured as a designated approver of a product (directly or through a designated approver group, on the product or inherited from its product group) is additionally granted the *Assess Observation* permission for that product. This applies regardless of the user's role on the product – even to users who have no role there at all – so a dedicated approver can create assessments, while still being unable to approve their own.
 
 ## Reviews
 

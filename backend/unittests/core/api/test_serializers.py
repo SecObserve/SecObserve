@@ -39,13 +39,15 @@ class TestProductSerializer(BaseTestCase):
 
 
 class TestBranchSerializer(BaseTestCase):
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
     @patch("application.core.api.serializers_product.get_current_user")
     @patch("application.core.api.serializers_product.get_highest_user_role")
     @patch("application.core.api.serializers_product.get_permissions_for_role")
-    def test_get_permissions_user(self, mock_permissions, mock_highest_user_role, mock_user):
+    def test_get_permissions_user(self, mock_permissions, mock_highest_user_role, mock_user, mock_approver):
         mock_permissions.return_value = [Permissions.Product_View]
         mock_highest_user_role.return_value = Roles.Writer
         mock_user.return_value = self.user_internal
+        mock_approver.return_value = False
         product_serializer = ProductSerializer()
         self.assertEqual(
             [Permissions.Product_View],
@@ -53,6 +55,40 @@ class TestBranchSerializer(BaseTestCase):
         )
         mock_highest_user_role.assert_called_with(self.product_1)
         mock_permissions.assert_called_with(Roles.Writer)
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_designated_approver(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_approver
+    ):
+        mock_permissions.return_value = {Permissions.Observation_View}
+        mock_highest_user_role.return_value = Roles.Writer
+        mock_user.return_value = self.user_internal
+        mock_approver.return_value = True
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_View, Permissions.Observation_Assessment},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_approver_without_role(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_approver
+    ):
+        mock_permissions.return_value = set()
+        mock_highest_user_role.return_value = None
+        mock_user.return_value = self.user_internal
+        mock_approver.return_value = True
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_Assessment},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
 
     @patch("application.core.api.serializers_product.get_product_member")
     def test_validate_security_gate_active_empty(self, mock_product_member):

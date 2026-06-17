@@ -1,5 +1,5 @@
 import { Divider, Stack, Typography } from "@mui/material";
-import { Fragment } from "react";
+import { Fragment, useEffect } from "react";
 import {
     AutocompleteArrayInput,
     BooleanInput,
@@ -9,7 +9,9 @@ import {
     NumberInput,
     ReferenceArrayInput,
     ReferenceInput,
+    useRecordContext,
 } from "react-admin";
+import { useFormContext } from "react-hook-form";
 
 import products from ".";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
@@ -61,11 +63,31 @@ export type ProductCreateEditComponentProps = {
     productGroupId?: Identifier;
 };
 
+// Pre-fills the designated approvers with the current user when the field first appears (create form).
+const DefaultApprover = ({ userId }: { userId: Identifier }) => {
+    const { getValues, setValue } = useFormContext();
+    useEffect(() => {
+        if (!getValues("assessment_approvers")?.length) {
+            setValue("assessment_approvers", [userId], { shouldDirty: true });
+        }
+    }, [getValues, setValue, userId]);
+    return null;
+};
+
 export const ProductCreateEditComponent = ({
     initialDescription,
     setDescription,
     productGroupId,
 }: ProductCreateEditComponentProps) => {
+    const product = useRecordContext();
+    // Limit approver choices to members of this product (or its product group). Falls back to the
+    // product group when creating a product under one; 0 yields no choices before the product exists.
+    const approver_filter = { of_product: product?.id ?? productGroupId ?? 0 };
+    // On create, pre-fill the designated approvers with the current user (who becomes the Owner of the
+    // new product); on edit, keep the saved list so it can be refined once members have been added.
+    const stored_user = localStorage.getItem("user");
+    const current_user_id = stored_user ? JSON.parse(stored_user).id : undefined;
+    const default_approver_on_create = product?.id ? undefined : current_user_id;
     return (
         <Fragment>
             <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
@@ -326,25 +348,28 @@ export const ProductCreateEditComponent = ({
                             <ReferenceArrayInput
                                 source="assessment_approvers"
                                 reference="users"
+                                filter={approver_filter}
                                 sort={{ field: "full_name", order: "ASC" }}
                             >
                                 <AutocompleteArrayInputWide
-                                    label="Assessment approvers"
+                                    label="Designated approvers"
                                     optionText="full_name"
-                                    helperText="Users allowed to approve assessments. Empty = anyone with permission."
+                                    helperText="Users allowed to approve assessments. Empty for default permission."
                                 />
                             </ReferenceArrayInput>
                             <ReferenceArrayInput
                                 source="assessment_approver_authorization_groups"
                                 reference="authorization_groups"
+                                filter={approver_filter}
                                 sort={{ field: "name", order: "ASC" }}
                             >
                                 <AutocompleteArrayInputWide
-                                    label="Assessment approver groups"
+                                    label="Designated approver groups"
                                     optionText="name"
                                     helperText="Groups whose members may approve assessments."
                                 />
                             </ReferenceArrayInput>
+                            {default_approver_on_create && <DefaultApprover userId={default_approver_on_create} />}
                         </Fragment>
                     )
                 }

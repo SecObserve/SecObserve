@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from django.db.models import Exists, QuerySet
+from django.db.models import Exists, Q, QuerySet
 from django_filters import CharFilter, FilterSet, NumberFilter, OrderingFilter
 from rest_framework.request import Request
 
@@ -23,6 +23,25 @@ class UserFilter(FilterSet):
     exclude_license_group = NumberFilter(field_name="exclude_license_group", method="get_exclude_license_group")
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     exclude_product = NumberFilter(field_name="exclude_product", method="get_exclude_product")
+    of_product = NumberFilter(field_name="of_product", method="get_of_product")
+
+    def get_of_product(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Any,
+    ) -> QuerySet:
+        # Users who are members of the product - directly or via an authorization group - including
+        # membership inherited from the product's product group. The "authorization_groups" relation
+        # is traversed twice: User -> authorization groups -> products the group is assigned to.
+        if value is not None:
+            return queryset.filter(
+                Q(product_members__id=value)  # direct member of the product
+                | Q(product_members__products__id=value)  # direct member of the product group
+                | Q(authorization_groups__authorization_groups__id=value)  # via an authorization group of the product
+                | Q(authorization_groups__authorization_groups__products__id=value)  # via an auth group of the group
+            ).distinct()
+        return queryset
 
     def get_exclude_authorization_group(
         self,
@@ -116,6 +135,21 @@ class AuthorizationGroupFilter(FilterSet):
     exclude_license_group = NumberFilter(field_name="exclude_license_group", method="get_exclude_license_group")
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     exclude_product = NumberFilter(field_name="exclude_product", method="get_exclude_product")
+    of_product = NumberFilter(field_name="of_product", method="get_of_product")
+
+    def get_of_product(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Any,
+    ) -> QuerySet:
+        # Authorization groups assigned to the product, including those inherited from its product group.
+        if value is not None:
+            return queryset.filter(
+                Q(authorization_groups__id=value)  # assigned to the product
+                | Q(authorization_groups__products__id=value)  # assigned to the product's product group
+            ).distinct()
+        return queryset
 
     def get_exclude_license_group(
         self,

@@ -7,6 +7,7 @@ from rest_framework.exceptions import ValidationError
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log, Product
+from application.core.queries.assessment import get_effective_assessment_approvers
 from application.core.services.observation import (
     get_current_priority,
     get_current_severity,
@@ -184,22 +185,6 @@ def _get_assessments_need_approval(product: Product) -> bool:
     return product.assessments_need_approval
 
 
-def _get_effective_assessment_approvers(product: Product) -> tuple[set[int], set[int]]:
-    """Return the effective approver user ids and authorization group ids for a product.
-
-    The effective set is the union of the product's own designated approvers and those of
-    its product group (mirroring the inheritance of the "assessments need approval" flag).
-    """
-    approver_user_ids: set[int] = set(product.assessment_approvers.values_list("id", flat=True))
-    approver_group_ids: set[int] = set(product.assessment_approver_authorization_groups.values_list("id", flat=True))
-    if product.product_group:
-        approver_user_ids |= set(product.product_group.assessment_approvers.values_list("id", flat=True))
-        approver_group_ids |= set(
-            product.product_group.assessment_approver_authorization_groups.values_list("id", flat=True)
-        )
-    return approver_user_ids, approver_group_ids
-
-
 def user_is_allowed_assessment_approver(product: Product, user: Optional[User] = None) -> bool:
     """Check whether a user satisfies the designated-approver restriction for a product.
 
@@ -213,7 +198,7 @@ def user_is_allowed_assessment_approver(product: Product, user: Optional[User] =
     if user is None:
         return False
 
-    approver_user_ids, approver_group_ids = _get_effective_assessment_approvers(product)
+    approver_user_ids, approver_group_ids = get_effective_assessment_approvers(product)
 
     if not approver_user_ids and not approver_group_ids:
         return True

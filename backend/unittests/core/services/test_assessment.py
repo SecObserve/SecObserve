@@ -10,8 +10,11 @@ from application.access_control.models import (
     User,
 )
 from application.core.models import Observation_Log, Product
+from application.core.queries.assessment import (
+    get_effective_assessment_approvers,
+    is_user_designated_assessment_approver,
+)
 from application.core.services.assessment import (
-    _get_effective_assessment_approvers,
     assessment_approval,
     user_is_allowed_assessment_approver,
 )
@@ -53,7 +56,7 @@ class TestAssessmentApproverResolution(TestCase):
         self.product_group.assessment_approvers.add(self.approver)
         self.product.assessment_approvers.add(self.other)
 
-        user_ids, group_ids = _get_effective_assessment_approvers(self.product)
+        user_ids, group_ids = get_effective_assessment_approvers(self.product)
         self.assertEqual(user_ids, {self.approver.pk, self.other.pk})
         self.assertEqual(group_ids, set())
 
@@ -65,6 +68,40 @@ class TestAssessmentApproverResolution(TestCase):
         self.product_group.assessment_approver_authorization_groups.add(self.group)
         self.assertTrue(user_is_allowed_assessment_approver(self.product, self.group_user))
         self.assertFalse(user_is_allowed_assessment_approver(self.product, self.other))
+
+
+class TestDesignatedAssessmentApprover(TestCase):
+    """Strict designated-approver check used to grant the assessment permission."""
+
+    def setUp(self) -> None:
+        self.approver = User.objects.create(username="designated@example.com")
+        self.other = User.objects.create(username="not_designated@example.com")
+        self.group_user = User.objects.create(username="group_member@example.com")
+
+        self.group = Authorization_Group.objects.create(name="approver_team")
+        Authorization_Group_Member.objects.create(authorization_group=self.group, user=self.group_user)
+
+        self.product_group = Product.objects.create(name="pg2", is_product_group=True)
+        self.product = Product.objects.create(name="p2", product_group=self.product_group)
+
+    def test_no_approvers_configured_denies_everyone(self) -> None:
+        # Unlike user_is_allowed_assessment_approver, the strict check returns False when empty.
+        self.assertFalse(is_user_designated_assessment_approver(self.product, self.other))
+
+    def test_direct_designated_user(self) -> None:
+        self.product.assessment_approvers.add(self.approver)
+        self.assertTrue(is_user_designated_assessment_approver(self.product, self.approver))
+        self.assertFalse(is_user_designated_assessment_approver(self.product, self.other))
+
+    def test_designated_via_authorization_group(self) -> None:
+        self.product.assessment_approver_authorization_groups.add(self.group)
+        self.assertTrue(is_user_designated_assessment_approver(self.product, self.group_user))
+        self.assertFalse(is_user_designated_assessment_approver(self.product, self.other))
+
+    def test_designated_inherited_from_product_group(self) -> None:
+        self.product_group.assessment_approvers.add(self.approver)
+        self.assertTrue(is_user_designated_assessment_approver(self.product, self.approver))
+        self.assertFalse(is_user_designated_assessment_approver(self.product, self.other))
 
 
 class TestAssessmentApprovalEnforcement(BaseTestCase):
