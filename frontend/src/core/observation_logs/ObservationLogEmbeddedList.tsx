@@ -84,7 +84,7 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
                                     observation.product_data.product_group_assessments_need_approval) && (
                                     <TextField
                                         source="approval_user_full_name"
-                                        label="Assessment by"
+                                        label="Approved/rejected by"
                                         sortable={false}
                                     />
                                 )}

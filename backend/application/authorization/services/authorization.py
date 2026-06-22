@@ -18,11 +18,11 @@ from application.core.models import (
     Product_Member,
     Service,
 )
-from application.core.queries.assessment import is_user_designated_assessment_approver
 from application.core.queries.product_member import (
     get_highest_role_of_product_authorization_group_members_for_user,
     get_product_member,
 )
+from application.core.services.assessment import is_user_designated_assessment_approver
 from application.import_observations.models import (
     Api_Configuration,
     Vulnerability_Check,
@@ -55,9 +55,9 @@ def user_has_permission(  # pylint: disable=too-many-return-statements,too-many-
         role = get_highest_user_role(obj, user)
         if role and role_has_permission(role, permission):
             return True
-        # Designated assessment approvers are allowed to assess observations of a product even if
-        # their role does not include the permission, or they have no role on the product at all.
-        if permission == Permissions.Observation_Assessment:
+        # Designated assessment approvers are allowed to approve assessments of a product even if
+        # their role does not include the approval permission, or they have no role on the product.
+        if permission == Permissions.Observation_Log_Approval:
             return is_user_designated_assessment_approver(obj, user)
         return False
 

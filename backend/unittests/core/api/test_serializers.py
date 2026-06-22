@@ -69,7 +69,7 @@ class TestBranchSerializer(BaseTestCase):
         mock_approver.return_value = True
         product_serializer = ProductSerializer()
         self.assertEqual(
-            {Permissions.Observation_View, Permissions.Observation_Assessment},
+            {Permissions.Observation_View, Permissions.Observation_Log_Approval},
             product_serializer.get_permissions(obj=self.product_1),
         )
 
@@ -86,7 +86,7 @@ class TestBranchSerializer(BaseTestCase):
         mock_approver.return_value = True
         product_serializer = ProductSerializer()
         self.assertEqual(
-            {Permissions.Observation_Assessment},
+            {Permissions.Observation_Log_Approval},
             product_serializer.get_permissions(obj=self.product_1),
         )
 

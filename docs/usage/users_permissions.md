@@ -76,8 +76,8 @@ While superusers have permission to view and edit all data, internal and externa
 |                          |        |        |            |       |        |
 | View Observation         | X      | X      | X          | X     | -      |
 | Create Observation       | -      | X      | X          | X     | -      |
-| Edit Observation ^1)^    | -      | -      | X          | X     | -      |
-| Assess Observation ^4)^  | -      | -      | X          | X     | -      |
+| Edit Observation ^1)^    | -      | X      | X          | X     | -      |
+| Assess Observation       | -      | X      | X          | X     | -      |
 | Delete Observation       | -      | -      | -          | X     | -      |
 |                          |        |        |            |       |        |
 | View Product Rules       | X      | X      | X          | X     | -      |
@@ -111,8 +111,6 @@ While superusers have permission to view and edit all data, internal and externa
 **^2)^** Maintainers are not allowed to manipulate Owners of that product
 
 **^3)^** Only for VEX documents (CSAF or OpenVEX) linked to a product. For VEX documents without a product, the user who created the VEX document is the owner of the document and can perform all actions on it.
-
-**^4)^** Writers cannot assess observations by default. When a user is designated as an assessment approver of a product (directly or through an authorization group, configured on the product or inherited from its product group), they are additionally granted the *Assess Observation* permission for that product, even if their role would not otherwise include it (this also applies to users who have no role on the product).
 
 
 ## Management of users and authorization groups

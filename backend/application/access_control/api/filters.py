@@ -23,9 +23,9 @@ class UserFilter(FilterSet):
     exclude_license_group = NumberFilter(field_name="exclude_license_group", method="get_exclude_license_group")
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     exclude_product = NumberFilter(field_name="exclude_product", method="get_exclude_product")
-    of_product = NumberFilter(field_name="of_product", method="get_of_product")
+    member_of_product = NumberFilter(field_name="member_of_product", method="get_member_of_product")
 
-    def get_of_product(
+    def get_member_of_product(
         self,
         queryset: QuerySet,
         name: Any,  # pylint: disable=unused-argument
@@ -135,9 +135,9 @@ class AuthorizationGroupFilter(FilterSet):
     exclude_license_group = NumberFilter(field_name="exclude_license_group", method="get_exclude_license_group")
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     exclude_product = NumberFilter(field_name="exclude_product", method="get_exclude_product")
-    of_product = NumberFilter(field_name="of_product", method="get_of_product")
+    member_of_product = NumberFilter(field_name="member_of_product", method="get_member_of_product")
 
-    def get_of_product(
+    def get_member_of_product(
         self,
         queryset: QuerySet,
         name: Any,  # pylint: disable=unused-argument

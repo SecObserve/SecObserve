@@ -57,8 +57,6 @@ The behavior is:
 
 Like **Assessments need approval**, the setting can also be configured for a product group and is then inherited by all products in that group; the effective approvers are the combination of the product's and the product group's approvers. The restriction applies to both single and bulk approvals.
 
-The `Writer` role cannot assess observations on its own. However, any user configured as a designated approver of a product (directly or through a designated approver group, on the product or inherited from its product group) is additionally granted the *Assess Observation* permission for that product. This applies regardless of the user's role on the product – even to users who have no role there at all – so a dedicated approver can create assessments, while still being unable to approve their own.
-
 ## Reviews
 
 To make it easier to find observations with the status `In Review` or assessements needing an approval, a tab is shown for the product, if reviews or approvals are pending:

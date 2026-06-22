@@ -334,17 +334,17 @@ export const RuleShowComponent = ({ rule }: any) => {
                             />
                         </Labeled>
                         {rule.approval_user_full_name && (
-                            <Labeled label="Assessment by">
+                            <Labeled label="Approved/rejected by">
                                 <TextField source="approval_user_full_name" />
                             </Labeled>
                         )}
                         {rule.approval_remark && (
-                            <Labeled label="Assessment remark">
+                            <Labeled label="Approval/rejection remark">
                                 <TextField source="approval_remark" />
                             </Labeled>
                         )}
                         {rule.approval_date && (
-                            <Labeled label="Date">
+                            <Labeled label="Approval/rejection date">
                                 <DateField source="approval_date" showTime />
                             </Labeled>
                         )}

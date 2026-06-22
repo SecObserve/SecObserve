@@ -10,12 +10,10 @@ from application.access_control.models import (
     User,
 )
 from application.core.models import Observation_Log, Product
-from application.core.queries.assessment import (
-    get_effective_assessment_approvers,
-    is_user_designated_assessment_approver,
-)
 from application.core.services.assessment import (
     assessment_approval,
+    get_effective_assessment_approvers,
+    is_user_designated_assessment_approver,
     user_is_allowed_assessment_approver,
 )
 from application.core.services.observations_bulk_actions import (

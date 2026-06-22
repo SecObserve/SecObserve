@@ -48,7 +48,7 @@ export const ProductGroupCreateEditComponent = ({
 }: ProductGroupCreateEditComponentProps) => {
     const product_group = useRecordContext();
     // Limit approver choices to members of this product group (0 yields no choices before it exists).
-    const approver_filter = { of_product: product_group?.id ?? 0 };
+    const approver_filter = { member_of_product: product_group?.id ?? 0 };
     // On create, pre-fill the designated approvers with the current user (who becomes the Owner of the new
     // product group); on edit, keep the saved list so it can be refined once members have been added.
     const stored_user = localStorage.getItem("user");

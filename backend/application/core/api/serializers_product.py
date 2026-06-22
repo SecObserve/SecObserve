@@ -42,11 +42,11 @@ from application.core.models import (
     Product_Member,
     Service,
 )
-from application.core.queries.assessment import is_user_designated_assessment_approver
 from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
 )
+from application.core.services.assessment import is_user_designated_assessment_approver
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
@@ -62,16 +62,16 @@ def get_product_permissions_for_user(product: Product) -> Optional[set[Permissio
     """Permissions of the current user for a product, including the designated-approver grant.
 
     The base set comes from the user's highest role. Designated assessment approvers are
-    additionally granted Observation_Assessment so the frontend exposes the assessment controls,
+    additionally granted Observation_Log_Approval so the frontend exposes the approval controls,
     mirroring the object-level authorization check.
     """
     permissions = get_permissions_for_role(get_highest_user_role(product))
     if (
         permissions is not None
-        and Permissions.Observation_Assessment not in permissions
+        and Permissions.Observation_Log_Approval not in permissions
         and is_user_designated_assessment_approver(product)
     ):
-        permissions = permissions | {Permissions.Observation_Assessment}
+        permissions = permissions | {Permissions.Observation_Log_Approval}
     return permissions
 
 
