@@ -29,7 +29,7 @@
   "author": "Kristof Ivancza (github.com/kHRISl33t)",
   "license": "ISC",
   "dependencies": {
-    "yargs": "17.7.2"
+    "yargs": "17.7.3"
   },
   "files": [
     "lib",
