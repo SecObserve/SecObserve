@@ -22,7 +22,7 @@ logger = logging.getLogger("secobserve.notifications")
 LAST_EXCEPTIONS: dict[str, datetime] = {}
 
 
-def send_product_security_gate_notification(product: Product) -> None:
+def send_product_security_gate_notification(product: Product, thresholds: Optional[dict[str, int]] = None) -> None:
     settings = Settings.load()
 
     if product.security_gate_passed is None:
@@ -49,12 +49,27 @@ def send_product_security_gate_notification(product: Product) -> None:
 
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(product)
     if notification_ms_teams_webhook:
+        severity_stats = [
+            {
+                "label": label,
+                "count": getattr(product, f"active_{key}_observation_count", None),
+                "threshold": thresholds.get(key) if thresholds else None,
+            }
+            for label, key in (
+                ("Critical", "critical"),
+                ("High", "high"),
+                ("Medium", "medium"),
+                ("Low", "low"),
+                ("Unknown", "unknown"),
+            )
+        ]
         send_msteams_notification(
             notification_ms_teams_webhook,
             "msteams_product_security_gate.tpl",
             product=product,
             security_gate_status=security_gate_status,
             product_url=f"{get_base_url_frontend()}#/products/{product.id}/show",
+            severity_stats=severity_stats,
         )
 
     notification_slack_webhook = _get_notification_slack_webhook(product)

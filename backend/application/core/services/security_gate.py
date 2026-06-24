@@ -15,7 +15,9 @@ def check_security_gate(product: Product) -> None:
     settings = Settings.load()
 
     initial_security_gate_passed = product.security_gate_passed
-    new_security_gate_passed = None
+    new_security_gate_passed: Optional[bool] = None
+    annotated_product = product
+    thresholds: Optional[dict[str, int]] = None
 
     security_gate_active: Optional[bool]
     if product.product_group and product.product_group.security_gate_active is not None:
@@ -26,14 +28,16 @@ def check_security_gate(product: Product) -> None:
     if security_gate_active is False:
         new_security_gate_passed = None
     elif security_gate_active is True:
-        new_security_gate_passed = _calculate_active_product_security_gate(product)
+        new_security_gate_passed, annotated_product, thresholds = _calculate_active_product_security_gate(product)
     elif settings.security_gate_active:
-        new_security_gate_passed = _calculate_active_config_security_gate(product)
+        new_security_gate_passed, annotated_product, thresholds = _calculate_active_config_security_gate(product)
 
     if initial_security_gate_passed != new_security_gate_passed:
         product.security_gate_passed = new_security_gate_passed
         product.save()
-        send_product_security_gate_notification(product)
+        # Pass the annotated product (active observation counts) and the thresholds
+        # that were applied, so the notification can show the statistics.
+        send_product_security_gate_notification(annotated_product, thresholds)
 
 
 def check_security_gate_observation(observation: Observation) -> None:
@@ -41,7 +45,7 @@ def check_security_gate_observation(observation: Observation) -> None:
         check_security_gate(observation.product)
 
 
-def _calculate_active_product_security_gate(product: Product) -> bool:
+def _calculate_active_product_security_gate(product: Product) -> tuple[bool, Product, dict[str, int]]:
     new_security_gate_passed = True
 
     if product.product_group and product.product_group.security_gate_active is True:
@@ -119,10 +123,18 @@ def _calculate_active_product_security_gate(product: Product) -> bool:
     ):
         new_security_gate_passed = False
 
-    return new_security_gate_passed
+    thresholds = {
+        "critical": security_gate_threshold_critical,
+        "high": security_gate_threshold_high,
+        "medium": security_gate_threshold_medium,
+        "low": security_gate_threshold_low,
+        "none": security_gate_threshold_none,
+        "unknown": security_gate_threshold_unknown,
+    }
+    return new_security_gate_passed, annotated_product, thresholds
 
 
-def _calculate_active_config_security_gate(product: Product) -> bool:
+def _calculate_active_config_security_gate(product: Product) -> tuple[bool, Product, dict[str, int]]:
     settings = Settings.load()
 
     annotated_product = get_product_by_id(
@@ -152,4 +164,12 @@ def _calculate_active_config_security_gate(product: Product) -> bool:
     ):
         new_security_gate_passed = False
 
-    return new_security_gate_passed
+    thresholds = {
+        "critical": settings.security_gate_threshold_critical,
+        "high": settings.security_gate_threshold_high,
+        "medium": settings.security_gate_threshold_medium,
+        "low": settings.security_gate_threshold_low,
+        "none": settings.security_gate_threshold_none,
+        "unknown": settings.security_gate_threshold_unknown,
+    }
+    return new_security_gate_passed, annotated_product, thresholds

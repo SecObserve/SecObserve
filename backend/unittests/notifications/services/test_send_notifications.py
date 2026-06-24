@@ -130,6 +130,7 @@ class TestPushNotifications(BaseTestCase):
             product=self.product_1,
             security_gate_status="None",
             product_url="https://secobserve.com/#/products/1/show",
+            severity_stats=ANY,
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
@@ -219,6 +220,7 @@ class TestPushNotifications(BaseTestCase):
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
+            severity_stats=ANY,
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
@@ -308,6 +310,7 @@ class TestPushNotifications(BaseTestCase):
             product=self.product_1,
             security_gate_status="Failed",
             product_url="https://secobserve.com/#/products/1/show",
+            severity_stats=ANY,
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",

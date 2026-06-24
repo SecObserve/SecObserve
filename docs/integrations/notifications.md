@@ -35,7 +35,12 @@ An admistrator can configure the field `EXCEPTION_EMAIL_TO` in the [Settings](..
 
 ####  Settings in Microsoft Teams
 
-For both types of notifications an incoming webhook has to be set for a channel, where the notifications shall appear. How to do this is explained in [Create Incoming Webhooks](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook). Copy the URL of the webhook to the clipboard, to have it available to set it in SecObserve.
+A webhook URL has to be set for the channel where the notifications shall appear. Microsoft offers two kinds of channel webhooks and SecObserve supports both — it automatically detects which payload format to send from the webhook URL, so no extra configuration is needed:
+
+* **Workflows (Power Automate):** the current Microsoft offering. Create one with the *"Post to a channel when a webhook request is received"* workflow template, described in [Browse and add workflows in Microsoft Teams](https://support.microsoft.com/en-us/office/browse-and-add-workflows-in-microsoft-teams-4998095c-8b72-4b0e-984c-f2ad39e6ba9a). These URLs contain `/workflows/.../triggers/manual/paths/invoke` in the path (on `*.environment.api.powerplatform.com`, or the older `*.logic.azure.com` form); SecObserve detects them by that path and sends them an Adaptive Card.
+* **Incoming Webhook connector:** the legacy [Office 365 connector](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook) (`*.webhook.office.com`). Microsoft has announced the retirement of these connectors, so new channels should use a Workflow instead; existing connector webhooks keep working unchanged (SecObserve sends them a MessageCard).
+
+Copy the URL of the webhook to the clipboard, to have it available to set it in SecObserve.
 
 The messages do not include mentions, but a user can set the "Channel notifications" to "All activities" in Teams, to get an active notification when an entry is generated. 
 

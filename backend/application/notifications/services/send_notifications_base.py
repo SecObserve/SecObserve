@@ -15,6 +15,17 @@ from application.commons.services.log_message import format_log_message
 
 logger = logging.getLogger("secobserve.notifications")
 
+# Host suffixes for Microsoft Teams "Workflows" (Power Automate) webhook trigger
+# URLs, used only as a fallback to the "/workflows/" path check below:
+#   current: <env>.environment.api.powerplatform.com
+#   legacy:  prod-NN.<region>.logic.azure.com   (HTTP-trigger URLs, retired 2025-11-30)
+# Legacy Office 365 "Incoming Webhook" connectors are on *.webhook.office.com and
+# take a MessageCard instead; they are detected by the absence of these signals.
+_MSTEAMS_WORKFLOW_HOST_SUFFIXES = (
+    ".environment.api.powerplatform.com",
+    ".logic.azure.com",
+)
+
 
 @db_task()
 def send_email_notification(notification_email_to: str, subject: str, template: str, **kwargs: Any) -> None:
@@ -43,16 +54,28 @@ def send_email_notification(notification_email_to: str, subject: str, template: 
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return
+
+    # Workflows webhooks need an Adaptive Card; legacy connectors keep the
+    # MessageCard template the caller passed in.
+    is_workflow = _is_msteams_workflow_webhook(webhook)
+    if is_workflow:
+        template = _get_msteams_workflow_template(template)
+
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
         try:
-            response = requests.request(
-                method="POST",
-                url=webhook,
-                data=notification_message,
-                allow_redirects=False,
-                timeout=60,
-            )
+            request_kwargs: dict[str, Any] = {
+                "method": "POST",
+                "url": webhook,
+                "data": notification_message,
+                "allow_redirects": False,
+                "timeout": 60,
+            }
+            if is_workflow:
+                # Power Automate only parses the body as JSON when told to; the
+                # legacy connector accepts it without an explicit content type.
+                request_kwargs["headers"] = {"Content-Type": "application/json"}
+            response = requests.request(**request_kwargs)
             response.raise_for_status()
         except Exception as e:
             logger.error(
@@ -126,6 +149,27 @@ def _validate_webhook_url(webhook: str) -> bool:
             return False
 
     return True
+
+
+def _is_msteams_workflow_webhook(webhook: str) -> bool:
+    split_url = urlsplit(webhook)
+    # Primary, format-stable signal: both the current and legacy trigger URLs
+    # carry ".../workflows/<id>/triggers/manual/paths/invoke" in their path.
+    # Checking split_url.path (not the raw URL) keeps the query string out of it.
+    if "/workflows/" in split_url.path.lower():
+        return True
+    # Host fallback in case Microsoft changes the path. urlsplit().hostname is
+    # already lower-cased and port-stripped (so an explicit :443 is ignored).
+    hostname = (split_url.hostname or "").lower()
+    return hostname.endswith(_MSTEAMS_WORKFLOW_HOST_SUFFIXES)
+
+
+def _get_msteams_workflow_template(template: str) -> str:
+    # Map a MessageCard template to its Adaptive Card sibling, e.g.
+    # "msteams_observation.tpl" -> "msteams_observation_workflow.tpl".
+    if template.endswith(".tpl"):
+        return f"{template[:-len('.tpl')]}_workflow.tpl"
+    return f"{template}_workflow"
 
 
 def _create_notification_message(template: str, **kwargs: Any) -> Optional[str]:

@@ -30,7 +30,8 @@ class TestSecurityGate(BaseTestCase):
 
         self.assertIsNone(product.security_gate_passed)
         save_mock.assert_called()
-        notification_mock.assert_called_with(product)
+        # Gate disabled -> no thresholds resolved, so they are passed as None.
+        notification_mock.assert_called_with(product, None)
 
     @patch("application.core.models.Product.save")
     @patch("application.core.services.security_gate.send_product_security_gate_notification")
@@ -46,7 +47,7 @@ class TestSecurityGate(BaseTestCase):
 
         self.assertIsNone(product.security_gate_passed)
         save_mock.assert_called()
-        notification_mock.assert_called_with(product)
+        notification_mock.assert_called_with(product, None)
 
     @patch("application.core.services.security_gate.get_product_by_id")
     def test_check_security_gate_true_critical(self, get_product_mock):
