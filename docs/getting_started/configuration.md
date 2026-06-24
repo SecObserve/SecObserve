@@ -39,6 +39,7 @@ A part of the configuration is done with environment variables, which need to be
 | `EMAIL_HOST_USER`      | optional    | Username used to authenticate against the SMTP server. Default is empty. |
 | `EMAIL_HOST_PASSWORD`  | optional    | Password used to authenticate against the SMTP server. Default is empty. |
 | `EMAIL_USE_TLS`        | optional    | `true`: use a TLS (secure) connection to the SMTP server, `false`: otherwise. Default is `false`. |
+| `OSV_MAX_THREADS`      | optional    | Maximum number of concurrent connections used when fetching vulnerability data from `api.osv.dev` during an OSV scan. Default is `32`. Lower it if the OSV API returns connection resets or SSL errors under load. |
 
 
 #### Frontend
