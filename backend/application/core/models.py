@@ -97,6 +97,7 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     apply_general_rules = BooleanField(default=True)
 
     notification_ms_teams_webhook = TextField(max_length=2048, blank=True)
+    notification_ms_teams_webhook_v2_format = BooleanField(default=False)
     notification_slack_webhook = TextField(max_length=2048, blank=True)
     notification_email_to = CharField(max_length=255, blank=True)
 

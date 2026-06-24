@@ -8,6 +8,7 @@ from application.notifications.services.send_notifications import (
     _get_first_name,
     _get_notification_email_to,
     _get_notification_ms_teams_webhook,
+    _get_notification_ms_teams_webhook_v2_format,
     _get_notification_slack_webhook,
     _get_stack_trace,
     _ratelimit_exception,
@@ -127,6 +128,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
             "msteams_product_security_gate.tpl",
+            ms_teams_v2_format=False,
             product=self.product_1,
             security_gate_status="None",
             product_url="https://secobserve.com/#/products/1/show",
@@ -216,6 +218,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
             "msteams_product_security_gate.tpl",
+            ms_teams_v2_format=False,
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -305,6 +308,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
             "msteams_product_security_gate.tpl",
+            ms_teams_v2_format=False,
             product=self.product_1,
             security_gate_status="Failed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -449,6 +453,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
             "msteams_exception.tpl",
+            ms_teams_v2_format=False,
             exception_class="builtins.Exception",
             exception_message="test_exception",
             exception_trace="",
@@ -614,6 +619,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
             "msteams_task_exception.tpl",
+            ms_teams_v2_format=False,
             function="test_function",
             arguments=str(arguments),
             user=self.user_internal,
@@ -800,3 +806,30 @@ class TestPushNotifications(BaseTestCase):
 
     def test_get_notification_slack_webhook_product_webhook_empty(self):
         self.assertEqual(None, _get_notification_slack_webhook(self.product_1))
+
+    # --- _get_notification_ms_teams_webhook_v2_format ---
+
+    def test_get_notification_ms_teams_webhook_v2_format_product_webhook_new_format(self):
+        self.product_1.notification_ms_teams_webhook = "https://msteams.microsoft.com"
+        self.product_1.notification_ms_teams_webhook_v2_format = True
+        self.assertTrue(_get_notification_ms_teams_webhook_v2_format(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_v2_format_product_webhook_old_format(self):
+        self.product_1.notification_ms_teams_webhook = "https://msteams.microsoft.com"
+        self.product_1.notification_ms_teams_webhook_v2_format = False
+        self.assertFalse(_get_notification_ms_teams_webhook_v2_format(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_v2_format_product_group_webhook_new_format(self):
+        self.product_group_1.notification_ms_teams_webhook = "https://msteams.microsoft.com"
+        self.product_group_1.notification_ms_teams_webhook_v2_format = True
+        self.product_1.product_group = self.product_group_1
+        self.assertTrue(_get_notification_ms_teams_webhook_v2_format(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_v2_format_product_group_webhook_old_format(self):
+        self.product_group_1.notification_ms_teams_webhook = "https://msteams.microsoft.com"
+        self.product_group_1.notification_ms_teams_webhook_v2_format = False
+        self.product_1.product_group = self.product_group_1
+        self.assertFalse(_get_notification_ms_teams_webhook_v2_format(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_v2_format_no_webhook(self):
+        self.assertFalse(_get_notification_ms_teams_webhook_v2_format(self.product_1))

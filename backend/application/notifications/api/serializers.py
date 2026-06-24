@@ -1,6 +1,9 @@
 from typing import Optional
 
 from rest_framework.serializers import (
+    BooleanField,
+    CharField,
+    ChoiceField,
     IntegerField,
     ListField,
     ModelSerializer,
@@ -64,3 +67,9 @@ class NotificationSerializer(ModelSerializer):
 
 class NotificationBulkSerializer(Serializer):
     notifications = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
+
+
+class WebhookTestSerializer(Serializer):
+    webhook_url = CharField(max_length=2048)
+    webhook_type = ChoiceField(choices=["msteams", "slack"])
+    ms_teams_v2_format = BooleanField(default=False, required=False)

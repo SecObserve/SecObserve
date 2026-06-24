@@ -109,9 +109,12 @@ def _send_observation_title_notifications(
             )
 
     if settings.observation_title_notification_ms_teams_webhook:
+        ms_teams_v2_format = settings.observation_title_notification_ms_teams_webhook_v2_format
+        template = "msteams_v2_observation_title.tpl" if ms_teams_v2_format else "msteams_observation_title.tpl"
         send_msteams_notification(
             settings.observation_title_notification_ms_teams_webhook,
-            "msteams_observation_title.tpl",
+            template,
+            ms_teams_v2_format=ms_teams_v2_format,
             observation=observation,
             url=url,
             first_line=first_line,

@@ -40,16 +40,18 @@ def send_email_notification(notification_email_to: str, subject: str, template: 
 
 
 @task()
-def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
+def send_msteams_notification(webhook: str, template: str, ms_teams_v2_format: bool = False, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
+        headers = {"Content-Type": "application/json"} if ms_teams_v2_format else {}
         try:
             response = requests.request(
                 method="POST",
                 url=webhook,
                 data=notification_message,
+                headers=headers,
                 allow_redirects=False,
                 timeout=60,
             )
@@ -85,6 +87,39 @@ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
                     exception=e,
                 )
             )
+
+
+def send_msteams_notification_test(webhook: str, ms_teams_v2_format: bool = False) -> None:
+    if not _validate_webhook_url(webhook):
+        raise ValueError(f"Invalid webhook URL: {webhook}")
+    template = "msteams_v2_test.tpl" if ms_teams_v2_format else "msteams_test.tpl"
+    notification_message = _create_notification_message(template)
+    if notification_message:
+        headers = {"Content-Type": "application/json"} if ms_teams_v2_format else {}
+        response = requests.request(
+            method="POST",
+            url=webhook,
+            data=notification_message,
+            headers=headers,
+            allow_redirects=False,
+            timeout=60,
+        )
+        response.raise_for_status()
+
+
+def send_slack_notification_test(webhook: str) -> None:
+    if not _validate_webhook_url(webhook):
+        raise ValueError(f"Invalid webhook URL: {webhook}")
+    notification_message = _create_notification_message("slack_test.tpl")
+    if notification_message:
+        response = requests.request(
+            method="POST",
+            url=webhook,
+            data=notification_message,
+            allow_redirects=False,
+            timeout=60,
+        )
+        response.raise_for_status()
 
 
 def _validate_webhook_url(webhook: str) -> bool:

@@ -183,6 +183,11 @@ const ProductGroupShow = () => {
                                                     <TextField source="notification_ms_teams_webhook" />
                                                 </Labeled>
                                             )}
+                                            {product_group.notification_ms_teams_webhook && (
+                                                <Labeled label="V2 webhook">
+                                                    <BooleanField source="notification_ms_teams_webhook_v2_format" />
+                                                </Labeled>
+                                            )}
                                             {product_group.notification_slack_webhook && (
                                                 <Labeled label="Slack">
                                                     <TextField source="notification_slack_webhook" />

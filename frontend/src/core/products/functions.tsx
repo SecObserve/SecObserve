@@ -19,6 +19,7 @@ import { DesignatedApproversInput } from "../../commons/custom_fields/Designated
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import OSVLinuxDistributionInput from "../../commons/custom_fields/OSVLinuxDistributionInput";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
+import WebhookTestButton from "../../commons/custom_fields/WebhookTestButton";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_automatic_osv_scanning, feature_email, feature_license_management } from "../../commons/functions";
 import {
@@ -161,16 +162,31 @@ export const ProductCreateEditComponent = ({
                         validate={validate_255}
                     />
                 )}
-                <TextInputExtraWide
-                    source="notification_ms_teams_webhook"
-                    label="Webhook URL to send notifications to MS Teams"
-                    validate={validate_2048}
-                />
-                <TextInputExtraWide
-                    source="notification_slack_webhook"
-                    label="Webhook URL to send notifications to Slack"
-                    validate={validate_2048}
-                />
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <TextInputExtraWide
+                        source="notification_ms_teams_webhook"
+                        label="Webhook URL to send notifications to MS Teams"
+                        validate={validate_2048}
+                    />
+                    <BooleanInput
+                        source="notification_ms_teams_webhook_v2_format"
+                        label="V2 webhook"
+                        defaultValue={false}
+                    />
+                    <WebhookTestButton
+                        webhookSource="notification_ms_teams_webhook"
+                        webhookType="msteams"
+                        v2FormatSource="notification_ms_teams_webhook_v2_format"
+                    />
+                </Stack>
+                <Stack direction="row" spacing={2} alignItems="center">
+                    <TextInputExtraWide
+                        source="notification_slack_webhook"
+                        label="Webhook URL to send notifications to Slack"
+                        validate={validate_2048}
+                    />
+                    <WebhookTestButton webhookSource="notification_slack_webhook" webhookType="slack" />
+                </Stack>
                 <AutocompleteInputMedium
                     source="observation_notification_min_severity"
                     label="Minimum severity for observation notifications"
