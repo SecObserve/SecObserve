@@ -980,15 +980,15 @@ formatting = ["autopep8"]
 
 [[package]]
 name = "django-stubs"
-version = "6.0.5"
+version = "6.0.6"
 description = "Mypy stubs for Django"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "django_stubs-6.0.5-py3-none-any.whl", hash = "sha256:9fb9eede9b2fc47b36c3dc4a93652eb959dff45466ec4a580e4a22782192d746"},
-    {file = "django_stubs-6.0.5.tar.gz", hash = "sha256:7742b8e60afc68a8545158e2bdb103376d5a092f7902c17f370920a9c08eb957"},
+    {file = "django_stubs-6.0.6-py3-none-any.whl", hash = "sha256:c488fea05a9eac40ddbdc69887f63a5c0922cb13df285291ee99c9bbc89bc4f1"},
+    {file = "django_stubs-6.0.6.tar.gz", hash = "sha256:dfc01e052e33c7f8f0c30c3ff8eda0903ee29ac710d1e46d9effd773744a69b0"},
 ]
 
 [package.dependencies]
@@ -3412,4 +3412,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">= 3.12, < 3.15"
-content-hash = "db540cbdc4766288caa9ca01c1d609ec29916ff968895709472a062316df57e5"
+content-hash = "195e0f63244580d0d84c734c38a83aabc62e19d9c610050a878914562fd35347"
