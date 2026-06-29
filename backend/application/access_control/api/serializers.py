@@ -21,6 +21,7 @@ from application.access_control.queries.api_token import get_api_tokens_for_user
 from application.access_control.queries.authorization_group_member import (
     get_authorization_group_member,
 )
+from application.access_control.queries.user import get_user_highest_role_for_product
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Product_Authorization_Group_Member, Product_Member
@@ -36,6 +37,7 @@ class UserListSerializer(ModelSerializer):
     full_name = SerializerMethodField()
     permissions = SerializerMethodField()
     has_password = SerializerMethodField()
+    product_role = SerializerMethodField()
 
     class Meta:
         model = User
@@ -59,10 +61,15 @@ class UserListSerializer(ModelSerializer):
             "is_oidc_user",
             "date_joined",
             "has_password",
+            "product_role",
         ]
 
     def to_representation(self, instance: User) -> dict[str, Any]:
         data = super().to_representation(instance)
+
+        # product_role is only relevant when filtering members of a product (e.g. the approver picker).
+        if not self._get_member_of_product():
+            data.pop("product_role", None)
 
         user = get_current_user()
         if user and not user.is_superuser and user.pk != instance.pk:
@@ -97,6 +104,22 @@ class UserListSerializer(ModelSerializer):
     def get_has_password(self, obj: User) -> bool:
         return bool(obj.password and obj.password != "" and obj.has_usable_password())  # nosec B105
         # eliminate false positive, password is not hardcoded
+
+    def get_product_role(self, obj: User) -> Optional[int]:
+        member_of_product = self._get_member_of_product()
+        if member_of_product is None:
+            return None
+        return get_user_highest_role_for_product(obj, member_of_product)
+
+    def _get_member_of_product(self) -> Optional[int]:
+        # Returns the member_of_product query parameter as an int, or None when absent or invalid.
+        request = self.context.get("request")
+        if request is None:
+            return None
+        value = request.query_params.get("member_of_product")
+        if value is None or not str(value).isdigit():
+            return None
+        return int(value)
 
 
 def _get_user_permissions(user: User = None) -> list[Permissions]:

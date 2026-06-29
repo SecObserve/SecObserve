@@ -14,6 +14,7 @@ import {
 import { useFormContext } from "react-hook-form";
 
 import products from ".";
+import { DesignatedApproversInput } from "../../commons/custom_fields/DesignatedApproversInput";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import OSVLinuxDistributionInput from "../../commons/custom_fields/OSVLinuxDistributionInput";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
@@ -345,18 +346,10 @@ export const ProductCreateEditComponent = ({
                 {({ formData }) =>
                     formData.assessments_need_approval && (
                         <Fragment>
-                            <ReferenceArrayInput
-                                source="assessment_approvers"
-                                reference="users"
-                                filter={approver_filter}
-                                sort={{ field: "full_name", order: "ASC" }}
-                            >
-                                <AutocompleteArrayInputWide
-                                    label="Designated approvers"
-                                    optionText="full_name"
-                                    helperText="Users allowed to approve assessments. Empty for default permission."
-                                />
-                            </ReferenceArrayInput>
+                            <DesignatedApproversInput
+                                approver_filter={approver_filter}
+                                helperText="Users allowed to approve assessments. Empty for default permission."
+                            />
                             <ReferenceArrayInput
                                 source="assessment_approver_authorization_groups"
                                 reference="authorization_groups"

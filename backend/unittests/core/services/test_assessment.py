@@ -12,6 +12,7 @@ from application.access_control.models import (
 from application.core.models import Observation_Log, Product
 from application.core.services.assessment import (
     assessment_approval,
+    assessment_approvers_configured,
     get_effective_assessment_approvers,
     is_user_designated_assessment_approver,
     user_is_allowed_assessment_approver,
@@ -100,6 +101,21 @@ class TestDesignatedAssessmentApprover(TestCase):
         self.product_group.assessment_approvers.add(self.approver)
         self.assertTrue(is_user_designated_assessment_approver(self.product, self.approver))
         self.assertFalse(is_user_designated_assessment_approver(self.product, self.other))
+
+    def test_approvers_configured_false_when_empty(self) -> None:
+        self.assertFalse(assessment_approvers_configured(self.product))
+
+    def test_approvers_configured_true_with_direct_user(self) -> None:
+        self.product.assessment_approvers.add(self.approver)
+        self.assertTrue(assessment_approvers_configured(self.product))
+
+    def test_approvers_configured_true_with_group(self) -> None:
+        self.product.assessment_approver_authorization_groups.add(self.group)
+        self.assertTrue(assessment_approvers_configured(self.product))
+
+    def test_approvers_configured_true_inherited_from_product_group(self) -> None:
+        self.product_group.assessment_approvers.add(self.approver)
+        self.assertTrue(assessment_approvers_configured(self.product))
 
 
 class TestAssessmentApprovalEnforcement(BaseTestCase):

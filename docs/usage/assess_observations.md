@@ -50,10 +50,16 @@ By default, any user with the permission to approve (role `Writer`, `Maintainer`
 * **Designated approvers**: individual users that are allowed to approve assessments.
 * **Designated approver groups**: authorization groups whose members are allowed to approve assessments.
 
+![Designated approvers](../assets/images/screenshot_assessment_approval_designated_approvers.png){ width="60%" style="display: block; margin: 0 auto" }
+
+Only `Maintainer` and `Owner` may configure these fields (they may add themselves to the list). Designated approvers must hold a role with the approval permission (`Writer`, `Maintainer` or `Owner`); the picker only offers such members and shows each member's role below their name:
+
+![Designated approvers list](../assets/images/screenshot_assessment_approval_designated_approvers_list.png){ width="50%" style="display: block; margin: 0 auto" }
+
 The behavior is:
 
 * If both fields are left empty, nothing changes: anyone with the approval permission (except the author of the assessment) may approve.
-* If at least one approver or approver group is configured, only those users – directly or as a member of a configured group – may approve or reject assessments. The approval permission and the rule that users cannot approve their own assessment still apply.
+* If at least one approver or approver group is configured, only those designated users – directly or as a member of a configured group – may approve or reject assessments. Everyone else loses the right to approve, including `Maintainer` and `Owner` who are not on the list; to approve they must add themselves. Designated approvers still need a role with the approval permission and still cannot approve their own assessment.
 
 Like **Assessments need approval**, the setting can also be configured for a product group and is then inherited by all products in that group; the effective approvers are the combination of the product's and the product group's approvers. The restriction applies to both single and bulk approvals.
 

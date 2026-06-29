@@ -200,13 +200,21 @@ def get_effective_assessment_approvers(product: Product) -> tuple[set[int], set[
     return approver_user_ids, approver_group_ids
 
 
+def assessment_approvers_configured(product: Product) -> bool:
+    """Whether the product (or its product group) has any designated assessment approvers."""
+    if product.pk is None:
+        return False
+    approver_user_ids, approver_group_ids = get_effective_assessment_approvers(product)
+    return bool(approver_user_ids or approver_group_ids)
+
+
 def is_user_designated_assessment_approver(product: Product, user: Optional[User] = None) -> bool:
     """Check whether a user is explicitly a designated assessment approver for a product.
 
     Unlike ``user_is_allowed_assessment_approver`` (which permits everyone when no approvers
-    are configured), this returns False when the effective approver set is empty. It is used to
-    additionally grant the Observation_Log_Approval permission to designated approvers whose role
-    would not otherwise include it.
+    are configured), this returns False when the effective approver set is empty. When designated
+    approvers are configured, the Observation_Log_Approval permission is restricted to these users
+    (who must still hold an approval-capable role).
     """
     if user is None:
         user = get_current_user()

@@ -46,7 +46,10 @@ from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
 )
-from application.core.services.assessment import is_user_designated_assessment_approver
+from application.core.services.assessment import (
+    assessment_approvers_configured,
+    is_user_designated_assessment_approver,
+)
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
@@ -59,19 +62,20 @@ from application.rules.types import Rule_Status
 
 
 def get_product_permissions_for_user(product: Product) -> Optional[set[Permissions]]:
-    """Permissions of the current user for a product, including the designated-approver grant.
+    """Permissions of the current user for a product, applying the designated-approver restriction.
 
-    The base set comes from the user's highest role. Designated assessment approvers are
-    additionally granted Observation_Log_Approval so the frontend exposes the approval controls,
-    mirroring the object-level authorization check.
+    The base set comes from the user's highest role. When designated assessment approvers are
+    configured for the product, Observation_Log_Approval is restricted to those approvers, so it is
+    stripped for users who are not designated — mirroring the object-level authorization check.
     """
     permissions = get_permissions_for_role(get_highest_user_role(product))
     if (
         permissions is not None
-        and Permissions.Observation_Log_Approval not in permissions
-        and is_user_designated_assessment_approver(product)
+        and Permissions.Observation_Log_Approval in permissions
+        and assessment_approvers_configured(product)
+        and not is_user_designated_assessment_approver(product)
     ):
-        permissions = permissions | {Permissions.Observation_Log_Approval}
+        permissions = permissions - {Permissions.Observation_Log_Approval}
     return permissions
 
 
