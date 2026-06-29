@@ -41,10 +41,15 @@ def _create_osv_session() -> requests.Session:
         total=OSV_MAX_RETRIES,
         backoff_factor=OSV_BACKOFF_FACTOR,
         status_forcelist=(429, 500, 502, 503, 504),
+        # Only idempotent GETs are retried; verify idempotency before adding other methods.
         allowed_methods=frozenset({"GET"}),
+        # Let urllib3 retry the status_forcelist codes silently; the caller's
+        # raise_for_status() surfaces a clear HTTPError once the retries are exhausted.
         raise_on_status=False,
     )
-    adapter = HTTPAdapter(max_retries=retry, pool_maxsize=_get_osv_max_threads())
+    # Only one host (api.osv.dev) is contacted, so a single connection pool is enough; size it
+    # to the worker count so concurrent threads reuse pooled connections instead of opening new ones.
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=1, pool_maxsize=_get_osv_max_threads())
     session = requests.Session()
     session.mount("https://", adapter)
     return session
