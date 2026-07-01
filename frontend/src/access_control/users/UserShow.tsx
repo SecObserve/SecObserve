@@ -82,7 +82,10 @@ const UserComponent = () => {
                     <Stack direction="row" spacing={2} sx={{ marginBottom: 1 }}>
                         <Stack sx={{ width: userWidth(user) }}>
                             <Paper sx={{ marginBottom: 1, padding: 2, height: "100%" }}>
-                                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
+                                <Typography
+                                    variant="h6"
+                                    sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}
+                                >
                                     <users.icon />
                                     &nbsp;&nbsp;User
                                 </Typography>

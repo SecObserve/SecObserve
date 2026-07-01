@@ -120,7 +120,11 @@ const About = () => {
                             </Link>
                         </Grid>
                     </Grid>
-                    <Stack direction="row" spacing={2} sx={{ justifyContent: "center", alignItems: "center", marginTop: 4 }}>
+                    <Stack
+                        direction="row"
+                        spacing={2}
+                        sx={{ justifyContent: "center", alignItems: "center", marginTop: 4 }}
+                    >
                         <OKButton />
                     </Stack>
                 </DialogContent>
