@@ -1239,18 +1239,18 @@ tornado = ["tornado (>=6.5.0)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "3.6.11"
+version = "3.7.2"
 description = "High-performance HTML to Markdown converter"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-3.6.11-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:2951a9aeb6fc49ab3e2f54799e2274288f1879ff50853a77d112b9ba69f55f52"},
-    {file = "html_to_markdown-3.6.11-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:8302da18b822541ad985d496dad344b64a0ddacdb3e6dfc9eedcb150e2f9bb4e"},
-    {file = "html_to_markdown-3.6.11-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:5a53f7f2aeeed5330e4df143de93427e3e78e5441a3affa58762b07c14fc1b46"},
-    {file = "html_to_markdown-3.6.11-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2698d0aa56b32328a146ff88065c3bb4a60202eb9fe3ef6f93e652652763b50f"},
-    {file = "html_to_markdown-3.6.11-cp310-abi3-win_amd64.whl", hash = "sha256:c74d59543a9f1e901fb5fe606ca9d8c6558bbeb1d4cd145a256d40f0c63e31aa"},
-    {file = "html_to_markdown-3.6.11.tar.gz", hash = "sha256:d3bbba16ca15931158a90a1e4c9f0ea7fd95fc92a37c082e831b61bcdf92a365"},
+    {file = "html_to_markdown-3.7.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:40c1398c058af91ba2d2609f0e92e761370f45237734bbe0e14f45a1fe3a4500"},
+    {file = "html_to_markdown-3.7.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:cbf25f18cb41852b2e42cb9fb7476d037a5e7616150442449310a08364fb1ea6"},
+    {file = "html_to_markdown-3.7.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9e5bd27942d72903cfb4be48db39140e610e0e0532bd38edbdf1adce5d7d0443"},
+    {file = "html_to_markdown-3.7.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:856cef47db43cf5cbb741185506e814514e52c528629315b96ba0c54df00a552"},
+    {file = "html_to_markdown-3.7.2-cp310-abi3-win_amd64.whl", hash = "sha256:8fd04ef799a591c40d6b09c098b430ffa46ba83affc0191b3d8f1a9a9ee64d44"},
+    {file = "html_to_markdown-3.7.2.tar.gz", hash = "sha256:1beba2c4f5a8bc78f718d664fc0d0d02a9c799451482669ae1032966c37d45d9"},
 ]
 
 [[package]]
@@ -3412,4 +3412,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "6e53502d809dd2e4ba441812975e82becbc92aa31269343374fe9f57baefced3"
+content-hash = "c8c4c5c78af174a8e48622bff64f28f85583a40477b017f1c490487262a673d3"
