@@ -1,13 +1,16 @@
-[tool.poetry]
+[project]
 name = "SecObserve"
 version = "1.54.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
-authors = [ "Stefan Fleckenstein", ]
+authors = [{ name = "Stefan Fleckenstein" }]
+requires-python = ">=3.12,<3.15"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">= 3.12, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
 gunicorn = "26.0.0"  # https://github.com/benoitc/gunicorn
@@ -105,14 +108,14 @@ types-PyMySQL = { version = "1.1.0.20260518", optional = true }  # https://githu
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
 [tool.poetry.extras]
-dev = ["Werkzeug", "ipdb", "watchgod", "django-extensions", "django-silk"]
+dev = ["Werkzeug", "ipdb", "django-extensions", "django-silk"]
 unittests = ["coverage", "django-extensions", "django-coverage-plugin"]
-code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "pre-commit", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
+code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
 
 [tool.black]
 line-length = 120
 target-version = ['py314']
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"
