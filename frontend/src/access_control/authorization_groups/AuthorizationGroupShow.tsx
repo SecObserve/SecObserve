@@ -22,7 +22,7 @@ const ShowActions = () => {
     const authorization_group = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "name", order: "ASC" }}
@@ -41,9 +41,9 @@ const AuthorizationGroupComponent = () => {
     return (
         <WithRecord
             render={(authorization_group) => (
-                <Box width={"100%"} sx={{ marginBottom: 2 }}>
+                <Box sx={{ width: "100%", marginBottom: 2 }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                        <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                        <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                             <authorization_groups.icon />
                             &nbsp;&nbsp;Authorization Group
                         </Typography>

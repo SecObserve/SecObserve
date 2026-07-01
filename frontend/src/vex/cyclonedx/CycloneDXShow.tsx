@@ -24,7 +24,7 @@ const ShowActions = () => {
     const cyclonedx = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "first_issued", order: "DESC" }}
@@ -41,10 +41,10 @@ const CycloneDXComponent = () => {
     return (
         <WithRecord
             render={(cyclonedx) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                         <Stack spacing={1}>
-                            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                                 <cyclonedxs.icon />
                                 &nbsp;&nbsp;Exported CycloneDX document
                             </Typography>

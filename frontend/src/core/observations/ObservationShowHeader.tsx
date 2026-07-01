@@ -28,7 +28,7 @@ const ObservationShowHeader = ({ observation }: ObservationShowHeaderProps) => {
         <RecordContextProvider value={observation}>
             {observation && (
                 <Paper sx={{ marginBottom: 2, padding: 2 }}>
-                    <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                    <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                         {!in_observation_log && (
                             <Fragment>
                                 <observations.icon />

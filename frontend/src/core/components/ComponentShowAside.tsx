@@ -46,7 +46,7 @@ const ComponentShowAside = () => {
     }
 
     return (
-        <Box width={"33%"} marginLeft={2}>
+        <Box sx={{ width: "33%", marginLeft: 2 }}>
             <MetaData />
             {licenseComponent && <License licenseComponent={licenseComponent} />}
         </Box>

@@ -109,16 +109,16 @@ export const RuleShowComponent = ({ rule }: any) => {
     const { classes } = useStyles();
 
     return (
-        <Box width={"100%"}>
+        <Box sx={{ width: "100%" }}>
             <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                 {rule.product_data && (
-                    <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                    <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                         <product_rules.icon />
                         &nbsp;&nbsp;Product Rule
                     </Typography>
                 )}
                 {!rule.product_data && (
-                    <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                    <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                         <general_rules.icon />
                         &nbsp;&nbsp;General Rule
                     </Typography>
@@ -606,13 +606,13 @@ export const RuleCreateEditComponent = ({
     return (
         <Fragment>
             {product && (
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <product_rules.icon />
                     &nbsp;&nbsp;Product Rule
                 </Typography>
             )}
             {!product && (
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <general_rules.icon />
                     &nbsp;&nbsp;General Rule
                 </Typography>

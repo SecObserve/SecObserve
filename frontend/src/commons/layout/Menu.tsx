@@ -1,7 +1,7 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { Badge, Box } from "@mui/material";
+import { Badge, MenuList } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "react-admin";
 
@@ -47,7 +47,7 @@ const Menu = ({ dense = false }: MenuProps) => {
     }, []);
 
     return (
-        <Box
+        <MenuList
             sx={{
                 width: open ? 220 : 50,
                 marginTop: 1,
@@ -211,7 +211,7 @@ const Menu = ({ dense = false }: MenuProps) => {
                     />
                 )}
             </SubMenu>
-        </Box>
+        </MenuList>
     );
 };
 

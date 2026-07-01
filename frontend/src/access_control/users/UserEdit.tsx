@@ -26,7 +26,7 @@ const UserEdit = () => {
     return (
         <Edit redirect="show" mutationMode="pessimistic" transform={transform}>
             <SimpleForm warnWhenUnsavedChanges toolbar={<CustomToolbar />}>
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <users.icon />
                     &nbsp;&nbsp;User
                 </Typography>
