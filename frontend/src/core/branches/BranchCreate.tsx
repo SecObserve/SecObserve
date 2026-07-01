@@ -78,7 +78,7 @@ const BranchCreate = ({ product }: BranchCreateProps) => {
                                 defaultValue={false}
                             />
                             {product?.osv_enabled && (
-                                <Stack direction="row" spacing={2} alignItems="center">
+                                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                                     <OSVLinuxDistributionInput />
                                 </Stack>
                             )}

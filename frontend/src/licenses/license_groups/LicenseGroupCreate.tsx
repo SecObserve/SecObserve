@@ -18,7 +18,7 @@ const LicenseGroupCreate = () => {
     return (
         <Create redirect="show" transform={transform}>
             <SimpleForm warnWhenUnsavedChanges>
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <license_groups.icon />
                     &nbsp;&nbsp;License Group
                 </Typography>

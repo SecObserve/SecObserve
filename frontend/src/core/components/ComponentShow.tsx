@@ -23,7 +23,7 @@ export const ComponentComponent = () => {
     return (
         <WithRecord
             render={(component) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
                         <ComponentShowComponent component={component} icon={true} />
                     </Paper>

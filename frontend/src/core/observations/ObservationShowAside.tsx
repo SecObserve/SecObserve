@@ -21,7 +21,7 @@ import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const ObservationsShowAside = () => {
     return (
-        <Box width={"33%"} marginLeft={2} marginRight={1}>
+        <Box sx={{ width: "33%", marginLeft: 2, marginRight: 1 }}>
             <MetaData />
             <References />
             <Evidences />

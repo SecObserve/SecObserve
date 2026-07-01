@@ -76,13 +76,13 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
 
     return (
         <SimpleForm warnWhenUnsavedChanges toolbar={<CustomToolbar />}>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                 <observations.icon />
                 &nbsp;&nbsp;Observation
             </Typography>
             <Stack>
                 <TextInputWide autoFocus source="title" validate={validate_required_255} />
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <AutocompleteInputMedium
                         source="parser_severity"
                         label="Severity"
@@ -159,7 +159,7 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
             </Typography>
             <Stack>
                 <TextInputWide source="vulnerability_id" label="Vulnerability ID" validate={validate_255} />
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <NumberInput
                         source="cvss4_score"
                         label="CVSS 4 score"
@@ -175,7 +175,7 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
                         new_tab={true}
                     />
                 </Stack>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <NumberInput
                         source="cvss3_score"
                         label="CVSS 3 score"

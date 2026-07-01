@@ -105,7 +105,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                             </Typography>
                             <Stack>
                                 <TextInputWide autoFocus source="title" validate={validate_required_255} />
-                                <Stack direction="row" spacing={2} alignItems="center">
+                                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                                     <AutocompleteInputMedium
                                         source="parser_severity"
                                         label="Severity"
@@ -187,7 +187,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                                     label="Vulnerability ID"
                                     validate={validate_255}
                                 />
-                                <Stack direction="row" spacing={2} alignItems="center">
+                                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                                     <NumberInput
                                         source="cvss4_score"
                                         label="CVSS 4 score"
@@ -207,7 +207,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                                         new_tab={true}
                                     />
                                 </Stack>
-                                <Stack direction="row" spacing={2} alignItems="center">
+                                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                                     <NumberInput
                                         source="cvss3_score"
                                         label="CVSS 3 score"

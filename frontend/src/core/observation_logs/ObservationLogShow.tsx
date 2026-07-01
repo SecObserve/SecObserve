@@ -55,7 +55,7 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 {observation_log && filter && sort && storeKey && (
                     <PrevNextButtons filter={filter} linkType="show" sort={sort} storeKey={storeKey} />
                 )}
@@ -81,10 +81,10 @@ const ObservationLogComponent = () => {
     return (
         <WithRecord
             render={(observation_log) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                         <Stack spacing={1}>
-                            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                                 <observation_logs.icon />
                                 &nbsp;&nbsp;Observation Log
                             </Typography>

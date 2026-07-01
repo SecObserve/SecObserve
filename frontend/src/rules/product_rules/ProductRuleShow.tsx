@@ -29,7 +29,7 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 {rule && filter && sort && storeKey && (
                     <PrevNextButtons filter={filter} linkType="show" sort={sort} storeKey={storeKey} />
                 )}

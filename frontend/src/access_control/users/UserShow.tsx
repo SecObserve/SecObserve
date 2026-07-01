@@ -41,7 +41,7 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 {filter && storeKey && (
                     <PrevNextButtons
                         linkType="show"
@@ -78,11 +78,11 @@ const UserComponent = () => {
     return (
         <WithRecord
             render={(user) => (
-                <Box width={"100%"} sx={{ marginBottom: 2 }}>
+                <Box sx={{ width: "100%", marginBottom: 2 }}>
                     <Stack direction="row" spacing={2} sx={{ marginBottom: 1 }}>
                         <Stack sx={{ width: userWidth(user) }}>
                             <Paper sx={{ marginBottom: 1, padding: 2, height: "100%" }}>
-                                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                                     <users.icon />
                                     &nbsp;&nbsp;User
                                 </Typography>

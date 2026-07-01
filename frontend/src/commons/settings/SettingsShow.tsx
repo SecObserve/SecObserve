@@ -20,7 +20,7 @@ import JWTSecretReset from "./JWTSecretReset";
 const ShowActions = () => {
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <JWTSecretReset />
                 <EditButton />
             </Stack>
@@ -32,12 +32,12 @@ const SettingsShowComponent = () => {
     return (
         <WithRecord
             render={(settings) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
                             Authentication
                         </Typography>
-                        <Grid container spacing={2} width={"100%"}>
+                        <Grid container spacing={2} sx={{ width: "100%" }}>
                             <Grid size={3}>
                                 <Labeled label="JWT validity duration user (hours)">
                                     <NumberField source="jwt_validity_duration_user" />
@@ -66,7 +66,7 @@ const SettingsShowComponent = () => {
                         <Typography variant="h6" sx={{ marginBottom: 1 }}>
                             Features
                         </Typography>
-                        <Grid container spacing={2} width={"100%"} sx={{ marginBottom: 2 }}>
+                        <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
                             <Grid size={3}>
                                 <Stack spacing={2}>
                                     <Labeled label="VEX">
@@ -84,7 +84,7 @@ const SettingsShowComponent = () => {
                                 </Stack>
                             </Grid>
                         </Grid>
-                        <Grid container spacing={2} width={"100%"} sx={{ marginBottom: 2 }}>
+                        <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
                             <Grid size={3}>
                                 <Stack spacing={2}>
                                     <Labeled label="Disable user login">
@@ -112,7 +112,7 @@ const SettingsShowComponent = () => {
                                 </Stack>
                             </Grid>
                         </Grid>
-                        <Grid container spacing={2} width={"100%"} sx={{ marginBottom: 2 }}>
+                        <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
                             <Grid size={3}>
                                 <Stack spacing={2}>
                                     <Labeled label="Enable exploit enrichment from cvss-bt">
@@ -130,7 +130,7 @@ const SettingsShowComponent = () => {
                                 </Stack>
                             </Grid>
                         </Grid>
-                        <Grid container spacing={2} width={"100%"} sx={{ marginBottom: 2 }}>
+                        <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
                             <Grid size={3}>
                                 <Stack spacing={2}>
                                     <Labeled label="Enable cross scanner deduplication">
@@ -156,7 +156,7 @@ const SettingsShowComponent = () => {
                             <BooleanField source="branch_housekeeping_active" sx={{ marginBottom: 1 }} />
                         </Labeled>
                         {settings.branch_housekeeping_active && (
-                            <Grid container spacing={2} width={"100%"}>
+                            <Grid container spacing={2} sx={{ width: "100%" }}>
                                 <Grid size={3}>
                                     <Labeled label="Branch housekeeping keep inactive (days)">
                                         <NumberField source="branch_housekeeping_keep_inactive_days" />
@@ -253,7 +253,7 @@ const SettingsShowComponent = () => {
                             <BooleanField source="security_gate_active" />
                         </Labeled>
                         {settings.security_gate_active && (
-                            <Grid container spacing={2} width={"100%"}>
+                            <Grid container spacing={2} sx={{ width: "100%" }}>
                                 <Grid size={3}>
                                     <Stack spacing={2}>
                                         <Labeled label="Threshold critical">
@@ -289,7 +289,7 @@ const SettingsShowComponent = () => {
                             Password validation for non-OIDC users
                         </Typography>
 
-                        <Grid container spacing={2} width={"100%"}>
+                        <Grid container spacing={2} sx={{ width: "100%" }}>
                             <Grid size={3}>
                                 <Stack spacing={2}>
                                     <Labeled label="Minimum length">
@@ -322,7 +322,7 @@ const SettingsShowComponent = () => {
                             <NumberField source="background_product_metrics_interval_minutes" />
                         </Labeled>
 
-                        <Grid container spacing={2} width={"100%"}>
+                        <Grid container spacing={2} sx={{ width: "100%" }}>
                             <Grid size={3}>
                                 <Stack spacing={2}>
                                     <Labeled label="Risk acceptance expiry crontab (hour/UTC)">

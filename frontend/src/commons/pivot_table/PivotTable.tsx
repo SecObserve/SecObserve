@@ -200,7 +200,7 @@ const PivotTable = () => {
 
     return (
         <Paper sx={{ marginTop: 2, padding: 2 }} className={theme.palette.mode === "dark" ? "pvt-dark" : undefined}>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 2 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 2 }}>
                 <Fragment>
                     <PivotTableChartIcon />
                     &nbsp;&nbsp;{hasQueryParams ? "Pivot Table for Observations" : "Pivot Table"}

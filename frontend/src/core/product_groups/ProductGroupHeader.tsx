@@ -22,7 +22,7 @@ const ProductGroupHeader = () => {
                     marginTop: 2,
                 }}
             >
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <product_groups.icon />
                     &nbsp;&nbsp;Product Group
                 </Typography>

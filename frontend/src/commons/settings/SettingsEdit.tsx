@@ -62,7 +62,7 @@ const SettingsEdit = () => {
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
                         Authentication
                     </Typography>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <NumberInput
                                 autoFocus
@@ -108,7 +108,7 @@ const SettingsEdit = () => {
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
                         Features
                     </Typography>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -134,7 +134,7 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -166,7 +166,7 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -193,7 +193,7 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -231,7 +231,7 @@ const SettingsEdit = () => {
                     <FormDataConsumer>
                         {({ formData }) =>
                             formData.branch_housekeeping_active && (
-                                <Grid container spacing={2} width={"100%"}>
+                                <Grid container spacing={2} sx={{ width: "100%" }}>
                                     <Grid size={3}>
                                         <NumberInput
                                             source="branch_housekeeping_keep_inactive_days"
@@ -360,7 +360,7 @@ const SettingsEdit = () => {
                     <FormDataConsumer>
                         {({ formData }) =>
                             formData.security_gate_active && (
-                                <Grid container spacing={2} width={"100%"}>
+                                <Grid container spacing={2} sx={{ width: "100%" }}>
                                     <Grid size={3}>
                                         <Stack spacing={2}>
                                             <NumberInput
@@ -433,7 +433,7 @@ const SettingsEdit = () => {
                         Password validation for non-OIDC users
                     </Typography>
 
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <NumberInput
@@ -490,7 +490,7 @@ const SettingsEdit = () => {
                         sx={{ marginBottom: 4 }}
                     />
 
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <NumberInput

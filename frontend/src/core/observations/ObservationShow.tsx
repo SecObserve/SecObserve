@@ -79,7 +79,7 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 {filter && storeKey && (
                     <PrevNextButtons
                         filter={filter}
@@ -114,7 +114,7 @@ const ObservationShowComponent = () => {
     return (
         <WithRecord
             render={(observation) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <ObservationShowHeader />
 
                     {(observation.vulnerability_id != "" ||
