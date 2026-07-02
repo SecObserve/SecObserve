@@ -661,8 +661,21 @@ class ObservationLogApprovalSerializer(Serializer):
 
 class ObservationLogBulkApprovalSerializer(Serializer):
     assessment_status = ChoiceField(choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL_BULK, required=False)
-    rejection_remark = CharField(max_length=255, required=True)
+    rejection_remark = CharField(max_length=255, required=False, allow_blank=True)
     observation_logs = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED and attrs.get(
+            "rejection_remark"
+        ):
+            raise ValidationError("Remark for rejection cannot be set with approval")
+
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_REJECTED and not attrs.get(
+            "rejection_remark"
+        ):
+            raise ValidationError("Rejection needs a remark")
+
+        return super().validate(attrs)
 
 
 class ObservationLogBulkDeleteSerializer(Serializer):

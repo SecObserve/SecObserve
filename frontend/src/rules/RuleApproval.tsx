@@ -23,7 +23,7 @@ const RuleApproval = (props: RuleApprovalProps) => {
     const saveApproval = async (data: any) => {
         const patch = {
             approval_status: data.approval_status,
-            approval_remark: data.approval_remark,
+            rejection_remark: data.rejection_remark,
         };
 
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/" + props.class + "/" + props.rule_id + "/approval/", {
@@ -68,7 +68,7 @@ const RuleApproval = (props: RuleApprovalProps) => {
                             validate={validate_required}
                             label="Decision"
                         />
-                        <TextInputWide source="approval_remark" validate={validate_required_255} label="Remark" />
+                        <TextInputWide source="rejection_remark" validate={validate_required_255} label="Remark" />
                     </SimpleForm>
                 </DialogContent>
             </Dialog>

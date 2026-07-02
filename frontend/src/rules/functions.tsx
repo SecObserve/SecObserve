@@ -338,9 +338,9 @@ export const RuleShowComponent = ({ rule }: any) => {
                                 <TextField source="approval_user_full_name" />
                             </Labeled>
                         )}
-                        {rule.approval_remark && (
+                        {rule.rejection_remark && (
                             <Labeled label="Approval/rejection remark">
-                                <TextField source="approval_remark" />
+                                <TextField source="rejection_remark" />
                             </Labeled>
                         )}
                         {rule.approval_date && (
