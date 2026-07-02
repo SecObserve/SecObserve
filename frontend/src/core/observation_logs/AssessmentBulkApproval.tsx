@@ -9,7 +9,7 @@ import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave
 import { validate_required, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { ASSESSMENT_STATUS_BULK_CHOICES } from "../types";
+import { ASSESSMENT_STATUS_APPROVED, ASSESSMENT_STATUS_BULK_CHOICES, ASSESSMENT_STATUS_REJECTED } from "../types";
 
 type AssessmentBulkApprovalProps = {
     storeKey: string;
@@ -17,6 +17,7 @@ type AssessmentBulkApprovalProps = {
 
 const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const [open, setOpen] = useState(false);
+    const [decision, setDecision] = useState(ASSESSMENT_STATUS_APPROVED);
     const refresh = useRefresh();
     const notify = useNotify();
     const { selectedIds } = useListContext();
@@ -77,8 +78,15 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                             choices={ASSESSMENT_STATUS_BULK_CHOICES}
                             validate={validate_required}
                             label="Decision"
+                            onChange={(e) => setDecision(e)}
                         />
-                        <TextInputWide source="rejection_remark" validate={validate_required_255} label="Remark" />
+                        {decision == ASSESSMENT_STATUS_REJECTED && (
+                            <TextInputWide
+                                source="rejection_remark"
+                                validate={validate_required_255}
+                                label="Remark for rejection"
+                            />
+                        )}{" "}
                     </SimpleForm>
                 </DialogContent>
             </Dialog>

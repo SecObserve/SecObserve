@@ -7,6 +7,7 @@ from application.authorization.services.roles_permissions import Permissions, Ro
 from application.commons.models import Settings
 from application.core.api.serializers_observation import (
     ObservationLogApprovalSerializer,
+    ObservationLogBulkApprovalSerializer,
     _get_origin_cloud_resource_url,
 )
 from application.core.api.serializers_product import (
@@ -659,3 +660,63 @@ class TestObservationLogApprovalSerializer(BaseTestCase):
                 raise ValidationError(serializer.errors)
 
         self.assertIn("Approval with edits needs an observation log comment", str(context.exception))
+
+
+class TestObservationLogBulkApprovalSerializer(BaseTestCase):
+    """Tests for the validate method of ObservationLogBulkApprovalSerializer"""
+
+    def test_approved_with_rejection_remark_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "This should fail",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("Remark for rejection cannot be set with approval", str(e.exception))
+
+    def test_approved_without_rejection_remark_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+    def test_rejected_without_rejection_remark_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("Rejection needs a remark", str(e.exception))
+
+    def test_rejected_with_rejection_remark_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "This is invalid",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+    def test_no_status_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "rejection_remark": "",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
