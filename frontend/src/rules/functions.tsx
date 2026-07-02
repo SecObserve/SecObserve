@@ -57,7 +57,7 @@ import {
 } from "../core/types";
 import general_rules from "./general_rules";
 import product_rules from "./product_rules";
-import { RULE_TYPE_CHOICES, RULE_TYPE_FIELDS, RULE_TYPE_REGO } from "./types";
+import { RULE_STATUS_REJECTED, RULE_TYPE_CHOICES, RULE_TYPE_FIELDS, RULE_TYPE_REGO } from "./types";
 
 // SyntaxHighlighter.registerLanguage("rego", rego);
 
@@ -334,18 +334,24 @@ export const RuleShowComponent = ({ rule }: any) => {
                             />
                         </Labeled>
                         {rule.approval_user_full_name && (
-                            <Labeled label="Approved/rejected by">
+                            <Labeled
+                                label={rule.approval_status === RULE_STATUS_REJECTED ? "Rejected by" : "Approved by"}
+                            >
                                 <TextField source="approval_user_full_name" />
                             </Labeled>
                         )}
-                        {rule.rejection_remark && (
-                            <Labeled label="Approval/rejection remark">
-                                <TextField source="rejection_remark" />
+                        {rule.approval_date && (
+                            <Labeled
+                                label={
+                                    rule.approval_status === RULE_STATUS_REJECTED ? "Rejection date" : "Approval date"
+                                }
+                            >
+                                <DateField source="approval_date" showTime />
                             </Labeled>
                         )}
-                        {rule.approval_date && (
-                            <Labeled label="Approval/rejection date">
-                                <DateField source="approval_date" showTime />
+                        {rule.rejection_remark && (
+                            <Labeled label="Rejection remark">
+                                <TextField source="rejection_remark" />
                             </Labeled>
                         )}
                     </Stack>

@@ -124,7 +124,16 @@ class ProductRuleSerializer(ModelSerializer):
 
 class RuleApprovalSerializer(Serializer):
     approval_status = ChoiceField(choices=Rule_Status.RULE_STATUS_CHOICES_APPROVAL, required=True)
-    rejection_remark = CharField(max_length=255, required=True, allow_blank=True)
+    rejection_remark = CharField(max_length=255, required=False, allow_blank=True)
+
+    def validate(self, attrs: dict) -> dict:
+        if attrs.get("approval_status") == Rule_Status.RULE_STATUS_APPROVED and attrs.get("rejection_remark"):
+            raise ValidationError("Remark for rejection cannot be set with approval")
+
+        if attrs.get("approval_status") == Rule_Status.RULE_STATUS_REJECTED and not attrs.get("rejection_remark"):
+            raise ValidationError("Rejection needs a remark")
+
+        return super().validate(attrs)
 
 
 class SimulationResultSerializer(Serializer):
