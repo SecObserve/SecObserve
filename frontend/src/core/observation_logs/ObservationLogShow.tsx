@@ -22,7 +22,7 @@ import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types"
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { is_superuser } from "../../commons/functions";
-import { ASSESSMENT_STATUS_NEEDS_APPROVAL } from "../types";
+import { ASSESSMENT_STATUS_NEEDS_APPROVAL, ASSESSMENT_STATUS_REJECTED } from "../types";
 import AssessmentApproval from "./AssessmentApproval";
 import ObservationLogShowAside from "./ObservationLogShowAside";
 
@@ -62,7 +62,7 @@ const ShowActions = () => {
                 {observation_log?.assessment_status == ASSESSMENT_STATUS_NEEDS_APPROVAL &&
                     observation_log?.observation_data?.product_data?.permissions?.includes(
                         PERMISSION_OBSERVATION_LOG_APPROVAL
-                    ) && <AssessmentApproval observation_log_id={observation_log.id} />}
+                    ) && <AssessmentApproval observation_log={observation_log} />}
             </Stack>
         </TopToolbar>
     );
@@ -191,18 +191,30 @@ const ObservationLogComponent = () => {
                                     />
                                 </Labeled>
                                 {observation_log.approval_user_full_name && (
-                                    <Labeled label="Approved/rejected by">
+                                    <Labeled
+                                        label={
+                                            observation_log.assessment_status === ASSESSMENT_STATUS_REJECTED
+                                                ? "Rejected by"
+                                                : "Approved by"
+                                        }
+                                    >
                                         <TextField source="approval_user_full_name" />
                                     </Labeled>
                                 )}
-                                {observation_log.approval_remark && (
-                                    <Labeled label="Approval/rejection remark">
-                                        <TextField source="approval_remark" />
+                                {observation_log.approval_date && (
+                                    <Labeled
+                                        label={
+                                            observation_log.assessment_status === ASSESSMENT_STATUS_REJECTED
+                                                ? "Rejection date"
+                                                : "Approval date"
+                                        }
+                                    >
+                                        <DateField source="approval_date" showTime />
                                     </Labeled>
                                 )}
-                                {observation_log.approval_date && (
-                                    <Labeled label="Approval/rejection date">
-                                        <DateField source="approval_date" showTime />
+                                {observation_log.rejection_remark && (
+                                    <Labeled label="Rejection remark">
+                                        <TextField source="rejection_remark" />
                                     </Labeled>
                                 )}
                             </Stack>

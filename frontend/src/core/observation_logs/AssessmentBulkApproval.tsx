@@ -9,7 +9,7 @@ import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave
 import { validate_required, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { ASSESSMENT_STATUS_CHOICES } from "../types";
+import { ASSESSMENT_STATUS_BULK_CHOICES } from "../types";
 
 type AssessmentBulkApprovalProps = {
     storeKey: string;
@@ -27,7 +27,7 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         setLoading(true);
         const post_data = {
             assessment_status: data.assessment_status,
-            approval_remark: data.approval_remark,
+            rejection_remark: data.rejection_remark,
             observation_logs: selectedIds,
         };
 
@@ -74,11 +74,11 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                     <SimpleForm onSubmit={assessmentUpdate} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
                         <AutocompleteInputMedium
                             source="assessment_status"
-                            choices={ASSESSMENT_STATUS_CHOICES}
+                            choices={ASSESSMENT_STATUS_BULK_CHOICES}
                             validate={validate_required}
                             label="Decision"
                         />
-                        <TextInputWide source="approval_remark" validate={validate_required_255} label="Remark" />
+                        <TextInputWide source="rejection_remark" validate={validate_required_255} label="Remark" />
                     </SimpleForm>
                 </DialogContent>
             </Dialog>

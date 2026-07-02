@@ -130,12 +130,12 @@ def _check_observations(product: Optional[Product], observation_ids: list[int]) 
 
 def observation_logs_bulk_approval(
     assessment_status: str,
-    approval_remark: str,
+    rejection_remark: str,
     observation_log_ids: list[int],
 ) -> None:
     observation_logs = _check_observation_logs(None, observation_log_ids)
     for observation_log in observation_logs:
-        assessment_approval(observation_log, assessment_status, approval_remark)
+        assessment_approval(observation_log, assessment_status, rejection_remark, None)
         set_potential_duplicate_both_ways(observation_log.observation)
 
 

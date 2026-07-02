@@ -224,7 +224,12 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
     return False
 
 
-def assessment_approval(observation_log: Observation_Log, assessment_status: str, approval_remark: str) -> None:
+def assessment_approval(
+    observation_log: Observation_Log,
+    assessment_status: str,
+    rejection_remark: Optional[str],
+    observation_log_comment: Optional[str],
+) -> None:
     if observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
         raise ValidationError("Observation log does not need approval")
 
@@ -232,8 +237,13 @@ def assessment_approval(observation_log: Observation_Log, assessment_status: str
     if observation_log.user == approval_user:
         raise ValidationError("Users cannot approve their own assessment")
 
+    if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and observation_log_comment:
+        observation_log.comment = observation_log_comment
+        observation_log.save()
+
     if assessment_status in (
         Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+        Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
         Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
     ):
         _update_observation(
@@ -253,7 +263,7 @@ def assessment_approval(observation_log: Observation_Log, assessment_status: str
         send_observation_title_notification(observation_log.observation)
 
     observation_log.approval_user = approval_user
-    observation_log.approval_remark = approval_remark
+    observation_log.rejection_remark = rejection_remark if rejection_remark else ""
     observation_log.approval_date = timezone.now()
     observation_log.assessment_status = assessment_status
     observation_log.save()
