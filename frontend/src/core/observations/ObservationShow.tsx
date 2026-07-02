@@ -101,7 +101,7 @@ const ShowActions = () => {
                     observation?.product_data?.permissions?.includes(PERMISSION_OBSERVATION_EDIT) && <EditButton />}
                 {observation?.assessment_needs_approval &&
                     observation?.product_data?.permissions?.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) && (
-                        <AssessmentApproval observation_log_id={observation.assessment_needs_approval} />
+                        <AssessmentApproval observation_log={observation.assessment_needs_approval} />
                     )}
             </Stack>
         </TopToolbar>
