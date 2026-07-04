@@ -14,7 +14,11 @@ from application.core.api.serializers_product import (
     ProductMemberSerializer,
     ProductSerializer,
 )
-from application.core.models import Observation, Product, Product_Authorization_Group_Member
+from application.core.models import (
+    Observation,
+    Product,
+    Product_Authorization_Group_Member,
+)
 from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
 

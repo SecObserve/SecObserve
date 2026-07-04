@@ -7,7 +7,12 @@ from rest_framework.exceptions import ValidationError
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.roles_permissions import Roles
-from application.core.models import Observation, Observation_Log, Product, Product_Authorization_Group_Member
+from application.core.models import (
+    Observation,
+    Observation_Log,
+    Product,
+    Product_Authorization_Group_Member,
+)
 from application.core.queries.product_member import (
     get_highest_role_of_product_authorization_group_members_for_user,
     get_product_member,

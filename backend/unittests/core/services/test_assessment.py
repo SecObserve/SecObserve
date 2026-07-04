@@ -10,7 +10,12 @@ from application.access_control.models import (
     User,
 )
 from application.authorization.services.roles_permissions import Roles
-from application.core.models import Observation_Log, Product, Product_Authorization_Group_Member, Product_Member
+from application.core.models import (
+    Observation_Log,
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 from application.core.services.assessment import (
     assessment_approval,
     assessment_approvers_configured,

@@ -1,9 +1,17 @@
 from django.test import TestCase
 
 from application.access_control.api.filters import AuthorizationGroupFilter, UserFilter
-from application.access_control.models import Authorization_Group, Authorization_Group_Member, User
+from application.access_control.models import (
+    Authorization_Group,
+    Authorization_Group_Member,
+    User,
+)
 from application.authorization.services.roles_permissions import Roles
-from application.core.models import Product, Product_Authorization_Group_Member, Product_Member
+from application.core.models import (
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 
 
 class TestApproverFilters(TestCase):

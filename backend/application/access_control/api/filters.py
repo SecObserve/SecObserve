@@ -11,7 +11,11 @@ from application.access_control.models import (
     User,
 )
 from application.authorization.services.roles_permissions import Roles
-from application.core.models import Product, Product_Authorization_Group_Member, Product_Member
+from application.core.models import (
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 
 
 def _get_product_and_group_ids(product_id: int) -> list[int]:
