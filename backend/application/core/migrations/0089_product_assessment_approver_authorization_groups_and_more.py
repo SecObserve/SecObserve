@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("access_control", "0018_user_setting_rows_per_page"),
-        ("core", "0088_resave_encrypt_issue_tracker_api_key"),
+        ("core", "0089_rename_approval_remark_observation_log_rejection_remark_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

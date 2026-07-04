@@ -366,10 +366,11 @@ def assessment_approval(
         raise ValidationError("Observation log does not need approval")
 
     approval_user = get_current_user()
+    product = observation_log.observation.product
     if observation_log.user == approval_user:
         raise ValidationError("Users cannot approve their own assessment")
 
-    if not user_is_allowed_assessment_approver(observation_log.observation.product, approval_user):
+    if not user_is_allowed_assessment_approver(product, approval_user):
         raise ValidationError("User is not an allowed approver for this product")
 
     if assessment_status in (

@@ -2,6 +2,7 @@ from datetime import date
 from typing import Any, Optional
 
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Q
 from rest_framework.serializers import (
     CharField,
     DateField,
@@ -78,6 +79,19 @@ def get_product_permissions_for_user(product: Product) -> Optional[set[Permissio
     ):
         permissions = permissions - {Permissions.Observation_Log_Approval}
     return permissions
+
+
+def _authorization_group_is_designated_assessment_approver(product: Product, authorization_group: Any) -> bool:
+    if not product.pk:
+        return False
+
+    designated_products = Product.objects.filter(assessment_approver_authorization_groups=authorization_group)
+    if product.is_product_group:
+        designated_products = designated_products.filter(Q(pk=product.pk) | Q(product_group=product))
+    else:
+        designated_products = designated_products.filter(pk=product.pk)
+
+    return designated_products.exists()
 
 
 class ProductCoreSerializer(ModelSerializer):
@@ -669,7 +683,24 @@ class ProductAuthorizationGroupMemberSerializer(ModelSerializer):
             if attrs.get("role") != Roles.Owner and self.instance is not None and self.instance.role == Roles.Owner:
                 raise ValidationError("You are not permitted to change the Owner role")
 
+        self._validate_designated_approver_group_role(attrs)
+
         return attrs
+
+    def _validate_designated_approver_group_role(self, attrs: dict) -> None:
+        role = attrs.get("role")
+        if role is None or role >= Roles.Writer:
+            return
+
+        product = attrs.get("product") or (self.instance.product if self.instance else None)
+        authorization_group = attrs.get("authorization_group") or (
+            self.instance.authorization_group if self.instance else None
+        )
+        if product is None or authorization_group is None:
+            return
+
+        if _authorization_group_is_designated_assessment_approver(product, authorization_group):
+            raise ValidationError("Designated approver groups must have at least the Writer role.")
 
 
 class ProductApiTokenSerializer(Serializer):

@@ -21,7 +21,7 @@ from application.core.models import (
     Product,
     Product_Authorization_Group_Member,
 )
-from application.core.types import Severity, Status
+from application.core.types import Assessment_Status, Severity, Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -491,6 +491,32 @@ class TestProductAuthorizationGroupMemberSerializer(BaseTestCase):
 
         self.assertEqual(new_attrs, attrs)
         mock_highest_user_role.assert_called_with(self.product_1, self.user_internal)
+        mock_user.assert_called_once()
+
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    def test_validate_reader_role_rejected_for_designated_approver_group(self, mock_highest_user_role, mock_user):
+        mock_highest_user_role.return_value = Roles.Owner
+        mock_user.return_value = self.user_internal
+        product = Product.objects.create(name="product")
+        authorization_group = Authorization_Group.objects.create(name="designated_approver_group")
+        product_authorization_group_member = Product_Authorization_Group_Member.objects.create(
+            product=product, authorization_group=authorization_group, role=Roles.Writer
+        )
+        product.assessment_approver_authorization_groups.add(authorization_group)
+        product_authorization_group_member_serializer = ProductAuthorizationGroupMemberSerializer(
+            product_authorization_group_member
+        )
+        attrs = {"role": Roles.Reader}
+
+        with self.assertRaises(ValidationError) as e:
+            product_authorization_group_member_serializer.validate(attrs)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Designated approver groups must have at least the Writer role.', code='invalid')]",
+            str(e.exception),
+        )
+        mock_highest_user_role.assert_called_with(product, self.user_internal)
         mock_user.assert_called_once()
 
     @patch("application.core.api.serializers_product.get_product_authorization_group_member")
