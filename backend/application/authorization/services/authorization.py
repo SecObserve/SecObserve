@@ -59,7 +59,7 @@ def user_has_permission(  # pylint: disable=too-many-return-statements,too-many-
         has_role_permission = bool(role and role_has_permission(role, permission))
         # With designated approvers configured, only they (with an approval-capable role) may approve assessments.
         if permission == Permissions.Observation_Log_Approval and assessment_approvers_configured(obj):
-            return has_role_permission and is_user_designated_assessment_approver(obj, user)
+            return has_role_permission and (role == Roles.Owner or is_user_designated_assessment_approver(obj, user))
         return has_role_permission
 
     if isinstance(obj, Product) and obj.is_product_group:

@@ -9,7 +9,8 @@ from application.access_control.models import (
     Authorization_Group_Member,
     User,
 )
-from application.core.models import Observation_Log, Product
+from application.authorization.services.roles_permissions import Roles
+from application.core.models import Observation_Log, Product, Product_Authorization_Group_Member, Product_Member
 from application.core.services.assessment import (
     assessment_approval,
     assessment_approvers_configured,
@@ -37,6 +38,14 @@ class TestAssessmentApproverResolution(TestCase):
 
         self.product_group = Product.objects.create(name="pg", is_product_group=True)
         self.product = Product.objects.create(name="p", product_group=self.product_group)
+        Product_Member.objects.create(product=self.product, user=self.approver, role=Roles.Writer)
+        Product_Member.objects.create(product=self.product, user=self.other, role=Roles.Writer)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=self.group, role=Roles.Writer
+        )
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product_group, authorization_group=self.group, role=Roles.Writer
+        )
 
     def test_no_approvers_configured_allows_anyone(self) -> None:
         self.assertTrue(user_is_allowed_assessment_approver(self.product, self.other))
@@ -68,6 +77,16 @@ class TestAssessmentApproverResolution(TestCase):
         self.assertTrue(user_is_allowed_assessment_approver(self.product, self.group_user))
         self.assertFalse(user_is_allowed_assessment_approver(self.product, self.other))
 
+    def test_reader_authorization_group_does_not_count_as_designated_approver(self) -> None:
+        reader_group = Authorization_Group.objects.create(name="reader_team")
+        Authorization_Group_Member.objects.create(authorization_group=reader_group, user=self.group_user)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=reader_group, role=Roles.Reader
+        )
+        self.product.assessment_approver_authorization_groups.add(reader_group)
+
+        self.assertFalse(user_is_allowed_assessment_approver(self.product, self.group_user))
+
 
 class TestDesignatedAssessmentApprover(TestCase):
     """Strict designated-approver check used to grant the assessment permission."""
@@ -82,6 +101,12 @@ class TestDesignatedAssessmentApprover(TestCase):
 
         self.product_group = Product.objects.create(name="pg2", is_product_group=True)
         self.product = Product.objects.create(name="p2", product_group=self.product_group)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=self.group, role=Roles.Writer
+        )
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product_group, authorization_group=self.group, role=Roles.Writer
+        )
 
     def test_no_approvers_configured_denies_everyone(self) -> None:
         # Unlike user_is_allowed_assessment_approver, the strict check returns False when empty.
@@ -130,8 +155,11 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.log.save()
         self.product = Product.objects.get(pk=1)
         self.author = User.objects.get(pk=2)
-        self.approver = User.objects.get(pk=3)
-        self.outsider = User.objects.get(pk=1)
+        self.outsider = User.objects.get(pk=3)
+        self.approver = User.objects.create(username="assessment_writer@example.com")
+        Product_Member.objects.create(product=self.product, user=self.approver, role=Roles.Writer)
+        self.owner = User.objects.create(username="assessment_owner@example.com")
+        Product_Member.objects.create(product=self.product, user=self.owner, role=Roles.Owner)
 
     @patch("application.core.services.assessment.get_current_user")
     def test_empty_configuration_allows_any_non_author(self, mock_user) -> None:
@@ -157,6 +185,14 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
             assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok")
         self.log.refresh_from_db()
         self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL)
+
+    @patch("application.core.services.assessment.get_current_user")
+    def test_owner_can_approve_other_users_assessments_when_not_designated(self, mock_user) -> None:
+        self.product.assessment_approvers.add(self.approver)
+        mock_user.return_value = self.owner
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok")
+        self.log.refresh_from_db()
+        self.assertEqual(self.log.approval_user, self.owner)
 
     @patch("application.core.services.assessment.get_current_user")
     def test_self_approval_blocked_even_if_designated_approver(self, mock_user) -> None:

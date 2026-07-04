@@ -1,7 +1,15 @@
 from typing import Any, Optional
 
-from regopy import Input, Interpreter
-from regopy.rego_shared import RegoError
+try:
+    from regopy import Input, Interpreter
+    from regopy.rego_shared import RegoError
+except ModuleNotFoundError:  # LOCAL DEV ONLY: regopy has no arm64 wheel; let the app import so the backend starts
+    Input = Interpreter = None  # type: ignore
+
+    class RegoError(Exception):  # type: ignore
+        pass
+
+
 from rest_framework.exceptions import ValidationError
 
 

@@ -14,7 +14,7 @@ from application.core.api.serializers_product import (
     ProductMemberSerializer,
     ProductSerializer,
 )
-from application.core.models import Observation, Product
+from application.core.models import Observation, Product, Product_Authorization_Group_Member
 from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
 
@@ -115,6 +115,45 @@ class TestBranchSerializer(BaseTestCase):
             {Permissions.Observation_View},
             product_serializer.get_permissions(obj=self.product_1),
         )
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.assessment_approvers_configured")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_approval_kept_for_non_designated_owner(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_configured, mock_approver
+    ):
+        mock_permissions.return_value = {Permissions.Observation_View, Permissions.Observation_Log_Approval}
+        mock_highest_user_role.return_value = Roles.Owner
+        mock_user.return_value = self.user_internal
+        mock_configured.return_value = True
+        mock_approver.return_value = False
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_View, Permissions.Observation_Log_Approval},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
+
+    def test_validate_rejects_reader_designated_approver_group(self):
+        authorization_group = Authorization_Group.objects.create(name="reader_approver_group")
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product_1, authorization_group=authorization_group, role=Roles.Reader
+        )
+        product_serializer = ProductSerializer(self.product_1)
+
+        with self.assertRaises(ValidationError):
+            product_serializer.validate({"assessment_approver_authorization_groups": [authorization_group]})
+
+    def test_validate_allows_writer_designated_approver_group(self):
+        authorization_group = Authorization_Group.objects.create(name="writer_approver_group")
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product_1, authorization_group=authorization_group, role=Roles.Writer
+        )
+        product_serializer = ProductSerializer(self.product_1)
+        attrs = {"assessment_approver_authorization_groups": [authorization_group]}
+
+        self.assertEqual(attrs, product_serializer.validate(attrs))
 
     @patch("application.core.api.serializers_product.get_product_member")
     def test_validate_security_gate_active_empty(self, mock_product_member):

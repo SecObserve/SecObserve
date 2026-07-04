@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from django.db.models import Exists, Q, QuerySet
+from django.db.models import Exists, OuterRef, Q, QuerySet
 from django_filters import CharFilter, FilterSet, NumberFilter, OrderingFilter
 from rest_framework.request import Request
 
@@ -10,6 +10,19 @@ from application.access_control.models import (
     Authorization_Group_Member,
     User,
 )
+from application.authorization.services.roles_permissions import Roles
+from application.core.models import Product, Product_Authorization_Group_Member, Product_Member
+
+
+def _get_product_and_group_ids(product_id: int) -> list[int]:
+    product = Product.objects.filter(id=product_id).select_related("product_group").first()
+    if product is None:
+        return []
+
+    product_ids = [product.id]
+    if product.product_group_id:
+        product_ids.append(product.product_group_id)
+    return product_ids
 
 
 class UserFilter(FilterSet):
@@ -24,6 +37,9 @@ class UserFilter(FilterSet):
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     exclude_product = NumberFilter(field_name="exclude_product", method="get_exclude_product")
     member_of_product = NumberFilter(field_name="member_of_product", method="get_member_of_product")
+    assessment_approver_for_product = NumberFilter(
+        field_name="assessment_approver_for_product", method="get_assessment_approver_for_product"
+    )
 
     def get_member_of_product(
         self,
@@ -42,6 +58,35 @@ class UserFilter(FilterSet):
                 | Q(authorization_groups__authorization_groups__products__id=value)  # via an auth group of the group
             ).distinct()
         return queryset
+
+    def get_assessment_approver_for_product(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Any,
+    ) -> QuerySet:
+        product_ids = _get_product_and_group_ids(value)
+        if not product_ids:
+            return queryset.none()
+
+        product_members = Product_Member.objects.filter(
+            product_id__in=product_ids,
+            user=OuterRef("pk"),
+            role__gte=Roles.Writer,
+        )
+        product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
+            product_id__in=product_ids,
+            authorization_group__users=OuterRef("pk"),
+            role__gte=Roles.Writer,
+        )
+        return (
+            queryset.annotate(
+                assessment_approver_product_member=Exists(product_members),
+                assessment_approver_group_member=Exists(product_authorization_group_members),
+            )
+            .filter(Q(assessment_approver_product_member=True) | Q(assessment_approver_group_member=True))
+            .distinct()
+        )
 
     def get_exclude_authorization_group(
         self,
@@ -136,6 +181,9 @@ class AuthorizationGroupFilter(FilterSet):
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     exclude_product = NumberFilter(field_name="exclude_product", method="get_exclude_product")
     member_of_product = NumberFilter(field_name="member_of_product", method="get_member_of_product")
+    assessment_approver_for_product = NumberFilter(
+        field_name="assessment_approver_for_product", method="get_assessment_approver_for_product"
+    )
 
     def get_member_of_product(
         self,
@@ -150,6 +198,25 @@ class AuthorizationGroupFilter(FilterSet):
                 | Q(authorization_groups__products__id=value)  # assigned to the product's product group
             ).distinct()
         return queryset
+
+    def get_assessment_approver_for_product(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Any,
+    ) -> QuerySet:
+        product_ids = _get_product_and_group_ids(value)
+        if not product_ids:
+            return queryset.none()
+
+        product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
+            product_id__in=product_ids,
+            authorization_group=OuterRef("pk"),
+            role__gte=Roles.Writer,
+        )
+        return queryset.annotate(
+            assessment_approver_product_authorization_group=Exists(product_authorization_group_members),
+        ).filter(assessment_approver_product_authorization_group=True)
 
     def get_exclude_license_group(
         self,
