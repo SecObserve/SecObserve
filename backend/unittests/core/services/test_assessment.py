@@ -92,6 +92,41 @@ class TestAssessmentApproverResolution(TestCase):
 
         self.assertFalse(user_is_allowed_assessment_approver(self.product, self.group_user))
 
+    def test_direct_writer_designated_user_is_not_blocked_by_reader_group_membership(self) -> None:
+        reader_group = Authorization_Group.objects.create(name="reader_team_for_direct_writer")
+        Authorization_Group_Member.objects.create(authorization_group=reader_group, user=self.approver)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=reader_group, role=Roles.Reader
+        )
+        self.product.assessment_approvers.add(self.approver)
+
+        self.assertTrue(is_user_designated_assessment_approver(self.product, self.approver))
+        self.assertTrue(user_is_allowed_assessment_approver(self.product, self.approver))
+
+    def test_reader_group_designation_does_not_allow_member_even_with_direct_writer_role(self) -> None:
+        reader_group = Authorization_Group.objects.create(name="reader_team_for_writer")
+        Authorization_Group_Member.objects.create(authorization_group=reader_group, user=self.approver)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=reader_group, role=Roles.Reader
+        )
+        self.product.assessment_approver_authorization_groups.add(reader_group)
+
+        self.assertFalse(is_user_designated_assessment_approver(self.product, self.approver))
+        self.assertFalse(user_is_allowed_assessment_approver(self.product, self.approver))
+
+    def test_inherited_writer_group_allows_member_with_direct_reader_role_on_product(self) -> None:
+        inherited_group_user = User.objects.create(username="inherited_group_reader@example.com")
+        inherited_group = Authorization_Group.objects.create(name="inherited_writer_team")
+        Authorization_Group_Member.objects.create(authorization_group=inherited_group, user=inherited_group_user)
+        Product_Member.objects.create(product=self.product, user=inherited_group_user, role=Roles.Reader)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product_group, authorization_group=inherited_group, role=Roles.Writer
+        )
+        self.product_group.assessment_approver_authorization_groups.add(inherited_group)
+
+        self.assertTrue(is_user_designated_assessment_approver(self.product, inherited_group_user))
+        self.assertTrue(user_is_allowed_assessment_approver(self.product, inherited_group_user))
+
 
 class TestDesignatedAssessmentApprover(TestCase):
     """Strict designated-approver check used to grant the assessment permission."""
@@ -181,6 +216,57 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
         self.log.refresh_from_db()
         self.assertEqual(self.log.approval_user, self.approver)
+
+    @patch("application.core.services.assessment.get_current_user")
+    def test_direct_writer_designated_user_with_reader_group_membership_can_approve(self, mock_user) -> None:
+        reader_group = Authorization_Group.objects.create(name="reader_group_for_designated_writer")
+        Authorization_Group_Member.objects.create(authorization_group=reader_group, user=self.approver)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=reader_group, role=Roles.Reader
+        )
+        self.product.assessment_approvers.add(self.approver)
+        mock_user.return_value = self.approver
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+
+        self.log.refresh_from_db()
+        self.assertEqual(self.log.approval_user, self.approver)
+
+    @patch("application.core.services.assessment.get_current_user")
+    def test_reader_group_designation_does_not_allow_direct_writer_member_to_approve(self, mock_user) -> None:
+        reader_group = Authorization_Group.objects.create(name="reader_group_for_writer")
+        Authorization_Group_Member.objects.create(authorization_group=reader_group, user=self.approver)
+        Product_Authorization_Group_Member.objects.create(
+            product=self.product, authorization_group=reader_group, role=Roles.Reader
+        )
+        self.product.assessment_approver_authorization_groups.add(reader_group)
+        mock_user.return_value = self.approver
+
+        with self.assertRaises(ValidationError):
+            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+
+        self.log.refresh_from_db()
+        self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL)
+
+    @patch("application.core.services.assessment.get_current_user")
+    def test_inherited_writer_group_member_with_direct_reader_role_can_approve(self, mock_user) -> None:
+        product_group = Product.objects.create(name="approval_product_group", is_product_group=True)
+        self.product.product_group = product_group
+        self.product.save()
+        inherited_group_user = User.objects.create(username="approval_group_reader@example.com")
+        inherited_group = Authorization_Group.objects.create(name="approval_writer_group")
+        Authorization_Group_Member.objects.create(authorization_group=inherited_group, user=inherited_group_user)
+        Product_Member.objects.create(product=self.product, user=inherited_group_user, role=Roles.Reader)
+        Product_Authorization_Group_Member.objects.create(
+            product=product_group, authorization_group=inherited_group, role=Roles.Writer
+        )
+        product_group.assessment_approver_authorization_groups.add(inherited_group)
+        mock_user.return_value = inherited_group_user
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+
+        self.log.refresh_from_db()
+        self.assertEqual(self.log.approval_user, inherited_group_user)
 
     @patch("application.core.services.assessment.get_current_user")
     def test_non_approver_is_rejected_when_configured(self, mock_user) -> None:
