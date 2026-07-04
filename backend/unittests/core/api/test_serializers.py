@@ -6,6 +6,8 @@ from application.access_control.models import Authorization_Group
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
 from application.core.api.serializers_observation import (
+    ObservationLogApprovalSerializer,
+    ObservationLogBulkApprovalSerializer,
     _get_origin_cloud_resource_url,
 )
 from application.core.api.serializers_product import (
@@ -618,3 +620,210 @@ class TestObservationSerializer(BaseTestCase):
 
         result = _get_origin_cloud_resource_url(observation)
         self.assertIsNone(result)
+
+
+class TestObservationLogApprovalSerializer(BaseTestCase):
+    """Tests for the validate method of ObservationLogApprovalSerializer"""
+
+    def _get_serializer_data(self, **kwargs):
+        """Helper to create consistent test data with sensible defaults"""
+        # Default: Valid Approval
+        data = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "comment": "Test comment",  # Serializer expects 'comment' as required in Meta/fields if needed,
+            # but here we focus on the specific validation logic.
+            # Note: The serializer definition shows 'comment' is required=True.
+        }
+        data.update(kwargs)
+        return data
+
+    def test_valid_approval_no_remark(self):
+        """Test that valid approval without rejection remark passes validation"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            rejection_remark="",  # Empty string is allowed for approvals
+            observation_log_comment="",
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+        # The 'comment' field is required by the Serializer class definition (comment = CharField(..., required=True))
+        # So we must provide it or it will fail earlier.
+        # However, looking at the code snippet provided:
+        # class ObservationLogApprovalSerializer(Serializer):
+        #     ...
+        #     comment = CharField(max_length=4096, required=True)
+        # So 'comment' is mandatory.
+
+        try:
+            if not serializer.is_valid():
+                self.fail(f"Validation failed unexpectedly: {serializer.errors}")
+        except ValidationError as e:
+            self.fail(f"Unexpected ValidationError: {e}")
+
+    def test_valid_approval_with_remark_raises_error(self):
+        """Test that providing a rejection remark with an approval raises a validation error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            rejection_remark="This should fail",  # Non-empty string
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        # Check that the error message matches the expected logic
+        # Note: DRF validation errors are often raised during is_valid() or explicit raise
+        self.assertIn("Remark for rejection cannot be set with approval", str(context.exception))
+
+    def test_valid_rejection_with_remark(self):
+        """Test that valid rejection with a remark passes validation"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            rejection_remark="This is invalid",  # Non-empty string required for rejection
+            observation_log_comment="",
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        # 'comment' is required by the class definition
+        data["comment"] = "Valid comment for rejection"
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        try:
+            if not serializer.is_valid():
+                self.fail(f"Validation failed unexpectedly: {serializer.errors}")
+        except ValidationError as e:
+            self.fail(f"Unexpected ValidationError: {e}")
+
+    def test_invalid_rejection_without_remark(self):
+        """Test that rejection without a remark raises a validation error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            rejection_remark="",  # Empty string is not allowed for rejection
+        )
+        # 'comment' is required by the class definition
+        data["comment"] = "Valid comment"
+
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Rejection needs a remark", str(context.exception))
+
+    def test_invalid_approval_with_observation_log_comment(self):
+        """Test that providing an observation log comment with standard approval raises error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            observation_log_comment="Some edit comment",  # Should not be allowed for standard approval
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Comment for observation Log cannot be set with approval", str(context.exception))
+
+    def test_invalid_rejection_with_observation_log_comment(self):
+        """Test that providing an observation log comment with rejection raises error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            rejection_remark="Rejected",
+            observation_log_comment="Some edit comment",  # Should not be allowed for rejection
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Comment for observation Log cannot be set with approval", str(context.exception))
+
+    def test_valid_approval_with_edits_has_comment(self):
+        """Test that APPROVED_WITH_EDITS works when comment is present"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            observation_log_comment="Edits were made",
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        try:
+            if not serializer.is_valid():
+                self.fail(f"Validation failed unexpectedly: {serializer.errors}")
+        except ValidationError as e:
+            self.fail(f"Unexpected ValidationError: {e}")
+
+    def test_invalid_approval_with_edits_no_comment(self):
+        """Test that APPROVED_WITH_EDITS fails when comment is missing"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            observation_log_comment="",  # Empty string as per default or omitted
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Approval with edits needs an observation log comment", str(context.exception))
+
+
+class TestObservationLogBulkApprovalSerializer(BaseTestCase):
+    """Tests for the validate method of ObservationLogBulkApprovalSerializer"""
+
+    def test_approved_with_rejection_remark_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "This should fail",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("Remark for rejection cannot be set with approval", str(e.exception))
+
+    def test_approved_without_rejection_remark_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+    def test_rejected_without_rejection_remark_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("Rejection needs a remark", str(e.exception))
+
+    def test_rejected_with_rejection_remark_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "This is invalid",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+    def test_no_status_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "rejection_remark": "",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)

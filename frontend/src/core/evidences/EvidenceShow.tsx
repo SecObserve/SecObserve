@@ -37,7 +37,7 @@ const EvidenceShow = () => {
     return (
         <Show actions={<ShowActions />}>
             <SimpleShowLayout>
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <evidences.icon />
                     &nbsp;&nbsp;Evidence
                 </Typography>
@@ -46,7 +46,7 @@ const EvidenceShow = () => {
                 <TextField source="name" />
                 <WithRecord
                     render={(evidence) => (
-                        <Labeled label="Evidence" width={"100%"}>
+                        <Labeled label="Evidence" sx={{ width: "100%" }}>
                             <JsonViewer
                                 value={JSON.parse(evidence.evidence)}
                                 groupArraysAfterLength={10000}

@@ -476,11 +476,11 @@ class Observation_Log(Model):
     vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)
     vex_remediations = JSONField(blank=True, null=True)
     assessment_status = CharField(
-        max_length=16,
+        max_length=20,
         choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES,
         default=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
     )
-    approval_remark = TextField(max_length=255, blank=True)
+    rejection_remark = TextField(max_length=255, blank=True)
     approval_date = DateTimeField(null=True)
     approval_user = ForeignKey(
         "access_control.User",

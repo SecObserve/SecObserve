@@ -61,7 +61,7 @@ const ShowActions = () => {
     const product_group = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "name", order: "ASC" }}

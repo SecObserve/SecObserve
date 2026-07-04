@@ -10,7 +10,7 @@ import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const LicenseComponentShowAside = () => {
     return (
-        <Box width={"33%"} marginLeft={2}>
+        <Box sx={{ width: "33%", marginLeft: 2 }}>
             <MetaData />
             <Evidences />
         </Box>

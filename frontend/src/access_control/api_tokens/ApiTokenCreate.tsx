@@ -121,9 +121,7 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                     <Stack
                         direction="row"
                         spacing={2}
-                        justifyContent="center"
-                        alignItems="center"
-                        sx={{ marginBottom: 4 }}
+                        sx={{ justifyContent: "center", alignItems: "center", marginBottom: 4 }}
                     >
                         <TextField disabled defaultValue={apiToken} sx={{ width: "50ch" }} />
                         <CopyToClipboardButton text={apiToken} />

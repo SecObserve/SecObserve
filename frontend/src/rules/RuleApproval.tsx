@@ -8,7 +8,7 @@ import { ToolbarCancelSave } from "../commons/custom_fields/ToolbarCancelSave";
 import { validate_required, validate_required_255 } from "../commons/custom_validators";
 import { AutocompleteInputMedium, TextInputWide } from "../commons/layout/themes";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
-import { RULE_STATUS_CHOICES_APPROVAL } from "./types";
+import { RULE_STATUS_APPROVED, RULE_STATUS_CHOICES_APPROVAL, RULE_STATUS_REJECTED } from "./types";
 
 type RuleApprovalProps = {
     rule_id: string | number;
@@ -17,13 +17,14 @@ type RuleApprovalProps = {
 
 const RuleApproval = (props: RuleApprovalProps) => {
     const [open, setOpen] = useState(false);
+    const [decision, setDecision] = useState(RULE_STATUS_APPROVED);
     const refresh = useRefresh();
     const notify = useNotify();
 
     const saveApproval = async (data: any) => {
         const patch = {
             approval_status: data.approval_status,
-            approval_remark: data.approval_remark,
+            rejection_remark: data.rejection_remark,
         };
 
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/" + props.class + "/" + props.rule_id + "/approval/", {
@@ -67,8 +68,15 @@ const RuleApproval = (props: RuleApprovalProps) => {
                             choices={RULE_STATUS_CHOICES_APPROVAL}
                             validate={validate_required}
                             label="Decision"
+                            onChange={(e) => setDecision(e)}
                         />
-                        <TextInputWide source="approval_remark" validate={validate_required_255} label="Remark" />
+                        {decision === RULE_STATUS_REJECTED && (
+                            <TextInputWide
+                                source="rejection_remark"
+                                validate={validate_required_255}
+                                label="Remark for rejection"
+                            />
+                        )}
                     </SimpleForm>
                 </DialogContent>
             </Dialog>

@@ -57,7 +57,7 @@ export const ProductGroupCreateEditComponent = ({
     const default_approver_on_create = product_group?.id ? undefined : current_user_id;
     return (
         <Fragment>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                 <product_groups.icon />
                 &nbsp;&nbsp;Product Group
             </Typography>

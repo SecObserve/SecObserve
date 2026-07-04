@@ -90,7 +90,7 @@ export const ProductCreateEditComponent = ({
     const default_approver_on_create = product?.id ? undefined : current_user_id;
     return (
         <Fragment>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                 <products.icon />
                 &nbsp;&nbsp;Product
             </Typography>
@@ -428,7 +428,7 @@ export const ProductCreateEditComponent = ({
                 Vulnerability scanning
             </Typography>
 
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                 <BooleanInput source="osv_enabled" label="OSV scanning enabled" defaultValue={true} />
                 <FormDataConsumer>
                     {({ formData }) => formData.osv_enabled && <OSVLinuxDistributionInput />}

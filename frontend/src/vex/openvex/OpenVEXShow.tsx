@@ -24,7 +24,7 @@ const ShowActions = () => {
     const openvex = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons linkType="show" sort={{ field: "timestamp", order: "DESC" }} storeKey="openvex.list" />
                 {update_permission(openvex) && <OpenVEXUpdate />}
                 {delete_permission(openvex) && <DeleteWithConfirmButton />}
@@ -37,10 +37,10 @@ const OpenVEXComponent = () => {
     return (
         <WithRecord
             render={(openvex) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                         <Stack spacing={1}>
-                            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                                 <openvexs.icon />
                                 &nbsp;&nbsp;Exported OpenVEX document
                             </Typography>

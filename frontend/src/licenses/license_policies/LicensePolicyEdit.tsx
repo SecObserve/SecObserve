@@ -43,7 +43,7 @@ const LicensePolicyEditForm = ({ setDescription }: LicensePolicyEditFormProps) =
 
     return (
         <SimpleForm warnWhenUnsavedChanges toolbar={<CustomToolbar />}>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                 <license_policies.icon />
                 &nbsp;&nbsp;License Policy
             </Typography>
