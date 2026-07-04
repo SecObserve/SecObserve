@@ -4,7 +4,7 @@ try:
     from regopy import Input, Interpreter
     from regopy.rego_shared import RegoError
 except ModuleNotFoundError:  # LOCAL DEV ONLY: regopy has no arm64 wheel; let the app import so the backend starts
-    Input = Interpreter = None  # type: ignore
+    Input = Interpreter = None
 
     class RegoError(Exception):  # type: ignore
         pass
