@@ -140,21 +140,23 @@ class TestBranchSerializer(BaseTestCase):
         )
 
     def test_validate_rejects_reader_designated_approver_group(self):
+        product = Product.objects.create(name="product")
         authorization_group = Authorization_Group.objects.create(name="reader_approver_group")
         Product_Authorization_Group_Member.objects.create(
-            product=self.product_1, authorization_group=authorization_group, role=Roles.Reader
+            product=product, authorization_group=authorization_group, role=Roles.Reader
         )
-        product_serializer = ProductSerializer(self.product_1)
+        product_serializer = ProductSerializer(product)
 
         with self.assertRaises(ValidationError):
             product_serializer.validate({"assessment_approver_authorization_groups": [authorization_group]})
 
     def test_validate_allows_writer_designated_approver_group(self):
+        product = Product.objects.create(name="product")
         authorization_group = Authorization_Group.objects.create(name="writer_approver_group")
         Product_Authorization_Group_Member.objects.create(
-            product=self.product_1, authorization_group=authorization_group, role=Roles.Writer
+            product=product, authorization_group=authorization_group, role=Roles.Writer
         )
-        product_serializer = ProductSerializer(self.product_1)
+        product_serializer = ProductSerializer(product)
         attrs = {"assessment_approver_authorization_groups": [authorization_group]}
 
         self.assertEqual(attrs, product_serializer.validate(attrs))
