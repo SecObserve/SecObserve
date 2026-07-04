@@ -73,6 +73,7 @@ def get_product_permissions_for_user(product: Product) -> Optional[set[Permissio
         permissions is not None
         and Permissions.Observation_Log_Approval in permissions
         and assessment_approvers_configured(product)
+        and get_highest_user_role(product) != Roles.Owner
         and not is_user_designated_assessment_approver(product)
     ):
         permissions = permissions - {Permissions.Observation_Log_Approval}
@@ -129,7 +130,51 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["security_gate_threshold_none"] = None
             attrs["security_gate_threshold_unknown"] = None
 
+        self._validate_assessment_approver_authorization_groups(attrs)
+
         return super().validate(attrs)
+
+    def _validate_assessment_approver_authorization_groups(self, attrs: dict) -> None:
+        authorization_groups = attrs.get("assessment_approver_authorization_groups")
+        if authorization_groups is None:
+            return
+
+        product_ids = []
+        if self.instance and self.instance.pk:
+            product_ids.append(self.instance.pk)
+
+        product_group = attrs.get("product_group")
+        if product_group is None and self.instance:
+            product_group = self.instance.product_group
+        if product_group:
+            product_ids.append(product_group.pk)
+
+        if not product_ids and authorization_groups:
+            raise ValidationError(
+                {
+                    "assessment_approver_authorization_groups": (
+                        "Designated approver groups must have at least the Writer role."
+                    )
+                }
+            )
+
+        invalid_groups = [
+            authorization_group
+            for authorization_group in authorization_groups
+            if not Product_Authorization_Group_Member.objects.filter(
+                product_id__in=product_ids,
+                authorization_group=authorization_group,
+                role__gte=Roles.Writer,
+            ).exists()
+        ]
+        if invalid_groups:
+            raise ValidationError(
+                {
+                    "assessment_approver_authorization_groups": (
+                        "Designated approver groups must have at least the Writer role."
+                    )
+                }
+            )
 
     def validate_observation_notification_status_list(self, value: list[str]) -> list[str]:
         if not isinstance(value, list):

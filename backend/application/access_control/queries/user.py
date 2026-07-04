@@ -5,12 +5,7 @@ from django.db.models.query import QuerySet
 
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
-from application.core.models import Product
-from application.core.queries.product_member import (
-    get_highest_role_of_product_authorization_group_members_for_user,
-    get_product_member,
-    get_product_members,
-)
+from application.core.queries.product_member import get_product_members
 
 
 def get_user_by_id(pk: int) -> Optional[User]:
@@ -34,21 +29,6 @@ def get_user_by_email(email: str) -> Optional[User]:
         return None
     except User.MultipleObjectsReturned:
         return None
-
-
-def get_user_highest_role_for_product(user: User, product_id: int) -> Optional[int]:
-    # Highest role integer a user holds for a product, including product-group and authorization-group inheritance.
-    product = Product.objects.filter(id=product_id).first()
-    if product is None:
-        return None
-    member = get_product_member(product, user)
-    role = member.role if member else 0
-    if product.product_group:
-        product_group_member = get_product_member(product.product_group, user)
-        if product_group_member:
-            role = max(role, product_group_member.role)
-    role = max(role, get_highest_role_of_product_authorization_group_members_for_user(product, user))
-    return role or None
 
 
 def get_users() -> QuerySet[User]:
