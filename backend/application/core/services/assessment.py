@@ -460,6 +460,50 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
 
     compiled_branches = _get_compiled_branches(observation, propagate_branches)
 
+    observation_logs = (
+        Observation_Log.objects.filter(
+            observation__product=observation.product,
+            observation__title=observation.title,
+            observation__origin_component_name_version=observation.origin_component_name_version,
+            observation__branch__isnull=False,
+            propagated_from__isnull=True,
+            assessment_status__in=(
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+                Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+            ),
+        )
+        .exclude(observation__branch=observation.branch)
+        .select_related("observation__branch")
+        .order_by("observation__branch", "-created")
+    )
+
+    newest_observation_logs_per_branch: dict[str, Observation_Log] = {}
+    for observation_log in observation_logs:
+        if observation_log.observation.branch.name not in newest_observation_logs_per_branch:
+            newest_observation_logs_per_branch[observation_log.observation.branch.name] = observation_log
+
+    newest_observation_log: Optional[Observation_Log] = None
+    for branch_name, observation_log in newest_observation_logs_per_branch.items():
+        branch_matches = any(compiled_branch.match(branch_name) for compiled_branch in compiled_branches)
+        if branch_matches and (
+            newest_observation_log is None or observation_log.created > newest_observation_log.created
+        ):
+            newest_observation_log = observation_log
+
+    if newest_observation_log:
+        save_assessment(
+            observation=observation,
+            new_severity=newest_observation_log.severity,
+            new_status=newest_observation_log.status,
+            new_priority=newest_observation_log.priority,
+            comment=newest_observation_log.comment,
+            new_vex_justification=newest_observation_log.vex_justification,
+            new_vex_remediations=newest_observation_log.vex_remediations,
+            new_risk_acceptance_expiry_date=newest_observation_log.risk_acceptance_expiry_date,
+            propagated_from=newest_observation_log,
+        )
+
 
 def _get_propagate_branches(observation: Observation) -> list:
     propagate_branches_product_group = (
