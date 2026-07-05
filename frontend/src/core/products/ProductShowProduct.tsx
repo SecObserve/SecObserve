@@ -1,8 +1,10 @@
 import { Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayField,
     BooleanField,
     ChipField,
+    Datagrid,
     Labeled,
     NumberField,
     ReferenceArrayField,
@@ -429,6 +431,20 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                             />
                         </Labeled>
                     )}
+                </Fragment>
+            )}
+
+            {product.propagate_branches && product.propagate_branches.length > 0 && (
+                <Fragment>
+                    <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                        Assessment propagation
+                    </Typography>
+                    <ArrayField source="propagate_branches">
+                        <Datagrid bulkActionButtons={false} sx={{ paddingBottom: 2 }}>
+                            <TextField source="propagate_to" label="Propagate to" />
+                        </Datagrid>
+                    </ArrayField>
                 </Fragment>
             )}
         </Fragment>

@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from typing import Optional
 
@@ -8,6 +9,7 @@ from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.roles_permissions import Roles
 from application.core.models import (
+    Branch,
     Observation,
     Observation_Log,
     Product,
@@ -51,6 +53,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     new_vex_justification: Optional[str],
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
+    propagated_from: Optional[Observation_Log] = None,
 ) -> None:
 
     log_severity = new_severity if new_severity and new_severity != observation.current_severity else ""
@@ -76,6 +79,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     assessment_status = (
         Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
         if _get_assessments_need_approval(observation.product)
+        and not propagated_from
         and (
             (log_severity and log_severity != observation.current_severity)
             or (log_status and log_status != observation.current_status and new_status != Status.STATUS_IN_REVIEW)
@@ -100,7 +104,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             new_risk_acceptance_expiry_date,
         )
 
-        create_observation_log(
+        observation_log = create_observation_log(
             observation=observation,
             severity=log_severity,
             status=log_status,
@@ -110,10 +114,13 @@ def save_assessment(  # pylint: disable=too-many-arguments
             vex_remediations=log_vex_remediations,
             assessment_status=assessment_status,
             risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
+            propagated_from=propagated_from,
         )
 
         check_security_gate(observation.product)
         push_observation_to_issue_tracker(observation, get_current_user())
+        if not propagated_from:
+            propagate_assessment(observation_log)
     else:
         create_observation_log(
             observation=observation,
@@ -398,8 +405,62 @@ def assessment_approval(
         send_observation_notification(observation_log.observation)
         send_observation_title_notification(observation_log.observation)
 
+        propagate_assessment(observation_log)
+
     observation_log.approval_user = approval_user
     observation_log.rejection_remark = rejection_remark if rejection_remark else ""
     observation_log.approval_date = timezone.now()
     observation_log.assessment_status = assessment_status
     observation_log.save()
+
+
+def propagate_assessment(observation_log: Observation_Log) -> None:
+    if not observation_log.observation.branch:
+        return
+
+    propagate_branches_product_group = (
+        list(observation_log.observation.product.product_group.propagate_branches)
+        if observation_log.observation.product.product_group
+        and observation_log.observation.product.product_group.propagate_branches
+        else []
+    )
+    propagate_branches_product = (
+        list(observation_log.observation.product.propagate_branches)
+        if observation_log.observation.product.propagate_branches
+        else []
+    )
+    if not propagate_branches_product_group and not propagate_branches_product:
+        return
+
+    propagate_branches = propagate_branches_product_group + propagate_branches_product
+
+    compiled_branches: set[re.Pattern] = set()
+    for propagate_branch in propagate_branches:
+        propagate_to = propagate_branch.get("propagate_to")
+        if re.match(propagate_to, observation_log.observation.branch.name):
+            compiled_branches.add(re.compile(propagate_to))
+
+    branches = Branch.objects.filter(product=observation_log.observation.product).exclude(
+        id=observation_log.observation.branch.pk
+    )
+    for branch in branches:
+        for compiled_branch in compiled_branches:
+            if compiled_branch.match(branch.name):
+                observations = Observation.objects.filter(
+                    product=observation_log.observation.product,
+                    branch=branch,
+                    title=observation_log.observation.title,
+                    origin_component_name_version=observation_log.observation.origin_component_name_version,
+                )
+                for observation in observations:
+                    save_assessment(
+                        observation=observation,
+                        new_severity=observation_log.severity,
+                        new_status=observation_log.status,
+                        new_priority=observation_log.priority,
+                        comment=observation_log.comment,
+                        new_vex_justification=observation_log.vex_justification,
+                        new_vex_remediations=observation_log.vex_remediations,
+                        new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
+                        propagated_from=observation_log,
+                    )
