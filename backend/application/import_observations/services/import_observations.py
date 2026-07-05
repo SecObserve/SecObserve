@@ -6,6 +6,7 @@ from typing import Optional, Tuple
 from django.core.files.base import File
 from django.db import connection
 from django.utils import timezone
+from application.core.services.assessment import set_propagated_assessment_for_new_observation
 from rest_framework.exceptions import ValidationError
 
 from application.commons.models import Settings
@@ -330,6 +331,8 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
             else:
                 if not _deduplicate_cross_scanner(imported_observation, settings):
                     _process_new_observation(imported_observation, settings)
+
+                    set_propagated_assessment_for_new_observation(imported_observation)
 
                     rule_engine.apply_rules_for_observation(imported_observation)
                     vex_engine.apply_vex_statements_for_observation(imported_observation)
