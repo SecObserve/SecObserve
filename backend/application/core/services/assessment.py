@@ -467,6 +467,9 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
             observation__origin_component_name_version=observation.origin_component_name_version,
             observation__branch__isnull=False,
             propagated_from__isnull=True,
+            general_rule__isnull=True,
+            product_rule__isnull=True,
+            vex_statement__isnull=True,
             assessment_status__in=(
                 Assessment_Status.ASSESSMENT_STATUS_APPROVED,
                 Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
@@ -474,6 +477,7 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
             ),
         )
         .exclude(observation__branch=observation.branch)
+        .exclude(severity="", status="")
         .select_related("observation__branch")
         .order_by("observation__branch", "-created")
     )
