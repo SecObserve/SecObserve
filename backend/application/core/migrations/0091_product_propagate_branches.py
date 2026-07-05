@@ -7,7 +7,7 @@ from django.db.models.deletion import SET_NULL
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0089_rename_approval_remark_observation_log_rejection_remark_and_more"),
+        ("core", "0090_product_assessment_approver_authorization_groups_and_more"),
     ]
 
     operations = [

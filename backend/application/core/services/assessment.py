@@ -418,27 +418,11 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
     if not observation_log.observation.branch:
         return
 
-    propagate_branches_product_group = (
-        list(observation_log.observation.product.product_group.propagate_branches)
-        if observation_log.observation.product.product_group
-        and observation_log.observation.product.product_group.propagate_branches
-        else []
-    )
-    propagate_branches_product = (
-        list(observation_log.observation.product.propagate_branches)
-        if observation_log.observation.product.propagate_branches
-        else []
-    )
-    if not propagate_branches_product_group and not propagate_branches_product:
+    propagate_branches = _get_propagate_branches(observation_log.observation)
+    if not propagate_branches:
         return
 
-    propagate_branches = propagate_branches_product_group + propagate_branches_product
-
-    compiled_branches: set[re.Pattern] = set()
-    for propagate_branch in propagate_branches:
-        propagate_to = propagate_branch.get("propagate_to")
-        if re.match(propagate_to, observation_log.observation.branch.name):
-            compiled_branches.add(re.compile(propagate_to))
+    compiled_branches = _get_compiled_branches(observation_log.observation, propagate_branches)
 
     branches = Branch.objects.filter(product=observation_log.observation.product).exclude(
         id=observation_log.observation.branch.pk
@@ -464,3 +448,37 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
                         new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
                         propagated_from=observation_log,
                     )
+
+
+def set_propagated_assessment_for_new_observation(observation: Observation) -> None:
+    if not observation.branch:
+        return
+
+    propagate_branches = _get_propagate_branches(observation)
+    if not propagate_branches:
+        return
+
+    compiled_branches = _get_compiled_branches(observation, propagate_branches)
+
+
+def _get_propagate_branches(observation: Observation) -> list:
+    propagate_branches_product_group = (
+        list(observation.product.product_group.propagate_branches)
+        if observation.product.product_group and observation.product.product_group.propagate_branches
+        else []
+    )
+    propagate_branches_product = (
+        list(observation.product.propagate_branches) if observation.product.propagate_branches else []
+    )
+
+    propagate_branches = propagate_branches_product_group + propagate_branches_product
+    return propagate_branches
+
+
+def _get_compiled_branches(observation: Observation, propagate_branches: list) -> set[re.Pattern]:
+    compiled_branches: set[re.Pattern] = set()
+    for propagate_branch in propagate_branches:
+        propagate_to = propagate_branch.get("propagate_to")
+        if re.match(propagate_to, observation.branch.name):
+            compiled_branches.add(re.compile(propagate_to))
+    return compiled_branches
