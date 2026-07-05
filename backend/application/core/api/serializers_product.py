@@ -343,7 +343,14 @@ class ProductListSerializer(ProductCoreSerializer):
 
     class Meta:
         model = Product
-        exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
+        exclude = [
+            "is_product_group",
+            "members",
+            "authorization_group_members",
+            "observation_notification_statuses",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
+        ]
 
     def get_all_licenses_count(self, obj: Product) -> Optional[int]:
         return _get_all_licenses_count(obj)

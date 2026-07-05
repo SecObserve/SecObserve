@@ -1,17 +1,15 @@
 import { Divider, Stack, Typography } from "@mui/material";
-import { Fragment, useEffect } from "react";
+import { Fragment } from "react";
 import {
     AutocompleteArrayInput,
     BooleanInput,
     FormDataConsumer,
-    Identifier,
     NullableBooleanInput,
     NumberInput,
     ReferenceArrayInput,
     ReferenceInput,
     useRecordContext,
 } from "react-admin";
-import { useFormContext } from "react-hook-form";
 
 import product_groups from ".";
 import { DesignatedApproversInput } from "../../commons/custom_fields/DesignatedApproversInput";
@@ -32,17 +30,6 @@ export type ProductGroupCreateEditComponentProps = {
     setDescription: (value: string) => void;
 };
 
-// Pre-fills the designated approvers with the current user when the field first appears (create form).
-const DefaultApprover = ({ userId }: { userId: Identifier }) => {
-    const { getValues, setValue } = useFormContext();
-    useEffect(() => {
-        if (!getValues("assessment_approvers")?.length) {
-            setValue("assessment_approvers", [userId], { shouldDirty: true });
-        }
-    }, [getValues, setValue, userId]);
-    return null;
-};
-
 export const ProductGroupCreateEditComponent = ({
     initialDescription,
     setDescription,
@@ -50,11 +37,7 @@ export const ProductGroupCreateEditComponent = ({
     const product_group = useRecordContext();
     // Limit approver choices to members with an approval-capable role on this product group.
     const approver_filter = { assessment_approver_for_product: product_group?.id ?? 0 };
-    // On create, pre-fill the designated approvers with the current user (who becomes the Owner of the new
-    // product group); on edit, keep the saved list so it can be refined once members have been added.
-    const stored_user = localStorage.getItem("user");
-    const current_user_id = stored_user ? JSON.parse(stored_user).id : undefined;
-    const default_approver_on_create = product_group?.id ? undefined : current_user_id;
+
     return (
         <Fragment>
             <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
@@ -242,7 +225,6 @@ export const ProductGroupCreateEditComponent = ({
                                     helperText="Groups whose members may approve assessments for all products in this group."
                                 />
                             </ReferenceArrayInput>
-                            {default_approver_on_create && <DefaultApprover userId={default_approver_on_create} />}
                         </Fragment>
                     )
                 }

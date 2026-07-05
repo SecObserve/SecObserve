@@ -373,6 +373,10 @@ def assessment_approval(
     if not user_is_allowed_assessment_approver(product, approval_user):
         raise ValidationError("User is not an allowed approver for this product")
 
+    if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and observation_log_comment:
+        observation_log.comment = observation_log_comment
+        observation_log.save()
+
     if assessment_status in (
         Assessment_Status.ASSESSMENT_STATUS_APPROVED,
         Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
