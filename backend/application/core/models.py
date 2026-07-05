@@ -83,6 +83,17 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
         blank=True,
     )
 
+    assessment_approvers: ManyToManyField = ManyToManyField(
+        User,
+        related_name="assessment_approver_for_products",
+        blank=True,
+    )
+    assessment_approver_authorization_groups: ManyToManyField = ManyToManyField(
+        Authorization_Group,
+        related_name="assessment_approver_group_for_products",
+        blank=True,
+    )
+
     apply_general_rules = BooleanField(default=True)
 
     notification_ms_teams_webhook = TextField(max_length=2048, blank=True)

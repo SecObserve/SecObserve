@@ -43,6 +43,26 @@ Be aware, that the user who has created the assessment is not allowed to approve
 
 ![Assessment approval](../assets/images/screenshot_assessment_approval.png){ width="60%" style="display: block; margin: 0 auto" }
 
+### Restricting who may approve
+
+By default, any user with the permission to approve (role `Writer`, `Maintainer` or `Owner`) may approve another user's assessment. In larger organizations the approval often has to be done by a dedicated, independent party, for example a security team. To enforce this, designated approvers can be configured per product. The fields are shown once **Assessments need approval** is enabled:
+
+* **Designated approvers**: individual users that are allowed to approve assessments.
+* **Designated approver groups**: authorization groups whose members are allowed to approve assessments.
+
+![Designated approvers](../assets/images/screenshot_assessment_approval_designated_approvers.png){ width="60%" style="display: block; margin: 0 auto" }
+
+Only `Maintainer` and `Owner` may configure these fields. Designated approvers must hold a role with the approval permission (`Writer`, `Maintainer` or `Owner`); the picker only offers such members. The same rule applies to designated approver groups: an authorization group must be assigned to the product (or its product group) with at least the `Writer` role. Groups with only the `Reader` role cannot be selected as designated approver groups.
+
+If a user has access through multiple paths, for example directly on the product and through an authorization group, the highest role is used. Product group membership and product group authorization groups are inherited by products in that group.
+
+The behavior is:
+
+* If both fields are left empty, nothing changes: anyone with the approval permission (except the author of the assessment) may approve.
+* If at least one approver or approver group is configured, only those designated users - directly or as a member of a configured group - may approve or reject assessments. Users with the `Owner` role may still approve other users' assessments, even if they are not designated. Designated approvers still need a role with the approval permission and no user can approve their own assessment.
+
+Like **Assessments need approval**, the setting can also be configured for a product group and is then inherited by all products in that group; the effective approvers are the combination of the product's and the product group's approvers. The restriction applies to both single and bulk approvals.
+
 ## Reviews
 
 To make it easier to find observations with the status `In Review` or assessements needing an approval, a tab is shown for the product, if reviews or approvals are pending:

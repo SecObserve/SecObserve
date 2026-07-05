@@ -6,14 +6,18 @@ import {
     FormDataConsumer,
     NullableBooleanInput,
     NumberInput,
+    ReferenceArrayInput,
     ReferenceInput,
+    useRecordContext,
 } from "react-admin";
 
 import product_groups from ".";
+import { DesignatedApproversInput } from "../../commons/custom_fields/DesignatedApproversInput";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_email, feature_license_management } from "../../commons/functions";
 import {
+    AutocompleteArrayInputWide,
     AutocompleteInputMedium,
     AutocompleteInputWide,
     TextInputExtraWide,
@@ -30,6 +34,10 @@ export const ProductGroupCreateEditComponent = ({
     initialDescription,
     setDescription,
 }: ProductGroupCreateEditComponentProps) => {
+    const product_group = useRecordContext();
+    // Limit approver choices to members with an approval-capable role on this product group.
+    const approver_filter = { assessment_approver_for_product: product_group?.id ?? 0 };
+
     return (
         <Fragment>
             <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
@@ -197,6 +205,30 @@ export const ProductGroupCreateEditComponent = ({
                 Review
             </Typography>
             <BooleanInput source="assessments_need_approval" label="Assessments need approval" defaultValue={false} />
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.assessments_need_approval && (
+                        <Fragment>
+                            <DesignatedApproversInput
+                                approver_filter={approver_filter}
+                                helperText="Users allowed to approve assessments for all products in this group. Empty for default permission."
+                            />
+                            <ReferenceArrayInput
+                                source="assessment_approver_authorization_groups"
+                                reference="authorization_groups"
+                                filter={approver_filter}
+                                sort={{ field: "name", order: "ASC" }}
+                            >
+                                <AutocompleteArrayInputWide
+                                    label="Designated approver groups"
+                                    optionText="name"
+                                    helperText="Groups whose members may approve assessments for all products in this group."
+                                />
+                            </ReferenceArrayInput>
+                        </Fragment>
+                    )
+                }
+            </FormDataConsumer>
             <BooleanInput source="product_rules_need_approval" label="Rules need approval" defaultValue={false} />
             <BooleanInput
                 source="new_observations_in_review"

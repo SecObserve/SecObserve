@@ -7,12 +7,15 @@ import { Badge, Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     BooleanField,
+    ChipField,
     EditButton,
     Labeled,
     NumberField,
     PrevNextButtons,
+    ReferenceArrayField,
     ReferenceField,
     Show,
+    SingleFieldList,
     Tab,
     TabbedShowLayout,
     TabbedShowLayoutTabs,
@@ -254,6 +257,32 @@ const ProductGroupShow = () => {
                                                     <BooleanField source="assessments_need_approval" />
                                                 </Labeled>
                                             )}
+                                            {product_group.assessment_approvers &&
+                                                product_group.assessment_approvers.length > 0 && (
+                                                    <Labeled label="Designated approvers">
+                                                        <ReferenceArrayField
+                                                            source="assessment_approvers"
+                                                            reference="users"
+                                                        >
+                                                            <SingleFieldList linkType={false}>
+                                                                <ChipField source="full_name" size="small" />
+                                                            </SingleFieldList>
+                                                        </ReferenceArrayField>
+                                                    </Labeled>
+                                                )}
+                                            {product_group.assessment_approver_authorization_groups &&
+                                                product_group.assessment_approver_authorization_groups.length > 0 && (
+                                                    <Labeled label="Designated approver groups">
+                                                        <ReferenceArrayField
+                                                            source="assessment_approver_authorization_groups"
+                                                            reference="authorization_groups"
+                                                        >
+                                                            <SingleFieldList linkType={false}>
+                                                                <ChipField source="name" size="small" />
+                                                            </SingleFieldList>
+                                                        </ReferenceArrayField>
+                                                    </Labeled>
+                                                )}
                                             {product_group.product_rules_need_approval && (
                                                 <Labeled label="Rules need approval">
                                                     <BooleanField source="product_rules_need_approval" />
