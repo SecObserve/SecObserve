@@ -22,6 +22,9 @@ class TestApproverFilters(TestCase):
         self.reader = User.objects.create(username="reader@example.com")
         self.writer = User.objects.create(username="writer@example.com")
         self.inherited_writer = User.objects.create(username="inherited_writer@example.com")
+
+        Product_Member.objects.all().delete()
+
         Product_Member.objects.create(product=self.product, user=self.reader, role=Roles.Reader)
         Product_Member.objects.create(product=self.product, user=self.writer, role=Roles.Writer)
         Product_Member.objects.create(product=self.product_group, user=self.inherited_writer, role=Roles.Writer)
