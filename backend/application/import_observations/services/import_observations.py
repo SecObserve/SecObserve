@@ -6,7 +6,6 @@ from typing import Optional, Tuple
 from django.core.files.base import File
 from django.db import connection
 from django.utils import timezone
-from application.core.services.assessment import set_propagated_assessment_for_new_observation
 from rest_framework.exceptions import ValidationError
 
 from application.commons.models import Settings
@@ -21,6 +20,9 @@ from application.core.models import (
 )
 from application.core.queries.observation import (
     get_observations_for_vulnerability_check,
+)
+from application.core.services.assessment import (
+    set_propagated_assessment_for_new_observation,
 )
 from application.core.services.observation import (
     get_current_severity,

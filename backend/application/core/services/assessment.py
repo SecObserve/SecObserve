@@ -485,8 +485,9 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
 
     newest_observation_logs_per_branch: dict[str, Observation_Log] = {}
     for observation_log in observation_logs:
-        if observation_log.observation.branch.name not in newest_observation_logs_per_branch:
-            newest_observation_logs_per_branch[observation_log.observation.branch.name] = observation_log
+        branch_name = observation_log.observation.branch.name  # type: ignore[union-attr]
+        if branch_name not in newest_observation_logs_per_branch:
+            newest_observation_logs_per_branch[branch_name] = observation_log
 
     newest_observation_log: Optional[Observation_Log] = None
     for branch_name, observation_log in newest_observation_logs_per_branch.items():
@@ -528,6 +529,6 @@ def _get_compiled_branches(observation: Observation, propagate_branches: list) -
     compiled_branches: set[re.Pattern] = set()
     for propagate_branch in propagate_branches:
         propagate_to = propagate_branch.get("propagate_to")
-        if re.match(propagate_to, observation.branch.name):
+        if re.match(propagate_to, observation.branch.name):  # type: ignore[union-attr]
             compiled_branches.add(re.compile(propagate_to))
     return compiled_branches
