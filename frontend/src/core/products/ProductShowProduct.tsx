@@ -438,7 +438,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                 <Fragment>
                     <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                        Assessment propagation
+                        Assessment propagation (experimental)
                     </Typography>
                     <ArrayField source="propagate_branches">
                         <Datagrid bulkActionButtons={false} sx={{ paddingBottom: 2 }}>

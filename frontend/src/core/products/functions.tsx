@@ -437,7 +437,7 @@ export const ProductCreateEditComponent = ({
 
             <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
             <Typography variant="h6" sx={{ marginBottom: 2 }}>
-                Assessment propagation
+                Assessment propagation (experimental)
             </Typography>
             <ArrayInput source="propagate_branches" label={false} defaultValue={""}>
                 <SimpleFormIterator disableReordering inline>
