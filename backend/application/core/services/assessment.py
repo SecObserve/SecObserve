@@ -415,7 +415,7 @@ def assessment_approval(
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:
-    if not observation_log.observation.branch:
+    if not observation_log.observation.branch or not observation_log.observation.origin_component_name_version:
         return
 
     propagate_branches = _get_propagate_branches(observation_log.observation)
@@ -451,7 +451,7 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
 
 
 def set_propagated_assessment_for_new_observation(observation: Observation) -> None:
-    if not observation.branch:
+    if not observation.branch or not observation.origin_component_name_version:
         return
 
     propagate_branches = _get_propagate_branches(observation)

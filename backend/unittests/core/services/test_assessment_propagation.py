@@ -83,6 +83,11 @@ class BasePropagationTestCase(TestCase):
         self.branch_main = Branch.objects.get(pk=2)
         self.user = User.objects.get(pk=2)
         self.observation_dev = Observation.objects.get(pk=1)
+        self.observation_dev.origin_component_name_version = "component_name:version"
+        self.observation_dev.save()
+        # re-fetch so the cached product relation (populated by the pre_save signal) does not
+        # shadow propagate_branches changes made by individual tests
+        self.observation_dev = Observation.objects.get(pk=1)
 
     def _create_branch(self, name: str) -> Branch:
         return Branch.objects.create(product=self.product, name=name)
@@ -162,9 +167,19 @@ class TestPropagateAssessment(BasePropagationTestCase):
 
     @patch("application.core.services.assessment.save_assessment")
     def test_observation_without_branch(self, save_assessment_mock) -> None:
-        observation_without_branch = self._clone_observation(None)
+        observation_without_branch = self._clone_observation(None, "Title", "component_name:version")
         self._clone_observation(self.branch_main)
         source_log = self._create_log(observation_without_branch)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_observation_without_origin_component_name_version(self, save_assessment_mock) -> None:
+        observation_without_component = self._clone_observation(self.branch_dev, "Title", "")
+        self._clone_observation(self.branch_main)
+        source_log = self._create_log(observation_without_component)
 
         propagate_assessment(source_log)
 
@@ -374,10 +389,19 @@ class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
 
     @patch("application.core.services.assessment.save_assessment")
     def test_observation_without_branch(self, save_assessment_mock) -> None:
-        observation_without_branch = self._clone_observation(None)
+        observation_without_branch = self._clone_observation(None, "Title", "component_name:version")
         self._create_log(self.observation_main)
 
         set_propagated_assessment_for_new_observation(observation_without_branch)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_observation_without_origin_component_name_version(self, save_assessment_mock) -> None:
+        observation_without_component = self._clone_observation(self.branch_dev, "Title", "")
+        self._create_log(self.observation_main)
+
+        set_propagated_assessment_for_new_observation(observation_without_component)
 
         save_assessment_mock.assert_not_called()
 
