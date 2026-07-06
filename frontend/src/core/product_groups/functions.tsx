@@ -1,6 +1,7 @@
 import { Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayInput,
     AutocompleteArrayInput,
     BooleanInput,
     FormDataConsumer,
@@ -8,6 +9,7 @@ import {
     NumberInput,
     ReferenceArrayInput,
     ReferenceInput,
+    SimpleFormIterator,
     useRecordContext,
 } from "react-admin";
 
@@ -285,6 +287,16 @@ export const ProductGroupCreateEditComponent = ({
                     </ReferenceInput>
                 </Fragment>
             )}
+
+            <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+            <Typography variant="h6" sx={{ marginBottom: 2 }}>
+                Assessment propagation (experimental)
+            </Typography>
+            <ArrayInput source="propagate_branches" label={false} defaultValue={""}>
+                <SimpleFormIterator disableReordering inline>
+                    <TextInputWide label="Propagate to branches (regular expression)" source="propagate_to" />
+                </SimpleFormIterator>
+            </ArrayInput>
         </Fragment>
     );
 };

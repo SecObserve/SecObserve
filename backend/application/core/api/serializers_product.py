@@ -293,6 +293,7 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "new_observations_in_review",
             "product_rule_approvals",
             "license_policy",
+            "propagate_branches",
             "forbidden_licenses_count",
             "review_required_licenses_count",
             "unknown_licenses_count",

@@ -177,6 +177,24 @@ const ObservationLogComponent = () => {
                         </Stack>
                     </Paper>
 
+                    {observation_log?.propagated_from && (
+                        <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
+                            <Stack spacing={1}>
+                                <Typography variant="h6">Assessment propagation</Typography>
+                                <Labeled label="Propagated from Observation Log">
+                                    <ReferenceField
+                                        source="propagated_from"
+                                        reference="observation_logs"
+                                        link="show"
+                                        sx={{ "& a": { textDecoration: "none" } }}
+                                    >
+                                        <NumberField source="id" options={{ useGrouping: false }} />
+                                    </ReferenceField>
+                                </Labeled>
+                            </Stack>
+                        </Paper>
+                    )}
+
                     {(observation_log?.observation_data?.product_data?.assessments_need_approval ||
                         observation_log?.observation_data?.product_data?.product_group_assessments_need_approval) && (
                         <Paper sx={{ marginBottom: 1, padding: 2, width: "100%" }}>

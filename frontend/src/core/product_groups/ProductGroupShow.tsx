@@ -6,8 +6,10 @@ import TokenIcon from "@mui/icons-material/Token";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayField,
     BooleanField,
     ChipField,
+    Datagrid,
     EditButton,
     Labeled,
     NumberField,
@@ -337,6 +339,19 @@ const ProductGroupShow = () => {
                                                 <TextField source="name" />
                                             </ReferenceField>
                                         </Labeled>
+                                    </Fragment>
+                                )}
+                                {product_group.propagate_branches && product_group.propagate_branches.length > 0 && (
+                                    <Fragment>
+                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
+                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                                            Assessment propagation (experimental)
+                                        </Typography>
+                                        <ArrayField source="propagate_branches">
+                                            <Datagrid bulkActionButtons={false} sx={{ paddingBottom: 2 }}>
+                                                <TextField source="propagate_to" label="Propagate to" />
+                                            </Datagrid>
+                                        </ArrayField>
                                     </Fragment>
                                 )}
                             </Tab>

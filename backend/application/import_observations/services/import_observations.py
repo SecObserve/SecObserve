@@ -21,6 +21,9 @@ from application.core.models import (
 from application.core.queries.observation import (
     get_observations_for_vulnerability_check,
 )
+from application.core.services.assessment import (
+    set_propagated_assessment_for_new_observation,
+)
 from application.core.services.observation import (
     get_current_severity,
     get_current_status,
@@ -330,6 +333,8 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
             else:
                 if not _deduplicate_cross_scanner(imported_observation, settings):
                     _process_new_observation(imported_observation, settings)
+
+                    set_propagated_assessment_for_new_observation(imported_observation)
 
                     rule_engine.apply_rules_for_observation(imported_observation)
                     vex_engine.apply_vex_statements_for_observation(imported_observation)
