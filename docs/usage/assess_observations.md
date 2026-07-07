@@ -63,6 +63,33 @@ The behavior is:
 
 Like **Assessments need approval**, the setting can also be configured for a product group and is then inherited by all products in that group; the effective approvers are the combination of the product's and the product group's approvers. The restriction applies to both single and bulk approvals.
 
+
+## Propagate assessments to other branches (experimental)
+
+Assessments are often very similar for several branches of a product that contains the same finding. These can be propagated from one branch to others, so that a finding is assessed once and then copied to similar findings in other branches of the same product.
+
+Similar finding are observations within one product that have the same title and the same component (name and version).
+
+### Configuration
+
+Product groups and products can configure a list of regular expressions for assessment propagation. New optional field propagate_branches on products and product groups: a list o regular expressions ("Propagate to branches"). 
+
+![Assessment propagation](../assets/images/screenshot_assessment_propagation.png)
+
+Propagation is active for an assessment when the branch of the assessed observation matches one of the regular expressions; the assessment is then propagated to similar finding in all other branches matching the same regular expression.
+
+
+### Propagation of new assessments
+
+When an assessment is saved (and auto-approved) or approved, it is copied to all observations on matching branches for similar findings.
+
+Propagated assessments are marked with the id of the original assessment. They are auto-approved (the original assessment already went through approval if required) and are never propagated again themselves.
+
+### Propagate assessments for new observations
+
+When an import creates a new observation, the newest matching assessment from the other configured branches is applied to it automatically. Only manual assessments count as source: approved, not itself propagated, not created by rules, VEX statements or the parser, and changing severity or status.
+
+
 ## Reviews
 
 To make it easier to find observations with the status `In Review` or assessements needing an approval, a tab is shown for the product, if reviews or approvals are pending:
