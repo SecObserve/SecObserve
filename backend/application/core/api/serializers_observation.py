@@ -632,6 +632,12 @@ class ObservationLogApprovalSerializer(Serializer):
     assessment_status = ChoiceField(choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL, required=True)
     rejection_remark = CharField(max_length=255, required=False, allow_blank=True)
     observation_log_comment = CharField(max_length=4096, required=False, allow_blank=True)
+    observation_log_vex_justification = ChoiceField(
+        choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES,
+        required=False,
+        allow_blank=True,
+    )
+    observation_log_vex_remediations = JSONField(required=False, allow_null=True)
 
     def validate(self, attrs: dict) -> dict:
         if attrs.get("assessment_status") in [
@@ -648,8 +654,13 @@ class ObservationLogApprovalSerializer(Serializer):
         if attrs.get("assessment_status") in [
             Assessment_Status.ASSESSMENT_STATUS_APPROVED,
             Assessment_Status.ASSESSMENT_STATUS_REJECTED,
-        ] and attrs.get("observation_log_comment"):
-            raise ValidationError("Comment for observation Log cannot be set with approval or rejection")
+        ]:
+            if attrs.get("observation_log_comment"):
+                raise ValidationError("Comment for observation Log cannot be set with approval or rejection")
+            if attrs.get("observation_log_vex_justification"):
+                raise ValidationError("VEX justification for observation log cannot be set with approval or rejection")
+            if attrs.get("observation_log_vex_remediations"):
+                raise ValidationError("VEX remediation for observation log cannot be set with approval or rejection")
 
         if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
             "observation_log_comment"

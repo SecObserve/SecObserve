@@ -204,7 +204,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
     @patch("application.core.services.assessment.get_current_user")
     def test_empty_configuration_allows_any_non_author(self, mock_user) -> None:
         mock_user.return_value = self.outsider
-        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
         self.log.refresh_from_db()
         self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_REJECTED)
         self.assertEqual(self.log.approval_user, self.outsider)
@@ -213,7 +213,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
     def test_designated_approver_can_approve(self, mock_user) -> None:
         self.product.assessment_approvers.add(self.approver)
         mock_user.return_value = self.approver
-        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
         self.log.refresh_from_db()
         self.assertEqual(self.log.approval_user, self.approver)
 
@@ -227,7 +227,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.product.assessment_approvers.add(self.approver)
         mock_user.return_value = self.approver
 
-        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
         self.log.refresh_from_db()
         self.assertEqual(self.log.approval_user, self.approver)
@@ -243,7 +243,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         mock_user.return_value = self.approver
 
         with self.assertRaises(ValidationError):
-            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
         self.log.refresh_from_db()
         self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL)
@@ -263,7 +263,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         product_group.assessment_approver_authorization_groups.add(inherited_group)
         mock_user.return_value = inherited_group_user
 
-        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
         self.log.refresh_from_db()
         self.assertEqual(self.log.approval_user, inherited_group_user)
@@ -273,7 +273,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.product.assessment_approvers.add(self.approver)
         mock_user.return_value = self.outsider
         with self.assertRaises(ValidationError):
-            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
         self.log.refresh_from_db()
         self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL)
 
@@ -281,7 +281,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
     def test_owner_can_approve_other_users_assessments_when_not_designated(self, mock_user) -> None:
         self.product.assessment_approvers.add(self.approver)
         mock_user.return_value = self.owner
-        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
         self.log.refresh_from_db()
         self.assertEqual(self.log.approval_user, self.owner)
 
@@ -292,7 +292,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.log.save()
         mock_user.return_value = self.owner
         with self.assertRaises(ValidationError):
-            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
     @patch("application.core.services.assessment.get_current_user")
     def test_owner_self_approval_blocked_even_if_designated(self, mock_user) -> None:
@@ -301,7 +301,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.log.save()
         mock_user.return_value = self.owner
         with self.assertRaises(ValidationError):
-            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
     @patch("application.core.services.assessment.get_current_user")
     def test_non_owner_self_approval_blocked_even_if_designated_approver(self, mock_user) -> None:
@@ -310,7 +310,7 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.log.save()
         mock_user.return_value = self.approver
         with self.assertRaises(ValidationError):
-            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None)
+            assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
     @patch("application.core.services.observations_bulk_actions.user_has_permission", return_value=True)
     @patch("application.core.services.observations_bulk_actions.get_current_user")
