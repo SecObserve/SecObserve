@@ -19,7 +19,7 @@
         "chart.js": "4.5.1",
         "cm6-theme-basic-light": "0.2.0",
         "cm6-theme-basic-dark": "0.2.0",
-        "humanize-duration": "3.33.2",
+        "humanize-duration": "3.34.0",
         "markdown-to-jsx": "9.8.2",
         "marked": "18.0.5",
         "mermaid": "11.16.0",
