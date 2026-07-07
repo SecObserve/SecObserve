@@ -363,7 +363,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
     return False
 
 
-def assessment_approval(
+def assessment_approval(  # pylint: disable=too-many-positional-arguments
     observation_log: Observation_Log,
     assessment_status: str,
     rejection_remark: Optional[str],
