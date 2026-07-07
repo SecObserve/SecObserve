@@ -368,6 +368,8 @@ def assessment_approval(
     assessment_status: str,
     rejection_remark: Optional[str],
     observation_log_comment: Optional[str],
+    observation_log_vex_justification: Optional[str],
+    observation_log_vex_remediations: Optional[str],
 ) -> None:
     if observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
         raise ValidationError("Observation log does not need approval")
@@ -380,8 +382,13 @@ def assessment_approval(
     if not user_is_allowed_assessment_approver(product, approval_user):
         raise ValidationError("User is not an allowed approver for this product")
 
-    if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and observation_log_comment:
-        observation_log.comment = observation_log_comment
+    if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS:
+        if observation_log_comment:
+            observation_log.comment = observation_log_comment
+        if observation_log_vex_justification:
+            observation_log.vex_justification = observation_log_vex_justification
+        if observation_log_vex_remediations:
+            observation_log.vex_remediations = observation_log_vex_remediations
         observation_log.save()
 
     if assessment_status in (

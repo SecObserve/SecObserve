@@ -325,6 +325,8 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             request_serializer.validated_data.get("assessment_status"),
             request_serializer.validated_data.get("rejection_remark"),
             request_serializer.validated_data.get("observation_log_comment"),
+            request_serializer.validated_data.get("observation_log_vex_justification"),
+            request_serializer.validated_data.get("observation_log_vex_remediations"),
         )
 
         set_potential_duplicate_both_ways(observation_log.observation)
