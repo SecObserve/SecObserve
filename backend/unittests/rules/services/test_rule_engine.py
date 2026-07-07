@@ -1,7 +1,9 @@
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
-from application.core.models import Product
+from application.core.models import Observation, Product
+from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
+from application.rules.types import Rule_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -53,6 +55,29 @@ class TestRuleEngine(BaseTestCase):
                 ),
             ]
         )
+
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_lazy_loads_interpreter(self, mock_rule, mock_rego_interpreter, _mock_dumps):
+        mock_rule.return_value = []
+        mock_rego_interpreter.return_value.query.return_value = {"severity": "High"}
+        rule_engine = Rule_Engine(self.product_1)
+        rule = Rule(
+            id=1,
+            name="rego_rule",
+            type=Rule_Type.RULE_TYPE_REGO,
+            rego_module="package rule",
+        )
+        observation = Observation(title="observation", product=self.product_1)
+        observation_before = MagicMock(spec=Observation)
+
+        result = rule_engine.check_rule_for_observation(rule, observation, observation_before, True)
+
+        self.assertTrue(result)
+        mock_rego_interpreter.assert_called_once_with("package rule")
+        mock_rego_interpreter.return_value.query.assert_called_once_with({"product_name": "product_1"})
+        self.assertEqual(rule_engine.rego_interpreters[rule.pk], mock_rego_interpreter.return_value)
 
     # --- apply_rules ---
 

@@ -280,7 +280,7 @@ class Rule_Engine:
         if observation.origin_service:
             observation_dict["origin_service_name"] = observation.origin_service.name
 
-        rego_interpreter = self.rego_interpreters[rule.pk]
+        rego_interpreter = self._get_rego_interpreter(rule)
         result = rego_interpreter.query(observation_dict)
 
         new_priority = result.get("priority")
@@ -326,6 +326,14 @@ class Rule_Engine:
             return True
 
         return False
+
+    def _get_rego_interpreter(self, rule: Rule) -> RegoInterpreter:
+        rego_interpreter = self.rego_interpreters.get(rule.pk)
+        if rego_interpreter is None:
+            rego_interpreter = RegoInterpreter(rule.rego_module)
+            self.rego_interpreters[rule.pk] = rego_interpreter
+
+        return rego_interpreter
 
 
 def _check_regex(pattern: str, value: str) -> bool:
