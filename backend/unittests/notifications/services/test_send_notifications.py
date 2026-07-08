@@ -363,7 +363,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_slack.assert_not_called()
         mock_send_email.assert_not_called()
         mock_notification_create.assert_called_with(
-            name="Deletion requested for product_1",
+            name='Deletion requested for "product_1"',
             message='user_internal@example.com requested deletion of product "product_1".',
             product=self.product_1,
             user=self.user_internal,
@@ -409,9 +409,10 @@ class TestPushNotifications(BaseTestCase):
         expected_calls_email = [
             call(
                 "test1@example.com",
-                "Deletion requested for product_1",
+                'Deletion requested for "product_1"',
                 "email_product_delete_request.tpl",
                 product=self.product_1,
+                product_display_name="\"product_1\"",
                 product_type="product",
                 product_url="https://secobserve.com/#/products/1/show",
                 requester_name="user_internal@example.com",
@@ -419,9 +420,10 @@ class TestPushNotifications(BaseTestCase):
             ),
             call(
                 "test2@example.com",
-                "Deletion requested for product_1",
+                'Deletion requested for "product_1"',
                 "email_product_delete_request.tpl",
                 product=self.product_1,
+                product_display_name="\"product_1\"",
                 product_type="product",
                 product_url="https://secobserve.com/#/products/1/show",
                 requester_name="user_internal@example.com",
@@ -433,6 +435,7 @@ class TestPushNotifications(BaseTestCase):
             "https://msteams.microsoft.com",
             "msteams_product_delete_request.tpl",
             product=self.product_1,
+            product_display_name="\"product_1\"",
             product_type="product",
             product_url="https://secobserve.com/#/products/1/show",
             requester_name="user_internal@example.com",
@@ -441,12 +444,13 @@ class TestPushNotifications(BaseTestCase):
             "https://secobserve.slack.com",
             "slack_product_delete_request.tpl",
             product=self.product_1,
+            product_display_name="\"product_1\"",
             product_type="product",
             product_url="https://secobserve.com/#/products/1/show",
             requester_name="user_internal@example.com",
         )
         mock_notification_create.assert_called_with(
-            name="Deletion requested for product_1",
+            name='Deletion requested for "product_1"',
             message='user_internal@example.com requested deletion of product "product_1".',
             product=self.product_1,
             user=self.user_internal,

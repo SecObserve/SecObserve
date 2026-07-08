@@ -81,9 +81,10 @@ def send_product_delete_request_notification(delete_request: Product_Delete_Requ
     requester = delete_request.user
     requester_name = requester.full_name or requester.username
     product_type = "product group" if product.is_product_group else "product"
+    product_display_name = f'"{product.name}"'
     resource = "product_groups" if product.is_product_group else "products"
     product_url = f"{get_base_url_frontend()}#/{resource}/{product.id}/show"
-    first_line = f'{requester_name} requested deletion of {product_type} "{product.name}".'
+    first_line = f"{requester_name} requested deletion of {product_type} {product_display_name}."
 
     notification_email_to = _get_notification_email_to(product)
     email_to_addresses = _get_email_to_addresses(notification_email_to)
@@ -92,9 +93,10 @@ def send_product_delete_request_notification(delete_request: Product_Delete_Requ
             first_name = _get_first_name(email_to_address)
             send_email_notification(
                 email_to_address,
-                f"Deletion requested for {product.name}",
+                f"Deletion requested for {product_display_name}",
                 "email_product_delete_request.tpl",
                 product=product,
+                product_display_name=product_display_name,
                 product_type=product_type,
                 product_url=product_url,
                 requester_name=requester_name,
@@ -107,6 +109,7 @@ def send_product_delete_request_notification(delete_request: Product_Delete_Requ
             notification_ms_teams_webhook,
             "msteams_product_delete_request.tpl",
             product=product,
+            product_display_name=product_display_name,
             product_type=product_type,
             product_url=product_url,
             requester_name=requester_name,
@@ -118,13 +121,14 @@ def send_product_delete_request_notification(delete_request: Product_Delete_Requ
             notification_slack_webhook,
             "slack_product_delete_request.tpl",
             product=product,
+            product_display_name=product_display_name,
             product_type=product_type,
             product_url=product_url,
             requester_name=requester_name,
         )
 
     Notification.objects.create(
-        name=f"Deletion requested for {product.name}",
+        name=f"Deletion requested for {product_display_name}",
         message=first_line,
         product=product,
         user=requester,

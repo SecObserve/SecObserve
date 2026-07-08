@@ -95,7 +95,7 @@ class TestViews(BaseTestCase):
         Product_Member.objects.create(product=product, user=owner, role=Roles.Owner)
         Product_Member.objects.create(product=product, user=maintainer, role=Roles.Maintainer)
         notification = Notification.objects.create(
-            name="Deletion requested for delete_request_notification",
+            name='Deletion requested for "delete_request_notification"',
             message="notification_maintainer@example.com requested deletion.",
             product=product,
             user=maintainer,
