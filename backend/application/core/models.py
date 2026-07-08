@@ -150,6 +150,8 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     automatic_osv_scanning_enabled = BooleanField(default=False)
 
     propagate_branches = JSONField(blank=True, null=True)
+    propagate_branches_new_assessment = BooleanField(default=True)
+    propagate_branches_new_observation = BooleanField(default=True)
 
     has_cloud_resource = BooleanField(default=False)
     has_component = BooleanField(default=False)

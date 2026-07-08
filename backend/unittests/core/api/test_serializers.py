@@ -13,6 +13,7 @@ from application.core.api.serializers_observation import (
 from application.core.api.serializers_product import (
     BranchSerializer,
     ProductAuthorizationGroupMemberSerializer,
+    ProductGroupSerializer,
     ProductMemberSerializer,
     ProductSerializer,
 )
@@ -853,3 +854,83 @@ class TestObservationLogBulkApprovalSerializer(BaseTestCase):
         new_attrs = serializer.validate(attrs)
 
         self.assertEqual(new_attrs, attrs)
+
+
+class TestValidatePropagateBranches(BaseTestCase):
+    """Tests for validate_propagate_branches of ProductSerializer and ProductGroupSerializer.
+
+    Both methods delegate to the module level _validate_propagate_branches, so every case is
+    exercised through both serializers to prove the delegation as well as the validation logic.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.serializers = (ProductSerializer(), ProductGroupSerializer())
+
+    def _label(self, serializer):
+        return type(serializer).__name__
+
+    def test_none_returns_none(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertIsNone(serializer.validate_propagate_branches(None))
+
+    def test_valid_list_is_returned(self):
+        value = [{"propagate_to": "release-.*"}, {"propagate_to": "main"}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertEqual(
+                    [{"propagate_to": "release-.*"}, {"propagate_to": "main"}],
+                    serializer.validate_propagate_branches(value),
+                )
+
+    def test_extra_keys_are_stripped(self):
+        value = [{"propagate_to": "main", "unexpected": "x"}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertEqual([{"propagate_to": "main"}], serializer.validate_propagate_branches(value))
+
+    def test_empty_list_returns_none(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertIsNone(serializer.validate_propagate_branches([]))
+
+    def test_items_without_propagate_to_are_skipped(self):
+        value = [{"propagate_to": ""}, {"other": "x"}, {}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertIsNone(serializer.validate_propagate_branches(value))
+
+    def test_mix_of_valid_and_skipped_items(self):
+        value = [{"propagate_to": ""}, {"propagate_to": "main"}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertEqual([{"propagate_to": "main"}], serializer.validate_propagate_branches(value))
+
+    def test_not_a_list_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches({"propagate_to": "main"})
+                self.assertIn("propagate_branches must be a list or null.", str(e.exception))
+
+    def test_item_not_a_dict_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches(["main"])
+                self.assertIn("Each item must be a dictionary.", str(e.exception))
+
+    def test_propagate_to_not_a_string_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches([{"propagate_to": 123}])
+                self.assertIn("The 'propagate_to' field must be a string.", str(e.exception))
+
+    def test_invalid_regex_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches([{"propagate_to": "["}])
+                self.assertIn("propagate_to is not a valid regular expression", str(e.exception))
