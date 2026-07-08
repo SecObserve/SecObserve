@@ -10,7 +10,8 @@ from application.access_control.models import User
 from application.core.models import Branch, Observation, Observation_Log, Product
 from application.core.services.assessment import (
     _get_compiled_branches,
-    _get_propagate_branches,
+    _get_product_group_propagate_branches,
+    _get_product_propagate_branches,
     propagate_assessment,
     set_propagated_assessment_for_new_observation,
 )
@@ -21,29 +22,31 @@ from application.vex.types import VEX_Document_Type, VEX_Status
 from unittests.base_test_case import BaseTestCase
 
 
-class TestGetPropagateBranches(BaseTestCase):
+class TestGetProductPropagateBranches(BaseTestCase):
+    def test_no_configuration(self) -> None:
+        self.assertEqual([], _get_product_propagate_branches(self.observation_1))
+
+    def test_configuration(self) -> None:
+        self.product_1.propagate_branches = [{"propagate_to": "release-.*"}]
+        self.assertEqual([{"propagate_to": "release-.*"}], _get_product_propagate_branches(self.observation_1))
+
+
+class TestGetProductGroupPropagateBranches(BaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.product_1.product_group = self.product_group_1
 
+    def test_no_product_group(self) -> None:
+        self.product_1.product_group = None
+        self.product_group_1.propagate_branches = [{"propagate_to": "main"}]
+        self.assertEqual([], _get_product_group_propagate_branches(self.observation_1))
+
     def test_no_configuration(self) -> None:
-        self.assertEqual([], _get_propagate_branches(self.observation_1))
+        self.assertEqual([], _get_product_group_propagate_branches(self.observation_1))
 
-    def test_product_configuration(self) -> None:
-        self.product_1.propagate_branches = [{"propagate_to": "release-.*"}]
-        self.assertEqual([{"propagate_to": "release-.*"}], _get_propagate_branches(self.observation_1))
-
-    def test_product_group_configuration(self) -> None:
+    def test_configuration(self) -> None:
         self.product_group_1.propagate_branches = [{"propagate_to": "main"}]
-        self.assertEqual([{"propagate_to": "main"}], _get_propagate_branches(self.observation_1))
-
-    def test_combined_configuration(self) -> None:
-        self.product_group_1.propagate_branches = [{"propagate_to": "main"}]
-        self.product_1.propagate_branches = [{"propagate_to": "release-.*"}]
-        self.assertEqual(
-            [{"propagate_to": "main"}, {"propagate_to": "release-.*"}],
-            _get_propagate_branches(self.observation_1),
-        )
+        self.assertEqual([{"propagate_to": "main"}], _get_product_group_propagate_branches(self.observation_1))
 
 
 class TestGetCompiledBranches(BaseTestCase):
@@ -91,6 +94,20 @@ class BasePropagationTestCase(TestCase):
 
     def _create_branch(self, name: str) -> Branch:
         return Branch.objects.create(product=self.product, name=name)
+
+    def _configure_product_group_propagation_only(
+        self, *, new_assessment: bool = True, new_observation: bool = True
+    ) -> Product:
+        # drive propagation exclusively via the product group by moving the branch
+        # configuration to the group and clearing it on the product
+        product_group = self.product.product_group
+        product_group.propagate_branches = [{"propagate_to": "db_branch_internal_.*"}]
+        product_group.propagate_branches_new_assessment = new_assessment
+        product_group.propagate_branches_new_observation = new_observation
+        product_group.save()
+        self.product.propagate_branches = None
+        self.product.save()
+        return product_group
 
     def _clone_observation(
         self,
@@ -170,6 +187,26 @@ class TestPropagateAssessment(BasePropagationTestCase):
         target_observation = self._clone_observation(self.branch_main)
         source_log = self._create_log(self.observation_dev, severity=Severity.SEVERITY_HIGH)
         source_log.observation.product.propagate_branches_new_assessment = False
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_propagate_branches_new_assessment_product_group(self, save_assessment_mock) -> None:
+        self._configure_product_group_propagation_only(new_assessment=True)
+        self._clone_observation(self.branch_main)
+        source_log = self._create_log(self.observation_dev, severity=Severity.SEVERITY_HIGH)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_called_once()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_not_propagate_branches_new_assessment_product_group(self, save_assessment_mock) -> None:
+        self._configure_product_group_propagation_only(new_assessment=False)
+        self._clone_observation(self.branch_main)
+        source_log = self._create_log(self.observation_dev, severity=Severity.SEVERITY_HIGH)
 
         propagate_assessment(source_log)
 
@@ -281,6 +318,24 @@ class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
         self.new_observation.product.propagate_branches_new_observation = False
 
         set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_propagate_branches_new_observation_product_group(self, save_assessment_mock) -> None:
+        self._configure_product_group_propagation_only(new_observation=True)
+        self._create_log(self.observation_main, severity=Severity.SEVERITY_HIGH)
+
+        set_propagated_assessment_for_new_observation(Observation.objects.get(pk=self.new_observation.pk))
+
+        save_assessment_mock.assert_called_once()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_not_propagate_branches_new_observation_product_group(self, save_assessment_mock) -> None:
+        self._configure_product_group_propagation_only(new_observation=False)
+        self._create_log(self.observation_main, severity=Severity.SEVERITY_HIGH)
+
+        set_propagated_assessment_for_new_observation(Observation.objects.get(pk=self.new_observation.pk))
 
         save_assessment_mock.assert_not_called()
 
