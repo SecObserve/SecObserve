@@ -55,7 +55,11 @@ from application.core.services.assessment import (
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
-from application.core.types import Assessment_Status, Product_Delete_Request_Status, Status
+from application.core.types import (
+    Assessment_Status,
+    Product_Delete_Request_Status,
+    Status,
+)
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
 from application.licenses.models import License_Component

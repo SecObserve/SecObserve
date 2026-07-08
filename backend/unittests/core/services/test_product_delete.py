@@ -5,7 +5,12 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 
 from application.access_control.models import User
 from application.authorization.services.roles_permissions import Roles
-from application.core.models import Observation, Product, Product_Delete_Request, Product_Member
+from application.core.models import (
+    Observation,
+    Product,
+    Product_Delete_Request,
+    Product_Member,
+)
 from application.core.services.product_delete import (
     approve_product_delete_request,
     force_delete_product,

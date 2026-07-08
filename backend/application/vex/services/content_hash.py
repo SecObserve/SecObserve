@@ -10,7 +10,7 @@ def calculate_vex_content_hash(content: Any) -> str:
 
 
 def _to_primitive(value: Any) -> Any:
-    if is_dataclass(value):
+    if is_dataclass(value) and not isinstance(value, type):
         return asdict(value)
     if isinstance(value, list):
         return [_to_primitive(item) for item in value]
