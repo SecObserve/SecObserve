@@ -16,10 +16,10 @@ from application.licenses.models import (
 
 @receiver(post_save, sender=License_Group)
 def license_group_post_save(  # pylint: disable=unused-argument
-    sender: Any, instance: License_Group, created: bool, **kwargs: Any
+    sender: Any, instance: License_Group, created: bool, raw: bool = False, **kwargs: Any
 ) -> None:
     # sender is needed according to Django documentation
-    if created:
+    if created and not raw:
         user = get_current_user()
         if user and not user.is_superuser:
             License_Group_Member.objects.update_or_create(license_group=instance, user=user, is_manager=True)
@@ -27,10 +27,10 @@ def license_group_post_save(  # pylint: disable=unused-argument
 
 @receiver(post_save, sender=License_Policy)
 def license_policy_post_save(  # pylint: disable=unused-argument
-    sender: Any, instance: License_Policy, created: bool, **kwargs: Any
+    sender: Any, instance: License_Policy, created: bool, raw: bool = False, **kwargs: Any
 ) -> None:
     # sender is needed according to Django documentation
-    if created:
+    if created and not raw:
         user = get_current_user()
         if user and not user.is_superuser:
             License_Policy_Member.objects.update_or_create(license_policy=instance, user=user, is_manager=True)
@@ -38,10 +38,10 @@ def license_policy_post_save(  # pylint: disable=unused-argument
 
 @receiver(post_save, sender=License_Component)
 def license_component_post_save(  # pylint: disable=unused-argument
-    sender: Any, instance: License_Component, created: bool, **kwargs: Any
+    sender: Any, instance: License_Component, created: bool, raw: bool = False, **kwargs: Any
 ) -> None:
     # sender is needed according to Django documentation
-    if created or "evaluation_result" in instance.get_dirty_fields().keys():
+    if not raw and (created or "evaluation_result" in instance.get_dirty_fields().keys()):
         instance.product.last_license_change = timezone.now()
         instance.product.save()
 

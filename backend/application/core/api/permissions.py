@@ -32,6 +32,7 @@ class UserHasProductPermission(BasePermission):
             get_permission=Permissions.Product_View,
             put_permission=Permissions.Product_Edit,
             delete_permission=Permissions.Product_Delete,
+            post_permission=_get_product_post_permission(view),
         )
 
 
@@ -52,6 +53,7 @@ class UserHasProductGroupPermission(BasePermission):
             get_permission=Permissions.Product_Group_View,
             put_permission=Permissions.Product_Group_Edit,
             delete_permission=Permissions.Product_Group_Delete,
+            post_permission=_get_product_group_post_permission(view),
         )
 
 
@@ -102,6 +104,26 @@ def _check_delete_owner(request: Request, obj: Any) -> bool:
         return True
 
     raise ValidationError("You are not permitted to delete an Owner")
+
+
+def _get_product_post_permission(view: APIView) -> Permissions | None:
+    match getattr(view, "action", None):
+        case "force_delete" | "approve_delete_request" | "reject_delete_request":
+            return Permissions.Product_Delete
+        case "request_delete":
+            return Permissions.Product_Edit
+        case _:
+            return None
+
+
+def _get_product_group_post_permission(view: APIView) -> Permissions | None:
+    match getattr(view, "action", None):
+        case "force_delete" | "approve_delete_request" | "reject_delete_request":
+            return Permissions.Product_Group_Delete
+        case "request_delete":
+            return Permissions.Product_Group_Edit
+        case _:
+            return None
 
 
 class UserHasBranchPermission(BasePermission):
