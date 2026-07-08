@@ -13,8 +13,7 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend/:/app
-      - dev_node_modules:/app/node_modules
-    command: sh -c "npm install --no-audit --no-fund && npm run start -- --host"
+    command : sh -c "npm run start -- --host"
 
   backend:
     build:
