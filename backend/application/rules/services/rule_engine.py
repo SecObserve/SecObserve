@@ -4,6 +4,7 @@ from copy import copy
 from typing import Any, Optional
 
 import jsonpickle
+from jsonpickle.backend import JSONBackend
 
 from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Product
@@ -268,10 +269,18 @@ class Rule_Engine:
     def _check_rule_rego(  # pylint: disable=too-many-branches
         self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
     ) -> bool:
-        jsonpickle.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
-        jsonpickle.set_preferred_backend("simplejson")
+        jsonpickle_backend = JSONBackend()
+        jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
+        jsonpickle_backend.set_preferred_backend("simplejson")
 
-        observation_dict = json.loads(jsonpickle.dumps(observation, unpicklable=False, use_decimal=True))
+        observation_dict = json.loads(
+            jsonpickle.dumps(
+                observation,
+                unpicklable=False,
+                use_decimal=True,
+                backend=jsonpickle_backend,
+            )
+        )
         observation_dict = {k: v for k, v in observation_dict.items() if v is not None and v != ""}
 
         observation_dict["product_name"] = observation.product.name

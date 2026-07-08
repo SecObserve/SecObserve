@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, call, patch
 
+import jsonpickle
+
 from application.core.models import Observation, Product
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
@@ -71,6 +73,7 @@ class TestRuleEngine(BaseTestCase):
         )
         observation = Observation(title="observation", product=self.product_1)
         observation_before = MagicMock(spec=Observation)
+        jsonpickle_output_before = jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False)
 
         result = rule_engine.check_rule_for_observation(rule, observation, observation_before, True)
 
@@ -78,6 +81,7 @@ class TestRuleEngine(BaseTestCase):
         mock_rego_interpreter.assert_called_once_with("package rule")
         mock_rego_interpreter.return_value.query.assert_called_once_with({"product_name": "product_1"})
         self.assertEqual(rule_engine.rego_interpreters[rule.pk], mock_rego_interpreter.return_value)
+        self.assertEqual(jsonpickle_output_before, jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False))
 
     # --- apply_rules ---
 
