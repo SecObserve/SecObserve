@@ -139,7 +139,7 @@ def observation_logs_bulk_approval(
 ) -> None:
     observation_logs = _check_observation_logs(None, observation_log_ids)
     for observation_log in observation_logs:
-        assessment_approval(observation_log, assessment_status, rejection_remark, None)
+        assessment_approval(observation_log, assessment_status, rejection_remark, None, None, None)
         set_potential_duplicate_both_ways(observation_log.observation)
 
 

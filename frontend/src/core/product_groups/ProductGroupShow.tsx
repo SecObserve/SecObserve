@@ -353,8 +353,12 @@ const ProductGroupShow = () => {
                                             Assessment propagation (experimental)
                                         </Typography>
                                         <ArrayField source="propagate_branches">
-                                            <Datagrid bulkActionButtons={false} sx={{ paddingBottom: 2 }}>
-                                                <TextField source="propagate_to" label="Propagate to" />
+                                            <Datagrid
+                                                bulkActionButtons={false}
+                                                rowClick={false}
+                                                sx={{ paddingBottom: 2 }}
+                                            >
+                                                <TextField source="propagate_to" label="Propagate to branches" />
                                             </Datagrid>
                                         </ArrayField>
                                     </Fragment>
