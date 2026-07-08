@@ -445,6 +445,14 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                             <TextField source="propagate_to" label="Propagate to branches" />
                         </Datagrid>
                     </ArrayField>
+                    <Stack>
+                        <Labeled label="Propagate new assessments to other branches">
+                            <BooleanField source="propagate_branches_new_assessment" />
+                        </Labeled>
+                        <Labeled label="Propagate assessments to new observations">
+                            <BooleanField source="propagate_branches_new_observation" />
+                        </Labeled>
+                    </Stack>
                 </Fragment>
             )}
         </Fragment>

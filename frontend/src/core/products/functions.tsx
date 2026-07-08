@@ -444,6 +444,25 @@ export const ProductCreateEditComponent = ({
                     <TextInputWide label="Propagate to branches (regular expression)" source="propagate_to" />
                 </SimpleFormIterator>
             </ArrayInput>
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.propagate_branches &&
+                    formData.propagate_branches.length >= 1 && (
+                        <Stack>
+                            <BooleanInput
+                                source="propagate_branches_new_assessment"
+                                label="Propagate new assessments to other branches"
+                                defaultValue={true}
+                            />
+                            <BooleanInput
+                                source="propagate_branches_new_observation"
+                                label="Propagate assessments to new observations"
+                                defaultValue={true}
+                            />
+                        </Stack>
+                    )
+                }
+            </FormDataConsumer>
         </Fragment>
     );
 };

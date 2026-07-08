@@ -422,26 +422,35 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:
-    if not observation_log.observation.branch or not observation_log.observation.origin_component_name_version:
+    observation = observation_log.observation
+
+    if not observation.branch or not observation.origin_component_name_version:
         return
 
-    propagate_branches = _get_propagate_branches(observation_log.observation)
+    propagate_branches = []
+    propagate_branches_product_group = (
+        _get_product_group_propagate_branches(observation)
+        if observation.product.product_group and observation.product.product_group.propagate_branches_new_assessment
+        else []
+    )
+    propagate_branches_product = (
+        _get_product_propagate_branches(observation) if observation.product.propagate_branches_new_assessment else []
+    )
+    propagate_branches = propagate_branches_product_group + propagate_branches_product
     if not propagate_branches:
         return
 
-    compiled_branches = _get_compiled_branches(observation_log.observation, propagate_branches)
+    compiled_branches = _get_compiled_branches(observation, propagate_branches)
 
-    branches = Branch.objects.filter(product=observation_log.observation.product).exclude(
-        id=observation_log.observation.branch.pk
-    )
+    branches = Branch.objects.filter(product=observation.product).exclude(id=observation.branch.pk)
     for branch in branches:
         for compiled_branch in compiled_branches:
             if compiled_branch.match(branch.name):
                 observations = Observation.objects.filter(
-                    product=observation_log.observation.product,
+                    product=observation.product,
                     branch=branch,
-                    title=observation_log.observation.title,
-                    origin_component_name_version=observation_log.observation.origin_component_name_version,
+                    title=observation.title,
+                    origin_component_name_version=observation.origin_component_name_version,
                 )
                 for observation in observations:
                     save_assessment(
@@ -461,7 +470,16 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
     if not observation.branch or not observation.origin_component_name_version:
         return
 
-    propagate_branches = _get_propagate_branches(observation)
+    propagate_branches = []
+    propagate_branches_product_group = (
+        _get_product_group_propagate_branches(observation)
+        if observation.product.product_group and observation.product.product_group.propagate_branches_new_observation
+        else []
+    )
+    propagate_branches_product = (
+        _get_product_propagate_branches(observation) if observation.product.propagate_branches_new_observation else []
+    )
+    propagate_branches = propagate_branches_product_group + propagate_branches_product
     if not propagate_branches:
         return
 
@@ -518,18 +536,16 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
         )
 
 
-def _get_propagate_branches(observation: Observation) -> list:
-    propagate_branches_product_group = (
+def _get_product_group_propagate_branches(observation: Observation) -> list:
+    return (
         list(observation.product.product_group.propagate_branches)
         if observation.product.product_group and observation.product.product_group.propagate_branches
         else []
     )
-    propagate_branches_product = (
-        list(observation.product.propagate_branches) if observation.product.propagate_branches else []
-    )
 
-    propagate_branches = propagate_branches_product_group + propagate_branches_product
-    return propagate_branches
+
+def _get_product_propagate_branches(observation: Observation) -> list:
+    return list(observation.product.propagate_branches) if observation.product.propagate_branches else []
 
 
 def _get_compiled_branches(observation: Observation, propagate_branches: list) -> set[re.Pattern]:

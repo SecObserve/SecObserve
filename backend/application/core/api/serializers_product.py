@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from typing import Any, Optional
 
@@ -294,6 +295,8 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "product_rule_approvals",
             "license_policy",
             "propagate_branches",
+            "propagate_branches_new_assessment",
+            "propagate_branches_new_observation",
             "forbidden_licenses_count",
             "review_required_licenses_count",
             "unknown_licenses_count",
@@ -304,6 +307,9 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "observation_notification_status_list",
             "observation_notification_min_priority",
         ]
+
+    def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
+        return _validate_propagate_branches(value)
 
     def create(self, validated_data: dict) -> Product:
         product_group = super().create(validated_data)
@@ -546,6 +552,47 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     def validate_cpe23(self, cpe23: str) -> str:
         return validate_cpe23(cpe23)
+
+    def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
+        return _validate_propagate_branches(value)
+
+
+def _validate_propagate_branches(value: Any) -> Optional[list[dict]]:
+    """
+    Validate that propagate_branches is either None or a list of dictionaries
+    where each dictionary contains 'propagate_to' fields with string values.
+    """
+    if value is None:
+        return value
+
+    items = []
+
+    if not isinstance(value, list):
+        raise ValidationError("propagate_branches must be a list or null.")
+
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValidationError("Each item must be a dictionary.")
+
+        propagate_to = item.get("propagate_to")
+
+        if not propagate_to:
+            continue
+
+        if not isinstance(propagate_to, str):
+            raise ValidationError("The 'propagate_to' field must be a string.")
+
+        try:
+            re.compile(propagate_to)
+        except re.error as e:
+            raise ValidationError(f"propagate_to is not a valid regular expression: {e.msg}") from e
+
+        items.append({"propagate_to": propagate_to})
+
+    if items:
+        return items
+
+    return None
 
 
 class NestedProductSerializer(ModelSerializer):

@@ -166,6 +166,16 @@ class TestPropagateAssessment(BasePropagationTestCase):
         )
 
     @patch("application.core.services.assessment.save_assessment")
+    def test_not_propagate_branches_new_assessment(self, save_assessment_mock) -> None:
+        target_observation = self._clone_observation(self.branch_main)
+        source_log = self._create_log(self.observation_dev, severity=Severity.SEVERITY_HIGH)
+        source_log.observation.product.propagate_branches_new_assessment = False
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
     def test_observation_without_branch(self, save_assessment_mock) -> None:
         observation_without_branch = self._clone_observation(None, "Title", "component_name:version")
         self._clone_observation(self.branch_main)
@@ -264,6 +274,15 @@ class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
             new_risk_acceptance_expiry_date=None,
             propagated_from=candidate_log,
         )
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_not_propagate_branches_new_observation(self, save_assessment_mock) -> None:
+        candidate_log = self._create_log(self.observation_main, severity=Severity.SEVERITY_HIGH)
+        self.new_observation.product.propagate_branches_new_observation = False
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
 
     @patch("application.core.services.assessment.save_assessment")
     def test_newest_log_across_branches_wins(self, save_assessment_mock) -> None:
