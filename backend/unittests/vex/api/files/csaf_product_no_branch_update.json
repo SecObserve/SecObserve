@@ -132,8 +132,8 @@
             {
                 "category": "default_component_of",
                 "full_product_name": {
-                    "name": "vex_comp_1:1.0.0@vex_product_1",
-                    "product_id": "vex_comp_1:1.0.0@vex_product_1"
+                    "name": "pkg:so/vex_comp_1@1.0.0@vex_product_1",
+                    "product_id": "pkg:so/vex_comp_1@1.0.0@vex_product_1"
                 },
                 "product_reference": "pkg:so/vex_comp_1@1.0.0",
                 "relates_to_product_reference": "vex_product_1"
@@ -141,8 +141,8 @@
             {
                 "category": "default_component_of",
                 "full_product_name": {
-                    "name": "vex_comp_2:2.0.0@vex_product_1",
-                    "product_id": "vex_comp_2:2.0.0@vex_product_1"
+                    "name": "pkg:so/vendor2/vex_comp_2@2.0.0@vex_product_1",
+                    "product_id": "pkg:so/vendor2/vex_comp_2@2.0.0@vex_product_1"
                 },
                 "product_reference": "pkg:so/vendor2/vex_comp_2@2.0.0",
                 "relates_to_product_reference": "vex_product_1"
@@ -150,8 +150,8 @@
             {
                 "category": "default_component_of",
                 "full_product_name": {
-                    "name": "vex_comp_3:3.0.0@vex_product_1",
-                    "product_id": "vex_comp_3:3.0.0@vex_product_1"
+                    "name": "pkg:so/vendor_3/vex_comp_3@3.0.0@vex_product_1",
+                    "product_id": "pkg:so/vendor_3/vex_comp_3@3.0.0@vex_product_1"
                 },
                 "product_reference": "pkg:so/vendor_3/vex_comp_3@3.0.0",
                 "relates_to_product_reference": "vex_product_1"
@@ -174,7 +174,7 @@
             ],
             "product_status": {
                 "known_affected": [
-                    "vex_comp_1:1.0.0@vex_product_1"
+                    "pkg:so/vex_comp_1@1.0.0@vex_product_1"
                 ]
             },
             "references": [
@@ -189,7 +189,7 @@
                     "category": "mitigation",
                     "details": "Upgrade to release 1.1.0",
                     "product_ids": [
-                        "vex_comp_1:1.0.0@vex_product_1"
+                        "pkg:so/vex_comp_1@1.0.0@vex_product_1"
                     ]
                 }
             ]
@@ -204,7 +204,7 @@
             ],
             "product_status": {
                 "known_affected": [
-                    "vex_comp_2:2.0.0@vex_product_1"
+                    "pkg:so/vendor2/vex_comp_2@2.0.0@vex_product_1"
                 ]
             },
             "references": [
@@ -219,7 +219,7 @@
                     "category": "mitigation",
                     "details": "Upgrade to release 2.1.0",
                     "product_ids": [
-                        "vex_comp_2:2.0.0@vex_product_1"
+                        "pkg:so/vendor2/vex_comp_2@2.0.0@vex_product_1"
                     ]
                 }
             ]
@@ -229,7 +229,7 @@
                 {
                     "label": "vulnerable_code_not_in_execute_path",
                     "product_ids": [
-                        "vex_comp_3:3.0.0@vex_product_1"
+                        "pkg:so/vendor_3/vex_comp_3@3.0.0@vex_product_1"
                     ]
                 }
             ],
@@ -247,7 +247,7 @@
             ],
             "product_status": {
                 "known_not_affected": [
-                    "vex_comp_3:3.0.0@vex_product_1"
+                    "pkg:so/vendor_3/vex_comp_3@3.0.0@vex_product_1"
                 ]
             }
         }
