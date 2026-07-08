@@ -80,7 +80,8 @@ const ProductDeleteApproval = ({ product, resource, isProductGroup }: ProductDel
                 <DialogContent>
                     <Stack spacing={2} sx={{ marginTop: 1 }}>
                         <Typography>
-                            {product.delete_request_user_full_name || "A maintainer"} requested deletion
+                            <strong>{product.delete_request_user_full_name || "A maintainer"}</strong> requested
+                            deletion
                             {product.delete_request_requested_at
                                 ? ` on ${humanReadableDate(product.delete_request_requested_at)}`
                                 : ""}

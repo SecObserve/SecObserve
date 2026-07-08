@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from unittest.mock import ANY, call, patch
 
 from application.commons.models import Settings
+from application.core.models import Product_Delete_Request
 from application.notifications.models import Notification
 from application.notifications.services.send_notifications import (
     LAST_EXCEPTIONS,
@@ -12,6 +13,7 @@ from application.notifications.services.send_notifications import (
     _get_stack_trace,
     _ratelimit_exception,
     get_base_url_frontend,
+    send_product_delete_request_notification,
     send_exception_notification,
     send_product_security_gate_notification,
     send_task_exception_notification,
@@ -326,6 +328,129 @@ class TestPushNotifications(BaseTestCase):
             product=self.product_1,
             user=self.user_internal,
             type=Notification.TYPE_SECURITY_GATE,
+        )
+
+    # --- send_product_delete_request_notification ---
+
+    @patch("application.notifications.services.send_notifications.send_slack_notification")
+    @patch("application.notifications.services.send_notifications.send_msteams_notification")
+    @patch("application.notifications.services.send_notifications.send_email_notification")
+    @patch("application.notifications.services.send_notifications._get_notification_email_to")
+    @patch("application.notifications.services.send_notifications._get_notification_slack_webhook")
+    @patch("application.notifications.services.send_notifications._get_notification_ms_teams_webhook")
+    @patch("application.notifications.models.Notification.objects.create")
+    def test_send_product_delete_request_notification_no_webhook_no_email(
+        self,
+        mock_notification_create,
+        mock_get_notification_ms_teams_webhook,
+        mock_get_notification_slack_webhook,
+        mock_get_notification_email_to,
+        mock_send_email,
+        mock_send_teams,
+        mock_send_slack,
+    ):
+        mock_get_notification_email_to.return_value = ""
+        mock_get_notification_ms_teams_webhook.return_value = ""
+        mock_get_notification_slack_webhook.return_value = ""
+        delete_request = Product_Delete_Request(product=self.product_1, user=self.user_internal)
+
+        send_product_delete_request_notification(delete_request)
+
+        mock_get_notification_email_to.assert_called_with(self.product_1)
+        mock_get_notification_ms_teams_webhook.assert_called_with(self.product_1)
+        mock_get_notification_slack_webhook.assert_called_with(self.product_1)
+        mock_send_teams.assert_not_called()
+        mock_send_slack.assert_not_called()
+        mock_send_email.assert_not_called()
+        mock_notification_create.assert_called_with(
+            name="Deletion requested for product_1",
+            message='user_internal@example.com requested deletion of product "product_1".',
+            product=self.product_1,
+            user=self.user_internal,
+            type=Notification.TYPE_PRODUCT_DELETE_REQUEST,
+        )
+
+    @patch("application.commons.models.Settings.load")
+    @patch("application.notifications.services.send_notifications.send_slack_notification")
+    @patch("application.notifications.services.send_notifications.send_msteams_notification")
+    @patch("application.notifications.services.send_notifications.send_email_notification")
+    @patch("application.notifications.services.send_notifications.get_base_url_frontend")
+    @patch("application.notifications.services.send_notifications._get_first_name")
+    @patch("application.notifications.services.send_notifications._get_notification_email_to")
+    @patch("application.notifications.services.send_notifications._get_notification_slack_webhook")
+    @patch("application.notifications.services.send_notifications._get_notification_ms_teams_webhook")
+    @patch("application.notifications.models.Notification.objects.create")
+    def test_send_product_delete_request_notification_success(
+        self,
+        mock_notification_create,
+        mock_get_notification_ms_teams_webhook,
+        mock_get_notification_slack_webhook,
+        mock_get_notification_email_to,
+        mock_get_first_name,
+        mock_base_url,
+        mock_send_email,
+        mock_send_teams,
+        mock_send_slack,
+        mock_settings_load,
+    ):
+        settings = Settings()
+        settings.email_from = "secobserve@example.com"
+        mock_settings_load.return_value = settings
+        mock_base_url.return_value = "https://secobserve.com/"
+        mock_get_first_name.return_value = "first_name"
+        mock_get_notification_email_to.return_value = "test1@example.com, test2@example.com"
+        mock_get_notification_ms_teams_webhook.return_value = "https://msteams.microsoft.com"
+        mock_get_notification_slack_webhook.return_value = "https://secobserve.slack.com"
+        self.product_1.pk = 1
+        delete_request = Product_Delete_Request(product=self.product_1, user=self.user_internal)
+
+        send_product_delete_request_notification(delete_request)
+
+        expected_calls_email = [
+            call(
+                "test1@example.com",
+                "Deletion requested for product_1",
+                "email_product_delete_request.tpl",
+                product=self.product_1,
+                product_type="product",
+                product_url="https://secobserve.com/#/products/1/show",
+                requester_name="user_internal@example.com",
+                first_name="first_name",
+            ),
+            call(
+                "test2@example.com",
+                "Deletion requested for product_1",
+                "email_product_delete_request.tpl",
+                product=self.product_1,
+                product_type="product",
+                product_url="https://secobserve.com/#/products/1/show",
+                requester_name="user_internal@example.com",
+                first_name="first_name",
+            ),
+        ]
+        mock_send_email.assert_has_calls(expected_calls_email)
+        mock_send_teams.assert_called_with(
+            "https://msteams.microsoft.com",
+            "msteams_product_delete_request.tpl",
+            product=self.product_1,
+            product_type="product",
+            product_url="https://secobserve.com/#/products/1/show",
+            requester_name="user_internal@example.com",
+        )
+        mock_send_slack.assert_called_with(
+            "https://secobserve.slack.com",
+            "slack_product_delete_request.tpl",
+            product=self.product_1,
+            product_type="product",
+            product_url="https://secobserve.com/#/products/1/show",
+            requester_name="user_internal@example.com",
+        )
+        mock_notification_create.assert_called_with(
+            name="Deletion requested for product_1",
+            message='user_internal@example.com requested deletion of product "product_1".',
+            product=self.product_1,
+            user=self.user_internal,
+            type=Notification.TYPE_PRODUCT_DELETE_REQUEST,
         )
 
     # --- send_exception_notification ---

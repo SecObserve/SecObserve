@@ -11,6 +11,7 @@ from application.core.services.product_delete import (
     force_delete_product,
     reject_product_delete_request,
     request_product_delete,
+    undo_product_delete_request,
 )
 from application.core.types import Status
 from application.import_observations.models import Parser
@@ -63,7 +64,8 @@ class TestProductDelete(BaseTestCase):
         self.assertEqual(0, License_Component.objects.filter(product_id=child_product.pk).count())
         mock_issue_tracker.assert_called_once()
 
-    def test_maintainer_requests_product_delete(self):
+    @patch("application.core.services.product_delete.send_product_delete_request_notification")
+    def test_maintainer_requests_product_delete(self, mock_notification):
         product = Product.objects.create(name="product")
         Product_Member.objects.create(product=product, user=self.maintainer, role=Roles.Maintainer)
 
@@ -72,6 +74,7 @@ class TestProductDelete(BaseTestCase):
         self.assertEqual(product, delete_request.product)
         self.assertEqual(self.maintainer, delete_request.user)
         self.assertTrue(Product.objects.filter(pk=product.pk).exists())
+        mock_notification.assert_called_once_with(delete_request)
 
     def test_duplicate_delete_request_is_rejected(self):
         product = Product.objects.create(name="product")
@@ -118,6 +121,26 @@ class TestProductDelete(BaseTestCase):
 
         self.assertTrue(Product.objects.filter(pk=product.pk).exists())
         self.assertEqual(0, Product_Delete_Request.objects.filter(product=product).count())
+
+    def test_undo_product_delete_request_keeps_product(self):
+        product = Product.objects.create(name="product")
+        Product_Member.objects.create(product=product, user=self.maintainer, role=Roles.Maintainer)
+        request_product_delete(product, self.maintainer)
+
+        undo_product_delete_request(product, self.maintainer)
+
+        self.assertTrue(Product.objects.filter(pk=product.pk).exists())
+        self.assertEqual(0, Product_Delete_Request.objects.filter(product=product).count())
+
+    def test_undo_product_delete_request_for_other_user_is_rejected(self):
+        product = Product.objects.create(name="product")
+        Product_Member.objects.create(product=product, user=self.maintainer, role=Roles.Maintainer)
+        request_product_delete(product, self.maintainer)
+
+        with self.assertRaises(PermissionDenied):
+            undo_product_delete_request(product, self.writer)
+
+        self.assertEqual(1, Product_Delete_Request.objects.filter(product=product).count())
 
     def _create_product_with_records(self, name: str, product_group: Product = None) -> Product:
         product = Product.objects.create(name=name, product_group=product_group)

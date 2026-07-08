@@ -9,6 +9,9 @@ from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Observation, Product, Product_Delete_Request
 from application.core.types import Product_Delete_Request_Status
 from application.licenses.models import License_Component
+from application.notifications.services.send_notifications import (
+    send_product_delete_request_notification,
+)
 
 
 def force_delete_product(product: Product, confirmation_name: str) -> None:
@@ -34,7 +37,9 @@ def request_product_delete(product: Product, user: User) -> Product_Delete_Reque
     if get_pending_delete_request(product):
         raise ValidationError("A delete request is already pending.")
 
-    return Product_Delete_Request.objects.create(product=product, user=user)
+    delete_request = Product_Delete_Request.objects.create(product=product, user=user)
+    send_product_delete_request_notification(delete_request)
+    return delete_request
 
 
 def approve_product_delete_request(product: Product, confirmation_name: str) -> None:
@@ -48,6 +53,17 @@ def reject_product_delete_request(product: Product) -> None:
     delete_request = get_pending_delete_request(product)
     if not delete_request:
         raise ValidationError("No pending delete request exists.")
+
+    delete_request.delete()
+
+
+def undo_product_delete_request(product: Product, user: User) -> None:
+    delete_request = get_pending_delete_request(product)
+    if not delete_request:
+        raise ValidationError("No pending delete request exists.")
+
+    if delete_request.user_id != user.id:
+        raise PermissionDenied()
 
     delete_request.delete()
 

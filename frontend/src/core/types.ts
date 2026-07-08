@@ -42,6 +42,7 @@ export interface Product extends RaRecord {
     permissions: number[];
     delete_request_id: number | null;
     delete_request_pending: boolean;
+    delete_request_user: Identifier | null;
     delete_request_requested_at: string | undefined;
     delete_request_user_full_name: string | undefined;
 }
@@ -68,6 +69,7 @@ export interface ProductGroup extends RaRecord {
     permissions: number[];
     delete_request_id: number | null;
     delete_request_pending: boolean;
+    delete_request_user: Identifier | null;
     delete_request_requested_at: string | undefined;
     delete_request_user_full_name: string | undefined;
 }

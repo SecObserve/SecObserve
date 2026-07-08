@@ -1,4 +1,5 @@
 import DeleteIcon from "@mui/icons-material/Delete";
+import UndoIcon from "@mui/icons-material/Undo";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import { useNotify, useRedirect, useRefresh } from "react-admin";
@@ -34,8 +35,11 @@ const ProductDeleteAction = ({ product, resource, isProductGroup }: ProductDelet
     const hasDeletePermission = product.permissions?.includes(deletePermission);
     const canRequestDelete = product.permissions?.includes(editPermission) && !hasDeletePermission;
     const label = isProductGroup ? "product group" : "product";
+    const currentUserId = getCurrentUserId();
+    const isOwnDeleteRequest =
+        product.delete_request_user != null && String(product.delete_request_user) === String(currentUserId);
 
-    if (product.delete_request_pending && canRequestDelete) {
+    if (product.delete_request_pending && canRequestDelete && !isOwnDeleteRequest) {
         return (
             <Button variant="contained" color="inherit" startIcon={<DeleteIcon />} disabled>
                 Delete requested
@@ -71,7 +75,7 @@ const ProductDeleteAction = ({ product, resource, isProductGroup }: ProductDelet
                 method: "POST",
                 body: JSON.stringify({}),
             });
-            notify(`Delete request created`, { type: "success" });
+            notify(`Delete request submitted`, { type: "success" });
             closeDialog();
             refresh();
         } catch (error: any) {
@@ -79,18 +83,37 @@ const ProductDeleteAction = ({ product, resource, isProductGroup }: ProductDelet
         }
     };
 
+    const undoDeleteRequest = async () => {
+        try {
+            await httpClient(
+                `${window.__RUNTIME_CONFIG__.API_BASE_URL}/${resource}/${product.id}/undo_delete_request/`,
+                {
+                    method: "POST",
+                    body: JSON.stringify({}),
+                }
+            );
+            notify(`Delete request undone`, { type: "success" });
+            refresh();
+        } catch (error: any) {
+            notify(`Undo failed: ${error.message}`, { type: "error" });
+        }
+    };
+
+    if (product.delete_request_pending && canRequestDelete && isOwnDeleteRequest) {
+        return (
+            <Button variant="contained" color="inherit" startIcon={<UndoIcon />} onClick={undoDeleteRequest}>
+                Undo delete request
+            </Button>
+        );
+    }
+
     return (
         <>
-            <Button
-                variant="contained"
-                color={hasDeletePermission ? "error" : "inherit"}
-                startIcon={<DeleteIcon />}
-                onClick={() => setOpen(true)}
-            >
-                {hasDeletePermission ? "Delete" : "Request deletion"}
+            <Button variant="contained" color="error" startIcon={<DeleteIcon />} onClick={() => setOpen(true)}>
+                Delete
             </Button>
             <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="sm">
-                <DialogTitle>{hasDeletePermission ? `Delete ${label}` : `Request ${label} deletion`}</DialogTitle>
+                <DialogTitle>Delete {label}</DialogTitle>
                 <DialogContent>
                     {hasDeletePermission ? (
                         <Stack spacing={2} sx={{ marginTop: 1 }}>
@@ -106,9 +129,15 @@ const ProductDeleteAction = ({ product, resource, isProductGroup }: ProductDelet
                             />
                         </Stack>
                     ) : (
-                        <Typography sx={{ marginTop: 1 }}>
-                            This will ask an Owner to approve deletion of <strong>{product.name}</strong>.
-                        </Typography>
+                        <Stack spacing={2} sx={{ marginTop: 1 }}>
+                            <Typography>
+                                Deletion of <strong>{product.name}</strong> requires Owner approval.
+                            </Typography>
+                            <Typography>
+                                Submit a delete request so an Owner can review and approve permanent deletion of this
+                                {` ${label}`}.
+                            </Typography>
+                        </Stack>
                     )}
                 </DialogContent>
                 <DialogActions>
@@ -126,7 +155,7 @@ const ProductDeleteAction = ({ product, resource, isProductGroup }: ProductDelet
                         </Button>
                     ) : (
                         <Button onClick={requestDelete} variant="contained">
-                            Request deletion
+                            Request approval
                         </Button>
                     )}
                 </DialogActions>
@@ -134,5 +163,18 @@ const ProductDeleteAction = ({ product, resource, isProductGroup }: ProductDelet
         </>
     );
 };
+
+function getCurrentUserId() {
+    const currentUser = localStorage.getItem("user");
+    if (!currentUser) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(currentUser).id;
+    } catch {
+        return null;
+    }
+}
 
 export default ProductDeleteAction;

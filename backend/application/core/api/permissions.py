@@ -110,7 +110,7 @@ def _get_product_post_permission(view: APIView) -> Permissions | None:
     match getattr(view, "action", None):
         case "force_delete" | "approve_delete_request" | "reject_delete_request":
             return Permissions.Product_Delete
-        case "request_delete":
+        case "request_delete" | "undo_delete_request":
             return Permissions.Product_Edit
         case _:
             return None
@@ -120,7 +120,7 @@ def _get_product_group_post_permission(view: APIView) -> Permissions | None:
     match getattr(view, "action", None):
         case "force_delete" | "approve_delete_request" | "reject_delete_request":
             return Permissions.Product_Group_Delete
-        case "request_delete":
+        case "request_delete" | "undo_delete_request":
             return Permissions.Product_Group_Edit
         case _:
             return None

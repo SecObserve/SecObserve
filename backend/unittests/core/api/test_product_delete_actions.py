@@ -65,3 +65,27 @@ class TestProductDeleteActions(BaseTestCase):
 
         self.assertEqual(201, delete_response.status_code, delete_response.data)
         self.assertTrue(Product_Delete_Request.objects.filter(product=product, user=self.maintainer).exists())
+
+    def test_product_maintainer_can_undo_own_delete_request(self):
+        product = Product.objects.create(name="undo_request_delete_me")
+        Product_Member.objects.create(product=product, user=self.maintainer, role=Roles.Maintainer)
+        Product_Delete_Request.objects.create(product=product, user=self.maintainer)
+
+        self.api_client.force_authenticate(user=self.maintainer)
+        undo_response = self.api_client.post(f"/api/products/{product.pk}/undo_delete_request/", {}, format="json")
+
+        self.assertEqual(204, undo_response.status_code, undo_response.data)
+        self.assertFalse(Product_Delete_Request.objects.filter(product=product).exists())
+
+    def test_product_maintainer_cannot_undo_other_user_delete_request(self):
+        other_maintainer = User.objects.create(username="delete_other_maintainer@example.com")
+        product = Product.objects.create(name="undo_other_request_delete_me")
+        Product_Member.objects.create(product=product, user=self.maintainer, role=Roles.Maintainer)
+        Product_Member.objects.create(product=product, user=other_maintainer, role=Roles.Maintainer)
+        Product_Delete_Request.objects.create(product=product, user=other_maintainer)
+
+        self.api_client.force_authenticate(user=self.maintainer)
+        undo_response = self.api_client.post(f"/api/products/{product.pk}/undo_delete_request/", {}, format="json")
+
+        self.assertEqual(403, undo_response.status_code, undo_response.data)
+        self.assertTrue(Product_Delete_Request.objects.filter(product=product, user=other_maintainer).exists())

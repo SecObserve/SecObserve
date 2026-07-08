@@ -8,7 +8,7 @@ from application.access_control.queries.user import get_user_by_email
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
 from application.commons.services.functions import get_base_url_frontend, get_classname
-from application.core.models import Product
+from application.core.models import Product, Product_Delete_Request
 from application.notifications.models import Notification
 from application.notifications.services.send_notifications_base import (
     send_email_notification,
@@ -72,6 +72,63 @@ def send_product_security_gate_notification(product: Product) -> None:
         product=product,
         user=get_current_user(),
         type=Notification.TYPE_SECURITY_GATE,
+    )
+
+
+def send_product_delete_request_notification(delete_request: Product_Delete_Request) -> None:
+    settings = Settings.load()
+    product = delete_request.product
+    requester = delete_request.user
+    requester_name = requester.full_name or requester.username
+    product_type = "product group" if product.is_product_group else "product"
+    resource = "product_groups" if product.is_product_group else "products"
+    product_url = f"{get_base_url_frontend()}#/{resource}/{product.id}/show"
+    first_line = f'{requester_name} requested deletion of {product_type} "{product.name}".'
+
+    notification_email_to = _get_notification_email_to(product)
+    email_to_addresses = _get_email_to_addresses(notification_email_to)
+    if email_to_addresses and settings.email_from:
+        for email_to_address in email_to_addresses:
+            first_name = _get_first_name(email_to_address)
+            send_email_notification(
+                email_to_address,
+                f"Deletion requested for {product.name}",
+                "email_product_delete_request.tpl",
+                product=product,
+                product_type=product_type,
+                product_url=product_url,
+                requester_name=requester_name,
+                first_name=first_name,
+            )
+
+    notification_ms_teams_webhook = _get_notification_ms_teams_webhook(product)
+    if notification_ms_teams_webhook:
+        send_msteams_notification(
+            notification_ms_teams_webhook,
+            "msteams_product_delete_request.tpl",
+            product=product,
+            product_type=product_type,
+            product_url=product_url,
+            requester_name=requester_name,
+        )
+
+    notification_slack_webhook = _get_notification_slack_webhook(product)
+    if notification_slack_webhook:
+        send_slack_notification(
+            notification_slack_webhook,
+            "slack_product_delete_request.tpl",
+            product=product,
+            product_type=product_type,
+            product_url=product_url,
+            requester_name=requester_name,
+        )
+
+    Notification.objects.create(
+        name=f"Deletion requested for {product.name}",
+        message=first_line,
+        product=product,
+        user=requester,
+        type=Notification.TYPE_PRODUCT_DELETE_REQUEST,
     )
 
 

@@ -19,6 +19,7 @@ class Notification(Model):
     TYPE_EXCEPTION = "Exception"
     TYPE_OBSERVATION = "Observation"
     TYPE_OBSERVATION_TITLE = "Observation title"
+    TYPE_PRODUCT_DELETE_REQUEST = "Delete request"
     TYPE_SECURITY_GATE = "Security gate"
     TYPE_TASK = "Task"
 
@@ -26,6 +27,7 @@ class Notification(Model):
         (TYPE_EXCEPTION, TYPE_EXCEPTION),
         (TYPE_OBSERVATION, TYPE_OBSERVATION),
         (TYPE_OBSERVATION_TITLE, TYPE_OBSERVATION_TITLE),
+        (TYPE_PRODUCT_DELETE_REQUEST, TYPE_PRODUCT_DELETE_REQUEST),
         (TYPE_SECURITY_GATE, TYPE_SECURITY_GATE),
         (TYPE_TASK, TYPE_TASK),
     ]

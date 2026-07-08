@@ -59,6 +59,7 @@ from application.core.api.serializers_product import (
     ProductDeleteRequestApprovalSerializer,
     ProductDeleteRequestRejectionSerializer,
     ProductDeleteRequestSerializer,
+    ProductDeleteRequestUndoSerializer,
     ProductForceDeleteSerializer,
     ProductGroupSerializer,
     ProductListSerializer,
@@ -102,6 +103,7 @@ from application.core.services.product_delete import (
     force_delete_product,
     reject_product_delete_request,
     request_product_delete,
+    undo_product_delete_request,
 )
 from application.core.types import Status
 from application.issue_tracker.services.issue_tracker import (
@@ -188,6 +190,22 @@ class ProductDeletionActionsMixin:
             raise ValidationError(request_serializer.errors)
 
         reject_product_delete_request(product)
+        return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["POST"],
+        request=ProductDeleteRequestUndoSerializer,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=True, methods=["post"])
+    def undo_delete_request(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        product = self.get_object()
+
+        request_serializer = ProductDeleteRequestUndoSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        undo_product_delete_request(product, request.user)
         return Response(status=HTTP_204_NO_CONTENT)
 
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:

@@ -99,6 +99,7 @@ class ProductCoreSerializer(ModelSerializer):
     permissions = SerializerMethodField()
     delete_request_id = SerializerMethodField()
     delete_request_pending = SerializerMethodField()
+    delete_request_user = SerializerMethodField()
     delete_request_requested_at = SerializerMethodField()
     delete_request_user_full_name = SerializerMethodField()
     observation_notification_status_list = ListField(
@@ -118,6 +119,12 @@ class ProductCoreSerializer(ModelSerializer):
 
     def get_delete_request_pending(self, obj: Product) -> bool:
         return bool(_get_pending_delete_request(obj))
+
+    def get_delete_request_user(self, obj: Product) -> Optional[int]:
+        delete_request = _get_pending_delete_request(obj)
+        if not delete_request:
+            return None
+        return delete_request.user_id
 
     def get_delete_request_requested_at(self, obj: Product) -> Optional[str]:
         delete_request = _get_pending_delete_request(obj)
@@ -293,6 +300,7 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "permissions",
             "delete_request_id",
             "delete_request_pending",
+            "delete_request_user",
             "delete_request_requested_at",
             "delete_request_user_full_name",
             "active_critical_observation_count",
@@ -368,6 +376,10 @@ class ProductDeleteRequestApprovalSerializer(ProductForceDeleteSerializer):
 
 
 class ProductDeleteRequestRejectionSerializer(Serializer):
+    pass
+
+
+class ProductDeleteRequestUndoSerializer(Serializer):
     pass
 
 
