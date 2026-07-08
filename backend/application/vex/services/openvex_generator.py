@@ -2,7 +2,6 @@ import hashlib
 from dataclasses import dataclass
 from typing import Optional
 
-import jsonpickle
 from rest_framework.exceptions import NotFound
 
 from application.__init__ import __version__
@@ -14,6 +13,7 @@ from application.core.queries.observation import get_current_modifying_observati
 from application.core.types import Status
 from application.vex.models import OpenVEX, OpenVEX_Branch, OpenVEX_Vulnerability
 from application.vex.queries.openvex import get_openvex_by_document_id
+from application.vex.services.content_hash import calculate_vex_content_hash
 from application.vex.services.openvex_generator_helpers import OpenVEXVulnerabilityCache
 from application.vex.services.vex_base import (
     check_product_or_vulnerabilities,
@@ -111,8 +111,7 @@ def create_openvex_document(
         openvex.delete()
         return None
 
-    statements_json = jsonpickle.encode(statements, unpicklable=False)
-    statements_hash = hashlib.sha256(statements_json.casefold().encode("utf-8").strip()).hexdigest()
+    statements_hash = calculate_vex_content_hash(statements)
     openvex.content_hash = statements_hash
     openvex.save()
 
@@ -147,8 +146,7 @@ def update_openvex_document(
     else:
         statements = _get_statements_for_vulnerabilities(openvex_vulnerability_names)
 
-    statements_json = jsonpickle.encode(statements, unpicklable=False)
-    statements_hash = hashlib.sha256(statements_json.casefold().encode("utf-8").strip()).hexdigest()
+    statements_hash = calculate_vex_content_hash(statements)
 
     if statements_hash == openvex.content_hash:
         return None

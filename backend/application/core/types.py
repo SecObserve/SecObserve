@@ -92,6 +92,14 @@ class Assessment_Status:
     ]
 
 
+class Product_Delete_Request_Status:
+    STATUS_PENDING = "Pending"
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, STATUS_PENDING),
+    ]
+
+
 class VEX_Justification:
     JUSTIFICATION_COMPONENT_NOT_PRESENT = "component_not_present"
     JUSTIFICATION_VULNERABLE_CODE_NOT_PRESENT = "vulnerable_code_not_present"

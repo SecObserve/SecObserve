@@ -28,8 +28,10 @@ __pycache__
 charts/secobserve/charts/postgresql-16.7.27.tgz
 charts/secobserve/my_values.yaml
 .kilo/
-
+# agents generated
 openspec/
 .claude/
 .mcp.json
 CLAUDE.md
+# macOS
+.DS_Store

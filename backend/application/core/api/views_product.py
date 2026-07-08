@@ -56,6 +56,10 @@ from application.core.api.serializers_product import (
     BranchSerializer,
     ProductApiTokenSerializer,
     ProductAuthorizationGroupMemberSerializer,
+    ProductDeleteRequestApprovalSerializer,
+    ProductDeleteRequestRejectionSerializer,
+    ProductDeleteRequestSerializer,
+    ProductForceDeleteSerializer,
     ProductGroupSerializer,
     ProductListSerializer,
     ProductMemberSerializer,
@@ -93,6 +97,12 @@ from application.core.services.product_api_token import (
     get_product_api_tokens,
     revoke_product_api_token,
 )
+from application.core.services.product_delete import (
+    approve_product_delete_request,
+    force_delete_product,
+    reject_product_delete_request,
+    request_product_delete,
+)
 from application.core.types import Status
 from application.issue_tracker.services.issue_tracker import (
     push_observations_to_issue_tracker,
@@ -110,13 +120,90 @@ from application.rules.services.rule_engine import Rule_Engine
 logger = logging.getLogger("secobserve.core")
 
 
-class ProductGroupViewSet(ModelViewSet):
+class ProductDeletionActionsMixin:
+    force_delete_permission: Permissions
+
+    @extend_schema(
+        methods=["POST"],
+        request=ProductForceDeleteSerializer,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=True, methods=["post"])
+    def force_delete(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        product = self.get_object()
+        user_has_permission_or_403(product, self.force_delete_permission)
+
+        request_serializer = ProductForceDeleteSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        force_delete_product(product, request_serializer.validated_data.get("confirmation_name"))
+        return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["POST"],
+        request=ProductDeleteRequestSerializer,
+        responses={HTTP_201_CREATED: None},
+    )
+    @action(detail=True, methods=["post"])
+    def request_delete(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        product = self.get_object()
+
+        request_serializer = ProductDeleteRequestSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        request_product_delete(product, request.user)
+        return Response(status=HTTP_201_CREATED)
+
+    @extend_schema(
+        methods=["POST"],
+        request=ProductDeleteRequestApprovalSerializer,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=True, methods=["post"])
+    def approve_delete_request(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        product = self.get_object()
+        user_has_permission_or_403(product, self.force_delete_permission)
+
+        request_serializer = ProductDeleteRequestApprovalSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        approve_product_delete_request(product, request_serializer.validated_data.get("confirmation_name"))
+        return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["POST"],
+        request=ProductDeleteRequestRejectionSerializer,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=True, methods=["post"])
+    def reject_delete_request(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        product = self.get_object()
+        user_has_permission_or_403(product, self.force_delete_permission)
+
+        request_serializer = ProductDeleteRequestRejectionSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        reject_product_delete_request(product)
+        return Response(status=HTTP_204_NO_CONTENT)
+
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        product = self.get_object()
+        user_has_permission_or_403(product, self.force_delete_permission)
+        raise ValidationError("Use force_delete with confirmation_name to delete products and product groups.")
+
+
+class ProductGroupViewSet(ProductDeletionActionsMixin, ModelViewSet):
     serializer_class = ProductGroupSerializer
     filterset_class = ProductGroupFilter
     permission_classes = (IsAuthenticated, UserHasProductGroupPermission)
     queryset = Product.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["name"]
+    force_delete_permission = Permissions.Product_Group_Delete
 
     def get_queryset(self) -> QuerySet[Product]:
         settings = Settings.load()
@@ -139,13 +226,14 @@ class ProductGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         return get_products(is_product_group=True)
 
 
-class ProductViewSet(ModelViewSet):
+class ProductViewSet(ProductDeletionActionsMixin, ModelViewSet):
     serializer_class = ProductSerializer
     filterset_class = ProductFilter
     permission_classes = (IsAuthenticated, UserHasProductPermission)
     queryset = Product.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["name"]
+    force_delete_permission = Permissions.Product_Delete
 
     def get_queryset(self) -> QuerySet[Product]:
         settings = Settings.load()

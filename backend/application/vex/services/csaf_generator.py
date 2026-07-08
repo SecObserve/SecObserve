@@ -1,8 +1,6 @@
-import hashlib
 from dataclasses import dataclass
 from typing import Optional
 
-import jsonpickle
 from rest_framework.exceptions import NotFound
 
 from application.access_control.services.current_user import get_current_user
@@ -11,6 +9,7 @@ from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Branch, Product
 from application.vex.models import CSAF, CSAF_Branch, CSAF_Revision, CSAF_Vulnerability
 from application.vex.queries.csaf import get_csaf_by_document_id
+from application.vex.services.content_hash import calculate_vex_content_hash
 from application.vex.services.csaf_generator_component import (
     append_component_to_product_tree,
 )
@@ -120,8 +119,7 @@ def create_csaf_document(parameters: CSAFCreateParameters) -> Optional[CSAFRoot]
         return None
 
     csaf_content = CSAFContent(vulnerabilities, product_tree)
-    content_json = jsonpickle.encode(csaf_content, unpicklable=False)
-    content_hash = hashlib.sha256(content_json.casefold().encode("utf-8").strip()).hexdigest()
+    content_hash = calculate_vex_content_hash(csaf_content)
     csaf.content_hash = content_hash
     csaf.save()
 
@@ -153,8 +151,7 @@ def update_csaf_document(parameters: CSAFUpdateParameters) -> Optional[CSAFRoot]
         vulnerabilities, product_tree = _get_content_for_vulnerabilities(csaf_vulnerability_names)
 
     csaf_content = CSAFContent(vulnerabilities, product_tree)
-    content_json = jsonpickle.encode(csaf_content, unpicklable=False)
-    content_hash = hashlib.sha256(content_json.casefold().encode("utf-8").strip()).hexdigest()
+    content_hash = calculate_vex_content_hash(csaf_content)
 
     if content_hash == csaf.content_hash:
         return None

@@ -40,6 +40,7 @@ from application.core.models import (
     Observation_Log,
     Product,
     Product_Authorization_Group_Member,
+    Product_Delete_Request,
     Product_Member,
     Service,
 )
@@ -54,7 +55,7 @@ from application.core.services.assessment import (
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
-from application.core.types import Assessment_Status, Status
+from application.core.types import Assessment_Status, Product_Delete_Request_Status, Status
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
 from application.licenses.models import License_Component
@@ -96,6 +97,10 @@ def _authorization_group_is_designated_assessment_approver(product: Product, aut
 
 class ProductCoreSerializer(ModelSerializer):
     permissions = SerializerMethodField()
+    delete_request_id = SerializerMethodField()
+    delete_request_pending = SerializerMethodField()
+    delete_request_requested_at = SerializerMethodField()
+    delete_request_user_full_name = SerializerMethodField()
     observation_notification_status_list = ListField(
         child=CharField(),
         required=False,
@@ -104,6 +109,27 @@ class ProductCoreSerializer(ModelSerializer):
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
         return get_product_permissions_for_user(obj)
+
+    def get_delete_request_id(self, obj: Product) -> Optional[int]:
+        delete_request = _get_pending_delete_request(obj)
+        if not delete_request:
+            return None
+        return delete_request.pk
+
+    def get_delete_request_pending(self, obj: Product) -> bool:
+        return bool(_get_pending_delete_request(obj))
+
+    def get_delete_request_requested_at(self, obj: Product) -> Optional[str]:
+        delete_request = _get_pending_delete_request(obj)
+        if not delete_request:
+            return None
+        return delete_request.requested_at.isoformat()
+
+    def get_delete_request_user_full_name(self, obj: Product) -> Optional[str]:
+        delete_request = _get_pending_delete_request(obj)
+        if not delete_request:
+            return None
+        return delete_request.user.full_name
 
     class Meta:
         model = Product
@@ -265,6 +291,10 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "description",
             "products_count",
             "permissions",
+            "delete_request_id",
+            "delete_request_pending",
+            "delete_request_requested_at",
+            "delete_request_user_full_name",
             "active_critical_observation_count",
             "active_high_observation_count",
             "active_medium_observation_count",
@@ -323,6 +353,22 @@ class ProductNameSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = ["id", "name"]
+
+
+class ProductForceDeleteSerializer(Serializer):
+    confirmation_name = CharField(max_length=255, required=True)
+
+
+class ProductDeleteRequestSerializer(Serializer):
+    pass
+
+
+class ProductDeleteRequestApprovalSerializer(ProductForceDeleteSerializer):
+    pass
+
+
+class ProductDeleteRequestRejectionSerializer(Serializer):
+    pass
 
 
 class ProductListSerializer(ProductCoreSerializer):
@@ -808,3 +854,14 @@ def _get_all_licenses_count(product: Product) -> Optional[int]:
     if all_licenses_count:
         return all_licenses_count
     return None
+
+
+def _get_pending_delete_request(product: Product) -> Optional[Product_Delete_Request]:
+    return (
+        Product_Delete_Request.objects.filter(
+            product=product,
+            status=Product_Delete_Request_Status.STATUS_PENDING,
+        )
+        .select_related("user")
+        .first()
+    )

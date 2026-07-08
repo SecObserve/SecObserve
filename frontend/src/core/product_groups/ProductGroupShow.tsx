@@ -55,12 +55,15 @@ import ProductMemberEmbeddedList from "../product_members/ProductMemberEmbeddedL
 import product from "../products";
 import ExportMenu from "../products/ExportMenu";
 import ProductCreateDialog from "../products/ProductCreateDialog";
+import ProductDeleteAction from "../products/ProductDeleteAction";
+import ProductDeleteApproval from "../products/ProductDeleteApproval";
 import ProductEmbeddedList from "../products/ProductEmbeddedList";
+import { ProductGroup } from "../types";
 import ProductGroupHeader from "./ProductGroupHeader";
 import ProductGroupReviews from "./ProductGroupReviews";
 
 const ShowActions = () => {
-    const product_group = useRecordContext();
+    const product_group = useRecordContext<ProductGroup>();
     return (
         <TopToolbar>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
@@ -71,6 +74,8 @@ const ShowActions = () => {
                     queryOptions={{ meta: { api_resource: "product_group_names" } }}
                 />
                 <ExportMenu product={product_group} is_product_group={true} />
+                <ProductDeleteApproval product={product_group} resource="product_groups" isProductGroup={true} />
+                <ProductDeleteAction product={product_group} resource="product_groups" isProductGroup={true} />
                 {product_group?.permissions.includes(PERMISSION_PRODUCT_GROUP_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>

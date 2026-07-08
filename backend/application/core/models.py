@@ -28,6 +28,7 @@ from application.access_control.models import Authorization_Group, User
 from application.core.types import (
     Assessment_Status,
     OSVLinuxDistribution,
+    Product_Delete_Request_Status,
     Severity,
     Status,
     VEX_Justification,
@@ -257,6 +258,25 @@ class Product_Authorization_Group_Member(Model):
 
     def __str__(self) -> str:
         return f"{self.product} / {self.authorization_group}"
+
+
+class Product_Delete_Request(Model):
+    product = ForeignKey(Product, related_name="delete_requests", on_delete=CASCADE)
+    user = ForeignKey(User, related_name="product_delete_requests", on_delete=PROTECT)
+    requested_at = DateTimeField(auto_now_add=True)
+    status = CharField(
+        max_length=16,
+        choices=Product_Delete_Request_Status.STATUS_CHOICES,
+        default=Product_Delete_Request_Status.STATUS_PENDING,
+    )
+
+    class Meta:
+        indexes = [
+            Index(fields=["product", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.product} / {self.status}"
 
 
 class Observation(Model):

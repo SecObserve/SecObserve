@@ -65,7 +65,10 @@ import ProductMemberAdd from "../product_members/ProductMemberAdd";
 import ProductMemberEmbeddedList from "../product_members/ProductMemberEmbeddedList";
 import ServiceCreate from "../services/ServiceCreate";
 import ServiceEmbeddedList from "../services/ServiceEmbeddedList";
+import { Product } from "../types";
 import ExportMenu from "./ExportMenu";
+import ProductDeleteAction from "./ProductDeleteAction";
+import ProductDeleteApproval from "./ProductDeleteApproval";
 import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
@@ -76,7 +79,7 @@ type ShowActionsProps = {
 };
 
 const ShowActions = (props: ShowActionsProps) => {
-    const product = useRecordContext();
+    const product = useRecordContext<Product>();
     return (
         <TopToolbar>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
@@ -91,6 +94,8 @@ const ShowActions = (props: ShowActionsProps) => {
                     <ImportMenu product={product} />
                 )}
                 <ExportMenu product={product} is_product_group={false} />
+                <ProductDeleteApproval product={product} resource="products" isProductGroup={false} />
+                <ProductDeleteAction product={product} resource="products" isProductGroup={false} />
                 {product?.permissions.includes(PERMISSION_PRODUCT_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>
