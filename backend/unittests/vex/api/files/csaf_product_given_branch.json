@@ -97,7 +97,8 @@
             "notes": [
                 {
                     "category": "description",
-                    "text": "description 4"
+                    "text": "description 4",
+                    "title": "Vulnerability description"
                 }
             ],
             "product_status": {
@@ -113,7 +114,8 @@
                         "vex_comp_5:5.0.0@vex_product_2:main"
                     ]
                 }
-            ]
+            ],
+            "title": "vex_vulnerability_4"
         }
     ]
 }

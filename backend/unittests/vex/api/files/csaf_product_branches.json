@@ -163,7 +163,8 @@
             "notes": [
                 {
                     "category": "description",
-                    "text": "description 2"
+                    "text": "description 2",
+                    "title": "Vulnerability description"
                 }
             ],
             "product_status": {
@@ -186,7 +187,8 @@
                         "vex_comp_2:2.0.0@vex_product_2:dev"
                     ]
                 }
-            ]
+            ],
+            "title": "CVE-vulnerability_2"
         },
         {
             "ids": [
@@ -198,14 +200,16 @@
             "notes": [
                 {
                     "category": "description",
-                    "text": "description 3"
+                    "text": "description 3",
+                    "title": "Vulnerability description"
                 }
             ],
             "product_status": {
                 "fixed": [
                     "vex_comp_4:4.0.0@vex_product_2:dev"
                 ]
-            }
+            },
+            "title": "vex_vulnerability_3"
         },
         {
             "ids": [
@@ -217,7 +221,8 @@
             "notes": [
                 {
                     "category": "description",
-                    "text": "description 4"
+                    "text": "description 4",
+                    "title": "Vulnerability description"
                 }
             ],
             "product_status": {
@@ -233,7 +238,8 @@
                         "vex_comp_5:5.0.0@vex_product_2:main"
                     ]
                 }
-            ]
+            ],
+            "title": "vex_vulnerability_4"
         }
     ]
 }
