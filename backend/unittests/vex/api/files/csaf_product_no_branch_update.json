@@ -255,6 +255,15 @@
                     "pkg:so/vendor_3/vex_comp_3@3.0.0@vex_product_1"
                 ]
             },
+            "threats": [
+                {
+                    "category": "impact",
+                    "details": "Should be no problem",
+                    "product_ids": [
+                        "pkg:so/vendor_3/vex_comp_3@3.0.0@vex_product_1"
+                    ]
+                }
+            ],
             "title": "vex_vulnerability_3"
         }
     ]
