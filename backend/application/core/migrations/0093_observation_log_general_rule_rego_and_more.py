@@ -7,19 +7,31 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0092_product_propagate_branches_new_assessment_and_more'),
-        ('rules', '0021_rename_approval_remark_rule_rejection_remark'),
+        ("core", "0092_product_propagate_branches_new_assessment_and_more"),
+        ("rules", "0021_rename_approval_remark_rule_rejection_remark"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='observation_log',
-            name='general_rule_rego',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='observation_log_general_rules_rego', to='rules.rule'),
+            model_name="observation_log",
+            name="general_rule_rego",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="observation_log_general_rules_rego",
+                to="rules.rule",
+            ),
         ),
         migrations.AddField(
-            model_name='observation_log',
-            name='product_rule_rego',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='observation_log_product_rules_rego', to='rules.rule'),
+            model_name="observation_log",
+            name="product_rule_rego",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="observation_log_product_rules_rego",
+                to="rules.rule",
+            ),
         ),
     ]
