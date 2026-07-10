@@ -136,22 +136,41 @@ const ObservationLogComponent = () => {
                                 </Labeled>
                             )}
                             {observation_log.general_rule != null && (
-                                <Labeled label="General rule">
+                                <Labeled label="General fields rule">
                                     <ReferenceField
                                         source="general_rule"
                                         reference="general_rules"
-                                        label="General rule name"
+                                        link="show"
+                                        sx={{ "& a": { textDecoration: "none" } }}
+                                    />
+                                </Labeled>
+                            )}
+                            {observation_log.general_rule_rego != null && (
+                                <Labeled label="General rego rule">
+                                    <ReferenceField
+                                        source="general_rule_rego"
+                                        reference="general_rules"
                                         link="show"
                                         sx={{ "& a": { textDecoration: "none" } }}
                                     />
                                 </Labeled>
                             )}
                             {observation_log.product_rule != null && (
-                                <Labeled label="Product rule">
+                                <Labeled label="Product fields rule">
                                     <ReferenceField
                                         source="product_rule"
                                         reference="product_rules"
-                                        label="Product rule name"
+                                        link="show"
+                                        sx={{ "& a": { textDecoration: "none" } }}
+                                    />
+                                </Labeled>
+                            )}
+                            {observation_log.product_rule_rego != null && (
+                                <Labeled label="Product rego rule">
+                                    <ReferenceField
+                                        source="product_rule_rego"
+                                        reference="product_rules"
+                                        label="Product rego rule name"
                                         link="show"
                                         sx={{ "& a": { textDecoration: "none" } }}
                                     />

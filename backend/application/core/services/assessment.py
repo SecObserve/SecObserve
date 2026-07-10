@@ -493,7 +493,9 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
             observation__branch__isnull=False,
             propagated_from__isnull=True,
             general_rule__isnull=True,
+            general_rule_rego__isnull=True,
             product_rule__isnull=True,
+            product_rule_rego__isnull=True,
             vex_statement__isnull=True,
             assessment_status__in=(
                 Assessment_Status.ASSESSMENT_STATUS_APPROVED,

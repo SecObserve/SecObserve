@@ -506,6 +506,20 @@ class Observation_Log(Model):
         null=True,
         on_delete=SET_NULL,
     )
+    general_rule_rego = ForeignKey(
+        "rules.Rule",
+        related_name="observation_log_general_rules_rego",
+        blank=True,
+        null=True,
+        on_delete=SET_NULL,
+    )
+    product_rule_rego = ForeignKey(
+        "rules.Rule",
+        related_name="observation_log_product_rules_rego",
+        blank=True,
+        null=True,
+        on_delete=SET_NULL,
+    )
     vex_statement = ForeignKey(
         "vex.VEX_Statement",
         related_name="observation_log_vex_statements",
