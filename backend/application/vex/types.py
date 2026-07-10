@@ -127,6 +127,7 @@ class CSAFProductTree:
 class CSAFNote:
     category: str
     text: str
+    title: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -173,6 +174,7 @@ class CSAFThreat:
 @dataclass()
 class CSAFVulnerability:
     cve: Optional[str]
+    title: Optional[str]
     notes: list[CSAFNote]
     flags: list[CSAFFlag]
     ids: list[CSAFId]
