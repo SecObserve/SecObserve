@@ -80,7 +80,7 @@ class TestCSAF(TestCase):
         self.assertEqual(Product.objects.get(id=1), csaf.product)
         self.assertEqual(1, csaf.version)
         self.assertEqual(
-            "eaa6cdcec3ea5f1feff8ecd7d0c8802e027e5c26d34f57f7a8cb0f31f633da0a",
+            "d95a991952c7a926d90e2beadcbd5d691e740f599df95470f1a4615b0a1d0470",
             csaf.content_hash,
         )
         self.assertEqual("Title", csaf.title)
@@ -170,7 +170,7 @@ class TestCSAF(TestCase):
         self.assertEqual(Product.objects.get(id=1), csaf.product)
         self.assertEqual(2, csaf.version)
         self.assertEqual(
-            "65aeaea7aa45c945515b81613bd0a937b2f2262a9a6dfc0512bbde340c67aad1",
+            "d4d235a598370dfaa825172c73663acdc5dd5b55b3dc676f6ac22f48a0b7c3fb",
             csaf.content_hash,
         )
         self.assertEqual("Title", csaf.title)
@@ -254,7 +254,7 @@ class TestCSAF(TestCase):
         self.assertEqual(Product.objects.get(id=2), csaf.product)
         self.assertEqual(1, csaf.version)
         self.assertEqual(
-            "ad81aa72d9cd265574eef05a13f86e6c7072212532b2d167e3ca120b6d26b897",
+            "17dcf310dc70fcfde16c7fce6560fa950f8307c15dff66226460f32e6166a8be",
             csaf.content_hash,
         )
         self.assertEqual("Title", csaf.title)
@@ -339,7 +339,7 @@ class TestCSAF(TestCase):
         self.assertEqual(Product.objects.get(id=2), csaf.product)
         self.assertEqual(1, csaf.version)
         self.assertEqual(
-            "cf643f6b631cf5d2bf9a11b0c7247d1be9e456482e9fc9ed073c8b3823d8bd0d",
+            "7eab73b134c451d9f8a73dbe52346aca0dde97aa3c22ec8cf647a656ab76e25b",
             csaf.content_hash,
         )
         self.assertEqual("Title", csaf.title)
@@ -424,7 +424,7 @@ class TestCSAF(TestCase):
         self.assertEqual(None, csaf.product)
         self.assertEqual(1, csaf.version)
         self.assertEqual(
-            "191a9c71fc1f1ab976b5d45adeedbc1faf997c43d59ab4977b907b95a9ab003d",
+            "e7444a7013ee24938b6757183d76ab87aa49921508bd1a5980fb64ff30b78a2b",
             csaf.content_hash,
         )
         self.assertEqual("Title", csaf.title)
@@ -511,7 +511,7 @@ class TestCSAF(TestCase):
         self.assertEqual(None, csaf.product)
         self.assertEqual(2, csaf.version)
         self.assertEqual(
-            "25495e803982bde094cd1f337f48c9740cd0250f0b04a9c5af3a6cdb72640184",
+            "578b26be2b54431bd004ce9828775023ebcfb45f5365f1daab6c5212061b123b",
             csaf.content_hash,
         )
         self.assertEqual("Title", csaf.title)
