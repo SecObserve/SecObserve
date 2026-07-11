@@ -14,7 +14,7 @@
     "lockFileMaintenance": {
         "enabled": true
     },
-    "minimumReleaseAge": "7 days",
+    "minimumReleaseAge": "5 days",
     "pip_requirements": {
         "managerFilePatterns": [
             "/mkdocs_requirements.txt/",
