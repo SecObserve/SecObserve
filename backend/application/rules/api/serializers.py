@@ -52,12 +52,6 @@ class GeneralRuleSerializer(ModelSerializer):
 
         return value
 
-    def validate_type(self, value: str) -> str:
-        if value == Rule_Type.RULE_TYPE_REGO and platform.machine() not in ["x86_64", "AMD64"]:
-            raise ValidationError("Rego rules are only supported on 'x86_64' or 'AMD64' architectures")
-
-        return value
-
     def validate_new_vex_remediations(self, value: Any) -> Optional[list[dict]]:
         return validate_vex_remediations(value)
 
