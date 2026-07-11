@@ -2704,48 +2704,49 @@ typing-extensions = {version = ">=4.4.0", markers = "python_version < \"3.13\""}
 
 [[package]]
 name = "regopy"
-version = "1.3.0"
+version = "1.5.2"
 description = "Python interface for the OPA Rego Language and Runtime"
 optional = false
-python-versions = "<4,>=3.6"
+python-versions = "<4,>=3.10"
 groups = ["main"]
 markers = "platform_machine == \"x86_64\" or platform_machine == \"AMD64\""
 files = [
-    {file = "regopy-1.3.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:1db7df22feee42016f79eabae5b6ecd215e6ec9a358e0028c9a7ced4e32dd468"},
-    {file = "regopy-1.3.0-cp310-cp310-macosx_14_0_x86_64.whl", hash = "sha256:ee1b0d39f87ddcb1c63dca4c139dd618b4545f0ddbc98ba4d3a85f3d6f912e61"},
-    {file = "regopy-1.3.0-cp310-cp310-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4ac2be61ced742216cd9fe2a1b31169beca4fd6491137624533f37aeaea1ce69"},
-    {file = "regopy-1.3.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:882ae3b2eeaa5e3a5335cefd86f21cfc3f2fa6e0bc16cf968d40193b2f0a5d69"},
-    {file = "regopy-1.3.0-cp310-cp310-win32.whl", hash = "sha256:285a3d05f2baeb734ceeeb383074c0007aee63a1e2c0c9d3b3baef40c7261feb"},
-    {file = "regopy-1.3.0-cp310-cp310-win_amd64.whl", hash = "sha256:0070eae643c3f2bd92f20ff102973509b27f8117216df760b01e26645687f7d6"},
-    {file = "regopy-1.3.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ca171df11ad200cc5ec19a45ab3766dc272c696f3fae644a50134bb011e1a699"},
-    {file = "regopy-1.3.0-cp311-cp311-macosx_14_0_x86_64.whl", hash = "sha256:095fa025a98d0652dfb5ecf49b6ec63f8794f056a78c10548b811882d3826d4c"},
-    {file = "regopy-1.3.0-cp311-cp311-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bfa9008508f0b818846039da362db6a7d0a035b956b24989b0b6dd40795c8319"},
-    {file = "regopy-1.3.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:c617175abba55be13c72173f7232f24c893e23951e9c08ed362dda05f2cf2f51"},
-    {file = "regopy-1.3.0-cp311-cp311-win32.whl", hash = "sha256:8c884731cefcbec76e3f57db940a7afdce6a0f791f511fd999933a32d7609b13"},
-    {file = "regopy-1.3.0-cp311-cp311-win_amd64.whl", hash = "sha256:8d106f008ad54545e5e6f2c1a8b135b4a062239d926fa55a7011256c9d9457d6"},
-    {file = "regopy-1.3.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:5fc9d695926cb409aba0f2ac671bf07fd2184a01ebd55e12db8256824f063fe7"},
-    {file = "regopy-1.3.0-cp312-cp312-macosx_14_0_x86_64.whl", hash = "sha256:c515f37b6cc8efce20adb1bc9ea9a0bc479f9ad57200d41b32fededa60ab5bf4"},
-    {file = "regopy-1.3.0-cp312-cp312-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:37eb9253c3fa3637dba59c61c862bb6d3a0922ac7905f88f1779dcba626f1cab"},
-    {file = "regopy-1.3.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:e08773f1ef236a3ba7d1615f53fb320a5eca3b63dda198f4ac9d47dd480c5427"},
-    {file = "regopy-1.3.0-cp312-cp312-win32.whl", hash = "sha256:f254c0eaea1839d964bac209140f1d92df2503c179eba66c6c81ecf01d395260"},
-    {file = "regopy-1.3.0-cp312-cp312-win_amd64.whl", hash = "sha256:31e44b295abc4c9febfd785184ea22a590c2d8ce5155ad6e1f397b3252bbcfdb"},
-    {file = "regopy-1.3.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e7a91a9f34496011624fcd607f878dc8476e2f8390289706c120b8c25460c0ab"},
-    {file = "regopy-1.3.0-cp313-cp313-macosx_14_0_x86_64.whl", hash = "sha256:94cb59db90747441d8ef5d27220d0530366d31199f02f876b03e7559d075ed25"},
-    {file = "regopy-1.3.0-cp313-cp313-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:fcdbb115671ba0f508c9d992693f404154eacfb1a112955fa8b19eb973b9ae70"},
-    {file = "regopy-1.3.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:51d35b5e424c6407f5c9765f4a356274ffaf4fbfaa81d3cb7d8a2f7941762f71"},
-    {file = "regopy-1.3.0-cp313-cp313-win32.whl", hash = "sha256:4007510ad9f00a990af6847f1439e659e128323a52d59b061659654241c5865d"},
-    {file = "regopy-1.3.0-cp313-cp313-win_amd64.whl", hash = "sha256:1ea84f6886432e5fc654b87d901851cd1e1a46dae5515a248dff8e72e1c4dc9c"},
-    {file = "regopy-1.3.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:f7005733e9ed06a4db199d984f7ed0c86fb9116d5b4b8b20d20c7c2508a5f995"},
-    {file = "regopy-1.3.0-cp314-cp314-macosx_14_0_x86_64.whl", hash = "sha256:ed67e5e602d3ca9180bb5bcb2d6a5e4ce2b3bcca5562a33673e622fa15c269da"},
-    {file = "regopy-1.3.0-cp314-cp314-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7e09509696dc401eda9655ca333e77fd2e803bf6c724213dfbe42bf77754c98e"},
-    {file = "regopy-1.3.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:cde8e428b658cb92267bc99e31768c0faa4b474c6abeeb09776c195dae57da68"},
-    {file = "regopy-1.3.0-cp314-cp314-win32.whl", hash = "sha256:3bce4b06f505f6e5d8e727d9d9d9a6fbc4a58a1ce48b2a07376b1e053309fbe4"},
-    {file = "regopy-1.3.0-cp314-cp314-win_amd64.whl", hash = "sha256:edefd91e49c2de6b1d51a8fe5d6daac69eceb5b3a47677f8930e30586fc79314"},
-    {file = "regopy-1.3.0-cp39-cp39-manylinux_2_26_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:cc4afe3845e6a98bc1d1c63ef16ffe0c7be2a7b5bdbc16749bee1c412df2ca4d"},
-    {file = "regopy-1.3.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:17c686d9c1a714a9f74c6b0ce769ab4e437c6dfafb045515c32ee51966b99249"},
-    {file = "regopy-1.3.0-cp39-cp39-win32.whl", hash = "sha256:e1c8c4b973752c9c61c90d1ea92ce52d72c7de3f6728270b8380ad94ffec6013"},
-    {file = "regopy-1.3.0-cp39-cp39-win_amd64.whl", hash = "sha256:fe0462a436c9496a67ee2a8738ec42ceb1d8d3b5765bd65f9561af9e4abb3a5e"},
-    {file = "regopy-1.3.0.tar.gz", hash = "sha256:010c40703c7671be19234f73c52b85abd53c242bf94d7f51e1368dd8f803f3da"},
+    {file = "regopy-1.5.2-cp310-cp310-macosx_15_0_arm64.whl", hash = "sha256:4d444b4481776ccf7cae45c2ca1cbfc44e7b1c0d0994dcea71d0765f63b36eb1"},
+    {file = "regopy-1.5.2-cp310-cp310-macosx_15_0_x86_64.whl", hash = "sha256:b131c82f4b02d2305fe54fb8777a22f01b2e7e49ae0b102c9c3dac1fa37e8582"},
+    {file = "regopy-1.5.2-cp310-cp310-manylinux_2_34_aarch64.whl", hash = "sha256:79e8e6b2e1d5c8dd3e1e0ac9b1f692bad35b496b066abdb8d0bdc32f18642619"},
+    {file = "regopy-1.5.2-cp310-cp310-manylinux_2_34_x86_64.whl", hash = "sha256:21232aad6eff57f73e1bf91c88be236562ac81b337f0a2e46e93ee505d6e42d7"},
+    {file = "regopy-1.5.2-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:b0ee8902c3be28fefaa3bc93183523a0130ba35296da627176058db739aac287"},
+    {file = "regopy-1.5.2-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:7ddf968b3a95cca88c68811fdbbc58b66a5a0ade3519088015ad922e248f31eb"},
+    {file = "regopy-1.5.2-cp310-cp310-win_amd64.whl", hash = "sha256:a4a3493fc060489b95afdbaf11fc188fc43d628fdd528e40e50473f97b869788"},
+    {file = "regopy-1.5.2-cp311-cp311-macosx_15_0_arm64.whl", hash = "sha256:ff78a80df66de5dc77e1dc00e4dc255823e2bddeb917e0ff927e26712c0d4b10"},
+    {file = "regopy-1.5.2-cp311-cp311-macosx_15_0_x86_64.whl", hash = "sha256:ff8824b1a9b0dd15a7b5b9ec5034f2e7a90a9b5484b8db0cf33e33b6eb3c68e1"},
+    {file = "regopy-1.5.2-cp311-cp311-manylinux_2_34_aarch64.whl", hash = "sha256:10383bf378c465bc679e9bc4cfe84b010ebf9b317b02ecd4aeab547466021205"},
+    {file = "regopy-1.5.2-cp311-cp311-manylinux_2_34_x86_64.whl", hash = "sha256:c1a92eab90592d7926d72d082a4b5fb9c968cbf6332406d28c3e96079ae97a26"},
+    {file = "regopy-1.5.2-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:fb4d8f767205d9bfb9eba3ac981f8756477ce31d7839d081ff2d07cc44d5b1f0"},
+    {file = "regopy-1.5.2-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:ce6b3a845c7e9e8ef4460c0edf3efa5e0af228a216b37e282adceaedf4ec6ab9"},
+    {file = "regopy-1.5.2-cp311-cp311-win_amd64.whl", hash = "sha256:a04c50687899f798a1eef4fac69ff8e8346cf0eac88982f7d1342f2bb7b3ec10"},
+    {file = "regopy-1.5.2-cp312-cp312-macosx_15_0_arm64.whl", hash = "sha256:af07e0ec772532ee2e5546b752d81548e4a945514e5ca145ab411a5d4a547f10"},
+    {file = "regopy-1.5.2-cp312-cp312-macosx_15_0_x86_64.whl", hash = "sha256:67b7294a14975884f3ae119548856a8ad37bb19ac2183dcdaaff59db8472b359"},
+    {file = "regopy-1.5.2-cp312-cp312-manylinux_2_34_aarch64.whl", hash = "sha256:5b7ec337b338631c6d3fa56215932a6aa4b233bbf5e78c278d14ab40e8d53124"},
+    {file = "regopy-1.5.2-cp312-cp312-manylinux_2_34_x86_64.whl", hash = "sha256:42d557ea696bc113566b75e474134a314e609bbb602a1974783701326dbcea5e"},
+    {file = "regopy-1.5.2-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:7e2c6226b1891d0907c4cd34f394a46b5a959023ebbbb7eeb550d0bb658fd0e7"},
+    {file = "regopy-1.5.2-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:b7e06cb8ba4afb306fb5057a1b84b34deb190252d2f7dae6b1ac2d30213d1a26"},
+    {file = "regopy-1.5.2-cp312-cp312-win_amd64.whl", hash = "sha256:49985468697eb412326bab99c51158c5c82ff99e45e77c17ba814c05fc69e5c9"},
+    {file = "regopy-1.5.2-cp313-cp313-macosx_15_0_arm64.whl", hash = "sha256:e1b3ca26b33b6e7e1fe91404ce247c1d7ba5aca0cc2e7e12f81b3a4726fc4970"},
+    {file = "regopy-1.5.2-cp313-cp313-macosx_15_0_x86_64.whl", hash = "sha256:f8fd3b8259af41b9c1be946465ec1609cc3a39a253463564881e657d13fb8df1"},
+    {file = "regopy-1.5.2-cp313-cp313-manylinux_2_34_aarch64.whl", hash = "sha256:1b4b1594e0a0cdad004e6b27eae214d3ccd166cc59874d2c26a5bfe9679ca9c9"},
+    {file = "regopy-1.5.2-cp313-cp313-manylinux_2_34_x86_64.whl", hash = "sha256:213075bee128a6dfc142fe70b2ec76457fb31bc89e6ee6e02ac50ef28b2c6b6e"},
+    {file = "regopy-1.5.2-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:6389be1200a4bbd52a93d7368b43932793ea928887b7b8a66af15ef05c26fa5f"},
+    {file = "regopy-1.5.2-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:420124cf0b34e1ae154eb505b2ed33a83729f44fb26be700a4b447e154235a66"},
+    {file = "regopy-1.5.2-cp313-cp313-win_amd64.whl", hash = "sha256:4a65ab14d16da8613ba5ccedd90828146418d6c105d10232702fad57597c1a8e"},
+    {file = "regopy-1.5.2-cp314-cp314-macosx_15_0_arm64.whl", hash = "sha256:6cd2c16f0165e5b2dc5c3797ccb0e7321c92d137094f64860e76aa262fbdae39"},
+    {file = "regopy-1.5.2-cp314-cp314-macosx_15_0_x86_64.whl", hash = "sha256:10c064f5281bd6a1706a5f4db22093ee372b7a70e2318aa6546a2b077d171faf"},
+    {file = "regopy-1.5.2-cp314-cp314-manylinux_2_34_aarch64.whl", hash = "sha256:2411206da3cc98520dfc61ae44e333c44c5f95dd6935a3b6af0a0b6ba311c39c"},
+    {file = "regopy-1.5.2-cp314-cp314-manylinux_2_34_x86_64.whl", hash = "sha256:e61a8e3cd2bb12b022d73692b62f4f47983470cad16b5ba6d2424be8c5d226f2"},
+    {file = "regopy-1.5.2-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:f75a0d45ca1ad2cd776822d325b6fe7e3172d58cb4349b84d53dc58b9d00e6da"},
+    {file = "regopy-1.5.2-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:2138ee26a253dcbf8fb2d0df4e05cf8677b28cc4676c560bc04563098c9a6721"},
+    {file = "regopy-1.5.2-cp314-cp314-win_amd64.whl", hash = "sha256:399d987ae846591b1be6a7c7bcad092a3dc3207d7272413bfad58c2dcda6d288"},
+    {file = "regopy-1.5.2.tar.gz", hash = "sha256:886016ce3064efbfcb5bf0fd8cb737629928be2c8dbd13621edf8ef9e23ca022"},
 ]
 
 [package.extras]
@@ -3413,4 +3414,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "c3f0a1b2093362f83145e8ad9dbffe46fb06b8e61ce373fa356ccb2d12fcdc8c"
+content-hash = "93363258f2eacdda8345be6d01a9bd39583397365bfd3d7be9dab4cc24d29ae9"
