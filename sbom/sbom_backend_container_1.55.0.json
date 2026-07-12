@@ -1,0 +1,1685 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.6",
+    "serialNumber": "urn:uuid:f590afc4-7e1c-4840-9d45-3ce203965d6c",
+    "version": 1,
+    "metadata": {
+        "timestamp": "2026-07-12T19:43:03+00:00",
+        "tools": {
+            "components": [
+                {
+                    "group": "aquasecurity",
+                    "manufacturer": {
+                        "name": "Aqua Security Software Ltd."
+                    },
+                    "name": "trivy",
+                    "type": "application",
+                    "version": "0.69.3"
+                }
+            ]
+        },
+        "component": {
+            "type": "container",
+            "name": "SecObserve Backend Container",
+            "version": "1.55.0",
+            "description": "Backend container of SecObserve, the open source vulnerability management system for software development and cloud environments.",
+            "bom-ref": "pkg:oci/secobserve-backend@sha256%3Ac85553fd8c2851fdf778460266ac911207a637f0164ff04f47e5af91399c6000?arch=amd64&repository_url=ghcr.io%2Fsecobserve%2Fsecobserve-backend",
+            "supplier": {
+                "name": "SecObserve Open Source Community and contributors",
+                "url": [
+                    "https://github.com/SecObserve/SecObserve"
+                ]
+            },
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:oci/secobserve-backend@sha256%3Ac85553fd8c2851fdf778460266ac911207a637f0164ff04f47e5af91399c6000?arch=amd64&repository_url=ghcr.io%2Fsecobserve%2Fsecobserve-backend"
+        }
+    },
+    "components": [
+        {
+            "type": "operating-system",
+            "name": "alpine",
+            "version": "3.24.1",
+            "bom-ref": "06fcca55-5114-4814-9b85-881e50d3e312"
+        },
+        {
+            "type": "library",
+            "name": ".python-rundeps",
+            "version": "20260616.002228",
+            "bom-ref": "pkg:apk/alpine/.python-rundeps@20260616.002228?arch=noarch&distro=3.24.1",
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "eaf28163d08e1f077c27ef4568f856d636972039"
+                }
+            ],
+            "purl": "pkg:apk/alpine/.python-rundeps@20260616.002228?arch=noarch&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "alpine-baselayout-data",
+            "version": "3.7.2-r1",
+            "bom-ref": "pkg:apk/alpine/alpine-baselayout-data@3.7.2-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "c6f9bded17d844b6f1b0bb5766d2c35c0d5c8508"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/alpine-baselayout-data@3.7.2-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "alpine-baselayout",
+            "version": "3.7.2-r1",
+            "bom-ref": "pkg:apk/alpine/alpine-baselayout@3.7.2-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "f0fcfdc2f4da058af6473bc45c4eab62916225b2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/alpine-baselayout@3.7.2-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "alpine-keys",
+            "version": "2.6-r0",
+            "bom-ref": "pkg:apk/alpine/alpine-keys@2.6-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "d8d6b80e53c059a77e4915da78ba964f3ffea240"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/alpine-keys@2.6-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "alpine-release",
+            "version": "3.24.1-r0",
+            "bom-ref": "pkg:apk/alpine/alpine-release@3.24.1-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "bc6912a25cdc7733e0035ed509eceaa4026946e3"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/alpine-release@3.24.1-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "apk-tools",
+            "version": "3.0.6-r0",
+            "bom-ref": "pkg:apk/alpine/apk-tools@3.0.6-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "043333589798a1f52e09ae63f026c6c8fa676d34"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/apk-tools@3.0.6-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "bash",
+            "version": "5.3.9-r1",
+            "bom-ref": "pkg:apk/alpine/bash@5.3.9-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "2ce9606f1c31438297b40df5875dbceb66afb675"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-3.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/bash@5.3.9-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "busybox-binsh",
+            "version": "1.37.0-r31",
+            "bom-ref": "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Sören Tempel \u003csoeren+alpine@soeren-tempel.net\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "5cbd14acc6f1804c5bac6c77dc2c492f010b0fc7"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "busybox",
+            "version": "1.37.0-r31",
+            "bom-ref": "pkg:apk/alpine/busybox@1.37.0-r31?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Sören Tempel \u003csoeren+alpine@soeren-tempel.net\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "b5405ebc02f7dd8be95b6265c54b243d5456ab8f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/busybox@1.37.0-r31?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "ca-certificates-bundle",
+            "version": "20260611-r0",
+            "bom-ref": "pkg:apk/alpine/ca-certificates-bundle@20260611-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "c9534a03750bdfae341f10969016090fc11febbd"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MPL-2.0"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/ca-certificates-bundle@20260611-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "ca-certificates",
+            "version": "20260611-r0",
+            "bom-ref": "pkg:apk/alpine/ca-certificates@20260611-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "8f2a04abeb54b331e2970a0a0dffb7bd6bdde567"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MPL-2.0"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/ca-certificates@20260611-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "fmt-dev",
+            "version": "11.2.0-r1",
+            "bom-ref": "pkg:apk/alpine/fmt-dev@11.2.0-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Achill Gilgenast \u003cachill@achill.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "6f557afe8b21230f5acd149ae59e90f68ed3463f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/fmt-dev@11.2.0-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "fmt",
+            "version": "11.2.0-r1",
+            "bom-ref": "pkg:apk/alpine/fmt@11.2.0-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Achill Gilgenast \u003cachill@achill.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "689bef544ef499d9e0d38fd076347fe22d56f4bb"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/fmt@11.2.0-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "gdbm",
+            "version": "1.26-r0",
+            "bom-ref": "pkg:apk/alpine/gdbm@1.26-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "619493d8124fe49a8ee1d8f7a1372cf7e3977337"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-3.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/gdbm@1.26-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libaio",
+            "version": "0.3.113-r2",
+            "bom-ref": "pkg:apk/alpine/libaio@0.3.113-r2?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Leonardo Arena \u003crnalrd@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "ae5e17b8c54823cffd00fc3ce70c2a75e93bce25"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libaio@0.3.113-r2?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libapk",
+            "version": "3.0.6-r0",
+            "bom-ref": "pkg:apk/alpine/libapk@3.0.6-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "523a8f58104589f74f743d501c81bf6517155378"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libapk@3.0.6-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libbz2",
+            "version": "1.0.8-r6",
+            "bom-ref": "pkg:apk/alpine/libbz2@1.0.8-r6?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "08566ba5c7af97c25474be8b24e8b48f0116b67d"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "bzip-2-1.0.6"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libbz2@1.0.8-r6?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libcrypto3",
+            "version": "3.5.7-r0",
+            "bom-ref": "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "481afbc52bcf06f2316c93a0a81ce8f72bed503e"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libffi",
+            "version": "3.5.2-r1",
+            "bom-ref": "pkg:apk/alpine/libffi@3.5.2-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "2f7b261f7fcecc4eebd8b330e7f6fb80713bfe3a"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libffi@3.5.2-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libgcc",
+            "version": "15.2.0-r5",
+            "bom-ref": "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Ariadne Conill \u003cariadne@dereferenced.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "379c156c53e0cc140e87c79c0a3dd22b6ee51552"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-or-later"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libncursesw",
+            "version": "6.6_p20260516-r0",
+            "bom-ref": "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Milan P. Stanić \u003cmps@arvanta.net\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "9f318e6e324d6827274829194cf6ac6afbaded12"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "X-11"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libpanelw",
+            "version": "6.6_p20260516-r0",
+            "bom-ref": "pkg:apk/alpine/libpanelw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Milan P. Stanić \u003cmps@arvanta.net\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "149bdc434232ed11fc5bb975ba519a07154a6f56"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "X-11"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libpanelw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libpq",
+            "version": "18.4-r0",
+            "bom-ref": "pkg:apk/alpine/libpq@18.4-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Jakub Jirutka \u003cjakub@jirutka.cz\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "a32f5129c982041819617e4160c68a30ee744690"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "PostgreSQL"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libpq@18.4-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libssl3",
+            "version": "3.5.7-r0",
+            "bom-ref": "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "240c8252d1ca145873c03c997966698eb509f745"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libstdc++",
+            "version": "15.2.0-r5",
+            "bom-ref": "pkg:apk/alpine/libstdc%2B%2B@15.2.0-r5?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Ariadne Conill \u003cariadne@dereferenced.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "5f7a2ad7646128ba02cc0d6fb94672b6845648d5"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-or-later"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libstdc%2B%2B@15.2.0-r5?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "libuuid",
+            "version": "2.42-r0",
+            "bom-ref": "pkg:apk/alpine/libuuid@2.42-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "0f55eecb7a79067e4a476abd210957988aca2a91"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/libuuid@2.42-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "lz4-libs",
+            "version": "1.10.0-r1",
+            "bom-ref": "pkg:apk/alpine/lz4-libs@1.10.0-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Stuart Cardall \u003cdeveloper@it-offshore.co.uk\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "d63bb2e1707aa4ca0b75a867706ea03df70bc5bd"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-2-Clause"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "GPL-2.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/lz4-libs@1.10.0-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mariadb-client",
+            "version": "11.8.8-r0",
+            "bom-ref": "pkg:apk/alpine/mariadb-client@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "d972cec15011d3c00aa1159a5db404c57d983d6c"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mariadb-client@11.8.8-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mariadb-common",
+            "version": "11.8.8-r0",
+            "bom-ref": "pkg:apk/alpine/mariadb-common@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "8f0f16fdf4ae386b3794c267b9e6bf82f19a683a"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mariadb-common@11.8.8-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mariadb-connector-c-dev",
+            "version": "3.4.6-r0",
+            "bom-ref": "pkg:apk/alpine/mariadb-connector-c-dev@3.4.6-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "2512b386de86f1716bb41875ebaa584a7e264e5c"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mariadb-connector-c-dev@3.4.6-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mariadb-connector-c",
+            "version": "3.4.6-r0",
+            "bom-ref": "pkg:apk/alpine/mariadb-connector-c@3.4.6-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "a2988b532144fe3b8d24f01c2c5cce0cb966a46c"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mariadb-connector-c@3.4.6-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mariadb-dev",
+            "version": "11.8.8-r0",
+            "bom-ref": "pkg:apk/alpine/mariadb-dev@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "be9df27cb63d9caf3b10ec78a13c09c0623ab960"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mariadb-dev@11.8.8-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mariadb-embedded",
+            "version": "11.8.8-r0",
+            "bom-ref": "pkg:apk/alpine/mariadb-embedded@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "42038a3bb141d44d1b02f18a6bb20553efffe111"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mariadb-embedded@11.8.8-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "musl-utils",
+            "version": "1.2.6-r2",
+            "bom-ref": "pkg:apk/alpine/musl-utils@1.2.6-r2?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "75ada3c48d63ec5d87c42fdf934a3fdd11298dc5"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "BSD-2-Clause"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "GPL-2.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/musl-utils@1.2.6-r2?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "musl",
+            "version": "1.2.6-r2",
+            "bom-ref": "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "0f7e5827e4e1a73631beda27b78431a8ba240e05"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "mysql-client",
+            "version": "11.8.8-r0",
+            "bom-ref": "pkg:apk/alpine/mysql-client@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "f0abe7dc026841b56e219d4c302f104abb83f26f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/mysql-client@11.8.8-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "ncurses-terminfo-base",
+            "version": "6.6_p20260516-r0",
+            "bom-ref": "pkg:apk/alpine/ncurses-terminfo-base@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Milan P. Stanić \u003cmps@arvanta.net\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "9d551d828e9c8ee52c5801c1d6046828ebf15752"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "X-11"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/ncurses-terminfo-base@6.6_p20260516-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "openssl-dev",
+            "version": "3.5.7-r0",
+            "bom-ref": "pkg:apk/alpine/openssl-dev@3.5.7-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "ccd334fbef60e627a719ca985f30606fcd94a660"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/openssl-dev@3.5.7-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "pcre2",
+            "version": "10.47-r1",
+            "bom-ref": "pkg:apk/alpine/pcre2@10.47-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Jakub Jirutka \u003cjakub@jirutka.cz\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "8ad6119a4a26044922b96cd8e2fc82f36a256de8"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/pcre2@10.47-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "pkgconf",
+            "version": "2.5.1-r0",
+            "bom-ref": "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Ariadne Conill \u003cariadne@dereferenced.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "07454df0588f2730777804ea4dd890de6e1dfdde"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "ISC"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "postgresql-common",
+            "version": "1.3-r0",
+            "bom-ref": "pkg:apk/alpine/postgresql-common@1.3-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Jakub Jirutka \u003cjakub@jirutka.cz\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "80cb1dc0324b191a8a793a85c54f69c62e9a4f6f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/postgresql-common@1.3-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "postgresql-libs",
+            "version": "20260712.191414",
+            "bom-ref": "pkg:apk/alpine/postgresql-libs@20260712.191414?arch=noarch&distro=3.24.1",
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "6156ddb66f2e622e6181caf34f56c937818cb456"
+                }
+            ],
+            "purl": "pkg:apk/alpine/postgresql-libs@20260712.191414?arch=noarch&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "postgresql18-client",
+            "version": "18.4-r0",
+            "bom-ref": "pkg:apk/alpine/postgresql18-client@18.4-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Jakub Jirutka \u003cjakub@jirutka.cz\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "257ec34294c2920aba259c792bb148ca639321ec"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "PostgreSQL"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/postgresql18-client@18.4-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "readline",
+            "version": "8.3.3-r1",
+            "bom-ref": "pkg:apk/alpine/readline@8.3.3-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "qaqland \u003cqaq@qaq.land\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "945b16e378bc00e44d89d4de8124bba7647fdf4d"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-3.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/readline@8.3.3-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "scanelf",
+            "version": "1.3.9-r1",
+            "bom-ref": "pkg:apk/alpine/scanelf@1.3.9-r1?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "013f903d0ba219673aebbdd04f74bb5ed82b01f0"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/scanelf@1.3.9-r1?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "sqlite-libs",
+            "version": "3.53.2-r0",
+            "bom-ref": "pkg:apk/alpine/sqlite-libs@3.53.2-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Jingyun Hua \u003chuajingyun@loongson.cn\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "1ffdc7c1d7b2c221306068c3ab0222fa0777b0c3"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "blessing"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/sqlite-libs@3.53.2-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "ssl_client",
+            "version": "1.37.0-r31",
+            "bom-ref": "pkg:apk/alpine/ssl_client@1.37.0-r31?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Sören Tempel \u003csoeren+alpine@soeren-tempel.net\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "c220f4a5125a313af733e98def94132bb1e9d40d"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/ssl_client@1.37.0-r31?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "tzdata",
+            "version": "2026b-r0",
+            "bom-ref": "pkg:apk/alpine/tzdata@2026b-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "c40d8eda63eeafd4460f25f5da45f824b3df277d"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "Public-Domain"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/tzdata@2026b-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "xz-libs",
+            "version": "5.8.3-r0",
+            "bom-ref": "pkg:apk/alpine/xz-libs@5.8.3-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "4c92c5be0c5bef404e93c880eba9037a9b147347"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "GPL-2.0-or-later"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "0BSD"
+                    }
+                },
+                {
+                    "license": {
+                        "name": "Public-Domain"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "LGPL-2.1-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/xz-libs@5.8.3-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "zlib-dev",
+            "version": "1.3.2-r0",
+            "bom-ref": "pkg:apk/alpine/zlib-dev@1.3.2-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "1668e3a443d602643333b97e0c88b92c70748c23"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Zlib"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/zlib-dev@1.3.2-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "zlib",
+            "version": "1.3.2-r0",
+            "bom-ref": "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "dd4c3d102acaef2a71a1495951d55fabc8680613"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Zlib"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+        },
+        {
+            "type": "library",
+            "name": "zstd-libs",
+            "version": "1.5.7-r2",
+            "bom-ref": "pkg:apk/alpine/zstd-libs@1.5.7-r2?arch=x86_64&distro=3.24.1",
+            "supplier": {
+                "name": "Natanael Copa \u003cncopa@alpinelinux.org\u003e"
+            },
+            "hashes": [
+                {
+                    "alg": "SHA-1",
+                    "content": "9569ce3a97c4109e8e53ddde9f3e1bd272613540"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "GPL-2.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:apk/alpine/zstd-libs@1.5.7-r2?arch=x86_64&distro=3.24.1"
+        }
+    ],
+    "dependencies": [
+        {
+            "ref": "06fcca55-5114-4814-9b85-881e50d3e312",
+            "dependsOn": [
+                "pkg:apk/alpine/.python-rundeps@20260616.002228?arch=noarch&distro=3.24.1",
+                "pkg:apk/alpine/alpine-baselayout@3.7.2-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/alpine-release@3.24.1-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/apk-tools@3.0.6-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/ca-certificates@20260611-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl-utils@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/postgresql-libs@20260712.191414?arch=noarch&distro=3.24.1",
+                "pkg:apk/alpine/ssl_client@1.37.0-r31?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/tzdata@2026b-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/.python-rundeps@20260616.002228?arch=noarch&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/gdbm@1.26-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libbz2@1.0.8-r6?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libffi@3.5.2-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libpanelw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libuuid@2.42-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/readline@8.3.3-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/sqlite-libs@3.53.2-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/xz-libs@5.8.3-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zstd-libs@1.5.7-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/alpine-baselayout-data@3.7.2-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:apk/alpine/alpine-baselayout@3.7.2-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/alpine-baselayout-data@3.7.2-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/alpine-keys@2.6-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:apk/alpine/alpine-release@3.24.1-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/alpine-keys@2.6-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/apk-tools@3.0.6-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/ca-certificates-bundle@20260611-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libapk@3.0.6-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/bash@5.3.9-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/readline@8.3.3-r1?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/busybox@1.37.0-r31?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/busybox@1.37.0-r31?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/ca-certificates-bundle@20260611-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:apk/alpine/ca-certificates@20260611-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/fmt-dev@11.2.0-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/fmt@11.2.0-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/fmt@11.2.0-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libstdc%2B%2B@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/gdbm@1.26-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libaio@0.3.113-r2?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libapk@3.0.6-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libbz2@1.0.8-r6?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libffi@3.5.2-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/ncurses-terminfo-base@6.6_p20260516-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libpanelw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/ncurses-terminfo-base@6.6_p20260516-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libpq@18.4-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libstdc%2B%2B@15.2.0-r5?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/libuuid@2.42-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/lz4-libs@1.10.0-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/mariadb-client@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libstdc%2B%2B@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/mariadb-common@11.8.8-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/pcre2@10.47-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/mariadb-common@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/mariadb-connector-c-dev@3.4.6-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/mariadb-connector-c@3.4.6-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/openssl-dev@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib-dev@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/mariadb-connector-c@3.4.6-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/mariadb-dev@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/fmt-dev@11.2.0-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/mariadb-connector-c-dev@3.4.6-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/mariadb-embedded@11.8.8-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/openssl-dev@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib-dev@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/mariadb-embedded@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libaio@0.3.113-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libgcc@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libstdc%2B%2B@15.2.0-r5?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/mariadb-common@11.8.8-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/pcre2@10.47-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/musl-utils@1.2.6-r2?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/scanelf@1.3.9-r1?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:apk/alpine/mysql-client@11.8.8-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/mariadb-client@11.8.8-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/ncurses-terminfo-base@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:apk/alpine/openssl-dev@3.5.7-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/pcre2@10.47-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/postgresql-common@1.3-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/busybox-binsh@1.37.0-r31?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/postgresql-libs@20260712.191414?arch=noarch&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/bash@5.3.9-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/mariadb-dev@11.8.8-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/mysql-client@11.8.8-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/postgresql18-client@18.4-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/postgresql18-client@18.4-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libpq@18.4-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/lz4-libs@1.10.0-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/postgresql-common@1.3-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/readline@8.3.3-r1?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zstd-libs@1.5.7-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/readline@8.3.3-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libncursesw@6.6_p20260516-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/scanelf@1.3.9-r1?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/sqlite-libs@3.53.2-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/ssl_client@1.37.0-r31?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/libcrypto3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/libssl3@3.5.7-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/tzdata@2026b-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:apk/alpine/xz-libs@5.8.3-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/zlib-dev@1.3.2-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/pkgconf@2.5.1-r0?arch=x86_64&distro=3.24.1",
+                "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/zlib@1.3.2-r0?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:apk/alpine/zstd-libs@1.5.7-r2?arch=x86_64&distro=3.24.1",
+            "dependsOn": [
+                "pkg:apk/alpine/musl@1.2.6-r2?arch=x86_64&distro=3.24.1"
+            ]
+        },
+        {
+            "ref": "pkg:oci/secobserve-backend@sha256%3Ac85553fd8c2851fdf778460266ac911207a637f0164ff04f47e5af91399c6000?arch=amd64&repository_url=ghcr.io%2Fsecobserve%2Fsecobserve-backend",
+            "dependsOn": [
+                "06fcca55-5114-4814-9b85-881e50d3e312"
+            ]
+        }
+    ],
+    "vulnerabilities": []
+}
