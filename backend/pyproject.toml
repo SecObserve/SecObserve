@@ -14,7 +14,7 @@ package-mode = false
 # Django
 # ------------------------------------------------------------------------------
 gunicorn = "26.0.0"  # https://github.com/benoitc/gunicorn
-django = "6.0.6"  # https://www.djangoproject.com/
+django = "6.0.7"  # https://www.djangoproject.com/
 django-environ = "0.14.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
 django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield 
