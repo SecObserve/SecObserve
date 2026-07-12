@@ -72,7 +72,7 @@ Similar finding are observations within one product that have the same title and
 
 ### Configuration
 
-Product groups and products can configure a list of regular expressions for assessment propagation. New optional field propagate_branches on products and product groups: a list o regular expressions ("Propagate to branches"). 
+Product groups and products can configure a list of regular expressions for assessment propagation: 
 
 ![Assessment propagation](../assets/images/screenshot_assessment_propagation.png)
 
@@ -81,11 +81,15 @@ Propagation is active for an assessment when the branch of the assessed observat
 
 ### Propagation of new assessments
 
+Activation of this direction is controlled with the parameter *"Propagate new assessments to other branches"*.
+
 When an assessment is saved (and auto-approved) or approved, it is copied to all observations on matching branches for similar findings.
 
 Propagated assessments are marked with the id of the original assessment. They are auto-approved (the original assessment already went through approval if required) and are never propagated again themselves.
 
 ### Propagate assessments for new observations
+
+Activation of this direction is controlled with the parameter *"Propagate new assessments to new observations"*.
 
 When an import creates a new observation, the newest matching assessment from the other configured branches is applied to it automatically. Only manual assessments count as source: approved, not itself propagated, not created by rules, VEX statements or the parser, and changing severity or status.
 
