@@ -60,12 +60,22 @@ def get_product_id(product: Product, branch: Optional[Branch]) -> str:
     return product.name
 
 
+def get_component_id(component_name_version: str, purl: Optional[str], cpe: Optional[str]) -> str:
+    if purl:
+        return purl
+    if cpe:
+        return cpe
+    return component_name_version
+
+
 def get_relationship_name(observation: Observation) -> str:
-    relationship_name = f"{observation.origin_component_name_version}@"
-    relationship_name += (
-        f"{observation.product.name}:{observation.branch.name}" if observation.branch else observation.product.name
+    component_id = get_component_id(
+        observation.origin_component_name_version,
+        observation.origin_component_purl,
+        observation.origin_component_cpe,
     )
-    return relationship_name
+    product_id = get_product_id(observation.product, observation.branch)
+    return f"{component_id}@{product_id}"
 
 
 def get_product_or_relationship_id(observation: Observation) -> str:

@@ -1,22 +1,28 @@
 import { Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayInput,
     AutocompleteArrayInput,
     BooleanInput,
     FormDataConsumer,
     Identifier,
     NullableBooleanInput,
     NumberInput,
+    ReferenceArrayInput,
     ReferenceInput,
+    SimpleFormIterator,
+    useRecordContext,
 } from "react-admin";
 
 import products from ".";
+import { DesignatedApproversInput } from "../../commons/custom_fields/DesignatedApproversInput";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import OSVLinuxDistributionInput from "../../commons/custom_fields/OSVLinuxDistributionInput";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_automatic_osv_scanning, feature_email, feature_license_management } from "../../commons/functions";
 import {
+    AutocompleteArrayInputWide,
     AutocompleteInputMedium,
     AutocompleteInputWide,
     TextInputExtraWide,
@@ -64,9 +70,13 @@ export const ProductCreateEditComponent = ({
     setDescription,
     productGroupId,
 }: ProductCreateEditComponentProps) => {
+    const product = useRecordContext();
+    // Limit approver choices to members with an approval-capable role on this product or its product group.
+    const approver_filter = { assessment_approver_for_product: product?.id ?? productGroupId ?? 0 };
+
     return (
         <Fragment>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                 <products.icon />
                 &nbsp;&nbsp;Product
             </Typography>
@@ -317,6 +327,30 @@ export const ProductCreateEditComponent = ({
                 Review
             </Typography>
             <BooleanInput source="assessments_need_approval" label="Assessments need approval" defaultValue={false} />
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.assessments_need_approval && (
+                        <Fragment>
+                            <DesignatedApproversInput
+                                approver_filter={approver_filter}
+                                helperText="Users allowed to approve assessments. Empty for default permission."
+                            />
+                            <ReferenceArrayInput
+                                source="assessment_approver_authorization_groups"
+                                reference="authorization_groups"
+                                filter={approver_filter}
+                                sort={{ field: "name", order: "ASC" }}
+                            >
+                                <AutocompleteArrayInputWide
+                                    label="Designated approver groups"
+                                    optionText="name"
+                                    helperText="Groups whose members may approve assessments."
+                                />
+                            </ReferenceArrayInput>
+                        </Fragment>
+                    )
+                }
+            </FormDataConsumer>
             <BooleanInput source="product_rules_need_approval" label="Rules need approval" defaultValue={false} />
             <BooleanInput
                 source="new_observations_in_review"
@@ -337,7 +371,7 @@ export const ProductCreateEditComponent = ({
                     nullLabel="Standard"
                     falseLabel="Disabled"
                     trueLabel="Product specific"
-                    helperText="Set date for expiry or risk acceptance"
+                    helperText="Set date for expiry of risk acceptance"
                     sx={{ width: "15em", marginBottom: 2 }}
                 />
                 <FormDataConsumer>
@@ -379,7 +413,7 @@ export const ProductCreateEditComponent = ({
                 Vulnerability scanning
             </Typography>
 
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                 <BooleanInput source="osv_enabled" label="OSV scanning enabled" defaultValue={true} />
                 <FormDataConsumer>
                     {({ formData }) => formData.osv_enabled && <OSVLinuxDistributionInput />}
@@ -397,6 +431,35 @@ export const ProductCreateEditComponent = ({
                                 />
                             )}
                         </Fragment>
+                    )
+                }
+            </FormDataConsumer>
+
+            <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+            <Typography variant="h6" sx={{ marginBottom: 2 }}>
+                Assessment propagation (experimental)
+            </Typography>
+            <ArrayInput source="propagate_branches" label={false} defaultValue={""}>
+                <SimpleFormIterator disableReordering inline>
+                    <TextInputWide label="Propagate to branches (regular expression)" source="propagate_to" />
+                </SimpleFormIterator>
+            </ArrayInput>
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.propagate_branches &&
+                    formData.propagate_branches.length >= 1 && (
+                        <Stack>
+                            <BooleanInput
+                                source="propagate_branches_new_assessment"
+                                label="Propagate new assessments to other branches"
+                                defaultValue={true}
+                            />
+                            <BooleanInput
+                                source="propagate_branches_new_observation"
+                                label="Propagate assessments to new observations"
+                                defaultValue={true}
+                            />
+                        </Stack>
                     )
                 }
             </FormDataConsumer>

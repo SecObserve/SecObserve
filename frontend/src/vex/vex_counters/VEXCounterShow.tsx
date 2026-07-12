@@ -7,7 +7,7 @@ import { is_superuser } from "../../commons/functions";
 const ShowActions = () => {
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "document_id_prefix", order: "ASC" }}
@@ -23,7 +23,7 @@ const VEXCounterShow = () => {
     return (
         <Show actions={<ShowActions />}>
             <SimpleShowLayout>
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <vex_counters.icon />
                     &nbsp;&nbsp;VEX Counter
                 </Typography>

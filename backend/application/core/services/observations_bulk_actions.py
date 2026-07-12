@@ -15,7 +15,11 @@ from application.core.models import (
     Product,
 )
 from application.core.queries.observation import get_current_observation_log
-from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment import (
+    assessment_approval,
+    save_assessment,
+    user_is_allowed_assessment_approver,
+)
 from application.core.services.potential_duplicates import (
     set_potential_duplicate,
     set_potential_duplicate_both_ways,
@@ -130,12 +134,12 @@ def _check_observations(product: Optional[Product], observation_ids: list[int]) 
 
 def observation_logs_bulk_approval(
     assessment_status: str,
-    approval_remark: str,
+    rejection_remark: str,
     observation_log_ids: list[int],
 ) -> None:
     observation_logs = _check_observation_logs(None, observation_log_ids)
     for observation_log in observation_logs:
-        assessment_approval(observation_log, assessment_status, approval_remark)
+        assessment_approval(observation_log, assessment_status, rejection_remark, None, None, None)
         set_potential_duplicate_both_ways(observation_log.observation)
 
 
@@ -156,6 +160,10 @@ def _check_observation_logs(product: Optional[Product], observation_log_ids: lis
             if get_current_user() == observation_log.user:
                 raise ValidationError(
                     f"First observation log where user cannot approve their own assessment: {observation_log.pk}"
+                )
+            if not user_is_allowed_assessment_approver(observation_log.observation.product):
+                raise ValidationError(
+                    f"First observation log where user is not an allowed approver: {observation_log.pk}"
                 )
 
     return observation_logs

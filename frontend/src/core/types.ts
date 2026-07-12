@@ -34,6 +34,11 @@ export interface Product extends RaRecord {
     issue_tracker_status_closed: string;
     issue_tracker_minimum_severity: string;
     last_observation_change: string;
+    assessments_need_approval: boolean;
+    assessment_approvers: Identifier[];
+    assessment_approver_authorization_groups: Identifier[];
+    product_group_assessment_approvers: Identifier[];
+    product_group_assessment_approver_authorization_groups: Identifier[];
 }
 
 export const ISSUE_TRACKER_TYPE_CHOICES = [
@@ -52,6 +57,9 @@ export interface ProductGroup extends RaRecord {
     notification_ms_teams_webhook: string;
     notification_slack_webhook: string;
     notification_email_to: string;
+    assessments_need_approval: boolean;
+    assessment_approvers: Identifier[];
+    assessment_approver_authorization_groups: Identifier[];
 }
 
 export interface Observation extends RaRecord {
@@ -286,10 +294,17 @@ export const OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES = [
 ];
 
 export const ASSESSMENT_STATUS_APPROVED = "Approved";
+export const ASSESSMENT_STATUS_APPROVED_WITH_EDITS = "Approved with edits";
 export const ASSESSMENT_STATUS_NEEDS_APPROVAL = "Needs approval";
 export const ASSESSMENT_STATUS_REJECTED = "Rejected";
 
 export const ASSESSMENT_STATUS_CHOICES = [
+    { id: ASSESSMENT_STATUS_APPROVED, name: ASSESSMENT_STATUS_APPROVED },
+    { id: ASSESSMENT_STATUS_APPROVED_WITH_EDITS, name: ASSESSMENT_STATUS_APPROVED_WITH_EDITS },
+    { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
+];
+
+export const ASSESSMENT_STATUS_BULK_CHOICES = [
     { id: ASSESSMENT_STATUS_APPROVED, name: ASSESSMENT_STATUS_APPROVED },
     { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
 ];

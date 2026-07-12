@@ -24,6 +24,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     vex_remediations: Optional[str],
     assessment_status: str,
     risk_acceptance_expiry_date: Optional[date],
+    propagated_from: Optional[Observation_Log] = None,
 ) -> Observation_Log:
     observation_log = Observation_Log(
         observation=observation,
@@ -36,9 +37,12 @@ def create_observation_log(  # pylint: disable=too-many-arguments
         vex_remediations=vex_remediations,
         assessment_status=assessment_status,
         general_rule=observation.general_rule,
+        general_rule_rego=observation.general_rule_rego,
         product_rule=observation.product_rule,
+        product_rule_rego=observation.product_rule_rego,
         vex_statement=observation.vex_statement,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
+        propagated_from=propagated_from,
     )
     observation_log.save()
 

@@ -79,7 +79,7 @@ const ShowActions = (props: ShowActionsProps) => {
     const product = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     filter={props.filter}
                     linkType="show"

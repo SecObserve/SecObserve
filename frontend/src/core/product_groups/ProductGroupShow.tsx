@@ -6,13 +6,18 @@ import TokenIcon from "@mui/icons-material/Token";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayField,
     BooleanField,
+    ChipField,
+    Datagrid,
     EditButton,
     Labeled,
     NumberField,
     PrevNextButtons,
+    ReferenceArrayField,
     ReferenceField,
     Show,
+    SingleFieldList,
     Tab,
     TabbedShowLayout,
     TabbedShowLayoutTabs,
@@ -58,7 +63,7 @@ const ShowActions = () => {
     const product_group = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "name", order: "ASC" }}
@@ -254,6 +259,32 @@ const ProductGroupShow = () => {
                                                     <BooleanField source="assessments_need_approval" />
                                                 </Labeled>
                                             )}
+                                            {product_group.assessment_approvers &&
+                                                product_group.assessment_approvers.length > 0 && (
+                                                    <Labeled label="Designated approvers">
+                                                        <ReferenceArrayField
+                                                            source="assessment_approvers"
+                                                            reference="users"
+                                                        >
+                                                            <SingleFieldList linkType={false}>
+                                                                <ChipField source="full_name" size="small" />
+                                                            </SingleFieldList>
+                                                        </ReferenceArrayField>
+                                                    </Labeled>
+                                                )}
+                                            {product_group.assessment_approver_authorization_groups &&
+                                                product_group.assessment_approver_authorization_groups.length > 0 && (
+                                                    <Labeled label="Designated approver groups">
+                                                        <ReferenceArrayField
+                                                            source="assessment_approver_authorization_groups"
+                                                            reference="authorization_groups"
+                                                        >
+                                                            <SingleFieldList linkType={false}>
+                                                                <ChipField source="name" size="small" />
+                                                            </SingleFieldList>
+                                                        </ReferenceArrayField>
+                                                    </Labeled>
+                                                )}
                                             {product_group.product_rules_need_approval && (
                                                 <Labeled label="Rules need approval">
                                                     <BooleanField source="product_rules_need_approval" />
@@ -308,6 +339,31 @@ const ProductGroupShow = () => {
                                                 <TextField source="name" />
                                             </ReferenceField>
                                         </Labeled>
+                                    </Fragment>
+                                )}
+                                {product_group.propagate_branches && product_group.propagate_branches.length > 0 && (
+                                    <Fragment>
+                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
+                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                                            Assessment propagation (experimental)
+                                        </Typography>
+                                        <ArrayField source="propagate_branches">
+                                            <Datagrid
+                                                bulkActionButtons={false}
+                                                rowClick={false}
+                                                sx={{ paddingBottom: 2 }}
+                                            >
+                                                <TextField source="propagate_to" label="Propagate to branches" />
+                                            </Datagrid>
+                                        </ArrayField>
+                                        <Stack>
+                                            <Labeled label="Propagate new assessments to other branches">
+                                                <BooleanField source="propagate_branches_new_assessment" />
+                                            </Labeled>
+                                            <Labeled label="Propagate assessments to new observations">
+                                                <BooleanField source="propagate_branches_new_observation" />
+                                            </Labeled>
+                                        </Stack>
                                     </Fragment>
                                 )}
                             </Tab>

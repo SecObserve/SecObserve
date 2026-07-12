@@ -38,7 +38,7 @@ const ProductHeader = () => {
                     marginTop: 2,
                 }}
             >
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <products.icon />
                     &nbsp;&nbsp;Product
                 </Typography>

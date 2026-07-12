@@ -4,6 +4,7 @@ from packageurl import PackageURL
 
 from application.core.models import Observation
 from application.vex.services.csaf_generator_helpers import (
+    get_component_id,
     get_product_id,
     get_relationship_name,
 )
@@ -16,14 +17,6 @@ from application.vex.types import (
     CSAFProductRelationship,
     CSAFProductTree,
 )
-
-
-def get_component_id(component_name_version: str, purl: Optional[str], cpe: Optional[str]) -> str:
-    if purl:
-        return purl
-    if cpe:
-        return cpe
-    return component_name_version
 
 
 def append_component_to_product_tree(

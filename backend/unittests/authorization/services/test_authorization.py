@@ -56,6 +56,72 @@ class TestAuthorization(BaseTestCase):
         )
         mock.assert_called_with(self.product_1, self.user_internal)
 
+    # --- Observation_Log_Approval restriction for designated approvers ---
+
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approval_role_based_without_designated_approvers(self, mock_role, mock_configured):
+        # No designated approvers: any role with the approval permission may approve.
+        mock_role.return_value = Roles.Writer
+        mock_configured.return_value = False
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, self.user_internal))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approval_granted_to_designated_approver(
+        self, mock_role, mock_configured, mock_approver
+    ):
+        # Designated approver with an approval-capable role may approve.
+        mock_role.return_value = Roles.Writer
+        mock_configured.return_value = True
+        mock_approver.return_value = True
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, self.user_internal))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approval_denied_to_non_designated_writer(
+        self, mock_role, mock_configured, mock_approver
+    ):
+        # Writer who is not designated may NOT approve once approvers are configured.
+        mock_role.return_value = Roles.Writer
+        mock_configured.return_value = True
+        mock_approver.return_value = False
+        self.assertFalse(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, self.user_internal))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approval_allowed_for_non_designated_owner(
+        self, mock_role, mock_configured, mock_approver
+    ):
+        # Owners may approve other users' assessments even when they are not designated.
+        mock_role.return_value = Roles.Owner
+        mock_configured.return_value = True
+        mock_approver.return_value = False
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, self.user_internal))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approval_denied_to_designated_without_role(
+        self, mock_role, mock_configured, mock_approver
+    ):
+        # A designated user without an approval-capable role (Reader) may NOT approve.
+        mock_role.return_value = Roles.Reader
+        mock_configured.return_value = True
+        mock_approver.return_value = True
+        self.assertFalse(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, self.user_internal))
+
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_approvers_do_not_affect_other_permissions(self, mock_role, mock_configured):
+        # The designated-approver restriction only applies to Observation_Log_Approval.
+        mock_role.return_value = Roles.Writer
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Edit, self.user_internal))
+        mock_configured.assert_not_called()
+
     # --- Product_Group ---
 
     @patch("application.authorization.services.authorization.get_highest_user_role")

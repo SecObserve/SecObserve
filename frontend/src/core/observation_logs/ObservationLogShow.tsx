@@ -22,7 +22,7 @@ import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types"
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { is_superuser } from "../../commons/functions";
-import { ASSESSMENT_STATUS_NEEDS_APPROVAL } from "../types";
+import { ASSESSMENT_STATUS_NEEDS_APPROVAL, ASSESSMENT_STATUS_REJECTED } from "../types";
 import AssessmentApproval from "./AssessmentApproval";
 import ObservationLogShowAside from "./ObservationLogShowAside";
 
@@ -55,14 +55,14 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 {observation_log && filter && sort && storeKey && (
                     <PrevNextButtons filter={filter} linkType="show" sort={sort} storeKey={storeKey} />
                 )}
                 {observation_log?.assessment_status == ASSESSMENT_STATUS_NEEDS_APPROVAL &&
                     observation_log?.observation_data?.product_data?.permissions?.includes(
                         PERMISSION_OBSERVATION_LOG_APPROVAL
-                    ) && <AssessmentApproval observation_log_id={observation_log.id} />}
+                    ) && <AssessmentApproval observation_log={observation_log} />}
             </Stack>
         </TopToolbar>
     );
@@ -81,10 +81,10 @@ const ObservationLogComponent = () => {
     return (
         <WithRecord
             render={(observation_log) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                         <Stack spacing={1}>
-                            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                                 <observation_logs.icon />
                                 &nbsp;&nbsp;Observation Log
                             </Typography>
@@ -136,22 +136,41 @@ const ObservationLogComponent = () => {
                                 </Labeled>
                             )}
                             {observation_log.general_rule != null && (
-                                <Labeled label="General rule">
+                                <Labeled label="General fields rule">
                                     <ReferenceField
                                         source="general_rule"
                                         reference="general_rules"
-                                        label="General rule name"
+                                        link="show"
+                                        sx={{ "& a": { textDecoration: "none" } }}
+                                    />
+                                </Labeled>
+                            )}
+                            {observation_log.general_rule_rego != null && (
+                                <Labeled label="General rego rule">
+                                    <ReferenceField
+                                        source="general_rule_rego"
+                                        reference="general_rules"
                                         link="show"
                                         sx={{ "& a": { textDecoration: "none" } }}
                                     />
                                 </Labeled>
                             )}
                             {observation_log.product_rule != null && (
-                                <Labeled label="Product rule">
+                                <Labeled label="Product fields rule">
                                     <ReferenceField
                                         source="product_rule"
                                         reference="product_rules"
-                                        label="Product rule name"
+                                        link="show"
+                                        sx={{ "& a": { textDecoration: "none" } }}
+                                    />
+                                </Labeled>
+                            )}
+                            {observation_log.product_rule_rego != null && (
+                                <Labeled label="Product rego rule">
+                                    <ReferenceField
+                                        source="product_rule_rego"
+                                        reference="product_rules"
+                                        label="Product rego rule name"
                                         link="show"
                                         sx={{ "& a": { textDecoration: "none" } }}
                                     />
@@ -177,6 +196,24 @@ const ObservationLogComponent = () => {
                         </Stack>
                     </Paper>
 
+                    {observation_log?.propagated_from && (
+                        <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
+                            <Stack spacing={1}>
+                                <Typography variant="h6">Assessment propagation</Typography>
+                                <Labeled label="Propagated from Observation Log">
+                                    <ReferenceField
+                                        source="propagated_from"
+                                        reference="observation_logs"
+                                        link="show"
+                                        sx={{ "& a": { textDecoration: "none" } }}
+                                    >
+                                        <NumberField source="id" options={{ useGrouping: false }} />
+                                    </ReferenceField>
+                                </Labeled>
+                            </Stack>
+                        </Paper>
+                    )}
+
                     {(observation_log?.observation_data?.product_data?.assessments_need_approval ||
                         observation_log?.observation_data?.product_data?.product_group_assessments_need_approval) && (
                         <Paper sx={{ marginBottom: 1, padding: 2, width: "100%" }}>
@@ -191,18 +228,30 @@ const ObservationLogComponent = () => {
                                     />
                                 </Labeled>
                                 {observation_log.approval_user_full_name && (
-                                    <Labeled label="Approved/rejected by">
+                                    <Labeled
+                                        label={
+                                            observation_log.assessment_status === ASSESSMENT_STATUS_REJECTED
+                                                ? "Rejected by"
+                                                : "Approved by"
+                                        }
+                                    >
                                         <TextField source="approval_user_full_name" />
                                     </Labeled>
                                 )}
-                                {observation_log.approval_remark && (
-                                    <Labeled label="Approval/rejection remark">
-                                        <TextField source="approval_remark" />
+                                {observation_log.approval_date && (
+                                    <Labeled
+                                        label={
+                                            observation_log.assessment_status === ASSESSMENT_STATUS_REJECTED
+                                                ? "Rejection date"
+                                                : "Approval date"
+                                        }
+                                    >
+                                        <DateField source="approval_date" showTime />
                                     </Labeled>
                                 )}
-                                {observation_log.approval_date && (
-                                    <Labeled label="Approval/rejection date">
-                                        <DateField source="approval_date" showTime />
+                                {observation_log.rejection_remark && (
+                                    <Labeled label="Rejection remark">
+                                        <TextField source="rejection_remark" />
                                     </Labeled>
                                 )}
                             </Stack>

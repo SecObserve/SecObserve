@@ -1,18 +1,21 @@
-[tool.poetry]
+[project]
 name = "SecObserve"
-version = "1.54.0"
+version = "1.55.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
-authors = [ "Stefan Fleckenstein", ]
+authors = [{ name = "Stefan Fleckenstein" }]
+requires-python = ">=3.12,<3.15"
+dynamic = ["dependencies"]
+
+[tool.poetry]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">= 3.12, < 3.15"
 # Django
 # ------------------------------------------------------------------------------
 gunicorn = "26.0.0"  # https://github.com/benoitc/gunicorn
-django = "6.0.6"  # https://www.djangoproject.com/
-django-environ = "0.13.0"  # https://github.com/joke2k/django-environ
+django = "6.0.7"  # https://www.djangoproject.com/
+django-environ = "0.14.0"  # https://github.com/joke2k/django-environ
 django-filter = "25.2"  # https://github.com/carltongibson/django-filter 
 django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield 
 django-encrypted-model-fields = "0.6.5"  # https://gitlab.com/lansharkconsulting/django/django-encrypted-model-fields
@@ -27,8 +30,8 @@ django-cors-headers = "4.9.0" # https://github.com/adamchainz/django-cors-header
 
 # OpenAPI 3
 # ------------------------------------------------------------------------------
-drf-spectacular = "0.29.0" # https://github.com/tfranzel/drf-spectacular
-drf-spectacular-sidecar = "2026.6.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
+drf-spectacular = "0.30.0" # https://github.com/tfranzel/drf-spectacular
+drf-spectacular-sidecar = "2026.7.1"  # https://github.com/tfranzel/drf-spectacular-sidecar
 
 # Token authentication
 # ------------------------------------------------------------------------------
@@ -59,7 +62,7 @@ license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expres
 
 # Task queue
 # ------------------------------------------------------------------------------
-huey = "3.0.1"  # https://github.com/coleifer/huey
+huey = "3.1.1"  # https://github.com/coleifer/huey
 
 # Issue tracker
 # ------------------------------------------------------------------------------
@@ -71,10 +74,10 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.9.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.5"  # https://github.com/spdx/tools-python
-html-to-markdown = "3.4.0"  # https://github.com/Goldziher/html-to-markdown
-cyclonedx-python-lib = "11.8.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
-licenselynx = "2.2.0"  # https://github.com/licenselynx/licenselynx
-regopy = { version = "1.3.0", markers = "platform_machine == 'x86_64' or platform_machine == 'AMD64'" }  # https://microsoft.github.io/rego-cpp/#python-example
+html-to-markdown = "3.8.2"  # https://github.com/Goldziher/html-to-markdown
+cyclonedx-python-lib = "11.11.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
+licenselynx = "2.3.0"  # https://github.com/licenselynx/licenselynx
+regopy = "1.5.2"  # https://microsoft.github.io/rego-cpp/#python-example
 simplejson = "4.1.1"
 
 # Development dependencies
@@ -88,7 +91,7 @@ django-silk = { version = "5.5.0", optional = true }  # https://github.com/jazzb
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------
-coverage = { version = "7.14.1", optional = true }  # https://github.com/nedbat/coveragepy
+coverage = { version = "7.15.0", optional = true }  # https://github.com/nedbat/coveragepy
 django-coverage-plugin = { version = "3.2.2", optional = true }  # https://github.com/nedbat/django_coverage_plugin
 
 # Code quality dependencies
@@ -96,23 +99,23 @@ django-coverage-plugin = { version = "3.2.2", optional = true }  # https://githu
 flake8 = { version = "7.3.0", optional = true }  # https://github.com/PyCQA/flake8
 flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gforcada/flake8-isort
 black = { version = "26.5.1", optional = true }  # https://github.com/psf/black
-pylint = { version = "4.0.5", optional = true }  # https://github.com/pylint-dev/pylint
+pylint = { version = "4.0.6", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.7.0", optional = true }  # https://github.com/PyCQA/pylint-django
 mypy = { version = "2.1.0", optional = true }  # https://github.com/python/mypy
-django-stubs = { version = "6.0.5", optional = true }  # https://github.com/typeddjango/django-stubs
+django-stubs = { version = "6.0.6", optional = true }  # https://github.com/typeddjango/django-stubs
 djangorestframework-stubs = { version = "3.17.0", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.1.0.20260518", optional = true }  # https://github.com/python/typeshed
 # import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
 
 [tool.poetry.extras]
-dev = ["Werkzeug", "ipdb", "watchgod", "django-extensions", "django-silk"]
+dev = ["Werkzeug", "ipdb", "django-extensions", "django-silk"]
 unittests = ["coverage", "django-extensions", "django-coverage-plugin"]
-code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "pre-commit", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
+code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
 
 [tool.black]
 line-length = 120
 target-version = ['py314']
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0.0"]
 build-backend = "poetry.core.masonry.api"

@@ -22,13 +22,13 @@ const LicenseComponentShowLicense = ({ licenseComponent, direction }: LicenseCom
     return (
         <RecordContextProvider value={licenseComponent}>
             {direction === "row" && (
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <license_components.icon />
                     &nbsp;&nbsp;License
                 </Typography>
             )}
             {direction === "column" && (
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     License
                 </Typography>
             )}

@@ -6,16 +6,23 @@ from application.access_control.models import Authorization_Group
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
 from application.core.api.serializers_observation import (
+    ObservationLogApprovalSerializer,
+    ObservationLogBulkApprovalSerializer,
     _get_origin_cloud_resource_url,
 )
 from application.core.api.serializers_product import (
     BranchSerializer,
     ProductAuthorizationGroupMemberSerializer,
+    ProductGroupSerializer,
     ProductMemberSerializer,
     ProductSerializer,
 )
-from application.core.models import Observation, Product
-from application.core.types import Severity, Status
+from application.core.models import (
+    Observation,
+    Product,
+    Product_Authorization_Group_Member,
+)
+from application.core.types import Assessment_Status, Severity, Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -39,13 +46,18 @@ class TestProductSerializer(BaseTestCase):
 
 
 class TestBranchSerializer(BaseTestCase):
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.assessment_approvers_configured")
     @patch("application.core.api.serializers_product.get_current_user")
     @patch("application.core.api.serializers_product.get_highest_user_role")
     @patch("application.core.api.serializers_product.get_permissions_for_role")
-    def test_get_permissions_user(self, mock_permissions, mock_highest_user_role, mock_user):
+    def test_get_permissions_user(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_configured, mock_approver
+    ):
         mock_permissions.return_value = [Permissions.Product_View]
         mock_highest_user_role.return_value = Roles.Writer
         mock_user.return_value = self.user_internal
+        mock_configured.return_value = False
         product_serializer = ProductSerializer()
         self.assertEqual(
             [Permissions.Product_View],
@@ -53,6 +65,104 @@ class TestBranchSerializer(BaseTestCase):
         )
         mock_highest_user_role.assert_called_with(self.product_1)
         mock_permissions.assert_called_with(Roles.Writer)
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.assessment_approvers_configured")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_approval_kept_without_designated_approvers(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_configured, mock_approver
+    ):
+        mock_permissions.return_value = {Permissions.Observation_View, Permissions.Observation_Log_Approval}
+        mock_highest_user_role.return_value = Roles.Writer
+        mock_user.return_value = self.user_internal
+        mock_configured.return_value = False
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_View, Permissions.Observation_Log_Approval},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
+        mock_approver.assert_not_called()
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.assessment_approvers_configured")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_approval_kept_for_designated_approver(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_configured, mock_approver
+    ):
+        mock_permissions.return_value = {Permissions.Observation_View, Permissions.Observation_Log_Approval}
+        mock_highest_user_role.return_value = Roles.Writer
+        mock_user.return_value = self.user_internal
+        mock_configured.return_value = True
+        mock_approver.return_value = True
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_View, Permissions.Observation_Log_Approval},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.assessment_approvers_configured")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_approval_stripped_for_non_designated(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_configured, mock_approver
+    ):
+        mock_permissions.return_value = {Permissions.Observation_View, Permissions.Observation_Log_Approval}
+        mock_highest_user_role.return_value = Roles.Writer
+        mock_user.return_value = self.user_internal
+        mock_configured.return_value = True
+        mock_approver.return_value = False
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_View},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
+
+    @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
+    @patch("application.core.api.serializers_product.assessment_approvers_configured")
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.get_permissions_for_role")
+    def test_get_permissions_approval_kept_for_non_designated_owner(
+        self, mock_permissions, mock_highest_user_role, mock_user, mock_configured, mock_approver
+    ):
+        mock_permissions.return_value = {Permissions.Observation_View, Permissions.Observation_Log_Approval}
+        mock_highest_user_role.return_value = Roles.Owner
+        mock_user.return_value = self.user_internal
+        mock_configured.return_value = True
+        mock_approver.return_value = False
+        product_serializer = ProductSerializer()
+        self.assertEqual(
+            {Permissions.Observation_View, Permissions.Observation_Log_Approval},
+            product_serializer.get_permissions(obj=self.product_1),
+        )
+
+    def test_validate_rejects_reader_designated_approver_group(self):
+        product = Product.objects.create(name="product")
+        authorization_group = Authorization_Group.objects.create(name="reader_approver_group")
+        Product_Authorization_Group_Member.objects.create(
+            product=product, authorization_group=authorization_group, role=Roles.Reader
+        )
+        product_serializer = ProductSerializer(product)
+
+        with self.assertRaises(ValidationError):
+            product_serializer.validate({"assessment_approver_authorization_groups": [authorization_group]})
+
+    def test_validate_allows_writer_designated_approver_group(self):
+        product = Product.objects.create(name="product")
+        authorization_group = Authorization_Group.objects.create(name="writer_approver_group")
+        Product_Authorization_Group_Member.objects.create(
+            product=product, authorization_group=authorization_group, role=Roles.Writer
+        )
+        product_serializer = ProductSerializer(product)
+        attrs = {"assessment_approver_authorization_groups": [authorization_group]}
+
+        self.assertEqual(attrs, product_serializer.validate(attrs))
 
     @patch("application.core.api.serializers_product.get_product_member")
     def test_validate_security_gate_active_empty(self, mock_product_member):
@@ -384,6 +494,32 @@ class TestProductAuthorizationGroupMemberSerializer(BaseTestCase):
         mock_highest_user_role.assert_called_with(self.product_1, self.user_internal)
         mock_user.assert_called_once()
 
+    @patch("application.core.api.serializers_product.get_current_user")
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    def test_validate_reader_role_rejected_for_designated_approver_group(self, mock_highest_user_role, mock_user):
+        mock_highest_user_role.return_value = Roles.Owner
+        mock_user.return_value = self.user_internal
+        product = Product.objects.create(name="product")
+        authorization_group = Authorization_Group.objects.create(name="designated_approver_group")
+        product_authorization_group_member = Product_Authorization_Group_Member.objects.create(
+            product=product, authorization_group=authorization_group, role=Roles.Writer
+        )
+        product.assessment_approver_authorization_groups.add(authorization_group)
+        product_authorization_group_member_serializer = ProductAuthorizationGroupMemberSerializer(
+            product_authorization_group_member
+        )
+        attrs = {"role": Roles.Reader}
+
+        with self.assertRaises(ValidationError) as e:
+            product_authorization_group_member_serializer.validate(attrs)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Designated approver groups must have at least the Writer role.', code='invalid')]",
+            str(e.exception),
+        )
+        mock_highest_user_role.assert_called_with(product, self.user_internal)
+        mock_user.assert_called_once()
+
     @patch("application.core.api.serializers_product.get_product_authorization_group_member")
     @patch("application.core.api.serializers_product.get_current_user")
     @patch("application.core.api.serializers_product.get_highest_user_role")
@@ -511,3 +647,290 @@ class TestObservationSerializer(BaseTestCase):
 
         result = _get_origin_cloud_resource_url(observation)
         self.assertIsNone(result)
+
+
+class TestObservationLogApprovalSerializer(BaseTestCase):
+    """Tests for the validate method of ObservationLogApprovalSerializer"""
+
+    def _get_serializer_data(self, **kwargs):
+        """Helper to create consistent test data with sensible defaults"""
+        # Default: Valid Approval
+        data = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "comment": "Test comment",  # Serializer expects 'comment' as required in Meta/fields if needed,
+            # but here we focus on the specific validation logic.
+            # Note: The serializer definition shows 'comment' is required=True.
+        }
+        data.update(kwargs)
+        return data
+
+    def test_valid_approval_no_remark(self):
+        """Test that valid approval without rejection remark passes validation"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            rejection_remark="",  # Empty string is allowed for approvals
+            observation_log_comment="",
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+        # The 'comment' field is required by the Serializer class definition (comment = CharField(..., required=True))
+        # So we must provide it or it will fail earlier.
+        # However, looking at the code snippet provided:
+        # class ObservationLogApprovalSerializer(Serializer):
+        #     ...
+        #     comment = CharField(max_length=4096, required=True)
+        # So 'comment' is mandatory.
+
+        try:
+            if not serializer.is_valid():
+                self.fail(f"Validation failed unexpectedly: {serializer.errors}")
+        except ValidationError as e:
+            self.fail(f"Unexpected ValidationError: {e}")
+
+    def test_valid_approval_with_remark_raises_error(self):
+        """Test that providing a rejection remark with an approval raises a validation error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            rejection_remark="This should fail",  # Non-empty string
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        # Check that the error message matches the expected logic
+        # Note: DRF validation errors are often raised during is_valid() or explicit raise
+        self.assertIn("Remark for rejection cannot be set with approval", str(context.exception))
+
+    def test_valid_rejection_with_remark(self):
+        """Test that valid rejection with a remark passes validation"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            rejection_remark="This is invalid",  # Non-empty string required for rejection
+            observation_log_comment="",
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        # 'comment' is required by the class definition
+        data["comment"] = "Valid comment for rejection"
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        try:
+            if not serializer.is_valid():
+                self.fail(f"Validation failed unexpectedly: {serializer.errors}")
+        except ValidationError as e:
+            self.fail(f"Unexpected ValidationError: {e}")
+
+    def test_invalid_rejection_without_remark(self):
+        """Test that rejection without a remark raises a validation error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            rejection_remark="",  # Empty string is not allowed for rejection
+        )
+        # 'comment' is required by the class definition
+        data["comment"] = "Valid comment"
+
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Rejection needs a remark", str(context.exception))
+
+    def test_invalid_approval_with_observation_log_comment(self):
+        """Test that providing an observation log comment with standard approval raises error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            observation_log_comment="Some edit comment",  # Should not be allowed for standard approval
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Comment for observation Log cannot be set with approval", str(context.exception))
+
+    def test_invalid_rejection_with_observation_log_comment(self):
+        """Test that providing an observation log comment with rejection raises error"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            rejection_remark="Rejected",
+            observation_log_comment="Some edit comment",  # Should not be allowed for rejection
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Comment for observation Log cannot be set with approval", str(context.exception))
+
+    def test_valid_approval_with_edits_has_comment(self):
+        """Test that APPROVED_WITH_EDITS works when comment is present"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            observation_log_comment="Edits were made",
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        try:
+            if not serializer.is_valid():
+                self.fail(f"Validation failed unexpectedly: {serializer.errors}")
+        except ValidationError as e:
+            self.fail(f"Unexpected ValidationError: {e}")
+
+    def test_invalid_approval_with_edits_no_comment(self):
+        """Test that APPROVED_WITH_EDITS fails when comment is missing"""
+        data = self._get_serializer_data(
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            observation_log_comment="",  # Empty string as per default or omitted
+        )
+        serializer = ObservationLogApprovalSerializer(data=data)
+
+        with self.assertRaises(ValidationError) as context:
+            if not serializer.is_valid():
+                raise ValidationError(serializer.errors)
+
+        self.assertIn("Approval with edits needs an observation log comment", str(context.exception))
+
+
+class TestObservationLogBulkApprovalSerializer(BaseTestCase):
+    """Tests for the validate method of ObservationLogBulkApprovalSerializer"""
+
+    def test_approved_with_rejection_remark_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "This should fail",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("Remark for rejection cannot be set with approval", str(e.exception))
+
+    def test_approved_without_rejection_remark_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+    def test_rejected_without_rejection_remark_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("Rejection needs a remark", str(e.exception))
+
+    def test_rejected_with_rejection_remark_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "This is invalid",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+    def test_no_status_valid(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "rejection_remark": "",
+        }
+
+        new_attrs = serializer.validate(attrs)
+
+        self.assertEqual(new_attrs, attrs)
+
+
+class TestValidatePropagateBranches(BaseTestCase):
+    """Tests for validate_propagate_branches of ProductSerializer and ProductGroupSerializer.
+
+    Both methods delegate to the module level _validate_propagate_branches, so every case is
+    exercised through both serializers to prove the delegation as well as the validation logic.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.serializers = (ProductSerializer(), ProductGroupSerializer())
+
+    def _label(self, serializer):
+        return type(serializer).__name__
+
+    def test_none_returns_none(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertIsNone(serializer.validate_propagate_branches(None))
+
+    def test_valid_list_is_returned(self):
+        value = [{"propagate_to": "release-.*"}, {"propagate_to": "main"}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertEqual(
+                    [{"propagate_to": "release-.*"}, {"propagate_to": "main"}],
+                    serializer.validate_propagate_branches(value),
+                )
+
+    def test_extra_keys_are_stripped(self):
+        value = [{"propagate_to": "main", "unexpected": "x"}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertEqual([{"propagate_to": "main"}], serializer.validate_propagate_branches(value))
+
+    def test_empty_list_returns_none(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertIsNone(serializer.validate_propagate_branches([]))
+
+    def test_items_without_propagate_to_are_skipped(self):
+        value = [{"propagate_to": ""}, {"other": "x"}, {}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertIsNone(serializer.validate_propagate_branches(value))
+
+    def test_mix_of_valid_and_skipped_items(self):
+        value = [{"propagate_to": ""}, {"propagate_to": "main"}]
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                self.assertEqual([{"propagate_to": "main"}], serializer.validate_propagate_branches(value))
+
+    def test_not_a_list_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches({"propagate_to": "main"})
+                self.assertIn("propagate_branches must be a list or null.", str(e.exception))
+
+    def test_item_not_a_dict_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches(["main"])
+                self.assertIn("Each item must be a dictionary.", str(e.exception))
+
+    def test_propagate_to_not_a_string_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches([{"propagate_to": 123}])
+                self.assertIn("The 'propagate_to' field must be a string.", str(e.exception))
+
+    def test_invalid_regex_raises(self):
+        for serializer in self.serializers:
+            with self.subTest(serializer=self._label(serializer)):
+                with self.assertRaises(ValidationError) as e:
+                    serializer.validate_propagate_branches([{"propagate_to": "["}])
+                self.assertIn("propagate_to is not a valid regular expression", str(e.exception))

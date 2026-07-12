@@ -34,7 +34,7 @@ class TestCryptolyzeParser(TestCase):
             observation = observations[0]
             self.assertEqual("Unrecommended TLS 1.2 cipher suites", observation.title)
             self.assertEqual(
-                "**Unrecommended cipher suites according to BSI recommendations:**\n* TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+                "**Unrecommended cipher suites:**\n* ECDHE_RSA_WITH_AES_256_GCM_SHA384\n* ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
                 observation.description,
             )
             self.assertEqual(Severity.SEVERITY_MEDIUM, observation.parser_severity)
@@ -44,16 +44,20 @@ class TestCryptolyzeParser(TestCase):
                 "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-2.pdf?__blob=publicationFile&v=5",
                 observation.unsaved_references[0],
             )
+            self.assertEqual(
+                "https://docs.tlsref.org",
+                observation.unsaved_references[1],
+            )
             self.assertEqual("Result", observation.unsaved_evidences[0][0])
             self.assertIn(
-                "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256",
+                "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",
                 observation.unsaved_evidences[0][1],
             )
 
             observation = observations[1]
             self.assertEqual("Unrecommended TLS 1.3 cipher suites", observation.title)
             self.assertEqual(
-                "**Unrecommended cipher suites according to BSI recommendations:**\n* TLS_CHACHA20_POLY1305_SHA256",
+                "**Unrecommended cipher suites:**\n* CHACHA20_POLY1305_SHA256",
                 observation.description,
             )
             self.assertEqual(Severity.SEVERITY_MEDIUM, observation.parser_severity)
@@ -63,13 +67,17 @@ class TestCryptolyzeParser(TestCase):
                 "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-2.pdf?__blob=publicationFile&v=5",
                 observation.unsaved_references[0],
             )
+            self.assertEqual(
+                "https://docs.tlsref.org",
+                observation.unsaved_references[1],
+            )
             self.assertEqual("Result", observation.unsaved_evidences[0][0])
-            self.assertIn("TLS_CHACHA20_POLY1305_SHA256", observation.unsaved_evidences[0][1])
+            self.assertIn("TLS_AES_128_GCM_SHA256", observation.unsaved_evidences[0][1])
 
             observation = observations[2]
             self.assertEqual("Unrecommended elliptic curves", observation.title)
             self.assertEqual(
-                "**Unrecommended elliptic curves according to BSI recommendations:**\n* X25519\n* X448",
+                "**Unrecommended elliptic curves:**\n* X448",
                 observation.description,
             )
             self.assertEqual(Severity.SEVERITY_MEDIUM, observation.parser_severity)
@@ -78,6 +86,10 @@ class TestCryptolyzeParser(TestCase):
             self.assertEqual(
                 "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-2.pdf?__blob=publicationFile&v=5",
                 observation.unsaved_references[0],
+            )
+            self.assertEqual(
+                "https://docs.tlsref.org",
+                observation.unsaved_references[1],
             )
             self.assertEqual("Result", observation.unsaved_evidences[0][0])
             self.assertIn("X25519", observation.unsaved_evidences[0][1])
@@ -85,7 +97,7 @@ class TestCryptolyzeParser(TestCase):
             observation = observations[3]
             self.assertEqual("Unrecommended signature algorithms", observation.title)
             self.assertEqual(
-                "**Unrecommended signature algorithms according to BSI recommendations:**\n* RSA_SHA1\n* RSA_SHA224",
+                "**Unrecommended signature algorithms:**\n* RSA_SHA1\n* RSA_SHA224",
                 observation.description,
             )
             self.assertEqual(Severity.SEVERITY_MEDIUM, observation.parser_severity)
@@ -94,6 +106,10 @@ class TestCryptolyzeParser(TestCase):
             self.assertEqual(
                 "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-2.pdf?__blob=publicationFile&v=5",
                 observation.unsaved_references[0],
+            )
+            self.assertEqual(
+                "https://docs.tlsref.org",
+                observation.unsaved_references[1],
             )
             self.assertEqual("Result", observation.unsaved_evidences[0][0])
             self.assertIn("RSA_SHA224", observation.unsaved_evidences[0][1])
@@ -112,7 +128,7 @@ class TestCryptolyzeParser(TestCase):
             observation = observations[0]
             self.assertEqual("Weak protocols detected", observation.title)
             self.assertEqual(
-                "**Weak protocols according to BSI recommendations:**\n* tls1\n* tls1_1",
+                "**Weak protocols:**\n* tls1\n* tls1_1",
                 observation.description,
             )
             self.assertEqual(Severity.SEVERITY_HIGH, observation.parser_severity)
@@ -121,6 +137,10 @@ class TestCryptolyzeParser(TestCase):
             self.assertEqual(
                 "https://www.bsi.bund.de/SharedDocs/Downloads/EN/BSI/Publications/TechGuidelines/TG02102/BSI-TR-02102-2.pdf?__blob=publicationFile&v=5",
                 observation.unsaved_references[0],
+            )
+            self.assertEqual(
+                "https://docs.tlsref.org",
+                observation.unsaved_references[1],
             )
             self.assertEqual("Result", observation.unsaved_evidences[0][0])
             self.assertIn("tls1_1", observation.unsaved_evidences[0][1])

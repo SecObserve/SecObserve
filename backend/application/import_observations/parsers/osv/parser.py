@@ -5,8 +5,11 @@ from datetime import datetime
 from json import dumps, loads
 from typing import Callable, Optional
 
+import environ
 import requests
 from packageurl import PackageURL
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 from application.core.models import Branch, Observation, Product
 from application.core.types import OSVLinuxDistribution
@@ -17,6 +20,39 @@ from application.import_observations.types import ExtendedSemVer, Parser_Type
 from application.licenses.models import License_Component
 
 logger = logging.getLogger("secobserve.import_observations")
+
+env = environ.Env()
+
+OSV_VULNERABILITY_URL = "https://api.osv.dev/v1/vulns/"
+OSV_REQUEST_TIMEOUT = 60
+OSV_MAX_RETRIES = 5
+OSV_BACKOFF_FACTOR = 1.0
+
+
+def _get_osv_max_threads() -> int:
+    return env.int("OSV_MAX_THREADS", default=32)
+
+
+def _create_osv_session() -> requests.Session:
+    # urllib3 decrements `total` on every retried error, so connection/SSL failures (the
+    # SSL EOF seen under load) are retried too, even though they are neither "connect" nor
+    # "read" errors in its taxonomy.
+    retry = Retry(
+        total=OSV_MAX_RETRIES,
+        backoff_factor=OSV_BACKOFF_FACTOR,
+        status_forcelist=(429, 500, 502, 503, 504),
+        # Only idempotent GETs are retried; verify idempotency before adding other methods.
+        allowed_methods=frozenset({"GET"}),
+        # Let urllib3 retry the status_forcelist codes silently; the caller's
+        # raise_for_status() surfaces a clear HTTPError once the retries are exhausted.
+        raise_on_status=False,
+    )
+    # Only one host (api.osv.dev) is contacted, so a single connection pool is enough; size it
+    # to the worker count so concurrent threads reuse pooled connections instead of opening new ones.
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=1, pool_maxsize=_get_osv_max_threads())
+    session = requests.Session()
+    session.mount("https://", adapter)
+    return session
 
 
 @dataclass(frozen=True)
@@ -180,19 +216,17 @@ class OSVParser(BaseParser):
             if osv_vulnerability.id not in valid_vulnerability_ids:
                 missing_osv_vulnerabilities.append(osv_vulnerability)
 
+        session = _create_osv_session()
+
         def _read_osv_vulnerability(osv_vulnerability: OSV_Vulnerability) -> OSV_Cache:
-            response = requests.get(
-                url=f"https://api.osv.dev/v1/vulns/{osv_vulnerability.id}",
-                timeout=60,
+            response = session.get(
+                url=f"{OSV_VULNERABILITY_URL}{osv_vulnerability.id}",
+                timeout=OSV_REQUEST_TIMEOUT,
             )
             response.raise_for_status()
             return OSV_Cache(osv_id=osv_vulnerability.id, modified=osv_vulnerability.modified, data=response.text)
 
-            # max number of threads to use
-
-        MAX_THREADS = 100
-
-        with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        with session, ThreadPoolExecutor(max_workers=_get_osv_max_threads()) as executor:
             osv_cache_items_from_osv = list(executor.map(_read_osv_vulnerability, missing_osv_vulnerabilities))
 
         if osv_cache_items_from_osv:

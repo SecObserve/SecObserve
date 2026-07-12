@@ -33,6 +33,13 @@ A part of the configuration is done with environment variables, which need to be
 | `OIDC_FULL_NAME`       | mandatory   | The claim that contains the full name of the user. |
 | `OIDC_EMAIL`           | mandatory   | The claim that contains the email address of the user. |
 | `OIDC_GROUPS`          | optional    | The claim that contains the groups of the user. |
+| `EMAIL_BACKEND`        | optional    | Django backend used to send email, see [Django settings EMAIL_BACKEND](https://docs.djangoproject.com/en/5.1/ref/settings/#email-backend). Default is `django.core.mail.backends.smtp.EmailBackend`. |
+| `EMAIL_HOST`           | optional    | Host of the SMTP server used to send email notifications. Default is `localhost`. Email notifications are only enabled when `EMAIL_HOST` or `EMAIL_PORT` is set. |
+| `EMAIL_PORT`           | optional    | Port of the SMTP server. Default is `1025`. |
+| `EMAIL_HOST_USER`      | optional    | Username used to authenticate against the SMTP server. Default is empty. |
+| `EMAIL_HOST_PASSWORD`  | optional    | Password used to authenticate against the SMTP server. Default is empty. |
+| `EMAIL_USE_TLS`        | optional    | `true`: use a TLS (secure) connection to the SMTP server, `false`: otherwise. Default is `false`. |
+| `OSV_MAX_THREADS`      | optional    | Maximum number of concurrent connections used when fetching vulnerability data from `api.osv.dev` during an OSV scan. Default is `32`. Lower it if the OSV API returns connection resets or SSL errors under load. |
 
 
 #### Frontend
