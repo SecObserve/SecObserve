@@ -53,7 +53,7 @@ const MetaData = () => {
                             <ReferenceField
                                 source="general_rule"
                                 reference="general_rules"
-                                label="General fields rule name"
+                                label="General fields rule"
                                 link="show"
                                 sx={{ "& a": { textDecoration: "none" } }}
                             />
@@ -62,7 +62,7 @@ const MetaData = () => {
                             <ReferenceField
                                 source="general_rule_rego"
                                 reference="general_rules"
-                                label="General rego rule name"
+                                label="General rego rule"
                                 link="show"
                                 sx={{ "& a": { textDecoration: "none" } }}
                             />
@@ -71,7 +71,7 @@ const MetaData = () => {
                             <ReferenceField
                                 source="product_rule"
                                 reference="product_rules"
-                                label="Product fields rule name"
+                                label="Product fields rule"
                                 link="show"
                                 sx={{ "& a": { textDecoration: "none" } }}
                             />
@@ -80,7 +80,7 @@ const MetaData = () => {
                             <ReferenceField
                                 source="product_rule_rego"
                                 reference="product_rules"
-                                label="Product rego rule name"
+                                label="Product rego rule"
                                 link="show"
                                 sx={{ "& a": { textDecoration: "none" } }}
                             />

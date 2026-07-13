@@ -1,4 +1,3 @@
-import platform
 from typing import Any, Optional
 
 from rest_framework.serializers import (
@@ -49,12 +48,6 @@ class GeneralRuleSerializer(ModelSerializer):
     def validate_description(self, value: str) -> str:
         if not value:
             raise ValidationError("Must be set")
-
-        return value
-
-    def validate_type(self, value: str) -> str:
-        if value == Rule_Type.RULE_TYPE_REGO and platform.machine() not in ["x86_64", "AMD64"]:
-            raise ValidationError("Rego rules are only supported on 'x86_64' or 'AMD64' architectures")
 
         return value
 
