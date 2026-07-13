@@ -59,7 +59,7 @@
         "@microsoft/eslint-formatter-sarif": "3.1.0",
         "@trivago/prettier-plugin-sort-imports": "6.0.2",
         "@types/humanize-duration": "3.27.4",
-        "@types/node": "25.9.4",
+        "@types/node": "25.9.5",
         "@types/papaparse":" 5.5.2",
         "@types/react-pivottable": "0.11.6",
         "@types/prop-types": "15.7.15",
