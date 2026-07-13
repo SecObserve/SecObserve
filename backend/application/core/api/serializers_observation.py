@@ -671,14 +671,16 @@ class ObservationLogApprovalSerializer(Serializer):
 
 
 class ObservationLogBulkApprovalSerializer(Serializer):
-    assessment_status = ChoiceField(choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL_BULK, required=False)
+    assessment_status = ChoiceField(choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL, required=False)
     rejection_remark = CharField(max_length=255, required=False, allow_blank=True)
+    observation_log_comment = CharField(max_length=4096, required=False, allow_blank=True)
     observation_logs = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
 
     def validate(self, attrs: dict) -> dict:
-        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED and attrs.get(
-            "rejection_remark"
-        ):
+        if attrs.get("assessment_status") in [
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+        ] and attrs.get("rejection_remark"):
             raise ValidationError("Remark for rejection cannot be set with approval")
 
         if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_REJECTED and not attrs.get(
@@ -686,8 +688,19 @@ class ObservationLogBulkApprovalSerializer(Serializer):
         ):
             raise ValidationError("Rejection needs a remark")
 
-        return super().validate(attrs)
+        if attrs.get("assessment_status") in [
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+        ]:
+            if attrs.get("observation_log_comment"):
+                raise ValidationError("Comment for observation Log cannot be set with approval or rejection")
 
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
+            "observation_log_comment"
+        ):
+            raise ValidationError("Approval with edits needs an observation log comment")
+
+        return super().validate(attrs)
 
 class ObservationLogBulkDeleteSerializer(Serializer):
     observation_logs = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
