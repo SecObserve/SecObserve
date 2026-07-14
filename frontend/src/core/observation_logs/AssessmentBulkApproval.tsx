@@ -1,16 +1,22 @@
 import ApprovalIcon from "@mui/icons-material/Approval";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
-import { Fragment, useState, useRef, useEffect } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { SimpleForm, useListContext, useNotify, useRefresh, useUnselectAll } from "react-admin";
 
+import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_required, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { ASSESSMENT_STATUS_APPROVED, ASSESSMENT_STATUS_APPROVED_WITH_EDITS, ASSESSMENT_STATUS_BULK_CHOICES, ASSESSMENT_STATUS_CHOICES, ASSESSMENT_STATUS_REJECTED } from "../types";
-import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
+import {
+    ASSESSMENT_STATUS_APPROVED,
+    ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+    ASSESSMENT_STATUS_BULK_CHOICES,
+    ASSESSMENT_STATUS_CHOICES,
+    ASSESSMENT_STATUS_REJECTED,
+} from "../types";
 
 type AssessmentBulkApprovalProps = {
     storeKey: string;
@@ -26,21 +32,20 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const unselectAll = useUnselectAll("observation_logs", storeKey);
     const [loading, setLoading] = useState(false);
 
-    const selectedRecords = data.filter(record =>
-        selectedIds.includes(record.id)
-  );
+    const selectedRecords = data.filter((record) => selectedIds.includes(record.id));
 
     const [comment, setComment] = useState("");
 
     const allSame =
-        selectedRecords.length > 0 &&
-        selectedRecords.every(r => r.comment === selectedRecords[0].comment);
+        selectedRecords.length > 0 && selectedRecords.every((r) => r.comment === selectedRecords[0].comment);
+
+    const firstComment = selectedRecords[0]?.comment ?? "";
 
     useEffect(() => {
         if (allSame) {
-            setComment(selectedRecords[0].comment ?? "");
+            setComment(firstComment);
         }
-    }, [allSame, selectedRecords[0]?.comment]);
+    }, [allSame, firstComment]);
 
     const assessmentUpdate = async (data: any) => {
         setLoading(true);
