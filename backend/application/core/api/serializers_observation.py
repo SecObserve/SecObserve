@@ -628,7 +628,33 @@ class ObservationLogListSerializer(ModelSerializer):
         fields = "__all__"
 
 
-class ObservationLogApprovalSerializer(Serializer):
+class ObservationLogApprovalBaseSerializer(Serializer):
+    def _validate_approval(self, attrs: dict) -> None:
+        if attrs.get("assessment_status") in [
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+        ] and attrs.get("rejection_remark"):
+            raise ValidationError("Remark for rejection cannot be set with approval")
+
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_REJECTED and not attrs.get(
+            "rejection_remark"
+        ):
+            raise ValidationError("Rejection needs a remark")
+
+        if attrs.get("assessment_status") in [
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+        ]:
+            if attrs.get("observation_log_comment"):
+                raise ValidationError("Comment for observation Log cannot be set with approval or rejection")
+
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
+            "observation_log_comment"
+        ):
+            raise ValidationError("Approval with edits needs an observation log comment")
+
+
+class ObservationLogApprovalSerializer(ObservationLogApprovalBaseSerializer):
     assessment_status = ChoiceField(choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL, required=True)
     rejection_remark = CharField(max_length=255, required=False, allow_blank=True)
     observation_log_comment = CharField(max_length=4096, required=False, allow_blank=True)
@@ -640,66 +666,28 @@ class ObservationLogApprovalSerializer(Serializer):
     observation_log_vex_remediations = JSONField(required=False, allow_null=True)
 
     def validate(self, attrs: dict) -> dict:
-        if attrs.get("assessment_status") in [
-            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
-            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
-        ] and attrs.get("rejection_remark"):
-            raise ValidationError("Remark for rejection cannot be set with approval")
-
-        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_REJECTED and not attrs.get(
-            "rejection_remark"
-        ):
-            raise ValidationError("Rejection needs a remark")
+        self._validate_approval(attrs)
 
         if attrs.get("assessment_status") in [
             Assessment_Status.ASSESSMENT_STATUS_APPROVED,
             Assessment_Status.ASSESSMENT_STATUS_REJECTED,
         ]:
-            if attrs.get("observation_log_comment"):
-                raise ValidationError("Comment for observation Log cannot be set with approval or rejection")
             if attrs.get("observation_log_vex_justification"):
                 raise ValidationError("VEX justification for observation log cannot be set with approval or rejection")
             if attrs.get("observation_log_vex_remediations"):
                 raise ValidationError("VEX remediation for observation log cannot be set with approval or rejection")
 
-        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
-            "observation_log_comment"
-        ):
-            raise ValidationError("Approval with edits needs an observation log comment")
-
         return super().validate(attrs)
 
 
-class ObservationLogBulkApprovalSerializer(Serializer):
+class ObservationLogBulkApprovalSerializer(ObservationLogApprovalBaseSerializer):
     assessment_status = ChoiceField(choices=Assessment_Status.ASSESSMENT_STATUS_CHOICES_APPROVAL, required=False)
     rejection_remark = CharField(max_length=255, required=False, allow_blank=True)
     observation_log_comment = CharField(max_length=4096, required=False, allow_blank=True)
     observation_logs = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
 
     def validate(self, attrs: dict) -> dict:
-        if attrs.get("assessment_status") in [
-            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
-            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
-        ] and attrs.get("rejection_remark"):
-            raise ValidationError("Remark for rejection cannot be set with approval")
-
-        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_REJECTED and not attrs.get(
-            "rejection_remark"
-        ):
-            raise ValidationError("Rejection needs a remark")
-
-        if attrs.get("assessment_status") in [
-            Assessment_Status.ASSESSMENT_STATUS_APPROVED,
-            Assessment_Status.ASSESSMENT_STATUS_REJECTED,
-        ]:
-            if attrs.get("observation_log_comment"):
-                raise ValidationError("Comment for observation Log cannot be set with approval or rejection")
-
-        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
-            "observation_log_comment"
-        ):
-            raise ValidationError("Approval with edits needs an observation log comment")
-
+        self._validate_approval(attrs)
         return super().validate(attrs)
 
 
