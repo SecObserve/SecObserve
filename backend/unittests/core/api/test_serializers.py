@@ -6,6 +6,7 @@ from application.access_control.models import Authorization_Group
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
 from application.core.api.serializers_observation import (
+    ObservationLogApprovalBaseSerializer,
     ObservationLogApprovalSerializer,
     ObservationLogBulkApprovalSerializer,
     _get_origin_cloud_resource_url,
@@ -854,6 +855,113 @@ class TestObservationLogBulkApprovalSerializer(BaseTestCase):
         new_attrs = serializer.validate(attrs)
 
         self.assertEqual(new_attrs, attrs)
+
+
+class TestObservationLogApprovalBaseSerializer(BaseTestCase):
+    """Tests for the shared _validate_approval method of ObservationLogApprovalBaseSerializer"""
+
+    def setUp(self):
+        super().setUp()
+        self.serializer = ObservationLogApprovalBaseSerializer()
+
+    def test_approved_with_rejection_remark_raises(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "This should fail",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            self.serializer._validate_approval(attrs)
+
+        self.assertIn("Remark for rejection cannot be set with approval", str(e.exception))
+
+    def test_approved_with_edits_with_rejection_remark_raises(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "rejection_remark": "This should fail",
+            "observation_log_comment": "Edits were made",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            self.serializer._validate_approval(attrs)
+
+        self.assertIn("Remark for rejection cannot be set with approval", str(e.exception))
+
+    def test_approved_without_rejection_remark_valid(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "rejection_remark": "",
+        }
+
+        self.assertIsNone(self.serializer._validate_approval(attrs))
+
+    def test_rejected_without_rejection_remark_raises(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            self.serializer._validate_approval(attrs)
+
+        self.assertIn("Rejection needs a remark", str(e.exception))
+
+    def test_rejected_with_rejection_remark_valid(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "This is invalid",
+        }
+
+        self.assertIsNone(self.serializer._validate_approval(attrs))
+
+    def test_approved_with_observation_log_comment_raises(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "observation_log_comment": "Some comment",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            self.serializer._validate_approval(attrs)
+
+        self.assertIn("Comment for observation Log cannot be set with approval or rejection", str(e.exception))
+
+    def test_rejected_with_observation_log_comment_raises(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_REJECTED,
+            "rejection_remark": "Rejected",
+            "observation_log_comment": "Some comment",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            self.serializer._validate_approval(attrs)
+
+        self.assertIn("Comment for observation Log cannot be set with approval or rejection", str(e.exception))
+
+    def test_approved_with_edits_without_comment_raises(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "observation_log_comment": "",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            self.serializer._validate_approval(attrs)
+
+        self.assertIn("Approval with edits needs an observation log comment", str(e.exception))
+
+    def test_approved_with_edits_with_comment_valid(self):
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "observation_log_comment": "Edits were made",
+        }
+
+        self.assertIsNone(self.serializer._validate_approval(attrs))
+
+    def test_no_status_valid(self):
+        attrs = {
+            "rejection_remark": "",
+        }
+
+        self.assertIsNone(self.serializer._validate_approval(attrs))
 
 
 class TestValidatePropagateBranches(BaseTestCase):
