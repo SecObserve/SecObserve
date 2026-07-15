@@ -1236,14 +1236,14 @@ files = [
 
 [[package]]
 name = "huey"
-version = "3.1.1"
+version = "3.2.1"
 description = "a little task queue"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "huey-3.1.1-py3-none-any.whl", hash = "sha256:8773231c7bc7a40b9b9191d72cf1c6580bbf6742a4118c70dde6b5c2e7ccb7ce"},
-    {file = "huey-3.1.1.tar.gz", hash = "sha256:156f30e90f0fae81ae2e004f2062e1b18ec9dcbc684564df63159ef546b13502"},
+    {file = "huey-3.2.1-py3-none-any.whl", hash = "sha256:da9e004b80941a718f33f9714697a67e6d5cf12e0707fc4f3dbb5d9c796e7224"},
+    {file = "huey-3.2.1.tar.gz", hash = "sha256:79cd63d117e5b8da2de58420dcde4e2d0f963e362d67a9b3872ce565eec5c3dc"},
 ]
 
 [package.extras]
@@ -3383,4 +3383,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "6e7e1bfb2ae4aa4bd11f373ab157b032fbe8644cc1a6d4166bd7cfb8ff71330f"
+content-hash = "ad697894b3658f4db7c4aead40b04cd011ef94001743ff82e64d20c07e87c513"
