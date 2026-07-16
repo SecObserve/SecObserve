@@ -2442,14 +2442,15 @@ testutils = ["gitpython (>3)"]
 
 [[package]]
 name = "pylint-django"
-version = "2.7.0"
+version = "2.8.0"
 description = "A Pylint plugin to help Pylint understand the Django web framework"
 optional = true
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "pylint_django-2.7.0-py3-none-any.whl", hash = "sha256:76ef7e7bbbcf7ee86adbb2beac0ffaa7232509a17bf4a488d81467a1bbaa215b"},
+    {file = "pylint_django-2.8.0-py3-none-any.whl", hash = "sha256:706eb2cc8d7692236be9fd033a341042afe3bbbf99df9234a659db931016ef5d"},
+    {file = "pylint_django-2.8.0.tar.gz", hash = "sha256:42accea9098e4a3298b4bfbae0e4da81f909f8bff0deda9485efbd6035a86d6a"},
 ]
 
 [package.dependencies]
@@ -3383,4 +3384,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "ad697894b3658f4db7c4aead40b04cd011ef94001743ff82e64d20c07e87c513"
+content-hash = "027d20e1f96ad03b2f8abd59bdd18469947849e4bf3856a6beac4a44f24a62cd"
