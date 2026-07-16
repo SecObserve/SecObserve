@@ -73,11 +73,10 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
 
         webhook_url = request_serializer.validated_data["webhook_url"]
         webhook_type = request_serializer.validated_data["webhook_type"]
-        ms_teams_v2_format = request_serializer.validated_data.get("ms_teams_v2_format", False)
 
         try:
             if webhook_type == "msteams":
-                send_msteams_notification_test(webhook_url, ms_teams_v2_format)
+                send_msteams_notification_test(webhook_url)
             else:
                 send_slack_notification_test(webhook_url)
         except Exception as e:

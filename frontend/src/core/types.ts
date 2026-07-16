@@ -21,7 +21,6 @@ export interface Product extends RaRecord {
     security_gate_threshold_unknown: number;
     apply_general_rules: boolean;
     notification_ms_teams_webhook: string;
-    notification_ms_teams_webhook_v2_format: boolean;
     notification_slack_webhook: string;
     notification_email_to: string;
     issue_tracker_active: boolean;
@@ -56,7 +55,6 @@ export interface ProductGroup extends RaRecord {
     repository_branch_housekeeping_keep_inactive_days: number;
     repository_branch_housekeeping_exempt_branches: string;
     notification_ms_teams_webhook: string;
-    notification_ms_teams_webhook_v2_format: boolean;
     notification_slack_webhook: string;
     notification_email_to: string;
     assessments_need_approval: boolean;

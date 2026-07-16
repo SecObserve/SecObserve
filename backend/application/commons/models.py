@@ -76,10 +76,6 @@ class Settings(Model, DirtyFieldsMixin):
         blank=True,
         help_text="MS Teams webhook to send exception notifications",
     )
-    exception_ms_teams_webhook_v2_format = BooleanField(
-        default=False,
-        help_text="Use new MS Teams webhook format (Power Automate Workflow)",
-    )
     exception_slack_webhook = TextField(
         max_length=2048,
         blank=True,
@@ -102,7 +98,6 @@ class Settings(Model, DirtyFieldsMixin):
     )
 
     observation_title_notification_ms_teams_webhook = TextField(max_length=2048, blank=True)
-    observation_title_notification_ms_teams_webhook_v2_format = BooleanField(default=False)
     observation_title_notification_slack_webhook = TextField(max_length=2048, blank=True)
     observation_title_notification_email_to = CharField(max_length=255, blank=True)
     observation_title_notification_min_severity = CharField(

@@ -39,13 +39,22 @@ def send_email_notification(notification_email_to: str, subject: str, template: 
             )
 
 
+def _is_msteams_v2(webhook: str) -> bool:
+    """Detect V1 (MessageCard) vs V2 (Power Automate) by URL. Legacy webhook.office.com = V1; everything else = V2."""
+    try:
+        hostname = urlsplit(webhook).hostname or ""
+        return not hostname.endswith("webhook.office.com")
+    except Exception:
+        return True
+
+
 @task()
-def send_msteams_notification(webhook: str, template: str, ms_teams_v2_format: bool = False, **kwargs: Any) -> None:
+def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        headers = {"Content-Type": "application/json"} if ms_teams_v2_format else {}
+        headers = {"Content-Type": "application/json"} if _is_msteams_v2(webhook) else {}
         try:
             response = requests.request(
                 method="POST",
@@ -89,13 +98,14 @@ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
             )
 
 
-def send_msteams_notification_test(webhook: str, ms_teams_v2_format: bool = False) -> None:
+def send_msteams_notification_test(webhook: str) -> None:
     if not _validate_webhook_url(webhook):
         raise ValueError(f"Invalid webhook URL: {webhook}")
-    template = "msteams_v2_test.tpl" if ms_teams_v2_format else "msteams_test.tpl"
+    v2 = _is_msteams_v2(webhook)
+    template = "msteams_v2_test.tpl" if v2 else "msteams_test.tpl"
     notification_message = _create_notification_message(template)
     if notification_message:
-        headers = {"Content-Type": "application/json"} if ms_teams_v2_format else {}
+        headers = {"Content-Type": "application/json"} if v2 else {}
         response = requests.request(
             method="POST",
             url=webhook,

@@ -1,18 +1,16 @@
 import SendIcon from "@mui/icons-material/Send";
 import { useState } from "react";
 import { Button, useNotify } from "react-admin";
-import { useFormContext, useWatch } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 
 import { httpClient } from "../ra-data-django-rest-framework";
 
 type WebhookTestButtonProps = {
     webhookSource: string;
     webhookType: "msteams" | "slack";
-    v2FormatSource?: string;
 };
 
-const WebhookTestButton = ({ webhookSource, webhookType, v2FormatSource }: WebhookTestButtonProps) => {
-    const { getValues } = useFormContext();
+const WebhookTestButton = ({ webhookSource, webhookType }: WebhookTestButtonProps) => {
     const webhookUrl = useWatch({ name: webhookSource });
     const notify = useNotify();
     const [loading, setLoading] = useState(false);
@@ -21,12 +19,9 @@ const WebhookTestButton = ({ webhookSource, webhookType, v2FormatSource }: Webho
         setLoading(true);
         try {
             const body: Record<string, unknown> = {
-                webhook_url: getValues(webhookSource),
+                webhook_url: webhookUrl,
                 webhook_type: webhookType,
             };
-            if (v2FormatSource) {
-                body.ms_teams_v2_format = getValues(v2FormatSource) ?? false;
-            }
             await httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/notifications/test_webhook/", {
                 method: "POST",
                 body: JSON.stringify(body),

@@ -11,6 +11,7 @@ from application.commons.services.functions import get_base_url_frontend, get_cl
 from application.core.models import Product
 from application.notifications.models import Notification
 from application.notifications.services.send_notifications_base import (
+    _is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -49,12 +50,10 @@ def send_product_security_gate_notification(product: Product) -> None:
 
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(product)
     if notification_ms_teams_webhook:
-        ms_teams_v2_format = _get_notification_ms_teams_webhook_v2_format(product)
-        template = "msteams_v2_product_security_gate.tpl" if ms_teams_v2_format else "msteams_product_security_gate.tpl"
+        template = "msteams_v2_product_security_gate.tpl" if _is_msteams_v2(notification_ms_teams_webhook) else "msteams_product_security_gate.tpl"
         send_msteams_notification(
             notification_ms_teams_webhook,
             template,
-            ms_teams_v2_format=ms_teams_v2_format,
             product=product,
             security_gate_status=security_gate_status,
             product_url=f"{get_base_url_frontend()}#/products/{product.id}/show",
@@ -98,12 +97,10 @@ def send_exception_notification(exception: Exception) -> None:
                 )
 
         if settings.exception_ms_teams_webhook:
-            ms_teams_v2_format = settings.exception_ms_teams_webhook_v2_format
-            template = "msteams_v2_exception.tpl" if ms_teams_v2_format else "msteams_exception.tpl"
+            template = "msteams_v2_exception.tpl" if _is_msteams_v2(settings.exception_ms_teams_webhook) else "msteams_exception.tpl"
             send_msteams_notification(
                 settings.exception_ms_teams_webhook,
                 template,
-                ms_teams_v2_format=ms_teams_v2_format,
                 exception_class=get_classname(exception),
                 exception_message=str(exception),
                 exception_trace=_get_stack_trace(exception, True),
@@ -157,12 +154,10 @@ def send_task_exception_notification(
                 )
 
         if settings.exception_ms_teams_webhook:
-            ms_teams_v2_format = settings.exception_ms_teams_webhook_v2_format
-            template = "msteams_v2_task_exception.tpl" if ms_teams_v2_format else "msteams_task_exception.tpl"
+            template = "msteams_v2_task_exception.tpl" if _is_msteams_v2(settings.exception_ms_teams_webhook) else "msteams_task_exception.tpl"
             send_msteams_notification(
                 settings.exception_ms_teams_webhook,
                 template,
-                ms_teams_v2_format=ms_teams_v2_format,
                 function=function,
                 arguments=str(arguments),
                 user=user,
@@ -244,16 +239,6 @@ def _get_notification_ms_teams_webhook(product: Product) -> Optional[str]:
         return product.product_group.notification_ms_teams_webhook
 
     return None
-
-
-def _get_notification_ms_teams_webhook_v2_format(product: Product) -> bool:
-    if product.notification_ms_teams_webhook:
-        return product.notification_ms_teams_webhook_v2_format
-
-    if product.product_group and product.product_group.notification_ms_teams_webhook:
-        return product.product_group.notification_ms_teams_webhook_v2_format
-
-    return False
 
 
 def _get_notification_slack_webhook(product: Product) -> Optional[str]:

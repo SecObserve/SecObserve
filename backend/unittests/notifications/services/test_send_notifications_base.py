@@ -9,6 +9,7 @@ from application.commons.models import Settings
 from application.commons.services.functions import get_classname
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
+    _is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -136,12 +137,12 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.return_value = "test_message"
         mock_request.side_effect = Exception("test_exception")
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://tenant.webhook.office.com/webhookb2/test",
             data="test_message",
             allow_redirects=False,
             headers={},
@@ -164,12 +165,12 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 400
         mock_request.return_value = response
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://tenant.webhook.office.com/webhookb2/test",
             data="test_message",
             headers={},
             allow_redirects=False,
@@ -192,12 +193,12 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 200
         mock_request.return_value = response
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://tenant.webhook.office.com/webhookb2/test",
             data="test_message",
             allow_redirects=False,
             headers={},
@@ -218,7 +219,7 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.return_value = "test_message"
         mock_request.side_effect = Exception("test_exception")
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template", ms_teams_v2_format=True)
+        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -246,7 +247,7 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 200
         mock_request.return_value = response
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template", ms_teams_v2_format=True)
+        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -639,3 +640,26 @@ class TestPushNotifications(BaseTestCase):
             "extra",
             [action["name"] for action in parsed["potentialAction"]][0].split("View observation ")[-1][:4],
         )
+
+    # --- _is_msteams_v2 ---
+
+    def test_is_msteams_v2_office_com_is_v1(self):
+        self.assertFalse(_is_msteams_v2("https://tenant.webhook.office.com/webhookb2/abc123"))
+
+    def test_is_msteams_v2_subdomain_office_com_is_v1(self):
+        self.assertFalse(_is_msteams_v2("https://contoso.webhook.office.com/webhookb2/xyz"))
+
+    def test_is_msteams_v2_bare_webhook_office_com_is_v1(self):
+        self.assertFalse(_is_msteams_v2("https://webhook.office.com/webhookb2/test"))
+
+    def test_is_msteams_v2_power_automate_is_v2(self):
+        self.assertTrue(_is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke"))
+
+    def test_is_msteams_v2_generic_https_is_v2(self):
+        self.assertTrue(_is_msteams_v2("https://hooks.example.org/webhook"))
+
+    def test_is_msteams_v2_empty_string_is_v2(self):
+        self.assertTrue(_is_msteams_v2(""))
+
+    def test_is_msteams_v2_invalid_url_is_v2(self):
+        self.assertTrue(_is_msteams_v2("not-a-url"))

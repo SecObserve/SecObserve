@@ -10,7 +10,6 @@ export const transform_product_group_and_product = (data: any, description: stri
 
     data.notification_email_to ??= "";
     data.notification_ms_teams_webhook ??= "";
-    data.notification_ms_teams_webhook_v2_format ??= false;
     data.notification_slack_webhook ??= "";
 
     if (data.security_gate_active) {

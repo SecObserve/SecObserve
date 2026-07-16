@@ -106,24 +106,18 @@ export const ProductGroupCreateEditComponent = ({
                         validate={validate_255}
                     />
                 )}
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <TextInputExtraWide
                         source="notification_ms_teams_webhook"
                         label="Webhook URL to send notifications to MS Teams"
                         validate={validate_2048}
                     />
-                    <BooleanInput
-                        source="notification_ms_teams_webhook_v2_format"
-                        label="V2 webhook"
-                        defaultValue={false}
-                    />
                     <WebhookTestButton
                         webhookSource="notification_ms_teams_webhook"
                         webhookType="msteams"
-                        v2FormatSource="notification_ms_teams_webhook_v2_format"
                     />
                 </Stack>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <TextInputExtraWide
                         source="notification_slack_webhook"
                         label="Webhook URL to send notifications to Slack"

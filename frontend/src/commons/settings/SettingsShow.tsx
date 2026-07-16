@@ -198,11 +198,6 @@ const SettingsShowComponent = () => {
                                     <TextField source="exception_ms_teams_webhook" />
                                 </Labeled>
                             )}
-                            {settings.exception_ms_teams_webhook && (
-                                <Labeled label="Use V2 webhook for exception notifications">
-                                    <BooleanField source="exception_ms_teams_webhook_v2_format" />
-                                </Labeled>
-                            )}
                             {settings.exception_slack_webhook && (
                                 <Labeled label="Exception Slack webhook for exception notifications">
                                     <TextField source="exception_slack_webhook" />
@@ -219,11 +214,6 @@ const SettingsShowComponent = () => {
                             {settings.observation_title_notification_ms_teams_webhook && (
                                 <Labeled label="MS Teams webhook for observation title notifications">
                                     <TextField source="observation_title_notification_ms_teams_webhook" />
-                                </Labeled>
-                            )}
-                            {settings.observation_title_notification_ms_teams_webhook && (
-                                <Labeled label="Use V2 webhook for observation title notifications">
-                                    <BooleanField source="observation_title_notification_ms_teams_webhook_v2_format" />
                                 </Labeled>
                             )}
                             {settings.observation_title_notification_slack_webhook && (

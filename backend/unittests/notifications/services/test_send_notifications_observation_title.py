@@ -18,7 +18,6 @@ def _make_settings(
     email_to="admin@example.com",
     email_from="noreply@example.com",
     ms_teams_webhook=None,
-    ms_teams_webhook_v2_format=False,
     slack_webhook=None,
 ):
     s = MagicMock()
@@ -29,7 +28,6 @@ def _make_settings(
     s.observation_title_notification_email_to = email_to
     s.email_from = email_from
     s.observation_title_notification_ms_teams_webhook = ms_teams_webhook
-    s.observation_title_notification_ms_teams_webhook_v2_format = ms_teams_webhook_v2_format
     s.observation_title_notification_slack_webhook = slack_webhook
     return s
 
@@ -333,8 +331,7 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
 
         mock_send_teams.assert_called_once_with(
             "https://teams.webhook.example.com",
-            "msteams_observation_title.tpl",
-            ms_teams_v2_format=False,
+            "msteams_v2_observation_title.tpl",
             observation=observation,
             url="http://url",
             first_line="First line",
@@ -344,7 +341,7 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
     @patch(f"{MODULE}.get_current_user")
     @patch(f"{MODULE}.send_msteams_notification")
     @patch(f"{MODULE}._get_email_to_addresses")
-    def test_sends_msteams_notification_v2_format_when_webhook_configured(
+    def test_sends_msteams_notification_legacy_format_when_webhook_configured(
         self, mock_get_addresses, mock_send_teams, mock_get_user, mock_notification
     ):
         mock_get_addresses.return_value = []
@@ -352,17 +349,15 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
 
         settings = _make_settings(
             email_from=None,
-            ms_teams_webhook="https://teams.webhook.example.com",
-            ms_teams_webhook_v2_format=True,
+            ms_teams_webhook="https://tenant.webhook.office.com/webhookb2/test",
             slack_webhook=None,
         )
         observation = _make_observation()
         _send_observation_title_notifications(settings, observation, "First line", "http://url")
 
         mock_send_teams.assert_called_once_with(
-            "https://teams.webhook.example.com",
-            "msteams_v2_observation_title.tpl",
-            ms_teams_v2_format=True,
+            "https://tenant.webhook.office.com/webhookb2/test",
+            "msteams_observation_title.tpl",
             observation=observation,
             url="http://url",
             first_line="First line",
