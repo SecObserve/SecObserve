@@ -6,8 +6,7 @@ import { useEffect, useState } from "react";
 import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "react-admin";
 
 import administration from "../../access_control/access_control_administration";
-import periodic_tasks from "../../background_tasks/periodic_tasks";
-import background_tasks_statistics from "../../background_tasks/statistics";
+import background_tasks_administration from "../../background_tasks/background_tasks_administration";
 import components from "../../core/components";
 import observations from "../../core/observations";
 import product_groups from "../../core/product_groups";
@@ -50,7 +49,7 @@ const Menu = ({ dense = false }: MenuProps) => {
     return (
         <MenuList
             sx={{
-                width: open ? 220 : 50,
+                width: open ? 225 : 50,
                 marginTop: 1,
                 marginBottom: 1,
                 transition: (theme) =>
@@ -181,19 +180,10 @@ const Menu = ({ dense = false }: MenuProps) => {
                 )}
                 {is_superuser() && (
                     <MenuItemLink
-                        to="/background_tasks_statistics"
+                        to="/background_tasks/statistics"
                         state={{ _scrollToTop: true }}
-                        primaryText="Background Task Statistics"
-                        leftIcon={<background_tasks_statistics.icon />}
-                        dense={dense}
-                    />
-                )}
-                {is_superuser() && (
-                    <MenuItemLink
-                        to="/periodic_tasks"
-                        state={{ _scrollToTop: true }}
-                        primaryText="Periodic Tasks"
-                        leftIcon={<periodic_tasks.icon />}
+                        primaryText="Background Tasks"
+                        leftIcon={<background_tasks_administration.icon />}
                         dense={dense}
                     />
                 )}

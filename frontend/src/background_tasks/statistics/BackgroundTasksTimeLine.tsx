@@ -60,6 +60,7 @@ const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
                             suggestedMax: 3,
                             ticks: {
                                 precision: 0,
+                                color: getFontColor(),
                             },
                             stacked: true,
                             grid: {
@@ -68,6 +69,9 @@ const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
                         },
                         x: {
                             stacked: true,
+                            ticks: {
+                                color: getFontColor(),
+                            },
                             grid: {
                                 color: getGridColor(),
                             },
