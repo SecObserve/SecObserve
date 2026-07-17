@@ -12,6 +12,7 @@ from application.access_control.api.views import (
     UserAPITokenCreateView,
     UserAPITokenRevokeView,
 )
+from application.background_tasks.api.views import BackgroundTaskView
 from application.commons.api.views import (
     HealthView,
     SettingsView,
@@ -47,7 +48,7 @@ from application.vex.api.views import (
     OpenVEXDocumentUpdateView,
     VEXImportView,
 )
-from application.background_tasks.api.views import BackgroundTaskView
+
 urlpatterns = [
     path("", empty_view),
     path(

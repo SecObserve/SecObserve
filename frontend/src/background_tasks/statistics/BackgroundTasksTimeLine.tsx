@@ -1,106 +1,98 @@
 import { Paper } from "@mui/material";
-import {
-    CategoryScale,
-    Chart as ChartJS,
-    Filler,
-    Legend,
-    LineElement,
-    LinearScale,
-    PointElement,
-    Title,
-    Tooltip,
-} from "chart.js";
-import { useEffect, useState } from "react";
-import { Identifier, useNotify } from "react-admin";
-import { Line } from "react-chartjs-2";
+import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from "chart.js";
+import { Bar } from "react-chartjs-2";
 
-import { get_severity_color } from "../commons/functions";
-import { httpClient } from "../commons/ra-data-django-rest-framework";
-import { getSettingsMetricsTimespanInDays } from "../commons/user_settings/functions";
-import {
-    OBSERVATION_SEVERITY_CRITICAL,
-    OBSERVATION_SEVERITY_HIGH,
-    OBSERVATION_SEVERITY_LOW,
-    OBSERVATION_SEVERITY_MEDIUM,
-    OBSERVATION_SEVERITY_NONE,
-    OBSERVATION_SEVERITY_UNKNOWN,
-} from "../core/types";
-import { getBackgroundColor, getElevation, getFontColor, getGridColor } from "./functions";
-import { TimeLine } from "../types";
+import { getBackgroundColor, getElevation, getFontColor, getGridColor } from "../../metrics/functions";
+import { BackgroundTaskThroughput } from "../types";
 
 interface BackgroundTasksTimelineProps {
-    timeline: TimeLine;
+    timeline: BackgroundTaskThroughput;
 }
 
 const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
-    const [datasets, setDatasets] = useState<any[]>([]);
-    const notify = useNotify();
+    ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+
+    const length = props.timeline.complete.length;
+    const labels = [];
+    for (let i = 0; i < length; i++) {
+        labels.push(
+            new Date(Date.now() - (length - 1 - i) * 60 * 1000).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false,
+            })
+        );
+    }
 
     const chart_data = {
-        labels: days,
-        datasets: datasets,
+        labels: labels,
+        datasets: [
+            {
+                label: "Completed",
+                data: props.timeline.complete,
+                backgroundColor: "#53aa33",
+                stack: "throughput",
+            },
+            {
+                label: "Errors",
+                data: props.timeline.error,
+                backgroundColor: "#cc0500",
+                stack: "throughput",
+            },
+        ],
     };
-
-    ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Filler, Legend);
 
     return (
         <Paper
-            elevation={getElevation(props.on_dashboard)}
+            elevation={getElevation()}
             sx={{
-                alignItems: "top",
-                display: "flex",
-                justifyContent: "flex-center",
-                width: "33%",
+                width: "100%",
             }}
         >
-            {!loading && (
-                <Line
-                    width="50vw"
-                    height="50vw"
-                    data={chart_data}
-                    options={{
-                        scales: {
-                            y: {
-                                min: 0,
-                                suggestedMax: 5,
-                                ticks: {
-                                    precision: 0,
-                                },
-                                stacked: true,
-                                grid: {
-                                    color: getGridColor(),
-                                },
+            <Bar
+                data={chart_data}
+                options={{
+                    maintainAspectRatio: true,
+                    aspectRatio: 3,
+                    scales: {
+                        y: {
+                            min: 0,
+                            suggestedMax: 3,
+                            ticks: {
+                                precision: 0,
                             },
-                            x: {
-                                grid: {
-                                    color: getGridColor(),
-                                },
+                            stacked: true,
+                            grid: {
+                                color: getGridColor(),
                             },
                         },
-                        borderColor: getBackgroundColor(),
-                        responsive: true,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text:
-                                    "Severities of active observations (last " +
-                                    getSettingsMetricsTimespanInDays() +
-                                    " days)",
+                        x: {
+                            stacked: true,
+                            grid: {
+                                color: getGridColor(),
+                            },
+                        },
+                    },
+                    borderColor: getBackgroundColor(),
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: "Background tasks throughput (last 60 minutes)",
+                            color: getFontColor(),
+                        },
+                        legend: {
+                            display: true,
+                            position: "bottom",
+                            labels: {
                                 color: getFontColor(),
                             },
-                            legend: {
-                                display: true,
-                                position: "bottom",
-                                labels: {
-                                    color: getFontColor(),
-                                },
-                            },
                         },
-                    }}
-                />
-            )}
+                    },
+                }}
+            />
         </Paper>
     );
 };
 
-export default MetricsSeveritiesTimeline;
+export default BackgroundTasksTimeline;

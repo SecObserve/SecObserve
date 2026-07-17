@@ -4,7 +4,30 @@ export const PERIODIC_TASKS_STATUS_CHOICES = [
     { id: "Running", name: "Running" },
 ];
 
-export interface TimeLine {
-    completed: number[];
+export interface BackgroundTaskBreakdown {
+    task: string;
+    full: string;
+    executed: number;
+    completed: number;
+    errors: number;
+    retries: number;
+    avg: number | null;
+}
+
+export interface BackgroundTaskThroughput {
+    complete: number[];
     error: number[];
-};
+}
+
+export interface BackgroundTaskInflight {
+    task: string;
+    id: string;
+    started: number;
+    elapsed: number;
+}
+
+export interface BackgroundTaskStatistics {
+    task_breakdown: BackgroundTaskBreakdown[];
+    throughput: BackgroundTaskThroughput;
+    inflight: BackgroundTaskInflight[];
+}

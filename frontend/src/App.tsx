@@ -11,6 +11,7 @@ import authorization_groups from "./access_control/authorization_groups";
 import { Login } from "./access_control/login";
 import users from "./access_control/users";
 import periodic_tasks from "./background_tasks/periodic_tasks";
+import background_tasks_statistics from "./background_tasks/statistics";
 import { Layout } from "./commons/layout";
 import { darkTheme, lightTheme } from "./commons/layout/themes";
 import PivotTable from "./commons/pivot_table/PivotTable";
@@ -84,6 +85,7 @@ const AdminApp = () => {
                 <Route path="/license/license_groups" element={<LicenseAdministration />} />
                 <Route path="/license/license_policies" element={<LicenseAdministration />} />
                 <Route path="/license/concluded_licenses" element={<LicenseAdministration />} />
+                <Route path="/background_tasks_statistics" element={<background_tasks_statistics.page />} />
                 <Route path="/pivot_table" element={<PivotTable />} />
                 <Route path="/reviews" element={<Reviews />} />
                 <Route path="/reviews/observation_reviews" element={<Reviews />} />
