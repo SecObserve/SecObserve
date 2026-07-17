@@ -47,7 +47,7 @@ from application.vex.api.views import (
     OpenVEXDocumentUpdateView,
     VEXImportView,
 )
-
+from application.background_tasks.api.views import BackgroundTaskView
 urlpatterns = [
     path("", empty_view),
     path(
@@ -69,6 +69,7 @@ urlpatterns += [
     path("api/status/version/", VersionView.as_view()),
     path("api/status/health/", HealthView.as_view()),
     path("api/status/settings/", StatusSettingsView.as_view()),
+    path("api/status/background_task_statistics/", BackgroundTaskView.as_view()),
     path("api/settings/<int:pk>/", SettingsView.as_view(), name="settings"),
     path("api/jwt_secret/reset/", JWTSecretResetView.as_view()),
     path(

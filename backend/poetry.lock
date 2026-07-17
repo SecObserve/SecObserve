@@ -1945,6 +1945,27 @@ optional = ["typing-extensions (>=4)"]
 re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
+name = "peewee"
+version = "4.2.4"
+description = "a little orm"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "peewee-4.2.4-py3-none-any.whl", hash = "sha256:feb430a7700658c40217e9eb7d4c9418e7a725fd282e986d104e166732ce5143"},
+    {file = "peewee-4.2.4.tar.gz", hash = "sha256:0ba411fcda2be276d55ec9f335518cb603e2899da03611a1d44502f5aece6837"},
+]
+
+[package.extras]
+aiomysql = ["aiomysql", "greenlet"]
+aiosqlite = ["aiosqlite", "greenlet"]
+asyncpg = ["asyncpg", "greenlet"]
+cysqlite = ["cysqlite"]
+mysql = ["pymysql"]
+postgres = ["psycopg2-binary"]
+psycopg3 = ["psycopg[binary]"]
+
+[[package]]
 name = "pexpect"
 version = "4.9.0"
 description = "Pexpect allows easy control of interactive console applications."
@@ -3384,4 +3405,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "027d20e1f96ad03b2f8abd59bdd18469947849e4bf3856a6beac4a44f24a62cd"
+content-hash = "abc9ac63432c66b2a8c949cbb52bf7d7241d62f32f1a422be47da99ed0395dd1"
