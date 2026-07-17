@@ -31,7 +31,11 @@ from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
-from application.core.types import Assessment_Status, Status
+from application.core.types import (
+    Assessment_Status,
+    Observation_Log_Comment,
+    Status,
+)
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
@@ -505,7 +509,7 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
         )
         .exclude(observation__branch=observation.branch)
         .exclude(severity="", status="")
-        .exclude(comment="Set by parser")
+        .exclude(comment=Observation_Log_Comment.COMMENT_SET_BY_PARSER)
         .select_related("observation__branch")
         .order_by("observation__branch", "-created")
     )

@@ -87,6 +87,20 @@ class Assessment_Status:
     ]
 
 
+class Observation_Log_Comment:
+    COMMENT_SET_BY_PARSER = "Set by parser"
+    COMMENT_UPDATED_BY_PARSER = "Updated by parser"
+    COMMENT_NOT_FOUND_IN_LATEST_SCAN = "Observation not found in latest scan"
+
+    # Comments written automatically during import. They carry no human assessment and must not be
+    # used as a VEX justification or impact statement.
+    AUTOMATED_COMMENTS = [
+        COMMENT_SET_BY_PARSER,
+        COMMENT_UPDATED_BY_PARSER,
+        COMMENT_NOT_FOUND_IN_LATEST_SCAN,
+    ]
+
+
 class VEX_Justification:
     JUSTIFICATION_COMPONENT_NOT_PRESENT = "component_not_present"
     JUSTIFICATION_VULNERABLE_CODE_NOT_PRESENT = "vulnerable_code_not_present"

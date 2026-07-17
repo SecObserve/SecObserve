@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import jsonpickle
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
 
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import user_has_permission_or_403
@@ -25,6 +25,7 @@ from application.vex.services.csaf_generator_vulnerability import (
     set_flag_or_threat,
     set_product_status,
     set_vulnerability_description,
+    validate_not_affected_impact_statements,
 )
 from application.vex.services.vex_base import (
     check_product_or_vulnerabilities,
@@ -119,6 +120,12 @@ def create_csaf_document(parameters: CSAFCreateParameters) -> Optional[CSAFRoot]
         csaf.delete()
         return None
 
+    try:
+        validate_not_affected_impact_statements(vulnerabilities)
+    except ValidationError:
+        csaf.delete()
+        raise
+
     csaf_content = CSAFContent(vulnerabilities, product_tree)
     content_json = jsonpickle.encode(csaf_content, unpicklable=False)
     content_hash = hashlib.sha256(content_json.casefold().encode("utf-8").strip()).hexdigest()
@@ -151,6 +158,8 @@ def update_csaf_document(parameters: CSAFUpdateParameters) -> Optional[CSAFRoot]
         vulnerabilities, product_tree = _get_content_for_product(csaf.product, csaf_vulnerability_names, csaf_branches)
     else:
         vulnerabilities, product_tree = _get_content_for_vulnerabilities(csaf_vulnerability_names)
+
+    validate_not_affected_impact_statements(vulnerabilities)
 
     csaf_content = CSAFContent(vulnerabilities, product_tree)
     content_json = jsonpickle.encode(csaf_content, unpicklable=False)

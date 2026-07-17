@@ -36,7 +36,11 @@ from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
-from application.core.types import Assessment_Status, Status
+from application.core.types import (
+    Assessment_Status,
+    Observation_Log_Comment,
+    Status,
+)
 from application.epss.services.cvss_bt import apply_exploit_information
 from application.epss.services.epss import apply_epss
 from application.import_observations.exceptions import ParserError
@@ -695,7 +699,7 @@ def _process_current_observation(
             observation=observation_before,
             severity=severity,
             status=status,
-            comment="Updated by parser",
+            comment=Observation_Log_Comment.COMMENT_UPDATED_BY_PARSER,
             vex_justification="",
             vex_remediations=None,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
@@ -745,7 +749,7 @@ def _process_new_observation(imported_observation: Observation, settings: Settin
         observation=imported_observation,
         severity=imported_observation.current_severity,
         status=imported_observation.current_status,
-        comment="Set by parser",
+        comment=Observation_Log_Comment.COMMENT_SET_BY_PARSER,
         vex_justification="",
         vex_remediations=None,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
@@ -805,7 +809,7 @@ def _resolve_unimported_observations(
                 observation=observation,
                 severity="",
                 status=observation.current_status,
-                comment="Observation not found in latest scan",
+                comment=Observation_Log_Comment.COMMENT_NOT_FOUND_IN_LATEST_SCAN,
                 vex_justification="",
                 vex_remediations=None,
                 assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
