@@ -9,7 +9,7 @@ from application.commons.models import Settings
 from application.commons.services.functions import get_classname
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
-    _is_msteams_v2,
+    is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -641,25 +641,25 @@ class TestPushNotifications(BaseTestCase):
             [action["name"] for action in parsed["potentialAction"]][0].split("View observation ")[-1][:4],
         )
 
-    # --- _is_msteams_v2 ---
+    # --- is_msteams_v2 ---
 
-    def test_is_msteams_v2_office_com_is_v1(self):
-        self.assertFalse(_is_msteams_v2("https://tenant.webhook.office.com/webhookb2/abc123"))
+    def testis_msteams_v2_office_com_is_v1(self):
+        self.assertFalse(is_msteams_v2("https://tenant.webhook.office.com/webhookb2/abc123"))
 
-    def test_is_msteams_v2_subdomain_office_com_is_v1(self):
-        self.assertFalse(_is_msteams_v2("https://contoso.webhook.office.com/webhookb2/xyz"))
+    def testis_msteams_v2_subdomain_office_com_is_v1(self):
+        self.assertFalse(is_msteams_v2("https://contoso.webhook.office.com/webhookb2/xyz"))
 
-    def test_is_msteams_v2_bare_webhook_office_com_is_v1(self):
-        self.assertFalse(_is_msteams_v2("https://webhook.office.com/webhookb2/test"))
+    def testis_msteams_v2_bare_webhook_office_com_is_v1(self):
+        self.assertFalse(is_msteams_v2("https://webhook.office.com/webhookb2/test"))
 
-    def test_is_msteams_v2_power_automate_is_v2(self):
-        self.assertTrue(_is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke"))
+    def testis_msteams_v2_power_automate_is_v2(self):
+        self.assertTrue(is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke"))
 
-    def test_is_msteams_v2_generic_https_is_v2(self):
-        self.assertTrue(_is_msteams_v2("https://hooks.example.org/webhook"))
+    def testis_msteams_v2_generic_https_is_v2(self):
+        self.assertTrue(is_msteams_v2("https://hooks.example.org/webhook"))
 
-    def test_is_msteams_v2_empty_string_is_v2(self):
-        self.assertTrue(_is_msteams_v2(""))
+    def testis_msteams_v2_empty_string_is_v2(self):
+        self.assertTrue(is_msteams_v2(""))
 
-    def test_is_msteams_v2_invalid_url_is_v2(self):
-        self.assertTrue(_is_msteams_v2("not-a-url"))
+    def testis_msteams_v2_invalid_url_is_v2(self):
+        self.assertTrue(is_msteams_v2("not-a-url"))
