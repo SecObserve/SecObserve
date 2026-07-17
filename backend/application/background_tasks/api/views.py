@@ -30,8 +30,7 @@ class PeriodicTaskViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
 
 class BackgroundTaskView(APIView):
-    authentication_classes = []
-    permission_classes = []
+    permission_classes = [IsAuthenticated, UserHasSuperuserPermission]
     serializer_class = BackgroundTaskStatisticsSerializer
 
     @action(detail=False, methods=["get"], url_name="background_task_statistics")
@@ -40,9 +39,9 @@ class BackgroundTaskView(APIView):
         stats = enable_stats(huey, stats_db)
 
         content = {
-            "task_breakdown": stats.task_breakdown(),  # per-task executed/completed/errors/avg
-            "throughput": stats.throughput(minutes=60),  # {'complete': [...], 'error': [...]} per minute
-            "inflight": stats.inflight(),  # tasks currently executing
+            "registered": stats.task_breakdown(),
+            "throughput": stats.throughput(minutes=60),
+            "running": stats.inflight(),
         }
         serializer = BackgroundTaskStatisticsSerializer(content)
         return Response(serializer.data)

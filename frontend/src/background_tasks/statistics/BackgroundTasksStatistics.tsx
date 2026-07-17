@@ -4,6 +4,8 @@ import { useNotify } from "react-admin";
 
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { BackgroundTaskStatistics } from "../types";
+import BackgroundTasksRegisteredList from "./BackgroundTasksRegisteredList";
+import BackgroundTasksRunningList from "./BackgroundTasksRunningList";
 import BackgroundTasksTimeline from "./BackgroundTasksTimeLine";
 
 const BackgroundTasksStatistics = () => {
@@ -38,15 +40,12 @@ const BackgroundTasksStatistics = () => {
     }
 
     return statistics ? (
-        <Stack
-            direction="row"
-            spacing={2}
-            sx={{
-                alignItems: "top",
-                marginTop: 2,
-            }}
-        >
-            <BackgroundTasksTimeline timeline={statistics.throughput} />{" "}
+        <Stack spacing={2} sx={{ marginTop: 2 }}>
+            <BackgroundTasksTimeline timeline={statistics.throughput} />
+            <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
+                <BackgroundTasksRegisteredList breakdown={statistics.registered} />
+                <BackgroundTasksRunningList running={statistics.running} />
+            </Stack>
         </Stack>
     ) : null;
 };

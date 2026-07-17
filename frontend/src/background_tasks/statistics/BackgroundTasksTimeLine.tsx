@@ -53,7 +53,7 @@ const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
                 data={chart_data}
                 options={{
                     maintainAspectRatio: true,
-                    aspectRatio: 3,
+                    aspectRatio: 4,
                     scales: {
                         y: {
                             min: 0,

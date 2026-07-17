@@ -39,6 +39,6 @@ class BackgroundTaskInflightSerializer(Serializer):
 
 
 class BackgroundTaskStatisticsSerializer(Serializer):
-    task_breakdown = BackgroundTaskBreakdownSerializer(many=True)
+    registered = BackgroundTaskBreakdownSerializer(many=True)
     throughput = BackgroundTaskThroughputSerializer()
-    inflight = BackgroundTaskInflightSerializer(many=True)
+    running = BackgroundTaskInflightSerializer(many=True)

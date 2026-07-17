@@ -19,7 +19,7 @@ export interface BackgroundTaskThroughput {
     error: number[];
 }
 
-export interface BackgroundTaskInflight {
+export interface BackgroundTaskRunning {
     task: string;
     id: string;
     started: number;
@@ -27,7 +27,7 @@ export interface BackgroundTaskInflight {
 }
 
 export interface BackgroundTaskStatistics {
-    task_breakdown: BackgroundTaskBreakdown[];
+    registered: BackgroundTaskBreakdown[];
     throughput: BackgroundTaskThroughput;
-    inflight: BackgroundTaskInflight[];
+    running: BackgroundTaskRunning[];
 }
