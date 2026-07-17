@@ -509,7 +509,7 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
         )
         .exclude(observation__branch=observation.branch)
         .exclude(severity="", status="")
-        .exclude(comment=Observation_Log_Comment.COMMENT_SET_BY_PARSER)
+        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
         .select_related("observation__branch")
         .order_by("observation__branch", "-created")
     )
