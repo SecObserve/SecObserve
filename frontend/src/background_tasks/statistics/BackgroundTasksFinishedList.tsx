@@ -1,28 +1,36 @@
 import { Paper, Typography } from "@mui/material";
-import { Datagrid, FunctionField, ListContextProvider, NumberField, ResourceContextProvider, TextField, useList } from "react-admin";
+import {
+    Datagrid,
+    FunctionField,
+    ListContextProvider,
+    NumberField,
+    ResourceContextProvider,
+    TextField,
+    useList,
+} from "react-admin";
 
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import { getElevation } from "../../metrics/functions";
 import { BackgroundTaskBreakdown } from "../types";
 import { formatDuration } from "./functions";
 
-interface BackgroundTasksRegisteredListProps {
+interface BackgroundTasksFinishedListProps {
     breakdown: BackgroundTaskBreakdown[];
 }
 
-const BackgroundTasksRegisteredList = (props: BackgroundTasksRegisteredListProps) => {
+const BackgroundTasksFinishedList = (props: BackgroundTasksFinishedListProps) => {
     const data = props.breakdown.map((task) => ({ ...task, id: task.full }));
     const listContext = useList({ data });
 
     return (
         <Paper elevation={getElevation()} sx={{ width: "50%", padding: 2 }}>
             <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                Registered Tasks
+                Finished tasks
             </Typography>
-            <ResourceContextProvider value="registered_background_task">
+            <ResourceContextProvider value="finished_background_task">
                 <ListContextProvider value={listContext}>
                     <Datagrid size={getSettingListSize()} bulkActionButtons={false} rowClick={false}>
-                        <TextField source="task" label="Task" />
+                        <TextField source="task" label="Task" sx={{ wordBreak: "break-word" }} />
                         <NumberField source="executed" label="Executed" />
                         <NumberField source="completed" label="Completed" />
                         <NumberField source="errors" label="Errors" />
@@ -37,4 +45,4 @@ const BackgroundTasksRegisteredList = (props: BackgroundTasksRegisteredListProps
     );
 };
 
-export default BackgroundTasksRegisteredList;
+export default BackgroundTasksFinishedList;

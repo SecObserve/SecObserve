@@ -26,8 +26,23 @@ export interface BackgroundTaskRunning {
     elapsed: number;
 }
 
+export interface BackgroundTaskCounts {
+    enqueued: number;
+    scheduled: number;
+    executing: number;
+    complete: number;
+    error: number;
+    retrying: number;
+    revoked: number;
+    canceled: number;
+    expired: number;
+    locked: number;
+    interrupted: number;
+}
+
 export interface BackgroundTaskStatistics {
     registered: BackgroundTaskBreakdown[];
     throughput: BackgroundTaskThroughput;
+    counts: BackgroundTaskCounts;
     running: BackgroundTaskRunning[];
 }

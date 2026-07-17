@@ -21,15 +21,12 @@ const BackgroundTasksRunningList = (props: BackgroundTasksRunningListProps) => {
             <ResourceContextProvider value="running_background_task">
                 <ListContextProvider value={listContext}>
                     <Datagrid size={getSettingListSize()} bulkActionButtons={false} rowClick={false}>
-                        <TextField source="task" label="Task" />
+                        <TextField source="task" label="Task" sx={{ wordBreak: "break-word" }} />
                         <FunctionField
                             label="Started"
                             render={(record) => new Date(record.started * 1000).toLocaleString()}
                         />
-                        <FunctionField
-                            label="Elapsed"
-                            render={(record) => formatDuration(record.elapsed)}
-                        />
+                        <FunctionField label="Elapsed" render={(record) => formatDuration(record.elapsed)} />
                     </Datagrid>
                 </ListContextProvider>
             </ResourceContextProvider>

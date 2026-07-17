@@ -41,6 +41,7 @@ class BackgroundTaskView(APIView):
         content = {
             "registered": stats.task_breakdown(),
             "throughput": stats.throughput(minutes=60),
+            "counts": stats.window_counts(seconds=86400),
             "running": stats.inflight(),
         }
         serializer = BackgroundTaskStatisticsSerializer(content)

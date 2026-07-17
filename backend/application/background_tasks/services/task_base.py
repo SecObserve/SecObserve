@@ -2,7 +2,6 @@ import functools
 import inspect
 import logging
 import sys
-import traceback
 from datetime import timedelta
 from typing import Any, Callable
 
@@ -50,7 +49,7 @@ def so_periodic_task(name: str) -> Callable:
                 periodic_task.save()
 
                 _handle_periodic_task_exception(e)
-                return
+                raise
 
             logger.info("--- %s - finished ---", name)
 
@@ -77,7 +76,6 @@ def _handle_periodic_task_exception(e: Exception) -> None:
             username=None,
         )
     )
-    logger.error(traceback.format_exc())
 
     send_task_exception_notification(function=function, arguments=None, user=None, exception=e, product=None)
 
