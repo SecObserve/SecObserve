@@ -320,6 +320,6 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         mock_user_assessment.return_value = self.outsider
         mock_user_bulk.return_value = self.outsider
         with self.assertRaises(ValidationError):
-            observation_logs_bulk_approval(Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", [self.log.pk])
+            observation_logs_bulk_approval(Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, [self.log.pk])
         self.log.refresh_from_db()
         self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL)
