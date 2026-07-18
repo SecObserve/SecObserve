@@ -31,7 +31,6 @@ const BackgroundTasksFinishedList = (props: BackgroundTasksFinishedListProps) =>
                 <ListContextProvider value={listContext}>
                     <Datagrid size={getSettingListSize()} bulkActionButtons={false} rowClick={false}>
                         <TextField source="task" label="Task" sx={{ wordBreak: "break-word" }} />
-                        <NumberField source="executed" label="Executed" />
                         <NumberField source="completed" label="Completed" />
                         <NumberField source="errors" label="Errors" />
                         <FunctionField
