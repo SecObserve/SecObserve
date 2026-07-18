@@ -168,10 +168,7 @@ export const ProductCreateEditComponent = ({
                         label="Webhook URL to send notifications to MS Teams"
                         validate={validate_2048}
                     />
-                    <WebhookTestButton
-                        webhookSource="notification_ms_teams_webhook"
-                        webhookType="msteams"
-                    />
+                    <WebhookTestButton webhookSource="notification_ms_teams_webhook" webhookType="msteams" />
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <TextInputExtraWide

@@ -291,10 +291,7 @@ const SettingsEdit = () => {
                             label="MS Teams webhook to send exception notifications"
                             validate={validate_2048}
                         />
-                        <WebhookTestButton
-                            webhookSource="exception_ms_teams_webhook"
-                            webhookType="msteams"
-                        />
+                        <WebhookTestButton webhookSource="exception_ms_teams_webhook" webhookType="msteams" />
                     </Stack>
                     <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                         <TextInputExtraWide
