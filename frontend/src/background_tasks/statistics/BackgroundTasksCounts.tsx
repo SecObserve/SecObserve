@@ -8,8 +8,8 @@ interface BackgroundTasksCountsProps {
 }
 
 const COUNT_ITEMS: { label: string; value: (counts: BackgroundTaskCounts) => number }[] = [
-    { label: "Queued", value: (counts) => counts.enqueued - counts.executing },
-    { label: "Executing", value: (counts) => counts.executing - counts.complete - counts.error },
+    { label: "Queued", value: (counts) => Math.max(0, counts.enqueued - counts.executing) },
+    { label: "Executing", value: (counts) => Math.max(0, counts.executing - counts.complete - counts.error) },
     { label: "Completed (24h)", value: (counts) => counts.complete },
     { label: "Errors (24h)", value: (counts) => counts.error },
 ];
