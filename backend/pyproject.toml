@@ -63,6 +63,7 @@ license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expres
 # Task queue
 # ------------------------------------------------------------------------------
 huey = "3.2.1"  # https://github.com/coleifer/huey
+peewee = "4.2.4"  # https://github.com/coleifer/peewee
 
 # Issue tracker
 # ------------------------------------------------------------------------------
