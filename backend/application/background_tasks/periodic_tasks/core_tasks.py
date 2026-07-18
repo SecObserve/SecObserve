@@ -1,8 +1,5 @@
 from huey import crontab
-from huey.contrib.djhuey import HUEY as huey
 from huey.contrib.djhuey import db_periodic_task
-from huey.contrib.stats import enable_stats
-from peewee import SqliteDatabase
 
 from application.background_tasks.services.task_base import so_periodic_task
 from application.commons import settings_static
@@ -12,9 +9,6 @@ from application.core.services.housekeeping import (
 from application.core.services.risk_acceptance_expiry_task import (
     expire_risk_acceptances,
 )
-
-stats_db = SqliteDatabase("/var/lib/huey/huey_stats.db")
-stats = enable_stats(huey, stats_db)
 
 
 @db_periodic_task(

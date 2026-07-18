@@ -47,6 +47,8 @@ const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
             elevation={getElevation()}
             sx={{
                 width: "100%",
+                paddingLeft: 2,
+                paddingRight: 2,
             }}
         >
             <Bar
