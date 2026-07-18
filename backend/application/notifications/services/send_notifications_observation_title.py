@@ -110,7 +110,11 @@ def _send_observation_title_notifications(
             )
 
     if settings.observation_title_notification_ms_teams_webhook:
-        template = "msteams_v2_observation_title.tpl" if is_msteams_v2(settings.observation_title_notification_ms_teams_webhook) else "msteams_observation_title.tpl"
+        template = (
+            "msteams_v2_observation_title.tpl"
+            if is_msteams_v2(settings.observation_title_notification_ms_teams_webhook)
+            else "msteams_observation_title.tpl"
+        )
         send_msteams_notification(
             settings.observation_title_notification_ms_teams_webhook,
             template,

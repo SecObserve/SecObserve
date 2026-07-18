@@ -800,4 +800,3 @@ class TestPushNotifications(BaseTestCase):
 
     def test_get_notification_slack_webhook_product_webhook_empty(self):
         self.assertEqual(None, _get_notification_slack_webhook(self.product_1))
-

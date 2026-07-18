@@ -107,7 +107,9 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
 
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(observation.product)
     if notification_ms_teams_webhook:
-        template = "msteams_v2_observation.tpl" if is_msteams_v2(notification_ms_teams_webhook) else "msteams_observation.tpl"
+        template = (
+            "msteams_v2_observation.tpl" if is_msteams_v2(notification_ms_teams_webhook) else "msteams_observation.tpl"
+        )
         send_msteams_notification(
             notification_ms_teams_webhook,
             template,

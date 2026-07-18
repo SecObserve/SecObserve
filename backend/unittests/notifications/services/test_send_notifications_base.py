@@ -653,7 +653,9 @@ class TestPushNotifications(BaseTestCase):
         self.assertFalse(is_msteams_v2("https://webhook.office.com/webhookb2/test"))
 
     def testis_msteams_v2_power_automate_is_v2(self):
-        self.assertTrue(is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke"))
+        self.assertTrue(
+            is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke")
+        )
 
     def testis_msteams_v2_generic_https_is_v2(self):
         self.assertTrue(is_msteams_v2("https://hooks.example.org/webhook"))

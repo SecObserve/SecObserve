@@ -50,7 +50,11 @@ def send_product_security_gate_notification(product: Product) -> None:
 
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(product)
     if notification_ms_teams_webhook:
-        template = "msteams_v2_product_security_gate.tpl" if is_msteams_v2(notification_ms_teams_webhook) else "msteams_product_security_gate.tpl"
+        template = (
+            "msteams_v2_product_security_gate.tpl"
+            if is_msteams_v2(notification_ms_teams_webhook)
+            else "msteams_product_security_gate.tpl"
+        )
         send_msteams_notification(
             notification_ms_teams_webhook,
             template,
@@ -97,7 +101,11 @@ def send_exception_notification(exception: Exception) -> None:
                 )
 
         if settings.exception_ms_teams_webhook:
-            template = "msteams_v2_exception.tpl" if is_msteams_v2(settings.exception_ms_teams_webhook) else "msteams_exception.tpl"
+            template = (
+                "msteams_v2_exception.tpl"
+                if is_msteams_v2(settings.exception_ms_teams_webhook)
+                else "msteams_exception.tpl"
+            )
             send_msteams_notification(
                 settings.exception_ms_teams_webhook,
                 template,
@@ -154,7 +162,11 @@ def send_task_exception_notification(
                 )
 
         if settings.exception_ms_teams_webhook:
-            template = "msteams_v2_task_exception.tpl" if is_msteams_v2(settings.exception_ms_teams_webhook) else "msteams_task_exception.tpl"
+            template = (
+                "msteams_v2_task_exception.tpl"
+                if is_msteams_v2(settings.exception_ms_teams_webhook)
+                else "msteams_task_exception.tpl"
+            )
             send_msteams_notification(
                 settings.exception_ms_teams_webhook,
                 template,
