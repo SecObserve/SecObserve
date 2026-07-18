@@ -331,6 +331,32 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
 
         mock_send_teams.assert_called_once_with(
             "https://teams.webhook.example.com",
+            "msteams_v2_observation_title.tpl",
+            observation=observation,
+            url="http://url",
+            first_line="First line",
+        )
+
+    @patch(f"{MODULE}.Notification")
+    @patch(f"{MODULE}.get_current_user")
+    @patch(f"{MODULE}.send_msteams_notification")
+    @patch(f"{MODULE}._get_email_to_addresses")
+    def test_sends_msteams_notification_legacy_format_when_webhook_configured(
+        self, mock_get_addresses, mock_send_teams, mock_get_user, mock_notification
+    ):
+        mock_get_addresses.return_value = []
+        mock_get_user.return_value = MagicMock()
+
+        settings = _make_settings(
+            email_from=None,
+            ms_teams_webhook="https://tenant.webhook.office.com/webhookb2/test",
+            slack_webhook=None,
+        )
+        observation = _make_observation()
+        _send_observation_title_notifications(settings, observation, "First line", "http://url")
+
+        mock_send_teams.assert_called_once_with(
+            "https://tenant.webhook.office.com/webhookb2/test",
             "msteams_observation_title.tpl",
             observation=observation,
             url="http://url",

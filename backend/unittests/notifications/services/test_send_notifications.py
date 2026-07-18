@@ -126,7 +126,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_product_security_gate.tpl",
+            "msteams_v2_product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="None",
             product_url="https://secobserve.com/#/products/1/show",
@@ -215,7 +215,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_product_security_gate.tpl",
+            "msteams_v2_product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -304,7 +304,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_product_security_gate.tpl",
+            "msteams_v2_product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Failed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -448,7 +448,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_exception.tpl",
+            "msteams_v2_exception.tpl",
             exception_class="builtins.Exception",
             exception_message="test_exception",
             exception_trace="",
@@ -613,7 +613,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_task_exception.tpl",
+            "msteams_v2_task_exception.tpl",
             function="test_function",
             arguments=str(arguments),
             user=self.user_internal,

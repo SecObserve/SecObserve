@@ -17,10 +17,15 @@ from application.notifications.api.permissions import UserHasNotificationPermiss
 from application.notifications.api.serializers import (
     NotificationBulkSerializer,
     NotificationSerializer,
+    WebhookTestSerializer,
 )
 from application.notifications.models import Notification, Notification_Viewed
 from application.notifications.queries.notification import get_notifications
 from application.notifications.services.notification import bulk_mark_as_viewed
+from application.notifications.services.send_notifications_base import (
+    send_msteams_notification_test,
+    send_slack_notification_test,
+)
 
 
 class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, RetrieveModelMixin):
@@ -52,6 +57,30 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
             raise ValidationError(request_serializer.errors)
 
         bulk_mark_as_viewed(request_serializer.validated_data.get("notifications"))
+
+        return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["POST"],
+        request=WebhookTestSerializer,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=False, methods=["post"])
+    def test_webhook(self, request: Request) -> Response:
+        request_serializer = WebhookTestSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        webhook_url = request_serializer.validated_data["webhook_url"]
+        webhook_type = request_serializer.validated_data["webhook_type"]
+
+        try:
+            if webhook_type == "msteams":
+                send_msteams_notification_test(webhook_url)
+            else:
+                send_slack_notification_test(webhook_url)
+        except Exception as e:
+            raise ValidationError(f"Failed to send test notification: {str(e)}") from e
 
         return Response(status=HTTP_204_NO_CONTENT)
 

@@ -415,7 +415,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_observation.tpl",
+            "msteams_v2_observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/1/show",
             first_line=first_line,
