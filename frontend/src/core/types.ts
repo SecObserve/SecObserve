@@ -39,6 +39,7 @@ export interface Product extends RaRecord {
     assessment_approver_authorization_groups: Identifier[];
     product_group_assessment_approvers: Identifier[];
     product_group_assessment_approver_authorization_groups: Identifier[];
+    permissions: number[];
 }
 
 export const ISSUE_TRACKER_TYPE_CHOICES = [
@@ -60,6 +61,7 @@ export interface ProductGroup extends RaRecord {
     assessments_need_approval: boolean;
     assessment_approvers: Identifier[];
     assessment_approver_authorization_groups: Identifier[];
+    permissions: number[];
 }
 
 export interface Observation extends RaRecord {

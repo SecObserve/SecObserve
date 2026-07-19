@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.utils import timezone
 
 from application.access_control.services.current_user import get_current_user
+from application.core.models import Product
 from application.licenses.models import (
     License_Component,
     License_Group,
@@ -38,17 +39,20 @@ def license_policy_post_save(  # pylint: disable=unused-argument
 
 @receiver(post_save, sender=License_Component)
 def license_component_post_save(  # pylint: disable=unused-argument
-    sender: Any, instance: License_Component, created: bool, **kwargs: Any
+    sender: Any, instance: License_Component, created: bool, raw: bool = False, **kwargs: Any
 ) -> None:
     # sender is needed according to Django documentation
-    if created or "evaluation_result" in instance.get_dirty_fields().keys():
+    if not raw and (created or "evaluation_result" in instance.get_dirty_fields().keys()):
         instance.product.last_license_change = timezone.now()
         instance.product.save()
 
 
 @receiver(post_delete, sender=License_Component)
 def license_component_post_delete(  # pylint: disable=unused-argument
-    sender: Any, instance: License_Component, **kwargs: Any
+    sender: Any, instance: License_Component, origin: Any = None, **kwargs: Any
 ) -> None:
+    if isinstance(origin, Product) or getattr(origin, "model", None) is Product:
+        return
+
     instance.product.last_license_change = timezone.now()
     instance.product.save()

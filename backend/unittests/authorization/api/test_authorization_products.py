@@ -174,16 +174,14 @@ class TestAuthorizationProducts(TestAuthorizationBase):
                 expected_data,
             )
         )
-        expected_data = (
-            "{'message': 'Cannot delete Product because it still has Services, Observations, License_Components.'}"
-        )
+        expected_data = "None"
         self._test_api(
             APITest(
                 "db_internal_write",
                 "delete",
-                "/api/products/1/",
+                "/api/products/1/?name=db_product_internal",
                 None,
-                409,
+                204,
                 expected_data,
             )
         )

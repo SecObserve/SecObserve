@@ -67,3 +67,13 @@ The API token has the same permissions for the same products as the user.
 ## Interactive API documentation
 
 The full documentation of the REST API is available at `<BACKEND_URL>/api/oa3/swagger-ui`.
+
+## Deleting products and product groups
+
+`DELETE /api/products/{id}/` and `DELETE /api/product_groups/{id}/` require the exact, case- and whitespace-sensitive resource name in the `name` query parameter. Deletion cascades to dependent data.
+
+```http
+DELETE /api/products/42/?name=Example%20Product
+```
+
+The same query parameter is required by the Product Group endpoint. Product Group deletion also permanently deletes all child Products and their dependent data. A successful deletion returns `204 No Content`; a missing, invalid, or non-matching name returns `400 Bad Request`, a caller without the matching delete permission receives `403 Forbidden`, and a remaining restricted cross-resource reference returns `409 Conflict`. Confirmed deletion is irreversible.

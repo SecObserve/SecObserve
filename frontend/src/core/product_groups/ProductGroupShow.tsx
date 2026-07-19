@@ -56,11 +56,12 @@ import product from "../products";
 import ExportMenu from "../products/ExportMenu";
 import ProductCreateDialog from "../products/ProductCreateDialog";
 import ProductEmbeddedList from "../products/ProductEmbeddedList";
+import { ProductGroup } from "../types";
 import ProductGroupHeader from "./ProductGroupHeader";
 import ProductGroupReviews from "./ProductGroupReviews";
 
 const ShowActions = () => {
-    const product_group = useRecordContext();
+    const product_group = useRecordContext<ProductGroup>();
     return (
         <TopToolbar>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>

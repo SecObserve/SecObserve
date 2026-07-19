@@ -65,6 +65,7 @@ import ProductMemberAdd from "../product_members/ProductMemberAdd";
 import ProductMemberEmbeddedList from "../product_members/ProductMemberEmbeddedList";
 import ServiceCreate from "../services/ServiceCreate";
 import ServiceEmbeddedList from "../services/ServiceEmbeddedList";
+import { Product } from "../types";
 import ExportMenu from "./ExportMenu";
 import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
@@ -76,7 +77,7 @@ type ShowActionsProps = {
 };
 
 const ShowActions = (props: ShowActionsProps) => {
-    const product = useRecordContext();
+    const product = useRecordContext<Product>();
     return (
         <TopToolbar>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
