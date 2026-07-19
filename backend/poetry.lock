@@ -961,15 +961,15 @@ formatting = ["autopep8"]
 
 [[package]]
 name = "django-stubs"
-version = "6.0.6"
+version = "6.0.7"
 description = "Mypy stubs for Django"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "django_stubs-6.0.6-py3-none-any.whl", hash = "sha256:c488fea05a9eac40ddbdc69887f63a5c0922cb13df285291ee99c9bbc89bc4f1"},
-    {file = "django_stubs-6.0.6.tar.gz", hash = "sha256:dfc01e052e33c7f8f0c30c3ff8eda0903ee29ac710d1e46d9effd773744a69b0"},
+    {file = "django_stubs-6.0.7-py3-none-any.whl", hash = "sha256:7ed9a14c438e589272ca04e966dee82a4d1ff7ca5c2171bc986c50a0d03ec35b"},
+    {file = "django_stubs-6.0.7.tar.gz", hash = "sha256:bc55431c0af745a64e39cf33a8d36c87dccbedeae2fe26fab47dd355270e8538"},
 ]
 
 [package.dependencies]
@@ -979,7 +979,7 @@ types-pyyaml = "*"
 typing-extensions = ">=4.11.0"
 
 [package.extras]
-compatible-mypy = ["mypy (>=1.13,<2.2)"]
+compatible-mypy = ["mypy (>=1.13,<2.4)"]
 oracle = ["oracledb"]
 redis = ["redis", "types-redis"]
 
@@ -3404,4 +3404,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "372dd98a521c093f43d7b01b3e3cf714004b0222e8203ce5e597ddadd93c5af7"
+content-hash = "ba04ffbec346a691336aa5dd80b0a30603099789cbe4333ad06ddeb66b66ad9b"
