@@ -1,7 +1,9 @@
 import re
 from datetime import date
+from functools import partial
 from typing import Optional
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -14,6 +16,12 @@ from application.core.models import (
     Observation_Log,
     Product,
     Product_Authorization_Group_Member,
+)
+from application.core.queries.assessment import (
+    assessment_approvers_configured as query_assessment_approvers_configured,
+)
+from application.core.queries.assessment import (
+    get_effective_assessment_approvers as query_effective_assessment_approvers,
 )
 from application.core.queries.product_member import (
     get_highest_role_of_product_authorization_group_members_for_user,
@@ -38,6 +46,10 @@ from application.core.types import (
 )
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
+)
+from application.notifications.services.send_notifications_assessment import (
+    send_assessment_approval_request_notification,
+    send_assessment_approval_result_notification,
 )
 from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
@@ -126,7 +138,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
         if not propagated_from:
             propagate_assessment(observation_log)
     else:
-        create_observation_log(
+        observation_log = create_observation_log(
             observation=observation,
             severity=log_severity,
             status=log_status,
@@ -137,6 +149,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             assessment_status=assessment_status,
             risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
         )
+        transaction.on_commit(partial(send_assessment_approval_request_notification, observation_log))
 
 
 def _update_observation(  # pylint: disable=too-many-positional-arguments
@@ -206,27 +219,11 @@ def _get_assessments_need_approval(product: Product) -> bool:
 
 
 def get_effective_assessment_approvers(product: Product) -> tuple[set[int], set[int]]:
-    """Return the effective approver user ids and authorization group ids for a product.
-
-    The effective set is the union of the product's own designated approvers and those of
-    its product group (mirroring the inheritance of the "assessments need approval" flag).
-    """
-    approver_user_ids: set[int] = set(product.assessment_approvers.values_list("id", flat=True))
-    approver_group_ids: set[int] = set(product.assessment_approver_authorization_groups.values_list("id", flat=True))
-    if product.product_group:
-        approver_user_ids |= set(product.product_group.assessment_approvers.values_list("id", flat=True))
-        approver_group_ids |= set(
-            product.product_group.assessment_approver_authorization_groups.values_list("id", flat=True)
-        )
-    return approver_user_ids, approver_group_ids
+    return query_effective_assessment_approvers(product)
 
 
 def assessment_approvers_configured(product: Product) -> bool:
-    """Whether the product (or its product group) has any designated assessment approvers."""
-    if product.pk is None:
-        return False
-    approver_user_ids, approver_group_ids = get_effective_assessment_approvers(product)
-    return bool(approver_user_ids or approver_group_ids)
+    return query_assessment_approvers_configured(product)
 
 
 def is_user_designated_assessment_approver(product: Product, user: Optional[User] = None) -> bool:
@@ -423,6 +420,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     observation_log.approval_date = timezone.now()
     observation_log.assessment_status = assessment_status
     observation_log.save()
+    transaction.on_commit(partial(send_assessment_approval_result_notification, observation_log))
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:

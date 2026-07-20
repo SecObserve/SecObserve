@@ -8,14 +8,17 @@ from django.db.models import (
     Model,
     OneToOneField,
     TextField,
+    UniqueConstraint,
 )
 
 from application.access_control.models import User
-from application.core.models import Observation, Product
+from application.core.models import Observation, Observation_Log, Product
 from application.core.types import Severity, Status
 
 
 class Notification(Model):
+    TYPE_ASSESSMENT_REQUEST = "Assessment request"
+    TYPE_ASSESSMENT_RESULT = "Assessment result"
     TYPE_EXCEPTION = "Exception"
     TYPE_OBSERVATION = "Observation"
     TYPE_OBSERVATION_TITLE = "Observation title"
@@ -23,6 +26,8 @@ class Notification(Model):
     TYPE_TASK = "Task"
 
     TYPE_CHOICES = [
+        (TYPE_ASSESSMENT_REQUEST, TYPE_ASSESSMENT_REQUEST),
+        (TYPE_ASSESSMENT_RESULT, TYPE_ASSESSMENT_RESULT),
         (TYPE_EXCEPTION, TYPE_EXCEPTION),
         (TYPE_OBSERVATION, TYPE_OBSERVATION),
         (TYPE_OBSERVATION_TITLE, TYPE_OBSERVATION_TITLE),
@@ -36,12 +41,33 @@ class Notification(Model):
     user = ForeignKey(User, on_delete=CASCADE, null=True)
     product = ForeignKey(Product, on_delete=CASCADE, null=True)
     observation = ForeignKey(Observation, on_delete=CASCADE, null=True)
+    observation_log = ForeignKey(Observation_Log, on_delete=CASCADE, null=True)
     type = CharField(max_length=20, choices=TYPE_CHOICES)
     function = CharField(max_length=255, blank=True)
     arguments = TextField(max_length=4096, blank=True)
 
     class Meta:
         db_table = "commons_notification"
+        constraints = [
+            UniqueConstraint(
+                fields=["type", "observation_log"],
+                name="unique_notification_type_observation_log",
+            )
+        ]
+
+
+class Notification_Recipient(Model):
+    notification = ForeignKey(Notification, on_delete=CASCADE, related_name="notification_recipients")
+    user = ForeignKey(User, on_delete=CASCADE, related_name="notification_recipients")
+
+    class Meta:
+        db_table = "commons_notification_recipient"
+        constraints = [
+            UniqueConstraint(
+                fields=["notification", "user"],
+                name="unique_notification_recipient",
+            )
+        ]
 
 
 class Notification_Viewed(Model):
