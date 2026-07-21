@@ -1,6 +1,6 @@
 from unittest.mock import patch
 
-from django.db.models.deletion import ProtectedError
+from django.db.models.deletion import ProtectedError, RestrictedError
 from rest_framework.exceptions import (
     APIException,
     AuthenticationFailed,
@@ -42,6 +42,18 @@ class TestExceptionHandler(BaseTestCase):
         data = {
             "message": "Cannot delete some instances of model Product because they are referenced through protected foreign keys: Service.product_group, 'Observation.product'."
         }
+        self.assertEqual(data, response.data)
+
+    def test_restricted_error_formatted(self):
+        exception = RestrictedError(
+            "Cannot delete some instances of model 'Service' because they are referenced through restricted "
+            "foreign keys: 'Observation.origin_service'.",
+            None,
+        )
+        response = custom_exception_handler(exception, None)
+
+        self.assertEqual(HTTP_409_CONFLICT, response.status_code)
+        data = {"message": "Cannot delete Service because it still has Observations."}
         self.assertEqual(data, response.data)
 
     @patch("application.notifications.api.exception_handler.logger.error")

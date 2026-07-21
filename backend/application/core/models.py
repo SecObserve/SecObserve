@@ -7,6 +7,7 @@ from django.db.models import (
     CASCADE,
     DO_NOTHING,
     PROTECT,
+    RESTRICT,
     SET_NULL,
     BooleanField,
     CharField,
@@ -41,7 +42,7 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     description = TextField(max_length=2048, blank=True)
 
     is_product_group = BooleanField(default=False)
-    product_group = ForeignKey("self", on_delete=PROTECT, related_name="products", null=True, blank=True)
+    product_group = ForeignKey("self", on_delete=CASCADE, related_name="products", null=True, blank=True)
     purl = CharField(max_length=255, blank=True)
     cpe23 = CharField(max_length=255, blank=True)
 
@@ -262,7 +263,7 @@ class Product_Authorization_Group_Member(Model):
 
 
 class Observation(Model):
-    product = ForeignKey(Product, on_delete=PROTECT)
+    product = ForeignKey(Product, on_delete=CASCADE)
     branch = ForeignKey(Branch, on_delete=CASCADE, null=True)
     parser = ForeignKey("import_observations.Parser", on_delete=PROTECT)
     title = CharField(max_length=255)
@@ -317,7 +318,7 @@ class Observation(Model):
     origin_endpoint_query = TextField(max_length=2048, blank=True)
     origin_endpoint_fragment = TextField(max_length=2048, blank=True)
 
-    origin_service = ForeignKey(Service, on_delete=PROTECT, null=True)
+    origin_service = ForeignKey(Service, on_delete=RESTRICT, null=True)
 
     origin_source_file = CharField(max_length=255, blank=True)
     origin_source_line_start = IntegerField(null=True, validators=[MinValueValidator(0), MaxValueValidator(999999)])
@@ -373,14 +374,14 @@ class Observation(Model):
         related_name="general_rules",
         blank=True,
         null=True,
-        on_delete=PROTECT,
+        on_delete=RESTRICT,
     )
     product_rule = ForeignKey(
         "rules.Rule",
         related_name="product_rules",
         blank=True,
         null=True,
-        on_delete=PROTECT,
+        on_delete=RESTRICT,
     )
 
     general_rule_rego = ForeignKey(
@@ -388,14 +389,14 @@ class Observation(Model):
         related_name="general_rules_rego",
         blank=True,
         null=True,
-        on_delete=PROTECT,
+        on_delete=RESTRICT,
     )
     product_rule_rego = ForeignKey(
         "rules.Rule",
         related_name="product_rules_rego",
         blank=True,
         null=True,
-        on_delete=PROTECT,
+        on_delete=RESTRICT,
     )
 
     issue_tracker_issue_id = CharField(max_length=255, blank=True)
