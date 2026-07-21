@@ -1,0 +1,18 @@
+# Docker Compose override for development on macOS with Apple Silicon.
+# Usage: docker compose -f docker-compose-dev.yml -f docker-compose-dev-arm.yaml up --build
+
+services:
+  frontend:
+    platform: linux/arm64/v8
+    volumes:
+      - dev_node_modules:/app/node_modules
+    command: sh -c "npm install --no-audit --no-fund && npm run start -- --host"
+
+  backend:
+    platform: linux/arm64/v8
+
+  postgres:
+    platform: linux/arm64/v8
+
+volumes:
+  dev_node_modules:
