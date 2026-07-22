@@ -393,6 +393,11 @@ def _write_observation_log(
         else:
             comment = f"Updated by general rule {rule.name}"
 
+    general_rule = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
+    general_rule_rego = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_REGO else None
+    product_rule = rule if rule.product and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
+    product_rule_rego = rule if rule.product and rule.type == Rule_Type.RULE_TYPE_REGO else None
+
     create_observation_log(
         observation=observation,
         severity=severity,
@@ -403,6 +408,11 @@ def _write_observation_log(
         vex_remediations=vex_remediations,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
+        propagated_from=None,
+        general_rule=general_rule,
+        general_rule_rego=general_rule_rego,
+        product_rule=product_rule,
+        product_rule_rego=product_rule_rego,
     )
 
 
