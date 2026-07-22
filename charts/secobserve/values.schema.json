@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "properties": {
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1,
+      "description": "SecObserve currently uses a pod-local SQLite Huey queue, so only one application replica is safe."
+    }
+  }
+}

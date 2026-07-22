@@ -3,7 +3,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "secobserve.fullname" . }}-ing
+  name: {{ printf "%s-ing" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
   namespace: "{{ .Release.Namespace }}"
   labels:
     {{- include "secobserve.labels" . | nindent 4 }}
@@ -21,21 +21,24 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "secobserve.fullname" . }}-svc
+                name: {{ printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
                 port:
                   name: backend-http
           - path: /django-static/
             pathType: Prefix
             backend:
               service:
-                name: {{ include "secobserve.fullname" . }}-svc
+                name: {{ printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
                 port:
                   name: backend-http
+          {{- with .Values.ingress.paths }}
+          {{- tpl (toYaml .) $ | nindent 10 }}
+          {{- end }}
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ include "secobserve.fullname" . }}-svc
+                name: {{ printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
                 port:
                   name: frontend-http
   {{- if .Values.ingress.tls }}
@@ -44,7 +47,4 @@ spec:
         - {{ .Values.ingress.hostname }}
       secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
-{{- if .Values.ingress.paths }}
-{{- tpl (toYaml .Values.ingress.paths | indent 8) . }}
-{{- end }}
 {{- end }}

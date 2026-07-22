@@ -1,0 +1,22 @@
+{{- if and .Values.huey.persistence.enabled (not .Values.huey.persistence.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "secobserve.huey.claimName" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "secobserve.labels" . | nindent 4 }}
+  {{- with .Values.huey.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml .Values.huey.persistence.accessModes | nindent 4 }}
+  {{- if .Values.huey.persistence.storageClass }}
+  storageClassName: {{ if eq "-" .Values.huey.persistence.storageClass }}""{{ else }}{{ .Values.huey.persistence.storageClass | quote }}{{ end }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.huey.persistence.size | quote }}
+{{- end }}

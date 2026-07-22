@@ -1,0 +1,48 @@
+suite: Test SecObserve Huey PVC
+
+templates:
+  - templates/pvc.yaml
+
+release:
+  name: test-release
+  namespace: test-namespace
+
+tests:
+  - it: creates a release-scoped Huey PVC
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-huey
+      - equal:
+          path: spec.accessModes[0]
+          value: ReadWriteOnce
+      - equal:
+          path: spec.resources.requests.storage
+          value: 1Gi
+
+  - it: supports a custom storage class and annotations
+    set:
+      huey.persistence.storageClass: fast
+      huey.persistence.annotations:
+        example.com/owner: secobserve
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: fast
+      - equal:
+          path: metadata.annotations["example.com/owner"]
+          value: secobserve
+
+  - it: does not create a PVC when an existing claim is configured
+    set:
+      huey.persistence.existingClaim: shared-huey
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: does not create a PVC when persistence is disabled
+    set:
+      huey.persistence.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
