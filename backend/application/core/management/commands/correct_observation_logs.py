@@ -1,5 +1,4 @@
 import logging
-import traceback
 from typing import Any
 
 from django.core.management.base import BaseCommand
@@ -76,5 +75,4 @@ class Command(BaseCommand):
 
             logger.info("... %s Observation Logs corrected", num_observation_logs)
         except Exception as e:
-            logger.error(str(e))
-            logger.error(traceback.format_exc())
+            logger.exception(e)
