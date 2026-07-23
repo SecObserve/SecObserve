@@ -7,6 +7,7 @@ import jsonpickle
 from jsonpickle.backend import JSONBackend
 
 from application.access_control.services.current_user import get_current_user
+from application.commons.models import Settings
 from application.core.models import Observation, Product
 from application.core.services.observation import (
     get_current_priority,
@@ -33,14 +34,24 @@ class Rule_Engine:
     def __init__(self, product: Product) -> None:
         self.product = product
 
+        if product.product_group:
+            product_rules_need_approval = (
+                product.product_rules_need_approval or product.product_group.product_rules_need_approval
+            )
+        else:
+            product_rules_need_approval = product.product_rules_need_approval
+
         product_parser_rules = Rule.objects.filter(
             product=product,
             enabled=True,
-            approval_status__in=[
-                Rule_Status.RULE_STATUS_APPROVED,
-                Rule_Status.RULE_STATUS_AUTO_APPROVED,
-            ],
         )
+        if product_rules_need_approval:
+            product_parser_rules = product_parser_rules.filter(
+                approval_status__in=[
+                    Rule_Status.RULE_STATUS_APPROVED,
+                    Rule_Status.RULE_STATUS_AUTO_APPROVED,
+                ],
+            )
         self.rules: list[Rule] = list(product_parser_rules)
 
         if product.product_group:
@@ -48,17 +59,28 @@ class Rule_Engine:
                 product=product.product_group,
                 enabled=True,
             )
+            if product.product_group.product_rules_need_approval:
+                product_group_parser_rules = product_group_parser_rules.filter(
+                    approval_status__in=[
+                        Rule_Status.RULE_STATUS_APPROVED,
+                        Rule_Status.RULE_STATUS_AUTO_APPROVED,
+                    ],
+                )
             self.rules += list(product_group_parser_rules)
 
         if product.apply_general_rules:
             general_rules = Rule.objects.filter(
                 product__isnull=True,
                 enabled=True,
-                approval_status__in=[
-                    Rule_Status.RULE_STATUS_APPROVED,
-                    Rule_Status.RULE_STATUS_AUTO_APPROVED,
-                ],
             )
+            settings = Settings.load()
+            if settings.feature_general_rules_need_approval:
+                general_rules = general_rules.filter(
+                    approval_status__in=[
+                        Rule_Status.RULE_STATUS_APPROVED,
+                        Rule_Status.RULE_STATUS_AUTO_APPROVED,
+                    ],
+                )
             self.rules += list(general_rules)
 
         self.rego_interpreters: dict[Any, RegoInterpreter] = {}
