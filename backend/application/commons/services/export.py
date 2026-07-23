@@ -60,6 +60,8 @@ def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_key
                         value = str(getattr(current_object, key))
                     if value and isinstance(value, datetime):
                         value = value.replace(tzinfo=None)
+                    if value and (isinstance(value, list) or isinstance(value, dict)):
+                        value = str(value)
                     value = _escape_formula(value)
                     try:
                         worksheet.cell(row=row_num, column=col_num, value=value)
