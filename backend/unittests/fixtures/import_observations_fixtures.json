@@ -63,6 +63,7 @@
             "security_gate_threshold_low": null,
             "security_gate_threshold_none": null,
             "security_gate_threshold_unknown": null,
+            "product_rules_need_approval": true,
             "apply_general_rules": true,
             "notification_ms_teams_webhook": "",
             "last_observation_change": "2022-12-16T16:13:18.283Z",
