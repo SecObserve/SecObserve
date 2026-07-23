@@ -7,6 +7,7 @@ from openpyxl import Workbook
 
 from application.commons.services.export import export_csv, export_excel
 from application.core.models import Observation, Observation_Log, Product
+from application.core.types import Observation_Log_Comment
 
 
 def export_observations_excel(observations: QuerySet) -> Workbook:
@@ -33,6 +34,7 @@ def _annotate_observation_log_comment(observations: QuerySet) -> QuerySet:
     newest_comment = Subquery(
         Observation_Log.objects.filter(observation=OuterRef("pk"))
         .filter(~Q(severity="") | ~Q(status=""))
+        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
         .order_by("-created", "-id")
         .values("comment")[:1]
     )
