@@ -2,7 +2,10 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 
-from application.access_control.queries.user import get_user_by_username, get_users
+from application.access_control.queries.user import (
+    get_user_by_username,
+    get_users,
+)
 from unittests.base_test_case import BaseTestCase
 
 

@@ -14,6 +14,7 @@ from application.notifications.services.send_notifications import (
     _get_notification_slack_webhook,
 )
 from application.notifications.services.send_notifications_base import (
+    is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -106,9 +107,12 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
 
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(observation.product)
     if notification_ms_teams_webhook:
+        template = (
+            "msteams_v2_observation.tpl" if is_msteams_v2(notification_ms_teams_webhook) else "msteams_observation.tpl"
+        )
         send_msteams_notification(
             notification_ms_teams_webhook,
-            "msteams_observation.tpl",
+            template,
             observation=observation,
             observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
             first_line=first_line,

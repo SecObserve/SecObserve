@@ -47,6 +47,6 @@ class TestRuleEngine(BaseTestCase):
 
         self.assertEqual(rule.approval_status, Rule_Status.RULE_STATUS_REJECTED)
         self.assertEqual(rule.approval_user, self.user_external)
-        self.assertEqual(rule.approval_remark, "test")
+        self.assertEqual(rule.rejection_remark, "test")
         self.assertIsNotNone(rule.approval_date)
         save_mock.assert_called_once()

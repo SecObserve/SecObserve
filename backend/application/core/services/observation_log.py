@@ -11,6 +11,7 @@ from application.notifications.services.send_notifications_observation import (
 from application.notifications.services.send_notifications_observation_title import (
     send_observation_title_notification,
 )
+from application.rules.models import Rule
 
 
 def create_observation_log(  # pylint: disable=too-many-arguments
@@ -24,6 +25,11 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     vex_remediations: Optional[str],
     assessment_status: str,
     risk_acceptance_expiry_date: Optional[date],
+    propagated_from: Optional[Observation_Log] = None,
+    general_rule: Optional[Rule] = None,
+    general_rule_rego: Optional[Rule] = None,
+    product_rule: Optional[Rule] = None,
+    product_rule_rego: Optional[Rule] = None,
 ) -> Observation_Log:
     observation_log = Observation_Log(
         observation=observation,
@@ -35,10 +41,13 @@ def create_observation_log(  # pylint: disable=too-many-arguments
         vex_justification=vex_justification,
         vex_remediations=vex_remediations,
         assessment_status=assessment_status,
-        general_rule=observation.general_rule,
-        product_rule=observation.product_rule,
+        general_rule=general_rule,
+        general_rule_rego=general_rule_rego,
+        product_rule=product_rule,
+        product_rule_rego=product_rule_rego,
         vex_statement=observation.vex_statement,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
+        propagated_from=propagated_from,
     )
     observation_log.save()
 

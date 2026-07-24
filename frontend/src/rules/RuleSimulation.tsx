@@ -108,7 +108,11 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
                             </Datagrid>
                         </ListContextProvider>
                     </ResourceContextProvider>
-                    <Stack direction="row" justifyContent="center" alignItems="center" marginTop={4} spacing={2}>
+                    <Stack
+                        direction="row"
+                        spacing={2}
+                        sx={{ justifyContent: "center", alignItems: "center", marginTop: 4 }}
+                    >
                         <OKButton />
                     </Stack>
                 </DialogContent>

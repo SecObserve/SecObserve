@@ -32,7 +32,7 @@ const ShowActions = () => {
     const license_policy = useRecordContext();
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "name", order: "ASC" }}
@@ -58,9 +58,9 @@ const LicensePolicyComponent = () => {
     return (
         <WithRecord
             render={(license_policy) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                        <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                        <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                             <license_policies.icon />
                             &nbsp;&nbsp;License Policy
                         </Typography>

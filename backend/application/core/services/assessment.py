@@ -1,11 +1,24 @@
+import re
 from datetime import date
 from typing import Optional
 
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
+from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
-from application.core.models import Observation, Observation_Log, Product
+from application.authorization.services.roles_permissions import Roles
+from application.core.models import (
+    Branch,
+    Observation,
+    Observation_Log,
+    Product,
+    Product_Authorization_Group_Member,
+)
+from application.core.queries.product_member import (
+    get_highest_role_of_product_authorization_group_members_for_user,
+    get_product_member,
+)
 from application.core.services.observation import (
     get_current_priority,
     get_current_severity,
@@ -18,7 +31,11 @@ from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
-from application.core.types import Assessment_Status, Status
+from application.core.types import (
+    Assessment_Status,
+    Observation_Log_Comment,
+    Status,
+)
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
@@ -40,6 +57,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     new_vex_justification: Optional[str],
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
+    propagated_from: Optional[Observation_Log] = None,
 ) -> None:
 
     log_severity = new_severity if new_severity and new_severity != observation.current_severity else ""
@@ -65,6 +83,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     assessment_status = (
         Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
         if _get_assessments_need_approval(observation.product)
+        and not propagated_from
         and (
             (log_severity and log_severity != observation.current_severity)
             or (log_status and log_status != observation.current_status and new_status != Status.STATUS_IN_REVIEW)
@@ -89,7 +108,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             new_risk_acceptance_expiry_date,
         )
 
-        create_observation_log(
+        observation_log = create_observation_log(
             observation=observation,
             severity=log_severity,
             status=log_status,
@@ -99,10 +118,13 @@ def save_assessment(  # pylint: disable=too-many-arguments
             vex_remediations=log_vex_remediations,
             assessment_status=assessment_status,
             risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
+            propagated_from=propagated_from,
         )
 
         check_security_gate(observation.product)
         push_observation_to_issue_tracker(observation, get_current_user())
+        if not propagated_from:
+            propagate_assessment(observation_log)
     else:
         create_observation_log(
             observation=observation,
@@ -183,6 +205,127 @@ def _get_assessments_need_approval(product: Product) -> bool:
     return product.assessments_need_approval
 
 
+def get_effective_assessment_approvers(product: Product) -> tuple[set[int], set[int]]:
+    """Return the effective approver user ids and authorization group ids for a product.
+
+    The effective set is the union of the product's own designated approvers and those of
+    its product group (mirroring the inheritance of the "assessments need approval" flag).
+    """
+    approver_user_ids: set[int] = set(product.assessment_approvers.values_list("id", flat=True))
+    approver_group_ids: set[int] = set(product.assessment_approver_authorization_groups.values_list("id", flat=True))
+    if product.product_group:
+        approver_user_ids |= set(product.product_group.assessment_approvers.values_list("id", flat=True))
+        approver_group_ids |= set(
+            product.product_group.assessment_approver_authorization_groups.values_list("id", flat=True)
+        )
+    return approver_user_ids, approver_group_ids
+
+
+def assessment_approvers_configured(product: Product) -> bool:
+    """Whether the product (or its product group) has any designated assessment approvers."""
+    if product.pk is None:
+        return False
+    approver_user_ids, approver_group_ids = get_effective_assessment_approvers(product)
+    return bool(approver_user_ids or approver_group_ids)
+
+
+def is_user_designated_assessment_approver(product: Product, user: Optional[User] = None) -> bool:
+    """Check whether a user is explicitly a designated assessment approver for a product.
+
+    Unlike ``user_is_allowed_assessment_approver`` (which permits everyone when no approvers
+    are configured), this returns False when the effective approver set is empty. When designated
+    approvers are configured, the Observation_Log_Approval permission is restricted to these users
+    (who must still hold an approval-capable role).
+    """
+    if user is None:
+        user = get_current_user()
+    if user is None:
+        return False
+    if product.pk is None:
+        return False
+
+    approver_user_ids, approver_group_ids = get_effective_assessment_approvers(product)
+
+    if not approver_user_ids and not approver_group_ids:
+        return False
+
+    if user.pk in approver_user_ids:
+        return True
+
+    if approver_group_ids:
+        return _user_is_member_of_approval_capable_approver_group(product, user, approver_group_ids)
+
+    return False
+
+
+def user_is_allowed_assessment_approver(product: Product, user: Optional[User] = None) -> bool:
+    """Check whether a user satisfies the designated-approver restriction for a product.
+
+    Returns True when no approvers are configured (legacy behavior) or when the user is a
+    designated approver, either directly or via membership in a designated authorization group.
+    This is an additional condition layered on top of the Observation_Log_Approval permission
+    and the self-approval restriction; it never grants approval rights on its own.
+    """
+    if user is None:
+        user = get_current_user()
+    if user is None:
+        return False
+
+    approver_user_ids, approver_group_ids = get_effective_assessment_approvers(product)
+
+    if not approver_user_ids and not approver_group_ids:
+        return True
+
+    if _user_is_owner(product, user):
+        return True
+
+    if _get_highest_user_role(product, user) < Roles.Writer:
+        return False
+
+    if user.pk in approver_user_ids:
+        return True
+
+    if approver_group_ids:
+        return _user_is_member_of_approval_capable_approver_group(product, user, approver_group_ids)
+
+    return False
+
+
+def _user_is_member_of_approval_capable_approver_group(
+    product: Product, user: User, approver_group_ids: set[int]
+) -> bool:
+    product_ids = [product.pk]
+    if product.product_group_id:
+        product_ids.append(product.product_group_id)
+
+    return Product_Authorization_Group_Member.objects.filter(
+        product_id__in=product_ids,
+        authorization_group_id__in=approver_group_ids,
+        authorization_group__users=user,
+        role__gte=Roles.Writer,
+    ).exists()
+
+
+def _user_is_owner(product: Product, user: User) -> bool:
+    return _get_highest_user_role(product, user) == Roles.Owner
+
+
+def _get_highest_user_role(product: Product, user: User) -> int:
+    if user.is_superuser:
+        return Roles.Owner
+
+    user_member = get_product_member(product, user)
+    highest_role = user_member.role if user_member else 0
+
+    if product.product_group:
+        product_group_member = get_product_member(product.product_group, user)
+        if product_group_member:
+            highest_role = max(highest_role, product_group_member.role)
+
+    highest_role = max(highest_role, get_highest_role_of_product_authorization_group_members_for_user(product, user))
+    return highest_role
+
+
 def remove_assessment(observation: Observation, comment: str) -> bool:
     if observation.assessment_severity or observation.assessment_status or observation.assessment_priority:
         observation.assessment_severity = ""
@@ -224,16 +367,37 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
     return False
 
 
-def assessment_approval(observation_log: Observation_Log, assessment_status: str, approval_remark: str) -> None:
+def assessment_approval(  # pylint: disable=too-many-positional-arguments
+    observation_log: Observation_Log,
+    assessment_status: str,
+    rejection_remark: Optional[str],
+    observation_log_comment: Optional[str],
+    observation_log_vex_justification: Optional[str],
+    observation_log_vex_remediations: Optional[str],
+) -> None:
     if observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
         raise ValidationError("Observation log does not need approval")
 
     approval_user = get_current_user()
+    product = observation_log.observation.product
     if observation_log.user == approval_user:
         raise ValidationError("Users cannot approve their own assessment")
 
+    if not user_is_allowed_assessment_approver(product, approval_user):
+        raise ValidationError("User is not an allowed approver for this product")
+
+    if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS:
+        if observation_log_comment:
+            observation_log.comment = observation_log_comment
+        if observation_log_vex_justification:
+            observation_log.vex_justification = observation_log_vex_justification
+        if observation_log_vex_remediations:
+            observation_log.vex_remediations = observation_log_vex_remediations
+        observation_log.save()
+
     if assessment_status in (
         Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+        Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
         Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
     ):
         _update_observation(
@@ -252,8 +416,148 @@ def assessment_approval(observation_log: Observation_Log, assessment_status: str
         send_observation_notification(observation_log.observation)
         send_observation_title_notification(observation_log.observation)
 
+        propagate_assessment(observation_log)
+
     observation_log.approval_user = approval_user
-    observation_log.approval_remark = approval_remark
+    observation_log.rejection_remark = rejection_remark if rejection_remark else ""
     observation_log.approval_date = timezone.now()
     observation_log.assessment_status = assessment_status
     observation_log.save()
+
+
+def propagate_assessment(observation_log: Observation_Log) -> None:
+    observation = observation_log.observation
+
+    if not observation.branch or not observation.origin_component_name_version:
+        return
+
+    propagate_branches = []
+    propagate_branches_product_group = (
+        _get_product_group_propagate_branches(observation)
+        if observation.product.product_group and observation.product.product_group.propagate_branches_new_assessment
+        else []
+    )
+    propagate_branches_product = (
+        _get_product_propagate_branches(observation) if observation.product.propagate_branches_new_assessment else []
+    )
+    propagate_branches = propagate_branches_product_group + propagate_branches_product
+    if not propagate_branches:
+        return
+
+    compiled_branches = _get_compiled_branches(observation, propagate_branches)
+
+    branches = Branch.objects.filter(product=observation.product).exclude(id=observation.branch.pk)
+    for branch in branches:
+        for compiled_branch in compiled_branches:
+            if compiled_branch.match(branch.name):
+                observations = Observation.objects.filter(
+                    product=observation.product,
+                    branch=branch,
+                    title=observation.title,
+                    origin_component_name_version=observation.origin_component_name_version,
+                )
+                for observation in observations:
+                    save_assessment(
+                        observation=observation,
+                        new_severity=observation_log.severity,
+                        new_status=observation_log.status,
+                        new_priority=observation_log.priority,
+                        comment=observation_log.comment,
+                        new_vex_justification=observation_log.vex_justification,
+                        new_vex_remediations=observation_log.vex_remediations,
+                        new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
+                        propagated_from=observation_log,
+                    )
+
+
+def set_propagated_assessment_for_new_observation(observation: Observation) -> None:
+    if not observation.branch or not observation.origin_component_name_version:
+        return
+
+    propagate_branches = []
+    propagate_branches_product_group = (
+        _get_product_group_propagate_branches(observation)
+        if observation.product.product_group and observation.product.product_group.propagate_branches_new_observation
+        else []
+    )
+    propagate_branches_product = (
+        _get_product_propagate_branches(observation) if observation.product.propagate_branches_new_observation else []
+    )
+    propagate_branches = propagate_branches_product_group + propagate_branches_product
+    if not propagate_branches:
+        return
+
+    compiled_branches = _get_compiled_branches(observation, propagate_branches)
+
+    observation_logs = (
+        Observation_Log.objects.filter(
+            observation__product=observation.product,
+            observation__title=observation.title,
+            observation__origin_component_name_version=observation.origin_component_name_version,
+            observation__branch__isnull=False,
+            propagated_from__isnull=True,
+            general_rule__isnull=True,
+            general_rule_rego__isnull=True,
+            product_rule__isnull=True,
+            product_rule_rego__isnull=True,
+            vex_statement__isnull=True,
+            assessment_status__in=(
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+                Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+            ),
+        )
+        .exclude(observation__branch=observation.branch)
+        .exclude(severity="", status="")
+        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
+        .select_related("observation__branch")
+        .order_by("observation__branch", "-created")
+    )
+
+    newest_observation_logs_per_branch: dict[str, Observation_Log] = {}
+    for observation_log in observation_logs:
+        branch_name = observation_log.observation.branch.name  # type: ignore[union-attr]
+        if branch_name not in newest_observation_logs_per_branch:
+            newest_observation_logs_per_branch[branch_name] = observation_log
+
+    newest_observation_log: Optional[Observation_Log] = None
+    for branch_name, observation_log in newest_observation_logs_per_branch.items():
+        branch_matches = any(compiled_branch.match(branch_name) for compiled_branch in compiled_branches)
+        if branch_matches and (
+            newest_observation_log is None or observation_log.created > newest_observation_log.created
+        ):
+            newest_observation_log = observation_log
+
+    if newest_observation_log:
+        save_assessment(
+            observation=observation,
+            new_severity=newest_observation_log.severity,
+            new_status=newest_observation_log.status,
+            new_priority=newest_observation_log.priority,
+            comment=newest_observation_log.comment,
+            new_vex_justification=newest_observation_log.vex_justification,
+            new_vex_remediations=newest_observation_log.vex_remediations,
+            new_risk_acceptance_expiry_date=newest_observation_log.risk_acceptance_expiry_date,
+            propagated_from=newest_observation_log,
+        )
+
+
+def _get_product_group_propagate_branches(observation: Observation) -> list:
+    return (
+        list(observation.product.product_group.propagate_branches)
+        if observation.product.product_group and observation.product.product_group.propagate_branches
+        else []
+    )
+
+
+def _get_product_propagate_branches(observation: Observation) -> list:
+    return list(observation.product.propagate_branches) if observation.product.propagate_branches else []
+
+
+def _get_compiled_branches(observation: Observation, propagate_branches: list) -> set[re.Pattern]:
+    compiled_branches: set[re.Pattern] = set()
+    for propagate_branch in propagate_branches:
+        propagate_to = propagate_branch.get("propagate_to")
+        if re.match(propagate_to, observation.branch.name):  # type: ignore[union-attr]
+            compiled_branches.add(re.compile(propagate_to))
+    return compiled_branches

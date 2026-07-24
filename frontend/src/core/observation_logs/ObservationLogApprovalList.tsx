@@ -41,7 +41,7 @@ const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
     return (
         <Fragment>
             {(!product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL)) && (
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <AssessmentBulkApproval storeKey={storeKey} />
                     <AssessmentDeleteApproval storeKey={storeKey} />
                 </Stack>

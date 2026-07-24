@@ -30,11 +30,13 @@ def append_product_to_product_tree(
         )
         product_tree.branches.append(product_family_branch)
 
+    product_id = get_product_id(product, branch)
+
     if not branch:
         if product_family_branch.branches is None:
             raise ValueError("Product family branches should not be None")
         for product_name_branch in product_family_branch.branches:
-            if product_name_branch.name == product.name:
+            if product_name_branch.product and product_name_branch.product.product_id == product_id:
                 return
 
         new_product_full_name = _create_product(product, branch)
@@ -48,7 +50,7 @@ def append_product_to_product_tree(
         if product_family_branch.branches is None:
             raise ValueError("Product family branches should not be None")
         for version_branch in product_family_branch.branches:
-            if version_branch.name == f"{product.name}:{branch.name}":
+            if version_branch.product and version_branch.product.product_id == product_id:
                 return
 
         new_product_full_name = _create_product(product, branch)

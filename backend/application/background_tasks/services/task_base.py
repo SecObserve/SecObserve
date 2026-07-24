@@ -2,12 +2,14 @@ import functools
 import inspect
 import logging
 import sys
-import traceback
 from datetime import timedelta
 from typing import Any, Callable
 
 from django.utils import timezone
+from huey.contrib.djhuey import HUEY as huey
 from huey.contrib.djhuey import lock_task
+from huey.contrib.stats import HueyStats, enable_stats
+from peewee import SqliteDatabase
 
 from application.background_tasks.models import Periodic_Task
 from application.background_tasks.types import Status
@@ -18,6 +20,14 @@ from application.notifications.services.send_notifications import (
 )
 
 logger = logging.getLogger("secobserve.background_tasks")
+
+
+def enable_statistics() -> HueyStats:
+    stats_db = SqliteDatabase("/var/lib/huey/huey_stats.db")
+    return enable_stats(huey, stats_db)
+
+
+enable_statistics()
 
 
 def so_periodic_task(name: str) -> Callable:
@@ -50,7 +60,7 @@ def so_periodic_task(name: str) -> Callable:
                 periodic_task.save()
 
                 _handle_periodic_task_exception(e)
-                return
+                raise
 
             logger.info("--- %s - finished ---", name)
 
@@ -77,7 +87,6 @@ def _handle_periodic_task_exception(e: Exception) -> None:
             username=None,
         )
     )
-    logger.error(traceback.format_exc())
 
     send_task_exception_notification(function=function, arguments=None, user=None, exception=e, product=None)
 

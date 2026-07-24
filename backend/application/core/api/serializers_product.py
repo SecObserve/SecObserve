@@ -1,7 +1,9 @@
+import re
 from datetime import date
 from typing import Any, Optional
 
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Q
 from rest_framework.serializers import (
     CharField,
     DateField,
@@ -46,6 +48,10 @@ from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
 )
+from application.core.services.assessment import (
+    assessment_approvers_configured,
+    is_user_designated_assessment_approver,
+)
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
@@ -57,6 +63,38 @@ from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
 
+def get_product_permissions_for_user(product: Product) -> Optional[set[Permissions]]:
+    """Permissions of the current user for a product, applying the designated-approver restriction.
+
+    The base set comes from the user's highest role. When designated assessment approvers are
+    configured for the product, Observation_Log_Approval is restricted to those approvers, so it is
+    stripped for users who are not designated — mirroring the object-level authorization check.
+    """
+    permissions = get_permissions_for_role(get_highest_user_role(product))
+    if (
+        permissions is not None
+        and Permissions.Observation_Log_Approval in permissions
+        and assessment_approvers_configured(product)
+        and get_highest_user_role(product) != Roles.Owner
+        and not is_user_designated_assessment_approver(product)
+    ):
+        permissions = permissions - {Permissions.Observation_Log_Approval}
+    return permissions
+
+
+def _authorization_group_is_designated_assessment_approver(product: Product, authorization_group: Any) -> bool:
+    if not product.pk:
+        return False
+
+    designated_products = Product.objects.filter(assessment_approver_authorization_groups=authorization_group)
+    if product.is_product_group:
+        designated_products = designated_products.filter(Q(pk=product.pk) | Q(product_group=product))
+    else:
+        designated_products = designated_products.filter(pk=product.pk)
+
+    return designated_products.exists()
+
+
 class ProductCoreSerializer(ModelSerializer):
     permissions = SerializerMethodField()
     observation_notification_status_list = ListField(
@@ -66,7 +104,7 @@ class ProductCoreSerializer(ModelSerializer):
     )
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
-        return get_permissions_for_role(get_highest_user_role(obj))
+        return get_product_permissions_for_user(obj)
 
     class Meta:
         model = Product
@@ -107,7 +145,51 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["security_gate_threshold_none"] = None
             attrs["security_gate_threshold_unknown"] = None
 
+        self._validate_assessment_approver_authorization_groups(attrs)
+
         return super().validate(attrs)
+
+    def _validate_assessment_approver_authorization_groups(self, attrs: dict) -> None:
+        authorization_groups = attrs.get("assessment_approver_authorization_groups")
+        if authorization_groups is None:
+            return
+
+        product_ids = []
+        if self.instance and self.instance.pk:
+            product_ids.append(self.instance.pk)
+
+        product_group = attrs.get("product_group")
+        if product_group is None and self.instance:
+            product_group = self.instance.product_group
+        if product_group:
+            product_ids.append(product_group.pk)
+
+        if not product_ids and authorization_groups:
+            raise ValidationError(
+                {
+                    "assessment_approver_authorization_groups": (
+                        "Designated approver groups must have at least the Writer role."
+                    )
+                }
+            )
+
+        invalid_groups = [
+            authorization_group
+            for authorization_group in authorization_groups
+            if not Product_Authorization_Group_Member.objects.filter(
+                product_id__in=product_ids,
+                authorization_group=authorization_group,
+                role__gte=Roles.Writer,
+            ).exists()
+        ]
+        if invalid_groups:
+            raise ValidationError(
+                {
+                    "assessment_approver_authorization_groups": (
+                        "Designated approver groups must have at least the Writer role."
+                    )
+                }
+            )
 
     def validate_observation_notification_status_list(self, value: list[str]) -> list[str]:
         if not isinstance(value, list):
@@ -204,12 +286,17 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "security_gate_threshold_none",
             "security_gate_threshold_unknown",
             "assessments_need_approval",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
             "product_rules_need_approval",
             "risk_acceptance_expiry_active",
             "risk_acceptance_expiry_days",
             "new_observations_in_review",
             "product_rule_approvals",
             "license_policy",
+            "propagate_branches",
+            "propagate_branches_new_assessment",
+            "propagate_branches_new_observation",
             "forbidden_licenses_count",
             "review_required_licenses_count",
             "unknown_licenses_count",
@@ -220,6 +307,9 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "observation_notification_status_list",
             "observation_notification_min_priority",
         ]
+
+    def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
+        return _validate_propagate_branches(value)
 
     def create(self, validated_data: dict) -> Product:
         product_group = super().create(validated_data)
@@ -260,7 +350,14 @@ class ProductListSerializer(ProductCoreSerializer):
 
     class Meta:
         model = Product
-        exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
+        exclude = [
+            "is_product_group",
+            "members",
+            "authorization_group_members",
+            "observation_notification_statuses",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
+        ]
 
     def get_all_licenses_count(self, obj: Product) -> Optional[int]:
         return _get_all_licenses_count(obj)
@@ -281,6 +378,8 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     product_group_repository_branch_housekeeping_active = SerializerMethodField()
     product_group_security_gate_active = SerializerMethodField()
     product_group_assessments_need_approval = SerializerMethodField()
+    product_group_assessment_approvers = SerializerMethodField()
+    product_group_assessment_approver_authorization_groups = SerializerMethodField()
     observation_reviews = SerializerMethodField()
     observation_log_approvals = SerializerMethodField()
     has_services = SerializerMethodField()
@@ -315,6 +414,16 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         if not obj.product_group:
             return False
         return obj.product_group.assessments_need_approval
+
+    def get_product_group_assessment_approvers(self, obj: Product) -> list[int]:
+        if not obj.product_group:
+            return []
+        return list(obj.product_group.assessment_approvers.values_list("id", flat=True))
+
+    def get_product_group_assessment_approver_authorization_groups(self, obj: Product) -> list[int]:
+        if not obj.product_group:
+            return []
+        return list(obj.product_group.assessment_approver_authorization_groups.values_list("id", flat=True))
 
     def get_observation_reviews(self, obj: Product) -> int:
         return Observation.objects.filter(product=obj, current_status=Status.STATUS_IN_REVIEW).count()
@@ -444,6 +553,47 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     def validate_cpe23(self, cpe23: str) -> str:
         return validate_cpe23(cpe23)
 
+    def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
+        return _validate_propagate_branches(value)
+
+
+def _validate_propagate_branches(value: Any) -> Optional[list[dict]]:
+    """
+    Validate that propagate_branches is either None or a list of dictionaries
+    where each dictionary contains 'propagate_to' fields with string values.
+    """
+    if value is None:
+        return value
+
+    items = []
+
+    if not isinstance(value, list):
+        raise ValidationError("propagate_branches must be a list or null.")
+
+    for item in value:
+        if not isinstance(item, dict):
+            raise ValidationError("Each item must be a dictionary.")
+
+        propagate_to = item.get("propagate_to")
+
+        if not propagate_to:
+            continue
+
+        if not isinstance(propagate_to, str):
+            raise ValidationError("The 'propagate_to' field must be a string.")
+
+        try:
+            re.compile(propagate_to)
+        except re.error as e:
+            raise ValidationError(f"propagate_to is not a valid regular expression: {e.msg}") from e
+
+        items.append({"propagate_to": propagate_to})
+
+    if items:
+        return items
+
+    return None
+
 
 class NestedProductSerializer(ModelSerializer):
     permissions = SerializerMethodField()
@@ -453,10 +603,15 @@ class NestedProductSerializer(ModelSerializer):
 
     class Meta:
         model = Product
-        exclude = ["members", "authorization_group_members"]
+        exclude = [
+            "members",
+            "authorization_group_members",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
+        ]
 
     def get_permissions(self, product: Product) -> Optional[set[Permissions]]:
-        return get_permissions_for_role(get_highest_user_role(product))
+        return get_product_permissions_for_user(product)
 
     def get_product_group_assessments_need_approval(self, obj: Product) -> bool:
         if not obj.product_group:
@@ -486,6 +641,8 @@ class NestedProductListSerializer(ModelSerializer):
         exclude = [
             "members",
             "authorization_group_members",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
             "is_product_group",
             "new_observations_in_review",
         ]
@@ -581,7 +738,24 @@ class ProductAuthorizationGroupMemberSerializer(ModelSerializer):
             if attrs.get("role") != Roles.Owner and self.instance is not None and self.instance.role == Roles.Owner:
                 raise ValidationError("You are not permitted to change the Owner role")
 
+        self._validate_designated_approver_group_role(attrs)
+
         return attrs
+
+    def _validate_designated_approver_group_role(self, attrs: dict) -> None:
+        role = attrs.get("role")
+        if role is None or role >= Roles.Writer:
+            return
+
+        product = attrs.get("product") or (self.instance.product if self.instance else None)
+        authorization_group = attrs.get("authorization_group") or (
+            self.instance.authorization_group if self.instance else None
+        )
+        if product is None or authorization_group is None:
+            return
+
+        if _authorization_group_is_designated_assessment_approver(product, authorization_group):
+            raise ValidationError("Designated approver groups must have at least the Writer role.")
 
 
 class ProductApiTokenSerializer(Serializer):

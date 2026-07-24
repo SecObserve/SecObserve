@@ -1,12 +1,12 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import SecurityIcon from "@mui/icons-material/Security";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { Badge, Box } from "@mui/material";
+import { Badge, MenuList } from "@mui/material";
 import { useEffect, useState } from "react";
 import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "react-admin";
 
 import administration from "../../access_control/access_control_administration";
-import periodic_tasks from "../../background_tasks/periodic_tasks";
+import background_tasks_administration from "../../background_tasks/background_tasks_administration";
 import components from "../../core/components";
 import observations from "../../core/observations";
 import product_groups from "../../core/product_groups";
@@ -47,9 +47,9 @@ const Menu = ({ dense = false }: MenuProps) => {
     }, []);
 
     return (
-        <Box
+        <MenuList
             sx={{
-                width: open ? 220 : 50,
+                width: open ? 225 : 50,
                 marginTop: 1,
                 marginBottom: 1,
                 transition: (theme) =>
@@ -180,10 +180,10 @@ const Menu = ({ dense = false }: MenuProps) => {
                 )}
                 {is_superuser() && (
                     <MenuItemLink
-                        to="/periodic_tasks"
+                        to="/background_tasks/statistics"
                         state={{ _scrollToTop: true }}
-                        primaryText="Periodic Tasks"
-                        leftIcon={<periodic_tasks.icon />}
+                        primaryText="Background Tasks"
+                        leftIcon={<background_tasks_administration.icon />}
                         dense={dense}
                     />
                 )}
@@ -211,7 +211,7 @@ const Menu = ({ dense = false }: MenuProps) => {
                     />
                 )}
             </SubMenu>
-        </Box>
+        </MenuList>
     );
 };
 

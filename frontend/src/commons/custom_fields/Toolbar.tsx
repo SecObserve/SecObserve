@@ -9,7 +9,7 @@ const Toolbar = (props: ToolbarProps) => {
     const { children } = props;
 
     return (
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+        <Stack direction="row" spacing={2} sx={{ justifyContent: "flex-end", alignItems: "center" }}>
             {children}
         </Stack>
     );

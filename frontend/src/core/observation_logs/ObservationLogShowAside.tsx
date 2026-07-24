@@ -8,7 +8,7 @@ const ObservationLogShowAside = () => {
     return (
         <WithRecord
             render={(observation_log) => (
-                <Box width={"100%"} marginLeft={2} marginRight={1}>
+                <Box sx={{ width: "100%", marginLeft: 2, marginRight: 1 }}>
                     <ObservationShowHeader observation={observation_log.observation_data} />
                     <ObservationShowOrigins
                         observation={observation_log.observation_data}

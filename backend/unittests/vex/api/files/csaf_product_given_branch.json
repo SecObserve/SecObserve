@@ -18,7 +18,7 @@
             "generator": {
                 "engine": {
                     "name": "SecObserve",
-                    "version": "1.54.0"
+                    "version": "1.55.0"
                 }
             },
             "id": "CSAF_2020_0001_0001",
@@ -78,8 +78,8 @@
             {
                 "category": "default_component_of",
                 "full_product_name": {
-                    "name": "vex_comp_5:5.0.0@vex_product_2:main",
-                    "product_id": "vex_comp_5:5.0.0@vex_product_2:main"
+                    "name": "vex_comp_5:5.0.0@pkg:so/vex_product_2@main",
+                    "product_id": "vex_comp_5:5.0.0@pkg:so/vex_product_2@main"
                 },
                 "product_reference": "vex_comp_5:5.0.0",
                 "relates_to_product_reference": "pkg:so/vex_product_2@main"
@@ -97,12 +97,13 @@
             "notes": [
                 {
                     "category": "description",
-                    "text": "description 4"
+                    "text": "description 4",
+                    "title": "Vulnerability description"
                 }
             ],
             "product_status": {
                 "known_not_affected": [
-                    "vex_comp_5:5.0.0@vex_product_2:main"
+                    "vex_comp_5:5.0.0@pkg:so/vex_product_2@main"
                 ]
             },
             "threats": [
@@ -110,10 +111,11 @@
                     "category": "impact",
                     "details": "Should be no problem",
                     "product_ids": [
-                        "vex_comp_5:5.0.0@vex_product_2:main"
+                        "vex_comp_5:5.0.0@pkg:so/vex_product_2@main"
                     ]
                 }
-            ]
+            ],
+            "title": "vex_vulnerability_4"
         }
     ]
 }

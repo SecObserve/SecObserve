@@ -1,5 +1,5 @@
 import { styled } from "@mui/system";
-import { AutocompleteInput, PasswordInput, TextInput, defaultTheme } from "react-admin";
+import { AutocompleteArrayInput, AutocompleteInput, PasswordInput, TextInput, defaultTheme } from "react-admin";
 import { tss } from "tss-react";
 
 export const AutocompleteInputExtraWide = styled(AutocompleteInput)({
@@ -7,6 +7,10 @@ export const AutocompleteInputExtraWide = styled(AutocompleteInput)({
 });
 
 export const AutocompleteInputWide = styled(AutocompleteInput)({
+    width: "30em",
+});
+
+export const AutocompleteArrayInputWide = styled(AutocompleteArrayInput)({
     width: "30em",
 });
 
@@ -75,7 +79,7 @@ export const darkTheme = {
         mode: "dark" as const, // Switching the dark mode on is a single property value change.
     },
     sidebar: {
-        width: 200,
+        width: 225,
     },
     components: {
         ...defaultTheme.components,
@@ -122,7 +126,7 @@ export const lightTheme = {
         borderRadius: 10,
     },
     sidebar: {
-        width: 200,
+        width: 240,
     },
     components: {
         ...defaultTheme.components,

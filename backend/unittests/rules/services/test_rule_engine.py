@@ -1,7 +1,11 @@
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
-from application.core.models import Product
+import jsonpickle
+
+from application.core.models import Observation, Product
+from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
+from application.rules.types import Rule_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -28,12 +32,13 @@ class TestRuleEngine(BaseTestCase):
         mock_rule.assert_called_with(
             product=self.product_1,
             enabled=True,
-            approval_status__in=["Approved", "Auto approved"],
         )
 
+    @patch("application.rules.services.rule_engine.Settings")
     @patch("application.rules.models.Rule.objects.filter")
-    def test_init_apply_general_rules(self, mock_rule):
+    def test_init_apply_general_rules(self, mock_rule, mock_settings):
         mock_rule.side_effect = self._rule_filter_conditionally
+        mock_settings.load.return_value.feature_general_rules_need_approval = False
 
         self.product_1.apply_general_rules = True
         rule_engine = Rule_Engine(self.product_1)
@@ -44,15 +49,114 @@ class TestRuleEngine(BaseTestCase):
                 call(
                     product=self.product_1,
                     enabled=True,
-                    approval_status__in=["Approved", "Auto approved"],
                 ),
                 call(
                     product__isnull=True,
                     enabled=True,
-                    approval_status__in=["Approved", "Auto approved"],
                 ),
             ]
         )
+
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_init_product_rules_need_approval(self, mock_rule):
+        product_qs = MagicMock()
+        product_qs.filter.return_value = [self.product_rule_1]
+        mock_rule.return_value = product_qs
+
+        self.product_1.apply_general_rules = False
+        self.product_1.product_rules_need_approval = True
+        rule_engine = Rule_Engine(self.product_1)
+
+        self.assertEqual(rule_engine.rules, [self.product_rule_1])
+        mock_rule.assert_called_once_with(product=self.product_1, enabled=True)
+        product_qs.filter.assert_called_once_with(approval_status__in=["Approved", "Auto approved"])
+
+    @patch("application.rules.services.rule_engine.Settings")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_init_general_rules_need_approval(self, mock_rule, mock_settings):
+        general_qs = MagicMock()
+        general_qs.filter.return_value = [self.general_rule]
+
+        def _filter(*args, **kwargs):
+            if kwargs.get("product") == self.product_1:
+                return [self.product_rule_1]
+            elif kwargs.get("product__isnull") is True:
+                return general_qs
+            else:
+                raise Exception("wrong parameters for _filter")
+
+        mock_rule.side_effect = _filter
+        mock_settings.load.return_value.feature_general_rules_need_approval = True
+
+        self.product_1.apply_general_rules = True
+        rule_engine = Rule_Engine(self.product_1)
+
+        self.assertEqual(rule_engine.rules, [self.product_rule_1, self.general_rule])
+        mock_rule.assert_has_calls(
+            [
+                call(product=self.product_1, enabled=True),
+                call(product__isnull=True, enabled=True),
+            ]
+        )
+        general_qs.filter.assert_called_once_with(approval_status__in=["Approved", "Auto approved"])
+
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_init_product_group_rules_need_approval(self, mock_rule):
+        group_rule = Rule(name="group_rule", product=self.product_group_1)
+        product_qs = MagicMock()
+        product_qs.filter.return_value = [self.product_rule_1]
+        group_qs = MagicMock()
+        group_qs.filter.return_value = [group_rule]
+
+        def _filter(*args, **kwargs):
+            if kwargs.get("product") == self.product_1:
+                return product_qs
+            elif kwargs.get("product") == self.product_group_1:
+                return group_qs
+            else:
+                raise Exception("wrong parameters for _filter")
+
+        mock_rule.side_effect = _filter
+
+        self.product_1.apply_general_rules = False
+        self.product_1.product_group = self.product_group_1
+        self.product_group_1.product_rules_need_approval = True
+        rule_engine = Rule_Engine(self.product_1)
+
+        self.assertEqual(rule_engine.rules, [self.product_rule_1, group_rule])
+        mock_rule.assert_has_calls(
+            [
+                call(product=self.product_1, enabled=True),
+                call(product=self.product_group_1, enabled=True),
+            ]
+        )
+        product_qs.filter.assert_called_once_with(approval_status__in=["Approved", "Auto approved"])
+        group_qs.filter.assert_called_once_with(approval_status__in=["Approved", "Auto approved"])
+
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_lazy_loads_interpreter(self, mock_rule, mock_rego_interpreter, _mock_dumps):
+        mock_rule.return_value = []
+        mock_rego_interpreter.return_value.query.return_value = {"severity": "High"}
+        rule_engine = Rule_Engine(self.product_1)
+        rule = Rule(
+            id=1,
+            name="rego_rule",
+            type=Rule_Type.RULE_TYPE_REGO,
+            rego_module="package rule",
+        )
+        observation = Observation(title="observation", product=self.product_1)
+        observation_before = MagicMock(spec=Observation)
+        jsonpickle_output_before = jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False)
+
+        result = rule_engine.check_rule_for_observation(rule, observation, observation_before, True)
+
+        self.assertTrue(result)
+        mock_rego_interpreter.assert_called_once_with("package rule")
+        mock_rego_interpreter.return_value.query.assert_called_once_with({"product_name": "product_1"})
+        self.assertEqual(rule_engine.rego_interpreters[rule.pk], mock_rego_interpreter.return_value)
+        self.assertEqual(jsonpickle_output_before, jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False))
 
     # --- apply_rules ---
 

@@ -2,6 +2,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
     PROTECT,
+    RESTRICT,
     BooleanField,
     CharField,
     DateTimeField,
@@ -50,8 +51,8 @@ class Api_Configuration(Model):
     # We treat EncryptedCharField as a regular CharField
     verify_ssl = BooleanField(default=False)
     automatic_import_enabled = BooleanField(default=False)
-    automatic_import_branch = ForeignKey(Branch, on_delete=PROTECT, null=True)
-    automatic_import_service = ForeignKey(Service, on_delete=PROTECT, null=True)
+    automatic_import_branch = ForeignKey(Branch, on_delete=RESTRICT, null=True)
+    automatic_import_service = ForeignKey(Service, on_delete=RESTRICT, null=True)
     automatic_import_service_legacy = CharField(max_length=255, blank=True)
     automatic_import_docker_image_name_tag = CharField(max_length=513, blank=True)
     automatic_import_endpoint_url = CharField(max_length=2048, blank=True)

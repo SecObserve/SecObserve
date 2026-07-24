@@ -10,6 +10,7 @@ import { oidcConfig, updateRefreshToken } from "./access_control/auth_provider/o
 import authorization_groups from "./access_control/authorization_groups";
 import { Login } from "./access_control/login";
 import users from "./access_control/users";
+import BackgroundTasksAdministration from "./background_tasks/background_tasks_administration/BackgroundTasksAdministration";
 import periodic_tasks from "./background_tasks/periodic_tasks";
 import { Layout } from "./commons/layout";
 import { darkTheme, lightTheme } from "./commons/layout/themes";
@@ -84,6 +85,8 @@ const AdminApp = () => {
                 <Route path="/license/license_groups" element={<LicenseAdministration />} />
                 <Route path="/license/license_policies" element={<LicenseAdministration />} />
                 <Route path="/license/concluded_licenses" element={<LicenseAdministration />} />
+                <Route path="/background_tasks/statistics" element={<BackgroundTasksAdministration />} />
+                <Route path="/background_tasks/periodic_tasks" element={<BackgroundTasksAdministration />} />
                 <Route path="/pivot_table" element={<PivotTable />} />
                 <Route path="/reviews" element={<Reviews />} />
                 <Route path="/reviews/observation_reviews" element={<Reviews />} />

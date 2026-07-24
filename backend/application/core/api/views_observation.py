@@ -320,9 +320,14 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
         user_has_permission_or_403(observation_log, Permissions.Observation_Log_Approval)
 
-        assessment_status = request_serializer.validated_data.get("assessment_status")
-        approval_remark = request_serializer.validated_data.get("approval_remark")
-        assessment_approval(observation_log, assessment_status, approval_remark)
+        assessment_approval(
+            observation_log,
+            request_serializer.validated_data.get("assessment_status"),
+            request_serializer.validated_data.get("rejection_remark"),
+            request_serializer.validated_data.get("observation_log_comment"),
+            request_serializer.validated_data.get("observation_log_vex_justification"),
+            request_serializer.validated_data.get("observation_log_vex_remediations"),
+        )
 
         set_potential_duplicate_both_ways(observation_log.observation)
 
@@ -341,7 +346,8 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
         observation_logs_bulk_approval(
             request_serializer.validated_data.get("assessment_status"),
-            request_serializer.validated_data.get("approval_remark"),
+            request_serializer.validated_data.get("rejection_remark"),
+            request_serializer.validated_data.get("observation_log_comment"),
             request_serializer.validated_data.get("observation_logs"),
         )
         return Response(status=HTTP_204_NO_CONTENT)

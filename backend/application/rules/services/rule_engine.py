@@ -4,8 +4,10 @@ from copy import copy
 from typing import Any, Optional
 
 import jsonpickle
+from jsonpickle.backend import JSONBackend
 
 from application.access_control.services.current_user import get_current_user
+from application.commons.models import Settings
 from application.core.models import Observation, Product
 from application.core.services.observation import (
     get_current_priority,
@@ -32,14 +34,24 @@ class Rule_Engine:
     def __init__(self, product: Product) -> None:
         self.product = product
 
+        if product.product_group:
+            product_rules_need_approval = (
+                product.product_rules_need_approval or product.product_group.product_rules_need_approval
+            )
+        else:
+            product_rules_need_approval = product.product_rules_need_approval
+
         product_parser_rules = Rule.objects.filter(
             product=product,
             enabled=True,
-            approval_status__in=[
-                Rule_Status.RULE_STATUS_APPROVED,
-                Rule_Status.RULE_STATUS_AUTO_APPROVED,
-            ],
         )
+        if product_rules_need_approval:
+            product_parser_rules = product_parser_rules.filter(
+                approval_status__in=[
+                    Rule_Status.RULE_STATUS_APPROVED,
+                    Rule_Status.RULE_STATUS_AUTO_APPROVED,
+                ],
+            )
         self.rules: list[Rule] = list(product_parser_rules)
 
         if product.product_group:
@@ -47,17 +59,28 @@ class Rule_Engine:
                 product=product.product_group,
                 enabled=True,
             )
+            if product.product_group.product_rules_need_approval:
+                product_group_parser_rules = product_group_parser_rules.filter(
+                    approval_status__in=[
+                        Rule_Status.RULE_STATUS_APPROVED,
+                        Rule_Status.RULE_STATUS_AUTO_APPROVED,
+                    ],
+                )
             self.rules += list(product_group_parser_rules)
 
         if product.apply_general_rules:
             general_rules = Rule.objects.filter(
                 product__isnull=True,
                 enabled=True,
-                approval_status__in=[
-                    Rule_Status.RULE_STATUS_APPROVED,
-                    Rule_Status.RULE_STATUS_AUTO_APPROVED,
-                ],
             )
+            settings = Settings.load()
+            if settings.feature_general_rules_need_approval:
+                general_rules = general_rules.filter(
+                    approval_status__in=[
+                        Rule_Status.RULE_STATUS_APPROVED,
+                        Rule_Status.RULE_STATUS_AUTO_APPROVED,
+                    ],
+                )
             self.rules += list(general_rules)
 
         self.rego_interpreters: dict[Any, RegoInterpreter] = {}
@@ -268,10 +291,18 @@ class Rule_Engine:
     def _check_rule_rego(  # pylint: disable=too-many-branches
         self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
     ) -> bool:
-        jsonpickle.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
-        jsonpickle.set_preferred_backend("simplejson")
+        jsonpickle_backend = JSONBackend()
+        jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
+        jsonpickle_backend.set_preferred_backend("simplejson")
 
-        observation_dict = json.loads(jsonpickle.dumps(observation, unpicklable=False, use_decimal=True))
+        observation_dict = json.loads(
+            jsonpickle.dumps(
+                observation,
+                unpicklable=False,
+                use_decimal=True,
+                backend=jsonpickle_backend,
+            )
+        )
         observation_dict = {k: v for k, v in observation_dict.items() if v is not None and v != ""}
 
         observation_dict["product_name"] = observation.product.name
@@ -280,7 +311,7 @@ class Rule_Engine:
         if observation.origin_service:
             observation_dict["origin_service_name"] = observation.origin_service.name
 
-        rego_interpreter = self.rego_interpreters[rule.pk]
+        rego_interpreter = self._get_rego_interpreter(rule)
         result = rego_interpreter.query(observation_dict)
 
         new_priority = result.get("priority")
@@ -326,6 +357,14 @@ class Rule_Engine:
             return True
 
         return False
+
+    def _get_rego_interpreter(self, rule: Rule) -> RegoInterpreter:
+        rego_interpreter = self.rego_interpreters.get(rule.pk)
+        if rego_interpreter is None:
+            rego_interpreter = RegoInterpreter(rule.rego_module)
+            self.rego_interpreters[rule.pk] = rego_interpreter
+
+        return rego_interpreter
 
 
 def _check_regex(pattern: str, value: str) -> bool:
@@ -376,6 +415,11 @@ def _write_observation_log(
         else:
             comment = f"Updated by general rule {rule.name}"
 
+    general_rule = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
+    general_rule_rego = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_REGO else None
+    product_rule = rule if rule.product and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
+    product_rule_rego = rule if rule.product and rule.type == Rule_Type.RULE_TYPE_REGO else None
+
     create_observation_log(
         observation=observation,
         severity=severity,
@@ -386,6 +430,11 @@ def _write_observation_log(
         vex_remediations=vex_remediations,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
+        propagated_from=None,
+        general_rule=general_rule,
+        general_rule_rego=general_rule_rego,
+        product_rule=product_rule,
+        product_rule_rego=product_rule_rego,
     )
 
 

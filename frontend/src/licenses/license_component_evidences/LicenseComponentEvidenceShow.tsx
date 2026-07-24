@@ -37,7 +37,7 @@ const LicenseComponentEvidenceShow = () => {
     return (
         <Show actions={<ShowActions />}>
             <SimpleShowLayout>
-                <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                     <license_component_evidences.icon />
                     &nbsp;&nbsp;License Component Evidence
                 </Typography>
@@ -57,7 +57,7 @@ const LicenseComponentEvidenceShow = () => {
                 <TextField source="name" />
                 <WithRecord
                     render={(evidence) => (
-                        <Labeled label="License Component Evidence" width={"100%"}>
+                        <Labeled label="License Component Evidence" sx={{ width: "100%" }}>
                             <JsonViewer
                                 value={JSON.parse(evidence.evidence)}
                                 groupArraysAfterLength={10000}

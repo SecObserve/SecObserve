@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from huey.contrib.djhuey import db_task, lock_task
@@ -37,7 +38,10 @@ def observation_post_delete(
     sender: Any, instance: Observation, **kwargs: Any  # pylint: disable=unused-argument
 ) -> None:
     # sender is needed according to Django documentation
-    push_deleted_observation_to_issue_tracker(instance.product, instance.issue_tracker_issue_id, get_current_user())
+    product = instance.product
+    issue_tracker_issue_id = instance.issue_tracker_issue_id
+    user = get_current_user()
+    transaction.on_commit(lambda: push_deleted_observation_to_issue_tracker(product, issue_tracker_issue_id, user))
 
 
 @receiver(post_delete, sender=Product)

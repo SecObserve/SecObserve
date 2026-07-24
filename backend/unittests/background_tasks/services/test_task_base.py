@@ -54,9 +54,11 @@ class TestTaskBase(BaseTestCase):
 
         # Execute
         decorated_function = so_periodic_task("test_task")(test_function)
-        decorated_function()
+        with self.assertRaises(Exception) as context:
+            decorated_function()
 
         # Assert
+        self.assertEqual(str(context.exception), "Test exception")
         mock_logger.info.assert_called_once_with("--- %s - start ---", "test_task")
         test_function.assert_called_once()
         mock_handle_exception.assert_called_once_with(test_exception)
@@ -105,7 +107,7 @@ class TestTaskBase(BaseTestCase):
         )
 
         # Check that the error was logged
-        mock_logger.error.assert_has_calls([call("Formatted log message"), call("NoneType: None\n")])
+        mock_logger.error.assert_has_calls([call("Formatted log message")])
 
         # Check that send_task_exception_notification was called with the correct parameters
         mock_send_notification.assert_called_once_with(
@@ -139,7 +141,7 @@ class TestTaskBase(BaseTestCase):
         )
 
         # Check that the error was logged
-        mock_logger.error.assert_has_calls([call("Formatted log message"), call("NoneType: None\n")])
+        mock_logger.error.assert_has_calls([call("Formatted log message")])
 
         # Check that send_task_exception_notification was called with the correct parameters
         mock_send_notification.assert_called_once_with(
@@ -179,7 +181,7 @@ class TestTaskBase(BaseTestCase):
         )
 
         # Check that the error was logged
-        mock_logger.error.assert_has_calls([call("Formatted log message"), call("NoneType: None\n")])
+        mock_logger.error.assert_has_calls([call("Formatted log message")])
 
         # Check that send_task_exception_notification was called with the correct parameters
         mock_send_notification.assert_called_once_with(

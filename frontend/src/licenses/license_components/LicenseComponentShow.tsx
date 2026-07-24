@@ -44,7 +44,7 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 {license_component && (
                     <PrevNextButtons
                         filter={filter()}
@@ -64,7 +64,7 @@ export const LicenseComponentComponent = () => {
     return (
         <WithRecord
             render={(component) => (
-                <Box width={"100%"}>
+                <Box sx={{ width: "100%" }}>
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
                         <LicenseComponentShowLicense licenseComponent={component} direction="row" />
                     </Paper>

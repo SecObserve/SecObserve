@@ -1,19 +1,26 @@
 import { Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
+    ArrayInput,
     AutocompleteArrayInput,
     BooleanInput,
     FormDataConsumer,
     NullableBooleanInput,
     NumberInput,
+    ReferenceArrayInput,
     ReferenceInput,
+    SimpleFormIterator,
+    useRecordContext,
 } from "react-admin";
 
 import product_groups from ".";
+import { DesignatedApproversInput } from "../../commons/custom_fields/DesignatedApproversInput";
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
+import WebhookTestButton from "../../commons/custom_fields/WebhookTestButton";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
 import { feature_email, feature_license_management } from "../../commons/functions";
 import {
+    AutocompleteArrayInputWide,
     AutocompleteInputMedium,
     AutocompleteInputWide,
     TextInputExtraWide,
@@ -30,9 +37,13 @@ export const ProductGroupCreateEditComponent = ({
     initialDescription,
     setDescription,
 }: ProductGroupCreateEditComponentProps) => {
+    const product_group = useRecordContext();
+    // Limit approver choices to members with an approval-capable role on this product group.
+    const approver_filter = { assessment_approver_for_product: product_group?.id ?? 0 };
+
     return (
         <Fragment>
-            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                 <product_groups.icon />
                 &nbsp;&nbsp;Product Group
             </Typography>
@@ -95,16 +106,22 @@ export const ProductGroupCreateEditComponent = ({
                         validate={validate_255}
                     />
                 )}
-                <TextInputExtraWide
-                    source="notification_ms_teams_webhook"
-                    label="Webhook URL to send notifications to MS Teams"
-                    validate={validate_2048}
-                />
-                <TextInputExtraWide
-                    source="notification_slack_webhook"
-                    label="Webhook URL to send notifications to Slack"
-                    validate={validate_2048}
-                />
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <TextInputExtraWide
+                        source="notification_ms_teams_webhook"
+                        label="Webhook URL to send notifications to MS Teams"
+                        validate={validate_2048}
+                    />
+                    <WebhookTestButton webhookSource="notification_ms_teams_webhook" webhookType="msteams" />
+                </Stack>
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <TextInputExtraWide
+                        source="notification_slack_webhook"
+                        label="Webhook URL to send notifications to Slack"
+                        validate={validate_2048}
+                    />
+                    <WebhookTestButton webhookSource="notification_slack_webhook" webhookType="slack" />
+                </Stack>
                 <AutocompleteInputMedium
                     source="observation_notification_min_severity"
                     label="Minimum severity for observation notifications"
@@ -197,6 +214,30 @@ export const ProductGroupCreateEditComponent = ({
                 Review
             </Typography>
             <BooleanInput source="assessments_need_approval" label="Assessments need approval" defaultValue={false} />
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.assessments_need_approval && (
+                        <Fragment>
+                            <DesignatedApproversInput
+                                approver_filter={approver_filter}
+                                helperText="Users allowed to approve assessments for all products in this group. Empty for default permission."
+                            />
+                            <ReferenceArrayInput
+                                source="assessment_approver_authorization_groups"
+                                reference="authorization_groups"
+                                filter={approver_filter}
+                                sort={{ field: "name", order: "ASC" }}
+                            >
+                                <AutocompleteArrayInputWide
+                                    label="Designated approver groups"
+                                    optionText="name"
+                                    helperText="Groups whose members may approve assessments for all products in this group."
+                                />
+                            </ReferenceArrayInput>
+                        </Fragment>
+                    )
+                }
+            </FormDataConsumer>
             <BooleanInput source="product_rules_need_approval" label="Rules need approval" defaultValue={false} />
             <BooleanInput
                 source="new_observations_in_review"
@@ -253,6 +294,35 @@ export const ProductGroupCreateEditComponent = ({
                     </ReferenceInput>
                 </Fragment>
             )}
+
+            <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+            <Typography variant="h6" sx={{ marginBottom: 2 }}>
+                Assessment propagation (experimental)
+            </Typography>
+            <ArrayInput source="propagate_branches" label={false} defaultValue={""}>
+                <SimpleFormIterator disableReordering inline>
+                    <TextInputWide label="Propagate to branches (regular expression)" source="propagate_to" />
+                </SimpleFormIterator>
+            </ArrayInput>
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.propagate_branches &&
+                    formData.propagate_branches.length >= 1 && (
+                        <Stack>
+                            <BooleanInput
+                                source="propagate_branches_new_assessment"
+                                label="Propagate new assessments to other branches"
+                                defaultValue={true}
+                            />
+                            <BooleanInput
+                                source="propagate_branches_new_observation"
+                                label="Propagate assessments to new observations"
+                                defaultValue={true}
+                            />
+                        </Stack>
+                    )
+                }
+            </FormDataConsumer>
         </Fragment>
     );
 };

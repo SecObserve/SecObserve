@@ -337,6 +337,8 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["get"], "/api/periodic_tasks/")
         self._check_authentication(["get"], "/api/periodic_tasks/1/")
 
+        self._check_authentication(["get"], "/api/status/background_task_statistics/")
+
     def test_authentication_users(self):
         self._check_authentication(["get"], "/api/users/me/")
         self._check_authentication(["get"], "/api/users/")

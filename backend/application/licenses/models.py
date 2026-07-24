@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
     PROTECT,
+    RESTRICT,
     BooleanField,
     CharField,
     DateTimeField,
@@ -90,7 +91,7 @@ class License_Group_Authorization_Group_Member(Model):
 class License_Component(Model, DirtyFieldsMixin):
     identity_hash = CharField(max_length=64)
 
-    product = ForeignKey(Product, related_name="license_components", on_delete=PROTECT)
+    product = ForeignKey(Product, related_name="license_components", on_delete=CASCADE)
     branch = ForeignKey(Branch, related_name="license_components", on_delete=CASCADE, null=True)
     upload_filename = CharField(max_length=255, blank=True)
 
@@ -139,7 +140,7 @@ class License_Component(Model, DirtyFieldsMixin):
     evaluation_result = CharField(max_length=16, choices=License_Policy_Evaluation_Result.RESULT_CHOICES, blank=True)
     numerical_evaluation_result = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
 
-    origin_service = ForeignKey(Service, on_delete=PROTECT, null=True)
+    origin_service = ForeignKey(Service, on_delete=RESTRICT, null=True)
 
     created = DateTimeField(auto_now_add=True)
     import_last_seen = DateTimeField(default=timezone.now)

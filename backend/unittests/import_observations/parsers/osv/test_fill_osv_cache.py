@@ -1,13 +1,19 @@
+import os
 from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
+
+import requests
 
 from application.import_observations.models import OSV_Cache
 
 # Adjust these imports based on your actual file structure
 from application.import_observations.parsers.osv.parser import (
+    OSV_MAX_RETRIES,
     OSV_Vulnerability,
     OSVParser,
+    _create_osv_session,
+    _get_osv_max_threads,
 )
 
 
@@ -17,7 +23,7 @@ class TestOSVParserCache(TestCase):
         self.now = datetime(2023, 1, 1, tzinfo=timezone.utc)
 
     @patch("application.import_observations.models.OSV_Cache.objects")
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_fill_osv_cache_invalidation_and_deletion(self, mock_get, mock_objects):
         """
         Scenario: Cache has stale data.
@@ -64,7 +70,7 @@ class TestOSVParserCache(TestCase):
         self.assertEqual(mock_objects.bulk_create.call_count, 1)
 
     @patch("application.import_observations.models.OSV_Cache.objects")
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_fill_osv_cache_mixed_state(self, mock_get, mock_objects):
         """
         Scenario: One valid cache hit, one missing (must fetch).
@@ -97,3 +103,49 @@ class TestOSVParserCache(TestCase):
         self.assertIn("CVE-VALID", result)
         self.assertIn("CVE-MISSING", result)
         self.assertEqual(mock_get.call_count, 1)  # Only called for CVE-MISSING
+
+    @patch("application.import_observations.models.OSV_Cache.objects")
+    @patch("requests.Session.get")
+    def test_fill_osv_cache_propagates_persistent_error(self, mock_get, mock_objects):
+        """
+        Scenario: api.osv.dev keeps failing with the SSL EOF seen in production. Once the
+        retrying session has given up, the error must propagate so that an incomplete scan
+        is never silently recorded (bulk_create must not run).
+        """
+        vuln = OSV_Vulnerability(id="UBUNTU-CVE-2021-22924", modified=self.now)
+
+        mock_objects.filter.side_effect = [[], MagicMock()]  # Nothing cached  # Deletion call
+
+        mock_get.side_effect = requests.exceptions.SSLError("EOF occurred in violation of protocol")
+
+        with self.assertRaises(requests.exceptions.SSLError):
+            self.parser._fill_osv_cache([vuln])
+
+        mock_objects.bulk_create.assert_not_called()
+
+
+class TestOSVSession(TestCase):
+    def test_session_is_configured_with_retries(self):
+        # The retry/backoff itself lives in urllib3 (and is covered by urllib3's own tests);
+        # here we verify our wiring: the adapter mounted for api.osv.dev carries the expected
+        # Retry policy for GET requests and transient status codes.
+        session = _create_osv_session()
+        try:
+            adapter = session.get_adapter("https://api.osv.dev/v1/vulns/CVE-2021-22924")
+            retries = adapter.max_retries
+            self.assertEqual(retries.total, OSV_MAX_RETRIES)
+            self.assertIn("GET", retries.allowed_methods)
+            self.assertIn(503, retries.status_forcelist)
+        finally:
+            session.close()
+
+
+class TestOSVMaxThreads(TestCase):
+    def test_default_when_env_unset(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("OSV_MAX_THREADS", None)
+            self.assertEqual(_get_osv_max_threads(), 32)
+
+    @patch.dict(os.environ, {"OSV_MAX_THREADS": "8"})
+    def test_reads_env_override(self):
+        self.assertEqual(_get_osv_max_threads(), 8)

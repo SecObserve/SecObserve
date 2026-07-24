@@ -26,6 +26,7 @@ import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium, TextInputExtraWide, TextInputWide } from "../../commons/layout/themes";
 import { OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../../core/types";
 import { SCANNER_TYPE_CHOICES } from "../../import_observations/types";
+import WebhookTestButton from "../custom_fields/WebhookTestButton";
 import { feature_email } from "../functions";
 import { VEX_JUSTIFICATION_TYPE_CHOICES } from "../types";
 
@@ -62,7 +63,7 @@ const SettingsEdit = () => {
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
                         Authentication
                     </Typography>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <NumberInput
                                 autoFocus
@@ -108,7 +109,7 @@ const SettingsEdit = () => {
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>
                         Features
                     </Typography>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -134,7 +135,7 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -166,7 +167,7 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -193,7 +194,7 @@ const SettingsEdit = () => {
                             </Stack>
                         </Grid>
                     </Grid>
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <BooleanInput
@@ -231,7 +232,7 @@ const SettingsEdit = () => {
                     <FormDataConsumer>
                         {({ formData }) =>
                             formData.branch_housekeeping_active && (
-                                <Grid container spacing={2} width={"100%"}>
+                                <Grid container spacing={2} sx={{ width: "100%" }}>
                                     <Grid size={3}>
                                         <NumberInput
                                             source="branch_housekeeping_keep_inactive_days"
@@ -284,16 +285,22 @@ const SettingsEdit = () => {
                             validate={validate_255}
                         />
                     )}
-                    <TextInputExtraWide
-                        source="exception_ms_teams_webhook"
-                        label="MS Teams webhook to send exception notifications"
-                        validate={validate_2048}
-                    />
-                    <TextInputExtraWide
-                        source="exception_slack_webhook"
-                        label="Slack webhook to send exception notifications"
-                        validate={validate_2048}
-                    />
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <TextInputExtraWide
+                            source="exception_ms_teams_webhook"
+                            label="MS Teams webhook to send exception notifications"
+                            validate={validate_2048}
+                        />
+                        <WebhookTestButton webhookSource="exception_ms_teams_webhook" webhookType="msteams" />
+                    </Stack>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <TextInputExtraWide
+                            source="exception_slack_webhook"
+                            label="Slack webhook to send exception notifications"
+                            validate={validate_2048}
+                        />
+                        <WebhookTestButton webhookSource="exception_slack_webhook" webhookType="slack" />
+                    </Stack>
                     <NumberInput
                         source="exception_rate_limit"
                         label="Exception rate limit"
@@ -310,16 +317,28 @@ const SettingsEdit = () => {
                             validate={validate_255}
                         />
                     )}
-                    <TextInputExtraWide
-                        source="observation_title_notification_ms_teams_webhook"
-                        label="Webhook URL to send observation title notifications to MS Teams"
-                        validate={validate_2048}
-                    />
-                    <TextInputExtraWide
-                        source="observation_title_notification_slack_webhook"
-                        label="Webhook URL to send observation title notifications to Slack"
-                        validate={validate_2048}
-                    />
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <TextInputExtraWide
+                            source="observation_title_notification_ms_teams_webhook"
+                            label="Webhook URL to send observation title notifications to MS Teams"
+                            validate={validate_2048}
+                        />
+                        <WebhookTestButton
+                            webhookSource="observation_title_notification_ms_teams_webhook"
+                            webhookType="msteams"
+                        />
+                    </Stack>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <TextInputExtraWide
+                            source="observation_title_notification_slack_webhook"
+                            label="Webhook URL to send observation title notifications to Slack"
+                            validate={validate_2048}
+                        />
+                        <WebhookTestButton
+                            webhookSource="observation_title_notification_slack_webhook"
+                            webhookType="slack"
+                        />
+                    </Stack>
                     <AutocompleteInputMedium
                         source="observation_title_notification_min_severity"
                         label="Minimum severity for observation title notifications"
@@ -360,7 +379,7 @@ const SettingsEdit = () => {
                     <FormDataConsumer>
                         {({ formData }) =>
                             formData.security_gate_active && (
-                                <Grid container spacing={2} width={"100%"}>
+                                <Grid container spacing={2} sx={{ width: "100%" }}>
                                     <Grid size={3}>
                                         <Stack spacing={2}>
                                             <NumberInput
@@ -433,7 +452,7 @@ const SettingsEdit = () => {
                         Password validation for non-OIDC users
                     </Typography>
 
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <NumberInput
@@ -490,7 +509,7 @@ const SettingsEdit = () => {
                         sx={{ marginBottom: 4 }}
                     />
 
-                    <Grid container spacing={2} width={"100%"}>
+                    <Grid container spacing={2} sx={{ width: "100%" }}>
                         <Grid size={3}>
                             <Stack spacing={2}>
                                 <NumberInput

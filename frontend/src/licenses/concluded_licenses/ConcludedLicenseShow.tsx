@@ -21,7 +21,7 @@ const ShowActions = () => {
 
     return (
         <TopToolbar>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
                 <PrevNextButtons
                     linkType="show"
                     sort={{ field: "product_data.name", order: "ASC" }}
@@ -42,7 +42,7 @@ const ConcludedLicenseComponent = () => {
                 <Stack spacing={2} sx={{ marginBottom: 1, width: "100%" }}>
                     <Paper sx={{ marginBottom: 1, padding: 2 }}>
                         <Stack spacing={1}>
-                            <Typography variant="h6" alignItems="center" display={"flex"} sx={{ marginBottom: 1 }}>
+                            <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
                                 <concluded_licenses.icon />
                                 &nbsp;&nbsp;Concluded license
                             </Typography>
