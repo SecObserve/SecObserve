@@ -55,10 +55,15 @@ const PERSISTED_KEYS = [
     "hiddenFromDragDrop",
 ] as const;
 
+// Single fixed localStorage key under which the pivot state is stored.
+const PIVOT_STATE_KEY = "pivot_state";
+
 const sanitizePivotConfig = (raw: Record<string, unknown>): Record<string, unknown> => {
     const sanitized: Record<string, unknown> = {};
     for (const k of PERSISTED_KEYS) {
-        if (k in raw) sanitized[k] = raw[k];
+        // Safe: `k` is not user input but a value from the static PERSISTED_KEYS whitelist,
+        // so neither the read nor the write can reach an unexpected property.
+        if (k in raw) sanitized[k] = raw[k]; // eslint-disable-line security/detect-object-injection
     }
     const aggName = raw.aggregatorName;
     if (typeof aggName === "string" && (DEFAULT_AGGREGATORS as readonly string[]).includes(aggName)) {
@@ -76,40 +81,43 @@ const PivotTable = () => {
 
     const hasQueryParams = searchParams.toString().length > 0;
 
-    // Derive a stable, canonical key from the search params to scope pivot state per query
-    const paramsKey = (() => {
-        if (!hasQueryParams) return null;
-        const sorted = new URLSearchParams(searchParams.toString());
-        sorted.sort();
-        return `pivot_state:${sorted.toString()}`;
-    })();
-
     // Only track pivot _configuration_ (rows, cols, vals, aggregatorName, filters, …).
     // The actual dataset lives in `data` state and must NOT be serialized (it overflows localStorage).
     const [pivotConfig, setPivotConfig] = useState<Record<string, unknown>>({});
-    const [lastLoadedParamsKey, setLastLoadedParamsKey] = useState<string | null>(null);
+    const [loaded, setLoaded] = useState(false);
 
-    // Load stored config (for the current paramsKey) whenever it changes
+    // One-time cleanup: remove legacy per-query keys (pivot_state:<query>), keeping
+    // only the single fixed PIVOT_STATE_KEY. Iterate backwards since removeItem shifts indices.
     useEffect(() => {
-        if (!paramsKey) {
+        for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith(PIVOT_STATE_KEY) && key !== PIVOT_STATE_KEY) {
+                localStorage.removeItem(key);
+            }
+        }
+    }, []);
+
+    // Load stored config once when query parameters are present
+    useEffect(() => {
+        if (!hasQueryParams) {
             setPivotConfig({});
             setData([]);
-            setLastLoadedParamsKey(null);
+            setLoaded(false);
             return;
         }
-        if (paramsKey === lastLoadedParamsKey) return; // already loaded for this key
+        if (loaded) return; // already loaded
 
-        const saved = localStorage.getItem(paramsKey);
+        const saved = localStorage.getItem(PIVOT_STATE_KEY);
         setPivotConfig(saved ? sanitizePivotConfig(JSON.parse(saved)) : {});
-        setLastLoadedParamsKey(paramsKey);
-    }, [paramsKey]);
+        setLoaded(true);
+    }, [hasQueryParams, loaded]);
 
     // Persist pivot config to localStorage whenever it changes
     useEffect(() => {
-        if (!paramsKey) return;
+        if (!hasQueryParams) return;
         if (Object.keys(pivotConfig).length === 0) return;
-        localStorage.setItem(paramsKey, JSON.stringify(pivotConfig));
-    }, [paramsKey, pivotConfig]);
+        localStorage.setItem(PIVOT_STATE_KEY, JSON.stringify(pivotConfig));
+    }, [hasQueryParams, pivotConfig]);
 
     const handlePivotChange = useCallback((newState: PivotTableUIProps) => {
         setPivotConfig(sanitizePivotConfig(newState as unknown as Record<string, unknown>));
