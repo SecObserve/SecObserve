@@ -1,0 +1,25 @@
+suite: Test SecObserve Service
+
+templates:
+  - templates/service.yaml
+
+release:
+  name: test-release
+  namespace: test-namespace
+
+tests:
+  - it: renders multiple annotations and release-aware names
+    set:
+      service.annotations:
+        example.com/first: one
+        example.com/second: two
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-svc
+      - equal:
+          path: metadata.annotations["example.com/first"]
+          value: one
+      - equal:
+          path: metadata.annotations["example.com/second"]
+          value: two

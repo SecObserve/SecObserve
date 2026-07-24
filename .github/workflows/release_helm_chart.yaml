@@ -24,6 +24,12 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
+      - name: Install helm-unittest
+        run: ./charts/secobserve/tests/install-helm-unittest.sh
+
+      - name: Validate chart
+        run: ./charts/secobserve/tests/test-chart.sh
+
       - name: Configure Git
         run: |
           git config user.name "${GITHUB_ACTOR}"
