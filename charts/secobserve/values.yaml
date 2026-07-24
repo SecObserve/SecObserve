@@ -438,7 +438,7 @@ dbchecker:
 
     # -- Image tag for the dbchecker image
     # @section -- dbchecker
-    tag: "1.37.0"
+    tag: "1.38.0"
 
     # -- Image pull policy for the dbchecker image
     # @section -- dbchecker
