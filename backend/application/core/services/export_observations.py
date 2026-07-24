@@ -34,6 +34,8 @@ def _annotate_observation_log_comment(observations: QuerySet) -> QuerySet:
     newest_comment = Subquery(
         Observation_Log.objects.filter(observation=OuterRef("pk"))
         .filter(~Q(severity="") | ~Q(status=""))
+        .filter(Q(severity="") | Q(severity=OuterRef("current_severity")))
+        .filter(Q(status="") | Q(status=OuterRef("current_status")))
         .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
         .order_by("-created", "-id")
         .values("comment")[:1]
