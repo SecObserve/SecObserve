@@ -9,6 +9,7 @@ from application.commons.models import Settings
 from application.commons.services.functions import get_classname
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
+    is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -136,14 +137,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.return_value = "test_message"
         mock_request.side_effect = Exception("test_exception")
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://tenant.webhook.office.com/webhookb2/test",
             data="test_message",
             allow_redirects=False,
+            headers={},
             timeout=60,
         )
         mock_logger.assert_called_once()
@@ -163,13 +165,14 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 400
         mock_request.return_value = response
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://tenant.webhook.office.com/webhookb2/test",
             data="test_message",
+            headers={},
             allow_redirects=False,
             timeout=60,
         )
@@ -190,6 +193,32 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 200
         mock_request.return_value = response
 
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
+
+        mock_create_message.assert_called_with("test_template")
+        mock_request.assert_called_with(
+            method="POST",
+            url="https://tenant.webhook.office.com/webhookb2/test",
+            data="test_message",
+            allow_redirects=False,
+            headers={},
+            timeout=60,
+        )
+        mock_logger.assert_not_called()
+        mock_format.assert_not_called()
+
+    @patch("application.notifications.services.send_notifications_base._create_notification_message")
+    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.logger.error")
+    @patch("application.notifications.services.send_notifications_base.format_log_message")
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_send_msteams_notification_v2_format_exception(
+        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
+    ):
+        mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
+        mock_create_message.return_value = "test_message"
+        mock_request.side_effect = Exception("test_exception")
+
         send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
@@ -197,6 +226,35 @@ class TestPushNotifications(BaseTestCase):
             method="POST",
             url="https://hooks.example.org/webhook",
             data="test_message",
+            headers={"Content-Type": "application/json"},
+            allow_redirects=False,
+            timeout=60,
+        )
+        mock_logger.assert_called_once()
+        mock_format.assert_called_once()
+
+    @patch("application.notifications.services.send_notifications_base._create_notification_message")
+    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.logger.error")
+    @patch("application.notifications.services.send_notifications_base.format_log_message")
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_send_msteams_notification_v2_format_success(
+        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
+    ):
+        mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
+        mock_create_message.return_value = "test_message"
+        response = Response()
+        response.status_code = 200
+        mock_request.return_value = response
+
+        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+
+        mock_create_message.assert_called_with("test_template")
+        mock_request.assert_called_with(
+            method="POST",
+            url="https://hooks.example.org/webhook",
+            data="test_message",
+            headers={"Content-Type": "application/json"},
             allow_redirects=False,
             timeout=60,
         )
@@ -367,6 +425,201 @@ class TestPushNotifications(BaseTestCase):
     }],
 }
 """
+        self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_new_security_gate(self):
+        message = _create_notification_message(
+            "msteams_v2_product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="security_gate_passed",
+            product_url="product_url",
+        )
+
+        expected_message = """{
+    "type": "message",
+    "attachments": [
+        {
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "contentUrl": null,
+            "content": {
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [
+                    {
+                        "type": "TextBlock",
+                        "text": "Security gate for product product_1 has changed to security_gate_passed",
+                        "weight": "bolder",
+                        "size": "medium",
+                        "wrap": true
+                    }
+                ],
+                "actions": [
+                    {
+                        "type": "Action.OpenUrl",
+                        "title": "View Product product_1",
+                        "url": "product_url"
+                    }
+                ]
+            }
+        }
+    ]
+}
+"""
+        self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_new_exception(self):
+        exception = Exception("test_exception")
+        message = _create_notification_message(
+            "msteams_v2_exception.tpl",
+            exception_class=get_classname(exception),
+            exception_message=str(exception),
+            date_time=datetime(2022, 12, 31, 23, 59, 59),
+        )
+
+        expected_message = """{
+    "type": "message",
+    "attachments": [
+        {
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "contentUrl": null,
+            "content": {
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [
+                    {
+                        "type": "TextBlock",
+                        "text": "Exception builtins.Exception has occured",
+                        "weight": "bolder",
+                        "size": "medium",
+                        "wrap": true
+                    },
+                    {
+                        "type": "FactSet",
+                        "facts": [
+                            {
+                                "title": "Exception class:",
+                                "value": "builtins.Exception"
+                            },
+                            {
+                                "title": "Exception message:",
+                                "value": "test_exception"
+                            },
+                            {
+                                "title": "Timestamp:",
+                                "value": "2022-12-31 23:59:59.000000"
+                            },
+                            {
+                                "title": "Trace:",
+                                "value": ""
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
+"""
+
+        self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_new_security_gate(self):
+        message = _create_notification_message(
+            "msteams_v2_product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="security_gate_passed",
+            product_url="product_url",
+        )
+
+        expected_message = """{
+    "type": "message",
+    "attachments": [
+        {
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "contentUrl": null,
+            "content": {
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [
+                    {
+                        "type": "TextBlock",
+                        "text": "Security gate for product product_1 has changed to security_gate_passed",
+                        "weight": "bolder",
+                        "size": "medium",
+                        "wrap": true
+                    }
+                ],
+                "actions": [
+                    {
+                        "type": "Action.OpenUrl",
+                        "title": "View Product product_1",
+                        "url": "product_url"
+                    }
+                ]
+            }
+        }
+    ]
+}
+"""
+        self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_new_exception(self):
+        exception = Exception("test_exception")
+        message = _create_notification_message(
+            "msteams_v2_exception.tpl",
+            exception_class=get_classname(exception),
+            exception_message=str(exception),
+            date_time=datetime(2022, 12, 31, 23, 59, 59),
+        )
+
+        expected_message = """{
+    "type": "message",
+    "attachments": [
+        {
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "contentUrl": null,
+            "content": {
+                "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                "type": "AdaptiveCard",
+                "version": "1.2",
+                "body": [
+                    {
+                        "type": "TextBlock",
+                        "text": "Exception builtins.Exception has occured",
+                        "weight": "bolder",
+                        "size": "medium",
+                        "wrap": true
+                    },
+                    {
+                        "type": "FactSet",
+                        "facts": [
+                            {
+                                "title": "Exception class:",
+                                "value": "builtins.Exception"
+                            },
+                            {
+                                "title": "Exception message:",
+                                "value": "test_exception"
+                            },
+                            {
+                                "title": "Timestamp:",
+                                "value": "2022-12-31 23:59:59.000000"
+                            },
+                            {
+                                "title": "Trace:",
+                                "value": ""
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
+"""
 
         self.assertEqual(expected_message, message)
 
@@ -387,3 +640,28 @@ class TestPushNotifications(BaseTestCase):
             "extra",
             [action["name"] for action in parsed["potentialAction"]][0].split("View observation ")[-1][:4],
         )
+
+    # --- is_msteams_v2 ---
+
+    def testis_msteams_v2_office_com_is_v1(self):
+        self.assertFalse(is_msteams_v2("https://tenant.webhook.office.com/webhookb2/abc123"))
+
+    def testis_msteams_v2_subdomain_office_com_is_v1(self):
+        self.assertFalse(is_msteams_v2("https://contoso.webhook.office.com/webhookb2/xyz"))
+
+    def testis_msteams_v2_bare_webhook_office_com_is_v1(self):
+        self.assertFalse(is_msteams_v2("https://webhook.office.com/webhookb2/test"))
+
+    def testis_msteams_v2_power_automate_is_v2(self):
+        self.assertTrue(
+            is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke")
+        )
+
+    def testis_msteams_v2_generic_https_is_v2(self):
+        self.assertTrue(is_msteams_v2("https://hooks.example.org/webhook"))
+
+    def testis_msteams_v2_empty_string_is_v2(self):
+        self.assertTrue(is_msteams_v2(""))
+
+    def testis_msteams_v2_invalid_url_is_v2(self):
+        self.assertTrue(is_msteams_v2("not-a-url"))

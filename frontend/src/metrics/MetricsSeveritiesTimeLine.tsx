@@ -192,6 +192,7 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                                 suggestedMax: 5,
                                 ticks: {
                                     precision: 0,
+                                    color: getFontColor(),
                                 },
                                 stacked: true,
                                 grid: {
@@ -199,6 +200,9 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
                                 },
                             },
                             x: {
+                                ticks: {
+                                    color: getFontColor(),
+                                },
                                 grid: {
                                     color: getGridColor(),
                                 },

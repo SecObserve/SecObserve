@@ -2,10 +2,32 @@
 # @section -- Pod
 replicaCount: 1
 
+# -- override the chart name used in resource names
+# @section -- General
+nameOverride: ""
+
+# -- fully override generated resource names
+# @section -- General
+fullnameOverride: ""
+
 # -- securityContext to use for the pod
 # @section -- Pod
 securityContext:
-  enabled: false
+  enabled: true
+  fsGroup: 1001
+  fsGroupChangePolicy: OnRootMismatch
+
+# -- annotations to add to the SecObserve Pod
+# @section -- Pod
+podAnnotations: {}
+
+# -- additional labels to add to the SecObserve Pod
+# @section -- Pod
+labels: {}
+
+# -- additional init containers to add to the SecObserve Pod
+# @section -- Pod
+extraInitContainers: []
 
 # @section -- Frontend
 frontend:
@@ -79,6 +101,14 @@ frontend:
     # @section -- Frontend
     port: 3000
 
+  # -- additional volume mounts for the frontend container
+  # @section -- Frontend
+  volumeMounts: []
+
+  # -- additional Pod volumes used by the frontend container
+  # @section -- Frontend
+  volumes: []
+
 # @section -- Backend
 backend:
   # -- image registry
@@ -97,7 +127,7 @@ backend:
     # @section -- Backend
     pullPolicy: IfNotPresent
 
-  # -- security context to use for backend pod
+  # -- security context to use for the backend container
   # @section -- Backend
   securityContext:
     enabled: true
@@ -106,51 +136,32 @@ backend:
     runAsGroup: 1001
     runAsNonRoot: true
 
+  # -- existing Secret containing the admin password, Django secret key and field encryption key
+  # @section -- Backend
+  existingSecret: ""
+
+  secretKeys:
+    # -- key containing the initial admin password
+    # @section -- Backend
+    adminPassword: password
+
+    # -- key containing the Django secret key
+    # @section -- Backend
+    djangoSecretKey: django_secret_key
+
+    # -- key containing the field encryption key
+    # @section -- Backend
+    fieldEncryptionKey: field_encryption_key
+
   # @section -- Backend
   env:
     # -- admin user name
     # @section -- Backend
     - { name: ADMIN_USER, value: admin }
 
-    # -- admin password
-    # @section -- Backend
-    - {
-        name: ADMIN_PASSWORD,
-        valueFrom:
-          { secretKeyRef: { name: secobserve-secrets, key: password } },
-      }
-
     # -- admin email address
     # @section -- Backend
     - { name: ADMIN_EMAIL, value: admin@admin.com }
-
-    # -- database engine
-    # @section -- Backend
-    - { name: DATABASE_ENGINE, value: "django.db.backends.postgresql" }
-
-    # -- database host/service
-    # @section -- Backend
-    - { name: DATABASE_HOST, value: secobserve-postgresql }
-
-    # -- database port
-    # @section -- Backend
-    - { name: DATABASE_PORT, value: "5432" }
-
-    # -- database name
-    # @section -- Backend
-    - { name: DATABASE_DB, value: secobserve }
-
-    # -- database user
-    # @section -- Backend
-    - { name: DATABASE_USER, value: secobserve }
-
-    # -- database password
-    # @section -- Backend
-    - { name: DATABASE_PASSWORD, valueFrom: {
-            # -- reference to secret containing db credentials
-            # @section -- Backend
-            secretKeyRef: { name: secobserve-postgresql, key: password },
-          } }
 
     # -- allowed hosts
     # @section -- Backend
@@ -160,23 +171,6 @@ backend:
     # @section -- Backend
     - { name: CORS_ALLOWED_ORIGINS, value: https://secobserve.dev }
 
-    # -- django secret key
-    # @section -- Backend
-    - { name: DJANGO_SECRET_KEY, valueFrom: {
-            # -- secret name containing the django secret key
-            # @section -- Backend
-            secretKeyRef: { name: secobserve-secrets, key: django_secret_key },
-          } }
-
-    # -- encryption key for fields
-    # @section -- Backend
-    - { name: FIELD_ENCRYPTION_KEY, valueFrom: {
-            # -- secret name containig the field encryption key
-            # @section -- Backend
-            secretKeyRef:
-              { name: secobserve-secrets, key: field_encryption_key },
-          } }
-
     # -- admin OIDC authority
     # @section -- Backend
     - { name: OIDC_AUTHORITY, value: https://oidc.secobserve.dev }
@@ -185,8 +179,8 @@ backend:
     # @section -- Backend
     - { name: OIDC_CLIENT_ID, value: secobserve }
 
-      # -- OIDC user name
-      # @section -- Backend
+    # -- OIDC user name
+    # @section -- Backend
     - { name: OIDC_USERNAME, value: preferred_username }
 
     # -- OIDC first name
@@ -224,12 +218,23 @@ backend:
     # @section -- Backend
     port: 5000
 
+  # -- additional volume mounts for the backend container
+  # @section -- Backend
+  volumeMounts: []
+
+  # -- additional Pod volumes used by the backend container
+  # @section -- Backend
+  volumes: []
+
 # -- defines the secobserve http service
 # @section -- Service
 service:
   # -- Service type of service
   # @section -- Service
   type: ClusterIP
+  # -- annotations to add to the Service
+  # @section -- Service
+  annotations: {}
   # If you want to use a NodePort service for ALB, uncomment the following line
   #type: NodePort
 
@@ -242,12 +247,13 @@ ingress:
   # @section -- Ingress
   hostname: "secobserve.dev"
 
-  # -- Example configuration for using an Amazon Load Balancer controller
+  # Example configuration for using an Amazon Load Balancer controller
   # ingressClassName: alb
   # annotations:
   #   alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS": 443}]'
   #   alb.ingress.kubernetes.io/ssl-policy: 'ELBSecurityPolicy-TLS13-1-2-FIPS-2023-04'
   #   alb.ingress.kubernetes.io/healthcheck-path: /
+  # -- ingress class name
   # @section -- Ingress
   ingressClassName: nginx
 
@@ -261,6 +267,10 @@ ingress:
     # Configure a custom timeout for the proxy
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+
+  # -- additional paths appended to the generated ingress rule
+  # @section -- Ingress
+  paths: []
   # -- # TLS configuration for HTTPS
   # @section -- Ingress
   # tls:
@@ -279,6 +289,65 @@ tolerations: {}
 # @section -- Pod
 affinity: {}
 
+# @section -- Database
+database:
+  # -- Django database engine
+  # @section -- Database
+  engine: django.db.backends.postgresql
+
+  # -- database hostname; inferred from the bundled PostgreSQL chart when empty
+  # @section -- Database
+  host: ""
+
+  # -- database port
+  # @section -- Database
+  port: 5432
+
+  # -- database name; defaults to postgresql.auth.database when empty
+  # @section -- Database
+  name: ""
+
+  # -- database username; defaults to postgresql.auth.username when empty
+  # @section -- Database
+  username: ""
+
+  passwordSecret:
+    # -- Secret containing the database password; inferred from PostgreSQL values when empty
+    # @section -- Database
+    name: ""
+
+    # -- key containing the database password; inferred from PostgreSQL values when empty
+    # @section -- Database
+    key: ""
+
+# @section -- Huey
+huey:
+  persistence:
+    # -- persist the Huey SQLite queue across backend container and Pod restarts
+    # @section -- Huey
+    enabled: true
+
+    # -- use an existing PersistentVolumeClaim instead of creating one
+    # @section -- Huey
+    existingClaim: ""
+
+    # -- storage class for the Huey PersistentVolumeClaim; use "-" to disable dynamic provisioning
+    # @section -- Huey
+    storageClass: ""
+
+    # -- access modes for the Huey PersistentVolumeClaim
+    # @section -- Huey
+    accessModes:
+      - ReadWriteOnce
+
+    # -- requested storage size for the Huey PersistentVolumeClaim
+    # @section -- Huey
+    size: 1Gi
+
+    # -- annotations to add to the Huey PersistentVolumeClaim
+    # @section -- Huey
+    annotations: {}
+
 ## PostgreSQL chart configuration
 ## ref: https://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml
 ## @param postgresql.enabled Switch to enable or disable the PostgreSQL helm chart
@@ -296,24 +365,24 @@ postgresql:
   # @section -- Postgresql
   enabled: true
 
-  # -- enable postgresql subchart
+  # -- image repository override for the bundled PostgreSQL database
   # @section -- Postgresql
   image:
     repository: bitnamilegacy/postgresql
 
-  # -- enable postgresql subchart
+  # -- image repository overrides for the volume-permissions init container
   # @section -- Postgresql
   volumePermissions:
     image:
       repository: bitnamilegacy/os-shell
 
-  # -- enable postgresql subchart
+  # -- image repository overrides for PostgreSQL metrics
   # @section -- Postgresql
   metrics:
     image:
       repository: bitnamilegacy/postgres-exporter
 
-  # -- enable postgresql subchart
+  # -- authentication settings for the bundled PostgreSQL database
   # @section -- Postgresql
   auth:
     # -- Password for the "postgres" admin user. Ignored if `auth.existingSecret` with key `postgres-password` is provided
@@ -346,15 +415,15 @@ postgresql:
   architecture: standalone
 
 dbchecker:
-  # -- enable dbchecker init container
+  # -- enable the database readiness init container
   # @section -- dbchecker
   enabled: true
 
-  # -- enable dbchecker init container
+  # -- database hostname override; inferred from database settings when empty
   # @section -- dbchecker
-  hostname: secobserve-postgresql
+  hostname: ""
 
-  # -- enable dbchecker init container
+  # -- database port checked by the init container
   # @section -- dbchecker
   port: 5432
 
@@ -363,9 +432,13 @@ dbchecker:
     # @section -- dbchecker
     repository: busybox
 
+    # -- Image digest for the dbchecker image; takes precedence over tag when set
+    # @section -- dbchecker
+    digest: ""
+
     # -- Image tag for the dbchecker image
     # @section -- dbchecker
-    tag: latest
+    tag: "1.38.0"
 
     # -- Image pull policy for the dbchecker image
     # @section -- dbchecker

@@ -9,6 +9,7 @@ from application.notifications.services.send_notifications import (
     _get_first_name,
 )
 from application.notifications.services.send_notifications_base import (
+    is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -109,9 +110,14 @@ def _send_observation_title_notifications(
             )
 
     if settings.observation_title_notification_ms_teams_webhook:
+        template = (
+            "msteams_v2_observation_title.tpl"
+            if is_msteams_v2(settings.observation_title_notification_ms_teams_webhook)
+            else "msteams_observation_title.tpl"
+        )
         send_msteams_notification(
             settings.observation_title_notification_ms_teams_webhook,
-            "msteams_observation_title.tpl",
+            template,
             observation=observation,
             url=url,
             first_line=first_line,

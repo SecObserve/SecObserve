@@ -1,0 +1,22 @@
+service:
+  annotations:
+    example.com/first: one
+    example.com/second: two
+
+backend:
+  volumeMounts:
+    - name: extra
+      mountPath: /extra
+  volumes:
+    - name: extra
+      emptyDir: {}
+
+ingress:
+  paths:
+    - path: /extra
+      pathType: Prefix
+      backend:
+        service:
+          name: external-service
+          port:
+            number: 8080

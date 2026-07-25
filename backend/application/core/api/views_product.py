@@ -1,12 +1,13 @@
 import logging
 import re
 from tempfile import NamedTemporaryFile
-from typing import Any
+from typing import Any, cast
 
 from django.db.models import QuerySet
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import OpenApiParameter, extend_schema
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.filters import SearchFilter
@@ -19,6 +20,9 @@ from rest_framework.status import (
     HTTP_200_OK,
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_409_CONFLICT,
 )
 from rest_framework.viewsets import GenericViewSet, ModelViewSet, ViewSet
 
@@ -110,7 +114,51 @@ from application.rules.services.rule_engine import Rule_Engine
 logger = logging.getLogger("secobserve.core")
 
 
-class ProductGroupViewSet(ModelViewSet):
+class ProductDeletionActionsMixin:
+    def _get_product(self, request: Request, kwargs: dict[str, Any]) -> Product:
+        viewset = cast(ModelViewSet, self)
+        lookup_url_kwarg = viewset.lookup_url_kwarg or viewset.lookup_field
+        assert lookup_url_kwarg in kwargs
+
+        # Bypass filter backends because `name` is both a Product list filter and
+        # the delete confirmation parameter. The base queryset remains user-scoped,
+        # and object permissions are still enforced explicitly.
+        product = get_object_or_404(
+            viewset.get_queryset(),
+            **{viewset.lookup_field: kwargs[lookup_url_kwarg]},
+        )
+        viewset.check_object_permissions(request, product)
+        return cast(Product, product)
+
+    @extend_schema(
+        request=None,
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="Exact, case- and whitespace-sensitive Product or Product Group name.",
+            )
+        ],
+        responses={
+            HTTP_204_NO_CONTENT: None,
+            HTTP_400_BAD_REQUEST: OpenApiResponse(description="Invalid or non-matching confirmation name."),
+            HTTP_403_FORBIDDEN: OpenApiResponse(description="Product delete permission is required."),
+            HTTP_409_CONFLICT: OpenApiResponse(description="Deletion is blocked by a restricted reference."),
+        },
+    )
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        product = self._get_product(request, kwargs)
+        confirmation_names = request.query_params.getlist("name")
+        if confirmation_names != [product.name]:
+            raise ValidationError({"name": "Confirmation name must match the product name."})
+
+        product.delete()
+        return Response(status=HTTP_204_NO_CONTENT)
+
+
+class ProductGroupViewSet(ProductDeletionActionsMixin, ModelViewSet):
     serializer_class = ProductGroupSerializer
     filterset_class = ProductGroupFilter
     permission_classes = (IsAuthenticated, UserHasProductGroupPermission)
@@ -139,7 +187,7 @@ class ProductGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         return get_products(is_product_group=True)
 
 
-class ProductViewSet(ModelViewSet):
+class ProductViewSet(ProductDeletionActionsMixin, ModelViewSet):
     serializer_class = ProductSerializer
     filterset_class = ProductFilter
     permission_classes = (IsAuthenticated, UserHasProductPermission)

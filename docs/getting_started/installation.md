@@ -43,7 +43,7 @@ Some values should be changed for productive use, to avoid using the default val
 
 ## Kubernetes
 
-SecObserve provides a Helm chart as a template for productive use. The default values will work if the release name is `secobserve` and the frontend will be accessible with [https://secobserve.dev/](https://secobserve.dev/).
+SecObserve provides a Helm chart as a template for productive use. Resource and bundled PostgreSQL names are derived from the Helm release name. With the default values, the frontend is accessible at [https://secobserve.dev/](https://secobserve.dev/).
 
 #### Database
 
@@ -51,11 +51,27 @@ The PostgreSQL database is provided by Bitnami's Helm chart. Bitnami doesn't pro
 
 This is ok to test the Kubernetes installation, but not suitable for production use. A productive environment has to use an update-to-date database, e.g. installed as an operator like [CloudNativePG](https://cloudnative-pg.io/) or a managed service of a cloud provider.
 
-If the provided database is used and the chart is installed with a release name different from `secobserve`, all occurrences of `secobserve-postgresql` in the chart have to be changed to `<release_name>-postgresql`.
+The chart automatically selects the PostgreSQL primary Service for standalone and replication architectures. When using `postgresql.auth.existingSecret`, the backend also uses the configured Secret and `postgresql.auth.secretKeys.userPasswordKey`.
+
+For an external database, disable the subchart and provide the connection and password Secret explicitly:
+
+```yaml
+postgresql:
+  enabled: false
+
+database:
+  host: postgres.example.internal
+  port: 5432
+  name: secobserve
+  username: secobserve
+  passwordSecret:
+    name: secobserve-database
+    key: password
+```
 
 #### Secrets
 
-Three values are read from a secret, which has to be set up manually before installing the chart:
+Three values are read from a Secret, which has to be created manually before installing the chart:
 
 * `ADMIN_PASSWORD`
 * `DJANGO_SECRET_KEY`
@@ -64,7 +80,7 @@ Three values are read from a secret, which has to be set up manually before inst
 The command to setup the secret can look like this:
 
 ```
-kubectl create secret generic secobserve-secrets \
+kubectl create secret generic my-release-secobserve-secrets \
     --namespace ... \
     --from-literal=password='...' \
     --from-literal=django_secret_key='...' \
@@ -72,3 +88,9 @@ kubectl create secret generic secobserve-secrets \
 ```
 
 See [Configuration](configuration.md#backend) for more information how to set these values.
+
+The example uses the release name `my-release`. For a release named `secobserve`, the generated Secret name remains `secobserve-secrets`. Set `backend.existingSecret` to use a different name.
+
+#### Background tasks
+
+SecObserve currently uses SQLite for its Huey task queue, so the chart supports exactly one application replica. The queue is persisted in a dedicated PersistentVolumeClaim by default. Configure `huey.persistence.existingClaim` to reuse a claim or `huey.persistence.storageClass` to select a storage class.

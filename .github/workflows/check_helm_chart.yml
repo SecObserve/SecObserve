@@ -1,0 +1,33 @@
+name: Check Helm chart
+
+on:
+  pull_request:
+    paths:
+      - charts/secobserve/**
+      - .github/workflows/check_helm_chart.yml
+  push:
+    branches:
+      - main
+    paths:
+      - charts/secobserve/**
+      - .github/workflows/check_helm_chart.yml
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Install helm-unittest
+        run: ./charts/secobserve/tests/install-helm-unittest.sh
+
+      - name: Validate chart
+        run: ./charts/secobserve/tests/test-chart.sh

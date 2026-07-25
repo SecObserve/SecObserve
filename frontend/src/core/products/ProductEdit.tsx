@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { DeleteButton, Edit, SaveButton, SimpleForm, Toolbar, WithRecord, useRecordContext } from "react-admin";
+import { Edit, SaveButton, SimpleForm, Toolbar, WithRecord, useRecordContext } from "react-admin";
 
-import { PERMISSION_PRODUCT_DELETE } from "../../access_control/types";
+import { Product } from "../types";
+import ProductDeleteAction from "./ProductDeleteAction";
 import { ProductCreateEditComponent, transform } from "./functions";
 
 const CustomToolbar = () => {
-    const product = useRecordContext();
+    const product = useRecordContext<Product>();
 
     return (
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
             <SaveButton alwaysEnable />
-            {product?.permissions.includes(PERMISSION_PRODUCT_DELETE) && <DeleteButton mutationMode="pessimistic" />}
+            <ProductDeleteAction product={product} isProductGroup={false} />
         </Toolbar>
     );
 };

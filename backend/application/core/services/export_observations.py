@@ -1,14 +1,17 @@
 from typing import Optional
 
+from django.db.models import OuterRef, Q, Subquery
 from django.db.models.query import QuerySet
 from django.http import HttpResponse
 from openpyxl import Workbook
 
 from application.commons.services.export import export_csv, export_excel
-from application.core.models import Observation, Product
+from application.core.models import Observation, Observation_Log, Product
+from application.core.types import Observation_Log_Comment
 
 
 def export_observations_excel(observations: QuerySet) -> Workbook:
+    observations = _annotate_observation_log_comment(observations)
     return export_excel(observations, "Observations", _get_excludes(), _get_foreign_keys())
 
 
@@ -18,12 +21,26 @@ def export_observations_excel_for_product(product: Product, status: Optional[lis
 
 
 def export_observations_csv(response: HttpResponse, observations: QuerySet) -> None:
+    observations = _annotate_observation_log_comment(observations)
     export_csv(response, observations, _get_excludes(), _get_foreign_keys())
 
 
 def export_observations_csv_for_product(response: HttpResponse, product: Product, status: Optional[list[str]]) -> None:
     observations = _get_observations(product, status)
     export_observations_csv(response, observations)
+
+
+def _annotate_observation_log_comment(observations: QuerySet) -> QuerySet:
+    newest_comment = Subquery(
+        Observation_Log.objects.filter(observation=OuterRef("pk"))
+        .filter(~Q(severity="") | ~Q(status=""))
+        .filter(Q(severity="") | Q(severity=OuterRef("current_severity")))
+        .filter(Q(status="") | Q(status=OuterRef("current_status")))
+        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
+        .order_by("-created", "-id")
+        .values("comment")[:1]
+    )
+    return observations.annotate(observation_log_comment=newest_comment)
 
 
 def _get_observations(product: Product, status: Optional[list[str]]) -> QuerySet:

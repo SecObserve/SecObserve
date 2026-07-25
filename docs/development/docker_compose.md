@@ -14,6 +14,14 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 * [`docker-compose-dev.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev.yml)
     - Starts the PostgreSQL database, as well as SecObserve's backend and frontend
     - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
+* [`docker-compose-dev-arm.yaml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-arm.yaml)
+    - Overrides the development stack for macOS on Apple Silicon
+    - Runs the main services on ARM64 and installs frontend dependencies inside the container using a Docker-managed volume
+    - Start it together with the standard development file:
+
+      ```shell
+      docker compose -f docker-compose-dev.yml -f docker-compose-dev-arm.yaml up --build
+      ```
 * [`docker-compose-playwright.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-playwright.yml)
     - Starts the end-to-end tests with Playwright
 * [`docker-compose-prod-test.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-prod-test.yml)

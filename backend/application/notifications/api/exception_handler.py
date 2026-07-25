@@ -4,7 +4,7 @@ import traceback
 from typing import Optional
 
 import inflect
-from django.db.models.deletion import ProtectedError
+from django.db.models.deletion import ProtectedError, RestrictedError
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_401_UNAUTHORIZED,
@@ -25,7 +25,7 @@ logger = logging.getLogger("secobserve.exception_handler")
 
 def custom_exception_handler(exc: Exception, context: dict) -> Response:
     response: Optional[Response]
-    if isinstance(exc, ProtectedError):
+    if isinstance(exc, (ProtectedError, RestrictedError)):
         # An object cannot be deleted because it has dependent objects.
         response = Response()
         response.status_code = HTTP_409_CONFLICT
@@ -83,13 +83,18 @@ def format_exception_message(exc: Exception) -> str:
     if hasattr(exc, "detail") and exc.detail and isinstance(exc.detail, list) and len(exc.detail) > 0:
         return " / ".join(exc.detail)
 
-    if hasattr(exc, "args") and exc.args and isinstance(exc.args[0], str) and "protected foreign keys" in exc.args[0]:
-        return _format_protected_foreign_keys(exc.args[0])
+    if (
+        hasattr(exc, "args")
+        and exc.args
+        and isinstance(exc.args[0], str)
+        and ("protected foreign keys" in exc.args[0] or "restricted foreign keys" in exc.args[0])
+    ):
+        return _format_referenced_foreign_keys(exc.args[0])
 
     return str(exc)
 
 
-def _format_protected_foreign_keys(message: str) -> str:
+def _format_referenced_foreign_keys(message: str) -> str:
     results = re.findall(r"'[a-zA-Z\.\_]*'", message)
     if len(results) >= 2:
         first_result = ""

@@ -1,88 +1,209 @@
-suite: Test secobserve StatefulSet
+suite: Test SecObserve StatefulSet
 
 templates:
   - templates/statefulset.yaml
 
+release:
+  name: test-release
+  namespace: test-namespace
+
 tests:
-  - it: should set correct StatefulSet name
-    set:
-      nameOverride: secobserve
+  - it: uses release-aware application and database names
     asserts:
       - equal:
           path: metadata.name
-          value: secobserve-sts
-
-  - it: should set the correct serviceName
-    set:
-      nameOverride: secobserve
-    asserts:
+          value: test-release-secobserve-sts
       - equal:
           path: spec.serviceName
-          value: secobserve-svc
+          value: test-release-secobserve-svc
+      - equal:
+          path: spec.template.spec.initContainers[0].command[2]
+          value: |
+            echo 'Waiting for Database to become ready...'
 
-  - it: should set the correct number of replicas
+            until printf "." && nc -z -w 2 test-release-postgresql 5432; do
+                sleep 2;
+            done;
+
+            echo 'Database OK ✓'
+      - equal:
+          path: spec.template.spec.containers[1].env[2].value
+          value: test-release-postgresql
+      - equal:
+          path: spec.template.spec.containers[1].env[0].valueFrom.secretKeyRef.name
+          value: test-release-secobserve-secrets
+      - equal:
+          path: spec.template.spec.containers[1].env[6].valueFrom.secretKeyRef.name
+          value: test-release-postgresql
+
+  - it: uses a configured application Secret
     set:
-      replicaCount: 2
+      backend.existingSecret: shared-secobserve-secrets
     asserts:
       - equal:
-          path: spec.replicas
-          value: 2
+          path: spec.template.spec.containers[1].env[0].valueFrom.secretKeyRef.name
+          value: shared-secobserve-secrets
+      - equal:
+          path: spec.template.spec.containers[1].env[7].valueFrom.secretKeyRef.name
+          value: shared-secobserve-secrets
+      - equal:
+          path: spec.template.spec.containers[1].env[8].valueFrom.secretKeyRef.name
+          value: shared-secobserve-secrets
 
-  - it: should render nodeSelector if provided
+  - it: uses the PostgreSQL primary service in replication mode
+    set:
+      postgresql.architecture: replication
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].env[2].value
+          value: test-release-postgresql-primary
+
+  - it: uses the configured PostgreSQL existing Secret and key
+    set:
+      postgresql.auth.existingSecret: external-db
+      postgresql.auth.secretKeys.userPasswordKey: db-password
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].env[6].valueFrom.secretKeyRef.name
+          value: external-db
+      - equal:
+          path: spec.template.spec.containers[1].env[6].valueFrom.secretKeyRef.key
+          value: db-password
+
+  - it: supports an external database
+    set:
+      postgresql.enabled: false
+      database.host: postgres.example.internal
+      database.passwordSecret.name: external-db
+      database.passwordSecret.key: db-password
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].env[2].value
+          value: postgres.example.internal
+      - equal:
+          path: spec.template.spec.containers[1].env[6].valueFrom.secretKeyRef.name
+          value: external-db
+
+  - it: preserves legacy backend env overrides without duplicates
+    set:
+      backend.env:
+        - name: DATABASE_HOST
+          value: legacy-postgres.example.internal
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[1].env
+          count: 9
+      - equal:
+          path: spec.template.spec.containers[1].env[8].name
+          value: DATABASE_HOST
+      - equal:
+          path: spec.template.spec.containers[1].env[8].value
+          value: legacy-postgres.example.internal
+
+  - it: persists the Huey queue by default
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 1001
+      - contains:
+          path: spec.template.spec.containers[1].volumeMounts
+          content:
+            name: huey
+            mountPath: /var/lib/huey
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: huey
+            persistentVolumeClaim:
+              claimName: test-release-secobserve-huey
+
+  - it: renders custom volumes and volume mounts
+    set:
+      backend.volumeMounts:
+        - name: extra
+          mountPath: /extra
+      backend.volumes:
+        - name: extra
+          emptyDir: {}
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].volumeMounts
+          content:
+            name: extra
+            mountPath: /extra
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: extra
+            emptyDir: {}
+
+  - it: can disable Huey persistence
+    set:
+      huey.persistence.enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[1].volumeMounts
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: mounts an existing Huey claim
+    set:
+      huey.persistence.existingClaim: shared-huey
+    asserts:
+      - equal:
+          path: spec.template.spec.volumes[0].persistentVolumeClaim.claimName
+          value: shared-huey
+
+  - it: renders scheduling configuration
     set:
       nodeSelector:
         disktype: ssd
-    asserts:
-    - matchSnapshot: {}
-
-  - it: should include affinity if specified
-    set:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: secobserve
+          effect: NoSchedule
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                  - key: kubernetes.io/e2e-az-name
+                  - key: kubernetes.io/os
                     operator: In
                     values:
-                      - e2e-az1
-                      - e2e-az2
+                      - linux
     asserts:
-    - matchSnapshot: {}
+      - equal:
+          path: spec.template.spec.nodeSelector.disktype
+          value: ssd
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: dedicated
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: kubernetes.io/os
 
-  - it: should render frontend and backend containers
+  - it: excludes dbchecker when disabled
     set:
-      frontend:
-        image:
-          registry: docker.io
-          repository: secobserve/frontend
-          tag: v1.2.3
-          pullPolicy: Always
-      backend:
-        image:
-          registry: docker.io
-          repository: secobserve/backend
-          tag: v1.2.3
-          pullPolicy: Always
+      dbchecker.enabled: false
     asserts:
-    - matchSnapshot: {}
+      - notExists:
+          path: spec.template.spec.initContainers
 
-  - it: should include initContainer dbchecker if enabled
+  - it: renders additional init containers
     set:
-      dbchecker:
-        enabled: true
-        hostname: "localhost"
-        port: 5432
-        image:
-          repository: "busybox"
-          tag: "latest"
-          pullPolicy: "IfNotPresent"
+      dbchecker.enabled: false
+      extraInitContainers:
+        - name: prepare
+          image: busybox:1.37.0
+          command:
+            - sh
+            - -c
+            - echo ready
     asserts:
-    - matchSnapshot: {}
-
-  - it: should exclude initContainer dbchecker if disabled
-    set:
-      dbchecker:
-        enabled: false
-    asserts:
-    - matchSnapshot: {}
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: prepare
+      - equal:
+          path: spec.template.spec.initContainers[0].command[2]
+          value: echo ready

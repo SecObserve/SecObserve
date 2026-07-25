@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import {
-    BulkDeleteButton,
     CreateButton,
     Datagrid,
     FunctionField,
@@ -34,12 +33,6 @@ const listFilters = [
     <AutocompleteInputMedium source="age" choices={AGE_CHOICES} label="Last observation change" alwaysOn />,
 ];
 
-const BulkActionButtons = () => (
-    <Fragment>
-        <BulkDeleteButton mutationMode="pessimistic" />
-    </Fragment>
-);
-
 const ListActions = () => {
     const user = localStorage.getItem("user");
     return (
@@ -67,7 +60,7 @@ const ProductList = () => {
             >
                 <WithListContext
                     render={({ data, sort }) => (
-                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={<BulkActionButtons />}>
+                        <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
                             <TextField source="name" />
                             {has_attribute("product_group_name", data, sort) && (
                                 <TextField source="product_group_name" label="Product Group" />

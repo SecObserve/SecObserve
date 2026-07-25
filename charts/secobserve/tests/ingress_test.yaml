@@ -1,16 +1,56 @@
-suite: test ingress
+suite: Test SecObserve Ingress
+
 templates:
-  - ingress.yaml
+  - templates/ingress.yaml
+
 release:
   name: test-release
   namespace: test-namespace
-tests:
-  - it: check manifest with custom host
-    set:
-      ingress:
-        enabled: true
-        ingressClassName: alb
-        hostname: test.example.com
-    asserts:
-    - matchSnapshot: {}
 
+tests:
+  - it: uses release-aware Service names
+    set:
+      ingress.hostname: test.example.com
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-ing
+      - equal:
+          path: spec.rules[0].host
+          value: test.example.com
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: test-release-secobserve-svc
+
+  - it: appends additional ingress paths
+    set:
+      ingress.paths:
+        - path: /extra
+          pathType: Prefix
+          backend:
+            service:
+              name: external-service
+              port:
+                number: 8080
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[2].path
+          value: /extra
+      - equal:
+          path: spec.rules[0].http.paths[2].backend.service.name
+          value: external-service
+
+  - it: renders TLS configuration
+    set:
+      ingress.tls.secretName: secobserve-tls
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: secobserve-tls
+
+  - it: does not render an Ingress when disabled
+    set:
+      ingress.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
