@@ -98,7 +98,7 @@ def observations_bulk_mark_duplicates(
     else:
         raise ValidationError("Invalid potential duplicate type")
 
-    rule_engine=Rule_Engine(product)
+    rule_engine = Rule_Engine(product)
 
     for duplicate in duplicates:
         duplicate.has_potential_duplicates = False
