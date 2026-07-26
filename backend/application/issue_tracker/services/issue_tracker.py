@@ -78,7 +78,9 @@ def push_deleted_observation_to_issue_tracker(product: Product, issue_id: Option
 
 
 @task()
-def _push_deleted_observation_to_issue_tracker_background(product: Product, issue_id: Optional[str], user: User) -> None:
+def _push_deleted_observation_to_issue_tracker_background(
+    product: Product, issue_id: Optional[str], user: User
+) -> None:
     try:
         issue_tracker = issue_tracker_factory(product)
         issue = issue_tracker.get_issue(product, issue_id)
