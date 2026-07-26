@@ -27,58 +27,63 @@ def push_observations_to_issue_tracker(product: Product, observations: set[Obser
             push_observation_to_issue_tracker(observation, get_current_user())
 
 
-@db_task()
 def push_observation_to_issue_tracker(observation: Observation, user: User) -> None:
+    if observation.product.issue_tracker_active and observation.branch == observation.product.repository_default_branch:
+        _push_observation_to_issue_tracker_background(observation, user)
+
+
+@db_task()
+def _push_observation_to_issue_tracker_background(observation: Observation, user: User) -> None:
     try:
-        if (
-            observation.product.issue_tracker_active
-            and observation.branch == observation.product.repository_default_branch
-        ):
-            issue_tracker = issue_tracker_factory(observation.product)
-            issue = _get_issue(observation, issue_tracker)
+        issue_tracker = issue_tracker_factory(observation.product)
+        issue = _get_issue(observation, issue_tracker)
 
-            # If the issue_tracker_issue_id is set but the issue does not exist, remove the id
-            if observation.issue_tracker_issue_id and not issue:
-                observation.issue_tracker_issue_id = ""
-                observation.save()
+        # If the issue_tracker_issue_id is set but the issue does not exist, remove the id
+        if observation.issue_tracker_issue_id and not issue:
+            observation.issue_tracker_issue_id = ""
+            observation.save()
 
-            if observation.current_status in Status.STATUS_ACTIVE:
-                if observation.product.issue_tracker_minimum_severity:
-                    numerical_minimum_severity = Severity.NUMERICAL_SEVERITIES.get(
-                        observation.product.issue_tracker_minimum_severity, 99
-                    )
-                else:
-                    numerical_minimum_severity = 99
-
-                if observation.numerical_severity <= numerical_minimum_severity:
-                    if issue:
-                        issue_tracker.update_issue(observation, issue)
-                    else:
-                        issue_id = issue_tracker.create_issue(observation)
-                        observation.issue_tracker_issue_id = issue_id
-                        observation.save()
-                else:
-                    if issue and not observation.issue_tracker_issue_closed:
-                        issue_tracker.close_issue(observation, issue)
-                        observation.issue_tracker_issue_closed = True
-                        observation.save()
+        if observation.current_status in Status.STATUS_ACTIVE:
+            if observation.product.issue_tracker_minimum_severity:
+                numerical_minimum_severity = Severity.NUMERICAL_SEVERITIES.get(
+                    observation.product.issue_tracker_minimum_severity, 99
+                )
             else:
+                numerical_minimum_severity = 99
+
+            if observation.numerical_severity <= numerical_minimum_severity:
                 if issue:
+                    issue_tracker.update_issue(observation, issue)
+                else:
+                    issue_id = issue_tracker.create_issue(observation)
+                    observation.issue_tracker_issue_id = issue_id
+                    observation.save()
+            else:
+                if issue and not observation.issue_tracker_issue_closed:
                     issue_tracker.close_issue(observation, issue)
                     observation.issue_tracker_issue_closed = True
                     observation.save()
+        else:
+            if issue:
+                issue_tracker.close_issue(observation, issue)
+                observation.issue_tracker_issue_closed = True
+                observation.save()
     except Exception as e:
         handle_task_exception(e, user)
 
 
-@task()
 def push_deleted_observation_to_issue_tracker(product: Product, issue_id: Optional[str], user: User) -> None:
+    if product.issue_tracker_active and issue_id:
+        _push_deleted_observation_to_issue_tracker_background(product, issue_id, user)
+
+
+@task()
+def _push_deleted_observation_to_issue_tracker_background(product: Product, issue_id: Optional[str], user: User) -> None:
     try:
-        if product.issue_tracker_active and issue_id:
-            issue_tracker = issue_tracker_factory(product)
-            issue = issue_tracker.get_issue(product, issue_id)
-            if issue:
-                issue_tracker.close_issue_for_deleted_observation(product, issue)
+        issue_tracker = issue_tracker_factory(product)
+        issue = issue_tracker.get_issue(product, issue_id)
+        if issue:
+            issue_tracker.close_issue_for_deleted_observation(product, issue)
     except Exception as e:
         handle_task_exception(e, user)
 
