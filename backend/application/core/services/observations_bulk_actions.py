@@ -98,6 +98,8 @@ def observations_bulk_mark_duplicates(
     else:
         raise ValidationError("Invalid potential duplicate type")
 
+    rule_engine=Rule_Engine(product)
+
     for duplicate in duplicates:
         duplicate.has_potential_duplicates = False
         save_assessment(
@@ -110,7 +112,7 @@ def observations_bulk_mark_duplicates(
             new_vex_remediations=None,
             new_risk_acceptance_expiry_date=None,
             propagated_from=None,
-            rule_engine=Rule_Engine(product),
+            rule_engine=rule_engine,
         )
 
     set_potential_duplicate(observation)
