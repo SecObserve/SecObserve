@@ -26,6 +26,7 @@ from application.core.services.potential_duplicates import (
 )
 from application.core.services.security_gate import check_security_gate
 from application.core.types import Assessment_Status, Status
+from application.rules.services.rule_engine import Rule_Engine
 
 
 def observations_bulk_assessment(  # pylint: disable=too-many-arguments
@@ -51,6 +52,8 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
             new_vex_justification=new_vex_justification,
             new_vex_remediations=new_vex_remediations,
             new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
+            propagated_from=None,
+            rule_engine=Rule_Engine(product) if product else None,
         )
 
 
@@ -104,6 +107,8 @@ def observations_bulk_mark_duplicates(
             new_vex_justification="",
             new_vex_remediations=None,
             new_risk_acceptance_expiry_date=None,
+            propagated_from=None,
+            rule_engine=Rule_Engine(product),
         )
 
     set_potential_duplicate(observation)
