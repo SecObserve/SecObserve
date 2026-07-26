@@ -38,10 +38,11 @@ def observation_post_delete(
     sender: Any, instance: Observation, **kwargs: Any  # pylint: disable=unused-argument
 ) -> None:
     # sender is needed according to Django documentation
-    product = instance.product
-    issue_tracker_issue_id = instance.issue_tracker_issue_id
-    user = get_current_user()
-    transaction.on_commit(lambda: push_deleted_observation_to_issue_tracker(product, issue_tracker_issue_id, user))
+    transaction.on_commit(
+        lambda: push_deleted_observation_to_issue_tracker(
+            instance.product, instance.issue_tracker_issue_id, get_current_user()
+        )
+    )
 
 
 @receiver(post_delete, sender=Product)

@@ -27,7 +27,7 @@ def push_observations_to_issue_tracker(product: Product, observations: set[Obser
             push_observation_to_issue_tracker(observation, get_current_user())
 
 
-def push_observation_to_issue_tracker(observation: Observation, user: User) -> None:
+def push_observation_to_issue_tracker(observation: Observation, user: Optional[User]) -> None:
     if observation.product.issue_tracker_active and observation.branch == observation.product.repository_default_branch:
         _push_observation_to_issue_tracker_background(observation, user)
 
@@ -72,14 +72,14 @@ def _push_observation_to_issue_tracker_background(observation: Observation, user
         handle_task_exception(e, user)
 
 
-def push_deleted_observation_to_issue_tracker(product: Product, issue_id: Optional[str], user: User) -> None:
+def push_deleted_observation_to_issue_tracker(product: Product, issue_id: Optional[str], user: Optional[User]) -> None:
     if product.issue_tracker_active and issue_id:
         _push_deleted_observation_to_issue_tracker_background(product, issue_id, user)
 
 
 @task()
 def _push_deleted_observation_to_issue_tracker_background(
-    product: Product, issue_id: Optional[str], user: User
+    product: Product, issue_id: str, user: Optional[User]
 ) -> None:
     try:
         issue_tracker = issue_tracker_factory(product)
