@@ -45,6 +45,7 @@ from application.notifications.services.send_notifications_observation import (
 from application.notifications.services.send_notifications_observation_title import (
     send_observation_title_notification,
 )
+from application.rules.services.rule_engine import Rule_Engine
 
 
 def save_assessment(  # pylint: disable=too-many-arguments
@@ -58,6 +59,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
     propagated_from: Optional[Observation_Log] = None,
+    rule_engine: Optional[Rule_Engine] = None,
 ) -> None:
 
     log_severity = new_severity if new_severity and new_severity != observation.current_severity else ""
@@ -120,6 +122,10 @@ def save_assessment(  # pylint: disable=too-many-arguments
             risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
             propagated_from=propagated_from,
         )
+
+        if not rule_engine:
+            rule_engine = Rule_Engine(observation.product)
+        rule_engine.apply_rules_for_observation(observation)
 
         check_security_gate(observation.product)
         push_observation_to_issue_tracker(observation, get_current_user())
