@@ -41,7 +41,9 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
 ) -> None:
-    observations = _check_observations(product, observation_ids)
+    rule_engine=Rule_Engine(product) if product else None
+
+    observations = _check_observations(product, observation_ids)    
     for observation in observations:
         save_assessment(
             observation=observation,
@@ -53,7 +55,7 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
             new_vex_remediations=new_vex_remediations,
             new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
             propagated_from=None,
-            rule_engine=Rule_Engine(product) if product else None,
+            rule_engine=rule_engine,
         )
 
 
