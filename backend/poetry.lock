@@ -1227,19 +1227,21 @@ files = [
 
 [[package]]
 name = "huey"
-version = "3.2.1"
+version = "3.3.0"
 description = "a little task queue"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "huey-3.2.1-py3-none-any.whl", hash = "sha256:da9e004b80941a718f33f9714697a67e6d5cf12e0707fc4f3dbb5d9c796e7224"},
-    {file = "huey-3.2.1.tar.gz", hash = "sha256:79cd63d117e5b8da2de58420dcde4e2d0f963e362d67a9b3872ce565eec5c3dc"},
+    {file = "huey-3.3.0-py3-none-any.whl", hash = "sha256:a7b1581aaae5f70540faafcf3306d74fa138ec7bad520f81150bb70b224eaddf"},
+    {file = "huey-3.3.0.tar.gz", hash = "sha256:e0c2a1542e6c3acb894821cde895cf9dbf72e42deb25f55b2d44096aa30f8f24"},
 ]
 
 [package.extras]
 backends = ["redis (>=3.0.0)"]
+cysqlite = ["cysqlite (>=0.3.5)"]
 postgres = ["psycopg (>=3.2)"]
+redis = ["redis (>=3.0.0)"]
 
 [[package]]
 name = "idna"
@@ -3395,4 +3397,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "9ef9ccb21af946306e7e1989a020e20653a8969445ef016554cdf972ea9422cc"
+content-hash = "d0beec5e6bdf72bddb5ff9391f66156de8899366ee771dd1540d9e3fe4ab8120"
