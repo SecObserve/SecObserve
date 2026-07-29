@@ -1,13 +1,3 @@
-> [!IMPORTANT]
-> The SecObserve repositories have been moved from the MaibornWolff organization to their own SecObserve organization. Even though all links to the previous repository location are automatically redirected to the new location, we strongly recommend updating any existing links to the new repository URL.
->
-> The location of the Docker images has been changed with release 1.42.0, they are now stored in a GitHub container registry:
->
-> * **ghcr.io/secobserve/secobserve-backend** (see https://github.com/SecObserve/SecObserve/pkgs/container/secobserve-backend)
-> * **ghcr.io/secobserve/secobserve-frontend** (see https://github.com/SecObserve/SecObserve/pkgs/container/secobserve-frontend)
->
-> Please adjust your pull statements accordingly.
-
 ![SecObserve](frontend/public/secobserve.svg)
 
 # SecObserve
@@ -54,3 +44,9 @@ Please see the [Contributing Guidelines](CONTRIBUTING.md) for more information o
 ## License
 
 SecObserve is licensed under the [3-Clause BSD License](LICENSE.txt)
+
+## Funding
+
+<img src="https://nlnet.nl/logo/banner.svg" width="20%" alt="NLNet">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://nlnet.nl/image/logos/NGI0CommonsFund_tag.svg" width="20%" alt="NLNet">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;https://nlnet.nl/project/SecObservePlus
+
+This project is funded through the [NGI0 Commons Fund](https://nlnet.nl/commonsfund), a fund established by [NLnet](https://nlnet.nl/) with financial support from the European Commission's [Next Generation Internet](https://ngi.eu/) programme, under the aegis of [DG Communications Networks, Content and Technology](https://commission.europa.eu/about-european-commission/departments-and-executive-agencies/communications-networks-content-and-technology_en) under grant agreement No [101135429](https://cordis.europa.eu/project/id/101135429). Additional funding is made available by the [Swiss State Secretariat for Education, Research and Innovation](https://www.sbfi.admin.ch/sbfi/en/home.html) (SERI).
