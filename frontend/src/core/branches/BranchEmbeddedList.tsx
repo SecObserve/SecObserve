@@ -41,7 +41,7 @@ type BranchEmbeddedListProps = {
 };
 
 const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
-    function listFilters(product: any) {
+    function listFilters() {
         const filters = [];
         filters.push(<TextInput source="name" label="Branch / Version" alwaysOn />);
 
@@ -65,7 +65,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
         <ResourceContextProvider value="branches">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    {product?.has_branches && <FilterForm filters={listFilters(product)} />}
+                    {product?.has_branches && <FilterForm filters={listFilters()} />}
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid
