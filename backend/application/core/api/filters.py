@@ -115,6 +115,8 @@ class ProductAuthorizationGroupMemberFilter(FilterSet):
 
 
 class BranchFilter(FilterSet):
+    name = CharFilter(field_name="name", lookup_expr="icontains")
+
     for_observations = BooleanFilter(
         field_name="for_observations",
         method="get_for_observations",
