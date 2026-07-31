@@ -65,7 +65,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
         Assessment_Status.ASSESSMENT_STATUS_REMOVED,
     ):
         send_observation_notification(observation)
-        send_observation_title_notification(observation)
+        send_observation_title_notification(observation, observation_log)
 
     return observation_log
 

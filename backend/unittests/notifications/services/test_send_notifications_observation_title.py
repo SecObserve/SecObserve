@@ -51,6 +51,19 @@ def _make_observation(
     return obs
 
 
+def _make_observation_log(
+    *,
+    severity="Critical",
+    status="Open",
+    priority_changed=True,
+):
+    observation_log = MagicMock()
+    observation_log.severity = severity
+    observation_log.status = status
+    observation_log.priority_changed = priority_changed
+    return observation_log
+
+
 class TestSendObservationTitleNotification(BaseTestCase):
 
     # -----------------------------------------------------------------------
@@ -70,7 +83,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation()
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
 
@@ -88,7 +102,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation(numerical_severity=5)
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
 
@@ -105,7 +120,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation(numerical_severity=1, current_status="Resolved")
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
 
@@ -123,7 +139,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
 
         # priority 5 > threshold 2 → blocked
         observation = _make_observation(numerical_severity=1, current_priority=5)
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
 
@@ -140,7 +157,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
 
         # no priority in observation -> blocked
         observation = _make_observation(current_priority=None)
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
 
@@ -157,9 +175,108 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation(numerical_severity=1, parser_type="SAST")
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
+
+    @patch(f"{MODULE}._send_observation_title_notifications")
+    @patch(f"{MODULE}.Observation_Title_Notified")
+    @patch(f"{MODULE}.Severity")
+    @patch(f"{MODULE}.Settings")
+    def test_observation_log_without_changes_is_blocked(self, mock_settings_cls, mock_severity, mock_otn, mock_send):
+        """An observation log that changed neither severity, status nor priority is blocked."""
+        settings = _make_settings(min_severity="Critical")
+        mock_settings_cls.load.return_value = settings
+        mock_severity.NUMERICAL_SEVERITIES = {"Critical": 1}
+        mock_otn.DoesNotExist = Exception
+        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
+
+        observation = _make_observation(numerical_severity=1, current_status="Open")
+        observation_log = _make_observation_log(severity="", status="", priority_changed=False)
+        send_observation_title_notification(observation, observation_log)
+
+        mock_send.assert_not_called()
+
+    # -----------------------------------------------------------------------
+    # Filters are only applied for the attributes changed in the observation log
+    # -----------------------------------------------------------------------
+
+    @patch(f"{MODULE}.Status")
+    @patch(f"{MODULE}.Settings")
+    @patch(f"{MODULE}.get_base_url_frontend")
+    @patch(f"{MODULE}._send_observation_title_notifications")
+    @patch(f"{MODULE}.Observation_Title_Notified")
+    @patch(f"{MODULE}.Severity")
+    def test_severity_filter_not_applied_when_severity_unchanged(
+        self, mock_severity, mock_otn, mock_send, mock_base_url, mock_settings_cls, mock_status
+    ):
+        """Severity below the threshold does not block when the log has no severity change."""
+        # numerical_severity 5 (low) vs threshold 2 (high) → would be blocked if severity had changed
+        settings = _make_settings(min_severity="High")
+        mock_settings_cls.load.return_value = settings
+        mock_severity.NUMERICAL_SEVERITIES = {"High": 2}
+        mock_base_url.return_value = "https://app.example.com/"
+        mock_status.STATUS_ACTIVE = ["Open", "Affected", "In review"]
+        mock_otn.DoesNotExist = Exception
+        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
+        mock_otn.return_value = MagicMock(severity=None, status=None, priority=None)
+
+        observation = _make_observation(numerical_severity=5, current_status="Open")
+        observation_log = _make_observation_log(severity="", status="Open", priority_changed=False)
+        send_observation_title_notification(observation, observation_log)
+
+        mock_send.assert_called_once()
+
+    @patch(f"{MODULE}.Status")
+    @patch(f"{MODULE}.Settings")
+    @patch(f"{MODULE}.get_base_url_frontend")
+    @patch(f"{MODULE}._send_observation_title_notifications")
+    @patch(f"{MODULE}.Observation_Title_Notified")
+    @patch(f"{MODULE}.Severity")
+    def test_status_filter_not_applied_when_status_unchanged(
+        self, mock_severity, mock_otn, mock_send, mock_base_url, mock_settings_cls, mock_status
+    ):
+        """A status not listed in the filter does not block when the log has no status change."""
+        settings = _make_settings(min_severity="Critical", statuses=["Open"])
+        mock_settings_cls.load.return_value = settings
+        mock_severity.NUMERICAL_SEVERITIES = {"Critical": 1}
+        mock_base_url.return_value = "https://app.example.com/"
+        mock_status.STATUS_ACTIVE = ["Open", "Affected", "In review"]
+        mock_otn.DoesNotExist = Exception
+        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
+        mock_otn.return_value = MagicMock(severity=None, status=None, priority=None)
+
+        observation = _make_observation(numerical_severity=1, current_status="Resolved")
+        observation_log = _make_observation_log(severity="Critical", status="", priority_changed=False)
+        send_observation_title_notification(observation, observation_log)
+
+        mock_send.assert_called_once()
+
+    @patch(f"{MODULE}.Status")
+    @patch(f"{MODULE}.Settings")
+    @patch(f"{MODULE}.get_base_url_frontend")
+    @patch(f"{MODULE}._send_observation_title_notifications")
+    @patch(f"{MODULE}.Observation_Title_Notified")
+    @patch(f"{MODULE}.Severity")
+    def test_priority_filter_not_applied_when_priority_unchanged(
+        self, mock_severity, mock_otn, mock_send, mock_base_url, mock_settings_cls, mock_status
+    ):
+        """A priority worse than the threshold does not block when the priority has not changed."""
+        settings = _make_settings(min_priority=2)
+        mock_settings_cls.load.return_value = settings
+        mock_base_url.return_value = "https://app.example.com/"
+        mock_status.STATUS_ACTIVE = ["Open", "Affected", "In review"]
+        mock_otn.DoesNotExist = Exception
+        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
+        mock_otn.return_value = MagicMock(severity=None, status=None, priority=None)
+
+        # priority 5 > threshold 2, but the log has no priority change
+        observation = _make_observation(current_priority=5, current_status="Open")
+        observation_log = _make_observation_log(severity="Critical", status="", priority_changed=False)
+        send_observation_title_notification(observation, observation_log)
+
+        mock_send.assert_called_once()
 
     # -----------------------------------------------------------------------
     # Filtering – new notification path
@@ -186,7 +303,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.return_value = new_record
 
         observation = _make_observation(numerical_severity=1, current_status="Open")
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         first_line_arg = mock_send.call_args[0][2]
         assert "New notification" in first_line_arg
@@ -218,7 +336,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
             current_status="Open",
             current_priority=1,
         )
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         first_line_arg = mock_send.call_args[0][2]
         assert "Change in" in first_line_arg
@@ -248,7 +367,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
             current_status="Open",
             current_priority=1,
         )
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         mock_send.assert_not_called()
 
@@ -277,7 +397,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.return_value = new_record
 
         observation = _make_observation(title="XSS Attack", numerical_severity=1, current_status="Open")
-        send_observation_title_notification(observation)
+        observation_log = _make_observation_log()
+        send_observation_title_notification(observation, observation_log)
 
         url_arg = mock_send.call_args[0][3]
         assert "XSS Attack" in url_arg

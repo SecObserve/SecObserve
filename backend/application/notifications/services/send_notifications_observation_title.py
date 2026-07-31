@@ -1,7 +1,7 @@
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
 from application.commons.services.functions import get_base_url_frontend
-from application.core.models import Observation
+from application.core.models import Observation, Observation_Log
 from application.core.types import Severity, Status
 from application.notifications.models import Notification, Observation_Title_Notified
 from application.notifications.services.send_notifications import (
@@ -16,7 +16,7 @@ from application.notifications.services.send_notifications_base import (
 )
 
 
-def send_observation_title_notification(observation: Observation) -> None:
+def send_observation_title_notification(observation: Observation, observation_log: Observation_Log) -> None:
     settings = Settings.load()
 
     observation_title_notification_min_severity = settings.observation_title_notification_min_severity
@@ -36,21 +36,29 @@ def send_observation_title_notification(observation: Observation) -> None:
             or observation_title_notification_min_priority
             or observation_title_notification_parser_type
         )
+        and (observation_log.severity or observation_log.status or observation_log.priority_changed)
         and (
             not observation_title_notification_numerical_min_severity
-            or observation.numerical_severity <= observation_title_notification_numerical_min_severity
+            or not observation_log.severity
+            or (
+                observation_log.severity
+                and observation.numerical_severity <= observation_title_notification_numerical_min_severity
+            )
         )
         and (
             (
                 observation_title_notification_statuses
                 and observation.current_status in observation_title_notification_statuses
             )
+            or not observation_log.status
             or (not observation_title_notification_statuses and observation.current_status in Status.STATUS_ACTIVE)
         )
         and (
             not observation_title_notification_min_priority
+            or not observation_log.priority_changed
             or (
-                observation.current_priority
+                observation_log.priority_changed
+                and observation.current_priority
                 and observation.current_priority <= observation_title_notification_min_priority
             )
         )

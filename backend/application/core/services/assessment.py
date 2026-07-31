@@ -447,7 +447,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
         push_observation_to_issue_tracker(observation_log.observation, get_current_user())
 
         send_observation_notification(observation_log.observation)
-        send_observation_title_notification(observation_log.observation)
+        send_observation_title_notification(observation_log.observation, observation_log)
 
         propagate_assessment(observation_log)
 
