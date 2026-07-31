@@ -3,7 +3,6 @@ import {
     Datagrid,
     DateField,
     ListContextProvider,
-    NumberField,
     ResourceContextProvider,
     TextField,
     WithListContext,
@@ -11,6 +10,7 @@ import {
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
 import { has_attribute } from "../../commons/functions";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
@@ -70,8 +70,8 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
                                 <TextField source="user_full_name" label="User" sortable={false} />
                                 <TextField source="severity" emptyText="---" sortable={false} />
                                 <TextField source="status" emptyText="---" sortable={false} />
-                                {has_attribute("priority", data, sort) && (
-                                    <NumberField source="priority" emptyText="---" sortable={false} />
+                                {has_attribute("priority_changed", data, sort) && (
+                                    <ObservationLogPriorityField source="priority" sortable={false} />
                                 )}
                                 <TextField
                                     source="comment_shortened"

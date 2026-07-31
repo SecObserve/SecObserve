@@ -106,7 +106,7 @@ const ObservationLogComponent = () => {
                                     />
                                 </Labeled>
                             )}
-                            {observation_log.priority && (
+                            {observation_log.priority_changed && (
                                 <Labeled label="Priority">
                                     <NumberField source="priority" />
                                 </Labeled>

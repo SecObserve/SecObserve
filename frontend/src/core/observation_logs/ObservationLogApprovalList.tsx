@@ -8,7 +8,6 @@ import {
     FilterForm,
     FunctionField,
     ListContextProvider,
-    NumberField,
     ReferenceInput,
     ResourceContextProvider,
     TextField,
@@ -20,6 +19,7 @@ import {
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
@@ -219,8 +219,8 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                 <TextField source="user_full_name" label="User" />
                                 <SeverityField label="Severity" source="severity" />
                                 <ChipField source="status" label="Status" emptyText="---" />
-                                {has_attribute("priority", data, sort) && (
-                                    <NumberField source="priority" emptyText="---" sortable={false} />
+                                {has_attribute("priority_changed", data, sort) && (
+                                    <ObservationLogPriorityField source="priority" sortable={false} />
                                 )}
                                 {feature_vex_enabled() && has_attribute("vex_justification", data, sort) && (
                                     <TextField

@@ -65,6 +65,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     log_severity = new_severity if new_severity and new_severity != observation.current_severity else ""
     log_status = new_status if new_status and new_status != observation.current_status else ""
     log_priority = new_priority if new_priority and new_priority != observation.current_priority else None
+    log_priority_changed = new_priority != observation.current_priority
     log_vex_justification = (
         new_vex_justification
         if new_vex_justification and new_vex_justification != observation.current_vex_justification
@@ -115,6 +116,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             severity=log_severity,
             status=log_status,
             priority=log_priority,
+            priority_changed=log_priority_changed,
             comment=comment,
             vex_justification=log_vex_justification,
             vex_remediations=log_vex_remediations,
@@ -137,6 +139,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             severity=log_severity,
             status=log_status,
             priority=log_priority,
+            priority_changed=log_priority_changed,
             comment=comment,
             vex_justification=log_vex_justification,
             vex_remediations=log_vex_remediations,
@@ -358,6 +361,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
             severity="",
             status="",
             priority=None,
+            priority_changed=False,
             comment=comment,
             vex_justification="",
             vex_remediations=None,
