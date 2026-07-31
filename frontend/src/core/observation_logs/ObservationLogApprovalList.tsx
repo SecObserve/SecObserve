@@ -219,7 +219,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                 <TextField source="user_full_name" label="User" />
                                 <SeverityField label="Severity" source="severity" />
                                 <ChipField source="status" label="Status" emptyText="---" />
-                                {has_attribute("priority_changed", data, sort) && (
+                                {data?.some((element: any) => element.priority_changed) && (
                                     <ObservationLogPriorityField source="priority" sortable={false} />
                                 )}
                                 {feature_vex_enabled() && has_attribute("vex_justification", data, sort) && (

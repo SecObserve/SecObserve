@@ -108,7 +108,7 @@ const ObservationLogComponent = () => {
                             )}
                             {observation_log.priority_changed && (
                                 <Labeled label="Priority">
-                                    <NumberField source="priority" />
+                                    <NumberField source="priority" emptyText="None" />
                                 </Labeled>
                             )}
                             {observation_log.risk_acceptance_expiry_date != null && (

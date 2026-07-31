@@ -11,7 +11,6 @@ import {
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
-import { has_attribute } from "../../commons/functions";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 type ObservationLogEmbeddedListProps = {
@@ -55,7 +54,7 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <WithListContext
-                        render={({ data, sort }) => (
+                        render={({ data }) => (
                             <Datagrid
                                 size={getSettingListSize()}
                                 sx={{ width: "100%" }}
@@ -70,7 +69,7 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
                                 <TextField source="user_full_name" label="User" sortable={false} />
                                 <TextField source="severity" emptyText="---" sortable={false} />
                                 <TextField source="status" emptyText="---" sortable={false} />
-                                {has_attribute("priority_changed", data, sort) && (
+                                {data?.some((element: any) => element.priority_changed) && (
                                     <ObservationLogPriorityField source="priority" sortable={false} />
                                 )}
                                 <TextField
