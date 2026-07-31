@@ -5,7 +5,6 @@ import {
     ArrayInput,
     DateInput,
     FormDataConsumer,
-    NumberInput,
     SimpleForm,
     SimpleFormIterator,
     useNotify,
@@ -33,6 +32,7 @@ import {
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
+import AssessmentPriorityInput from "./AssessmentPriorityInput";
 
 const ObservationAssessment = () => {
     const dialogRef = useRef<HTMLDivElement>(null);
@@ -52,15 +52,18 @@ const ObservationAssessment = () => {
             return;
         }
 
-        const patch = {
+        const patch: Record<string, any> = {
             severity: data.severity,
             status: data.status,
-            priority: data.priority,
             vex_justification: justificationEnabled ? data.vex_justification : "",
             vex_remediations: remediationsEnabled ? data.vex_remediations : null,
             comment: comment,
             risk_acceptance_expiry_date: data.risk_acceptance_expiry_date,
         };
+        // The priority is only sent if it shall be changed, an empty priority removes it
+        if (data.change_priority) {
+            patch.priority = data.priority ?? null;
+        }
 
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/observations/" + data.id + "/assessment/", {
             method: "PATCH",
@@ -105,7 +108,7 @@ const ObservationAssessment = () => {
                             choices={OBSERVATION_STATUS_CHOICES}
                             onChange={(e) => setStatus(e)}
                         />
-                        <NumberInput source="priority" step={1} min={1} max={99} sx={{ width: "7em" }} />
+                        <AssessmentPriorityInput />
                         {justificationEnabled &&
                             settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
                                 <AutocompleteInputWide

@@ -54,6 +54,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
     new_severity: Optional[str],
     new_status: Optional[str],
     new_priority: Optional[int],
+    new_priority_changed: bool,
     comment: str,
     new_vex_justification: Optional[str],
     new_vex_remediations: Optional[str],
@@ -64,7 +65,8 @@ def save_assessment(  # pylint: disable=too-many-arguments
 
     log_severity = new_severity if new_severity and new_severity != observation.current_severity else ""
     log_status = new_status if new_status and new_status != observation.current_status else ""
-    log_priority = new_priority if new_priority and new_priority != observation.current_priority else None
+    log_priority_changed = _priority_is_changed(observation, new_priority, new_priority_changed)
+    log_priority = new_priority if log_priority_changed else None
     log_vex_justification = (
         new_vex_justification
         if new_vex_justification and new_vex_justification != observation.current_vex_justification
@@ -89,7 +91,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
         and (
             (log_severity and log_severity != observation.current_severity)
             or (log_status and log_status != observation.current_status and new_status != Status.STATUS_IN_REVIEW)
-            or (log_priority and log_priority != observation.current_priority)
+            or log_priority_changed
             or (log_vex_justification and log_vex_justification != observation.current_vex_justification)
             or (log_vex_remediations and log_vex_remediations != observation.current_vex_remediations)
         )
@@ -101,13 +103,14 @@ def save_assessment(  # pylint: disable=too-many-arguments
         Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
     ):
         _update_observation(
-            observation,
-            new_severity,
-            new_status,
-            new_priority,
-            new_vex_justification,
-            new_vex_remediations,
-            new_risk_acceptance_expiry_date,
+            observation=observation,
+            new_severity=new_severity,
+            new_status=new_status,
+            new_priority=new_priority,
+            new_priority_changed=new_priority_changed,
+            new_vex_justification=new_vex_justification,
+            new_vex_remediations=new_vex_remediations,
+            new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
         )
 
         observation_log = create_observation_log(
@@ -115,6 +118,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             severity=log_severity,
             status=log_status,
             priority=log_priority,
+            priority_changed=log_priority_changed,
             comment=comment,
             vex_justification=log_vex_justification,
             vex_remediations=log_vex_remediations,
@@ -137,6 +141,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             severity=log_severity,
             status=log_status,
             priority=log_priority,
+            priority_changed=log_priority_changed,
             comment=comment,
             vex_justification=log_vex_justification,
             vex_remediations=log_vex_remediations,
@@ -145,11 +150,13 @@ def save_assessment(  # pylint: disable=too-many-arguments
         )
 
 
-def _update_observation(  # pylint: disable=too-many-positional-arguments
+def _update_observation(  # pylint: disable=too-many-arguments
+    *,
     observation: Observation,
     new_severity: Optional[str],
     new_status: Optional[str],
     new_priority: Optional[int],
+    new_priority_changed: bool,
     new_vex_justification: Optional[str],
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
@@ -168,7 +175,7 @@ def _update_observation(  # pylint: disable=too-many-positional-arguments
 
     previous_current_priority = observation.current_priority
     previous_assessment_priority = observation.assessment_priority
-    if new_priority and new_priority != observation.current_priority:
+    if _priority_is_changed(observation, new_priority, new_priority_changed):
         observation.assessment_priority = new_priority
         observation.current_priority = get_current_priority(observation)
 
@@ -203,6 +210,24 @@ def _update_observation(  # pylint: disable=too-many-positional-arguments
         or previous_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
     ):
         observation.save()
+
+
+def _priority_is_changed(observation: Observation, new_priority: Optional[int], new_priority_changed: bool) -> bool:
+    """Check if an assessment changes the priority of an observation.
+
+    * new_priority_changed is False: the priority is not part of the assessment.
+    * new_priority is None: the assessment priority shall be removed, which only is a change if an
+      assessment priority is set. The current priority then falls back to a rule priority.
+    * otherwise: like severity and status, a new priority only is a change if it differs from the
+      current priority.
+    """
+    if not new_priority_changed:
+        return False
+
+    if new_priority is None:
+        return observation.assessment_priority is not None
+
+    return new_priority != observation.current_priority
 
 
 def _get_assessments_need_approval(product: Product) -> bool:
@@ -343,7 +368,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
         observation.current_severity = get_current_severity(observation)
         previous_status = observation.current_status
         observation.current_status = get_current_status(observation)
-        observation.current_priority = get_current_status(observation)
+        observation.current_priority = get_current_priority(observation)
         observation.current_vex_justification = get_current_vex_justification(observation)
         observation.current_vex_remediations = get_current_vex_remediations(observation)
 
@@ -358,6 +383,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
             severity="",
             status="",
             priority=None,
+            priority_changed=False,
             comment=comment,
             vex_justification="",
             vex_remediations=None,
@@ -411,6 +437,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
             new_severity=observation_log.severity,
             new_status=observation_log.status,
             new_priority=observation_log.priority,
+            new_priority_changed=observation_log.priority_changed,
             new_vex_justification=observation_log.vex_justification,
             new_vex_remediations=observation_log.vex_remediations,
             new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
@@ -468,6 +495,7 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
                         new_severity=observation_log.severity,
                         new_status=observation_log.status,
                         new_priority=observation_log.priority,
+                        new_priority_changed=observation_log.priority_changed,
                         comment=observation_log.comment,
                         new_vex_justification=observation_log.vex_justification,
                         new_vex_remediations=observation_log.vex_remediations,
@@ -540,6 +568,7 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
             new_severity=newest_observation_log.severity,
             new_status=newest_observation_log.status,
             new_priority=newest_observation_log.priority,
+            new_priority_changed=newest_observation_log.priority_changed,
             comment=newest_observation_log.comment,
             new_vex_justification=newest_observation_log.vex_justification,
             new_vex_remediations=newest_observation_log.vex_remediations,

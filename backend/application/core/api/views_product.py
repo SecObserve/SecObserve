@@ -336,6 +336,7 @@ class ProductViewSet(ProductDeletionActionsMixin, ModelViewSet):
             new_severity=request_serializer.validated_data.get("severity"),
             new_status=request_serializer.validated_data.get("status"),
             new_priority=request_serializer.validated_data.get("priority"),
+            new_priority_changed="priority" in request_serializer.validated_data,
             comment=request_serializer.validated_data.get("comment"),
             observation_ids=request_serializer.validated_data.get("observations"),
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),

@@ -391,6 +391,7 @@ def _write_observation_log(
     priority = (
         observation.current_priority if observation_before.current_priority != observation.current_priority else None
     )
+    priority_changed = observation_before.current_priority != observation.current_priority
     vex_justification = (
         observation.current_vex_justification
         if observation_before.current_vex_justification != observation.current_vex_justification
@@ -425,6 +426,7 @@ def _write_observation_log(
         severity=severity,
         status=status,
         priority=priority,
+        priority_changed=priority_changed,
         comment=comment,
         vex_justification=vex_justification,
         vex_remediations=vex_remediations,
@@ -470,6 +472,7 @@ def _write_observation_log_no_rule(
     log_severity = observation.current_severity if previous_severity != observation.current_severity else ""
 
     log_priority = observation.current_priority if previous_priority != observation.current_priority else None
+    log_priority_changed = previous_priority != observation.current_priority
 
     log_vex_justification = (
         observation.current_vex_justification
@@ -501,6 +504,7 @@ def _write_observation_log_no_rule(
         severity=log_severity,
         status=log_status,
         priority=log_priority,
+        priority_changed=log_priority_changed,
         comment=comment,
         vex_justification=log_vex_justification,
         vex_remediations=log_vex_remediations,
