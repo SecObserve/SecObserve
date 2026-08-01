@@ -40,7 +40,7 @@ type BulkActionButtonsProps = {
 const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
     return (
         <Fragment>
-            {(!product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL)) && (
+            {(!product || product?.permissions?.includes(PERMISSION_OBSERVATION_LOG_APPROVAL)) && (
                 <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <AssessmentBulkApproval storeKey={storeKey} />
                     <AssessmentDeleteApproval storeKey={storeKey} />
@@ -150,7 +150,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                 size={getSettingListSize()}
                                 sx={{ width: "100%" }}
                                 bulkActionButtons={
-                                    !product || product?.permissions.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
+                                    !product || product?.permissions?.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
                                         <BulkActionButtons product={product} storeKey={storeKey} />
                                     ) : (
                                         false

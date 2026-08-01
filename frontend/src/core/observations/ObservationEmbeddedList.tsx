@@ -144,10 +144,10 @@ type ObservationsEmbeddedListProps = {
 
 const BulkActionButtons = (product: any) => (
     <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        {product.product.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT) && (
+        {product.product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) && (
             <ObservationBulkAssessment product={product.product} storeKey="observations.embedded" />
         )}
-        {product.product.permissions.includes(PERMISSION_OBSERVATION_DELETE) && (
+        {product.product?.permissions?.includes(PERMISSION_OBSERVATION_DELETE) && (
             <ObservationBulkDeleteButton product={product.product} storeKey="observations.embedded" />
         )}
     </Stack>
@@ -202,8 +202,8 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
                                 rowClick={ShowObservations}
                                 bulkActionButtons={
                                     product &&
-                                    (product.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT) ||
-                                        product.permissions.includes(PERMISSION_OBSERVATION_DELETE)) && (
+                                    (product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) ||
+                                        product?.permissions?.includes(PERMISSION_OBSERVATION_DELETE)) && (
                                         <BulkActionButtons product={product} />
                                     )
                                 }
