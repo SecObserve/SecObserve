@@ -96,15 +96,11 @@ def _authorization_group_is_designated_assessment_approver(product: Product, aut
 
 
 class ProductCoreSerializer(ModelSerializer):
-    permissions = SerializerMethodField()
     observation_notification_status_list = ListField(
         child=CharField(),
         required=False,
         allow_empty=True,
     )
-
-    def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
-        return get_product_permissions_for_user(obj)
 
     class Meta:
         model = Product
@@ -229,7 +225,7 @@ class ProductCoreSerializer(ModelSerializer):
         return validated_data
 
 
-class ProductGroupSerializer(ProductCoreSerializer):
+class ProductGroupListSerializer(ProductCoreSerializer):
     active_critical_observation_count = IntegerField(read_only=True)
     active_high_observation_count = IntegerField(read_only=True)
     active_medium_observation_count = IntegerField(read_only=True)
@@ -265,7 +261,6 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "name",
             "description",
             "products_count",
-            "permissions",
             "active_critical_observation_count",
             "active_high_observation_count",
             "active_medium_observation_count",
@@ -307,6 +302,17 @@ class ProductGroupSerializer(ProductCoreSerializer):
             "observation_notification_status_list",
             "observation_notification_min_priority",
         ]
+
+
+class ProductGroupSerializer(ProductGroupListSerializer):
+    permissions = SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ProductGroupListSerializer.Meta.fields + ["permissions"]
+
+    def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
+        return get_product_permissions_for_user(obj)
 
     def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
         return _validate_propagate_branches(value)
@@ -375,6 +381,7 @@ class ProductListSerializer(ProductCoreSerializer):
 
 class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-public-methods
     # all these methods are needed
+    permissions = SerializerMethodField()
     product_group_repository_branch_housekeeping_active = SerializerMethodField()
     product_group_security_gate_active = SerializerMethodField()
     product_group_assessments_need_approval = SerializerMethodField()
@@ -399,6 +406,9 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         model = Product
         read_only_fields = ["repository_default_branch"]
         exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
+
+    def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
+        return get_product_permissions_for_user(obj)
 
     def get_product_group_repository_branch_housekeeping_active(self, obj: Product) -> Optional[bool]:
         if not obj.product_group:

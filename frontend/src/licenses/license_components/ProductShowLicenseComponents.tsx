@@ -83,8 +83,8 @@ const ProductShowLicenseComponents = ({ product }: ProductShowLicenseComponentsP
                             </ReferenceField>
                         </Labeled>
                     )}
-                {product?.permissions.includes(PERMISSION_PRODUCT_EDIT) && <LicensePolicyApply product={product} />}
-                {product && !product.permissions.includes(PERMISSION_PRODUCT_EDIT) && (
+                {product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && <LicensePolicyApply product={product} />}
+                {product && !product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && (
                     <Typography variant="body1" sx={{ width: "15em" }} />
                 )}
             </Paper>

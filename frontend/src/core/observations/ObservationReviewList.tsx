@@ -118,7 +118,7 @@ type BulkActionButtonsProps = {
 
 const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => (
     <Fragment>
-        {(!product || product?.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT)) && (
+        {(!product || product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT)) && (
             <ObservationBulkAssessment product={product} storeKey={storeKey} />
         )}
     </Fragment>
@@ -170,7 +170,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                 sx={{ width: "100%" }}
                                 rowClick={ShowObservations}
                                 bulkActionButtons={
-                                    (!product || product?.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT)) && (
+                                    (!product || product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT)) && (
                                         <BulkActionButtons product={product} storeKey={storeKey} />
                                     )
                                 }

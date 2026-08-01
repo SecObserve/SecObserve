@@ -33,7 +33,7 @@ type LicenseComponentEmbeddedListProps = {
 
 const BulkActionButtons = (product: any) => (
     <Fragment>
-        {product.product.permissions.includes(PERMISSION_COMPONENT_LICENSE_DELETE) && (
+        {product.product?.permissions?.includes(PERMISSION_COMPONENT_LICENSE_DELETE) && (
             <LicenseComponentBulkDeleteButton product={product.product} />
         )}
     </Fragment>
@@ -164,7 +164,7 @@ const LicenseComponentEmbeddedList = ({
                                 size={getSettingListSize()}
                                 rowClick={showLicenseComponent}
                                 bulkActionButtons={
-                                    product?.permissions.includes(PERMISSION_COMPONENT_LICENSE_DELETE) && (
+                                    product?.permissions?.includes(PERMISSION_COMPONENT_LICENSE_DELETE) && (
                                         <BulkActionButtons product={product} />
                                     )
                                 }

@@ -74,10 +74,10 @@ const ApiConfigurationEmbeddedList = ({ product }: ApiConfigurationEmbeddedListP
                         <WithRecord
                             render={(api_configuration) => (
                                 <Stack direction="row" spacing={4}>
-                                    {product?.permissions.includes(PERMISSION_API_CONFIGURATION_EDIT) && (
+                                    {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_EDIT) && (
                                         <ApiConfigurationEdit />
                                     )}
-                                    {product?.permissions.includes(PERMISSION_API_CONFIGURATION_DELETE) && (
+                                    {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_DELETE) && (
                                         <APIConfigurationDelete api_configuration={api_configuration} />
                                     )}
                                 </Stack>

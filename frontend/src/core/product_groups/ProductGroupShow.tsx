@@ -72,7 +72,7 @@ const ShowActions = () => {
                     queryOptions={{ meta: { api_resource: "product_group_names" } }}
                 />
                 <ExportMenu product={product_group} is_product_group={true} />
-                {product_group?.permissions.includes(PERMISSION_PRODUCT_GROUP_EDIT) && <EditButton />}
+                {product_group?.permissions?.includes(PERMISSION_PRODUCT_GROUP_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>
     );
@@ -376,10 +376,10 @@ const ProductGroupShow = () => {
                                         alignItems: "center",
                                     }}
                                 >
-                                    {product_group?.permissions.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
+                                    {product_group?.permissions?.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
                                         <ProductRuleCreate product={product_group} />
                                     )}
-                                    {product_group?.permissions.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
+                                    {product_group?.permissions?.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
                                         <ProductRuleApply product={product_group} />
                                     )}
                                 </Stack>
@@ -389,7 +389,7 @@ const ProductGroupShow = () => {
                                 <Typography variant="h6" sx={{ marginBottom: 1 }}>
                                     User members
                                 </Typography>
-                                {product_group?.permissions.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
+                                {product_group?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
                                     <ProductMemberAdd id={product_group.id} />
                                 )}
                                 <ProductMemberEmbeddedList product={product_group} />
@@ -398,13 +398,13 @@ const ProductGroupShow = () => {
                                 <Typography variant="h6" sx={{ marginBottom: 1 }}>
                                     Authorization group members
                                 </Typography>
-                                {product_group?.permissions.includes(
+                                {product_group?.permissions?.includes(
                                     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE
                                 ) && <ProductAuthorizationGroupMemberAdd id={product_group.id} />}
                                 <ProductAuthorizationGroupMemberEmbeddedList product={product_group} />
                             </Tab>
                             <Tab label="API Token" path="api_token" icon={<TokenIcon />}>
-                                {product_group?.permissions.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
+                                {product_group?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
                                     <ApiTokenCreate type="product" product={product_group} />
                                 )}
                                 <ApiTokenEmbeddedList type="product" product={product_group} />

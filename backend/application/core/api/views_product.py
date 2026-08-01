@@ -60,6 +60,7 @@ from application.core.api.serializers_product import (
     BranchSerializer,
     ProductApiTokenSerializer,
     ProductAuthorizationGroupMemberSerializer,
+    ProductGroupListSerializer,
     ProductGroupSerializer,
     ProductListSerializer,
     ProductMemberSerializer,
@@ -165,6 +166,12 @@ class ProductGroupViewSet(ProductDeletionActionsMixin, ModelViewSet):
     queryset = Product.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["name"]
+
+    def get_serializer_class(self) -> type[BaseSerializer[Any]]:
+        if self.action == "list":
+            return ProductGroupListSerializer
+
+        return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet[Product]:
         settings = Settings.load()

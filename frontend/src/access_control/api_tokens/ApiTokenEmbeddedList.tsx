@@ -58,7 +58,7 @@ const ApiTokenEmbeddedList = ({ type, product, user }: ApiTokenEmbeddedListProps
                             render={(api_token) => (
                                 <Fragment>
                                     {((type === "product" &&
-                                        product?.permissions.includes(PERMISSION_PRODUCT_API_TOKEN_REVOKE)) ||
+                                        product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_REVOKE)) ||
                                         (type === "user" && api_token.username === username)) && (
                                         <ApiTokenRevoke
                                             type={type}

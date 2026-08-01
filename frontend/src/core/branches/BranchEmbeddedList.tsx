@@ -108,12 +108,12 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                 <WithRecord
                                     render={(branch) => (
                                         <Stack direction="row" spacing={4}>
-                                            {product?.permissions.includes(PERMISSION_BRANCH_EDIT) && (
+                                            {product?.permissions?.includes(PERMISSION_BRANCH_EDIT) && (
                                                 <BranchEdit product={product} />
                                             )}
-                                            {product?.permissions.includes(PERMISSION_PRODUCT_EDIT) &&
+                                            {product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) &&
                                                 !branch.is_default_branch && <DefaultBranch branch={branch} />}
-                                            {product?.permissions.includes(PERMISSION_BRANCH_DELETE) &&
+                                            {product?.permissions?.includes(PERMISSION_BRANCH_DELETE) &&
                                                 !branch.is_default_branch && <BranchDelete branch={branch} />}
                                         </Stack>
                                     )}
