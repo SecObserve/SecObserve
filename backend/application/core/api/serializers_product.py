@@ -285,8 +285,6 @@ class ProductGroupListSerializer(ProductCoreSerializer):
             "security_gate_threshold_none",
             "security_gate_threshold_unknown",
             "assessments_need_approval",
-            "assessment_approvers",
-            "assessment_approver_authorization_groups",
             "product_rules_need_approval",
             "risk_acceptance_expiry_active",
             "risk_acceptance_expiry_days",
@@ -313,7 +311,11 @@ class ProductGroupSerializer(ProductGroupListSerializer):
 
     class Meta:
         model = Product
-        fields = ProductGroupListSerializer.Meta.fields + ["permissions"]
+        fields = ProductGroupListSerializer.Meta.fields + [
+            "permissions",
+            "assessment_approvers",
+            "assessment_approver_authorization_groups",
+        ]
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
         return get_product_permissions_for_user(obj)
