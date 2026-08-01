@@ -78,7 +78,12 @@ from application.core.models import (
     Service,
 )
 from application.core.queries.branch import get_branches
-from application.core.queries.product import get_product_by_id, get_products
+from application.core.queries.product import (
+    get_product_by_id,
+    get_products,
+    populate_product_count_annotations,
+    populate_product_group_product_counts,
+)
 from application.core.queries.product_member import (
     get_product_authorization_group_members,
     get_product_members,
@@ -159,13 +164,72 @@ class ProductDeletionActionsMixin:
         return Response(status=HTTP_204_NO_CONTENT)
 
 
-class ProductGroupViewSet(ProductDeletionActionsMixin, ModelViewSet):
+class ProductCountAnnotationsMixin(ModelViewSet):
+    is_product_group: bool
+
+    def _populate_count_annotations(self, products: list[Product]) -> None:
+        if not products:
+            return
+
+        settings = Settings.load()
+        populate_product_count_annotations(
+            products,
+            is_product_group=self.is_product_group,
+            use_metrics=settings.observation_count_from_metrics,
+            include_license_counts=settings.feature_license_management,
+        )
+        if self.is_product_group:
+            populate_product_group_product_counts(products)
+
+    def list(self, request: Request, *args: Any, **kwargs: Any) -> Response:  # pylint: disable=unused-argument
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            products = list(page)
+            self._populate_count_annotations(products)
+            serializer = self.get_serializer(products, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        products = list(queryset)
+        self._populate_count_annotations(products)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:  # pylint: disable=unused-argument
+        product = self.get_object()
+        self._populate_count_annotations([product])
+        serializer = self.get_serializer(product)
+        return Response(serializer.data)
+
+    def update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        partial = kwargs.pop("partial", False)
+        product = self.get_object()
+        serializer = self.get_serializer(product, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        prefetched_objects_cache = getattr(product, "_prefetched_objects_cache", None)
+        if prefetched_objects_cache:
+            prefetched_objects_cache.clear()
+
+        updated_product = serializer.instance
+        if updated_product:
+            self._populate_count_annotations([updated_product])
+            response_serializer = self.get_serializer(updated_product)
+            return Response(response_serializer.data)
+
+        return Response()
+
+
+class ProductGroupViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, ModelViewSet):
     serializer_class = ProductGroupSerializer
     filterset_class = ProductGroupFilter
     permission_classes = (IsAuthenticated, UserHasProductGroupPermission)
     queryset = Product.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["name"]
+    is_product_group = True
 
     def get_serializer_class(self) -> type[BaseSerializer[Any]]:
         if self.action == "list":
@@ -174,12 +238,7 @@ class ProductGroupViewSet(ProductDeletionActionsMixin, ModelViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self) -> QuerySet[Product]:
-        settings = Settings.load()
-        return get_products(
-            is_product_group=True,
-            with_observation_annotations=not settings.observation_count_from_metrics,
-            with_metrics_annotations=settings.observation_count_from_metrics,
-        )
+        return get_products(is_product_group=True)
 
 
 class ProductGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
@@ -194,22 +253,18 @@ class ProductGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         return get_products(is_product_group=True)
 
 
-class ProductViewSet(ProductDeletionActionsMixin, ModelViewSet):
+class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, ModelViewSet):
     serializer_class = ProductSerializer
     filterset_class = ProductFilter
     permission_classes = (IsAuthenticated, UserHasProductPermission)
     queryset = Product.objects.none()
     filter_backends = [SearchFilter, DjangoFilterBackend]
     search_fields = ["name"]
+    is_product_group = False
 
     def get_queryset(self) -> QuerySet[Product]:
-        settings = Settings.load()
         return (
-            get_products(
-                is_product_group=False,
-                with_observation_annotations=not settings.observation_count_from_metrics,
-                with_metrics_annotations=settings.observation_count_from_metrics,
-            )
+            get_products(is_product_group=False)
             .select_related("product_group")
             .select_related("product_group__license_policy")
             .select_related("repository_default_branch")
