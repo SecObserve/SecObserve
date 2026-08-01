@@ -164,7 +164,7 @@ class ProductDeletionActionsMixin:
         return Response(status=HTTP_204_NO_CONTENT)
 
 
-class ProductCountAnnotationsMixin:
+class ProductCountAnnotationsMixin(ModelViewSet):
     is_product_group: bool
 
     def _populate_count_annotations(self, products: list[Product]) -> None:
@@ -214,9 +214,12 @@ class ProductCountAnnotationsMixin:
             prefetched_objects_cache.clear()
 
         updated_product = serializer.instance
-        self._populate_count_annotations([updated_product])
-        response_serializer = self.get_serializer(updated_product)
-        return Response(response_serializer.data)
+        if updated_product:
+            self._populate_count_annotations([updated_product])
+            response_serializer = self.get_serializer(updated_product)
+            return Response(response_serializer.data)
+
+        return Response()
 
 
 class ProductGroupViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, ModelViewSet):
