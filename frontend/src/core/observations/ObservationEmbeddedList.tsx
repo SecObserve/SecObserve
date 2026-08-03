@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     AutocompleteArrayInput,
     BooleanField,
@@ -153,11 +153,16 @@ const BulkActionButtons = (product: any) => (
     </Stack>
 );
 
+// The list must not be rendered before the product change has been processed:
+// useListController writes the list params from the store into the URL when it is mounted,
+// which would overwrite the URL of the navigate call below.
 const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) => {
     setListIdentifier(IDENTIFIER_OBSERVATION_EMBEDDED_LIST);
 
     const location = useLocation();
     const navigate = useNavigate();
+    const [initializedProductId, setInitializedProductId] = useState<Identifier | null>(null);
+
     function get_observations_url(branch_id: Identifier): string {
         return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
     }
@@ -173,8 +178,17 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
                 navigate(get_observations_url(product.repository_default_branch), { replace: true });
             }
         }
+        setInitializedProductId(product.id);
     }, [location.search, navigate, product.id, product.repository_default_branch]);
 
+    if (initializedProductId !== product.id) {
+        return <div>Loading...</div>;
+    }
+
+    return <ObservationsListContent product={product} />;
+};
+
+const ObservationsListContent = ({ product }: ObservationsEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
         perPage: getSettingRowsPerPage(),
