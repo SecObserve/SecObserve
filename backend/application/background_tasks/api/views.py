@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from huey.contrib.djhuey import HUEY as huey
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
@@ -7,8 +8,6 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
-
-from huey.contrib.djhuey import HUEY as huey
 
 from application.background_tasks.api.filters import PeriodicTaskFilter
 from application.background_tasks.api.serializers import (
