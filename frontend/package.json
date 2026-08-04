@@ -15,7 +15,7 @@
         "@mui/icons-material": "9.2.0",
         "@mui/material": "9.2.0",
         "@textea/json-viewer": "4.0.1",
-        "axios": "1.18.1",
+        "axios": "1.19.0",
         "chart.js": "4.5.1",
         "cm6-theme-basic-light": "0.2.0",
         "cm6-theme-basic-dark": "0.2.0",
