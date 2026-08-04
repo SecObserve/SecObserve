@@ -117,6 +117,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular_sidecar",
     "django_filters",
     "huey.contrib.djhuey",
+    "huey.contrib.djhuey.stats",
 ]
 
 LOCAL_APPS = [

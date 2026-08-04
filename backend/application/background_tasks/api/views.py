@@ -8,13 +8,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
+from huey.contrib.djhuey import HUEY as huey
+
 from application.background_tasks.api.filters import PeriodicTaskFilter
 from application.background_tasks.api.serializers import (
     BackgroundTaskStatisticsSerializer,
     PeriodicTaskSerializer,
 )
 from application.background_tasks.models import Periodic_Task
-from application.background_tasks.services.task_base import enable_statistics
 from application.commons.api.permissions import UserHasSuperuserPermission
 
 
@@ -33,7 +34,7 @@ class BackgroundTaskView(APIView):
 
     @action(detail=False, methods=["get"], url_name="background_task_statistics")
     def get(self, request: Request) -> Response:
-        stats = enable_statistics()
+        stats = huey._stats
 
         content = {
             "registered": stats.task_breakdown(),
