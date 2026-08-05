@@ -33,7 +33,9 @@ class BackgroundTaskView(APIView):
 
     @action(detail=False, methods=["get"], url_name="background_task_statistics")
     def get(self, request: Request) -> Response:
-        stats = huey._stats
+        stats = getattr(huey, "_stats", None)
+        if stats is None:
+            return Response({"detail": "Huey statistics are not enabled."}, status=503)
 
         content = {
             "registered": stats.task_breakdown(),
