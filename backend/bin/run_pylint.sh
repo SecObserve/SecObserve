@@ -27,7 +27,7 @@ export OIDC_FULL_NAME=dummy
 export OIDC_EMAIL=dummy
 export OIDC_GROUPS=dummy
 # --- Huey ---
-export HUEY_FILENAME=./huey.db
+export HUEY_IMMEDIATE=true
 
 if [ -z "$GITHUB_WORKSPACE" ]; then 
     pylint application
