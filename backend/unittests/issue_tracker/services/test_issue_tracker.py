@@ -54,7 +54,8 @@ class TestIssueTracker(BaseTestCase):
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     def test_push_observation_to_issue_tracker_not_active(self, mock):
         observation = Observation.objects.get(pk=1)
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
         mock.assert_not_called()
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
@@ -63,7 +64,8 @@ class TestIssueTracker(BaseTestCase):
         observation.product.issue_tracker_active = True
         not_default_branch = Branch.objects.get(pk=2)
         observation.branch = not_default_branch
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
         mock.assert_not_called()
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
@@ -75,7 +77,8 @@ class TestIssueTracker(BaseTestCase):
         observation.product.issue_tracker_active = True
         observation.current_status = Status.STATUS_OPEN
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         expected_calls = [call(observation.product), call().create_issue(observation)]
         mock.assert_has_calls(expected_calls, any_order=False)
@@ -92,7 +95,8 @@ class TestIssueTracker(BaseTestCase):
         observation.current_status = Status.STATUS_OPEN
         observation.issue_tracker_issue_id = "123"
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         observation_mock.assert_not_called()
         expected_calls = [
@@ -111,7 +115,8 @@ class TestIssueTracker(BaseTestCase):
         observation.product.issue_tracker_active = True
         observation.current_status = Status.STATUS_NOT_AFFECTED
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         expected_calls = [call(observation.product)]
         factory_mock.assert_has_calls(expected_calls, any_order=False)
@@ -128,7 +133,8 @@ class TestIssueTracker(BaseTestCase):
         observation.current_status = Status.STATUS_FALSE_POSITIVE
         observation.issue_tracker_issue_id = "123"
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         expected_calls = [
             call(observation.product),
@@ -146,7 +152,8 @@ class TestIssueTracker(BaseTestCase):
 
         observation = Observation.objects.get(pk=1)
         observation.product.issue_tracker_active = True
-        push_observation_to_issue_tracker(observation, self.user_internal)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, self.user_internal)
 
         exception_mock.assert_called_with(exception, self.user_internal)
 
@@ -166,7 +173,8 @@ class TestIssueTracker(BaseTestCase):
         observation.numerical_severity = Severity.NUMERICAL_SEVERITIES.get(observation.current_severity, 99)
         observation.issue_tracker_issue_id = "123"
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         self.assertEqual(observation_mock.call_count, 2)
         expected_calls = [
@@ -190,7 +198,8 @@ class TestIssueTracker(BaseTestCase):
         observation.numerical_severity = Severity.NUMERICAL_SEVERITIES.get(observation.current_severity, 99)
         observation.issue_tracker_issue_id = "123"
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         observation_mock.assert_not_called()
         expected_calls = [
@@ -214,7 +223,8 @@ class TestIssueTracker(BaseTestCase):
         observation.current_severity = Severity.SEVERITY_MEDIUM
         observation.numerical_severity = Severity.NUMERICAL_SEVERITIES.get(observation.current_severity, 99)
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         observation_mock.assert_not_called()
         expected_calls = [
@@ -238,7 +248,8 @@ class TestIssueTracker(BaseTestCase):
         observation.numerical_severity = Severity.NUMERICAL_SEVERITIES.get(observation.current_severity, 99)
         observation.issue_tracker_issue_id = "123"
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         observation_mock.assert_called_once()
         expected_calls = [
@@ -265,7 +276,8 @@ class TestIssueTracker(BaseTestCase):
         observation.issue_tracker_issue_id = "123"
         observation.issue_tracker_issue_closed = True
 
-        push_observation_to_issue_tracker(observation, None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
 
         observation_mock.assert_not_called()
         expected_calls = [
@@ -279,20 +291,23 @@ class TestIssueTracker(BaseTestCase):
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     def test_push_deleted_observation_not_active_no_id(self, mock):
         product = Product.objects.get(pk=1)
-        push_deleted_observation_to_issue_tracker(product, "", None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_deleted_observation_to_issue_tracker(product, "", None)
         mock.assert_not_called()
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     def test_push_deleted_observation_active_no_id(self, mock):
         product = Product.objects.get(pk=1)
         product.issue_tracker_active = True
-        push_deleted_observation_to_issue_tracker(product, "", None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_deleted_observation_to_issue_tracker(product, "", None)
         mock.assert_not_called()
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     def test_push_deleted_observation_not_active_with_id(self, mock):
         product = Product.objects.get(pk=1)
-        push_deleted_observation_to_issue_tracker(product, "123", None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_deleted_observation_to_issue_tracker(product, "123", None)
         mock.assert_not_called()
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
@@ -300,7 +315,8 @@ class TestIssueTracker(BaseTestCase):
         mock.return_value.get_issue.return_value = None
         product = Product.objects.get(pk=1)
         product.issue_tracker_active = True
-        push_deleted_observation_to_issue_tracker(product, "123", None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_deleted_observation_to_issue_tracker(product, "123", None)
         expected_calls = [call(product), call().get_issue(product, "123")]
         mock.assert_has_calls(expected_calls, any_order=False)
 
@@ -310,7 +326,8 @@ class TestIssueTracker(BaseTestCase):
         mock.return_value.get_issue.return_value = issue
         product = Product.objects.get(pk=1)
         product.issue_tracker_active = True
-        push_deleted_observation_to_issue_tracker(product, "123", None)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_deleted_observation_to_issue_tracker(product, "123", None)
         expected_calls = [
             call(product),
             call().get_issue(product, "123"),
@@ -326,7 +343,8 @@ class TestIssueTracker(BaseTestCase):
 
         product = Product.objects.get(pk=1)
         product.issue_tracker_active = True
-        push_deleted_observation_to_issue_tracker(product, "123", self.user_internal)
+        with self.captureOnCommitCallbacks(execute=True):
+            push_deleted_observation_to_issue_tracker(product, "123", self.user_internal)
 
         exception_mock.assert_called_with(exception, self.user_internal)
 

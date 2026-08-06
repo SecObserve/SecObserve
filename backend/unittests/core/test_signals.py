@@ -148,7 +148,8 @@ class TestCoreSignals(TestCase):
         mock_product_model.objects.filter.return_value = [mock_product]
 
         # Call the task
-        settings_post_save_task()
+        with self.captureOnCommitCallbacks(execute=True):
+            settings_post_save_task()
 
         # Verify that logger was called
         mock_logger.info.assert_has_calls(
