@@ -1,6 +1,6 @@
 from typing import Optional
 
-from huey.contrib.djhuey import db_task, task
+from huey.contrib.djhuey import on_commit_task
 
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
@@ -32,7 +32,7 @@ def push_observation_to_issue_tracker(observation: Observation, user: Optional[U
         _push_observation_to_issue_tracker_background(observation, user)
 
 
-@db_task()
+@on_commit_task()
 def _push_observation_to_issue_tracker_background(observation: Observation, user: User) -> None:
     try:
         issue_tracker = issue_tracker_factory(observation.product)
@@ -77,7 +77,7 @@ def push_deleted_observation_to_issue_tracker(product: Product, issue_id: Option
         _push_deleted_observation_to_issue_tracker_background(product, issue_id, user)
 
 
-@task()
+@on_commit_task()
 def _push_deleted_observation_to_issue_tracker_background(
     product: Product, issue_id: str, user: Optional[User]
 ) -> None:

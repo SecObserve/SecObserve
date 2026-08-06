@@ -3,7 +3,7 @@ from typing import Any
 
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from huey.contrib.djhuey import db_task, lock_task
+from huey.contrib.djhuey import lock_task, on_commit_task
 
 from application.commons.models import Settings
 from application.epss.models import Exploit_Information
@@ -23,7 +23,7 @@ def settings_post_save(  # pylint: disable=unused-argument
     settings_post_save_task(instance, created)
 
 
-@db_task()
+@on_commit_task()
 @lock_task("epss_settings_post_save_task_lock")
 def settings_post_save_task(settings: Settings, created: bool) -> None:
 
