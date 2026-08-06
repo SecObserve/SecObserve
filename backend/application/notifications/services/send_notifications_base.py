@@ -8,7 +8,7 @@ import environ
 import requests
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from huey.contrib.djhuey import db_task, task
+from huey.contrib.djhuey import on_commit_task
 
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
@@ -16,7 +16,7 @@ from application.commons.services.log_message import format_log_message
 logger = logging.getLogger("secobserve.notifications")
 
 
-@db_task()
+@on_commit_task()
 def send_email_notification(notification_email_to: str, subject: str, template: str, **kwargs: Any) -> None:
     settings = Settings.load()
     notification_message = _create_notification_message(template, **kwargs)
@@ -48,7 +48,7 @@ def is_msteams_v2(webhook: str) -> bool:
         return True
 
 
-@task()
+@on_commit_task()
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return
@@ -74,7 +74,7 @@ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> Non
             )
 
 
-@task()
+@on_commit_task()
 def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return

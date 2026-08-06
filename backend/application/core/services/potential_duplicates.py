@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.db.models.query import QuerySet
-from huey.contrib.djhuey import db_task
+from huey.contrib.djhuey import on_commit_task
 
 from application.core.models import (
     Branch,
@@ -14,7 +14,7 @@ from application.core.types import Status
 from application.notifications.services.tasks import handle_task_exception
 
 
-@db_task()
+@on_commit_task()
 def find_potential_duplicates(product: Product, branch: Optional[Branch], service: Optional[Service]) -> None:
     try:
         observations = Observation.objects.filter(

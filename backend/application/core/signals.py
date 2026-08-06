@@ -4,7 +4,7 @@ from typing import Any
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
-from huey.contrib.djhuey import db_task, lock_task
+from huey.contrib.djhuey import lock_task, on_commit_task
 
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
@@ -101,7 +101,7 @@ def settings_post_save(  # pylint: disable=unused-argument
         settings_post_save_task()
 
 
-@db_task()
+@on_commit_task()
 @lock_task("product_settings_post_save_task_lock")
 def settings_post_save_task() -> None:
 
