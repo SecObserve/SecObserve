@@ -1939,21 +1939,21 @@ re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
 name = "peewee"
-version = "4.2.6"
+version = "4.3.0"
 description = "a little orm"
 optional = false
-python-versions = "*"
+python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "peewee-4.2.6-py3-none-any.whl", hash = "sha256:b54c0f6e09c987465f8268bb2b4c1cba2e1b2788fcc0974c8e2233af1fd5af8f"},
-    {file = "peewee-4.2.6.tar.gz", hash = "sha256:f40655c64a62eaa447af228e4b84a5e80d3c812d2de34c7b9c621a3ef0c6555c"},
+    {file = "peewee-4.3.0-py3-none-any.whl", hash = "sha256:62a43d5934e7986747285124059c5ad8908cc70e538472aadae5cb5e9f10006c"},
+    {file = "peewee-4.3.0.tar.gz", hash = "sha256:f2e6686e6fc61d236fd12f370bfd42955b7b42bbd9954f207d02434a0328c3de"},
 ]
 
 [package.extras]
 aiomysql = ["aiomysql", "greenlet"]
 aiosqlite = ["aiosqlite", "greenlet"]
 asyncpg = ["asyncpg", "greenlet"]
-cysqlite = ["cysqlite"]
+cysqlite = ["cysqlite (>=0.3.5)"]
 mysql = ["pymysql"]
 postgres = ["psycopg2-binary"]
 psycopg3 = ["psycopg[binary]"]
@@ -3397,4 +3397,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "30e14c97fd375e117d623d2b1d5857d5178f3d770c893462165bbc7f9f38309d"
+content-hash = "129ebd57fe7db8d8df9d007ae7f9638d34a53bc9c6ee0d3a0b233f9069deed15"
