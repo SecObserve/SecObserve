@@ -291,6 +291,11 @@ class Rule_Engine:
     def _check_rule_rego(  # pylint: disable=too-many-branches
         self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
     ) -> bool:
+        if (rule.parser and observation.parser != rule.parser) or (
+            rule.scanner_prefix and not observation.scanner.lower().startswith(rule.scanner_prefix.lower())
+        ):
+            return False
+
         jsonpickle_backend = JSONBackend()
         jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
         jsonpickle_backend.set_preferred_backend("simplejson")
