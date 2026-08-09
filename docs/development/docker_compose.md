@@ -4,16 +4,16 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 
 ## Development
 
+* [`docker-compose-dev.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev.yml)
+    - Starts the PostgreSQL database, as well as SecObserve's backend and frontend
+    - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
+* [`docker-compose-dev-mysql.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-mysql.yml)
+    - Starts the MySQL database, as well as SecObserve's backend and frontend
+    - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
 * [`docker-compose-dev-keycloak.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-keycloak.yml)
     - Starts the PostgreSQL database, the SecObserve backend, Keycloak and Mailhog
     - The frontend is only started, when the parameter `--profile frontend` is given
     - A predefined realm calles `secobserve` is imported on start-up. There is an administrator configured (username: `admin`, password: `admin`) and a regular user for SecObserve (username: `keycloak_user`, password: `keycloak`).
-* [`docker-compose-dev-mysql.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-mysql.yml)
-    - Starts the MySQL database, as well as SecObserve's backend and frontend
-    - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
-* [`docker-compose-dev.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev.yml)
-    - Starts the PostgreSQL database, as well as SecObserve's backend and frontend
-    - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
 * [`docker-compose-dev-arm.yaml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-arm.yaml)
     - Overrides the development stack for macOS on Apple Silicon
     - Runs the main services on ARM64 and installs frontend dependencies inside the container using a Docker-managed volume
@@ -36,5 +36,5 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 
 See the [installation](../getting_started/installation.md) guide how to use the productive Docker Compose files.
 
-* [`docker-compose-prod-mysql.yml`](https://github.com/SecObserve/SecObserve/blob/main/docker-compose-prod-mysql.yml)
 * [`docker-compose-prod-postgres.yml`](https://github.com/SecObserve/SecObserve/blob/main/docker-compose-prod-postgres.yml)
+* [`docker-compose-prod-mysql.yml`](https://github.com/SecObserve/SecObserve/blob/main/docker-compose-prod-mysql.yml)
