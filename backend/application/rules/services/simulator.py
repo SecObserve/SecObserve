@@ -2,13 +2,13 @@ from copy import copy
 from typing import Tuple
 
 from django.core.paginator import Paginator
+from django.db.models import QuerySet
 
 from application.core.models import Observation
 from application.core.queries.product import get_products
 from application.core.services.observation import normalize_observation_fields
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine
-from application.rules.types import Rule_Type
 
 MAX_OBSERVATIONS = 100
 
@@ -16,30 +16,7 @@ MAX_OBSERVATIONS = 100
 def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
     simulation_results: list[Observation] = []
 
-    if rule.product:
-        if rule.product.is_product_group:
-            products = rule.product.products.all()
-            observations = Observation.objects.filter(product__in=products)
-        else:
-            observations = Observation.objects.filter(product=rule.product)
-    else:
-        observations = Observation.objects.filter(product__in=get_products(), product__apply_general_rules=True)
-
-    if rule.parser:
-        observations = observations.filter(parser=rule.parser)
-    if rule.scanner_prefix:
-        observations = observations.filter(scanner__startswith=rule.scanner_prefix)
-
-    observations = (
-        observations.order_by("product__name", "title")
-        .select_related("product")
-        .select_related("product__product_group")
-        .select_related("branch")
-        .select_related("origin_service")
-        .select_related("parser")
-        .select_related("general_rule")
-        .select_related("product_rule")
-    )
+    observations = _get_observations(rule)
 
     rule_engines: dict[int, Rule_Engine] = {}
 
@@ -79,3 +56,31 @@ def simulate_rule(rule: Rule) -> Tuple[int, list[Observation]]:
         break
 
     return observations.count(), simulation_results
+
+
+def _get_observations(rule: Rule) -> QuerySet:
+    if rule.product:
+        if rule.product.is_product_group:
+            products = rule.product.products.all()
+            observations = Observation.objects.filter(product__in=products)
+        else:
+            observations = Observation.objects.filter(product=rule.product)
+    else:
+        observations = Observation.objects.filter(product__in=get_products(), product__apply_general_rules=True)
+
+    if rule.parser:
+        observations = observations.filter(parser=rule.parser)
+    if rule.scanner_prefix:
+        observations = observations.filter(scanner__startswith=rule.scanner_prefix)
+
+    observations = (
+        observations.order_by("product__name", "title")
+        .select_related("product")
+        .select_related("product__product_group")
+        .select_related("branch")
+        .select_related("origin_service")
+        .select_related("parser")
+        .select_related("general_rule")
+        .select_related("product_rule")
+    )
+    return observations
