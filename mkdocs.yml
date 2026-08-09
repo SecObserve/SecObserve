@@ -104,3 +104,4 @@ nav:
     - REST API: integrations/rest_api.md
   - Development:
     - Docker Compose: development/docker_compose.md
+    - VulnerableCode: development/vulnerablecode.md
