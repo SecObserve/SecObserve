@@ -993,14 +993,14 @@ typing-extensions = "*"
 
 [[package]]
 name = "djangorestframework"
-version = "3.17.1"
+version = "3.17.2"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "djangorestframework-3.17.1-py3-none-any.whl", hash = "sha256:c3c74dd3e83a5a3efc37b3c18d92bd6f86a6791c7b7d4dff62bb068500e76457"},
-    {file = "djangorestframework-3.17.1.tar.gz", hash = "sha256:a6def5f447fe78ff853bff1d47a3c59bf38f5434b031780b351b0c73a62db1a5"},
+    {file = "djangorestframework-3.17.2-py3-none-any.whl", hash = "sha256:cb0546a7415d5b46c04e0f4fe0a54b2109f4fdd5e83ca773c8c6183a6493d042"},
+    {file = "djangorestframework-3.17.2.tar.gz", hash = "sha256:89ed713b6dc83e1539f214b7d10808ae19bb8511004beba886225da6d5c9dafa"},
 ]
 
 [package.dependencies]
@@ -3397,4 +3397,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "cd6d232d0a78867096ce613c5e8c3678af3ea4201ece79a3b048b88c0ae810fe"
+content-hash = "948378da16f9a6e44e8bced5912c55ff46ecc580e9003549c048266ea708d5ab"
