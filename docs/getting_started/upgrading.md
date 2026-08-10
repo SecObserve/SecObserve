@@ -10,6 +10,14 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+
+## Release 1.57.0
+
+**Noteable changes**
+
+* There is an architectural change. Background tasks are not queued in a SQLite database anymore, but in the same database as the other SecObserve data.
+
+
 ## Release 1.49.0
 
 **Security notice**
