@@ -25,7 +25,8 @@ class TestPushNotifications(BaseTestCase):
     def test_send_email_notification_empty_message(self, mock_send_email, mock_create_message):
         mock_create_message.return_value = None
 
-        send_email_notification("test@example.com", "subject", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_email_notification("test@example.com", "subject", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_send_email.assert_not_called()
@@ -55,7 +56,8 @@ class TestPushNotifications(BaseTestCase):
                 "EMAIL_HOST": "mail.example.com",
             },
         ):
-            send_email_notification("test@example.com", "subject", "test_template")
+            with self.captureOnCommitCallbacks(execute=True):
+                send_email_notification("test@example.com", "subject", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_send_email.assert_called_with(
@@ -87,7 +89,8 @@ class TestPushNotifications(BaseTestCase):
         mock_settings_load.return_value = settings
         mock_create_message.return_value = "test_message"
 
-        send_email_notification("test@example.com", "subject", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_email_notification("test@example.com", "subject", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_send_email.assert_called_with(
@@ -108,7 +111,8 @@ class TestPushNotifications(BaseTestCase):
     def test_send_msteams_notification_internal_host_blocked(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("127.0.0.1", 443))]
 
-        send_msteams_notification("https://localhost/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://localhost/webhook", "test_template")
 
         mock_create_message.assert_not_called()
         mock_request.assert_not_called()
@@ -120,7 +124,8 @@ class TestPushNotifications(BaseTestCase):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = None
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_not_called()
@@ -137,7 +142,8 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.return_value = "test_message"
         mock_request.side_effect = Exception("test_exception")
 
-        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -165,7 +171,8 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 400
         mock_request.return_value = response
 
-        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -193,7 +200,8 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 200
         mock_request.return_value = response
 
-        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -219,7 +227,8 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.return_value = "test_message"
         mock_request.side_effect = Exception("test_exception")
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -247,7 +256,8 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 200
         mock_request.return_value = response
 
-        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -270,7 +280,8 @@ class TestPushNotifications(BaseTestCase):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = None
 
-        send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_not_called()
@@ -287,7 +298,8 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.return_value = "test_message"
         mock_request.side_effect = Exception("test_exception")
 
-        send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -314,7 +326,8 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 400
         mock_request.return_value = response
 
-        send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -341,7 +354,8 @@ class TestPushNotifications(BaseTestCase):
         response.status_code = 200
         mock_request.return_value = response
 
-        send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        with self.captureOnCommitCallbacks(execute=True):
+            send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(

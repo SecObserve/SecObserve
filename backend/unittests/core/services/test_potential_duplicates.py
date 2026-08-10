@@ -93,7 +93,8 @@ class TestSetPotentialDuplicate(BaseTestCase):
                 suppress_licenses=False,
                 sbom=False,
             )
-            file_upload_observations(file_upload_parameters)
+            with self.captureOnCommitCallbacks(execute=True):
+                file_upload_observations(file_upload_parameters)
 
             observations = Observation.objects.filter(product=product)
             self.assertEqual(4, len(observations))

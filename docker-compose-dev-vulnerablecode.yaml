@@ -1,0 +1,84 @@
+# Docker Compose override for development of VulnerableCode integration.
+# Usage: docker compose -f docker-compose-dev.yml -f docker-compose-dev-vulnerablecode.yaml up --build
+
+services:
+  redis:
+    image: redis:8.10.0-alpine
+    volumes:
+      - dev_vulnerablecode_redis:/data
+
+  vulnerablecode:
+    image: vulnerablecode:local
+    command: /bin/sh -c "
+        ./manage.py migrate &&
+        ./manage.py collectstatic --no-input --verbosity 0 --clear &&
+        gunicorn vulnerablecode.wsgi:application -u nobody -g nogroup --bind :8000 --timeout 600 --workers 8"
+    env_file:
+      - docker/vulnerablecode/docker.env
+    expose:
+      - 8000
+    volumes:
+      - dev_vulnerablecode_etc:/etc/vulnerablecode/
+      - dev_vulnerablecode_static:/var/vulnerablecode/static/
+    depends_on:
+      - postgres
+
+  nginx:
+    image: nginx
+    ports:
+      - 4000:80
+    env_file:
+      - docker/vulnerablecode/docker.env
+    volumes:
+      - ./docker/vulnerablecode/nginx/conf.d/:/etc/nginx/conf.d/
+      - dev_vulnerablecode_static:/var/vulnerablecode/static/
+      - /var/www/html:/var/www/html
+    depends_on:
+      - vulnerablecode
+
+  vulnerablecode_scheduler:
+    image: vulnerablecode:local
+    command: wait-for-it web:8000 -- python ./manage.py run_scheduler
+    env_file:
+      - docker/vulnerablecode/docker.env
+    volumes:
+      - dev_vulnerablecode_etc:/etc/vulnerablecode/
+    depends_on:
+      - redis
+      - postgres
+      - vulnerablecode
+
+  vulnerablecode_rqworker:
+    image: vulnerablecode:local
+    command: wait-for-it web:8000 -- python ./manage.py rqworker default
+    env_file:
+      - docker/vulnerablecode/docker.env
+    volumes:
+      - dev_vulnerablecode_etc:/etc/vulnerablecode/
+    depends_on:
+      - redis
+      - postgres
+      - vulnerablecode
+
+  vulnerablecode_rqworker_high:
+    image: vulnerablecode:local
+    command: wait-for-it web:8000 -- python ./manage.py rqworker high
+    env_file:
+      - docker/vulnerablecode/docker.env
+    volumes:
+      - dev_vulnerablecode_etc:/etc/vulnerablecode/
+    depends_on:
+      - redis
+      - postgres
+      - vulnerablecode
+
+  backend:
+    depends_on:
+      - postgres
+      - vulnerablecode
+
+volumes:
+  dev_vulnerablecode_etc:
+  dev_vulnerablecode_static:
+  dev_vulnerablecode_redis:
+
