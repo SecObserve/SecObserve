@@ -49,7 +49,8 @@ class UserHasAuthorizationGroupPermission(BasePermission):
 class UserHasAuthorizationGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
-            authorization_group = get_object_or_404(Authorization_Group, pk=request.data.get("authorization_group"))
+            pk = request.data.get("authorization_group") if isinstance(request.data, dict) else None
+            authorization_group = get_object_or_404(Authorization_Group, pk=pk)
             return _has_manage_permission(request, authorization_group)
 
         return True
