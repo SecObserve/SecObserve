@@ -166,14 +166,22 @@ class Rule_Engine:
         self,
         rule: Rule,
         observation: Observation,
-        observation_before: Observation,
+        observation_before: Optional[Observation],
         simulation: Optional[bool] = False,
     ) -> bool:
+        if simulation:
+            if rule.type == Rule_Type.RULE_TYPE_FIELDS:
+                return self._check_rule_fields(rule, observation, observation_before, True)
+            if rule.type == Rule_Type.RULE_TYPE_REGO:
+                return self._check_rule_rego(rule, observation, observation_before, True)
+            return False
+
+        if observation_before is None:
+            raise ValueError("observation_before must not be None")
+
         fields_found = False
         if rule.type == Rule_Type.RULE_TYPE_FIELDS:
             fields_found = self._check_rule_fields(rule, observation, observation_before, simulation)
-            if simulation:
-                return fields_found
 
         # Write observation and observation and push to issue tracker log if status or severity has been changed
         if fields_found and (  # pylint: disable=too-many-boolean-expressions
@@ -200,8 +208,6 @@ class Rule_Engine:
         rego_found = False
         if rule.type == Rule_Type.RULE_TYPE_REGO:
             rego_found = self._check_rule_rego(rule, observation, observation_before, simulation)
-            if simulation:
-                return rego_found
 
         # Write observation and observation and push to issue tracker log if status or severity has been changed
         if rego_found and (  # pylint: disable=too-many-boolean-expressions
@@ -228,7 +234,11 @@ class Rule_Engine:
         return fields_found or rego_found
 
     def _check_rule_fields(
-        self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
+        self,
+        rule: Rule,
+        observation: Observation,
+        observation_before: Optional[Observation],
+        simulation: Optional[bool] = False,
     ) -> bool:
         service_name = observation.origin_service.name if observation.origin_service else ""
         if (  # pylint: disable=too-many-boolean-expressions
@@ -274,7 +284,7 @@ class Rule_Engine:
                 observation.current_vex_remediations = get_current_vex_remediations(observation)
 
             if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-                if observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
+                if observation_before and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
                     observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(observation.product)
             else:
                 observation.risk_acceptance_expiry_date = None
@@ -289,8 +299,17 @@ class Rule_Engine:
         return False
 
     def _check_rule_rego(  # pylint: disable=too-many-branches
-        self, rule: Rule, observation: Observation, observation_before: Observation, simulation: Optional[bool] = False
+        self,
+        rule: Rule,
+        observation: Observation,
+        observation_before: Optional[Observation],
+        simulation: Optional[bool] = False,
     ) -> bool:
+        if (rule.parser and observation.parser != rule.parser) or (
+            rule.scanner_prefix and not observation.scanner.lower().startswith(rule.scanner_prefix.lower())
+        ):
+            return False
+
         jsonpickle_backend = JSONBackend()
         jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
         jsonpickle_backend.set_preferred_backend("simplejson")
@@ -334,7 +353,7 @@ class Rule_Engine:
                 observation.current_status = get_current_status(observation)
 
                 if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-                    if observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
+                    if simulation and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
                         observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(
                             observation.product
                         )

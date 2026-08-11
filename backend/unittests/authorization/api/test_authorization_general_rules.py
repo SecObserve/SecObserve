@@ -84,7 +84,7 @@ class TestAuthorizationGeneralRules(TestAuthorizationBase):
             )
         )
 
-        expected_data = "{'count': 0, 'results': []}"
+        expected_data = "{'results': []}"
         self._test_api(APITest("db_admin", "post", "/api/general_rules/3/simulate/", None, 200, expected_data))
 
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
