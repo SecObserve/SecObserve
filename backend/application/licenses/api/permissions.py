@@ -65,7 +65,7 @@ class UserHasLicenseGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
             pk = request.data.get("license_group") if isinstance(request.data, dict) else None
-            license_group = get_object_or_404(License_Group, pk)
+            license_group = get_object_or_404(License_Group, pk=pk)
             return _has_license_group_manage_permission(request, license_group)
 
         return True
@@ -81,7 +81,7 @@ class UserHasLicenseGroupAuthenticationGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
             pk = request.data.get("license_group") if isinstance(request.data, dict) else None
-            license_group = get_object_or_404(License_Group, pk)
+            license_group = get_object_or_404(License_Group, pk=pk)
 
             authorization_group = request.data.get("authorization_group") if isinstance(request.data, dict) else None
             if not authorization_group:
@@ -130,7 +130,7 @@ class UserHasLicensePolicyItemMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
             pk = request.data.get("license_policy") if isinstance(request.data, dict) else None
-            license_policy = get_object_or_404(License_Policy, pk)
+            license_policy = get_object_or_404(License_Policy, pk=pk)
             return _has_license_policy_manage_permission(request, license_policy)
 
         return True
@@ -146,7 +146,7 @@ class UserHasLicensePolicyAuthorizationGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
             pk = request.data.get("license_policy") if isinstance(request.data, dict) else None
-            license_policy = get_object_or_404(License_Policy, pk)
+            license_policy = get_object_or_404(License_Policy, pk=pk)
 
             authorization_group = request.data.get("authorization_group") if isinstance(request.data, dict) else None
             if not authorization_group:

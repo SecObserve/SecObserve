@@ -18,7 +18,7 @@ def check_post_permission(
         pk = request.data.get(post_foreign_key) if isinstance(request.data, dict) else None
         if pk is None:
             raise ParseError(f"Unable to check for permissions: Attribute '{post_foreign_key}' is required")
-        object_to_check = get_object_or_404(post_model, pk)
+        object_to_check = get_object_or_404(post_model, pk=pk)
         return user_has_permission(object_to_check, post_permission)
 
     return True
