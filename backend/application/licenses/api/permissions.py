@@ -64,7 +64,8 @@ class UserHasLicenseGroupPermission(BasePermission):
 class UserHasLicenseGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
-            license_group = get_object_or_404(License_Group, pk=request.data.get("license_group"))
+            pk = request.data.get("license_group") if isinstance(request.data, dict) else None
+            license_group = get_object_or_404(License_Group, pk)
             return _has_license_group_manage_permission(request, license_group)
 
         return True
@@ -79,9 +80,10 @@ class UserHasLicenseGroupMemberPermission(BasePermission):
 class UserHasLicenseGroupAuthenticationGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
-            license_group = get_object_or_404(License_Group, pk=request.data.get("license_group"))
+            pk = request.data.get("license_group") if isinstance(request.data, dict) else None
+            license_group = get_object_or_404(License_Group, pk)
 
-            authorization_group = request.data.get("authorization_group")
+            authorization_group = request.data.get("authorization_group") if isinstance(request.data, dict) else None
             if not authorization_group:
                 raise ValueError("No Authorization_Group provided")
 
@@ -127,7 +129,8 @@ class UserHasLicensePolicyPermission(BasePermission):
 class UserHasLicensePolicyItemMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
-            license_policy = get_object_or_404(License_Policy, pk=request.data.get("license_policy"))
+            pk = request.data.get("license_policy") if isinstance(request.data, dict) else None
+            license_policy = get_object_or_404(License_Policy, pk)
             return _has_license_policy_manage_permission(request, license_policy)
 
         return True
@@ -142,9 +145,10 @@ class UserHasLicensePolicyItemMemberPermission(BasePermission):
 class UserHasLicensePolicyAuthorizationGroupMemberPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
         if request.method == "POST":
-            license_policy = get_object_or_404(License_Policy, pk=request.data.get("license_policy"))
+            pk = request.data.get("license_policy") if isinstance(request.data, dict) else None
+            license_policy = get_object_or_404(License_Policy, pk)
 
-            authorization_group = request.data.get("authorization_group")
+            authorization_group = request.data.get("authorization_group") if isinstance(request.data, dict) else None
             if not authorization_group:
                 raise ValueError("No Authorization_Group provided")
 
