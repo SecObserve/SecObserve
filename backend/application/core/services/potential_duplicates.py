@@ -1,9 +1,10 @@
 import logging
 from collections import defaultdict
-from collections.abc import Iterable, Iterator
-from itertools import combinations
+from collections.abc import Iterator
+from itertools import batched, combinations
 from typing import NamedTuple, Optional
 
+from django.db.models.query import QuerySet
 from huey.contrib.djhuey import lock_task, on_commit_task
 
 from application.core.models import (
@@ -21,13 +22,19 @@ logger = logging.getLogger("secobserve.core")
 BULK_BATCH_SIZE = 1000
 
 
-class Observation_Data(NamedTuple):
-    pk: int
+class DuplicateCandidate(NamedTuple):
+    """An active observation, reduced to the fields that are needed to match duplicates."""
+
+    id: int
     title: str
     origin_component_name: str
     origin_source_file: str
     origin_source_line_start: Optional[int]
     scanner: str
+
+
+# Type of the potential duplicate per pair of observation ids, lower id first
+DuplicateTypes = dict[tuple[int, int], str]
 
 
 # The lock serializes all recalculations, so that concurrent imports cannot write
@@ -38,166 +45,138 @@ class Observation_Data(NamedTuple):
 @lock_task("find_potential_duplicates_lock")
 def find_potential_duplicates(product: Product, branch: Optional[Branch], service: Optional[Service]) -> None:
     try:
-        _find_potential_duplicates(product, branch, service)
+        observations = Observation.objects.filter(product=product, branch=branch, origin_service=service)
+
+        candidates = _get_duplicate_candidates(observations)
+        duplicate_types = _match_duplicate_candidates(candidates)
+
+        _write_potential_duplicates(observations, duplicate_types)
+        _set_has_potential_duplicates(observations, product, duplicate_types)
+
+        logger.debug(
+            "Potential duplicates for product %s / branch %s / service %s: %s candidates, %s pairs",
+            product.pk,
+            branch.pk if branch else None,
+            service.pk if service else None,
+            len(candidates),
+            len(duplicate_types),
+        )
     except Exception as e:
         handle_task_exception(e)
 
 
-def _find_potential_duplicates(product: Product, branch: Optional[Branch], service: Optional[Service]) -> None:
-    observations = _get_active_observations(product, branch, service)
-    potential_duplicates = _get_potential_duplicates(observations)
-
-    _write_potential_duplicates(product, branch, service, potential_duplicates)
-    _set_has_potential_duplicates(
-        product, branch, service, {observation_id for observation_id, _ in potential_duplicates}
+def _get_duplicate_candidates(observations: QuerySet[Observation]) -> list[DuplicateCandidate]:
+    # Only active observations can be duplicates of each other, and only the fields that
+    # are needed for matching are read, to keep this cheap for products with many
+    # observations.
+    rows = observations.filter(current_status__in=Status.STATUS_ACTIVE).values(
+        "id",
+        "title",
+        "origin_component_name",
+        "origin_source_file",
+        "origin_source_line_start",
+        "scanner",
     )
-
-    logger.info(
-        "Potential duplicates for product %s / branch %s / service %s: "
-        "%s active observations, %s potential duplicates",
-        product.pk,
-        branch.pk if branch else None,
-        service.pk if service else None,
-        len(observations),
-        len(potential_duplicates),
-    )
+    return [DuplicateCandidate(**row) for row in rows.iterator(chunk_size=BULK_BATCH_SIZE)]
 
 
-def _get_active_observations(
-    product: Product, branch: Optional[Branch], service: Optional[Service]
-) -> list[Observation_Data]:
-    # Only active observations can be potential duplicates of each other, so the
-    # database can filter out everything else. Only the fields needed for matching
-    # are read to avoid instantiating the full observations.
-    return [
-        Observation_Data(*row)
-        for row in Observation.objects.filter(
-            product=product,
-            branch=branch,
-            origin_service=service,
-            current_status__in=Status.STATUS_ACTIVE,
-        )
-        .values_list(
-            "pk",
-            "title",
-            "origin_component_name",
-            "origin_source_file",
-            "origin_source_line_start",
-            "scanner",
-        )
-        .iterator(chunk_size=BULK_BATCH_SIZE)
-    ]
+def _match_duplicate_candidates(candidates: list[DuplicateCandidate]) -> DuplicateTypes:
+    duplicate_types: DuplicateTypes = {}
+
+    for id_pair in _match_by_component(candidates):
+        duplicate_types[id_pair] = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
+
+    # Source is matched last, because its type takes precedence over Component
+    for id_pair in _match_by_source(candidates):
+        duplicate_types[id_pair] = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE
+
+    return duplicate_types
 
 
-def _get_potential_duplicates(observations: list[Observation_Data]) -> dict[tuple[int, int], str]:
-    """Return the type of the potential duplicate per pair of observation ids, both ways.
+def _match_by_component(candidates: list[DuplicateCandidate]) -> Iterator[tuple[int, int]]:
+    """Observations with the same title, if both of them have a component."""
+    candidates_by_title: dict[str, list[DuplicateCandidate]] = defaultdict(list)
+    for candidate in candidates:
+        if candidate.origin_component_name:
+            candidates_by_title[candidate.title].append(candidate)
 
-    Observations are grouped by the attributes they need to have in common, so that only
-    the observations within a group have to be compared with each other.
-    """
-    observations_by_title: dict[str, list[int]] = defaultdict(list)
-    observations_by_source: dict[tuple[str, int], list[tuple[int, str]]] = defaultdict(list)
-
-    for observation in observations:
-        if observation.origin_component_name:
-            observations_by_title[observation.title].append(observation.pk)
-        if observation.origin_source_file and observation.origin_source_line_start is not None:
-            observations_by_source[(observation.origin_source_file, observation.origin_source_line_start)].append(
-                (observation.pk, observation.scanner)
-            )
-
-    potential_duplicates: dict[tuple[int, int], str] = {}
-
-    for observation_ids in observations_by_title.values():
-        for observation_id_1, observation_id_2 in combinations(observation_ids, 2):
-            potential_duplicates[(observation_id_1, observation_id_2)] = (
-                Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
-            )
-            potential_duplicates[(observation_id_2, observation_id_1)] = (
-                Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
-            )
-
-    # Source is checked after component, because it takes precedence
-    for observations_with_scanner in observations_by_source.values():
-        for (observation_id_1, scanner_1), (observation_id_2, scanner_2) in combinations(observations_with_scanner, 2):
-            if scanner_1 != scanner_2:
-                potential_duplicates[(observation_id_1, observation_id_2)] = (
-                    Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE
-                )
-                potential_duplicates[(observation_id_2, observation_id_1)] = (
-                    Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE
-                )
-
-    return potential_duplicates
+    for candidates_with_same_title in candidates_by_title.values():
+        for candidate_1, candidate_2 in combinations(candidates_with_same_title, 2):
+            yield _get_id_pair(candidate_1, candidate_2)
 
 
-def _write_potential_duplicates(
-    product: Product,
-    branch: Optional[Branch],
-    service: Optional[Service],
-    potential_duplicates: dict[tuple[int, int], str],
-) -> None:
-    Potential_Duplicate.objects.filter(
-        observation__product=product,
-        observation__branch=branch,
-        observation__origin_service=service,
-    ).delete()
+def _match_by_source(candidates: list[DuplicateCandidate]) -> Iterator[tuple[int, int]]:
+    """Observations from different scanners for the same line in the same source file."""
+    candidates_by_source: dict[tuple[str, int], list[DuplicateCandidate]] = defaultdict(list)
+    for candidate in candidates:
+        if candidate.origin_source_file and candidate.origin_source_line_start is not None:
+            source = (candidate.origin_source_file, candidate.origin_source_line_start)
+            candidates_by_source[source].append(candidate)
 
-    Potential_Duplicate.objects.bulk_create(
-        [
+    for candidates_with_same_source in candidates_by_source.values():
+        for candidate_1, candidate_2 in combinations(candidates_with_same_source, 2):
+            if candidate_1.scanner != candidate_2.scanner:
+                yield _get_id_pair(candidate_1, candidate_2)
+
+
+def _get_id_pair(candidate_1: DuplicateCandidate, candidate_2: DuplicateCandidate) -> tuple[int, int]:
+    # The lower id always comes first, so that both matching rules describe the same pair
+    # of observations with the same key
+    return (min(candidate_1.id, candidate_2.id), max(candidate_1.id, candidate_2.id))
+
+
+def _write_potential_duplicates(observations: QuerySet[Observation], duplicate_types: DuplicateTypes) -> None:
+    Potential_Duplicate.objects.filter(observation__in=observations).delete()
+
+    potential_duplicates = []
+    for (observation_id_1, observation_id_2), duplicate_type in duplicate_types.items():
+        # Every pair is stored in both directions
+        potential_duplicates.append(
             Potential_Duplicate(
-                observation_id=observation_id,
-                potential_duplicate_observation_id=potential_duplicate_observation_id,
-                type=potential_duplicate_type,
+                observation_id=observation_id_1,
+                potential_duplicate_observation_id=observation_id_2,
+                type=duplicate_type,
             )
-            for (
-                observation_id,
-                potential_duplicate_observation_id,
-            ), potential_duplicate_type in potential_duplicates.items()
-        ],
-        batch_size=BULK_BATCH_SIZE,
-    )
+        )
+        potential_duplicates.append(
+            Potential_Duplicate(
+                observation_id=observation_id_2,
+                potential_duplicate_observation_id=observation_id_1,
+                type=duplicate_type,
+            )
+        )
+
+    Potential_Duplicate.objects.bulk_create(potential_duplicates, batch_size=BULK_BATCH_SIZE)
 
 
 def _set_has_potential_duplicates(
-    product: Product,
-    branch: Optional[Branch],
-    service: Optional[Service],
-    observation_ids_with_duplicates: set[int],
+    observations: QuerySet[Observation], product: Product, duplicate_types: DuplicateTypes
 ) -> None:
-    # Observations that are not active are not in observation_ids_with_duplicates,
-    # but their flag has to be reset as well.
-    observation_ids_with_flag = set(
-        Observation.objects.filter(
-            product=product,
-            branch=branch,
-            origin_service=service,
-            has_potential_duplicates=True,
-        ).values_list("pk", flat=True)
-    )
+    observation_ids_with_duplicates: set[int] = set()
+    for observation_id_1, observation_id_2 in duplicate_types:
+        observation_ids_with_duplicates.add(observation_id_1)
+        observation_ids_with_duplicates.add(observation_id_2)
 
-    for observation_ids in _batches(observation_ids_with_duplicates - observation_ids_with_flag):
-        Observation.objects.filter(pk__in=observation_ids).update(has_potential_duplicates=True)
+    # This also contains observations that are not active anymore, their flag has to be
+    # reset as well.
+    flagged_observation_ids = set(observations.filter(has_potential_duplicates=True).values_list("id", flat=True))
 
-    for observation_ids in _batches(observation_ids_with_flag - observation_ids_with_duplicates):
-        Observation.objects.filter(pk__in=observation_ids).update(has_potential_duplicates=False)
+    _update_has_potential_duplicates(observation_ids_with_duplicates - flagged_observation_ids, True)
+    _update_has_potential_duplicates(flagged_observation_ids - observation_ids_with_duplicates, False)
 
-    # The observations are updated without save(), so the product flag that is
-    # normally set in set_product_flags() has to be set here. Like there, it is only
-    # ever set to True, housekeeping resets it.
+    # The observations are updated without save(), so the product flag that would be set
+    # in set_product_flags() has to be set here. As there, it is only ever set to True,
+    # housekeeping resets it.
     if observation_ids_with_duplicates:
         Product.objects.filter(pk=product.pk, has_potential_duplicates=False).update(has_potential_duplicates=True)
 
 
-def _batches(observation_ids: Iterable[int]) -> Iterator[list[int]]:
-    batch: list[int] = []
-    for observation_id in observation_ids:
-        batch.append(observation_id)
-        if len(batch) == BULK_BATCH_SIZE:
-            yield batch
-            batch = []
-    if batch:
-        yield batch
+def _update_has_potential_duplicates(observation_ids: set[int], has_potential_duplicates: bool) -> None:
+    # Batched to stay below the parameter limits of the databases
+    for observation_ids_batch in batched(observation_ids, BULK_BATCH_SIZE):
+        Observation.objects.filter(id__in=observation_ids_batch).update(
+            has_potential_duplicates=has_potential_duplicates
+        )
 
 
 def set_potential_duplicate_both_ways(observation: Observation) -> None:

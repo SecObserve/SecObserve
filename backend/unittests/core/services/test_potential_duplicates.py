@@ -3,8 +3,8 @@ from unittest.mock import call, patch
 
 from application.core.models import Observation, Potential_Duplicate, Product
 from application.core.services.potential_duplicates import (
-    Observation_Data,
-    _get_potential_duplicates,
+    DuplicateCandidate,
+    _match_duplicate_candidates,
     find_potential_duplicates,
     set_potential_duplicate,
     set_potential_duplicate_both_ways,
@@ -174,8 +174,8 @@ class TestSetPotentialDuplicate(BaseTestCase):
             self.assertEqual(1, Potential_Duplicate.objects.filter(observation=observation).count())
 
 
-class TestGetPotentialDuplicates(BaseTestCase):
-    def _observation_data(self, pk, **kwargs):
+class TestMatchDuplicateCandidates(BaseTestCase):
+    def _candidate(self, id, **kwargs):
         defaults = {
             "title": "",
             "origin_component_name": "",
@@ -184,102 +184,90 @@ class TestGetPotentialDuplicates(BaseTestCase):
             "scanner": "",
         }
         defaults.update(kwargs)
-        return Observation_Data(pk=pk, **defaults)
+        return DuplicateCandidate(id=id, **defaults)
 
-    def test_no_observations(self):
-        self.assertEqual({}, _get_potential_duplicates([]))
+    def test_no_candidates(self):
+        self.assertEqual({}, _match_duplicate_candidates([]))
 
     def test_component(self):
-        observations = [
-            self._observation_data(1, title="CVE-1", origin_component_name="component_1"),
-            self._observation_data(2, title="CVE-1", origin_component_name="component_2"),
-            self._observation_data(3, title="CVE-2", origin_component_name="component_3"),
+        candidates = [
+            self._candidate(1, title="CVE-1", origin_component_name="component_1"),
+            self._candidate(2, title="CVE-1", origin_component_name="component_2"),
+            self._candidate(3, title="CVE-2", origin_component_name="component_3"),
         ]
 
         self.assertEqual(
-            {
-                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
-                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
-            },
-            _get_potential_duplicates(observations),
+            {(1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT},
+            _match_duplicate_candidates(candidates),
         )
 
     def test_component_without_component_name(self):
-        observations = [
-            self._observation_data(1, title="CVE-1", origin_component_name="component_1"),
-            self._observation_data(2, title="CVE-1"),
+        candidates = [
+            self._candidate(1, title="CVE-1", origin_component_name="component_1"),
+            self._candidate(2, title="CVE-1"),
         ]
 
-        self.assertEqual({}, _get_potential_duplicates(observations))
+        self.assertEqual({}, _match_duplicate_candidates(candidates))
 
     def test_component_more_than_two(self):
-        observations = [
-            self._observation_data(1, title="CVE-1", origin_component_name="component_1"),
-            self._observation_data(2, title="CVE-1", origin_component_name="component_2"),
-            self._observation_data(3, title="CVE-1", origin_component_name="component_3"),
+        candidates = [
+            self._candidate(1, title="CVE-1", origin_component_name="component_1"),
+            self._candidate(2, title="CVE-1", origin_component_name="component_2"),
+            self._candidate(3, title="CVE-1", origin_component_name="component_3"),
         ]
 
         self.assertEqual(
             {
                 (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
-                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
                 (1, 3): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
-                (3, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
                 (2, 3): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
-                (3, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
             },
-            _get_potential_duplicates(observations),
+            _match_duplicate_candidates(candidates),
         )
 
     def test_source(self):
-        observations = [
-            self._observation_data(1, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
-            self._observation_data(2, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_2"),
-            self._observation_data(3, origin_source_file="file_1", origin_source_line_start=2, scanner="scanner_2"),
-            self._observation_data(4, origin_source_file="file_2", origin_source_line_start=1, scanner="scanner_2"),
+        candidates = [
+            self._candidate(1, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
+            self._candidate(2, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_2"),
+            self._candidate(3, origin_source_file="file_1", origin_source_line_start=2, scanner="scanner_2"),
+            self._candidate(4, origin_source_file="file_2", origin_source_line_start=1, scanner="scanner_2"),
         ]
 
         self.assertEqual(
-            {
-                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
-                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
-            },
-            _get_potential_duplicates(observations),
+            {(1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE},
+            _match_duplicate_candidates(candidates),
         )
 
     def test_source_same_scanner(self):
-        observations = [
-            self._observation_data(1, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
-            self._observation_data(2, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
+        candidates = [
+            self._candidate(1, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
+            self._candidate(2, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
         ]
 
-        self.assertEqual({}, _get_potential_duplicates(observations))
+        self.assertEqual({}, _match_duplicate_candidates(candidates))
 
     def test_source_without_line_start(self):
-        observations = [
-            self._observation_data(1, origin_source_file="file_1", scanner="scanner_1"),
-            self._observation_data(2, origin_source_file="file_1", scanner="scanner_2"),
+        candidates = [
+            self._candidate(1, origin_source_file="file_1", scanner="scanner_1"),
+            self._candidate(2, origin_source_file="file_1", scanner="scanner_2"),
         ]
 
-        self.assertEqual({}, _get_potential_duplicates(observations))
+        self.assertEqual({}, _match_duplicate_candidates(candidates))
 
     def test_source_line_start_zero(self):
-        observations = [
-            self._observation_data(1, origin_source_file="file_1", origin_source_line_start=0, scanner="scanner_1"),
-            self._observation_data(2, origin_source_file="file_1", origin_source_line_start=0, scanner="scanner_2"),
+        candidates = [
+            self._candidate(1, origin_source_file="file_1", origin_source_line_start=0, scanner="scanner_1"),
+            self._candidate(2, origin_source_file="file_1", origin_source_line_start=0, scanner="scanner_2"),
         ]
 
         self.assertEqual(
-            {
-                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
-                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
-            },
-            _get_potential_duplicates(observations),
+            {(1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE},
+            _match_duplicate_candidates(candidates),
         )
 
     def test_source_takes_precedence_over_component(self):
-        observations = [
-            self._observation_data(
+        candidates = [
+            self._candidate(
                 1,
                 title="CVE-1",
                 origin_component_name="component_1",
@@ -287,7 +275,7 @@ class TestGetPotentialDuplicates(BaseTestCase):
                 origin_source_line_start=1,
                 scanner="scanner_1",
             ),
-            self._observation_data(
+            self._candidate(
                 2,
                 title="CVE-1",
                 origin_component_name="component_2",
@@ -298,9 +286,17 @@ class TestGetPotentialDuplicates(BaseTestCase):
         ]
 
         self.assertEqual(
-            {
-                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
-                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
-            },
-            _get_potential_duplicates(observations),
+            {(1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE},
+            _match_duplicate_candidates(candidates),
+        )
+
+    def test_id_pair_is_ordered_independently_of_the_candidate_order(self):
+        candidates = [
+            self._candidate(2, title="CVE-1", origin_component_name="component_2"),
+            self._candidate(1, title="CVE-1", origin_component_name="component_1"),
+        ]
+
+        self.assertEqual(
+            {(1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT},
+            _match_duplicate_candidates(candidates),
         )
