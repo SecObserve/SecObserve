@@ -3,6 +3,9 @@ from unittest.mock import call, patch
 
 from application.core.models import Observation, Potential_Duplicate, Product
 from application.core.services.potential_duplicates import (
+    Observation_Data,
+    _get_potential_duplicates,
+    find_potential_duplicates,
     set_potential_duplicate,
     set_potential_duplicate_both_ways,
 )
@@ -76,6 +79,8 @@ class TestSetPotentialDuplicate(BaseTestCase):
         command.handle()
 
         product = Product.objects.get(id=1)
+        product.has_potential_duplicates = False
+        product.save()
         Observation.objects.filter(product=product).delete()
 
         with open(path.dirname(__file__) + "/files/duplicates_cdx.json") as testfile:
@@ -105,3 +110,197 @@ class TestSetPotentialDuplicate(BaseTestCase):
                         potential_duplicate.type,
                         Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
                     )
+
+            product.refresh_from_db()
+            self.assertTrue(product.has_potential_duplicates)
+
+    def test_find_potential_duplicates_inactive_observation(self):
+        # Register parsers
+        command = Command()
+        command.handle()
+
+        product = Product.objects.get(id=1)
+        Observation.objects.filter(product=product).delete()
+
+        with open(path.dirname(__file__) + "/files/duplicates_cdx.json") as testfile:
+            file_upload_parameters = FileUploadParameters(
+                product=product,
+                branch=None,
+                file=testfile,
+                service_name="",
+                docker_image_name_tag="",
+                endpoint_url="",
+                kubernetes_cluster="",
+                kubernetes_namespace="",
+                kubernetes_resource_type="",
+                kubernetes_resource_name="",
+                suppress_licenses=False,
+                sbom=False,
+            )
+            with self.captureOnCommitCallbacks(execute=True):
+                file_upload_observations(file_upload_parameters)
+
+        # The file has 2 vulnerabilities for 2 components each, so there are 2 pairs of
+        # observations with the same title.
+        inactive_observation = Observation.objects.filter(product=product).order_by("pk").first()
+        former_duplicate = (
+            Observation.objects.filter(product=product, title=inactive_observation.title)
+            .exclude(pk=inactive_observation.pk)
+            .get()
+        )
+        other_observations = Observation.objects.filter(product=product).exclude(title=inactive_observation.title)
+        self.assertEqual(2, len(other_observations))
+
+        # current_status is derived from the assessment status in normalize_observation_fields()
+        inactive_observation.assessment_status = Status.STATUS_RESOLVED
+        inactive_observation.save()
+        self.assertEqual(Status.STATUS_RESOLVED, inactive_observation.current_status)
+
+        find_potential_duplicates.call_local(product, None, None)
+
+        # The inactive observation and its former duplicate are not potential duplicates anymore
+        for observation in (inactive_observation, former_duplicate):
+            observation.refresh_from_db()
+            self.assertFalse(observation.has_potential_duplicates)
+            self.assertEqual(0, Potential_Duplicate.objects.filter(observation=observation).count())
+            self.assertEqual(
+                0,
+                Potential_Duplicate.objects.filter(potential_duplicate_observation=observation).count(),
+            )
+
+        # The other pair is unchanged
+        for observation in other_observations:
+            self.assertTrue(observation.has_potential_duplicates)
+            self.assertEqual(1, Potential_Duplicate.objects.filter(observation=observation).count())
+
+
+class TestGetPotentialDuplicates(BaseTestCase):
+    def _observation_data(self, pk, **kwargs):
+        defaults = {
+            "title": "",
+            "origin_component_name": "",
+            "origin_source_file": "",
+            "origin_source_line_start": None,
+            "scanner": "",
+        }
+        defaults.update(kwargs)
+        return Observation_Data(pk=pk, **defaults)
+
+    def test_no_observations(self):
+        self.assertEqual({}, _get_potential_duplicates([]))
+
+    def test_component(self):
+        observations = [
+            self._observation_data(1, title="CVE-1", origin_component_name="component_1"),
+            self._observation_data(2, title="CVE-1", origin_component_name="component_2"),
+            self._observation_data(3, title="CVE-2", origin_component_name="component_3"),
+        ]
+
+        self.assertEqual(
+            {
+                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+            },
+            _get_potential_duplicates(observations),
+        )
+
+    def test_component_without_component_name(self):
+        observations = [
+            self._observation_data(1, title="CVE-1", origin_component_name="component_1"),
+            self._observation_data(2, title="CVE-1"),
+        ]
+
+        self.assertEqual({}, _get_potential_duplicates(observations))
+
+    def test_component_more_than_two(self):
+        observations = [
+            self._observation_data(1, title="CVE-1", origin_component_name="component_1"),
+            self._observation_data(2, title="CVE-1", origin_component_name="component_2"),
+            self._observation_data(3, title="CVE-1", origin_component_name="component_3"),
+        ]
+
+        self.assertEqual(
+            {
+                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+                (1, 3): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+                (3, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+                (2, 3): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+                (3, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT,
+            },
+            _get_potential_duplicates(observations),
+        )
+
+    def test_source(self):
+        observations = [
+            self._observation_data(1, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
+            self._observation_data(2, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_2"),
+            self._observation_data(3, origin_source_file="file_1", origin_source_line_start=2, scanner="scanner_2"),
+            self._observation_data(4, origin_source_file="file_2", origin_source_line_start=1, scanner="scanner_2"),
+        ]
+
+        self.assertEqual(
+            {
+                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
+                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
+            },
+            _get_potential_duplicates(observations),
+        )
+
+    def test_source_same_scanner(self):
+        observations = [
+            self._observation_data(1, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
+            self._observation_data(2, origin_source_file="file_1", origin_source_line_start=1, scanner="scanner_1"),
+        ]
+
+        self.assertEqual({}, _get_potential_duplicates(observations))
+
+    def test_source_without_line_start(self):
+        observations = [
+            self._observation_data(1, origin_source_file="file_1", scanner="scanner_1"),
+            self._observation_data(2, origin_source_file="file_1", scanner="scanner_2"),
+        ]
+
+        self.assertEqual({}, _get_potential_duplicates(observations))
+
+    def test_source_line_start_zero(self):
+        observations = [
+            self._observation_data(1, origin_source_file="file_1", origin_source_line_start=0, scanner="scanner_1"),
+            self._observation_data(2, origin_source_file="file_1", origin_source_line_start=0, scanner="scanner_2"),
+        ]
+
+        self.assertEqual(
+            {
+                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
+                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
+            },
+            _get_potential_duplicates(observations),
+        )
+
+    def test_source_takes_precedence_over_component(self):
+        observations = [
+            self._observation_data(
+                1,
+                title="CVE-1",
+                origin_component_name="component_1",
+                origin_source_file="file_1",
+                origin_source_line_start=1,
+                scanner="scanner_1",
+            ),
+            self._observation_data(
+                2,
+                title="CVE-1",
+                origin_component_name="component_2",
+                origin_source_file="file_1",
+                origin_source_line_start=1,
+                scanner="scanner_2",
+            ),
+        ]
+
+        self.assertEqual(
+            {
+                (1, 2): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
+                (2, 1): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE,
+            },
+            _get_potential_duplicates(observations),
+        )
