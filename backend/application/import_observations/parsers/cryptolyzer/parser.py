@@ -124,6 +124,8 @@ class CryptoLyzerParser(BaseParser, BaseFileParser):
         return False
 
     def get_observations(self, data: dict, product: Product, branch: Optional[Branch]) -> tuple[list[Observation], str]:
+        data = {key: value for key, value in data.items() if value is not None}
+
         observations = []
 
         observation = self.check_weak_protocols(data)
