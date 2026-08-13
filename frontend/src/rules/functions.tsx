@@ -201,28 +201,6 @@ export const RuleShowComponent = ({ rule }: any) => {
                 </Paper>
             )}
 
-            {rule.rego_module && (
-                <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
-                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                        Rego module
-                    </Typography>
-                    <SyntaxHighlighter
-                        language="rego"
-                        style={getPrismTheme()}
-                        wrapLongLines
-                        customStyle={{ lineHeight: "1.43", fontSize: "0.875rem" }}
-                        codeTagProps={{
-                            style: {
-                                lineHeight: "inherit",
-                                fontSize: "inherit",
-                            },
-                        }}
-                    >
-                        {rule.rego_module}
-                    </SyntaxHighlighter>
-                </Paper>
-            )}
-
             {rule && (rule.parser || rule.scanner_prefix || rule.title || rule.description_observation) && (
                 <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                     <Typography variant="h6" sx={{ marginBottom: 1 }}>
@@ -316,6 +294,28 @@ export const RuleShowComponent = ({ rule }: any) => {
                     </Paper>
                 )}
 
+            {rule.rego_module && (
+                <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                        Rego module
+                    </Typography>
+                    <SyntaxHighlighter
+                        language="rego"
+                        style={getPrismTheme()}
+                        wrapLongLines
+                        customStyle={{ lineHeight: "1.43", fontSize: "0.875rem" }}
+                        codeTagProps={{
+                            style: {
+                                lineHeight: "inherit",
+                                fontSize: "inherit",
+                            },
+                        }}
+                    >
+                        {rule.rego_module}
+                    </SyntaxHighlighter>
+                </Paper>
+            )}
+
             {((rule.product_data &&
                 (rule.product_data.product_rules_need_approval ||
                     rule.product_data.product_group_product_rules_need_approval)) ||
@@ -394,13 +394,13 @@ export const non_duplicate_transform = (data: any, description: string) => {
     }
 
     if (data.type === RULE_TYPE_REGO) {
+        data.scanner_prefix ??= "";
+
         data.title = "";
         data.description_observation = "";
         data.new_severity = "";
         data.new_status = "";
         data.new_vex_justification = "";
-
-        data.scanner_prefix = "";
 
         data.origin_component_name_version = "";
         data.origin_component_purl = "";
@@ -481,6 +481,18 @@ const RegoModuleInput = () => {
     if (type === RULE_TYPE_REGO) {
         return (
             <Stack sx={{ marginBottom: 2 }}>
+                <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+
+                <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                    Observation
+                </Typography>
+                <Stack>
+                    <ReferenceInput source="parser" reference="parsers" sort={{ field: "name", order: "ASC" }}>
+                        <AutocompleteInputWide optionText="name" />
+                    </ReferenceInput>
+                    <TextInputWide source="scanner_prefix" validate={validate_255} />
+                </Stack>
+
                 <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
 
                 <Typography variant="h6" sx={{ marginBottom: 1 }}>

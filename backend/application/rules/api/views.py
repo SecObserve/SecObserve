@@ -40,7 +40,6 @@ from application.rules.services.simulator import simulate_rule
 
 @dataclass
 class SimulationResult:
-    count: int
     results: list[Observation]
 
 
@@ -143,8 +142,8 @@ class ProductRuleViewSet(ModelViewSet):
 
 
 def _do_simulation(rule: Rule) -> Response:
-    num_observations, observations = simulate_rule(rule)
-    simulation_result = SimulationResult(count=num_observations, results=observations)
+    observations = simulate_rule(rule)
+    simulation_result = SimulationResult(results=observations)
     response_serializer = SimulationResultSerializer(simulation_result)
 
     return Response(status=HTTP_200_OK, data=response_serializer.data)

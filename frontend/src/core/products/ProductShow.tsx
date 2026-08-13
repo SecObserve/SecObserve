@@ -88,11 +88,11 @@ const ShowActions = (props: ShowActionsProps) => {
                     queryOptions={{ meta: { api_resource: "product_names" } }}
                     storeKey={props.storeKey}
                 />
-                {product?.permissions.includes(PERMISSION_PRODUCT_IMPORT_OBSERVATIONS) && (
+                {product?.permissions?.includes(PERMISSION_PRODUCT_IMPORT_OBSERVATIONS) && (
                     <ImportMenu product={product} />
                 )}
                 <ExportMenu product={product} is_product_group={false} />
-                {product?.permissions.includes(PERMISSION_PRODUCT_EDIT) && <EditButton />}
+                {product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>
     );
@@ -154,7 +154,7 @@ const ProductShow = () => {
                                     }}
                                 >
                                     <ShowDefaultBranchObservationsButton product={product} />
-                                    {product?.permissions.includes(PERMISSION_OBSERVATION_CREATE) && (
+                                    {product?.permissions?.includes(PERMISSION_OBSERVATION_CREATE) && (
                                         <ObservationCreate
                                             id={product.id}
                                             risk_acceptance_expiry_date_calculated={
@@ -224,7 +224,7 @@ const ProductShow = () => {
                                 icon={<AccountTreeIcon />}
                                 onClick={hideSettingsTabs}
                             >
-                                {product?.permissions.includes(PERMISSION_BRANCH_CREATE) && (
+                                {product?.permissions?.includes(PERMISSION_BRANCH_CREATE) && (
                                     <BranchCreate product={product} />
                                 )}
                                 <BranchEmbeddedList product={product} />
@@ -235,7 +235,7 @@ const ProductShow = () => {
                                 icon={<ConstructionIcon />}
                                 onClick={hideSettingsTabs}
                             >
-                                {product?.permissions.includes(PERMISSION_SERVICE_CREATE) && (
+                                {product?.permissions?.includes(PERMISSION_SERVICE_CREATE) && (
                                     <ServiceCreate product={product} />
                                 )}
                                 <ServiceEmbeddedList product={product} />
@@ -272,10 +272,10 @@ const ProductShow = () => {
                                             alignItems: "center",
                                         }}
                                     >
-                                        {product?.permissions.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
+                                        {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
                                             <ProductRuleCreate product={product} />
                                         )}
-                                        {product?.permissions.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
+                                        {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
                                             <ProductRuleApply product={product} />
                                         )}
                                     </Stack>
@@ -284,7 +284,7 @@ const ProductShow = () => {
                             )}
                             {settingsTabsShow && (
                                 <Tab label="API Configurations" path="api_configurations" icon={<UploadIcon />}>
-                                    {product?.permissions.includes(PERMISSION_API_CONFIGURATION_CREATE) && (
+                                    {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_CREATE) && (
                                         <ApiConfigurationCreate id={product.id} />
                                     )}
                                     <ApiConfigurationEmbeddedList product={product} />
@@ -293,14 +293,14 @@ const ProductShow = () => {
                             {settingsTabsShow && (
                                 <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
                                     <Typography variant="h6">User members</Typography>
-                                    {product?.permissions.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
                                         <ProductMemberAdd id={product.id} />
                                     )}
                                     <ProductMemberEmbeddedList product={product} />
 
                                     <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
                                     <Typography variant="h6">Authorization group members</Typography>
-                                    {product?.permissions.includes(
+                                    {product?.permissions?.includes(
                                         PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE
                                     ) && <ProductAuthorizationGroupMemberAdd id={product.id} />}
                                     <ProductAuthorizationGroupMemberEmbeddedList product={product} />
@@ -308,7 +308,7 @@ const ProductShow = () => {
                             )}
                             {settingsTabsShow && (
                                 <Tab label="API Token" path="api_token" icon={<TokenIcon />}>
-                                    {product?.permissions.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
                                         <ApiTokenCreate type="product" product={product} />
                                     )}
                                     <ApiTokenEmbeddedList type="product" product={product} />

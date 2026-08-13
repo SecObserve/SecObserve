@@ -117,6 +117,7 @@ THIRD_PARTY_APPS = [
     "drf_spectacular_sidecar",
     "django_filters",
     "huey.contrib.djhuey",
+    "huey.contrib.djhuey.stats",
 ]
 
 LOCAL_APPS = [
@@ -431,22 +432,30 @@ SPECTACULAR_SETTINGS = {
 
 FIELD_ENCRYPTION_KEY = env("FIELD_ENCRYPTION_KEY")
 
-HUEY_FILENAME = env("HUEY_FILENAME", default="/var/lib/huey/huey.db")
-
 HUEY_IMMEDIATE = env.bool("HUEY_IMMEDIATE", False)
 if HUEY_IMMEDIATE not in [True, False]:
     raise ValueError("HUEY_IMMEDIATE must be True or False")
 
+db = DATABASES["default"]
+
+if "postgresql" in db["ENGINE"]:
+    scheme, port = "postgresql", db["PORT"] or 5432
+    db_url = f"{scheme}://{db['USER']}:{db['PASSWORD']}@{db['HOST'] or 'localhost'}:{port}/{db['NAME']}"
+elif "mysql" in db["ENGINE"]:
+    scheme, port = "mysql", db["PORT"] or 3306
+    db_url = f"{scheme}://{db['USER']}:{db['PASSWORD']}@{db['HOST'] or 'localhost'}:{port}/{db['NAME']}"
+else:
+    # Fallback: SQLite file
+    db_url = "sqlite:////var/lib/huey/huey.db"
+
 HUEY = {
-    "huey_class": "huey.SqliteHuey",  # Huey implementation to use.
-    "name": DATABASES["default"]["NAME"],  # Use db name for huey.
+    "huey_class": "application.background_tasks.services.prefixed_sql_storage.PrefixedSqlHuey",
+    "name": "secobserve",
+    "database": db_url,  # forwarded as a kwarg to SqlHuey -> SqlStorage
     "results": False,  # Store return values of tasks.
     "store_none": False,  # If a task returns None, do not save to results.
     "immediate": HUEY_IMMEDIATE,  # Check the variable for documentation
     "utc": True,  # Use UTC for all times internally.
-    "connection": {
-        "filename": HUEY_FILENAME,  # Filename for sqlite.
-    },
     "consumer": {
         "workers": 3,  # Number of worker threads/processes.
         "worker_type": "thread",

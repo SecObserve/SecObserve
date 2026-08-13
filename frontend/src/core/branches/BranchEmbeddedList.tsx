@@ -4,9 +4,11 @@ import {
     Datagrid,
     DateField,
     FieldProps,
+    FilterForm,
     ListContextProvider,
     ResourceContextProvider,
     TextField,
+    TextInput,
     WithListContext,
     WithRecord,
     useListController,
@@ -39,6 +41,13 @@ type BranchEmbeddedListProps = {
 };
 
 const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
+    function listFilters() {
+        const filters = [];
+        filters.push(<TextInput source="name" label="Branch / Version" alwaysOn />);
+
+        return filters;
+    }
+
     const listContext = useListController({
         filter: { product: Number(product.id) },
         perPage: getSettingRowsPerPage(),
@@ -56,6 +65,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
         <ResourceContextProvider value="branches">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
+                    {product?.has_branches && <FilterForm filters={listFilters()} />}
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid
@@ -98,12 +108,12 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                 <WithRecord
                                     render={(branch) => (
                                         <Stack direction="row" spacing={4}>
-                                            {product?.permissions.includes(PERMISSION_BRANCH_EDIT) && (
+                                            {product?.permissions?.includes(PERMISSION_BRANCH_EDIT) && (
                                                 <BranchEdit product={product} />
                                             )}
-                                            {product?.permissions.includes(PERMISSION_PRODUCT_EDIT) &&
+                                            {product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) &&
                                                 !branch.is_default_branch && <DefaultBranch branch={branch} />}
-                                            {product?.permissions.includes(PERMISSION_BRANCH_DELETE) &&
+                                            {product?.permissions?.includes(PERMISSION_BRANCH_DELETE) &&
                                                 !branch.is_default_branch && <BranchDelete branch={branch} />}
                                         </Stack>
                                     )}

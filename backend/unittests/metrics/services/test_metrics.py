@@ -1,8 +1,14 @@
 from datetime import date, datetime
 from unittest.mock import patch
 
+from django.utils import timezone
+
+from application.core.models import Branch, Observation
 from application.core.types import Severity, Status
+from application.import_observations.models import Parser
+from application.licenses.models import License_Component
 from application.licenses.types import License_Policy_Evaluation_Result
+from application.metrics.models import Product_License_Metrics, Product_Metrics
 from application.metrics.services.metrics import (
     _initialize_response_data,
     calculate_license_metrics_for_product,
@@ -13,6 +19,29 @@ from application.metrics.services.metrics import (
     get_product_metrics_timeline,
 )
 from unittests.base_test_case import BaseTestCase
+
+
+def _empty_observation_metrics() -> dict[str, int]:
+    return _initialize_response_data()
+
+
+def _empty_license_metrics() -> dict[str, int]:
+    return {
+        "allowed": 0,
+        "forbidden": 0,
+        "ignored": 0,
+        "review_required": 0,
+        "unknown": 0,
+    }
+
+
+def _localdate_side_effect(today: date):
+    def localdate(value=None):
+        if value is None:
+            return today
+        return value.date()
+
+    return localdate
 
 
 class TestInitializeResponseData(BaseTestCase):
@@ -227,6 +256,90 @@ class TestCalculateProductMetrics(BaseTestCase):
 
 
 class TestCalculateMetricsForProduct(BaseTestCase):
+    def _save_product_with_branches(self) -> tuple[Branch, Branch]:
+        parser = Parser.objects.create(name="metrics_parser")
+        self.product_1.repository_default_branch = None
+        self.product_1.save()
+        default_branch = Branch.objects.create(product=self.product_1, name="main", is_default_branch=True)
+        other_branch = Branch.objects.create(product=self.product_1, name="feature", is_default_branch=False)
+        self.product_1.repository_default_branch = default_branch
+        self.product_1.save()
+        self.parser_1 = parser
+        return default_branch, other_branch
+
+    def _create_observation(self, branch: Branch, severity: str, status: str) -> None:
+        Observation.objects.create(
+            title=f"{severity}_{status}_{branch.name}",
+            product=self.product_1,
+            branch=branch,
+            parser=self.parser_1,
+            parser_severity=severity,
+            parser_status=status,
+            import_last_seen=timezone.now(),
+        )
+
+    def _create_license_component(self, branch: Branch, evaluation_result: str, name: str) -> None:
+        License_Component.objects.create(
+            identity_hash=f"{name:_<64}"[:64],
+            product=self.product_1,
+            branch=branch,
+            component_name=name,
+            component_name_version=name,
+            evaluation_result=evaluation_result,
+            numerical_evaluation_result=License_Policy_Evaluation_Result.NUMERICAL_RESULTS[evaluation_result],
+        )
+
+    def test_calculate_observation_metrics_for_product_aggregates_database_counts(self):
+        default_branch, other_branch = self._save_product_with_branches()
+        self._create_observation(default_branch, Severity.SEVERITY_CRITICAL, Status.STATUS_OPEN)
+        self._create_observation(default_branch, Severity.SEVERITY_HIGH, Status.STATUS_AFFECTED)
+        self._create_observation(default_branch, Severity.SEVERITY_MEDIUM, Status.STATUS_RESOLVED)
+        self._create_observation(default_branch, Severity.SEVERITY_UNKNOWN, Status.STATUS_IN_REVIEW)
+        self._create_observation(other_branch, Severity.SEVERITY_LOW, Status.STATUS_OPEN)
+
+        self.product_1.refresh_from_db()
+        result = calculate_observation_metrics_for_product(self.product_1)
+
+        self.assertTrue(result)
+        metrics = Product_Metrics.objects.get(product=self.product_1, date=timezone.localdate())
+        self.assertEqual(1, metrics.active_critical)
+        self.assertEqual(1, metrics.active_high)
+        self.assertEqual(0, metrics.active_medium)
+        self.assertEqual(0, metrics.active_low)
+        self.assertEqual(1, metrics.active_unknown)
+        self.assertEqual(1, metrics.open)
+        self.assertEqual(1, metrics.affected)
+        self.assertEqual(1, metrics.resolved)
+        self.assertEqual(1, metrics.in_review)
+
+    def test_calculate_license_metrics_for_product_aggregates_database_counts(self):
+        default_branch, other_branch = self._save_product_with_branches()
+        self._create_license_component(
+            default_branch, License_Policy_Evaluation_Result.RESULT_ALLOWED, "allowed_component"
+        )
+        self._create_license_component(
+            default_branch, License_Policy_Evaluation_Result.RESULT_FORBIDDEN, "forbidden_component"
+        )
+        self._create_license_component(default_branch, License_Policy_Evaluation_Result.RESULT_IGNORED, "ignored")
+        self._create_license_component(
+            default_branch, License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED, "review_component"
+        )
+        self._create_license_component(default_branch, License_Policy_Evaluation_Result.RESULT_UNKNOWN, "unknown")
+        self._create_license_component(
+            other_branch, License_Policy_Evaluation_Result.RESULT_FORBIDDEN, "other_branch_component"
+        )
+
+        self.product_1.refresh_from_db()
+        result = calculate_license_metrics_for_product(self.product_1)
+
+        self.assertTrue(result)
+        metrics = Product_License_Metrics.objects.get(product=self.product_1, date=timezone.localdate())
+        self.assertEqual(1, metrics.allowed)
+        self.assertEqual(1, metrics.forbidden)
+        self.assertEqual(1, metrics.ignored)
+        self.assertEqual(1, metrics.review_required)
+        self.assertEqual(1, metrics.unknown)
+
     @patch("application.metrics.services.metrics.Observation.objects")
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
     @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
@@ -235,20 +348,22 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         self, mock_timezone, mock_get_latest, mock_pm_objects, mock_obs_objects
     ):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 15, 10, 0, 0)
 
         mock_get_latest.return_value = None
 
-        todays_metrics = ProductMetricsStub()
-        mock_pm_objects.update_or_create.return_value = (todays_metrics, True)
-        mock_obs_objects.filter.return_value.values.return_value = []
+        observation_metrics = _empty_observation_metrics()
+        mock_obs_objects.filter.return_value.aggregate.return_value = observation_metrics
 
         result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
-        mock_pm_objects.update_or_create.assert_called_once()
-        todays_metrics.assert_save_called(self)
+        mock_pm_objects.update_or_create.assert_called_once_with(
+            product=self.product_1,
+            date=today,
+            defaults=observation_metrics,
+        )
 
     @patch("application.metrics.services.metrics.Observation.objects")
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
@@ -258,36 +373,33 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         self, mock_timezone, mock_get_latest, mock_pm_objects, mock_obs_objects
     ):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 15, 10, 0, 0)
 
         mock_get_latest.return_value = None
 
-        todays_metrics = ProductMetricsStub()
-        mock_pm_objects.update_or_create.return_value = (todays_metrics, True)
-
-        observations = [
-            {"current_severity": Severity.SEVERITY_CRITICAL, "current_status": Status.STATUS_OPEN},
-            {"current_severity": Severity.SEVERITY_HIGH, "current_status": Status.STATUS_OPEN},
-            {"current_severity": Severity.SEVERITY_MEDIUM, "current_status": Status.STATUS_AFFECTED},
-            {"current_severity": Severity.SEVERITY_LOW, "current_status": Status.STATUS_IN_REVIEW},
-            {"current_severity": Severity.SEVERITY_NONE, "current_status": Status.STATUS_OPEN},
-            {"current_severity": Severity.SEVERITY_UNKNOWN, "current_status": Status.STATUS_AFFECTED},
-        ]
-        mock_obs_objects.filter.return_value.values.return_value = observations
+        observation_metrics = _empty_observation_metrics()
+        observation_metrics.update(
+            active_critical=1,
+            active_high=1,
+            active_medium=1,
+            active_low=1,
+            active_none=1,
+            active_unknown=1,
+            open=3,
+            affected=2,
+            in_review=1,
+        )
+        mock_obs_objects.filter.return_value.aggregate.return_value = observation_metrics
 
         result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
-        self.assertEqual(todays_metrics.active_critical, 1)
-        self.assertEqual(todays_metrics.active_high, 1)
-        self.assertEqual(todays_metrics.active_medium, 1)
-        self.assertEqual(todays_metrics.active_low, 1)
-        self.assertEqual(todays_metrics.active_none, 1)
-        self.assertEqual(todays_metrics.active_unknown, 1)
-        self.assertEqual(todays_metrics.open, 3)
-        self.assertEqual(todays_metrics.affected, 2)
-        self.assertEqual(todays_metrics.in_review, 1)
+        mock_pm_objects.update_or_create.assert_called_once_with(
+            product=self.product_1,
+            date=today,
+            defaults=observation_metrics,
+        )
 
     @patch("application.metrics.services.metrics.Observation.objects")
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
@@ -297,46 +409,36 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         self, mock_timezone, mock_get_latest, mock_pm_objects, mock_obs_objects
     ):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 15, 10, 0, 0)
 
         mock_get_latest.return_value = None
 
-        todays_metrics = ProductMetricsStub()
-        mock_pm_objects.update_or_create.return_value = (todays_metrics, True)
-
-        observations = [
-            {"current_severity": Severity.SEVERITY_CRITICAL, "current_status": Status.STATUS_OPEN},
-            {"current_severity": Severity.SEVERITY_HIGH, "current_status": Status.STATUS_AFFECTED},
-            {"current_severity": Severity.SEVERITY_MEDIUM, "current_status": Status.STATUS_RESOLVED},
-            {"current_severity": Severity.SEVERITY_LOW, "current_status": Status.STATUS_DUPLICATE},
-            {"current_severity": Severity.SEVERITY_NONE, "current_status": Status.STATUS_FALSE_POSITIVE},
-            {"current_severity": Severity.SEVERITY_UNKNOWN, "current_status": Status.STATUS_IN_REVIEW},
-            {"current_severity": Severity.SEVERITY_LOW, "current_status": Status.STATUS_NOT_AFFECTED},
-            {"current_severity": Severity.SEVERITY_LOW, "current_status": Status.STATUS_NOT_SECURITY},
-            {"current_severity": Severity.SEVERITY_LOW, "current_status": Status.STATUS_RISK_ACCEPTED},
-        ]
-        mock_obs_objects.filter.return_value.values.return_value = observations
+        observation_metrics = _empty_observation_metrics()
+        observation_metrics.update(
+            active_critical=1,
+            active_high=1,
+            active_unknown=1,
+            open=1,
+            affected=1,
+            resolved=1,
+            duplicate=1,
+            false_positive=1,
+            in_review=1,
+            not_affected=1,
+            not_security=1,
+            risk_accepted=1,
+        )
+        mock_obs_objects.filter.return_value.aggregate.return_value = observation_metrics
 
         result = calculate_observation_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
-        self.assertEqual(todays_metrics.open, 1)
-        self.assertEqual(todays_metrics.affected, 1)
-        self.assertEqual(todays_metrics.resolved, 1)
-        self.assertEqual(todays_metrics.duplicate, 1)
-        self.assertEqual(todays_metrics.false_positive, 1)
-        self.assertEqual(todays_metrics.in_review, 1)
-        self.assertEqual(todays_metrics.not_affected, 1)
-        self.assertEqual(todays_metrics.not_security, 1)
-        self.assertEqual(todays_metrics.risk_accepted, 1)
-        # Active statuses: Open, Affected, In review
-        self.assertEqual(todays_metrics.active_critical, 1)
-        self.assertEqual(todays_metrics.active_high, 1)
-        self.assertEqual(todays_metrics.active_unknown, 1)
-        # Resolved, Duplicate, etc. are not active
-        self.assertEqual(todays_metrics.active_medium, 0)
-        self.assertEqual(todays_metrics.active_low, 0)
+        mock_pm_objects.update_or_create.assert_called_once_with(
+            product=self.product_1,
+            date=today,
+            defaults=observation_metrics,
+        )
 
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
     @patch("application.metrics.services.metrics._get_latest_product_observation_metrics")
@@ -344,7 +446,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
     def test_no_changes_today_copies_previous_metrics(self, mock_timezone, mock_get_latest, mock_pm_objects):
         today = date(2025, 6, 15)
         yesterday = date(2025, 6, 14)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 14, 10, 0, 0)
 
         latest_metrics = ProductMetricsStub(
@@ -379,7 +481,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
     def test_no_changes_today_fills_gap_days(self, mock_timezone, mock_get_latest, mock_pm_objects):
         today = date(2025, 6, 15)
         three_days_ago = date(2025, 6, 12)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 12, 10, 0, 0)
 
         latest_metrics = ProductMetricsStub(date=three_days_ago, active_critical=2, open=1)
@@ -404,7 +506,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
     @patch("application.metrics.services.metrics.timezone")
     def test_no_changes_today_metrics_already_up_to_date(self, mock_timezone, mock_get_latest, mock_pm_objects):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 14, 10, 0, 0)
 
         latest_metrics = ProductMetricsStub(date=today)
@@ -434,7 +536,6 @@ class TestGetLatestProductMetrics(BaseTestCase):
 
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
     def test_returns_none_when_no_metrics(self, mock_pm_objects):
-        from application.metrics.models import Product_Metrics
         from application.metrics.services.metrics import (
             _get_latest_product_observation_metrics,
         )
@@ -453,20 +554,22 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
     @patch("application.metrics.services.metrics.timezone")
     def test_no_previous_metrics_no_licenses(self, mock_timezone, mock_get_latest, mock_plm_objects, mock_lc_objects):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 15, 10, 0, 0)
 
         mock_get_latest.return_value = None
 
-        todays_metrics = ProductLicenseMetricsStub()
-        mock_plm_objects.update_or_create.return_value = (todays_metrics, True)
-        mock_lc_objects.filter.return_value.values.return_value = []
+        license_metrics = _empty_license_metrics()
+        mock_lc_objects.filter.return_value.aggregate.return_value = license_metrics
 
         result = calculate_license_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
-        mock_plm_objects.update_or_create.assert_called_once()
-        todays_metrics.assert_save_called(self)
+        mock_plm_objects.update_or_create.assert_called_once_with(
+            product=self.product_1,
+            date=today,
+            defaults=license_metrics,
+        )
 
     @patch("application.metrics.services.metrics.License_Component.objects")
     @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
@@ -476,31 +579,29 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
         self, mock_timezone, mock_get_latest, mock_plm_objects, mock_lc_objects
     ):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 15, 10, 0, 0)
 
         mock_get_latest.return_value = None
 
-        todays_metrics = ProductLicenseMetricsStub()
-        mock_plm_objects.update_or_create.return_value = (todays_metrics, True)
-
-        licenses = [
-            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_ALLOWED},
-            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_FORBIDDEN},
-            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_IGNORED},
-            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED},
-            {"evaluation_result": License_Policy_Evaluation_Result.RESULT_UNKNOWN},
-        ]
-        mock_lc_objects.filter.return_value.values.return_value = licenses
+        license_metrics = _empty_license_metrics()
+        license_metrics.update(
+            allowed=1,
+            forbidden=1,
+            ignored=1,
+            review_required=1,
+            unknown=1,
+        )
+        mock_lc_objects.filter.return_value.aggregate.return_value = license_metrics
 
         result = calculate_license_metrics_for_product(self.product_1)
 
         self.assertTrue(result)
-        self.assertEqual(todays_metrics.allowed, 1)
-        self.assertEqual(todays_metrics.forbidden, 1)
-        self.assertEqual(todays_metrics.ignored, 1)
-        self.assertEqual(todays_metrics.review_required, 1)
-        self.assertEqual(todays_metrics.unknown, 1)
+        mock_plm_objects.update_or_create.assert_called_once_with(
+            product=self.product_1,
+            date=today,
+            defaults=license_metrics,
+        )
 
     @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
     @patch("application.metrics.services.metrics._get_latest_product_license_metrics")
@@ -508,7 +609,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
     def test_no_changes_today_copies_previous_metrics(self, mock_timezone, mock_get_latest, mock_plm_objects):
         today = date(2025, 6, 15)
         yesterday = date(2025, 6, 14)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 14, 10, 0, 0)
 
         latest_metrics = ProductLicenseMetricsStub(
@@ -541,7 +642,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
     def test_no_changes_today_fills_gap_days(self, mock_timezone, mock_get_latest, mock_plm_objects):
         today = date(2025, 6, 15)
         three_days_ago = date(2025, 6, 12)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 12, 10, 0, 0)
 
         latest_metrics = ProductLicenseMetricsStub(date=three_days_ago, allowed=2, forbidden=1)
@@ -566,7 +667,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
     @patch("application.metrics.services.metrics.timezone")
     def test_no_changes_today_metrics_already_up_to_date(self, mock_timezone, mock_get_latest, mock_plm_objects):
         today = date(2025, 6, 15)
-        mock_timezone.localdate.return_value = today
+        mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 14, 10, 0, 0)
 
         latest_metrics = ProductLicenseMetricsStub(date=today)
@@ -596,7 +697,6 @@ class TestGetLatestProductLicenseMetrics(BaseTestCase):
 
     @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
     def test_returns_none_when_no_metrics(self, mock_plm_objects):
-        from application.metrics.models import Product_License_Metrics
         from application.metrics.services.metrics import (
             _get_latest_product_license_metrics,
         )

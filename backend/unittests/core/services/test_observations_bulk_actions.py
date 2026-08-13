@@ -21,7 +21,8 @@ class TestObservationsBulkActions(BaseTestCase):
 
     @patch("application.core.services.observations_bulk_actions._check_observations")
     @patch("application.core.services.observations_bulk_actions.save_assessment")
-    def test_observations_bulk_assessment(self, save_mock, check_mock):
+    @patch("application.core.services.observations_bulk_actions.Rule_Engine")
+    def test_observations_bulk_assessment(self, rule_engine_mock, save_mock, check_mock):
         observation_2 = Observation()
         check_mock.return_value = [self.observation_1, observation_2]
 
@@ -30,6 +31,7 @@ class TestObservationsBulkActions(BaseTestCase):
             new_severity=Severity.SEVERITY_CRITICAL,
             new_status=Status.STATUS_OPEN,
             new_priority=1,
+            new_priority_changed=True,
             comment="comment",
             observation_ids=[1, 2],
             new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
@@ -38,26 +40,34 @@ class TestObservationsBulkActions(BaseTestCase):
         )
 
         check_mock.assert_called_with(self.product_1, [1, 2])
+        rule_engine_mock.assert_called_once_with(self.product_1)
+        rule_engine = rule_engine_mock.return_value
         expected_calls = [
             call(
                 observation=self.observation_1,
                 new_severity=Severity.SEVERITY_CRITICAL,
                 new_status=Status.STATUS_OPEN,
                 new_priority=1,
+                new_priority_changed=True,
                 comment="comment",
                 new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
                 new_vex_remediations="remediation",
                 new_risk_acceptance_expiry_date=date(2024, 7, 1),
+                propagated_from=None,
+                rule_engine=rule_engine,
             ),
             call(
                 observation=observation_2,
                 new_severity=Severity.SEVERITY_CRITICAL,
                 new_status=Status.STATUS_OPEN,
                 new_priority=1,
+                new_priority_changed=True,
                 comment="comment",
                 new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
                 new_vex_remediations="remediation",
                 new_risk_acceptance_expiry_date=date(2024, 7, 1),
+                propagated_from=None,
+                rule_engine=rule_engine,
             ),
         ]
         save_mock.assert_has_calls(expected_calls, any_order=False)

@@ -1,5 +1,4 @@
 volumes:
-  dev_huey_data:
   dev_mysql_data:
   dev_postgres_data:
   dev_keycloak_data:
@@ -64,7 +63,6 @@ services:
       USE_DOCKER: yes
     volumes:
       - ./backend:/app
-      - dev_huey_data:/var/lib/huey
     ports:
       - "8000:8000"
 
@@ -87,7 +85,7 @@ services:
       - "8025:8025"
 
   keycloak:
-    image: keycloak/keycloak:26.7.0
+    image: keycloak/keycloak:26.7.1
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin

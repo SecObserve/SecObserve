@@ -1,5 +1,4 @@
 volumes:
-  dev_huey_data:
   dev_mysql_data:
   dev_node_modules:
 
@@ -43,12 +42,11 @@ services:
       USE_DOCKER: yes
     volumes:
       - ./backend:/app
-      - dev_huey_data:/var/lib/huey
     ports:
       - "8000:8000"
 
   mysql:
-    image: mysql:8.4.10
+    image: mysql:8.4.11
     environment:
       MYSQL_RANDOM_ROOT_PASSWORD: ${SO_MYSQL_RANDOM_ROOT_PASSWORD:-yes}
       MYSQL_DATABASE: ${SO_MYSQL_DATABASE:-secobserve}

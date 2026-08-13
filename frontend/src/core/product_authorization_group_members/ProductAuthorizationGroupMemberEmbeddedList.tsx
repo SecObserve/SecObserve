@@ -55,10 +55,10 @@ const ProductAuthorizationGroupMemberEmbeddedList = ({ product }: ProductAuthori
                         <WithRecord
                             render={(product_authorization_group_member) => (
                                 <Stack direction="row" spacing={4}>
-                                    {product?.permissions.includes(
+                                    {product?.permissions?.includes(
                                         PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_EDIT
                                     ) && <ProductAuthorizationGroupMemberEdit />}
-                                    {product?.permissions.includes(
+                                    {product?.permissions?.includes(
                                         PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_DELETE
                                     ) && (
                                         <ProductAuthorizationGroupMemberDelete

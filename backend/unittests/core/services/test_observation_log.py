@@ -28,6 +28,8 @@ class TestObservationLog(BaseTestCase):
             observation=self.observation_1,
             severity="severity",
             status="status",
+            priority=1,
+            priority_changed=True,
             comment="comment",
             vex_justification="vex_justification",
             vex_remediations="vex_remediation",
@@ -39,6 +41,8 @@ class TestObservationLog(BaseTestCase):
         self.assertEqual(self.user_internal, observation_log.user)
         self.assertEqual("severity", observation_log.severity)
         self.assertEqual("status", observation_log.status)
+        self.assertEqual(1, observation_log.priority)
+        self.assertEqual(True, observation_log.priority_changed)
         self.assertEqual("comment", observation_log.comment)
         self.assertEqual("vex_justification", observation_log.vex_justification)
         self.assertEqual("vex_remediation", observation_log.vex_remediations)

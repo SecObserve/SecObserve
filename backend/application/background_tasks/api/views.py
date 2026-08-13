@@ -1,4 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from huey.contrib.djhuey import HUEY as huey
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
@@ -14,7 +15,6 @@ from application.background_tasks.api.serializers import (
     PeriodicTaskSerializer,
 )
 from application.background_tasks.models import Periodic_Task
-from application.background_tasks.services.task_base import enable_statistics
 from application.commons.api.permissions import UserHasSuperuserPermission
 
 
@@ -33,7 +33,9 @@ class BackgroundTaskView(APIView):
 
     @action(detail=False, methods=["get"], url_name="background_task_statistics")
     def get(self, request: Request) -> Response:
-        stats = enable_statistics()
+        stats = getattr(huey, "_stats", None)
+        if stats is None:
+            return Response({"detail": "Huey statistics are not enabled."}, status=503)
 
         content = {
             "registered": stats.task_breakdown(),

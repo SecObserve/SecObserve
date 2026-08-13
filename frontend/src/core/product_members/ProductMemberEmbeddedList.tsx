@@ -52,10 +52,10 @@ const ProductMemberEmbeddedList = ({ product }: ProductMemberEmbeddedListProps) 
                         <WithRecord
                             render={(product_member) => (
                                 <Stack direction="row" spacing={4}>
-                                    {product?.permissions.includes(PERMISSION_PRODUCT_MEMBER_EDIT) && (
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_EDIT) && (
                                         <ProductMemberEdit />
                                     )}
-                                    {product?.permissions.includes(PERMISSION_PRODUCT_MEMBER_DELETE) && (
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_DELETE) && (
                                         <ProductMemberDelete product_member={product_member} />
                                     )}
                                 </Stack>

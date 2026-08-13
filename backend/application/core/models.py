@@ -476,6 +476,7 @@ class Observation_Log(Model):
     severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
+    priority_changed = BooleanField(default=False)
     comment = TextField(max_length=4096)
     created = DateTimeField(auto_now_add=True)
     vex_justification = CharField(max_length=64, choices=VEX_Justification.VEX_JUSTIFICATION_CHOICES, blank=True)

@@ -4,7 +4,6 @@ from rest_framework.serializers import (
     CharField,
     ChoiceField,
     DateTimeField,
-    IntegerField,
     ListField,
     ModelSerializer,
     Serializer,
@@ -130,5 +129,4 @@ class RuleApprovalSerializer(Serializer):
 
 
 class SimulationResultSerializer(Serializer):
-    count = IntegerField()
     results = ListField(child=ObservationListSerializer())

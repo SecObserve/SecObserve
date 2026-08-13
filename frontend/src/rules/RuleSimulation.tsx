@@ -23,12 +23,14 @@ interface RuleSimulationProps {
     product?: any;
 }
 
+// Maximum number of observations returned by the simulation, see MAX_OBSERVATIONS in the backend
+const MAX_OBSERVATIONS = 100;
+
 const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
     const notify = useNotify();
     const [data, setData] = useState<any[]>([]);
-    const [count, setCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     const simulateRule = () => {
@@ -38,7 +40,6 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
             method: "POST",
         })
             .then((result: any) => {
-                setCount(result.json.count);
                 setData(result.json.results);
                 setLoading(false);
             })
@@ -80,16 +81,16 @@ const RuleSimulation = ({ rule, product }: RuleSimulationProps) => {
             <Dialog ref={dialogRef} open={open && !loading} onClose={handleClose} fullWidth maxWidth={"lg"}>
                 <DialogTitle>Affected observations of rule {rule.name}</DialogTitle>
                 <DialogContent>
-                    {count !== data.length && (
+                    {data.length >= MAX_OBSERVATIONS && (
                         <Typography sx={{ marginBottom: 2 }}>
-                            Showing {data.length} of {count} observations.
+                            Showing the first {MAX_OBSERVATIONS} affected observations.
                         </Typography>
                     )}
                     <ResourceContextProvider value="rule_simulation">
                         <ListContextProvider value={listContext}>
                             <Datagrid
                                 data={data}
-                                total={count}
+                                total={data.length}
                                 isLoading={loading}
                                 size={getSettingListSize()}
                                 bulkActionButtons={false}

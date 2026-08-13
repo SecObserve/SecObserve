@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
     AutocompleteArrayInput,
     BooleanField,
@@ -19,7 +19,6 @@ import {
     WithListContext,
     useListController,
 } from "react-admin";
-import { useLocation, useNavigate } from "react-router";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
@@ -41,19 +40,6 @@ import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationBulkDeleteButton from "./ObservationBulkDeleteButton";
 import ObservationExpand from "./ObservationExpand";
 import { IDENTIFIER_OBSERVATION_EMBEDDED_LIST, setListIdentifier } from "./functions";
-
-function hasObservationListParams(search: string): boolean {
-    const searchParams = new URLSearchParams(search);
-
-    return (
-        searchParams.has("filter") ||
-        searchParams.has("displayedFilters") ||
-        searchParams.has("page") ||
-        searchParams.has("perPage") ||
-        searchParams.has("sort") ||
-        searchParams.has("order")
-    );
-}
 
 function listFilters(product: Product) {
     const filters = [];
@@ -144,43 +130,52 @@ type ObservationsEmbeddedListProps = {
 
 const BulkActionButtons = (product: any) => (
     <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        {product.product.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT) && (
+        {product.product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) && (
             <ObservationBulkAssessment product={product.product} storeKey="observations.embedded" />
         )}
-        {product.product.permissions.includes(PERMISSION_OBSERVATION_DELETE) && (
+        {product.product?.permissions?.includes(PERMISSION_OBSERVATION_DELETE) && (
             <ObservationBulkDeleteButton product={product.product} storeKey="observations.embedded" />
         )}
     </Stack>
 );
 
+// The list must not be rendered before the product change has been processed:
+// the stored list params have to be removed before useListController is mounted,
+// otherwise it reads the params of the previous product instead of the filterDefaultValues.
 const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) => {
     setListIdentifier(IDENTIFIER_OBSERVATION_EMBEDDED_LIST);
 
-    const location = useLocation();
-    const navigate = useNavigate();
-    function get_observations_url(branch_id: Identifier): string {
-        return `?displayedFilters=%7B%7D&filter=%7B%22current_status%22%3A["Open"%2C"Affected"%2C"In review"]%2C%22branch%22%3A${branch_id}%7D&order=ASC&sort=current_severity`;
-    }
+    const [initializedProductId, setInitializedProductId] = useState<Identifier | null>(null);
+
     useEffect(() => {
         const current_product_id = localStorage.getItem("observationembeddedlist.product");
-        if (current_product_id == null || Number(current_product_id) !== product.id) {
+        if (current_product_id == null || Number(current_product_id) !== Number(product.id)) {
             localStorage.removeItem("RaStore.observations.embedded");
             localStorage.removeItem("RaStore.license_components.embedded");
             localStorage.removeItem("RaStore.license_components.overview");
             localStorage.removeItem("RaStore.vulnerability_checks.embedded");
-            localStorage.setItem("observationembeddedlist.product", product.id);
-            if (product.repository_default_branch && !hasObservationListParams(location.search)) {
-                navigate(get_observations_url(product.repository_default_branch), { replace: true });
-            }
+            localStorage.setItem("observationembeddedlist.product", String(product.id));
         }
-    }, [location.search, navigate, product.id, product.repository_default_branch]);
+        setInitializedProductId(product.id);
+    }, [product.id]);
 
+    if (initializedProductId !== product.id) {
+        return <div>Loading...</div>;
+    }
+
+    return <ObservationsListContent product={product} />;
+};
+
+const ObservationsListContent = ({ product }: ObservationsEmbeddedListProps) => {
     const listContext = useListController({
         filter: { product: Number(product.id) },
         perPage: getSettingRowsPerPage(),
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
-        filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE, branch: product.repository_default_branch },
+        filterDefaultValues: {
+            current_status: OBSERVATION_STATUS_ACTIVE,
+            ...(product.repository_default_branch ? { branch: product.repository_default_branch } : {}),
+        },
         disableSyncWithLocation: false,
         storeKey: "observations.embedded",
     });
@@ -202,8 +197,8 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
                                 rowClick={ShowObservations}
                                 bulkActionButtons={
                                     product &&
-                                    (product.permissions.includes(PERMISSION_OBSERVATION_ASSESSMENT) ||
-                                        product.permissions.includes(PERMISSION_OBSERVATION_DELETE)) && (
+                                    (product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) ||
+                                        product?.permissions?.includes(PERMISSION_OBSERVATION_DELETE)) && (
                                         <BulkActionButtons product={product} />
                                     )
                                 }
