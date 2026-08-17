@@ -3,31 +3,39 @@
 set -o errexit
 set -o nounset
 
-if [ -z "${DATABASE_USER}" ]; then
-    base_postgres_image_default_user='postgres'
-    export DATABASE_USER="${base_postgres_image_default_user}"
-fi
+# Role to run, one of: all, init, background, api (default: all)
+ROLE=${1:-all}
 
-if [ "${DATABASE_ENGINE}" != "django.db.backends.sqlite3" ]; then
-    /wait-for-it.sh "${DATABASE_HOST}":"${DATABASE_PORT}"
-    >&2 echo 'Database is available'
-fi
-
-python manage.py migrate
-
-echo "Admin user: ${ADMIN_USER}"
-ADMIN_EXISTS=$(echo "SELECT * from access_control_user;" | python manage.py dbshell | grep "${ADMIN_USER}" || :)
-if [ ! -z "$ADMIN_EXISTS" ]
-then
-    echo "Initialization detected that the admin user ${ADMIN_USER} already exists in your database."
-else
-    if [ -z "${ADMIN_PASSWORD}" ]
-    then
-        export ADMIN_PASSWORD="$(cat /dev/urandom | LC_ALL=C tr -dc a-zA-Z0-9 | head -c 22)"
-        echo "Admin password: ${ADMIN_PASSWORD}"
+wait_for_database() {
+    if [ -z "${DATABASE_USER:-}" ]; then
+        base_postgres_image_default_user='postgres'
+        export DATABASE_USER="${base_postgres_image_default_user}"
     fi
 
-    echo "Initialization detected no admin user ${ADMIN_USER}, creating it now in your database."
+    if [ "${DATABASE_ENGINE:-}" != "django.db.backends.sqlite3" ]; then
+        /wait-for-it.sh "${DATABASE_HOST}":"${DATABASE_PORT}"
+        >&2 echo 'Database is available'
+    fi
+}
+
+run_migrations() {
+    python manage.py migrate
+}
+
+check_or_create_admin() {
+    echo "Admin user: ${ADMIN_USER}"
+    ADMIN_EXISTS=$(echo "SELECT * from access_control_user;" | python manage.py dbshell | grep "${ADMIN_USER}" || :)
+    if [ ! -z "$ADMIN_EXISTS" ]
+    then
+        echo "Initialization detected that the admin user ${ADMIN_USER} already exists in your database."
+    else
+        if [ -z "${ADMIN_PASSWORD:-}" ]
+        then
+            export ADMIN_PASSWORD="$(cat /dev/urandom | LC_ALL=C tr -dc a-zA-Z0-9 | head -c 22)"
+            echo "Admin password: ${ADMIN_PASSWORD}"
+        fi
+
+        echo "Initialization detected no admin user ${ADMIN_USER}, creating it now in your database."
 
 cat <<EOD | python manage.py shell
 import os
@@ -38,12 +46,64 @@ User.objects.create_superuser(
   os.getenv('ADMIN_PASSWORD'),
 )
 EOD
-fi
+    fi
+}
 
-python manage.py flush_huey_inflight
-python manage.py run_huey --flush-locks &
+run_background_tasks() {
+    python manage.py flush_huey_inflight
+}
 
-python manage.py register_parsers
-python manage.py initial_license_load
+run_huey_foreground() {
+    python manage.py run_huey --flush-locks
+}
 
-python manage.py runserver_plus 0.0.0.0:8000
+run_huey_background() {
+    python manage.py run_huey --flush-locks &
+}
+
+register_parsers() {
+    python manage.py register_parsers
+}
+
+initial_license_load() {
+    python manage.py initial_license_load
+}
+
+run_server() {
+    python manage.py runserver_plus 0.0.0.0:8000
+}
+
+case "${ROLE}" in
+    all)
+        wait_for_database
+        run_migrations
+        check_or_create_admin
+        run_background_tasks
+        run_huey_background
+        register_parsers
+        initial_license_load
+        run_server
+        ;;
+    init)
+        wait_for_database
+        run_migrations
+        check_or_create_admin
+        register_parsers
+        initial_license_load
+        ;;
+    background)
+        wait_for_database
+        run_background_tasks
+        run_huey_foreground
+        ;;
+    api)
+        wait_for_database
+        register_parsers
+        run_server
+        ;;
+    *)
+        >&2 echo "Unknown role: ${ROLE}"
+        >&2 echo "Usage: $0 <all|init|background|api>"
+        exit 1
+        ;;
+esac
