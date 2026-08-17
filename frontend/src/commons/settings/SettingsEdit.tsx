@@ -52,6 +52,10 @@ const SettingsEdit = () => {
         data.observation_title_notification_slack_webhook ??= "";
         data.observation_title_notification_min_severity ??= "";
         data.observation_title_notification_parser_type ??= "";
+        data.vulnerablecode_base_url ??= "";
+        if (data.feature_automatic_vulnerablecode_scanning == false) {
+            data.vulnerablecode_base_url = "";
+        }
         return data;
     };
 
@@ -143,11 +147,15 @@ const SettingsEdit = () => {
                                     label="Disable user login"
                                     helperText="Do not show user and password fields if OIDC login is enabled"
                                 />
-                                <BooleanInput
-                                    source="feature_general_rules_need_approval"
-                                    label="General rules need approval"
-                                />
                                 <BooleanInput source="feature_license_management" label="Enable license management" />
+                                <BooleanInput
+                                    source="feature_automatic_osv_scanning"
+                                    label="Enable automatic OSV scanning"
+                                />
+                                <BooleanInput
+                                    source="feature_automatic_vulnerablecode_scanning"
+                                    label="Enable automatic VulnerableCode scanning"
+                                />
                             </Stack>
                         </Grid>
                         <Grid size={3}>
@@ -157,13 +165,24 @@ const SettingsEdit = () => {
                                     label="Enable automatic API imports"
                                 />
                                 <BooleanInput
-                                    source="feature_automatic_osv_scanning"
-                                    label="Enable automatic OSV scanning"
+                                    source="feature_general_rules_need_approval"
+                                    label="General rules need approval"
                                 />
                                 <BooleanInput
                                     source="observation_count_from_metrics"
                                     label="Calculate observation count from metrics"
                                 />
+                                <FormDataConsumer>
+                                    {({ formData }) =>
+                                        formData.feature_automatic_vulnerablecode_scanning && (
+                                            <TextInputWide
+                                                source="vulnerablecode_base_url"
+                                                label="VulnerableCode base URL"
+                                                validate={validate_255}
+                                            />
+                                        )
+                                    }
+                                </FormDataConsumer>
                             </Stack>
                         </Grid>
                     </Grid>

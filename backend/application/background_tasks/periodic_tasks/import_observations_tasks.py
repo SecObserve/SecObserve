@@ -7,7 +7,10 @@ from application.background_tasks.services.task_base import so_periodic_task
 from application.commons import settings_static
 from application.commons.models import Settings
 from application.import_observations.models import Api_Configuration, Product
-from application.import_observations.scanners.osv_scanner import scan_product
+from application.import_observations.scanners.osv_scanner import OSVScanner
+from application.import_observations.scanners.vulnerablecode_scanner import (
+    VulnerableCodeScanner,
+)
 from application.import_observations.services.import_observations import (
     ApiImportParameters,
     api_import_observations,
@@ -84,6 +87,7 @@ def task_api_import() -> str:
         return message + "\nOSV scanning is disabled in settings."
 
     osv_imports_failed = 0
+    osv_scanner = OSVScanner()
     products = Product.objects.filter(osv_enabled=True, automatic_osv_scanning_enabled=True)
     for product in products:
         try:
@@ -91,7 +95,7 @@ def task_api_import() -> str:
                 observations_new,
                 observations_updated,
                 observations_resolved,
-            ) = scan_product(product)
+            ) = osv_scanner.scan_product(product)
             logger.info(
                 "OSV scanning - %s: %s new, %s updated, %s resolved",
                 product,
@@ -107,5 +111,37 @@ def task_api_import() -> str:
     message += f"\nImported observations for {len(products)} products from OSV scanning."
     if osv_imports_failed > 0:
         message += f" OSV scanning failed for {osv_imports_failed} products."
+
+    # 3. Scan products for VulnerableCode vulnerabilities
+    settings = Settings.load()
+    if not settings.feature_automatic_vulnerablecode_scanning:
+        logger.info("VulnerableCode scanning is disabled in settings")
+        return message + "\nVulnerableCode scanning is disabled in settings."
+
+    vulnerablecode_imports_failed = 0
+    vulnerablecode_scanner = VulnerableCodeScanner()
+    products = Product.objects.filter(vulnerablecode_enabled=True, automatic_vulnerablecode_scanning_enabled=True)
+    for product in products:
+        try:
+            (
+                observations_new,
+                observations_updated,
+                observations_resolved,
+            ) = vulnerablecode_scanner.scan_product(product)
+            logger.info(
+                "VulnerableCode scanning - %s: %s new, %s updated, %s resolved",
+                product,
+                observations_new,
+                observations_updated,
+                observations_resolved,
+            )
+        except Exception as e:
+            vulnerablecode_imports_failed += 1
+            logger.warning("VulnerableCode scanning - %s: failed with exception", product)
+            handle_task_exception(e, product=product)
+
+    message += f"\nImported observations for {len(products)} products from VulnerableCode scanning."
+    if vulnerablecode_imports_failed > 0:
+        message += f" VulnerableCode scanning failed for {osv_imports_failed} products."
 
     return message

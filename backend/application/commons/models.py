@@ -213,6 +213,14 @@ class Settings(Model, DirtyFieldsMixin):
         help_text="Hour crontab expression for importing licenses (UTC)",
     )
     feature_automatic_osv_scanning = BooleanField(default=True, help_text="Enable automatic OSV scanning")
+    feature_automatic_vulnerablecode_scanning = BooleanField(
+        default=False, help_text="Enable automatic VulnerableCode scanning"
+    )
+    vulnerablecode_base_url = CharField(
+        max_length=255,
+        blank=True,
+        help_text="Base URL of the VulnerableCode instance",
+    )
     feature_exploit_information = BooleanField(default=True, help_text="Enable CVSS enrichment")
     exploit_information_max_age_years = IntegerField(
         default=10,

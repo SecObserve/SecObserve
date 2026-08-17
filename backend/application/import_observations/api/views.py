@@ -59,9 +59,9 @@ from application.import_observations.queries.api_configuration import (
 from application.import_observations.queries.vulnerability_check import (
     get_vulnerability_checks,
 )
-from application.import_observations.scanners.osv_scanner import (
-    scan_branch,
-    scan_product,
+from application.import_observations.scanners.osv_scanner import OSVScanner
+from application.import_observations.scanners.vulnerablecode_scanner import (
+    VulnerableCodeScanner,
 )
 from application.import_observations.services.import_observations import (
     ApiImportParameters,
@@ -431,7 +431,8 @@ class ScanOSVProductView(APIView):
         if not product.osv_enabled:
             raise ValidationError(f"OSV scan is not enabled for product {product.name}")
 
-        observations_new, observations_updated, observations_resolved = scan_product(product)
+        osv_scanner = OSVScanner()
+        observations_new, observations_updated, observations_resolved = osv_scanner.scan_product(product)
         response_data = {
             "observations_new": observations_new,
             "observations_updated": observations_updated,
@@ -461,7 +462,66 @@ class ScanOSVBranchView(APIView):
         if not branch:
             return Response(status=HTTP_404_NOT_FOUND)
 
-        observations_new, observations_updated, observations_resolved = scan_branch(branch)
+        osv_scanner = OSVScanner()
+        observations_new, observations_updated, observations_resolved = osv_scanner.scan_branch(branch)
+        response_data = {
+            "observations_new": observations_new,
+            "observations_updated": observations_updated,
+            "observations_resolved": observations_resolved,
+        }
+        return Response(response_data)
+
+
+class ScanVulnerableCodeProductView(APIView):
+    @extend_schema(
+        request=None,
+        responses={status.HTTP_200_OK: APIImportObservationsResponseSerializer},
+        operation_id="products_scan_osv_create",
+    )
+    @action(detail=True, methods=["post"])
+    def post(self, request: Request, product_id: int) -> Response:
+        product = get_product_by_id(product_id)
+        if not product:
+            return Response(status=HTTP_404_NOT_FOUND)
+
+        user_has_permission_or_403(product, Permissions.Product_Scan_OSV)
+
+        if not product.vulnerablecode_enabled:
+            raise ValidationError(f"VulnerableCode scan is not enabled for product {product.name}")
+
+        vulnerablecode_scanner = VulnerableCodeScanner()
+        observations_new, observations_updated, observations_resolved = vulnerablecode_scanner.scan_product(product)
+        response_data = {
+            "observations_new": observations_new,
+            "observations_updated": observations_updated,
+            "observations_resolved": observations_resolved,
+        }
+        return Response(response_data)
+
+
+class ScanVulnerableCodeBranchView(APIView):
+    @extend_schema(
+        request=None,
+        responses={status.HTTP_200_OK: APIImportObservationsResponseSerializer},
+        operation_id="products_branch_scan_osv_create",
+    )
+    @action(detail=True, methods=["post"])
+    def post(self, request: Request, product_id: int, branch_id: int) -> Response:
+        product = get_product_by_id(product_id)
+        if not product:
+            return Response(status=HTTP_404_NOT_FOUND)
+
+        user_has_permission_or_403(product, Permissions.Product_Scan_OSV)
+
+        if not product.vulnerablecode_enabled:
+            raise ValidationError(f"VulnerableCode scan is not enabled for product {product.name}")
+
+        branch = get_branch_by_id(product, branch_id)
+        if not branch:
+            return Response(status=HTTP_404_NOT_FOUND)
+
+        vulnerablecode_scanner = VulnerableCodeScanner()
+        observations_new, observations_updated, observations_resolved = vulnerablecode_scanner.scan_branch(branch)
         response_data = {
             "observations_new": observations_new,
             "observations_updated": observations_updated,

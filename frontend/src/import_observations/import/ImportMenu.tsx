@@ -9,6 +9,7 @@ import ApiImportObservations from "./ApiImportObservations";
 import FileUploadObservations from "./FileUploadObservations";
 import FileUploadSBOM from "./FileUploadSBOM";
 import ScanOSV from "./ScanOSV";
+import ScanVulnerableCode from "./ScanVulnerableCode";
 
 interface ImportMenuProps {
     product: any;
@@ -55,6 +56,11 @@ const ImportMenu = ({ product }: ImportMenuProps) => {
                 {product.osv_enabled && product.has_licenses && (
                     <MenuItem onKeyDown={(e) => e.stopPropagation()}>
                         <ScanOSV product={product} />
+                    </MenuItem>
+                )}
+                {product.osv_enabled && product.has_licenses && (
+                    <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+                        <ScanVulnerableCode product={product} />
                     </MenuItem>
                 )}
             </Menu>
