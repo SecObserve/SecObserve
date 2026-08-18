@@ -14,13 +14,44 @@ services:
       - ./frontend/:/app
     command : sh -c "npm run start -- --host"
 
+  init:
+    build:
+      context: .
+      dockerfile: ./docker/backend/dev/django/Dockerfile
+    image: secobserve_backend_dev
+    command: ["init"]
+    depends_on:
+      - postgres
+    env_file:
+      - ./docker/backend/dev/django/docker.env
+
+  background:
+    build:
+      context: .
+      dockerfile: ./docker/backend/dev/django/Dockerfile
+    image: secobserve_backend_dev
+    command: ["background"]
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
+    env_file:
+      - ./docker/backend/dev/django/docker.env
+
   backend:
     build:
       context: .
       dockerfile: ./docker/backend/dev/django/Dockerfile
     image: secobserve_backend_dev
+    command: ["api"]
     depends_on:
-      - postgres
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
     env_file:
       - ./docker/backend/dev/django/docker.env
     volumes:

@@ -7,6 +7,9 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 * [`docker-compose-dev.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev.yml)
     - Starts the PostgreSQL database, as well as SecObserve's backend and frontend
     - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
+* [`docker-compose-dev-multi.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-multi.yml)
+    - Starts the PostgreSQL database and the frontend, as well as SecObserve's backend split into one container per role: `init` (migrations, admin user, parsers, licenses), `background` (Huey consumer) and `api` (Django development server)
+    - The roles are selected by the argument given to the backend's entrypoint, see `docker/backend/dev/django/entrypoint`
 * [`docker-compose-dev-mysql.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-mysql.yml)
     - Starts the MySQL database, as well as SecObserve's backend and frontend
     - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
@@ -27,6 +30,11 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 * [`docker-compose-prod-test.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-prod-test.yml)
     - Starts the PostgreSQL database, as well as SecObserve's backend and frontend
     - Backend and frontend are build automatically if necessary with the production Dockerfiles
+    - The environment variables of the backend container are defined in `docker/backend/prod/django/docker.env`
+* [`docker-compose-prod-test-multi.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-prod-test-multi.yml)
+    - Same as `docker-compose-prod-test.yml`, but with the backend split into one container per role: `init` (migrations, admin user, parsers, licenses), `background` (Huey consumer) and `api` (Gunicorn)
+    - The roles are selected by the argument given to the backend's entrypoint, see `docker/backend/prod/django/entrypoint`
+    - The environment variables of the backend containers are defined in `docker/backend/prod/django/docker.env`
 * [`docker-compose-unittests.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-unittests.yml)
     - Starts the unit tests for the backend
 * [`docker-compose.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose.yml)

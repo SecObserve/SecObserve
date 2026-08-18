@@ -21,6 +21,37 @@ services:
     ports:
       - "3000:3000"
 
+  init:
+    build:
+      context: .
+      dockerfile: ./docker/backend/prod/django/Dockerfile
+      args:
+        VERSION: prod_test
+    image: secobserve_backend_prod
+    command: ["init"]
+    depends_on:
+      - postgres
+    env_file:
+      - ./docker/backend/prod/django/docker.env
+
+  background:
+    build:
+      context: .
+      dockerfile: ./docker/backend/prod/django/Dockerfile
+      args:
+        VERSION: prod_test
+    image: secobserve_backend_prod
+    command: ["background"]
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
+    env_file:
+      - ./docker/backend/prod/django/docker.env
+
   backend:
     build:
       context: .
@@ -28,9 +59,12 @@ services:
       args:
         VERSION: prod_test
     image: secobserve_backend_prod
-    command: ["all"]
+    command: ["api"]
     depends_on:
-      - postgres
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
     env_file:
       - ./docker/backend/prod/django/docker.env
     ports:
