@@ -19,7 +19,6 @@ services:
       context: .
       dockerfile: ./docker/backend/dev/django/Dockerfile
     image: secobserve_backend_dev
-    command: ["all"]
     depends_on:
       - postgres
     env_file:

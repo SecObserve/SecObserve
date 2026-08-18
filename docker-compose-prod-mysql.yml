@@ -57,7 +57,6 @@ services:
   backend:
     image: ghcr.io/secobserve/secobserve-backend:1.57.0
     container_name: "prod_secobserve_backend"
-    command: ["all"]
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`secobserve-backend.localhost`)"
