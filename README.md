@@ -29,6 +29,21 @@ The aim of SecObserve is to make vulnerability scanning and vulnerability manage
 
 ![Overview](docs/assets/images/secobserve_integrations.svg)
 
+## Quickstart
+
+```sh
+git clone git@github.com:SecObserve/SecObserve.git
+cd SecObserve
+cp frontend/.env.no_oidc frontend/.env
+./bin/dev.sh
+```
+This starts SecObserve in development and testing mode with Docker Compose.
+
+- User interface: <http://localhost:3000>
+- User / password: `admin` / `admin`
+
+Templates for productive installation are documented in <https://secobserve.github.io/SecObserve/getting_started/installation/>
+
 ## Documentation
 
 The full documentation how to install and use SecObserve can be found here: [https://secobserve.github.io/SecObserve/](https://secobserve.github.io/SecObserve/)
