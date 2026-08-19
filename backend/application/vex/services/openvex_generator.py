@@ -270,7 +270,8 @@ def _get_statements_for_product(
             if existing_product:
                 _add_subcomponent(observation, existing_product)
             else:
-                raise ValueError(f"Product {product.name} not found in existing statement")
+                openvex_product = _create_product(observation)
+                existing_statement.products.append(openvex_product)
         else:
             prepared_statement.vulnerability = openvex_vulnerability
             openvex_product = _create_product(observation)

@@ -1,0 +1,81 @@
+{
+    "@context": "https://openvex.dev/ns/v0.2.0",
+    "@id": "https://vex.example.com/OpenVEX_2020_0001",
+    "author": "Author",
+    "last_updated": "2020-01-01T04:30:00+00:00",
+    "role": "Role",
+    "statements": [
+        {
+            "action_statement": "Upgrade to release 2.1.0",
+            "products": [
+                {
+                    "@id": "pkg:so/vex_product_2@dev",
+                    "identifiers": {
+                        "purl": "pkg:so/vex_product_2@dev"
+                    },
+                    "subcomponents": [
+                        {
+                            "@id": "pkg:so/vendor2/vex_comp_2@2.0.0"
+                        }
+                    ]
+                },
+                {
+                    "@id": "pkg:so/vex_product_2@main",
+                    "identifiers": {
+                        "purl": "pkg:so/vex_product_2@main"
+                    },
+                    "subcomponents": [
+                        {
+                            "@id": "pkg:so/vendor2/vex_comp_2@2.0.0"
+                        }
+                    ]
+                }
+            ],
+            "status": "affected",
+            "vulnerability": {
+                "@id": "https://nvd.nist.gov/vuln/detail/CVE-vulnerability_2",
+                "description": "description 2",
+                "name": "CVE-vulnerability_2"
+            }
+        },
+        {
+            "products": [
+                {
+                    "@id": "pkg:so/vex_product_2@dev",
+                    "identifiers": {
+                        "purl": "pkg:so/vex_product_2@dev"
+                    },
+                    "subcomponents": [
+                        {
+                            "@id": "pkg:so/vex_comp_4@4.0.0"
+                        }
+                    ]
+                }
+            ],
+            "status": "fixed",
+            "vulnerability": {
+                "description": "description 3",
+                "name": "vex_vulnerability_3"
+            }
+        },
+        {
+            "impact_statement": "Should be no problem",
+            "products": [
+                {
+                    "@id": "pkg:so/vex_product_2@main",
+                    "identifiers": {
+                        "purl": "pkg:so/vex_product_2@main"
+                    }
+                }
+            ],
+            "status": "not_affected",
+            "vulnerability": {
+                "description": "description 4",
+                "name": "vex_vulnerability_4"
+            }
+        }
+    ],
+    "timestamp": "2020-01-01T04:30:00+00:00",
+    "tooling": "SecObserve / 1.57.0",
+    "version": 1
+}
