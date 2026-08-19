@@ -1,0 +1,9 @@
+# Values used by tests/test-chart.sh to render the `ha` architecture.
+architecture: ha
+
+frontend:
+  replicaCount: 2
+
+backend:
+  api:
+    replicaCount: 3
