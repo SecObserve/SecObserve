@@ -26,8 +26,6 @@ Set `architecture: ha` to split the backend into separate workloads: an `init` J
 
 Application and bundled PostgreSQL resource names are derived from the Helm release name. External databases can be configured through `database.*` values with `postgresql.enabled=false`.
 
-{{ template "chart.valuesSection" . }}
-
 {{ template "chart.valuesSectionHtml" . }}
 
 {{ template "helm-docs.versionFooter" . }}
