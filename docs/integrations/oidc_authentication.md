@@ -1,6 +1,6 @@
 # OpenID Connect authentication
 
-[OpenID Connect](https://openid.net/developers/how-connect-works) authentication has been tested with Keycloak and Azure Active Directory. It should work with other OpenID Connect providers as well, as long as they support the [authorization flow](https://oauth.net/2/grant-types/authorization-code) with [PKCE](https://oauth.net/2/pkce) and without a secret.
+[OpenID Connect](https://openid.net/developers/how-connect-works) authentication has been tested with Keycloak and Microsoft Entra ID. It should work with other OpenID Connect providers as well, as long as they support the [authorization flow](https://oauth.net/2/grant-types/authorization-code) with [PKCE](https://oauth.net/2/pkce) and without a secret.
 
 ## Keycloak
 
@@ -8,9 +8,9 @@ In Keycloak a new OpenID Connect client needs to be created. The client needs to
 
 ![Keycloak client settings](../assets/images/screenshot_keycloak.png)
 
-#### Configuration parameters for SecObserve
+### Configuration parameters for SecObserve
 
-Backend
+Backend:
 
 | Environment variable | Value                                               |
 |----------------------|-----------------------------------------------------|
@@ -23,7 +23,7 @@ Backend
 | `OIDC_GROUPS`        | `groups`                                            |
 
 
-Frontend
+Frontend:
 
 | Environment variable            | Value                                               |
 |---------------------------------|-----------------------------------------------------|
@@ -35,13 +35,13 @@ Frontend
 | `OIDC_PROMPT`                   | [no value]                                          |
 
 
-## Azure Active Directory
+## Microsoft Entra ID
 
-In Azure Active Directory a new App registration needs to be created.
+In Microsoft Entra ID, a new **App registration** needs to be created, with the redirect URI registered under the **Single-page application (SPA)** platform. A client secret is not needed.
 
-#### Configuration parameters for SecObserve
+### Configuration parameters for SecObserve
 
-Backend
+Backend:
 
 | Environment variable | Value                                              |
 |----------------------|----------------------------------------------------|
@@ -53,17 +53,16 @@ Backend
 | `OIDC_GROUPS`        | `groups`                                           |
 
 
-Frontend
+Frontend:
 
 | Environment variable            | Value                                              |
 |---------------------------------|----------------------------------------------------|
 | `OIDC_ENABLE`                   | `true`                                             |
-| `OIDC_AUTHORITY`                | `https://login.microsoftonline.com/TENANT_ID`      |
+| `OIDC_AUTHORITY`                | `https://login.microsoftonline.com/TENANT_ID/v2.0` |
 | `OIDC_CLIENT_ID`                | `CLIENT_ID`                                        |
 | `OIDC_REDIRECT_URI`             | `https://secobserve.example.com`                   |
 | `OIDC_POST_LOGOUT_REDIRECT_URI` | `https://secobserve.example.com`                   |
 | `OIDC_PROMPT`                   | [no value]                                         |
-
 
 ## Customize the login dialog
 
