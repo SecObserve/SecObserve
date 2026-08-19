@@ -2,9 +2,9 @@
 
 ## Installing the chart
 
-The chart can be installed from the OCI repository using `helm install secobserve --version 1.1.1 oci://ghcr.io/SecObserve/charts/secobserve`.
+The chart can be installed from the OCI repository using `helm install secobserve --version 1.2.0 oci://ghcr.io/SecObserve/charts/secobserve`.
 
-![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.57.0](https://img.shields.io/badge/AppVersion-1.57.0-informational?style=flat-square)
+![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.57.0](https://img.shields.io/badge/AppVersion-1.57.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system
 designed for software development teams and cloud-native environments.
@@ -32,7 +32,9 @@ across their software projects, enhancing visibility and improving DevSecOps wor
 
 ## Operational notes
 
-The chart supports exactly one application replica because SecObserve currently uses a SQLite-backed Huey task queue. The queue is persisted in a dedicated PersistentVolumeClaim by default.
+With the default `architecture: single`, all roles run in one Pod and the chart supports exactly one application replica. The Huey queue of a SQLite installation is persisted in a dedicated PersistentVolumeClaim.
+
+Set `architecture: ha` to split the backend into separate workloads: an `init` Job, a scalable `api` Deployment, a `background` Deployment running the Huey consumer, and a separate `frontend` Deployment. `backend.background.replicaCount` is limited to 1, because the Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue. The PersistentVolumeClaim is not created for this architecture.
 
 Application and bundled PostgreSQL resource names are derived from the Helm release name. External databases can be configured through `database.*` values with `postgresql.enabled=false`.
 
@@ -51,10 +53,20 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 | securityContext | object | `{"enabled":true,"fsGroup":1001,"fsGroupChangePolicy":"OnRootMismatch"}` | securityContext to use for the pod |
 | tolerations | object | `{}` | Toleration labels for pod assignment |
 
+### General
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| architecture | string | `"single"` | deployment architecture (`single` for one Pod running all roles, `ha` for separate init, api, background and frontend workloads) |
+| fullnameOverride | string | `""` | fully override generated resource names |
+| nameOverride | string | `""` | override the chart name used in resource names |
+
 ### Backend
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| backend.api.replicaCount | int | `2` | number of API replicas, only used when `architecture` is `ha` |
+| backend.background.replicaCount | int | `1` | number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue, so a second consumer is not safe yet. |
 | backend.env[0] | object | `{"name":"ADMIN_USER","value":"admin"}` | admin user name |
 | backend.env[10] | object | `{"name":"OIDC_EMAIL","value":"email"}` | OIDC email address |
 | backend.env[11] | object | `{"name":"OIDC_GROUPS","value":"groups"}` | OIDC groups |
@@ -72,6 +84,7 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 | backend.image.pullPolicy | string | `"IfNotPresent"` | image pull policy |
 | backend.image.repository | string | `"secobserve/secobserve-backend"` | image repository |
 | backend.image.tag | string | `nil` | image tag (uses appVersion value of Chart.yaml if not specified) |
+| backend.init.backoffLimit | int | `6` | number of retries for the init Job, only used when `architecture` is `ha` |
 | backend.resources | object | `{"limits":{"cpu":"1000m","memory":"1500Mi"},"requests":{"cpu":"1000m","memory":"1500Mi"}}` | resource requirements and limits |
 | backend.secretKeys.adminPassword | string | `"password"` | key containing the initial admin password |
 | backend.secretKeys.djangoSecretKey | string | `"django_secret_key"` | key containing the Django secret key |
@@ -102,7 +115,7 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 | dbchecker.image.digest | string | `""` | Image digest for the dbchecker image; takes precedence over tag when set |
 | dbchecker.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy for the dbchecker image |
 | dbchecker.image.repository | string | `"busybox"` | Docker image used to check Database readiness at startup |
-| dbchecker.image.tag | string | `"1.37.0"` | Image tag for the dbchecker image |
+| dbchecker.image.tag | string | `"1.38.0"` | Image tag for the dbchecker image |
 | dbchecker.port | int | `5432` | database port checked by the init container |
 | dbchecker.resources | object | `{"limits":{"cpu":"20m","memory":"32Mi"},"requests":{"cpu":"20m","memory":"32Mi"}}` | Resource requests and limits for the dbchecker container |
 | dbchecker.securityContext | object | `{"allowPrivilegeEscalation":false,"enabled":true,"runAsGroup":1001,"runAsNonRoot":true,"runAsUser":1001}` | SecurityContext for the dbchecker container |
@@ -122,18 +135,12 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 | frontend.image.registry | string | `"ghcr.io"` | image registry |
 | frontend.image.repository | string | `"secobserve/secobserve-frontend"` | image repository |
 | frontend.image.tag | string | `nil` | image tag (uses appVersion value of Chart.yaml if not specified) |
+| frontend.replicaCount | int | `1` | number of frontend replicas, only used when `architecture` is `ha` |
 | frontend.resources | object | `{"limits":{"cpu":"500m","memory":"1000Mi"},"requests":{"cpu":"500m","memory":"1000Mi"}}` | resource requirements and limits |
 | frontend.securityContext | object | `{"allowPrivilegeEscalation":false,"enabled":true,"runAsGroup":1001,"runAsNonRoot":true,"runAsUser":1001}` | securityContext to use for frontend container |
 | frontend.service.port | int | `3000` | service port |
 | frontend.volumeMounts | list | `[]` | additional volume mounts for the frontend container |
 | frontend.volumes | list | `[]` | additional Pod volumes used by the frontend container |
-
-### General
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| fullnameOverride | string | `""` | fully override generated resource names |
-| nameOverride | string | `""` | override the chart name used in resource names |
 
 ### Huey
 
@@ -270,6 +277,44 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 		</tr>
 	</tbody>
 </table>
+<h3>General</h3>
+<table>
+	<thead>
+		<th>Key</th>
+		<th>Type</th>
+		<th>Default</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td>architecture</td>
+			<td>string</td>
+			<td><pre lang="json">
+"single"
+</pre>
+</td>
+			<td>deployment architecture (`single` for one Pod running all roles, `ha` for separate init, api, background and frontend workloads)</td>
+		</tr>
+		<tr>
+			<td>fullnameOverride</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>fully override generated resource names</td>
+		</tr>
+		<tr>
+			<td>nameOverride</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>override the chart name used in resource names</td>
+		</tr>
+	</tbody>
+</table>
 <h3>Backend</h3>
 <table>
 	<thead>
@@ -279,6 +324,24 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 		<th>Description</th>
 	</thead>
 	<tbody>
+		<tr>
+			<td>backend.api.replicaCount</td>
+			<td>int</td>
+			<td><pre lang="json">
+2
+</pre>
+</td>
+			<td>number of API replicas, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
+			<td>backend.background.replicaCount</td>
+			<td>int</td>
+			<td><pre lang="json">
+1
+</pre>
+</td>
+			<td>number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue, so a second consumer is not safe yet.</td>
+		</tr>
 		<tr>
 			<td>backend.env[0]</td>
 			<td>object</td>
@@ -472,6 +535,15 @@ null
 </pre>
 </td>
 			<td>image tag (uses appVersion value of Chart.yaml if not specified)</td>
+		</tr>
+		<tr>
+			<td>backend.init.backoffLimit</td>
+			<td>int</td>
+			<td><pre lang="json">
+6
+</pre>
+</td>
+			<td>number of retries for the init Job, only used when `architecture` is `ha`</td>
 		</tr>
 		<tr>
 			<td>backend.resources</td>
@@ -694,7 +766,7 @@ true
 			<td>dbchecker.image.tag</td>
 			<td>string</td>
 			<td><pre lang="json">
-"1.37.0"
+"1.38.0"
 </pre>
 </td>
 			<td>Image tag for the dbchecker image</td>
@@ -873,6 +945,15 @@ null
 			<td>image tag (uses appVersion value of Chart.yaml if not specified)</td>
 		</tr>
 		<tr>
+			<td>frontend.replicaCount</td>
+			<td>int</td>
+			<td><pre lang="json">
+1
+</pre>
+</td>
+			<td>number of frontend replicas, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
 			<td>frontend.resources</td>
 			<td>object</td>
 			<td><pre lang="json">
@@ -931,35 +1012,6 @@ null
 </pre>
 </td>
 			<td>additional Pod volumes used by the frontend container</td>
-		</tr>
-	</tbody>
-</table>
-<h3>General</h3>
-<table>
-	<thead>
-		<th>Key</th>
-		<th>Type</th>
-		<th>Default</th>
-		<th>Description</th>
-	</thead>
-	<tbody>
-		<tr>
-			<td>fullnameOverride</td>
-			<td>string</td>
-			<td><pre lang="json">
-""
-</pre>
-</td>
-			<td>fully override generated resource names</td>
-		</tr>
-		<tr>
-			<td>nameOverride</td>
-			<td>string</td>
-			<td><pre lang="json">
-""
-</pre>
-</td>
-			<td>override the chart name used in resource names</td>
 		</tr>
 	</tbody>
 </table>

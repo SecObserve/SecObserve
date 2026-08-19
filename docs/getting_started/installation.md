@@ -93,4 +93,10 @@ The example uses the release name `my-release`. For a release named `secobserve`
 
 #### Background tasks
 
-SecObserve currently uses SQLite for its Huey task queue, so the chart supports exactly one application replica. The queue is persisted in a dedicated PersistentVolumeClaim by default. Configure `huey.persistence.existingClaim` to reuse a claim or `huey.persistence.storageClass` to select a storage class.
+With the default `architecture: single`, all roles run in one Pod and the chart supports exactly one application replica.
+
+Set `architecture: ha` to run the backend roles as separate workloads instead: an `init` Job for migrations, admin user, parsers and licenses, a scalable `api` Deployment, a `background` Deployment for the Huey consumer, and a separate `frontend` Deployment. Scale the API with `backend.api.replicaCount` and the frontend with `frontend.replicaCount`.
+
+`backend.background.replicaCount` is limited to 1. The Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue, so a second consumer would enqueue periodic tasks twice and reset the state of the first one. For the same reason the `background` Deployment uses the `Recreate` strategy.
+
+For SQLite installations the queue is persisted in a dedicated PersistentVolumeClaim. Configure `huey.persistence.existingClaim` to reuse a claim or `huey.persistence.storageClass` to select a storage class. The PersistentVolumeClaim is not created for `architecture: ha`, which requires PostgreSQL or MySQL.
