@@ -100,3 +100,11 @@ Set `architecture: ha` to run the backend roles as separate workloads instead: a
 `backend.background.replicaCount` is limited to 1. The Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue, so a second consumer would enqueue periodic tasks twice and reset the state of the first one. For the same reason the `background` Deployment uses the `Recreate` strategy.
 
 For SQLite installations the queue is persisted in a dedicated PersistentVolumeClaim. Configure `huey.persistence.existingClaim` to reuse a claim or `huey.persistence.storageClass` to select a storage class. The PersistentVolumeClaim is not created for `architecture: ha`, which requires PostgreSQL or MySQL.
+
+#### Scaling the API
+
+Two limits are shared by all API replicas and should be checked before raising `backend.api.replicaCount`.
+
+**Database connections.** `CONN_MAX_AGE` is not configured, so connections are opened per request rather than held open. At peak an API replica can still use up to `GUNICORN_WORKERS * GUNICORN_THREADS` connections, which is 30 with the defaults of 3 and 10, see [Configuration](configuration.md#backend). The bundled PostgreSQL allows 100 connections by default, so raise `max_connections` through `postgresql.primary.extendedConfiguration`, or lower `GUNICORN_THREADS`, before running more than three API replicas.
+
+**Rate limiting.** SecObserve uses the Django in-memory cache, which is local to each Gunicorn worker process. The rate limits of the REST API are therefore counted per process, not per installation: the effective limit is `replicas * GUNICORN_WORKERS` times the configured rate. This already applies to a single Pod and is not specific to `architecture: ha`.
