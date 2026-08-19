@@ -1,3 +1,4 @@
+{{- if ne (default "single" .Values.architecture) "ha" -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -158,3 +159,4 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
+{{- end }}

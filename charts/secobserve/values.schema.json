@@ -2,11 +2,63 @@
   "$schema": "http://json-schema.org/schema#",
   "type": "object",
   "properties": {
+    "architecture": {
+      "type": "string",
+      "enum": [
+        "single",
+        "ha"
+      ],
+      "default": "single",
+      "description": "Deployment architecture. \"single\" runs every role in one Pod, \"ha\" splits init, api, background and frontend into separate workloads."
+    },
     "replicaCount": {
       "type": "integer",
       "minimum": 1,
       "maximum": 1,
       "description": "SecObserve currently uses a pod-local SQLite Huey queue, so only one application replica is safe."
+    },
+    "frontend": {
+      "type": "object",
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "properties": {
+        "api": {
+          "type": "object",
+          "properties": {
+            "replicaCount": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "background": {
+          "type": "object",
+          "properties": {
+            "replicaCount": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1,
+              "description": "The Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue, so only one background replica is safe."
+            }
+          }
+        },
+        "init": {
+          "type": "object",
+          "properties": {
+            "backoffLimit": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
     }
   }
 }
