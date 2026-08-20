@@ -44,6 +44,9 @@ class VulnerableCodeScanner(BaseScanner):
 
         settings = Settings.load()
 
+        if settings.vulnerablecode_api_key:
+            HEADERS["Authorization"] = f"Token {settings.vulnerablecode_api_key}"
+
         vulnerablecode_components: list[VulnerableCodeComponent] = []
 
         jsonpickle.set_encoder_options("json", ensure_ascii=False)

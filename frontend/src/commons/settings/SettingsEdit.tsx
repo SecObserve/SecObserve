@@ -53,8 +53,10 @@ const SettingsEdit = () => {
         data.observation_title_notification_min_severity ??= "";
         data.observation_title_notification_parser_type ??= "";
         data.vulnerablecode_base_url ??= "";
+        data.vulnerablecode_api_key ??= "";
         if (data.feature_automatic_vulnerablecode_scanning == false) {
             data.vulnerablecode_base_url = "";
+            data.vulnerablecode_api_key = "";
         }
         return data;
     };
@@ -175,11 +177,18 @@ const SettingsEdit = () => {
                                 <FormDataConsumer>
                                     {({ formData }) =>
                                         formData.feature_automatic_vulnerablecode_scanning && (
-                                            <TextInputWide
-                                                source="vulnerablecode_base_url"
-                                                label="VulnerableCode base URL"
-                                                validate={validate_255}
-                                            />
+                                            <Stack spacing={1}>
+                                                <TextInputWide
+                                                    source="vulnerablecode_base_url"
+                                                    label="VulnerableCode base URL"
+                                                    validate={validate_255}
+                                                />
+                                                <TextInputWide
+                                                    source="vulnerablecode_api_key"
+                                                    label="VulnerableCode API key"
+                                                    validate={validate_255}
+                                                />
+                                            </Stack>
                                         )
                                     }
                                 </FormDataConsumer>

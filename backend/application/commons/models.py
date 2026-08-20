@@ -9,6 +9,7 @@ from django.db.models import (
     Model,
     TextField,
 )
+from encrypted_model_fields.fields import EncryptedCharField
 
 from application.commons.services.request_cache import cache_for_request
 from application.commons.types import VEX_Justification_Styles
@@ -221,6 +222,8 @@ class Settings(Model, DirtyFieldsMixin):
         blank=True,
         help_text="Base URL of the VulnerableCode instance",
     )
+    vulnerablecode_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
+    # We treat EncryptedCharField as a regular CharField
     feature_exploit_information = BooleanField(default=True, help_text="Enable CVSS enrichment")
     exploit_information_max_age_years = IntegerField(
         default=10,

@@ -112,11 +112,18 @@ const SettingsShowComponent = () => {
                                     <Labeled label="Calculate observation count from metrics">
                                         <BooleanField source="observation_count_from_metrics" />
                                     </Labeled>
-                                    {settings.vulnerablecode_base_url && (
-                                        <Labeled label="VulnerableCode base URL">
-                                            <TextField source="vulnerablecode_base_url" />
-                                        </Labeled>
-                                    )}
+                                    <Stack spacing={1}>
+                                        {settings.vulnerablecode_base_url && (
+                                            <Labeled label="VulnerableCode base URL">
+                                                <TextField source="vulnerablecode_base_url" />
+                                            </Labeled>
+                                        )}
+                                        {settings.vulnerablecode_api_key && (
+                                            <Labeled label="VulnerableCode API key">
+                                                <TextField source="vulnerablecode_api_key" />
+                                            </Labeled>
+                                        )}
+                                    </Stack>
                                 </Stack>
                             </Grid>
                         </Grid>
