@@ -28,9 +28,16 @@ logger = logging.getLogger("secobserve.import_observations")
 )
 @so_periodic_task("Import observations from API configurations and OSV")
 def task_api_import() -> str:
+    message = _import_api()
+    message = _import_osv(message)
+    message = _import_vulnerablecode(message)
+
+    return message
+
+
+def _import_api() -> str:
     message = ""
 
-    # 1. Import observations from API configurations
     settings = Settings.load()
     if not settings.feature_automatic_api_import:
         logger.info("API import is disabled in settings")
@@ -80,11 +87,14 @@ def task_api_import() -> str:
         if api_imports_failed > 0:
             message += f" API import failed for {api_imports_failed} configurations."
 
-    # 2. Scan products for OSV vulnerabilities
+    return message
+
+
+def _import_osv(message: str) -> str:
     settings = Settings.load()
     if not settings.feature_automatic_osv_scanning:
         logger.info("OSV scanning is disabled in settings")
-        return message + "\nOSV scanning is disabled in settings."
+        message += "\nOSV scanning is disabled in settings."
 
     osv_imports_failed = 0
     osv_scanner = OSVScanner()
@@ -112,11 +122,14 @@ def task_api_import() -> str:
     if osv_imports_failed > 0:
         message += f" OSV scanning failed for {osv_imports_failed} products."
 
-    # 3. Scan products for VulnerableCode vulnerabilities
+    return message
+
+
+def _import_vulnerablecode(message: str) -> str:
     settings = Settings.load()
     if not settings.feature_automatic_vulnerablecode_scanning:
         logger.info("VulnerableCode scanning is disabled in settings")
-        return message + "\nVulnerableCode scanning is disabled in settings."
+        message += "\nVulnerableCode scanning is disabled in settings."
 
     vulnerablecode_imports_failed = 0
     vulnerablecode_scanner = VulnerableCodeScanner()
@@ -142,6 +155,6 @@ def task_api_import() -> str:
 
     message += f"\nImported observations for {len(products)} products from VulnerableCode scanning."
     if vulnerablecode_imports_failed > 0:
-        message += f" VulnerableCode scanning failed for {osv_imports_failed} products."
+        message += f" VulnerableCode scanning failed for {vulnerablecode_imports_failed} products."
 
     return message
