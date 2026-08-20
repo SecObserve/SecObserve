@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from json import dumps
 from typing import Optional, Tuple
+
 from packageurl import PackageURL
 
 from application.core.models import Branch, Observation, Product
@@ -101,7 +102,7 @@ class VulnerableCodeParser(BaseParser):
                 parsed_purl = PackageURL.from_string(fixed_by_package)
                 recommendation = parsed_purl.version if parsed_purl.version else f"`{fixed_by_package}`"
                 recommendations.append(recommendation)
-            except ValueError as e:
+            except ValueError:
                 recommendations.append(f"`{fixed_by_package}`")
 
         version_string = "version" if len(recommendations) == 1 else "versions"
