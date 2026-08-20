@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from json import dumps
 from typing import Optional, Tuple
+from packageurl import PackageURL
 
 from application.core.models import Branch, Observation, Product
 from application.import_observations.parsers.base_parser import BaseParser
@@ -91,14 +92,20 @@ class VulnerableCodeParser(BaseParser):
         return cvss3, cvss4
 
     def _get_recommendation(self, advisory: dict) -> str:
-        recommendation = ""
+        recommendations = []
 
         fixed_by_packages = advisory.get("fixed_by_packages")
         fixed_by_packages = fixed_by_packages if isinstance(fixed_by_packages, list) else ""
-        if fixed_by_packages:
-            recommendation = f"Update to {", ".join(fixed_by_packages)}"
+        for fixed_by_package in fixed_by_packages:
+            try:
+                parsed_purl = PackageURL.from_string(fixed_by_package)
+                recommendation = parsed_purl.version if parsed_purl.version else f"`{fixed_by_package}`"
+                recommendations.append(recommendation)
+            except ValueError as e:
+                recommendations.append(f"`{fixed_by_package}`")
 
-        return recommendation
+        version_string = "version" if len(recommendations) == 1 else "versions"
+        return f"Update to {version_string} {", ".join(recommendations)}" if recommendations else ""
 
     def _get_references(self, advisory: dict) -> list:
         references = []
