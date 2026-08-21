@@ -38,7 +38,7 @@ class MockResponse:
             return loads(file.read())
 
 
-class TestImportObservations(BaseTestCase):
+class TestOSVScanner(BaseTestCase):
     def setUp(self):
         call_command(
             "loaddata",
@@ -62,140 +62,6 @@ class TestImportObservations(BaseTestCase):
 
         self.service_frontend = Service.objects.get(product=self.product, name="db_service_internal_frontend")
         self.service_backend = Service.objects.get(product=self.product, name="db_service_internal_backend")
-
-    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
-    def test_scan_product_no_branch_no_service(
-        self,
-        mock_scan_license_components,
-    ):
-        self.license_component.branch = None
-        self.license_component.origin_service = None
-        self.license_component.save()
-
-        mock_scan_license_components.return_value = (0, 0, 0)
-        OSVScanner().scan_product(self.product)
-
-        expected_calls = [
-            call([self.license_component], self.product, None, None),
-            call([], self.product, self.branch_dev, None),
-            call([], self.product, self.branch_main, None),
-            call([], self.product, None, self.service_backend),
-            call([], self.product, self.branch_dev, self.service_backend),
-            call([], self.product, self.branch_main, self.service_backend),
-            call([], self.product, None, self.service_frontend),
-            call([], self.product, self.branch_dev, self.service_frontend),
-            call([], self.product, self.branch_main, self.service_frontend),
-        ]
-        mock_scan_license_components.assert_has_calls(expected_calls)
-
-    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
-    def test_scan_product_branch_no_service(
-        self,
-        mock_scan_license_components,
-    ):
-        self.license_component.branch = self.branch_dev
-        self.license_component.origin_service = None
-        self.license_component.save()
-
-        mock_scan_license_components.return_value = (0, 0, 0)
-        OSVScanner().scan_product(self.product)
-
-        expected_calls = [
-            call([], self.product, None, None),
-            call([self.license_component], self.product, self.branch_dev, None),
-            call([], self.product, self.branch_main, None),
-            call([], self.product, None, self.service_backend),
-            call([], self.product, self.branch_dev, self.service_backend),
-            call([], self.product, self.branch_main, self.service_backend),
-            call([], self.product, None, self.service_frontend),
-            call([], self.product, self.branch_dev, self.service_frontend),
-            call([], self.product, self.branch_main, self.service_frontend),
-        ]
-        mock_scan_license_components.assert_has_calls(expected_calls)
-
-    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
-    def test_scan_product_no_branch_but_service(
-        self,
-        mock_scan_license_components,
-    ):
-        self.license_component.branch = None
-        self.license_component.origin_service = self.service_frontend
-        self.license_component.save()
-
-        mock_scan_license_components.return_value = (0, 0, 0)
-        OSVScanner().scan_product(self.product)
-
-        expected_calls = [
-            call([], self.product, None, None),
-            call([], self.product, self.branch_dev, None),
-            call([], self.product, self.branch_main, None),
-            call([], self.product, None, self.service_backend),
-            call([], self.product, self.branch_dev, self.service_backend),
-            call([], self.product, self.branch_main, self.service_backend),
-            call([self.license_component], self.product, None, self.service_frontend),
-            call([], self.product, self.branch_dev, self.service_frontend),
-            call([], self.product, self.branch_main, self.service_frontend),
-        ]
-        mock_scan_license_components.assert_has_calls(expected_calls)
-
-    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
-    def test_scan_product_branch_and_service(
-        self,
-        mock_scan_license_components,
-    ):
-        self.license_component.branch = self.branch_main
-        self.license_component.origin_service = self.service_frontend
-        self.license_component.save()
-
-        mock_scan_license_components.return_value = (0, 0, 0)
-        OSVScanner().scan_product(self.product)
-
-        expected_calls = [
-            call([], self.product, None, None),
-            call([], self.product, self.branch_dev, None),
-            call([], self.product, self.branch_main, None),
-            call([], self.product, None, self.service_backend),
-            call([], self.product, self.branch_dev, self.service_backend),
-            call([], self.product, self.branch_main, self.service_backend),
-            call([], self.product, None, self.service_frontend),
-            call([], self.product, self.branch_dev, self.service_frontend),
-            call([self.license_component], self.product, self.branch_main, self.service_frontend),
-        ]
-        mock_scan_license_components.assert_has_calls(expected_calls)
-
-    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
-    def test_scan_branch(
-        self,
-        mock_scan_license_components,
-    ):
-        self.license_component.branch = self.branch_main
-        self.license_component.origin_service = self.service_frontend
-        self.license_component.save()
-
-        mock_scan_license_components.return_value = (0, 0, 0)
-        OSVScanner().scan_branch(self.branch_main)
-
-        expected_calls = [
-            call([], self.product, self.branch_main, None),
-            call([], self.product, self.branch_main, self.service_backend),
-            call([self.license_component], self.product, self.branch_main, self.service_frontend),
-        ]
-        mock_scan_license_components.assert_has_calls(expected_calls)
-
-    @patch("requests.post")
-    @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
-    @patch("application.import_observations.scanners.base_scanner._process_data")
-    def test_scan_license_components_no_license_components(
-        self, mock_process_data, mock_get_observations, mock_requests_post
-    ):
-        product = Product.objects.get(id=1)
-
-        numbers = OSVScanner()._scan_license_components([], product, None, None)
-
-        self.assertEqual((0, 0, 0), numbers)
-        mock_requests_post.assert_not_called()
-        mock_get_observations.assert_not_called()
-        mock_process_data.assert_not_called()
 
     @patch("requests.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")

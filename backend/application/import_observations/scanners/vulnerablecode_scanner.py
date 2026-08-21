@@ -30,22 +30,24 @@ class RequestAdvisories:
     purls: list[str]
 
 
-HEADERS = {"User-Agent": "VCIO_API_AGENT", "Content-Type": "application/json", "Accept": "application/json"}
-
-
 class VulnerableCodeScanner(BaseScanner):
     def __init__(self) -> None:
         super().__init__()
         self.parser = VulnerableCodeParser()
 
+        settings = Settings.load()
+        self.base_url = settings.vulnerablecode_base_url
+        self.headers = {
+            "User-Agent": "VCIO_API_AGENT",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        if settings.vulnerablecode_api_key:
+            self.headers["Authorization"] = f"Token {settings.vulnerablecode_api_key}"
+
     def _do_scan(self, license_components: list[License_Component]) -> Any:
         if not license_components:
             return []
-
-        settings = Settings.load()
-
-        if settings.vulnerablecode_api_key:
-            HEADERS["Authorization"] = f"Token {settings.vulnerablecode_api_key}"
 
         vulnerablecode_components: list[VulnerableCodeComponent] = []
 
@@ -58,13 +60,13 @@ class VulnerableCodeScanner(BaseScanner):
         }
 
         packages_request_data = RequestPackages(purls=list(license_components_dict.keys()))
-        packages_url = f"{settings.vulnerablecode_base_url}/api/v3/packages/"
+        packages_url = f"{self.base_url}/api/v3/packages/"
 
         while packages_url:
             response = requests.post(  # nosec B113
                 # This is a false positive, there is a timeout of 5 minutes
                 url=packages_url,
-                headers=HEADERS,
+                headers=self.headers,
                 data=jsonpickle.encode(packages_request_data, unpicklable=False),
                 timeout=5 * 60,
             )
@@ -77,7 +79,7 @@ class VulnerableCodeScanner(BaseScanner):
             affected_advisories: dict[str, list[str]] = {}
 
             for result in results:
-                for affected_by_vulnerability in result.get("affected_by_vulnerabilities"):
+                for affected_by_vulnerability in result.get("affected_by_vulnerabilities", []):
                     purl_list = affected_advisories.get(affected_by_vulnerability.get("advisory_uid"))
                     if purl_list:
                         purl_list.append(result.get("purl"))
@@ -90,7 +92,7 @@ class VulnerableCodeScanner(BaseScanner):
                     affected_purls.add(purl)
 
             if not affected_purls:
-                return []
+                continue
 
             self._get_advisories(
                 vulnerablecode_components=vulnerablecode_components,
@@ -107,9 +109,7 @@ class VulnerableCodeScanner(BaseScanner):
         license_components: dict[str, License_Component],
         affected_purls: set[str],
     ) -> None:
-        settings = Settings.load()
-
-        advisories_url_base = f"{settings.vulnerablecode_base_url}/api/v3/affected-by-advisories"
+        advisories_url_base = f"{self.base_url}/api/v3/affected-by-advisories"
 
         for purl in affected_purls:
             license_component = license_components.get(purl)
@@ -122,7 +122,7 @@ class VulnerableCodeScanner(BaseScanner):
                 response = requests.get(  # nosec B113
                     # This is a false positive, there is a timeout of 5 minutes
                     url=advisories_url,
-                    headers=HEADERS,
+                    headers=self.headers,
                     timeout=5 * 60,
                 )
 
@@ -135,23 +135,22 @@ class VulnerableCodeScanner(BaseScanner):
                         VulnerableCodeComponent(component=license_component, advisory=result)
                     )
 
-    def _get_advisories_1(
+    def _get_advisories_1(  # pragma: no cover
+        # Alternative implementation, not called at the moment
         self,
         vulnerablecode_components: list[VulnerableCodeComponent],
         license_components: dict[str, License_Component],
         affected_advisories: dict[str, list[str]],
         affected_purls: set[str],
     ) -> None:
-        settings = Settings.load()
-
         advisories_request_data = RequestAdvisories(purls=list(affected_purls))
-        advisories_url = f"{settings.vulnerablecode_base_url}/api/v3/advisories/"
+        advisories_url = f"{self.base_url}/api/v3/advisories/"
 
         while advisories_url:
             response = requests.post(  # nosec B113
                 # This is a false positive, there is a timeout of 5 minutes
                 url=advisories_url,
-                headers=HEADERS,
+                headers=self.headers,
                 data=jsonpickle.encode(advisories_request_data, unpicklable=False),
                 timeout=5 * 60,
             )
