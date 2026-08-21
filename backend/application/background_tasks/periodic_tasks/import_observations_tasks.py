@@ -94,7 +94,7 @@ def _import_osv(message: str) -> str:
     settings = Settings.load()
     if not settings.feature_automatic_osv_scanning:
         logger.info("OSV scanning is disabled in settings")
-        message += "\nOSV scanning is disabled in settings."
+        return message + "\nOSV scanning is disabled in settings."
 
     osv_imports_failed = 0
     osv_scanner = OSVScanner()
@@ -129,7 +129,7 @@ def _import_vulnerablecode(message: str) -> str:
     settings = Settings.load()
     if not settings.feature_automatic_vulnerablecode_scanning:
         logger.info("VulnerableCode scanning is disabled in settings")
-        message += "\nVulnerableCode scanning is disabled in settings."
+        return message + "\nVulnerableCode scanning is disabled in settings."
 
     vulnerablecode_imports_failed = 0
     vulnerablecode_scanner = VulnerableCodeScanner()

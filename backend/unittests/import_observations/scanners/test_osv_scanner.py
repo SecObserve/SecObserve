@@ -11,11 +11,7 @@ from application.import_observations.parsers.osv.parser import (
     OSV_Component,
     OSV_Vulnerability,
 )
-from application.import_observations.scanners.osv_scanner import (
-    scan_branch,
-    scan_license_components,
-    scan_product,
-)
+from application.import_observations.scanners.osv_scanner import OSVScanner
 from application.import_observations.services.import_observations import (
     ImportParameters,
 )
@@ -67,7 +63,7 @@ class TestImportObservations(BaseTestCase):
         self.service_frontend = Service.objects.get(product=self.product, name="db_service_internal_frontend")
         self.service_backend = Service.objects.get(product=self.product, name="db_service_internal_backend")
 
-    @patch("application.import_observations.scanners.osv_scanner.scan_license_components")
+    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
     def test_scan_product_no_branch_no_service(
         self,
         mock_scan_license_components,
@@ -77,7 +73,7 @@ class TestImportObservations(BaseTestCase):
         self.license_component.save()
 
         mock_scan_license_components.return_value = (0, 0, 0)
-        scan_product(self.product)
+        OSVScanner().scan_product(self.product)
 
         expected_calls = [
             call([self.license_component], self.product, None, None),
@@ -92,7 +88,7 @@ class TestImportObservations(BaseTestCase):
         ]
         mock_scan_license_components.assert_has_calls(expected_calls)
 
-    @patch("application.import_observations.scanners.osv_scanner.scan_license_components")
+    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
     def test_scan_product_branch_no_service(
         self,
         mock_scan_license_components,
@@ -102,7 +98,7 @@ class TestImportObservations(BaseTestCase):
         self.license_component.save()
 
         mock_scan_license_components.return_value = (0, 0, 0)
-        scan_product(self.product)
+        OSVScanner().scan_product(self.product)
 
         expected_calls = [
             call([], self.product, None, None),
@@ -117,7 +113,7 @@ class TestImportObservations(BaseTestCase):
         ]
         mock_scan_license_components.assert_has_calls(expected_calls)
 
-    @patch("application.import_observations.scanners.osv_scanner.scan_license_components")
+    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
     def test_scan_product_no_branch_but_service(
         self,
         mock_scan_license_components,
@@ -127,7 +123,7 @@ class TestImportObservations(BaseTestCase):
         self.license_component.save()
 
         mock_scan_license_components.return_value = (0, 0, 0)
-        scan_product(self.product)
+        OSVScanner().scan_product(self.product)
 
         expected_calls = [
             call([], self.product, None, None),
@@ -142,7 +138,7 @@ class TestImportObservations(BaseTestCase):
         ]
         mock_scan_license_components.assert_has_calls(expected_calls)
 
-    @patch("application.import_observations.scanners.osv_scanner.scan_license_components")
+    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
     def test_scan_product_branch_and_service(
         self,
         mock_scan_license_components,
@@ -152,7 +148,7 @@ class TestImportObservations(BaseTestCase):
         self.license_component.save()
 
         mock_scan_license_components.return_value = (0, 0, 0)
-        scan_product(self.product)
+        OSVScanner().scan_product(self.product)
 
         expected_calls = [
             call([], self.product, None, None),
@@ -167,7 +163,7 @@ class TestImportObservations(BaseTestCase):
         ]
         mock_scan_license_components.assert_has_calls(expected_calls)
 
-    @patch("application.import_observations.scanners.osv_scanner.scan_license_components")
+    @patch("application.import_observations.scanners.base_scanner.BaseScanner._scan_license_components")
     def test_scan_branch(
         self,
         mock_scan_license_components,
@@ -177,7 +173,7 @@ class TestImportObservations(BaseTestCase):
         self.license_component.save()
 
         mock_scan_license_components.return_value = (0, 0, 0)
-        scan_branch(self.branch_main)
+        OSVScanner().scan_branch(self.branch_main)
 
         expected_calls = [
             call([], self.product, self.branch_main, None),
@@ -188,13 +184,13 @@ class TestImportObservations(BaseTestCase):
 
     @patch("requests.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
-    @patch("application.import_observations.scanners.osv_scanner._process_data")
+    @patch("application.import_observations.scanners.base_scanner._process_data")
     def test_scan_license_components_no_license_components(
         self, mock_process_data, mock_get_observations, mock_requests_post
     ):
         product = Product.objects.get(id=1)
 
-        numbers = scan_license_components([], product, None, None)
+        numbers = OSVScanner()._scan_license_components([], product, None, None)
 
         self.assertEqual((0, 0, 0), numbers)
         mock_requests_post.assert_not_called()
@@ -203,8 +199,8 @@ class TestImportObservations(BaseTestCase):
 
     @patch("requests.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
-    @patch("application.import_observations.scanners.osv_scanner._process_data")
-    @patch("application.import_observations.scanners.osv_scanner.Vulnerability_Check.objects.update_or_create")
+    @patch("application.import_observations.scanners.base_scanner._process_data")
+    @patch("application.import_observations.scanners.base_scanner.Vulnerability_Check.objects.update_or_create")
     def test_scan_license_components_error_length(
         self,
         mock_vulnerability_check,
@@ -222,7 +218,7 @@ class TestImportObservations(BaseTestCase):
         mock_requests_post.return_value = response
 
         with self.assertRaises(Exception) as e:
-            scan_license_components(license_components, product, branch, None)
+            OSVScanner()._scan_license_components(license_components, product, branch, None)
 
         self.assertEqual(
             "Number of results is different than number of components",
@@ -241,8 +237,8 @@ class TestImportObservations(BaseTestCase):
 
     @patch("requests.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
-    @patch("application.import_observations.scanners.osv_scanner._process_data")
-    @patch("application.import_observations.scanners.osv_scanner.Vulnerability_Check.objects.update_or_create")
+    @patch("application.import_observations.scanners.base_scanner._process_data")
+    @patch("application.import_observations.scanners.base_scanner.Vulnerability_Check.objects.update_or_create")
     def test_scan_license_components_error_next_page_token(
         self,
         mock_vulnerability_check,
@@ -260,7 +256,7 @@ class TestImportObservations(BaseTestCase):
         mock_requests_post.return_value = response
         mock_get_observations.return_value = [], "OSV (Open Source Vulnerabilities)"
 
-        scan_license_components(license_components, product, branch, None)
+        OSVScanner()._scan_license_components(license_components, product, branch, None)
 
         mock_requests_post.assert_has_calls(
             [
@@ -280,7 +276,7 @@ class TestImportObservations(BaseTestCase):
         mock_get_observations.assert_has_calls(
             [
                 call(
-                    [
+                    data=[
                         OSV_Component(
                             license_component=license_components[0],
                             vulnerabilities={
@@ -312,8 +308,8 @@ class TestImportObservations(BaseTestCase):
                             },
                         ),
                     ],
-                    product,
-                    branch,
+                    product=product,
+                    branch=branch,
                 )
             ]
         )
@@ -322,8 +318,8 @@ class TestImportObservations(BaseTestCase):
 
     @patch("requests.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
-    @patch("application.import_observations.scanners.osv_scanner._process_data")
-    @patch("application.import_observations.scanners.osv_scanner.Vulnerability_Check.objects.update_or_create")
+    @patch("application.import_observations.scanners.base_scanner._process_data")
+    @patch("application.import_observations.scanners.base_scanner.Vulnerability_Check.objects.update_or_create")
     def test_scan_license_components_success(
         self,
         mock_vulnerability_check,
@@ -344,7 +340,7 @@ class TestImportObservations(BaseTestCase):
         mock_process_data.return_value = (1, 2, 3)
         mock_get_observations.return_value = [observation], "OSV (Open Source Vulnerabilities)"
 
-        numbers = scan_license_components(license_components, product, branch, service)
+        numbers = OSVScanner()._scan_license_components(license_components, product, branch, service)
 
         self.assertEqual((1, 2, 3), numbers)
 
@@ -379,7 +375,7 @@ class TestImportObservations(BaseTestCase):
             ),
         ]
 
-        mock_get_observations.assert_called_with(osv_components, product, branch)
+        mock_get_observations.assert_called_with(data=osv_components, product=product, branch=branch)
         mock_process_data.assert_called_with(
             ImportParameters(
                 product=product,

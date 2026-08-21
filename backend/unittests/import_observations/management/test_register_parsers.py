@@ -17,7 +17,7 @@ class TestRegisterParsers(TestCase):
         command.handle()
 
         parsers = Parser.objects.all().order_by("name")
-        self.assertEqual(17, len(parsers))
+        self.assertEqual(18, len(parsers))
 
         parser = parsers[0]
         self.assertEqual("Azure Defender", parser.name)
