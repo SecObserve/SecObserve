@@ -1,0 +1,77 @@
+{{- if eq (default "single" .Values.architecture) "ha" }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ printf "%s-api" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "secobserve.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+spec:
+  replicas: {{ .Values.backend.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "secobserve.componentSelectorLabels" (dict "context" . "component" "api") | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- with .Values.labels }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "secobserve.componentSelectorLabels" (dict "context" . "component" "api") | nindent 8 }}
+    spec:
+      initContainers:
+        {{- if .Values.dbchecker.enabled }}
+        {{- include "secobserve.dbcheckerInitContainer" . | nindent 8 }}
+        {{- end }}
+        {{- include "secobserve.migrationsInitContainer" . | nindent 8 }}
+        {{- with .Values.extraInitContainers }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
+      {{- include "secobserve.podPlacement" . | nindent 6 }}
+      containers:
+        - name: backend
+          image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          args:
+            - api
+          env:
+            {{- include "secobserve.backendEnv" . | nindent 12 }}
+          ports:
+            - name: backend-http
+              containerPort: 5000
+          livenessProbe:
+            httpGet:
+              path: /api/status/health/
+              port: 5000
+            initialDelaySeconds: 300
+            timeoutSeconds: 5
+            failureThreshold: 12
+          readinessProbe:
+            httpGet:
+              path: /api/status/health/
+              port: 5000
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 12
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          {{- with .Values.backend.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.backend.securityContext.enabled }}
+          securityContext:
+            {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+      {{- with .Values.backend.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

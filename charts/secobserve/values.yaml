@@ -1,3 +1,7 @@
+# -- deployment architecture (`single` for one Pod running all roles, `ha` for separate init, api, background and frontend workloads)
+# @section -- General
+architecture: single
+
 # -- number of replicas to deploy
 # @section -- Pod
 replicaCount: 1
@@ -31,6 +35,10 @@ extraInitContainers: []
 
 # @section -- Frontend
 frontend:
+  # -- number of frontend replicas, only used when `architecture` is `ha`
+  # @section -- Frontend
+  replicaCount: 1
+
   image:
     # -- image registry
     # @section -- Frontend
@@ -111,6 +119,23 @@ frontend:
 
 # @section -- Backend
 backend:
+  api:
+    # -- number of API replicas, only used when `architecture` is `ha`
+    # @section -- Backend
+    replicaCount: 2
+
+  background:
+    # -- number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the
+    # Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue,
+    # so a second consumer is not safe yet.
+    # @section -- Backend
+    replicaCount: 1
+
+  init:
+    # -- number of retries for the init Job, only used when `architecture` is `ha`
+    # @section -- Backend
+    backoffLimit: 6
+
   # -- image registry
   # @section -- Backend
   image:

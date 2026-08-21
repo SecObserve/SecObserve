@@ -1,0 +1,61 @@
+{{- if eq (default "single" .Values.architecture) "ha" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ printf "%s-init" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "secobserve.labels" . | nindent 4 }}
+    app.kubernetes.io/component: init
+  annotations:
+    helm.sh/hook: post-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: {{ .Values.backend.init.backoffLimit }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- with .Values.labels }}
+        {{ toYaml . | nindent 8 }}
+        {{- end }}
+        {{- include "secobserve.componentSelectorLabels" (dict "context" . "component" "init") | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      {{- if or .Values.dbchecker.enabled .Values.extraInitContainers }}
+      initContainers:
+        {{- if .Values.dbchecker.enabled }}
+        {{- include "secobserve.dbcheckerInitContainer" . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.extraInitContainers }}
+        {{- tpl (toYaml .) $ | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- include "secobserve.podPlacement" . | nindent 6 }}
+      containers:
+        - name: init
+          image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          args:
+            - init
+          env:
+            {{- include "secobserve.backendEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          {{- with .Values.backend.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.backend.securityContext.enabled }}
+          securityContext:
+            {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+      {{- with .Values.backend.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

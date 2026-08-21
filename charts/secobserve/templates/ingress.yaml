@@ -21,14 +21,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
+                name: {{ include "secobserve.backendServiceName" . }}
                 port:
                   name: backend-http
           - path: /django-static/
             pathType: Prefix
             backend:
               service:
-                name: {{ printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
+                name: {{ include "secobserve.backendServiceName" . }}
                 port:
                   name: backend-http
           {{- with .Values.ingress.paths }}
@@ -38,7 +38,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" }}
+                name: {{ include "secobserve.frontendServiceName" . }}
                 port:
                   name: frontend-http
   {{- if .Values.ingress.tls }}

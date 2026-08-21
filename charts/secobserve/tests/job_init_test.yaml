@@ -1,0 +1,49 @@
+suite: Test SecObserve init Job
+
+templates:
+  - templates/job-init.yaml
+
+release:
+  name: test-release
+  namespace: test-namespace
+
+tests:
+  - it: is not rendered for the single architecture
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: runs the init role once before the other workloads
+    set:
+      architecture: ha
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-init
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-install,pre-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - init
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: dbchecker
+
+  - it: uses the configured backoffLimit
+    set:
+      architecture: ha
+      backend.init.backoffLimit: 2
+    asserts:
+      - equal:
+          path: spec.backoffLimit
+          value: 2
