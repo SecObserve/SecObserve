@@ -39,7 +39,7 @@ export function getIconAndFontColor() {
 }
 
 export function getUserOptionText(user: RaRecord): string {
-    if (user.username && user.username !== user.full_name) {
+    if (user.full_name && user.username !== user.full_name) {
         return `${user.full_name} (${user.username})`;
     }
     return user.full_name;
