@@ -15,7 +15,7 @@ import {
 import notifications from ".";
 import { CustomPagination } from "../commons/custom_fields/CustomPagination";
 import { ProductReferenceInput } from "../commons/custom_fields/ProductReferenceInput";
-import { has_attribute } from "../commons/functions";
+import { getUserOptionText, has_attribute } from "../commons/functions";
 import ListHeader from "../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../commons/user_settings/functions";
@@ -36,7 +36,7 @@ const listFilters = [
     <TextInput source="function" alwaysOn />,
     <ProductReferenceInput alwaysOn />,
     <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
-        <AutocompleteInputMedium optionText="full_name" />
+        <AutocompleteInputMedium optionText={getUserOptionText} />
     </ReferenceInput>,
     <BooleanInput source="exclude_already_viewed" alwaysOn />,
 ];

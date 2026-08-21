@@ -12,7 +12,7 @@ import {
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
-import { humanReadableDate } from "../../commons/functions";
+import { getUserOptionText, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { AGE_CHOICES } from "../../core/types";
@@ -35,7 +35,7 @@ const listFilters = [
     <TextInput source="manual_concluded_license_expression" label="License expression" alwaysOn />,
     <TextInput source="manual_concluded_non_spdx_license" label="Non-SPDX license" alwaysOn />,
     <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
-        <AutocompleteInputMedium optionText="full_name" />
+        <AutocompleteInputMedium optionText={getUserOptionText} />
     </ReferenceInput>,
     <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,
 ];

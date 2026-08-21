@@ -90,7 +90,7 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.none()
     permission_classes = (IsAuthenticated, UserHasSuperuserPermission)
     filter_backends = [SearchFilter, DjangoFilterBackend]
-    search_fields = ["full_name"]
+    search_fields = ["full_name", "username"]
 
     def get_queryset(self) -> QuerySet[User]:
         if self.action == "list":

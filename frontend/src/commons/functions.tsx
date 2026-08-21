@@ -1,5 +1,5 @@
 import { PackageURL } from "packageurl-js";
-import { SortPayload } from "ra-core";
+import { RaRecord, SortPayload } from "ra-core";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { httpClient } from "../commons/ra-data-django-rest-framework";
@@ -36,6 +36,13 @@ export function getIconAndFontColor() {
     } else {
         return "black";
     }
+}
+
+export function getUserOptionText(user: RaRecord): string {
+    if (user.username && user.username !== user.full_name) {
+        return `${user.full_name} (${user.username})`;
+    }
+    return user.full_name;
 }
 
 export function get_severity_color(severity: string): string {
