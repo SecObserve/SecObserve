@@ -65,12 +65,21 @@ class VulnerableCodeParser(BaseParser):
         return observations, self.get_name()
 
     def _get_title(self, advisory: dict) -> str:
-        title = "No title"
+        title = ""
 
-        for alias in advisory.get("aliases", []):
-            title = alias if title == "No title" or alias.startswith("CVE") else title
+        advisory_uid = advisory.get("advisory_uid") or ""
+        if "/" in advisory_uid:
+            title = advisory_uid.rsplit("/", 1)[-1]
 
-        return title
+        aliases = advisory.get("aliases") or []
+        cve_aliases = [alias for alias in aliases if alias.startswith("CVE")]
+        if len(cve_aliases) == 1:
+            title = cve_aliases[0]
+
+        if not title and aliases:
+            title = aliases[0]
+
+        return title or "No title"
 
     def _get_aliases(self, advisory: dict, title: str) -> str:
         aliases = []
@@ -81,11 +90,11 @@ class VulnerableCodeParser(BaseParser):
 
         return ", ".join(aliases) if aliases else ""
 
-    def _get_severities(self, adivsory: dict) -> Tuple[str, str]:
+    def _get_severities(self, advisory: dict) -> Tuple[str, str]:
         cvss3 = ""
         cvss4 = ""
 
-        for severity in adivsory.get("severities", []):
+        for severity in advisory.get("severities", []):
             vector = severity.get("scoring_elements", "")
             cvss3 = vector if vector.startswith("CVSS:3") and not cvss3 else cvss3
             cvss4 = vector if vector.startswith("CVSS:4") and not cvss4 else cvss4
