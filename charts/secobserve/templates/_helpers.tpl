@@ -271,7 +271,7 @@ backend image, so no additional image has to be pulled.
 
       echo 'Migrations OK ✓'
   resources:
-    {{- toYaml .Values.dbchecker.resources | nindent 4 }}
+    {{- toYaml .Values.backend.resources | nindent 4 }}
 {{- end -}}
 
 {{/* Pod level scheduling and security settings shared by all workloads. */}}
