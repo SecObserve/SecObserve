@@ -3,7 +3,7 @@ import inspect
 import logging
 import sys
 from datetime import timedelta
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from django.utils import timezone
 from huey.contrib.djhuey import lock_task
@@ -18,7 +18,8 @@ from application.notifications.services.send_notifications import (
 
 logger = logging.getLogger("secobserve.background_tasks")
 
-MESSAGE_MAX_LENGTH = Periodic_Task._meta.get_field("message").max_length
+# max_length is typed as Optional, but it is always set for the CharField "message"
+MESSAGE_MAX_LENGTH = cast(int, Periodic_Task._meta.get_field("message").max_length)
 
 
 def _truncate_message(message: str) -> str:
