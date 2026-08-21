@@ -26,7 +26,7 @@ logger = logging.getLogger("secobserve.import_observations")
         hour=settings_static.api_import_crontab_hour,
     )
 )
-@so_periodic_task("Import observations from API configurations and OSV")
+@so_periodic_task("Import observations from API configurations, OSV and VulnerableCode")
 def task_api_import() -> str:
     message = _import_api()
     message = _import_osv(message)
@@ -83,9 +83,9 @@ def _import_api() -> str:
                 logger.warning("API import - %s: failed with exception", api_configuration)
                 handle_task_exception(e, product=api_configuration.product)
 
-        message += f" Imported observations for {len(product_set)} products from API configurations."
+        message += f"Imported observations for {len(product_set)} products from API configurations."
         if api_imports_failed > 0:
-            message += f" API import failed for {api_imports_failed} configurations."
+            message += f"\nAPI import failed for {api_imports_failed} configurations."
 
     return message
 
@@ -120,7 +120,7 @@ def _import_osv(message: str) -> str:
 
     message += f"\nImported observations for {len(products)} products from OSV scanning."
     if osv_imports_failed > 0:
-        message += f" OSV scanning failed for {osv_imports_failed} products."
+        message += f"\nOSV scanning failed for {osv_imports_failed} products."
 
     return message
 
@@ -155,6 +155,6 @@ def _import_vulnerablecode(message: str) -> str:
 
     message += f"\nImported observations for {len(products)} products from VulnerableCode scanning."
     if vulnerablecode_imports_failed > 0:
-        message += f" VulnerableCode scanning failed for {vulnerablecode_imports_failed} products."
+        message += f"\nVulnerableCode scanning failed for {vulnerablecode_imports_failed} products."
 
     return message

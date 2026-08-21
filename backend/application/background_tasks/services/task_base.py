@@ -18,6 +18,14 @@ from application.notifications.services.send_notifications import (
 
 logger = logging.getLogger("secobserve.background_tasks")
 
+MESSAGE_MAX_LENGTH = Periodic_Task._meta.get_field("message").max_length
+
+
+def _truncate_message(message: str) -> str:
+    if len(message) <= MESSAGE_MAX_LENGTH:
+        return message
+    return f"{message[:MESSAGE_MAX_LENGTH - 4]} ..."
+
 
 def so_periodic_task(name: str) -> Callable:
     def decorator(func: Callable) -> Callable:
@@ -40,12 +48,12 @@ def so_periodic_task(name: str) -> Callable:
 
                 periodic_task.status = Status.STATUS_SUCCESS
                 periodic_task.duration = (timezone.now() - periodic_task.start_time) / timedelta(milliseconds=1)
-                periodic_task.message = str(message) if message else ""
+                periodic_task.message = _truncate_message(str(message)) if message else ""
                 periodic_task.save()
             except Exception as e:
                 periodic_task.status = Status.STATUS_FAILURE
                 periodic_task.duration = (timezone.now() - periodic_task.start_time) / timedelta(milliseconds=1)
-                periodic_task.message = str(e)
+                periodic_task.message = _truncate_message(str(e))
                 periodic_task.save()
 
                 _handle_periodic_task_exception(e)

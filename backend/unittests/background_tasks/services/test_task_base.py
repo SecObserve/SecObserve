@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, call, patch
 
+from application.background_tasks.models import Periodic_Task
 from application.background_tasks.services.task_base import (
     _delete_older_entries,
     _handle_periodic_task_exception,
@@ -67,6 +68,48 @@ class TestTaskBase(BaseTestCase):
 
         # Verify that the "finished" log is not called when an exception occurs
         self.assertEqual(mock_logger.info.call_count, 1)
+
+    @patch("application.background_tasks.services.task_base.lock_task")
+    @patch("application.background_tasks.services.task_base.logger")
+    @patch("application.background_tasks.services.task_base._delete_older_entries")
+    def test_so_periodic_task_message_truncated(self, mock_delete_older_entries, mock_logger, mock_lock_task):
+        # Setup
+        # Periodic_Task.save is deliberately not mocked, so the stored message can be read back
+        mock_lock_task.return_value = lambda func: func
+        test_function = MagicMock(return_value="x" * 300)
+        test_function.__name__ = "test_function"
+
+        # Execute
+        so_periodic_task("test_task")(test_function)()
+
+        # Assert
+        message = Periodic_Task.objects.filter(task="test_task").latest("start_time").message
+        self.assertEqual(255, len(message))
+        self.assertTrue(message.endswith(" ..."))
+        self.assertEqual("x" * 251, message[:251])
+
+    @patch("application.background_tasks.services.task_base._handle_periodic_task_exception")
+    @patch("application.background_tasks.services.task_base.lock_task")
+    @patch("application.background_tasks.services.task_base.logger")
+    @patch("application.background_tasks.services.task_base._delete_older_entries")
+    def test_so_periodic_task_exception_message_truncated(
+        self, mock_delete_older_entries, mock_logger, mock_lock_task, mock_handle_exception
+    ):
+        # Setup
+        # Periodic_Task.save is deliberately not mocked, so the stored message can be read back
+        mock_lock_task.return_value = lambda func: func
+        test_function = MagicMock(side_effect=Exception("x" * 300))
+        test_function.__name__ = "test_function"
+
+        # Execute
+        with self.assertRaises(Exception):
+            so_periodic_task("test_task")(test_function)()
+
+        # Assert
+        message = Periodic_Task.objects.filter(task="test_task").latest("start_time").message
+        self.assertEqual(255, len(message))
+        self.assertTrue(message.endswith(" ..."))
+        self.assertEqual("x" * 251, message[:251])
 
     # ---------------------------------------------------------------
     # _handle_periodic_task_exception
