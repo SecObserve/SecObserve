@@ -330,3 +330,32 @@ class TestGitHubIssueTracker(BaseTestCase):
         issue_tracker = GitHubIssueTracker()
         frontend_issue_url = issue_tracker.get_frontend_issue_url(self.observation_1.product, "gh_1")
         self.assertEqual("https://github.com/gh_project_1/issues/gh_1", frontend_issue_url)
+
+    @patch("requests.post")
+    def test_create_issue_github_enterprise(self, post_mock):
+        self.observation_1.product.issue_tracker_base_url = "https://github.example.com/api/v3"
+        post_mock.return_value.raise_for_status.return_value = None
+        post_mock.return_value.json.return_value = {"number": "gh_1"}
+
+        issue_tracker = GitHubIssueTracker()
+        issue_id = issue_tracker.create_issue(self.observation_1)
+
+        self.assertEqual("gh_1", issue_id)
+        self.assertEqual(
+            "https://github.example.com/api/v3/repos/gh_project_1/issues",
+            post_mock.call_args.kwargs["url"],
+        )
+
+    def test_get_issue_tracker_base_url_github_com(self):
+        self.observation_1.product.issue_tracker_base_url = "https://api.github.com"
+        issue_tracker = GitHubIssueTracker()
+        self.assertEqual(
+            "https://api.github.com/repos/gh_project_1/issues",
+            issue_tracker._get_issue_tracker_base_url(self.observation_1.product),
+        )
+
+    def test_get_frontend_issue_url_github_enterprise(self):
+        self.observation_1.product.issue_tracker_base_url = "https://github.example.com/api/v3/"
+        issue_tracker = GitHubIssueTracker()
+        frontend_issue_url = issue_tracker.get_frontend_issue_url(self.observation_1.product, "gh_1")
+        self.assertEqual("https://github.example.com/gh_project_1/issues/gh_1", frontend_issue_url)

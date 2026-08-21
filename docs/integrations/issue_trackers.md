@@ -21,7 +21,7 @@ The parameters for the issue tracker integration are set in the product:
 |---------------------|---|
 | **Active**          | Issues will only be pushed, if this parameter is set. |
 | **Type**            | Either **GitHub** or **GitLab** or **Jira** |
-| **Base URL**        | The base URL of the issue tracker. For **GitHub** it is `https://api.github.com`, for a self hosted **GitLab** it will be something like `https://gitlab.example.com`, for **Jira** it is `https:\\{organization_name}.atlassian.net`. |
+| **Base URL**        | The base URL of the issue tracker. For **GitHub** it is `https://api.github.com` (for a GitHub Enterprise Server installation it will be something like `https://github.example.com/api/v3`), for a self hosted **GitLab** it will be something like `https://gitlab.example.com`, for **Jira** it is `https:\\{organization_name}.atlassian.net`. |
 | **API key**          | An API key must be created in the issue tracker, having the permissions to create and update issues. |
 | **Project id**       | The path of the repository in its URL in **GitHub** or **GitLab**, e.g. `SecObserve/SecObserve`. For **Jira** it is the key of the project. |
 | **Labels**           | A comma separated list of labels, that will be set for the issue. Additional labels can be set in the issue tracker, they will be preserved when the issue is updated. |
