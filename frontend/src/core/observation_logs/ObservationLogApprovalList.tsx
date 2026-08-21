@@ -24,7 +24,7 @@ import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductG
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { feature_vex_enabled, has_attribute } from "../../commons/functions";
+import { feature_vex_enabled, getUserOptionText, has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
@@ -92,7 +92,7 @@ function listFilters(product: any) {
 
     filters.push(
         <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
-            <AutocompleteInputMedium optionText="full_name" />
+            <AutocompleteInputMedium optionText={getUserOptionText} />
         </ReferenceInput>,
         <AutocompleteInput source="severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />,
         <AutocompleteInput source="status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />

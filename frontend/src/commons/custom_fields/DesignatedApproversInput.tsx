@@ -1,9 +1,11 @@
 import { Identifier, RaRecord, useGetList } from "react-admin";
 
+import { getUserOptionText } from "../functions";
 import { AutocompleteArrayInputWide } from "../layout/themes";
 
 interface UserRecord extends RaRecord {
     full_name: string;
+    username: string;
 }
 
 interface DesignatedApproversInputProps {
@@ -24,11 +26,15 @@ export const DesignatedApproversInput = ({ approver_filter, helperText }: Design
             label="Designated approvers"
             helperText={helperText}
             choices={data ?? []}
-            optionText="full_name"
-            inputText={(record: RaRecord) => (record as UserRecord).full_name}
-            matchSuggestion={(filterValue: string, record: RaRecord) =>
-                (record as UserRecord).full_name.toLowerCase().includes(filterValue.toLowerCase())
-            }
+            optionText={getUserOptionText}
+            inputText={(record: RaRecord) => getUserOptionText(record)}
+            matchSuggestion={(filterValue: string, record: RaRecord) => {
+                const user = record as UserRecord;
+                return (
+                    user.full_name.toLowerCase().includes(filterValue.toLowerCase()) ||
+                    (user.username ?? "").toLowerCase().includes(filterValue.toLowerCase())
+                );
+            }}
         />
     );
 };
