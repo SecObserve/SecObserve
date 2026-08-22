@@ -508,7 +508,9 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     def validate(self, attrs: dict) -> dict:  # pylint: disable=too-many-branches
         # There are quite a lot of branches, but at least they are not nested too much
-        if attrs.get("issue_tracker_type") == Issue_Tracker.ISSUE_TRACKER_GITHUB:
+        if attrs.get("issue_tracker_type") == Issue_Tracker.ISSUE_TRACKER_GITHUB and not attrs.get(
+            "issue_tracker_base_url"
+        ):
             attrs["issue_tracker_base_url"] = "https://api.github.com"
 
         if not (
