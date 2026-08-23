@@ -13,7 +13,7 @@ package-mode = false
 [tool.poetry.dependencies]
 # Django
 # ------------------------------------------------------------------------------
-gunicorn = "26.0.0"  # https://github.com/benoitc/gunicorn
+gunicorn = "26.1.0"  # https://github.com/benoitc/gunicorn
 django = "6.1"  # https://www.djangoproject.com/
 django-environ = "0.14.0"  # https://github.com/joke2k/django-environ
 django-filter = "26.1"  # https://github.com/carltongibson/django-filter 
