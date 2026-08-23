@@ -25,6 +25,7 @@ import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
+import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 
 const listFilters = [
     <TextInput source="name" alwaysOn />,
@@ -93,6 +94,7 @@ const GeneralRuleList = () => {
                     <TextField source="scanner_prefix" />
                     <TextField source="title" label="Observation title" />
                     {is_superuser() && <WithRecord render={(rule) => <RuleSimulation rule={rule} />} />}
+                    {is_superuser() && <WithRecord render={(rule) => <GeneralRuleEvaluate rule={rule} />} />}
                 </Datagrid>
             </List>
         </Fragment>
