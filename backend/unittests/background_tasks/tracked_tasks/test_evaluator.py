@@ -15,15 +15,21 @@ class TestProcessGeneralRuleEvaluation(unittest.TestCase):
     def setUp(self):
         self.rule = Rule(id=1, name="rule", type=Rule_Type.RULE_TYPE_FIELDS)
 
-        self.mock_periodic_task = self._patch("application.background_tasks.tracked_tasks.evaluator.Periodic_Task")
+        self.mock_periodic_task = self._patch(
+            "application.background_tasks.tracked_tasks.general_rule_evaluator.Periodic_Task"
+        )
         self.task_record = self.mock_periodic_task.return_value
         self.mock_delete_older_task_entries = self._patch(
-            "application.background_tasks.tracked_tasks.evaluator.delete_older_task_entries"
+            "application.background_tasks.tracked_tasks.general_rule_evaluator.delete_older_task_entries"
         )
-        self.mock_rule_objects = self._patch("application.background_tasks.tracked_tasks.evaluator.Rule.objects")
-        self.mock_evaluate = self._patch("application.background_tasks.tracked_tasks.evaluator.evaluate_general_rule")
+        self.mock_rule_objects = self._patch(
+            "application.background_tasks.tracked_tasks.general_rule_evaluator.Rule.objects"
+        )
+        self.mock_evaluate = self._patch(
+            "application.background_tasks.tracked_tasks.general_rule_evaluator.evaluate_general_rule"
+        )
         self.mock_handle_task_exception = self._patch(
-            "application.background_tasks.tracked_tasks.evaluator.handle_task_exception"
+            "application.background_tasks.tracked_tasks.general_rule_evaluator.handle_task_exception"
         )
 
     def _patch(self, target: str) -> MagicMock:
