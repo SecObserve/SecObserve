@@ -1,23 +1,23 @@
 from dataclasses import dataclass
-from datetime import timedelta
 from itertools import batched
 
 from django.db.models import Q
-from django.utils import timezone
-from huey.contrib.djhuey import on_commit_task
+from django.dispatch import Signal
 
-from application.background_tasks.models import Periodic_Task
-from application.background_tasks.types import Status
-from application.commons.models import Settings
 from application.core.models import Observation, Product
 from application.core.services.security_gate import check_security_gate
-from application.notifications.services.tasks import handle_task_exception
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine
 
 CHUNK_SIZE = 1000
 
-TASK_NAME = "Evaluate general rule"
+# Requests a background evaluation of a general rule. The receiver lives in
+# application.background_tasks, which is a higher layer and must not be imported from here.
+general_rule_evaluation_requested = Signal()
+
+
+def request_general_rule_evaluation(rule_id: int) -> None:
+    general_rule_evaluation_requested.send(sender=Rule, rule_id=rule_id)
 
 
 @dataclass
@@ -76,45 +76,6 @@ def evaluate_general_rule(rule: Rule) -> EvaluationResult:
     )
 
 
-@on_commit_task()
-def evaluate_general_rule_task(rule_id: int) -> None:
-    _process_general_rule_evaluation(rule_id)
-
-
-def _process_general_rule_evaluation(rule_id: int) -> None:
-    task_record = Periodic_Task(
-        task=TASK_NAME,
-        start_time=timezone.now(),
-        status=Status.STATUS_RUNNING,
-    )
-    task_record.save()
-
-    _delete_older_task_entries()
-
-    try:
-        rule = Rule.objects.filter(pk=rule_id, product__isnull=True).first()
-        if rule:
-            result = evaluate_general_rule(rule)
-            message = (
-                f"Rule '{rule.name}': {result.observations_processed} observations processed, "
-                f"{result.observations_changed} changed"
-            )
-        else:
-            message = f"General rule {rule_id} not found, nothing to evaluate"
-
-        task_record.status = Status.STATUS_SUCCESS
-        task_record.duration = (timezone.now() - task_record.start_time) / timedelta(milliseconds=1)
-        task_record.message = message[:255]
-        task_record.save()
-    except Exception as e:
-        task_record.status = Status.STATUS_FAILURE
-        task_record.duration = (timezone.now() - task_record.start_time) / timedelta(milliseconds=1)
-        task_record.message = str(e)[:255]
-        task_record.save()
-
-        handle_task_exception(e)
-
-
 def _get_affected_observation_pks(rule: Rule) -> list[int]:
     # No user-based product filtering: no current user exists in a background task.
     scope = Q(product__apply_general_rules=True)
@@ -154,13 +115,3 @@ def _snapshot(observation: Observation) -> tuple:
         observation.current_vex_remediations,
         observation.risk_acceptance_expiry_date,
     )
-
-
-def _delete_older_task_entries() -> None:
-    settings = Settings.load()
-    recent_task_ids = list(
-        Periodic_Task.objects.filter(task=TASK_NAME)
-        .order_by("-start_time")
-        .values_list("id", flat=True)[: settings.periodic_task_max_entries]
-    )
-    Periodic_Task.objects.filter(task=TASK_NAME).exclude(id__in=recent_task_ids).delete()

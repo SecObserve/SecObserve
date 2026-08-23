@@ -586,7 +586,7 @@ const SettingsEdit = () => {
                                 </FormDataConsumer>
                                 <NumberInput
                                     source="periodic_task_max_entries"
-                                    label="Number of entries of Periodic Task to keep per task"
+                                    label="Number of entries of Tracked Task to keep per task"
                                     min={1}
                                     step={1}
                                     validate={validate_1_999999}

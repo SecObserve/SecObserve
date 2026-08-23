@@ -35,7 +35,7 @@ from application.rules.queries.rule import (
     get_product_rules,
 )
 from application.rules.services.approval import rule_approval
-from application.rules.services.evaluator import evaluate_general_rule_task
+from application.rules.services.evaluator import request_general_rule_evaluation
 from application.rules.services.simulator import simulate_rule
 
 
@@ -101,7 +101,7 @@ class GeneralRuleViewSet(ModelViewSet):
         if not rule:
             raise NotFound()
 
-        evaluate_general_rule_task(rule.pk)
+        request_general_rule_evaluation(rule.pk)
 
         return Response(status=status.HTTP_202_ACCEPTED)
 
