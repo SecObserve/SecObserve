@@ -41,6 +41,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_api_import = True
         settings.feature_automatic_osv_scanning = True
         settings.feature_automatic_vulnerablecode_scanning = True
+        settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
         mock_settings_load.return_value = settings
 
         # Mock API configurations
@@ -119,6 +120,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_api_import = False
         settings.feature_automatic_osv_scanning = True
         settings.feature_automatic_vulnerablecode_scanning = True
+        settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
         mock_settings_load.return_value = settings
 
         # Mock products
@@ -168,6 +170,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_api_import = True
         settings.feature_automatic_osv_scanning = False
         settings.feature_automatic_vulnerablecode_scanning = True
+        settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
         mock_settings_load.return_value = settings
 
         # Mock API configurations
@@ -218,6 +221,56 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_api_import = True
         settings.feature_automatic_osv_scanning = True
         settings.feature_automatic_vulnerablecode_scanning = False
+        settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
+        mock_settings_load.return_value = settings
+
+        # Mock API configurations
+        mock_api_config = MagicMock()
+        mock_api_config_filter.return_value = [mock_api_config]
+
+        # Mock products
+        mock_product = MagicMock()
+        mock_product_filter.return_value = [mock_product]
+
+        # Mock import results
+        mock_api_import_observations.return_value = (1, 2, 3)  # new, updated, resolved
+        mock_scan_product_osv.return_value = (4, 5, 6)  # new, updated, resolved
+
+        # Execute
+        task_api_import()
+
+        # Assert
+        # Check API import was called
+        mock_api_config_filter.assert_called_once_with(automatic_import_enabled=True)
+        mock_api_import_observations.assert_called_once()
+
+        # Check VulnerableCode scanning was not called, but OSV scanning was
+        mock_product_filter.assert_called_once_with(osv_enabled=True, automatic_osv_scanning_enabled=True)
+        mock_scan_product_vc.assert_not_called()
+        mock_scan_product_osv.assert_called_once_with(mock_product)
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
+    def test_task_api_import_vulnerablecode_no_base_url(
+        self,
+        mock_settings_load,
+        mock_api_config_filter,
+        mock_product_filter,
+        mock_api_import_observations,
+        mock_scan_product_osv,
+        mock_scan_product_vc,
+    ):
+        # Setup
+        # Mock settings
+        settings = Settings()
+        settings.feature_automatic_api_import = True
+        settings.feature_automatic_osv_scanning = True
+        settings.feature_automatic_vulnerablecode_scanning = True
+        settings.vulnerablecode_base_url = ""
         mock_settings_load.return_value = settings
 
         # Mock API configurations
@@ -330,6 +383,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_api_import = False
         settings.feature_automatic_osv_scanning = False
         settings.feature_automatic_vulnerablecode_scanning = True
+        settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
         mock_settings_load.return_value = settings
 
         # Mock products
@@ -373,6 +427,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_api_import = True
         settings.feature_automatic_osv_scanning = True
         settings.feature_automatic_vulnerablecode_scanning = True
+        settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
         mock_settings_load.return_value = settings
 
         # Mock API configurations

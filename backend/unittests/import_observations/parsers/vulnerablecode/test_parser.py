@@ -200,15 +200,6 @@ class TestVulnerableCodeParser(BaseTestCase):
         # The title matches no alias, so every alias is kept
         self.assertEqual("CVE-2024-53908, CVE-2024-53907", observation.vulnerability_id_aliases)
 
-    @skip(
-        "Waiting for a real /api/v3/affected-by-advisories capture to be added as "
-        "unittests/import_observations/parsers/vulnerablecode/files/vulnerablecode_advisories.json. "
-        "Once it is there, load the file, feed its 'results' entries into get_observations() and "
-        "assert the resulting observations, to guard against drift in the VulnerableCode API shape."
-    )
-    def test_get_observations_from_api_response(self):
-        pass
-
     # ---------------------------------------------------------------
     # _get_title
     # ---------------------------------------------------------------

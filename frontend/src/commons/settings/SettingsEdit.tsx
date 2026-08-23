@@ -54,10 +54,6 @@ const SettingsEdit = () => {
         data.observation_title_notification_parser_type ??= "";
         data.vulnerablecode_base_url ??= "";
         data.vulnerablecode_api_key ??= "";
-        if (data.feature_automatic_vulnerablecode_scanning == false) {
-            data.vulnerablecode_base_url = "";
-            data.vulnerablecode_api_key = "";
-        }
         return data;
     };
 
@@ -174,24 +170,18 @@ const SettingsEdit = () => {
                                     source="observation_count_from_metrics"
                                     label="Calculate observation count from metrics"
                                 />
-                                <FormDataConsumer>
-                                    {({ formData }) =>
-                                        formData.feature_automatic_vulnerablecode_scanning && (
-                                            <Stack spacing={1}>
-                                                <TextInputWide
-                                                    source="vulnerablecode_base_url"
-                                                    label="VulnerableCode base URL"
-                                                    validate={validate_255}
-                                                />
-                                                <TextInputWide
-                                                    source="vulnerablecode_api_key"
-                                                    label="VulnerableCode API key"
-                                                    validate={validate_255}
-                                                />
-                                            </Stack>
-                                        )
-                                    }
-                                </FormDataConsumer>
+                                <Stack spacing={1}>
+                                    <TextInputWide
+                                        source="vulnerablecode_base_url"
+                                        label="VulnerableCode base URL"
+                                        validate={validate_255}
+                                    />
+                                    <TextInputWide
+                                        source="vulnerablecode_api_key"
+                                        label="VulnerableCode API key"
+                                        validate={validate_255}
+                                    />
+                                </Stack>
                             </Stack>
                         </Grid>
                     </Grid>
@@ -585,7 +575,7 @@ const SettingsEdit = () => {
                                             formData.feature_automatic_osv_scanning) && (
                                             <NumberInput
                                                 source="api_import_crontab_hour"
-                                                label="API import and OSV scanning crontab (hour)"
+                                                label="API import, OSV and VulnerableCode scanning crontab (hour)"
                                                 min={0}
                                                 step={1}
                                                 validate={validate_0_23}
@@ -651,7 +641,7 @@ const SettingsEdit = () => {
                                             formData.feature_automatic_osv_scanning) && (
                                             <NumberInput
                                                 source="api_import_crontab_minute"
-                                                label="API import and OSV scanning crontab (minute)"
+                                                label="API import, OSV and VulnerableCode scanning crontab (minute)"
                                                 min={0}
                                                 step={1}
                                                 validate={validate_0_59}

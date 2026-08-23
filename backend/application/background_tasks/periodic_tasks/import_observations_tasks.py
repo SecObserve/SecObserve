@@ -131,6 +131,10 @@ def _import_vulnerablecode(message: str) -> str:
         logger.info("VulnerableCode scanning is disabled in settings")
         return message + "\nVulnerableCode scanning is disabled in settings."
 
+    if not settings.vulnerablecode_base_url:
+        logger.info("VulnerableCode base URL is not set")
+        return message + "\nVulnerableCode bade URL is not set."
+
     vulnerablecode_imports_failed = 0
     vulnerablecode_scanner = VulnerableCodeScanner()
     products = Product.objects.filter(vulnerablecode_enabled=True, automatic_vulnerablecode_scanning_enabled=True)

@@ -7,25 +7,33 @@ The components of a product can be scanned for vulnerabilities using [Vulnerable
 
 There are 3 preconditions to be met before VulnerableCode can be used for vulnerability scanning:
 
-* The VulnerableCode scanning feature has to be configured in the [Settings](#configuration-of-the-vulnerablecode-instance) of the SecObserve instance.
+* The base URL of the VulnerableCode instance has to be configured in the [Settings](#configuration-in-settings).
 * License/Component information has to be imported for the product, only then all components are available for scanning. Only components with a PURL (Package URL) can be scanned, components without a PURL are silently skipped.
 * The flag `VulnerableCode scanning enabled` in the product settings has to be activated. This flag is activated by default for new products.
 
 ## Configuration in Settings
 
-The VulnerableCode instance to be used is configured in the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve). The `VulnerableCode base URL` is the URL of the VulnerableCode instance without a trailing path, e.g. `https://public.vulnerablecode.io`. The `VulnerableCode API key` is optional, it is only needed if the VulnerableCode instance requires authentication for its API.
+The VulnerableCode parameters are configured in the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve).
 
-!!! note
-    Both fields are only visible when `Enable automatic VulnerableCode scanning` is activated, and their content is deleted when that flag is deactivated. This means that this flag needs to stay activated as well, if VulnerableCode scans shall only be started manually.
+![Settings VulnerableCode instance](../assets/images/screenshot_settings_vulnerablecode_scanning.png){ width="100%" style="display: block; margin: 0 auto" }
 
-![Settings VulnerableCode instance](../assets/images/screenshot_settings_vulnerablecode.png){ width="65%" style="display: block; margin: 0 auto" }
+- **Enable [automatic VulnerableCode scanning](#automatic-scan)**
+- **VulnerableCode base URL:** The URL of the VulnerableCode instance without a trailing path, see [VulnerableCode instances](#vulnerablecode-instances).
+- **VulnerableCode API key:** Optional, it is only needed if the VulnerableCode instance requires authentication for its API.
 
+## VulnerableCode instances
+
+Organisations have the choice of either using a publicly available instance of VulnerableCode or set up and use a local installation.
+
+The base URL for the **public instance** is `https://public.vulnerablecode.io`. An API key can be requested with <https://public.vulnerablecode.io/account/request_api_key/>. The public instance has the advantage of working out of the box, but there is no guarantee for its availability and API throttling leading to errors may occur even with an API key.
+
+A **local instance** can be installed with Docker or other ways, see <https://vulnerablecode.readthedocs.io/en/latest/installation.html#installation>. See also <https://vulnerablecode.readthedocs.io/en/latest/api-admin.html> hot to set up an API key. A local instance is more work to set up and maintain, but gives more control about availability and API throttling.
 
 ## Manual scan
 
 If all preconditions are met, the VulnerableCode scan can be started manually from the `Import` menu. If a branch is selected, the scan will be performed on the components of the branch. If no branch is selected, the scan will be performed on the components of all branches and components without a branch.
 
-![VulnerableCode scanning import](../assets/images/screenshot_vulnerablecode_scanning_import.png){ width="40%" style="display: block; margin: 0 auto" }
+![VulnerableCode scanning import](../assets/images/screenshot_vulnerablecode_scanning_import.png){ width="50%" style="display: block; margin: 0 auto" }
 
 
 ## Automatic scan
@@ -36,8 +44,6 @@ VulnerableCode scanning can be configured to run automatically at a specific tim
 
 In the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) the automatic VulnerableCode scanning can be enabled or disabled for the whole SecObserve instance.
 
-![Settings automatic VulnerableCode scanning](../assets/images/screenshot_settings_automatic_vulnerablecode_scanning.png){ width="65%" style="display: block; margin: 0 auto" }
-
 The hour (in UTC time) and minute, when the automatic [API imports](./api_import.md/#automatic-import), OSV scanning and VulnerableCode scanning will run, can be set in the `Background tasks` section. A restart of the SecObserve instance is required to apply the changes.
 
 ![Settings background tasks](../assets/images/screenshot_settings_background_api_osv.png){ width="70%" style="display: block; margin: 0 auto" }
@@ -46,7 +52,7 @@ The hour (in UTC time) and minute, when the automatic [API imports](./api_import
 
 Only products that have `VulnerableCode scanning enabled` and `Automatic VulnerableCode scanning enabled` turned on will be scanned automatically.
 
-![VulnerableCode scanning settings](../assets/images/screenshot_vulnerablecode_scanning_settings_2.png)
+![VulnerableCode scanning settings](../assets/images/screenshot_vulnerablecode_scanning_settings_2.png){ width="50%" style="display: block; margin: 0 auto" }
 
 
 ## Funding

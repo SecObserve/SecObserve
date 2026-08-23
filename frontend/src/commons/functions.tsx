@@ -337,8 +337,8 @@ export const feature_automatic_osv_scanning = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
         const features = settings.features ?? [];
-        const feature_vex_position = features.indexOf("feature_automatic_osv_scanning");
-        return feature_vex_position !== -1;
+        const feature_automatic_osv_scanning = features.indexOf("feature_automatic_osv_scanning");
+        return feature_automatic_osv_scanning !== -1;
     } catch {
         return false;
     }
@@ -348,8 +348,19 @@ export const feature_automatic_vulnerablecode_scanning = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
         const features = settings.features ?? [];
-        const feature_vex_position = features.indexOf("feature_automatic_vulnerablecode_scanning");
-        return feature_vex_position !== -1;
+        const feature_automatic_vulnerablecode_scanning = features.indexOf("feature_automatic_vulnerablecode_scanning");
+        return feature_automatic_vulnerablecode_scanning !== -1;
+    } catch {
+        return false;
+    }
+};
+
+export const vulnerablecode_base_url_is_set = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const vulnerablecode_base_url_is_set = features.indexOf("vulnerablecode_base_url_is_set");
+        return vulnerablecode_base_url_is_set !== -1;
     } catch {
         return false;
     }
