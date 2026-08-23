@@ -16,6 +16,14 @@ class PeriodicTaskSerializer(ModelSerializer):
         fields = "__all__"
 
 
+class PeriodicTaskRegisteredSerializer(Serializer):
+    tasks = ListField(child=CharField())
+
+
+class PeriodicTaskRunSerializer(Serializer):
+    task = CharField(max_length=255)
+
+
 class BackgroundTaskBreakdownSerializer(Serializer):
     task = CharField()
     full = CharField()

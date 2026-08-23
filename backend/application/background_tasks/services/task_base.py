@@ -21,6 +21,9 @@ logger = logging.getLogger("secobserve.background_tasks")
 # max_length is typed as Optional, but it is always set for the CharField "message"
 MESSAGE_MAX_LENGTH = cast(int, Periodic_Task._meta.get_field("message").max_length)
 
+# Names of all periodic tasks, used to check that the registry is complete
+PERIODIC_TASK_NAMES: set[str] = set()
+
 
 def _truncate_message(message: str) -> str:
     if len(message) <= MESSAGE_MAX_LENGTH:
@@ -29,6 +32,8 @@ def _truncate_message(message: str) -> str:
 
 
 def so_periodic_task(name: str) -> Callable:
+    PERIODIC_TASK_NAMES.add(name)
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         @lock_task(name)

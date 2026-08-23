@@ -1,8 +1,17 @@
 from unittest.mock import MagicMock, patch
 
-from rest_framework.status import HTTP_200_OK, HTTP_403_FORBIDDEN
+from django.utils import timezone
+from rest_framework.status import (
+    HTTP_200_OK,
+    HTTP_202_ACCEPTED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_409_CONFLICT,
+)
 from rest_framework.test import APIClient
 
+from application.background_tasks.models import Periodic_Task
+from application.background_tasks.types import Status
 from unittests.base_test_case import BaseTestCase
 
 URL = "/api/status/background_task_statistics/"
@@ -52,3 +61,95 @@ class TestBackgroundTaskView(BaseTestCase):
 
         self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
         mock_huey._stats.task_breakdown.assert_not_called()
+
+
+REGISTERED_TASKS_URL = "/api/periodic_tasks/registered_tasks/"
+RUN_URL = "/api/periodic_tasks/run/"
+
+
+class TestPeriodicTaskRun(BaseTestCase):
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_registered_tasks(self, mock_authentication):
+        mock_authentication.return_value = self.user_admin, None
+
+        api_client = APIClient()
+        response = api_client.get(REGISTERED_TASKS_URL)
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        expected_tasks = [
+            "Branch housekeeping",
+            "Calculate product metrics",
+            "Expire risk acceptances",
+            "Import EPSS and cvss-bt",
+            "Import SPDX licenses",
+            "Import observations from API configurations, OSV and VulnerableCode",
+        ]
+        self.assertEqual(expected_tasks, response.data["tasks"])
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_registered_tasks_forbidden(self, mock_authentication):
+        mock_authentication.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.get(REGISTERED_TASKS_URL)
+
+        self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
+
+    @patch("application.background_tasks.api.views.get_periodic_task")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_run_successful(self, mock_authentication, mock_get_periodic_task):
+        mock_authentication.return_value = self.user_admin, None
+        mock_task = MagicMock()
+        mock_get_periodic_task.return_value = mock_task
+
+        api_client = APIClient()
+        response = api_client.post(RUN_URL, {"task": "Test task"}, format="json")
+
+        self.assertEqual(HTTP_202_ACCEPTED, response.status_code)
+        mock_get_periodic_task.assert_called_once_with("Test task")
+        mock_task.assert_called_once_with()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_run_unknown_task(self, mock_authentication):
+        mock_authentication.return_value = self.user_admin, None
+
+        api_client = APIClient()
+        response = api_client.post(RUN_URL, {"task": "Unknown task"}, format="json")
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_run_missing_task(self, mock_authentication):
+        mock_authentication.return_value = self.user_admin, None
+
+        api_client = APIClient()
+        response = api_client.post(RUN_URL, {}, format="json")
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+
+    @patch("application.background_tasks.api.views.get_periodic_task")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_run_already_running(self, mock_authentication, mock_get_periodic_task):
+        mock_authentication.return_value = self.user_admin, None
+        mock_task = MagicMock()
+        mock_get_periodic_task.return_value = mock_task
+        Periodic_Task(task="Test task", start_time=timezone.now(), status=Status.STATUS_RUNNING).save()
+
+        api_client = APIClient()
+        response = api_client.post(RUN_URL, {"task": "Test task"}, format="json")
+
+        self.assertEqual(HTTP_409_CONFLICT, response.status_code)
+        mock_task.assert_not_called()
+
+    @patch("application.background_tasks.api.views.get_periodic_task")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_run_forbidden(self, mock_authentication, mock_get_periodic_task):
+        mock_authentication.return_value = self.user_internal, None
+        mock_task = MagicMock()
+        mock_get_periodic_task.return_value = mock_task
+
+        api_client = APIClient()
+        response = api_client.post(RUN_URL, {"task": "Test task"}, format="json")
+
+        self.assertEqual(HTTP_403_FORBIDDEN, response.status_code)
+        mock_task.assert_not_called()
