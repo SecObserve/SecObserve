@@ -6,11 +6,11 @@ import SmallButton from "../commons/custom_fields/SmallButton";
 import { Spinner } from "../commons/custom_fields/Spinner";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 
-type GeneralRuleReEvaluateProps = {
+type GeneralRuleEvaluateProps = {
     rule: any;
 };
 
-const GeneralRuleReEvaluate = ({ rule }: GeneralRuleReEvaluateProps) => {
+const GeneralRuleEvaluate = ({ rule }: GeneralRuleEvaluateProps) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const notify = useNotify();
@@ -19,7 +19,7 @@ const GeneralRuleReEvaluate = ({ rule }: GeneralRuleReEvaluateProps) => {
 
     const handleConfirm = async () => {
         setLoading(true);
-        const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/general_rules/" + rule.id + "/re_evaluate/";
+        const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/general_rules/" + rule.id + "/evaluate/";
 
         httpClient(url, {
             method: "POST",
@@ -28,7 +28,7 @@ const GeneralRuleReEvaluate = ({ rule }: GeneralRuleReEvaluateProps) => {
                 setOpen(false);
                 setLoading(false);
                 notify(
-                    "Re-evaluation of rule '" +
+                    "Evaluation of rule '" +
                         rule.name +
                         "' started in the background, see Background Tasks for the result",
                     {
@@ -47,12 +47,12 @@ const GeneralRuleReEvaluate = ({ rule }: GeneralRuleReEvaluateProps) => {
 
     return (
         <>
-            <SmallButton title="Re-evaluate" onClick={handleClick} icon={<PublishedWithChangesIcon />} />
+            <SmallButton title="Evaluate" onClick={handleClick} icon={<PublishedWithChangesIcon />} />
             <Confirm
                 isOpen={open && !loading}
-                title="Re-evaluate rule"
+                title="Evaluate rule"
                 content={
-                    "Are you sure you want to re-evaluate rule " +
+                    "Are you sure you want to evaluate rule " +
                     rule.name +
                     "? Its effects will be applied to matching observations" +
                     " and removed where it no longer matches or is disabled."
@@ -65,4 +65,4 @@ const GeneralRuleReEvaluate = ({ rule }: GeneralRuleReEvaluateProps) => {
     );
 };
 
-export default GeneralRuleReEvaluate;
+export default GeneralRuleEvaluate;

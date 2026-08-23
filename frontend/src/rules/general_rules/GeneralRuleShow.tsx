@@ -3,7 +3,7 @@ import { Fragment } from "react";
 import { EditButton, PrevNextButtons, Show, TopToolbar, WithRecord, useRecordContext } from "react-admin";
 
 import { feature_general_rules_need_approval_enabled, is_superuser } from "../../commons/functions";
-import GeneralRuleReEvaluate from "../GeneralRuleReEvaluate";
+import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 import RuleApproval from "../RuleApproval";
 import RuleSimulation from "../RuleSimulation";
 import { RuleShowComponent } from "../functions";
@@ -19,7 +19,7 @@ const ShowActions = () => {
                     feature_general_rules_need_approval_enabled() &&
                     is_superuser() && <RuleApproval rule_id={rule.id} class="general_rules" />}
                 {rule && is_superuser() && <RuleSimulation rule={rule} />}
-                {rule && is_superuser() && <GeneralRuleReEvaluate rule={rule} />}
+                {rule && is_superuser() && <GeneralRuleEvaluate rule={rule} />}
                 {is_superuser() && <EditButton />}
             </Stack>
         </TopToolbar>

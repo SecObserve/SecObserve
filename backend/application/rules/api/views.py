@@ -35,7 +35,7 @@ from application.rules.queries.rule import (
     get_product_rules,
 )
 from application.rules.services.approval import rule_approval
-from application.rules.services.reevaluator import re_evaluate_general_rule_task
+from application.rules.services.evaluator import evaluate_general_rule_task
 from application.rules.services.simulator import simulate_rule
 
 
@@ -96,12 +96,12 @@ class GeneralRuleViewSet(ModelViewSet):
         responses={status.HTTP_202_ACCEPTED: None},
     )
     @action(detail=True, methods=["post"])
-    def re_evaluate(self, request: Request, pk: int) -> Response:
+    def evaluate(self, request: Request, pk: int) -> Response:
         rule = get_general_rule_by_id(pk)
         if not rule:
             raise NotFound()
 
-        re_evaluate_general_rule_task(rule.pk)
+        evaluate_general_rule_task(rule.pk)
 
         return Response(status=status.HTTP_202_ACCEPTED)
 

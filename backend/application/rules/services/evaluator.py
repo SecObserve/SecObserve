@@ -17,16 +17,16 @@ from application.rules.services.rule_engine import Rule_Engine
 
 CHUNK_SIZE = 1000
 
-TASK_NAME = "Re-evaluate general rule"
+TASK_NAME = "Evaluate general rule"
 
 
 @dataclass
-class ReEvaluationResult:
+class EvaluationResult:
     observations_processed: int
     observations_changed: int
 
 
-def re_evaluate_general_rule(rule: Rule) -> ReEvaluationResult:
+def evaluate_general_rule(rule: Rule) -> EvaluationResult:
     """
     Applies a general rule to all observations of products with apply_general_rules
     enabled and reverts stale effects. A disabled or unapproved rule is revert-only.
@@ -70,18 +70,18 @@ def re_evaluate_general_rule(rule: Rule) -> ReEvaluationResult:
     for product in products_with_changes.values():
         check_security_gate(product)
 
-    return ReEvaluationResult(
+    return EvaluationResult(
         observations_processed=observations_processed,
         observations_changed=observations_changed,
     )
 
 
 @on_commit_task()
-def re_evaluate_general_rule_task(rule_id: int) -> None:
-    _process_general_rule_re_evaluation(rule_id)
+def evaluate_general_rule_task(rule_id: int) -> None:
+    _process_general_rule_evaluation(rule_id)
 
 
-def _process_general_rule_re_evaluation(rule_id: int) -> None:
+def _process_general_rule_evaluation(rule_id: int) -> None:
     task_record = Periodic_Task(
         task=TASK_NAME,
         start_time=timezone.now(),
@@ -94,13 +94,13 @@ def _process_general_rule_re_evaluation(rule_id: int) -> None:
     try:
         rule = Rule.objects.filter(pk=rule_id, product__isnull=True).first()
         if rule:
-            result = re_evaluate_general_rule(rule)
+            result = evaluate_general_rule(rule)
             message = (
                 f"Rule '{rule.name}': {result.observations_processed} observations processed, "
                 f"{result.observations_changed} changed"
             )
         else:
-            message = f"General rule {rule_id} not found, nothing to re-evaluate"
+            message = f"General rule {rule_id} not found, nothing to evaluate"
 
         task_record.status = Status.STATUS_SUCCESS
         task_record.duration = (timezone.now() - task_record.start_time) / timedelta(milliseconds=1)

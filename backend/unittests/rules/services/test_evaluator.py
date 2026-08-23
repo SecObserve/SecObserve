@@ -7,12 +7,12 @@ from application.background_tasks.types import Status
 from application.core.models import Observation, Product
 from application.import_observations.models import Parser
 from application.rules.models import Rule
-from application.rules.services.reevaluator import (
+from application.rules.services.evaluator import (
     TASK_NAME,
-    ReEvaluationResult,
+    EvaluationResult,
     _get_affected_observation_pks,
-    _process_general_rule_re_evaluation,
-    re_evaluate_general_rule,
+    _process_general_rule_evaluation,
+    evaluate_general_rule,
 )
 from application.rules.types import Rule_Type
 
@@ -22,7 +22,7 @@ class TestGetAffectedObservationPks(unittest.TestCase):
         self.parser = Parser(id=1, name="parser")
         self.rule = Rule(id=1, name="rule", type=Rule_Type.RULE_TYPE_FIELDS)
 
-    @patch("application.rules.services.reevaluator.Observation.objects")
+    @patch("application.rules.services.evaluator.Observation.objects")
     def test_scope_and_linked_observations(self, mock_objects):
         mock_objects.filter.return_value.values_list.return_value = [1, 2, 3]
 
@@ -35,7 +35,7 @@ class TestGetAffectedObservationPks(unittest.TestCase):
         mock_objects.filter.assert_called_once_with(expected_query)
         mock_objects.filter.return_value.values_list.assert_called_once_with("pk", flat=True)
 
-    @patch("application.rules.services.reevaluator.Observation.objects")
+    @patch("application.rules.services.evaluator.Observation.objects")
     def test_parser_and_scanner_prefix_narrow_only_the_scope(self, mock_objects):
         """Linked observations outside the parser/scanner scope must still be reverted."""
         mock_objects.filter.return_value.values_list.return_value = []
@@ -50,16 +50,16 @@ class TestGetAffectedObservationPks(unittest.TestCase):
         mock_objects.filter.assert_called_once_with(expected_query)
 
 
-class TestReEvaluateGeneralRule(unittest.TestCase):
+class TestEvaluateGeneralRule(unittest.TestCase):
     def setUp(self):
         self.product = Product(id=1, name="product", apply_general_rules=True)
         self.rule = Rule(id=1, name="rule", type=Rule_Type.RULE_TYPE_FIELDS)
 
-        self.mock_get_pks = self._patch("application.rules.services.reevaluator._get_affected_observation_pks")
-        self.mock_objects = self._patch("application.rules.services.reevaluator.Observation.objects")
-        self.mock_rule_engine = self._patch("application.rules.services.reevaluator.Rule_Engine")
+        self.mock_get_pks = self._patch("application.rules.services.evaluator._get_affected_observation_pks")
+        self.mock_objects = self._patch("application.rules.services.evaluator.Observation.objects")
+        self.mock_rule_engine = self._patch("application.rules.services.evaluator.Rule_Engine")
         self.mock_apply_rules = self.mock_rule_engine.return_value.apply_rules_for_observation
-        self.mock_check_security_gate = self._patch("application.rules.services.reevaluator.check_security_gate")
+        self.mock_check_security_gate = self._patch("application.rules.services.evaluator.check_security_gate")
 
     def _patch(self, target: str) -> MagicMock:
         patcher = patch(target)
@@ -88,9 +88,9 @@ class TestReEvaluateGeneralRule(unittest.TestCase):
     def test_no_affected_observations(self):
         self.mock_get_pks.return_value = []
 
-        result = re_evaluate_general_rule(self.rule)
+        result = evaluate_general_rule(self.rule)
 
-        self.assertEqual(result, ReEvaluationResult(observations_processed=0, observations_changed=0))
+        self.assertEqual(result, EvaluationResult(observations_processed=0, observations_changed=0))
         self.mock_rule_engine.assert_not_called()
         self.mock_check_security_gate.assert_not_called()
 
@@ -98,7 +98,7 @@ class TestReEvaluateGeneralRule(unittest.TestCase):
         observations = self._observations(3)
         self._mock_chunks(observations)
 
-        result = re_evaluate_general_rule(self.rule)
+        result = evaluate_general_rule(self.rule)
 
         self.assertEqual(result.observations_processed, 3)
         self.mock_apply_rules.assert_has_calls([call(observation) for observation in observations])
@@ -108,7 +108,7 @@ class TestReEvaluateGeneralRule(unittest.TestCase):
         observations = self._observations(2) + self._observations(2, product_2) + self._observations(1)
         self._mock_chunks(observations)
 
-        re_evaluate_general_rule(self.rule)
+        evaluate_general_rule(self.rule)
 
         self.assertEqual(self.mock_rule_engine.call_count, 2)
         self.mock_rule_engine.assert_has_calls([call(self.product), call(product_2)], any_order=True)
@@ -118,9 +118,9 @@ class TestReEvaluateGeneralRule(unittest.TestCase):
     def test_no_changes(self):
         self._mock_chunks(self._observations(3))
 
-        result = re_evaluate_general_rule(self.rule)
+        result = evaluate_general_rule(self.rule)
 
-        self.assertEqual(result, ReEvaluationResult(observations_processed=3, observations_changed=0))
+        self.assertEqual(result, EvaluationResult(observations_processed=3, observations_changed=0))
         self.mock_check_security_gate.assert_not_called()
 
     def test_changed_observations_are_counted(self):
@@ -134,9 +134,9 @@ class TestReEvaluateGeneralRule(unittest.TestCase):
 
         self.mock_apply_rules.side_effect = apply_rules
 
-        result = re_evaluate_general_rule(self.rule)
+        result = evaluate_general_rule(self.rule)
 
-        self.assertEqual(result, ReEvaluationResult(observations_processed=3, observations_changed=2))
+        self.assertEqual(result, EvaluationResult(observations_processed=3, observations_changed=2))
 
     def test_security_gate_is_checked_once_per_product_with_changes(self):
         product_2 = Product(id=2, name="product_2", apply_general_rules=True)
@@ -149,35 +149,35 @@ class TestReEvaluateGeneralRule(unittest.TestCase):
 
         self.mock_apply_rules.side_effect = apply_rules
 
-        re_evaluate_general_rule(self.rule)
+        evaluate_general_rule(self.rule)
 
         self.mock_check_security_gate.assert_called_once_with(self.product)
 
     # --- chunking ---
 
-    @patch("application.rules.services.reevaluator.CHUNK_SIZE", 2)
+    @patch("application.rules.services.evaluator.CHUNK_SIZE", 2)
     def test_observations_are_fetched_in_chunks_of_the_initial_pks(self):
         self._mock_chunks(self._observations(2), self._observations(1))
         self.mock_get_pks.return_value = [1, 2, 3]
 
-        result = re_evaluate_general_rule(self.rule)
+        result = evaluate_general_rule(self.rule)
 
         self.assertEqual(result.observations_processed, 3)
         self.mock_objects.filter.assert_has_calls([call(pk__in=(1, 2)), call(pk__in=(3,))])
 
 
-class TestProcessGeneralRuleReEvaluation(unittest.TestCase):
+class TestProcessGeneralRuleEvaluation(unittest.TestCase):
     def setUp(self):
         self.rule = Rule(id=1, name="rule", type=Rule_Type.RULE_TYPE_FIELDS)
 
-        self.mock_periodic_task = self._patch("application.rules.services.reevaluator.Periodic_Task")
+        self.mock_periodic_task = self._patch("application.rules.services.evaluator.Periodic_Task")
         self.task_record = self.mock_periodic_task.return_value
         self.mock_delete_older_task_entries = self._patch(
-            "application.rules.services.reevaluator._delete_older_task_entries"
+            "application.rules.services.evaluator._delete_older_task_entries"
         )
-        self.mock_rule_objects = self._patch("application.rules.services.reevaluator.Rule.objects")
-        self.mock_re_evaluate = self._patch("application.rules.services.reevaluator.re_evaluate_general_rule")
-        self.mock_handle_task_exception = self._patch("application.rules.services.reevaluator.handle_task_exception")
+        self.mock_rule_objects = self._patch("application.rules.services.evaluator.Rule.objects")
+        self.mock_evaluate = self._patch("application.rules.services.evaluator.evaluate_general_rule")
+        self.mock_handle_task_exception = self._patch("application.rules.services.evaluator.handle_task_exception")
 
     def _patch(self, target: str) -> MagicMock:
         patcher = patch(target)
@@ -186,14 +186,14 @@ class TestProcessGeneralRuleReEvaluation(unittest.TestCase):
 
     def test_success(self):
         self.mock_rule_objects.filter.return_value.first.return_value = self.rule
-        self.mock_re_evaluate.return_value = ReEvaluationResult(observations_processed=5, observations_changed=2)
+        self.mock_evaluate.return_value = EvaluationResult(observations_processed=5, observations_changed=2)
 
-        _process_general_rule_re_evaluation(1)
+        _process_general_rule_evaluation(1)
 
         self.mock_periodic_task.assert_called_once_with(task=TASK_NAME, start_time=ANY, status=Status.STATUS_RUNNING)
         self.mock_delete_older_task_entries.assert_called_once_with()
         self.mock_rule_objects.filter.assert_called_once_with(pk=1, product__isnull=True)
-        self.mock_re_evaluate.assert_called_once_with(self.rule)
+        self.mock_evaluate.assert_called_once_with(self.rule)
         self.assertEqual(self.task_record.status, Status.STATUS_SUCCESS)
         self.assertEqual(self.task_record.message, "Rule 'rule': 5 observations processed, 2 changed")
         self.assertEqual(self.task_record.save.call_count, 2)
@@ -202,18 +202,18 @@ class TestProcessGeneralRuleReEvaluation(unittest.TestCase):
     def test_rule_not_found(self):
         self.mock_rule_objects.filter.return_value.first.return_value = None
 
-        _process_general_rule_re_evaluation(1)
+        _process_general_rule_evaluation(1)
 
-        self.mock_re_evaluate.assert_not_called()
+        self.mock_evaluate.assert_not_called()
         self.assertEqual(self.task_record.status, Status.STATUS_SUCCESS)
-        self.assertEqual(self.task_record.message, "General rule 1 not found, nothing to re-evaluate")
+        self.assertEqual(self.task_record.message, "General rule 1 not found, nothing to evaluate")
 
     def test_exception(self):
         self.mock_rule_objects.filter.return_value.first.return_value = self.rule
         exception = Exception("something went wrong")
-        self.mock_re_evaluate.side_effect = exception
+        self.mock_evaluate.side_effect = exception
 
-        _process_general_rule_re_evaluation(1)
+        _process_general_rule_evaluation(1)
 
         self.assertEqual(self.task_record.status, Status.STATUS_FAILURE)
         self.assertEqual(self.task_record.message, "something went wrong")
