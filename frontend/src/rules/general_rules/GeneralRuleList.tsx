@@ -23,9 +23,9 @@ import { feature_general_rules_need_approval_enabled, is_superuser } from "../..
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
-import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 
 const listFilters = [
     <TextInput source="name" alwaysOn />,
