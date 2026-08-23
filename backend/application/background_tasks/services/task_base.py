@@ -42,7 +42,7 @@ def so_periodic_task(name: str) -> Callable:
             )
             periodic_task.save()
 
-            _delete_older_entries(name)
+            delete_older_task_entries(name)
 
             try:
                 message = func()
@@ -89,7 +89,7 @@ def _handle_periodic_task_exception(e: Exception) -> None:
     send_task_exception_notification(function=function, arguments=None, user=None, exception=e, product=None)
 
 
-def _delete_older_entries(name: str) -> None:
+def delete_older_task_entries(name: str) -> None:
     settings = Settings.load()
     recent_task_ids = list(
         Periodic_Task.objects.filter(task=name)

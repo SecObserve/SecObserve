@@ -81,7 +81,7 @@ export default function BackgroundTasksAdministration() {
                         // nosemgrep because the props are well defined in the import
                     />
                     <Tab
-                        label="Periodic Tasks"
+                        label="Tracked Tasks"
                         icon={<periodic_tasks.icon />}
                         to="/background_tasks/periodic_tasks"
                         component={Link}
