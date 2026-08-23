@@ -30,6 +30,8 @@ from application.import_observations.api.views import (
     FileUploadSBOMByName,
     ScanOSVBranchView,
     ScanOSVProductView,
+    ScanVulnerableCodeBranchView,
+    ScanVulnerableCodeProductView,
 )
 from application.metrics.api.views import (
     ProductMetricsCurrentView,
@@ -94,6 +96,11 @@ urlpatterns += [
     path(
         "api/products/<int:product_id>/<int:branch_id>/scan_osv/",
         ScanOSVBranchView.as_view(),
+    ),
+    path("api/products/<int:product_id>/scan_vulnerablecode/", ScanVulnerableCodeProductView.as_view()),
+    path(
+        "api/products/<int:product_id>/<int:branch_id>/scan_vulnerablecode/",
+        ScanVulnerableCodeBranchView.as_view(),
     ),
     path(
         "api/import/api_import_observations_by_name/",

@@ -344,6 +344,17 @@ export const feature_automatic_osv_scanning = () => {
     }
 };
 
+export const feature_automatic_vulnerablecode_scanning = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_vex_position = features.indexOf("feature_automatic_vulnerablecode_scanning");
+        return feature_vex_position !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const feature_exploit_information = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");

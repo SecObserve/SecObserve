@@ -90,11 +90,14 @@ const SettingsShowComponent = () => {
                                     <Labeled label="Disable user login">
                                         <BooleanField source="feature_disable_user_login" />
                                     </Labeled>
-                                    <Labeled label="General rules need approval">
-                                        <BooleanField source="feature_general_rules_need_approval" />
-                                    </Labeled>
                                     <Labeled label="Enable license management">
                                         <BooleanField source="feature_license_management" />
+                                    </Labeled>
+                                    <Labeled label="Enable automatic OSV scanning">
+                                        <BooleanField source="feature_automatic_osv_scanning" />
+                                    </Labeled>
+                                    <Labeled label="Enable automatic VulnerableCode scanning">
+                                        <BooleanField source="feature_automatic_vulnerablecode_scanning" />
                                     </Labeled>
                                 </Stack>
                             </Grid>
@@ -103,12 +106,24 @@ const SettingsShowComponent = () => {
                                     <Labeled label="Enable automatic API imports">
                                         <BooleanField source="feature_automatic_api_import" />
                                     </Labeled>
-                                    <Labeled label="Enable automatic OSV scanning">
-                                        <BooleanField source="feature_automatic_osv_scanning" />
+                                    <Labeled label="General rules need approval">
+                                        <BooleanField source="feature_general_rules_need_approval" />
                                     </Labeled>
                                     <Labeled label="Calculate observation count from metrics">
                                         <BooleanField source="observation_count_from_metrics" />
                                     </Labeled>
+                                    <Stack spacing={1}>
+                                        {settings.vulnerablecode_base_url && (
+                                            <Labeled label="VulnerableCode base URL">
+                                                <TextField source="vulnerablecode_base_url" />
+                                            </Labeled>
+                                        )}
+                                        {settings.vulnerablecode_api_key && (
+                                            <Labeled label="VulnerableCode API key">
+                                                <TextField source="vulnerablecode_api_key" />
+                                            </Labeled>
+                                        )}
+                                    </Stack>
                                 </Stack>
                             </Grid>
                         </Grid>
