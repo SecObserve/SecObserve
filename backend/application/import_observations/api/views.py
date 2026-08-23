@@ -19,6 +19,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.models import Settings
 from application.core.models import Branch, Product
 from application.core.queries.branch import get_branch_by_id, get_branch_by_name
 from application.core.queries.product import get_product_by_id, get_product_by_name
@@ -515,6 +516,10 @@ class ScanVulnerableCodeBranchView(APIView):
 
         if not product.vulnerablecode_enabled:
             raise ValidationError(f"VulnerableCode scan is not enabled for product {product.name}")
+
+        settings = Settings.load()
+        if not settings.vulnerablecode_base_url:
+            raise ValidationError("VulnerableCode base url is not set")
 
         branch = get_branch_by_id(product, branch_id)
         if not branch:

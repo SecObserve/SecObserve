@@ -25,11 +25,13 @@
     ---
 
     Vulnerability data can be imported from the results of several vulnerability scanners. Additionally components
-    can be scanned by SecObserve against the OSV database.
+    can be scanned by SecObserve against OSV or VulnerableCode.
 
     [:octicons-arrow-right-24: Supported scanners](supported_scanners.md)
 
     [:octicons-arrow-right-24: OSV scan](osv_scan.md)
+
+    [:octicons-arrow-right-24: VulnerableCode scan](vulnerablecode_scan.md)
 
 -   :material-skull-scan:{ .lg .middle } __EPSS Scores, Exploits__
 

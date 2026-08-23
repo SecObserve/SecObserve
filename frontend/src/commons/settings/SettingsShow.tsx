@@ -356,7 +356,7 @@ const SettingsShowComponent = () => {
                                     </Labeled>
                                     {(settings.feature_automatic_api_import ||
                                         settings.feature_automatic_osv_scanning) && (
-                                        <Labeled label="API import and OSV scanning crontab (hour/UTC)">
+                                        <Labeled label="API import, OSV and VulnerableCode scanning crontab (hour/UTC)">
                                             <NumberField source="api_import_crontab_hour" />
                                         </Labeled>
                                     )}
@@ -383,7 +383,7 @@ const SettingsShowComponent = () => {
                                     </Labeled>
                                     {(settings.feature_automatic_api_import ||
                                         settings.feature_automatic_osv_scanning) && (
-                                        <Labeled label="API import and OSV scanning crontab (minute)">
+                                        <Labeled label="API import, OSV and VulnerableCode scanning crontab (minute)">
                                             <NumberField source="api_import_crontab_minute" />
                                         </Labeled>
                                     )}

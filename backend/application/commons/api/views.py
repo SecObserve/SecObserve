@@ -64,6 +64,8 @@ class StatusSettingsView(APIView):
                 features.append("feature_automatic_osv_scanning")
             if settings.feature_automatic_vulnerablecode_scanning:
                 features.append("feature_automatic_vulnerablecode_scanning")
+            if settings.vulnerablecode_base_url:
+                features.append("vulnerablecode_base_url_is_set")
             if settings.feature_exploit_information:
                 features.append("feature_exploit_information")
 
