@@ -40,7 +40,9 @@ const ProductReviews = ({ product }: ProductReviewsProps) => {
                     <ObservationsReviewList product={product} />
                 </AccordionDetails>
             </Accordion>
-            {(product.assessments_need_approval || product.product_group_assessments_need_approval) && (
+            {(product.assessments_need_approval ||
+                product.product_group_assessments_need_approval ||
+                product.observation_log_approvals > 0) && (
                 <Accordion
                     elevation={getElevation()}
                     sx={{ marginTop: 2 }}
