@@ -10,7 +10,7 @@ export const PeriodicTaskStatusField = ({ label }: PeriodicTaskStatusFieldProps)
     function get_status_color() {
         if (record?.status === "Success") {
             return "#00aa00";
-        } else if (record?.status === "Failed") {
+        } else if (record?.status === "Failure") {
             return "#d4333f";
         } else if (record?.status === "Running") {
             return "#00B4F0";
