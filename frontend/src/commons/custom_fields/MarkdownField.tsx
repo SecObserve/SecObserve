@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import Markdown from "markdown-to-jsx";
 import { marked } from "marked";
 import { Fragment, HTMLAttributes } from "react";
@@ -87,25 +88,32 @@ const MarkdownField = (props: MarkdownProps) => {
     return (
         <Fragment>
             {isMarkdownValue(props.content) && (
-                <Markdown
-                    style={{
-                        fontSize: "0.875rem",
-                        fontFamily: "Roboto",
-                        lineHeight: 1.43,
-                    }}
-                    options={{
-                        overrides: {
-                            a: {
-                                props: {
-                                    className: classes.link,
-                                },
-                            },
-                            code: SyntaxHighlightedCode,
-                        },
+                <Box
+                    sx={{
+                        "& p": { marginTop: 0, marginBottom: 0.5 },
+                        "& p:last-child": { marginBottom: 0 },
                     }}
                 >
-                    {props.content}
-                </Markdown>
+                    <Markdown
+                        style={{
+                            fontSize: "0.875rem",
+                            fontFamily: "Roboto",
+                            lineHeight: 1.43,
+                        }}
+                        options={{
+                            overrides: {
+                                a: {
+                                    props: {
+                                        className: classes.link,
+                                    },
+                                },
+                                code: SyntaxHighlightedCode,
+                            },
+                        }}
+                    >
+                        {props.content}
+                    </Markdown>
+                </Box>
             )}
             {!isMarkdownValue(props.content) && <LabeledTextField label={props.label} text={props.content} />}
         </Fragment>

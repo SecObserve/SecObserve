@@ -52,6 +52,14 @@ const ShowActions = () => {
         sort = { field: "created", order: "ASC" };
         storeKey = "observation_logs.approvalproduct";
     }
+    if (observation_log?.observation_data && localStorage.getItem("observationlogapprovallistproductgroup")) {
+        filter = {
+            product_group: observation_log.observation_data.product_data.product_group,
+            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
+        };
+        sort = { field: "created", order: "ASC" };
+        storeKey = "observation_logs.approvalproductgroup";
+    }
 
     return (
         <TopToolbar>
