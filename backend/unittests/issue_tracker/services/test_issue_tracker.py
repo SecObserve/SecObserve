@@ -161,6 +161,33 @@ class TestIssueTracker(BaseTestCase):
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     @patch("application.core.models.Observation.save")
+    def test_push_observation_to_issue_tracker_with_id_no_issue_higher_than_minimum(
+        self, observation_mock, factory_mock
+    ):
+        factory_mock.return_value.get_issue.return_value = None
+
+        observation = Observation.objects.get(pk=1)
+        observation.product.issue_tracker_active = True
+        observation.product.issue_tracker_minimum_severity = Severity.SEVERITY_HIGH
+        observation.current_status = Status.STATUS_OPEN
+        observation.current_severity = Severity.SEVERITY_HIGH
+        observation.numerical_severity = Severity.NUMERICAL_SEVERITIES.get(observation.current_severity, 99)
+        observation.issue_tracker_issue_id = "123"
+
+        with self.captureOnCommitCallbacks(execute=True):
+            push_observation_to_issue_tracker(observation, None)
+
+        self.assertEqual(observation_mock.call_count, 2)
+        self.assertEqual(observation.issue_tracker_issue_id, factory_mock.return_value.create_issue.return_value)
+        expected_calls = [
+            call(observation.product),
+            call().get_issue(observation.product, "123"),
+            call().create_issue(observation),
+        ]
+        factory_mock.assert_has_calls(expected_calls, any_order=False)
+
+    @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
+    @patch("application.core.models.Observation.save")
     def test_push_observation_to_issue_tracker_with_issue_higher_than_minimum(self, observation_mock, factory_mock):
         issue = Issue(id=1, title="title", description="description", labels="labels")
         factory_mock.return_value.get_issue.return_value = issue
