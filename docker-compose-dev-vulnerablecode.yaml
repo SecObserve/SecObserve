@@ -3,7 +3,7 @@
 
 services:
   redis:
-    image: redis:8.10.0-alpine
+    image: redis:8.10.1-alpine
     volumes:
       - dev_vulnerablecode_redis:/data
 
