@@ -164,3 +164,21 @@ prettier -w src
 - **Line Length**: 120 characters (configured via `.prettierrc.json`).
 - **TypeScript**: Strict mode enabled; all components should be fully typed.
 - **Component Style**: Functional components with hooks; no class components.
+
+## Development on ARM macOS (Apple Silicon)
+
+On Macs with Apple Silicon, start the development stack with the ARM override file in addition to the standard development file:
+
+```bash
+docker compose -f docker-compose-dev.yml -f docker-compose-dev-arm.yaml up --build
+```
+
+The override (`docker-compose-dev-arm.yaml`):
+
+- Runs the frontend, backend and PostgreSQL services with `platform: linux/arm64/v8`.
+- Installs the frontend's `node_modules` inside the container in a Docker-managed volume, so that native dependencies built for macOS on the host are not mounted into the Linux container.
+
+Notes:
+
+- `./bin/dev.sh` uses only `docker-compose-dev.yml`. On ARM macOS, start the stack with the command above instead.
+- Unit tests (`./bin/unittests.sh` with `docker-compose-unittests.yml`) run unchanged on ARM macOS.
