@@ -77,6 +77,11 @@ register_parsers() {
 }
 
 initial_license_load() {
+    if [ "${SO_END_TO_END_TESTS:-}" = "true" ]; then
+        >&2 echo 'Running end-to-end tests and skipping initial license load'
+        return
+    fi
+
     python manage.py initial_license_load
 }
 
