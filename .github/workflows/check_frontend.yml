@@ -52,7 +52,11 @@ jobs:
   check_code_sonarqube_frontend:
     permissions:
       contents: read
-    if: github.repository == 'SecObserve/SecObserve' && (github.ref == 'refs/heads/dev' || github.event_name == 'pull_request')
+    if: >-
+      github.repository == 'SecObserve/SecObserve' &&
+      (github.ref == 'refs/heads/dev' ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository))
     runs-on: ubuntu-latest
     steps:
       - 

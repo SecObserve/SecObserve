@@ -142,6 +142,7 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["security_gate_threshold_unknown"] = None
 
         self._validate_assessment_approver_authorization_groups(attrs)
+        self._validate_assessments_need_approval(attrs)
 
         return super().validate(attrs)
 
@@ -185,6 +186,50 @@ class ProductCoreSerializer(ModelSerializer):
                         "Designated approver groups must have at least the Writer role."
                     )
                 }
+            )
+
+    def _validate_assessments_need_approval(self, attrs: dict) -> None:
+        """Block disabling "assessments need approval" while assessments are pending approval.
+
+        The effective flag of a product is its product group's flag OR its own flag.
+        Disabling it would orphan observation logs in "Needs approval" status: they block
+        new assessments on their observations and their authors cannot approve or reject them.
+        """
+        if not (self.instance and self.instance.pk):
+            return
+
+        if self.instance.is_product_group:
+            old_effective = self.instance.assessments_need_approval
+            new_effective = attrs.get("assessments_need_approval", self.instance.assessments_need_approval)
+            if not old_effective or new_effective:
+                return
+            # disabling the group flag does not affect products
+            # that have enabled approvals themselves
+            pending_approvals = Observation_Log.objects.filter(
+                observation__product__product_group=self.instance,
+                assessment_status=Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL,
+                observation__product__assessments_need_approval=False,
+            ).count()
+        else:
+            old_group = self.instance.product_group
+            new_group = attrs.get("product_group", self.instance.product_group)
+            old_effective = (
+                bool(old_group and old_group.assessments_need_approval) or self.instance.assessments_need_approval
+            )
+            new_effective = bool(new_group and new_group.assessments_need_approval) or attrs.get(
+                "assessments_need_approval", self.instance.assessments_need_approval
+            )
+            if not old_effective or new_effective:
+                return
+            pending_approvals = Observation_Log.objects.filter(
+                observation__product=self.instance,
+                assessment_status=Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL,
+            ).count()
+
+        if pending_approvals:
+            raise ValidationError(
+                f"Assessment approval cannot be disabled while {pending_approvals} assessment(s) "
+                "are pending approval. Approve, reject or delete the pending assessments first."
             )
 
     def validate_observation_notification_status_list(self, value: list[str]) -> list[str]:
@@ -457,13 +502,6 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         return Observation.objects.filter(product=obj, current_status=Status.STATUS_IN_REVIEW).count()
 
     def get_observation_log_approvals(self, obj: Product) -> int:
-        if obj.product_group:
-            if not obj.product_group.assessments_need_approval and not obj.assessments_need_approval:
-                return 0
-        else:
-            if not obj.assessments_need_approval:
-                return 0
-
         return Observation_Log.objects.filter(
             observation__product=obj,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL,
