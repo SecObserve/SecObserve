@@ -7,7 +7,7 @@ import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import ShowHeaderChip from "../../commons/custom_fields/ShowHeaderChip";
 import ShowHeaderDescription from "../../commons/custom_fields/ShowHeaderDescription";
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, feature_show_product_header_chips } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import { ProductGroup } from "../types";
 
@@ -57,7 +57,7 @@ const ProductGroupHeader = () => {
                     </Stack>
                 </Box>
                 {product_group?.description && <ShowHeaderDescription description={product_group.description} />}
-                {product_group && (
+                {product_group && feature_show_product_header_chips() && (
                     <Stack direction="row" spacing={1} sx={{ marginTop: 1.5, flexWrap: "wrap" }}>
                         <ShowHeaderChip label="Products" value={product_group.products_count} />
                         {product_group.product_rule_approvals > 0 && (

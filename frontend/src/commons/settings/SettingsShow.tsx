@@ -151,6 +151,9 @@ const SettingsShowComponent = () => {
                                     <Labeled label="Enable cross scanner deduplication">
                                         <BooleanField source="feature_cross_scanner_deduplication" />
                                     </Labeled>
+                                    <Labeled label="Show chips in Product header">
+                                        <BooleanField source="feature_show_product_header_chips" />
+                                    </Labeled>
                                 </Stack>
                             </Grid>
                             <Grid size={3}>

@@ -9,7 +9,7 @@ import { ProductGroupReferenceField } from "../../commons/custom_fields/ProductG
 import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
 import ShowHeaderChip from "../../commons/custom_fields/ShowHeaderChip";
 import ShowHeaderDescription from "../../commons/custom_fields/ShowHeaderDescription";
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, feature_show_product_header_chips } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import { Product } from "../types";
 
@@ -85,19 +85,21 @@ const ProductHeader = () => {
                     </Stack>
                 </Box>
                 {product?.description && <ShowHeaderDescription description={product.description} />}
-                {product && (product.repository_default_branch_name || product.last_observation_change) && (
-                    <Stack direction="row" spacing={1} sx={{ marginTop: 1.5, flexWrap: "wrap" }}>
-                        {product.repository_default_branch_name && (
-                            <ShowHeaderChip label="Default branch" value={product.repository_default_branch_name} />
-                        )}
-                        {product.last_observation_change && (
-                            <ShowHeaderChip
-                                label="Last change"
-                                value={new Date(product.last_observation_change).toLocaleString()}
-                            />
-                        )}
-                    </Stack>
-                )}
+                {feature_show_product_header_chips() &&
+                    product &&
+                    (product.repository_default_branch_name || product.last_observation_change) && (
+                        <Stack direction="row" spacing={1} sx={{ marginTop: 1.5, flexWrap: "wrap" }}>
+                            {product.repository_default_branch_name && (
+                                <ShowHeaderChip label="Default branch" value={product.repository_default_branch_name} />
+                            )}
+                            {product.last_observation_change && (
+                                <ShowHeaderChip
+                                    label="Last change"
+                                    value={new Date(product.last_observation_change).toLocaleString()}
+                                />
+                            )}
+                        </Stack>
+                    )}
             </Paper>
         </RecordContextProvider>
     );
