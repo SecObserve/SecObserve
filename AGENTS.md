@@ -64,8 +64,15 @@ SecObserve is an open-source vulnerability management system designed for softwa
 
 - **Unit tests**:
   ```bash
+  # all unit tests, with coverage measurement
   ./bin/unittests.sh
+
+  # only the given tests, without coverage measurement
+  ./bin/unittests.sh unittests.core.services.test_assessment
   ```
+  Arguments are passed to `manage.py test`, so its options can be used as well, e.g.
+  `./bin/unittests.sh unittests.core --failfast`. Always give a test label, otherwise the
+  tests are collected from the whole application.
 - **Code Quality**:
   ```bash
   cd backend

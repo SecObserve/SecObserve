@@ -8,7 +8,12 @@ set -o errexit
 rm -f /var/lib/sqlite/secobserve.db
 python manage.py migrate --run-syncdb
 
-coverage run /app/manage.py test unittests
-# coverage run /app/manage.py test unittests.core.services.test_assessment
-coverage report
-coverage xml -o /home/coverage.xml
+if [ $# -eq 0 ]; then
+    # All unit tests, with coverage measurement for SonarQube
+    coverage run /app/manage.py test unittests
+    coverage report
+    coverage xml -o /home/coverage.xml
+else
+    # Only the given tests, without coverage measurement to get the results faster
+    python /app/manage.py test "$@"
+fi
