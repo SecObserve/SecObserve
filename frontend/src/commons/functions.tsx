@@ -1,5 +1,5 @@
 import { PackageURL } from "packageurl-js";
-import { SortPayload } from "ra-core";
+import { RaRecord, SortPayload } from "ra-core";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { httpClient } from "../commons/ra-data-django-rest-framework";
@@ -36,6 +36,13 @@ export function getIconAndFontColor() {
     } else {
         return "black";
     }
+}
+
+export function getUserOptionText(user: RaRecord): string {
+    if (user.full_name && user.username !== user.full_name) {
+        return `${user.full_name} (${user.username})`;
+    }
+    return user.full_name;
 }
 
 export function get_severity_color(severity: string): string {
@@ -330,8 +337,30 @@ export const feature_automatic_osv_scanning = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
         const features = settings.features ?? [];
-        const feature_vex_position = features.indexOf("feature_automatic_osv_scanning");
-        return feature_vex_position !== -1;
+        const feature_automatic_osv_scanning = features.indexOf("feature_automatic_osv_scanning");
+        return feature_automatic_osv_scanning !== -1;
+    } catch {
+        return false;
+    }
+};
+
+export const feature_automatic_vulnerablecode_scanning = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_automatic_vulnerablecode_scanning = features.indexOf("feature_automatic_vulnerablecode_scanning");
+        return feature_automatic_vulnerablecode_scanning !== -1;
+    } catch {
+        return false;
+    }
+};
+
+export const vulnerablecode_base_url_is_set = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const vulnerablecode_base_url_is_set = features.indexOf("vulnerablecode_base_url_is_set");
+        return vulnerablecode_base_url_is_set !== -1;
     } catch {
         return false;
     }
@@ -343,6 +372,17 @@ export const feature_exploit_information = () => {
         const features = settings.features ?? [];
         const feature_vex_position = features.indexOf("feature_exploit_information");
         return feature_vex_position !== -1;
+    } catch {
+        return false;
+    }
+};
+
+export const feature_show_product_header_chips = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_show_product_header_chips = features.indexOf("feature_show_product_header_chips");
+        return feature_show_product_header_chips !== -1;
     } catch {
         return false;
     }

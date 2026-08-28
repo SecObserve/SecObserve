@@ -1,3 +1,48 @@
+{{- if eq (default "single" .Values.architecture) "ha" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "secobserve.frontendServiceName" . | quote }}
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "secobserve.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{- toYaml .Values.service.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  ports:
+    - name: frontend-http
+      port: {{ .Values.frontend.service.port }}
+      targetPort: frontend-http
+      protocol: TCP
+  selector:
+    {{- include "secobserve.componentSelectorLabels" (dict "context" . "component" "frontend") | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "secobserve.backendServiceName" . | quote }}
+  namespace: "{{ .Release.Namespace }}"
+  labels:
+    {{- include "secobserve.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{- toYaml .Values.service.annotations | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type | default "ClusterIP" }}
+  ports:
+    - name: backend-http
+      port: {{ .Values.backend.service.port }}
+      targetPort: backend-http
+      protocol: TCP
+  selector:
+    {{- include "secobserve.componentSelectorLabels" (dict "context" . "component" "api") | nindent 4 }}
+{{- else -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,3 +67,4 @@ spec:
       protocol: TCP
   selector:
     {{- include "secobserve.selectorLabels" . | nindent 4 }}
+{{- end }}

@@ -31,6 +31,7 @@ There are some general permissions based on the user's type:
 | View General Rules          | X        | X        | X         |
 | Create General Rules        | -        | -        | X         |
 | Edit General Rules          | -        | -        | X         |
+| Evaluate General Rules      | -        | -        | X         |
 | Delete General Rules        | -        | -        | X         |
 |                             |          |          |           |
 | Change own password ^1)^    | X        | X        | X         |

@@ -4,11 +4,12 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { Fragment, MouseEvent, useState } from "react";
 
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, vulnerablecode_base_url_is_set } from "../../commons/functions";
 import ApiImportObservations from "./ApiImportObservations";
 import FileUploadObservations from "./FileUploadObservations";
 import FileUploadSBOM from "./FileUploadSBOM";
 import ScanOSV from "./ScanOSV";
+import ScanVulnerableCode from "./ScanVulnerableCode";
 
 interface ImportMenuProps {
     product: any;
@@ -55,6 +56,11 @@ const ImportMenu = ({ product }: ImportMenuProps) => {
                 {product.osv_enabled && product.has_licenses && (
                     <MenuItem onKeyDown={(e) => e.stopPropagation()}>
                         <ScanOSV product={product} />
+                    </MenuItem>
+                )}
+                {vulnerablecode_base_url_is_set() && product.vulnerablecode_enabled && product.has_licenses && (
+                    <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+                        <ScanVulnerableCode product={product} />
                     </MenuItem>
                 )}
             </Menu>

@@ -24,7 +24,7 @@ import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductG
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { feature_vex_enabled, has_attribute } from "../../commons/functions";
+import { feature_vex_enabled, getUserOptionText, has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
@@ -50,7 +50,7 @@ const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
     );
 };
 
-function listFilters(product: any) {
+function listFilters(product: any, is_product_group: boolean) {
     const filters = [];
 
     filters.push(<TextInput source="observation_title" label="Observation title" alwaysOn />);
@@ -59,6 +59,12 @@ function listFilters(product: any) {
         filters.push(
             <ProductReferenceInput alwaysOn />,
             <ProductGroupReferenceInput alwaysOn />,
+            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+            <TextInput source="origin_service_name" label="Service" alwaysOn />
+        );
+    } else if (is_product_group) {
+        filters.push(
+            <ProductReferenceInput alwaysOn />,
             <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
             <TextInput source="origin_service_name" label="Service" alwaysOn />
         );
@@ -92,7 +98,7 @@ function listFilters(product: any) {
 
     filters.push(
         <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
-            <AutocompleteInputMedium optionText="full_name" />
+            <AutocompleteInputMedium optionText={getUserOptionText} />
         </ReferenceInput>,
         <AutocompleteInput source="severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />,
         <AutocompleteInput source="status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
@@ -102,16 +108,19 @@ function listFilters(product: any) {
 
 type ObservationLogApprovalListProps = {
     product?: any;
+    is_product_group?: boolean;
 };
 
-const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps) => {
+const ObservationLogApprovalList = ({ product, is_product_group = false }: ObservationLogApprovalListProps) => {
     let filter: Record<string, any> = { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
     if (product) {
-        filter = { ...filter, product: Number(product.id) };
+        filter = is_product_group
+            ? { ...filter, product_group: Number(product.id) }
+            : { ...filter, product: Number(product.id) };
     }
     let storeKey = "observation_logs.approval";
     if (product) {
-        storeKey = "observation_logs.approvalproduct";
+        storeKey = is_product_group ? "observation_logs.approvalproductgroup" : "observation_logs.approvalproduct";
     }
     const listContext = useListController({
         filter: filter,
@@ -130,12 +139,18 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
         return "../../../../observation_logs/" + id + "/show";
     };
 
-    if (product) {
+    if (product && is_product_group) {
+        localStorage.setItem("observationlogapprovallistproductgroup", "true");
+        localStorage.removeItem("observationlogapprovallistproduct");
+        localStorage.removeItem("observationlogapprovallist");
+    } else if (product) {
         localStorage.setItem("observationlogapprovallistproduct", "true");
         localStorage.removeItem("observationlogapprovallist");
+        localStorage.removeItem("observationlogapprovallistproductgroup");
     } else {
         localStorage.setItem("observationlogapprovallist", "true");
         localStorage.removeItem("observationlogapprovallistproduct");
+        localStorage.removeItem("observationlogapprovallistproductgroup");
     }
     localStorage.removeItem("observationlogembeddedlist");
 
@@ -143,7 +158,7 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
         <ResourceContextProvider value="observation_logs">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <FilterForm filters={listFilters(product)} />
+                    <FilterForm filters={listFilters(product, is_product_group)} />
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid
@@ -160,7 +175,9 @@ const ObservationLogApprovalList = ({ product }: ObservationLogApprovalListProps
                                 resource="observation_logs"
                             >
                                 <TextField source="observation_data.title" label="Observation" />
-                                {!product && <TextField source="observation_data.product_data.name" label="Product" />}
+                                {(!product || is_product_group) && (
+                                    <TextField source="observation_data.product_data.name" label="Product" />
+                                )}
                                 {!product &&
                                     has_attribute("observation_data.product_data.product_group_name", data, sort) && (
                                         <TextField

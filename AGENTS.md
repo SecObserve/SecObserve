@@ -64,8 +64,15 @@ SecObserve is an open-source vulnerability management system designed for softwa
 
 - **Unit tests**:
   ```bash
+  # all unit tests, with coverage measurement
   ./bin/unittests.sh
+
+  # only the given tests, without coverage measurement
+  ./bin/unittests.sh unittests.core.services.test_assessment
   ```
+  Arguments are passed to `manage.py test`, so its options can be used as well, e.g.
+  `./bin/unittests.sh unittests.core --failfast`. Always give a test label, otherwise the
+  tests are collected from the whole application.
 - **Code Quality**:
   ```bash
   cd backend
@@ -164,3 +171,20 @@ prettier -w src
 - **Line Length**: 120 characters (configured via `.prettierrc.json`).
 - **TypeScript**: Strict mode enabled; all components should be fully typed.
 - **Component Style**: Functional components with hooks; no class components.
+
+## Development on ARM macOS (Apple Silicon)
+
+On Macs with Apple Silicon, start the development stack with the ARM override file in addition to the standard development file:
+
+```bash
+docker compose -f docker-compose-dev.yml -f docker-compose-dev-arm.yaml up --build
+```
+
+The override (`docker-compose-dev-arm.yaml`) runs the frontend, backend and PostgreSQL services with `platform: linux/arm64/v8`.
+
+The frontend's `node_modules` is installed inside the container in the Docker-managed volume `dev_node_modules`. This is configured in the development Compose files themselves and applies to all platforms, so that native dependencies built on the host (macOS, or Linux with glibc) are not mounted into the Alpine Linux container.
+
+Notes:
+
+- `./bin/dev.sh` uses only `docker-compose-dev.yml`. On ARM macOS, start the stack with the command above instead.
+- Unit tests (`./bin/unittests.sh` with `docker-compose-unittests.yml`) run unchanged on ARM macOS.

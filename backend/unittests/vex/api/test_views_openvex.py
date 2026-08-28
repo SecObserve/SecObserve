@@ -7,7 +7,7 @@ from django.utils import dateparse
 from rest_framework.test import APIClient
 
 from application.access_control.models import User
-from application.core.models import Observation, Product, Product_Member
+from application.core.models import Branch, Observation, Product, Product_Member
 from application.licenses.models import License_Component
 from application.vex.models import OpenVEX, OpenVEX_Branch, OpenVEX_Vulnerability
 
@@ -232,6 +232,54 @@ class TestOpenVEX(TestCase):
 
         openvex_vulnerabilities = OpenVEX_Vulnerability.objects.filter(openvex=openvex)
         self.assertEqual(0, len(openvex_vulnerabilities))
+
+    @patch("django.utils.timezone.now")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.vex.services.openvex_generator.user_has_permission_or_403")
+    @patch("application.vex.services.openvex_generator.get_current_user")
+    @patch("application.core.queries.observation.get_current_user")
+    def test_openvex_document_product_same_statement_on_multiple_branches(
+        self,
+        mock_get_current_user_1,
+        mock_get_current_user_2,
+        mock_get_user_has_permission_or_403,
+        mock_authenticate,
+        mock_now,
+    ):
+        mock_now.return_value = dateparse.parse_datetime("2020-01-01T04:30:00Z")
+        vex_user = User.objects.get(username="vex_user")
+        mock_authenticate.return_value = vex_user, None
+        mock_get_current_user_1.return_value = vex_user
+        mock_get_current_user_2.return_value = vex_user
+
+        # same vulnerability with the same status on a second branch
+        observation = Observation.objects.get(id=4)
+        observation.pk = None
+        observation.branch = Branch.objects.get(id=2)
+        observation.save()
+
+        parameters = {
+            "product": 2,
+            "document_id_prefix": "OpenVEX",
+            "id_namespace": "https://vex.example.com",
+            "author": "Author",
+            "role": "Role",
+        }
+
+        api_client = APIClient()
+        response = api_client.post("/api/vex/openvex_document/create/", parameters, format="json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("application/json", response.headers["Content-Type"])
+        self.assertEqual(
+            "attachment; filename=OpenVEX_2020_0001_0001.json",
+            response.headers["Content-Disposition"],
+        )
+        with open(
+            path.dirname(__file__) + "/files/openvex_product_same_statement_on_multiple_branches.json",
+            "r",
+        ) as testfile:
+            self.assertEqual(testfile.read(), response._container[0].decode("utf-8"))
 
     @patch("django.utils.timezone.now")
     @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")

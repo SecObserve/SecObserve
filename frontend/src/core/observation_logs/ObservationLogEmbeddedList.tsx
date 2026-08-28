@@ -48,6 +48,7 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
     localStorage.setItem("observationlogembeddedlist", "true");
     localStorage.removeItem("observationlogapprovallist");
     localStorage.removeItem("observationlogapprovallistproduct");
+    localStorage.removeItem("observationlogapprovallistproductgroup");
 
     return (
         <ResourceContextProvider value="observation_logs">

@@ -256,7 +256,7 @@ const AdminApp = () => {
                 name="periodic_tasks"
                 {...periodic_tasks} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                 // nosemgrep because the props are well defined in the import
-                options={{ label: "Periodic Tasks" }}
+                options={{ label: "Tracked Tasks" }}
             />
             <Resource
                 name="components"

@@ -63,6 +63,7 @@ class SettingsSerializer(ModelSerializer):
             if instance.observation_title_notification_statuses
             else []
         )
+
         return data
 
     def to_internal_value(self, data: dict) -> dict:

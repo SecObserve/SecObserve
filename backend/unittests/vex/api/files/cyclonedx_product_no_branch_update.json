@@ -13,7 +13,7 @@
     "tools": {
       "components": [
         {
-          "name": "SecObserve / 1.57.0",
+          "name": "SecObserve / 1.58.0",
           "type": "application"
         }
       ]

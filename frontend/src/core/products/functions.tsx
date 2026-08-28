@@ -21,7 +21,12 @@ import OSVLinuxDistributionInput from "../../commons/custom_fields/OSVLinuxDistr
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import WebhookTestButton from "../../commons/custom_fields/WebhookTestButton";
 import { validate_0_999999, validate_255, validate_2048, validate_required_255 } from "../../commons/custom_validators";
-import { feature_automatic_osv_scanning, feature_email, feature_license_management } from "../../commons/functions";
+import {
+    feature_automatic_osv_scanning,
+    feature_automatic_vulnerablecode_scanning,
+    feature_email,
+    feature_license_management,
+} from "../../commons/functions";
 import {
     AutocompleteArrayInputWide,
     AutocompleteInputMedium,
@@ -53,6 +58,9 @@ export const transform = (data: any, description: string) => {
         data.osv_linux_distribution = "";
         data.osv_linux_release = "";
         data.automatic_osv_scanning_enabled = false;
+    }
+    if (!data.vulnerablecode_enabled) {
+        data.automatic_vulnerablecode_scanning_enabled = false;
     }
     data.osv_linux_distribution ??= "";
     data.osv_linux_release ??= "";
@@ -434,6 +442,22 @@ export const ProductCreateEditComponent = ({
                                 <BooleanInput
                                     source="automatic_osv_scanning_enabled"
                                     label="Automatic OSV scanning enabled"
+                                    defaultValue={false}
+                                />
+                            )}
+                        </Fragment>
+                    )
+                }
+            </FormDataConsumer>
+            <BooleanInput source="vulnerablecode_enabled" label="VulnerableCode scanning enabled" defaultValue={true} />
+            <FormDataConsumer>
+                {({ formData }) =>
+                    formData.vulnerablecode_enabled && (
+                        <Fragment>
+                            {feature_automatic_vulnerablecode_scanning() && (
+                                <BooleanInput
+                                    source="automatic_vulnerablecode_scanning_enabled"
+                                    label="Automatic VulnerableCode scanning enabled"
                                     defaultValue={false}
                                 />
                             )}

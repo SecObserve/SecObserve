@@ -23,6 +23,7 @@ import { feature_general_rules_need_approval_enabled, is_superuser } from "../..
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 
@@ -93,6 +94,7 @@ const GeneralRuleList = () => {
                     <TextField source="scanner_prefix" />
                     <TextField source="title" label="Observation title" />
                     {is_superuser() && <WithRecord render={(rule) => <RuleSimulation rule={rule} />} />}
+                    {is_superuser() && <WithRecord render={(rule) => <GeneralRuleEvaluate rule={rule} />} />}
                 </Datagrid>
             </List>
         </Fragment>

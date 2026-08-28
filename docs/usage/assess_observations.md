@@ -35,6 +35,11 @@ With the default settings of the product, the assessment is activated right away
 
 The setting is also available for product groups. If it is set for a product group, it will be inherited by all products in that group.
 
+!!! note
+    **Assessments need approval** cannot be disabled (neither on the product nor on the
+    product group) while assessments are still pending approval. Approve, reject or delete
+    the pending assessments first.
+
 If the approval is required, the dialog showing the observation or and the dialog showing the observation log (after clicking on an entry in the list of observation logs) will show a button to either approve or reject the assessment:
 
 ![Show observation log](../assets/images/screenshot_observation_log_show.png)

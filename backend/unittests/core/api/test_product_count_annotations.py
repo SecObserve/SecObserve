@@ -35,7 +35,9 @@ class TestProductCountAnnotationsApi(BaseTestCase):
         super().setUpClass()
 
     def _set_observation_count_from_metrics(self, enabled: bool) -> None:
-        Settings.objects.update(observation_count_from_metrics=enabled)
+        settings = Settings.load()
+        settings.observation_count_from_metrics = enabled
+        settings.save()
 
     def _get_as_admin(self, url: str):
         auth_path = "application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate"

@@ -36,7 +36,8 @@
 | [Direct link to source code](../integrations/source_code_repositories.md) | :material-plus-circle-outline: |
 | [Export vulnerabilities to issue trackers (Jira, GitLab, GitHub)](../integrations/issue_trackers.md) | :material-plus-circle-outline: |
 | [Import/export vulnerabilities from/to VEX documents (CSAF, OpenVEX)](../integrations/vex.md) | :material-plus-circle-outline: |
-| [Vulnerability scanning from OSV database](../integrations/osv_scan.md) | :material-plus-circle-outline: |
+| [Vulnerability scanning from OSV](../integrations/osv_scan.md) | :material-plus-circle-outline: |
+| [Vulnerability scanning from VulnerableCode](../integrations/vulnerablecode_scan.md) | :material-plus-circle-outline: |
 | [Export of data to Microsoft Excel and CSV](../integrations/observations_export.md) | :material-plus-circle-outline: |
 | [Export metrics to CodeCharta](../integrations/codecharta.md) | :material-plus-circle-outline: |
 | [Notifications to Microsoft Teams, Slack and email](../integrations/notifications.md) | :material-plus-circle-outline: |

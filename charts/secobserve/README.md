@@ -2,9 +2,9 @@
 
 ## Installing the chart
 
-The chart can be installed from the OCI repository using `helm install secobserve --version 1.1.1 oci://ghcr.io/SecObserve/charts/secobserve`.
+The chart can be installed from the OCI repository using `helm install secobserve --version 1.2.0 oci://ghcr.io/SecObserve/charts/secobserve`.
 
-![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.57.0](https://img.shields.io/badge/AppVersion-1.57.0-informational?style=flat-square)
+![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.58.0](https://img.shields.io/badge/AppVersion-1.58.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system
 designed for software development teams and cloud-native environments.
@@ -32,154 +32,11 @@ across their software projects, enhancing visibility and improving DevSecOps wor
 
 ## Operational notes
 
-The chart supports exactly one application replica because SecObserve currently uses a SQLite-backed Huey task queue. The queue is persisted in a dedicated PersistentVolumeClaim by default.
+With the default `architecture: single`, all roles run in one Pod and the chart supports exactly one application replica. The Huey queue of a SQLite installation is persisted in a dedicated PersistentVolumeClaim.
+
+Set `architecture: ha` to split the backend into separate workloads: an `init` Job, a scalable `api` Deployment, a `background` Deployment running the Huey consumer, and a separate `frontend` Deployment. `backend.background.replicaCount` is limited to 1, because the Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue. The PersistentVolumeClaim is not created for this architecture.
 
 Application and bundled PostgreSQL resource names are derived from the Helm release name. External databases can be configured through `database.*` values with `postgresql.enabled=false`.
-
-## Values
-
-### Pod
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| affinity | object | `{}` | Sets the affinity for the secobserve pod For more information on affinity, see https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity |
-| extraInitContainers | list | `[]` | additional init containers to add to the SecObserve Pod |
-| labels | object | `{}` | additional labels to add to the SecObserve Pod |
-| nodeSelector | object | `{}` | Node labels to select for secobserve pod assignment |
-| podAnnotations | object | `{}` | annotations to add to the SecObserve Pod |
-| replicaCount | int | `1` | number of replicas to deploy |
-| securityContext | object | `{"enabled":true,"fsGroup":1001,"fsGroupChangePolicy":"OnRootMismatch"}` | securityContext to use for the pod |
-| tolerations | object | `{}` | Toleration labels for pod assignment |
-
-### Backend
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| backend.env[0] | object | `{"name":"ADMIN_USER","value":"admin"}` | admin user name |
-| backend.env[10] | object | `{"name":"OIDC_EMAIL","value":"email"}` | OIDC email address |
-| backend.env[11] | object | `{"name":"OIDC_GROUPS","value":"groups"}` | OIDC groups |
-| backend.env[1] | object | `{"name":"ADMIN_EMAIL","value":"admin@admin.com"}` | admin email address |
-| backend.env[2] | object | `{"name":"ALLOWED_HOSTS","value":"secobserve.dev"}` | allowed hosts |
-| backend.env[3] | object | `{"name":"CORS_ALLOWED_ORIGINS","value":"https://secobserve.dev"}` | CORS allowed origins |
-| backend.env[4] | object | `{"name":"OIDC_AUTHORITY","value":"https://oidc.secobserve.dev"}` | admin OIDC authority |
-| backend.env[5] | object | `{"name":"OIDC_CLIENT_ID","value":"secobserve"}` | OIDC client id |
-| backend.env[6] | object | `{"name":"OIDC_USERNAME","value":"preferred_username"}` | OIDC user name |
-| backend.env[7] | object | `{"name":"OIDC_FIRST_NAME","value":"given_name"}` | OIDC first name |
-| backend.env[8] | object | `{"name":"OIDC_LAST_NAME","value":"family_name"}` | OIDC last name |
-| backend.env[9] | object | `{"name":"OIDC_FULL_NAME","value":"preferred_username"}` | OIDC full name |
-| backend.existingSecret | string | `""` | existing Secret containing the admin password, Django secret key and field encryption key |
-| backend.image | object | `{"pullPolicy":"IfNotPresent","registry":"ghcr.io","repository":"secobserve/secobserve-backend","tag":null}` | image registry |
-| backend.image.pullPolicy | string | `"IfNotPresent"` | image pull policy |
-| backend.image.repository | string | `"secobserve/secobserve-backend"` | image repository |
-| backend.image.tag | string | `nil` | image tag (uses appVersion value of Chart.yaml if not specified) |
-| backend.resources | object | `{"limits":{"cpu":"1000m","memory":"1500Mi"},"requests":{"cpu":"1000m","memory":"1500Mi"}}` | resource requirements and limits |
-| backend.secretKeys.adminPassword | string | `"password"` | key containing the initial admin password |
-| backend.secretKeys.djangoSecretKey | string | `"django_secret_key"` | key containing the Django secret key |
-| backend.secretKeys.fieldEncryptionKey | string | `"field_encryption_key"` | key containing the field encryption key |
-| backend.securityContext | object | `{"allowPrivilegeEscalation":false,"enabled":true,"runAsGroup":1001,"runAsNonRoot":true,"runAsUser":1001}` | security context to use for the backend container |
-| backend.service.port | int | `5000` | service port |
-| backend.volumeMounts | list | `[]` | additional volume mounts for the backend container |
-| backend.volumes | list | `[]` | additional Pod volumes used by the backend container |
-
-### Database
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| database.engine | string | `"django.db.backends.postgresql"` | Django database engine |
-| database.host | string | `""` | database hostname; inferred from the bundled PostgreSQL chart when empty |
-| database.name | string | `""` | database name; defaults to postgresql.auth.database when empty |
-| database.passwordSecret.key | string | `""` | key containing the database password; inferred from PostgreSQL values when empty |
-| database.passwordSecret.name | string | `""` | Secret containing the database password; inferred from PostgreSQL values when empty |
-| database.port | int | `5432` | database port |
-| database.username | string | `""` | database username; defaults to postgresql.auth.username when empty |
-
-### dbchecker
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| dbchecker.enabled | bool | `true` | enable the database readiness init container |
-| dbchecker.hostname | string | `""` | database hostname override; inferred from database settings when empty |
-| dbchecker.image.digest | string | `""` | Image digest for the dbchecker image; takes precedence over tag when set |
-| dbchecker.image.pullPolicy | string | `"IfNotPresent"` | Image pull policy for the dbchecker image |
-| dbchecker.image.repository | string | `"busybox"` | Docker image used to check Database readiness at startup |
-| dbchecker.image.tag | string | `"1.37.0"` | Image tag for the dbchecker image |
-| dbchecker.port | int | `5432` | database port checked by the init container |
-| dbchecker.resources | object | `{"limits":{"cpu":"20m","memory":"32Mi"},"requests":{"cpu":"20m","memory":"32Mi"}}` | Resource requests and limits for the dbchecker container |
-| dbchecker.securityContext | object | `{"allowPrivilegeEscalation":false,"enabled":true,"runAsGroup":1001,"runAsNonRoot":true,"runAsUser":1001}` | SecurityContext for the dbchecker container |
-
-### Frontend
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| frontend.env[0] | object | `{"name":"API_BASE_URL","value":"https://secobserve.dev/api"}` | Base URL for API |
-| frontend.env[1] | object | `{"name":"OIDC_ENABLE","value":"false"}` | enable OIDC authentication |
-| frontend.env[2] | object | `{"name":"OIDC_AUTHORITY","value":"https://oidc.secobserve.dev"}` | oidc issuer |
-| frontend.env[3] | object | `{"name":"OIDC_CLIENT_ID","value":"secobserve"}` | OIDC client ID |
-| frontend.env[4] | object | `{"name":"OIDC_REDIRECT_URI","value":"https://secobserve.dev/"}` | OIDC client redirect URL |
-| frontend.env[5] | object | `{"name":"OIDC_POST_LOGOUT_REDIRECT_URI","value":"https://secobserve.dev/"}` | URI to redirect to after logout |
-| frontend.env[6] | object | `{"name":"OIDC_PROMPT","value":null}` | OIDC prompt |
-| frontend.image.pullPolicy | string | `"IfNotPresent"` | image pull policy |
-| frontend.image.registry | string | `"ghcr.io"` | image registry |
-| frontend.image.repository | string | `"secobserve/secobserve-frontend"` | image repository |
-| frontend.image.tag | string | `nil` | image tag (uses appVersion value of Chart.yaml if not specified) |
-| frontend.resources | object | `{"limits":{"cpu":"500m","memory":"1000Mi"},"requests":{"cpu":"500m","memory":"1000Mi"}}` | resource requirements and limits |
-| frontend.securityContext | object | `{"allowPrivilegeEscalation":false,"enabled":true,"runAsGroup":1001,"runAsNonRoot":true,"runAsUser":1001}` | securityContext to use for frontend container |
-| frontend.service.port | int | `3000` | service port |
-| frontend.volumeMounts | list | `[]` | additional volume mounts for the frontend container |
-| frontend.volumes | list | `[]` | additional Pod volumes used by the frontend container |
-
-### General
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| fullnameOverride | string | `""` | fully override generated resource names |
-| nameOverride | string | `""` | override the chart name used in resource names |
-
-### Huey
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| huey.persistence.accessModes | list | `["ReadWriteOnce"]` | access modes for the Huey PersistentVolumeClaim |
-| huey.persistence.annotations | object | `{}` | annotations to add to the Huey PersistentVolumeClaim |
-| huey.persistence.enabled | bool | `true` | persist the Huey SQLite queue across backend container and Pod restarts |
-| huey.persistence.existingClaim | string | `""` | use an existing PersistentVolumeClaim instead of creating one |
-| huey.persistence.size | string | `"1Gi"` | requested storage size for the Huey PersistentVolumeClaim |
-| huey.persistence.storageClass | string | `""` | storage class for the Huey PersistentVolumeClaim; use "-" to disable dynamic provisioning |
-
-### Ingress
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| ingress.annotations | object | `{"kubernetes.io/ingress.class":"nginx","nginx.ingress.kubernetes.io/proxy-read-timeout":"600","nginx.ingress.kubernetes.io/proxy-send-timeout":"600","nginx.ingress.kubernetes.io/ssl-redirect":"true"}` | annotations to add to ingress |
-| ingress.enabled | bool | `true` | If true, a Kubernetes Ingress resource will be created to the http port of the secobserve Service |
-| ingress.hostname | string | `"secobserve.dev"` | hostname of ingress |
-| ingress.ingressClassName | string | `"nginx"` | ingress class name |
-| ingress.paths | list | `[]` | additional paths appended to the generated ingress rule |
-
-### Postgresql
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| postgresql.architecture | string | `"standalone"` | PostgreSQL architecture (`standalone` or `replication`) |
-| postgresql.auth | object | `{"database":"secobserve","existingSecret":"","password":"","postgresPassword":"","secretKeys":{"userPasswordKey":"password"},"username":"secobserve"}` | authentication settings for the bundled PostgreSQL database |
-| postgresql.auth.database | string | `"secobserve"` | Name for a custom database to create |
-| postgresql.auth.existingSecret | string | `""` | Name of existing secret to use for PostgreSQL credentials |
-| postgresql.auth.password | string | `""` | Password for the custom user to create |
-| postgresql.auth.postgresPassword | string | `""` | Password for the "postgres" admin user. Ignored if `auth.existingSecret` with key `postgres-password` is provided |
-| postgresql.auth.secretKeys.userPasswordKey | string | `"password"` | Name of key in existing secret to use for PostgreSQL credentials. Only used when `auth.existingSecret` is set. |
-| postgresql.auth.username | string | `"secobserve"` | Name for a custom user to create |
-| postgresql.enabled | bool | `true` | Switch to enable or disable the PostgreSQL helm chart |
-| postgresql.image | object | `{"repository":"bitnamilegacy/postgresql"}` | image repository override for the bundled PostgreSQL database |
-| postgresql.metrics | object | `{"image":{"repository":"bitnamilegacy/postgres-exporter"}}` | image repository overrides for PostgreSQL metrics |
-| postgresql.volumePermissions | object | `{"image":{"repository":"bitnamilegacy/os-shell"}}` | image repository overrides for the volume-permissions init container |
-
-### Service
-
-| Key | Type | Default | Description |
-|-----|------|---------|-------------|
-| service | object | `{"annotations":{},"type":"ClusterIP"}` | defines the secobserve http service |
-| service.annotations | object | `{}` | annotations to add to the Service |
-| service.type | string | `"ClusterIP"` | Service type of service |
 
 ## Values
 
@@ -270,6 +127,44 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 		</tr>
 	</tbody>
 </table>
+<h3>General</h3>
+<table>
+	<thead>
+		<th>Key</th>
+		<th>Type</th>
+		<th>Default</th>
+		<th>Description</th>
+	</thead>
+	<tbody>
+		<tr>
+			<td>architecture</td>
+			<td>string</td>
+			<td><pre lang="json">
+"single"
+</pre>
+</td>
+			<td>deployment architecture (`single` for one Pod running all roles, `ha` for separate init, api, background and frontend workloads)</td>
+		</tr>
+		<tr>
+			<td>fullnameOverride</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>fully override generated resource names</td>
+		</tr>
+		<tr>
+			<td>nameOverride</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>override the chart name used in resource names</td>
+		</tr>
+	</tbody>
+</table>
 <h3>Backend</h3>
 <table>
 	<thead>
@@ -279,6 +174,24 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 		<th>Description</th>
 	</thead>
 	<tbody>
+		<tr>
+			<td>backend.api.replicaCount</td>
+			<td>int</td>
+			<td><pre lang="json">
+2
+</pre>
+</td>
+			<td>number of API replicas, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
+			<td>backend.background.replicaCount</td>
+			<td>int</td>
+			<td><pre lang="json">
+1
+</pre>
+</td>
+			<td>number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue, so a second consumer is not safe yet.</td>
+		</tr>
 		<tr>
 			<td>backend.env[0]</td>
 			<td>object</td>
@@ -472,6 +385,15 @@ null
 </pre>
 </td>
 			<td>image tag (uses appVersion value of Chart.yaml if not specified)</td>
+		</tr>
+		<tr>
+			<td>backend.init.backoffLimit</td>
+			<td>int</td>
+			<td><pre lang="json">
+6
+</pre>
+</td>
+			<td>number of retries for the init Job, only used when `architecture` is `ha`</td>
 		</tr>
 		<tr>
 			<td>backend.resources</td>
@@ -694,7 +616,7 @@ true
 			<td>dbchecker.image.tag</td>
 			<td>string</td>
 			<td><pre lang="json">
-"1.37.0"
+"1.38.0"
 </pre>
 </td>
 			<td>Image tag for the dbchecker image</td>
@@ -873,6 +795,15 @@ null
 			<td>image tag (uses appVersion value of Chart.yaml if not specified)</td>
 		</tr>
 		<tr>
+			<td>frontend.replicaCount</td>
+			<td>int</td>
+			<td><pre lang="json">
+1
+</pre>
+</td>
+			<td>number of frontend replicas, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
 			<td>frontend.resources</td>
 			<td>object</td>
 			<td><pre lang="json">
@@ -931,35 +862,6 @@ null
 </pre>
 </td>
 			<td>additional Pod volumes used by the frontend container</td>
-		</tr>
-	</tbody>
-</table>
-<h3>General</h3>
-<table>
-	<thead>
-		<th>Key</th>
-		<th>Type</th>
-		<th>Default</th>
-		<th>Description</th>
-	</thead>
-	<tbody>
-		<tr>
-			<td>fullnameOverride</td>
-			<td>string</td>
-			<td><pre lang="json">
-""
-</pre>
-</td>
-			<td>fully override generated resource names</td>
-		</tr>
-		<tr>
-			<td>nameOverride</td>
-			<td>string</td>
-			<td><pre lang="json">
-""
-</pre>
-</td>
-			<td>override the chart name used in resource names</td>
 		</tr>
 	</tbody>
 </table>

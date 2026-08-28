@@ -97,7 +97,8 @@ nav:
     - Issue trackers: integrations/issue_trackers.md
     - Notifications: integrations/notifications.md
     - VEX documents: integrations/vex.md
-    - Vulnerability scanning from OSV database: integrations/osv_scan.md
+    - Vulnerability scanning from OSV: integrations/osv_scan.md
+    - Vulnerability scanning from VulnerableCode: integrations/vulnerablecode_scan.md
     - Export of observations: integrations/observations_export.md
     - CodeCharta: integrations/codecharta.md
     - Links to additional information: integrations/links.md

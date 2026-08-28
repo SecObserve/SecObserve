@@ -192,3 +192,105 @@ Selector labels
 com.secobserve.tenant: {{ include "secobserve.fullname" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
+
+{{/*
+Selector labels for a single component. Call with a dict, for example:
+{{ include "secobserve.componentSelectorLabels" (dict "context" $ "component" "api") }}
+*/}}
+{{- define "secobserve.componentSelectorLabels" -}}
+{{ include "secobserve.selectorLabels" .context }}
+app.kubernetes.io/component: {{ .component }}
+{{- end }}
+
+{{/* Return the name of the Service exposing the frontend. */}}
+{{- define "secobserve.frontendServiceName" -}}
+{{- if eq (default "single" .Values.architecture) "ha" -}}
+{{- printf "%s-frontend-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Return the name of the Service exposing the backend API. */}}
+{{- define "secobserve.backendServiceName" -}}
+{{- if eq (default "single" .Values.architecture) "ha" -}}
+{{- printf "%s-backend-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- else -}}
+{{- printf "%s-svc" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Init container waiting for the database to accept connections. */}}
+{{- define "secobserve.dbcheckerInitContainer" -}}
+- name: dbchecker
+  image: "{{ .Values.dbchecker.image.repository }}{{- if (.Values.dbchecker.image.digest) -}}@{{ .Values.dbchecker.image.digest }}{{- else -}}:{{ .Values.dbchecker.image.tag }} {{- end }}"
+  imagePullPolicy: {{ .Values.dbchecker.image.pullPolicy }}
+  {{- if .Values.dbchecker.securityContext.enabled }}
+  securityContext:
+    {{- omit .Values.dbchecker.securityContext "enabled" | toYaml | nindent 4 }}
+  {{- end }}
+  command:
+    - sh
+    - -c
+    - |
+      echo 'Waiting for Database to become ready...'
+
+      until printf "." && nc -z -w 2 {{ default (include "secobserve.databaseHost" .) .Values.dbchecker.hostname }} {{ default .Values.database.port .Values.dbchecker.port }}; do
+          sleep 2;
+      done;
+
+      echo 'Database OK ✓'
+  resources:
+    {{- toYaml .Values.dbchecker.resources | nindent 4 }}
+{{- end -}}
+
+{{/*
+Init container waiting for the init Job to have applied all migrations. Uses the
+backend image, so no additional image has to be pulled.
+*/}}
+{{- define "secobserve.migrationsInitContainer" -}}
+- name: wait-for-migrations
+  image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+  imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+  {{- if .Values.backend.securityContext.enabled }}
+  securityContext:
+    {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 4 }}
+  {{- end }}
+  env:
+    {{- include "secobserve.backendEnv" . | nindent 4 }}
+  command:
+    - sh
+    - -c
+    - |
+      echo 'Waiting for database migrations to be applied...'
+
+      until python manage.py migrate --check >/dev/null 2>&1; do
+          printf "."
+          sleep 5;
+      done;
+
+      echo 'Migrations OK ✓'
+  resources:
+    {{- toYaml .Values.backend.resources | nindent 4 }}
+{{- end -}}
+
+{{/* Pod level scheduling and security settings shared by all workloads. */}}
+{{- define "secobserve.podPlacement" -}}
+{{- with .Values.nodeSelector }}
+nodeSelector:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.affinity }}
+affinity:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.tolerations }}
+tolerations:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- if .Values.securityContext.enabled }}
+securityContext:
+  {{- omit .Values.securityContext "enabled" | toYaml | nindent 2 }}
+{{- end }}
+{{- end -}}
+

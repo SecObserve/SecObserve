@@ -1,0 +1,83 @@
+volumes:
+  dev_postgres_data:
+  dev_node_modules:
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./docker/frontend/dev/Dockerfile
+    image: secobserve_frontend_dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/:/app
+      # Dependencies are installed inside the container, so that native bindings
+      # match the container's platform and libc instead of the host's.
+      - dev_node_modules:/app/node_modules
+    command: sh -c "npm install --no-audit --no-fund && npm run start -- --host"
+
+  init:
+    build:
+      context: .
+      dockerfile: ./docker/backend/dev/django/Dockerfile
+    image: secobserve_backend_dev
+    command: ["init"]
+    depends_on:
+      - postgres
+    env_file:
+      - ./docker/backend/dev/django/docker.env
+
+  background:
+    build:
+      context: .
+      dockerfile: ./docker/backend/dev/django/Dockerfile
+    image: secobserve_backend_dev
+    command: ["background"]
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
+    env_file:
+      - ./docker/backend/dev/django/docker.env
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/backend/dev/django/Dockerfile
+    image: secobserve_backend_dev
+    command: ["api"]
+    depends_on:
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
+    env_file:
+      - ./docker/backend/dev/django/docker.env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    
+  postgres:
+    image: postgres:15.19-alpine
+    volumes:
+      - dev_postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${SO_POSTGRES_DB:-secobserve}
+      POSTGRES_USER: ${SO_POSTGRES_USER:-secobserve}
+      POSTGRES_PASSWORD: ${SO_POSTGRES_PASSWORD:-secobserve}
+    ports:
+      - "5432:5432"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    profiles:
+      - mailhog
+    entrypoint: ["/bin/sh", "-c", "MailHog &>/dev/null"]
+    ports:
+      - "1025:1025"
+      - "8025:8025"

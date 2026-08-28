@@ -1,0 +1,51 @@
+suite: Test the architecture switch
+
+templates:
+  - templates/statefulset.yaml
+  - templates/pvc.yaml
+  - templates/service.yaml
+
+release:
+  name: test-release
+  namespace: test-namespace
+
+tests:
+  - it: renders the single Pod workload, the Huey PVC and one Service by default
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: renders neither the single Pod workload nor the Huey PVC for the ha architecture
+    set:
+      architecture: ha
+    templates:
+      - templates/statefulset.yaml
+      - templates/pvc.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: splits the Service into a frontend and a backend Service for the ha architecture
+    set:
+      architecture: ha
+    templates:
+      - templates/service.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-frontend-svc
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-backend-svc
+        documentIndex: 1
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: frontend
+        documentIndex: 0
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: api
+        documentIndex: 1

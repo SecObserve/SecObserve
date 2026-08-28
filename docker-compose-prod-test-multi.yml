@@ -1,0 +1,96 @@
+volumes:
+  prod_mysql_data:
+  prod_postgres_data:
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./docker/frontend/prod/Dockerfile
+      args:
+        VERSION: prod_test
+    image: secobserve_frontend_prod
+    environment:
+      API_BASE_URL: ${SO_API_BASE_URL:-http://localhost:5000/api}
+      OIDC_ENABLE: ${SO_OIDC_ENABLE:-false}
+      OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-dummy}
+      OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-dummy}
+      OIDC_REDIRECT_URI: ${SO_OIDC_REDIRECT_URI:-http://localhost:3000}
+      OIDC_POST_LOGOUT_REDIRECT_URI: ${SO_OIDC_POST_LOGOUT_REDIRECT_URI:-http://localhost:3000}
+      OIDC_PROMPT: ${SO_OIDC_PROMPT:-}
+    ports:
+      - "3000:3000"
+
+  init:
+    build:
+      context: .
+      dockerfile: ./docker/backend/prod/django/Dockerfile
+      args:
+        VERSION: prod_test
+    image: secobserve_backend_prod
+    command: ["init"]
+    depends_on:
+      - postgres
+    env_file:
+      - ./docker/backend/prod/django/docker.env
+
+  background:
+    build:
+      context: .
+      dockerfile: ./docker/backend/prod/django/Dockerfile
+      args:
+        VERSION: prod_test
+    image: secobserve_backend_prod
+    command: ["background"]
+    healthcheck:
+      disable: true
+    depends_on:
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
+    env_file:
+      - ./docker/backend/prod/django/docker.env
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./docker/backend/prod/django/Dockerfile
+      args:
+        VERSION: prod_test
+    image: secobserve_backend_prod
+    command: ["api"]
+    depends_on:
+      postgres:
+          condition: service_started
+      init:
+          condition: service_completed_successfully
+    env_file:
+      - ./docker/backend/prod/django/docker.env
+    ports:
+      - "5000:5000"
+
+  mysql:
+    image: mysql:8.4.11
+    profiles:
+      - mysql
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: ${SO_MYSQL_RANDOM_ROOT_PASSWORD:-yes}
+      MYSQL_DATABASE: ${SO_MYSQL_DATABASE:-secobserve}
+      MYSQL_USER: ${SO_MYSQL_USER:-secobserve}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secobserve}
+    volumes:
+      - prod_mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  postgres:
+    image: postgres:15.19-alpine
+    environment:
+      POSTGRES_DB: ${SO_POSTGRES_DB:-secobserve}
+      POSTGRES_USER: ${SO_POSTGRES_USER:-secobserve}
+      POSTGRES_PASSWORD: ${SO_POSTGRES_PASSWORD:-secobserve}
+    volumes:
+      - prod_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"

@@ -23,6 +23,8 @@ helm template custom "$chart_dir" --namespace secobserve \
     --set database.passwordSecret.key=db-password >"$test_dir/external-database.yaml"
 helm template custom "$chart_dir" --namespace secobserve \
     --values "$chart_dir/tests/values/render-options.yaml" >"$test_dir/render-options.yaml"
+helm template custom "$chart_dir" --namespace secobserve \
+    --values "$chart_dir/tests/values/ha.yaml" >"$test_dir/ha.yaml"
 
 grep -q 'value: "custom-postgresql"' "$test_dir/custom-release.yaml"
 grep -q 'value: "custom-postgresql-primary"' "$test_dir/replication.yaml"
@@ -33,8 +35,38 @@ grep -q "example.com/second: two" "$test_dir/render-options.yaml"
 grep -q "mountPath: /extra" "$test_dir/render-options.yaml"
 grep -q "path: /extra" "$test_dir/render-options.yaml"
 
+grep -q "name: custom-secobserve-init" "$test_dir/ha.yaml"
+grep -q "name: custom-secobserve-api" "$test_dir/ha.yaml"
+grep -q "name: custom-secobserve-background" "$test_dir/ha.yaml"
+grep -q "name: custom-secobserve-frontend" "$test_dir/ha.yaml"
+grep -q "type: Recreate" "$test_dir/ha.yaml"
+grep -q 'name: "custom-secobserve-backend-svc"' "$test_dir/ha.yaml"
+grep -q 'name: "custom-secobserve-frontend-svc"' "$test_dir/ha.yaml"
+# the single-Pod workload and the Huey PVC are rendered for the single architecture only
+grep -q "# Source: secobserve/templates/statefulset.yaml" "$test_dir/default.yaml"
+grep -q "# Source: secobserve/templates/pvc.yaml" "$test_dir/default.yaml"
+if grep -q "# Source: secobserve/templates/statefulset.yaml" "$test_dir/ha.yaml"; then
+    echo "Expected no SecObserve StatefulSet in the ha architecture" >&2
+    exit 1
+fi
+if grep -q "# Source: secobserve/templates/pvc.yaml" "$test_dir/ha.yaml"; then
+    echo "Expected no Huey PVC in the ha architecture" >&2
+    exit 1
+fi
+
 if helm template custom "$chart_dir" --set replicaCount=2 >"$test_dir/invalid-replicas.yaml" 2>&1; then
     echo "Expected replicaCount=2 to fail schema validation" >&2
+    exit 1
+fi
+
+if helm template custom "$chart_dir" --set architecture=multi >"$test_dir/invalid-architecture.yaml" 2>&1; then
+    echo "Expected an unknown architecture to fail schema validation" >&2
+    exit 1
+fi
+
+if helm template custom "$chart_dir" --set architecture=ha --set backend.background.replicaCount=2 \
+    >"$test_dir/invalid-background-replicas.yaml" 2>&1; then
+    echo "Expected backend.background.replicaCount=2 to fail schema validation" >&2
     exit 1
 fi
 

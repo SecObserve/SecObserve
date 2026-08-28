@@ -1,0 +1,42 @@
+suite: Test SecObserve background Deployment
+
+templates:
+  - templates/deployment-background.yaml
+
+release:
+  name: test-release
+  namespace: test-namespace
+
+tests:
+  - it: is not rendered for the single architecture
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: runs a single Huey consumer that is never allowed to overlap
+    set:
+      architecture: ha
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: test-release-secobserve-background
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: background
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value:
+            - background
+      - notExists:
+          path: spec.template.spec.containers[0].ports
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: wait-for-migrations

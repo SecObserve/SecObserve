@@ -399,7 +399,7 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                 </Fragment>
             )}
 
-            {product.osv_enabled && (
+            {(product.osv_enabled || product.vulnerablecode_enabled) && (
                 <Fragment>
                     <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 1 }}>
@@ -423,14 +423,27 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                             </Labeled>
                         )}
                     </Stack>
-                    {product.automatic_osv_scanning_enabled && (
-                        <Labeled>
-                            <BooleanField
-                                source="automatic_osv_scanning_enabled"
-                                label="Automatic OSV scanning enabled"
-                            />
+                    <Stack direction="column" spacing={2}>
+                        {product.automatic_osv_scanning_enabled && (
+                            <Labeled>
+                                <BooleanField
+                                    source="automatic_osv_scanning_enabled"
+                                    label="Automatic OSV scanning enabled"
+                                />
+                            </Labeled>
+                        )}
+                        <Labeled label="VulnerableCode scanning enabled">
+                            <BooleanField source="vulnerablecode_enabled" />
                         </Labeled>
-                    )}
+                        {product.automatic_vulnerablecode_scanning_enabled && (
+                            <Labeled>
+                                <BooleanField
+                                    source="automatic_vulnerablecode_scanning_enabled"
+                                    label="Automatic VulnerableCode scanning enabled"
+                                />
+                            </Labeled>
+                        )}
+                    </Stack>
                 </Fragment>
             )}
 

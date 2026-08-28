@@ -34,6 +34,7 @@ export interface Product extends RaRecord {
     issue_tracker_status_closed: string;
     issue_tracker_minimum_severity: string;
     last_observation_change: string;
+    repository_default_branch_name: string;
     assessments_need_approval: boolean;
     assessment_approvers: Identifier[];
     assessment_approver_authorization_groups: Identifier[];
@@ -52,6 +53,9 @@ export interface ProductGroup extends RaRecord {
     id: Identifier;
     name: string;
     description: string;
+    products_count: number;
+    product_rule_approvals: number;
+    observation_log_approvals: number;
     repository_branch_housekeeping_active: boolean;
     repository_branch_housekeeping_keep_inactive_days: number;
     repository_branch_housekeeping_exempt_branches: string;

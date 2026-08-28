@@ -1,4 +1,4 @@
-# Vulnerability scanning from OSV database
+# Vulnerability scanning from OSV
 
 The components of a product can be scanned for vulnerabilities using the OSV database. The OSV database is a database of open-source vulnerabilities, maintained by Google and is available at [https://osv.dev/](https://osv.dev/).
 

@@ -9,6 +9,7 @@ from django.db.models import (
     Model,
     TextField,
 )
+from encrypted_model_fields.fields import EncryptedCharField
 
 from application.commons.services.request_cache import cache_for_request
 from application.commons.types import VEX_Justification_Styles
@@ -213,6 +214,16 @@ class Settings(Model, DirtyFieldsMixin):
         help_text="Hour crontab expression for importing licenses (UTC)",
     )
     feature_automatic_osv_scanning = BooleanField(default=True, help_text="Enable automatic OSV scanning")
+    feature_automatic_vulnerablecode_scanning = BooleanField(
+        default=False, help_text="Enable automatic VulnerableCode scanning"
+    )
+    vulnerablecode_base_url = CharField(
+        max_length=255,
+        blank=True,
+        help_text="Base URL of the VulnerableCode instance",
+    )
+    vulnerablecode_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
+    # We treat EncryptedCharField as a regular CharField
     feature_exploit_information = BooleanField(default=True, help_text="Enable CVSS enrichment")
     exploit_information_max_age_years = IntegerField(
         default=10,
@@ -234,6 +245,7 @@ class Settings(Model, DirtyFieldsMixin):
     observation_count_from_metrics = BooleanField(default=False)
 
     feature_cross_scanner_deduplication = BooleanField(default=False)
+    feature_show_product_header_chips = BooleanField(default=False)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """

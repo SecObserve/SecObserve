@@ -3,7 +3,7 @@ import inspect
 import logging
 import sys
 from datetime import timedelta
-from typing import Any, Callable
+from typing import Any, Callable, cast
 
 from django.utils import timezone
 from huey.contrib.djhuey import lock_task
@@ -18,8 +18,22 @@ from application.notifications.services.send_notifications import (
 
 logger = logging.getLogger("secobserve.background_tasks")
 
+# max_length is typed as Optional, but it is always set for the CharField "message"
+MESSAGE_MAX_LENGTH = cast(int, Periodic_Task._meta.get_field("message").max_length)
+
+# Names of all periodic tasks, used to check that the registry is complete
+PERIODIC_TASK_NAMES: set[str] = set()
+
+
+def _truncate_message(message: str) -> str:
+    if len(message) <= MESSAGE_MAX_LENGTH:
+        return message
+    return f"{message[:MESSAGE_MAX_LENGTH - 4]} ..."
+
 
 def so_periodic_task(name: str) -> Callable:
+    PERIODIC_TASK_NAMES.add(name)
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         @lock_task(name)
@@ -33,19 +47,19 @@ def so_periodic_task(name: str) -> Callable:
             )
             periodic_task.save()
 
-            _delete_older_entries(name)
+            delete_older_task_entries(name)
 
             try:
                 message = func()
 
                 periodic_task.status = Status.STATUS_SUCCESS
                 periodic_task.duration = (timezone.now() - periodic_task.start_time) / timedelta(milliseconds=1)
-                periodic_task.message = str(message) if message else ""
+                periodic_task.message = _truncate_message(str(message)) if message else ""
                 periodic_task.save()
             except Exception as e:
                 periodic_task.status = Status.STATUS_FAILURE
                 periodic_task.duration = (timezone.now() - periodic_task.start_time) / timedelta(milliseconds=1)
-                periodic_task.message = str(e)
+                periodic_task.message = _truncate_message(str(e))
                 periodic_task.save()
 
                 _handle_periodic_task_exception(e)
@@ -80,7 +94,7 @@ def _handle_periodic_task_exception(e: Exception) -> None:
     send_task_exception_notification(function=function, arguments=None, user=None, exception=e, product=None)
 
 
-def _delete_older_entries(name: str) -> None:
+def delete_older_task_entries(name: str) -> None:
     settings = Settings.load()
     recent_task_ids = list(
         Periodic_Task.objects.filter(task=name)

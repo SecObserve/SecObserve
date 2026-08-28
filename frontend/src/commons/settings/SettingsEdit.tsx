@@ -52,6 +52,8 @@ const SettingsEdit = () => {
         data.observation_title_notification_slack_webhook ??= "";
         data.observation_title_notification_min_severity ??= "";
         data.observation_title_notification_parser_type ??= "";
+        data.vulnerablecode_base_url ??= "";
+        data.vulnerablecode_api_key ??= "";
         return data;
     };
 
@@ -143,11 +145,15 @@ const SettingsEdit = () => {
                                     label="Disable user login"
                                     helperText="Do not show user and password fields if OIDC login is enabled"
                                 />
-                                <BooleanInput
-                                    source="feature_general_rules_need_approval"
-                                    label="General rules need approval"
-                                />
                                 <BooleanInput source="feature_license_management" label="Enable license management" />
+                                <BooleanInput
+                                    source="feature_automatic_osv_scanning"
+                                    label="Enable automatic OSV scanning"
+                                />
+                                <BooleanInput
+                                    source="feature_automatic_vulnerablecode_scanning"
+                                    label="Enable automatic VulnerableCode scanning"
+                                />
                             </Stack>
                         </Grid>
                         <Grid size={3}>
@@ -157,13 +163,25 @@ const SettingsEdit = () => {
                                     label="Enable automatic API imports"
                                 />
                                 <BooleanInput
-                                    source="feature_automatic_osv_scanning"
-                                    label="Enable automatic OSV scanning"
+                                    source="feature_general_rules_need_approval"
+                                    label="General rules need approval"
                                 />
                                 <BooleanInput
                                     source="observation_count_from_metrics"
                                     label="Calculate observation count from metrics"
                                 />
+                                <Stack spacing={1}>
+                                    <TextInputWide
+                                        source="vulnerablecode_base_url"
+                                        label="VulnerableCode base URL"
+                                        validate={validate_255}
+                                    />
+                                    <TextInputWide
+                                        source="vulnerablecode_api_key"
+                                        label="VulnerableCode API key"
+                                        validate={validate_255}
+                                    />
+                                </Stack>
                             </Stack>
                         </Grid>
                     </Grid>
@@ -200,6 +218,10 @@ const SettingsEdit = () => {
                                 <BooleanInput
                                     source="feature_cross_scanner_deduplication"
                                     label="Enable cross scanner deduplication"
+                                />
+                                <BooleanInput
+                                    source="feature_show_product_header_chips"
+                                    label="Show chips in Product header"
                                 />
                             </Stack>
                         </Grid>
@@ -557,7 +579,7 @@ const SettingsEdit = () => {
                                             formData.feature_automatic_osv_scanning) && (
                                             <NumberInput
                                                 source="api_import_crontab_hour"
-                                                label="API import and OSV scanning crontab (hour)"
+                                                label="API import, OSV and VulnerableCode scanning crontab (hour)"
                                                 min={0}
                                                 step={1}
                                                 validate={validate_0_23}
@@ -568,7 +590,7 @@ const SettingsEdit = () => {
                                 </FormDataConsumer>
                                 <NumberInput
                                     source="periodic_task_max_entries"
-                                    label="Number of entries of Periodic Task to keep per task"
+                                    label="Number of entries of Tracked Task to keep per task"
                                     min={1}
                                     step={1}
                                     validate={validate_1_999999}
@@ -623,7 +645,7 @@ const SettingsEdit = () => {
                                             formData.feature_automatic_osv_scanning) && (
                                             <NumberInput
                                                 source="api_import_crontab_minute"
-                                                label="API import and OSV scanning crontab (minute)"
+                                                label="API import, OSV and VulnerableCode scanning crontab (minute)"
                                                 min={0}
                                                 step={1}
                                                 validate={validate_0_59}

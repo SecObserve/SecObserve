@@ -8,6 +8,7 @@ import AddButton from "../../commons/custom_fields/AddButton";
 import CancelButton from "../../commons/custom_fields/CancelButton";
 import Toolbar from "../../commons/custom_fields/Toolbar";
 import { validate_required } from "../../commons/custom_validators";
+import { getUserOptionText } from "../../commons/functions";
 import { AutocompleteInputWide } from "../../commons/layout/themes";
 
 export type ProductMemberAddProps = {
@@ -104,7 +105,7 @@ const ProductMemberAdd = ({ id }: ProductMemberAddProps) => {
                             sort={{ field: "full_name", order: "ASC" }}
                         >
                             <AutocompleteInputWide
-                                optionText="full_name"
+                                optionText={getUserOptionText}
                                 validate={validate_required}
                                 onChange={(e) => setUser(e)}
                             />

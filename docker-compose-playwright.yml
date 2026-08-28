@@ -8,9 +8,17 @@ services:
       dockerfile: ./docker/frontend/prod/Dockerfile
     image: secobserve_frontend_playwright
     depends_on:
-      - backend
-    ports:
-      - "3000:3000"
+      backend:
+        condition: service_healthy
+    # The healthcheck itself comes from the image, only the timing is overridden here,
+    # to detect readiness faster than the 30s interval that is appropriate for production.
+    healthcheck:
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 2s
+    # Ports are not published, the tests reach the services via the internal network.
+    # Publish them temporarily if you want to debug a run from the host.
     environment:
       API_BASE_URL: http://backend:5000/api
       OIDC_ENABLE: false
@@ -54,8 +62,15 @@ services:
       OIDC_FULL_NAME: ${SO_OIDC_FULL_NAME:-}
       OIDC_EMAIL: ${SO_OIDC_EMAIL:-}
       OIDC_GROUPS: ${SO_OIDC_GROUPS:-}
-    ports:
-      - "5000:5000"
+    # The healthcheck itself comes from the image, only the timing is overridden here,
+    # to detect readiness faster than the 30s interval that is appropriate for production.
+    healthcheck:
+      interval: 2s
+      timeout: 5s
+      retries: 60
+      start_period: 5s
+    # Ports are not published, the tests reach the services via the internal network.
+    # Publish them temporarily if you want to debug a run from the host.
     networks:
       - secobserve
 
@@ -63,9 +78,11 @@ services:
   playwright:
     image: mcr.microsoft.com/playwright:v1.62.1
     depends_on:
-      - frontend
+      frontend:
+        condition: service_healthy
     environment:
-      - SO_PW_DOCKER=true
+      # Needed so that Playwright applies retries and forbidOnly when running in CI
+      - CI=${CI:-}
       - SO_PW_FRONTEND_BASE_URL=http://frontend:3000
       - SO_PW_USERNAME=admin-user
       - SO_PW_PASSWORD=admin-password

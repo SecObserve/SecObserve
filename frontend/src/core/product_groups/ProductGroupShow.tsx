@@ -106,12 +106,18 @@ const ProductGroupShow = () => {
                                     <MetricsStatusCurrent product_id={product_group.id} />
                                 </Stack>
                             </Tab>
-                            {product_group.product_rule_approvals > 0 && (
+                            {product_group.product_rule_approvals + product_group.observation_log_approvals > 0 && (
                                 <Tab
                                     label="Reviews"
                                     path="reviews"
                                     icon={
-                                        <Badge badgeContent={product_group.product_rule_approvals} color="secondary">
+                                        <Badge
+                                            badgeContent={
+                                                product_group.product_rule_approvals +
+                                                product_group.observation_log_approvals
+                                            }
+                                            color="secondary"
+                                        >
                                             <ChecklistIcon />
                                         </Badge>
                                     }

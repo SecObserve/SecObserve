@@ -116,6 +116,18 @@ status := "In review" if {
 
 Rules can be simulated from the list of rules or when showing a single rule. The simulation produces a list of up to a 100 observations with their current values, that would be altered by the rule.
 
+## Evaluation
+
+Rules are applied when observations are imported. To apply rule changes to existing observations:
+
+* **Product rules and product group rules**: The `Apply rules` button on the `Rules` tab of the product or product group applies all rules to the existing observations of the product or product group.
+* **General rules**: The `Evaluate` button when showing a single general rule applies that rule to the existing observations of all products where `Apply general rules` is enabled. Because the amount of observations can be large, the evaluation runs as a background task and its result can be checked in the `Background tasks` administration. Evaluating a general rule is restricted to superusers, like all other changes to general rules.
+
+The evaluation performs a full rule engine pass on the affected observations. That means:
+
+* Observations that do not match the rule anymore lose its effects, with an entry in the observation log. Evaluating a rule that is disabled or waiting for approval therefore only removes its effects, which makes disabling a rule followed by an evaluation the way to undo a general rule.
+* Pending changes of other rules are applied to the affected observations as well, the same way the `Apply rules` button does for a product.
+
 ## Approvals
 
 With the default settings of the product, the rule will be activated right away if enabled. If more control is needed, an approval can be configured:

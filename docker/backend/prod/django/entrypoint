@@ -1,37 +1,48 @@
 #!/bin/sh
 
 set -o errexit
+set -o nounset
 
-if [ "${DATABASE_ENGINE}" != "django.db.backends.sqlite3" ]; then
-    if [ -z "${DATABASE_USER}" ]; then
+# Role to run, one of: all, init, background, api (default: all)
+ROLE=${1:-all}
+
+wait_for_database() {
+    if [ -z "${DATABASE_USER:-}" ]; then
         base_postgres_image_default_user='postgres'
         export DATABASE_USER="${base_postgres_image_default_user}"
     fi
 
-    /wait-for-it.sh "${DATABASE_HOST}":"${DATABASE_PORT}"
-    >&2 echo 'Database is available'
-else
-    if [ "${SO_END_TO_END_TESTS}" == "true" ]; then
+    if [ "${DATABASE_ENGINE:-}" != "django.db.backends.sqlite3" ]; then
+        /wait-for-it.sh "${DATABASE_HOST}":"${DATABASE_PORT}"
+        >&2 echo 'Database is available'
+    fi
+}
+
+reset_sqlite_database() {
+    if [ "${DATABASE_ENGINE:-}" = "django.db.backends.sqlite3" ] && [ "${SO_END_TO_END_TESTS:-}" = "true" ]; then
         >&2 echo 'Running end-to-end tests and deleting SQLite database'
         rm -rf /var/lib/sqlite/*
     fi
-fi
+}
 
-python manage.py migrate
+run_migrations() {
+    python manage.py migrate
+}
 
-echo "Admin user: ${ADMIN_USER}"
-ADMIN_EXISTS=$(echo "SELECT * from access_control_user;" | python manage.py dbshell | grep "${ADMIN_USER}" || :)
-if [ ! -z "$ADMIN_EXISTS" ]
-then
-    echo "Initialization detected that the admin user ${ADMIN_USER} already exists in your database."
-else
-    if [ -z "${ADMIN_PASSWORD}" ]
+check_or_create_admin() {
+    echo "Admin user: ${ADMIN_USER}"
+    ADMIN_EXISTS=$(echo "SELECT * from access_control_user;" | python manage.py dbshell | grep "${ADMIN_USER}" || :)
+    if [ ! -z "$ADMIN_EXISTS" ]
     then
-        export ADMIN_PASSWORD="$(cat /dev/urandom | LC_ALL=C tr -dc a-zA-Z0-9 | head -c 22)"
-        echo "Admin password: ${ADMIN_PASSWORD}"
-    fi
+        echo "Initialization detected that the admin user ${ADMIN_USER} already exists in your database."
+    else
+        if [ -z "${ADMIN_PASSWORD:-}" ]
+        then
+            export ADMIN_PASSWORD="$(cat /dev/urandom | LC_ALL=C tr -dc a-zA-Z0-9 | head -c 22)"
+            echo "Admin password: ${ADMIN_PASSWORD}"
+        fi
 
-    echo "Initialization detected no admin user ${ADMIN_USER}, creating it now in your database."
+        echo "Initialization detected no admin user ${ADMIN_USER}, creating it now in your database."
 
 cat <<EOD | python manage.py shell
 import os
@@ -42,29 +53,92 @@ User.objects.create_superuser(
   os.getenv('ADMIN_PASSWORD'),
 )
 EOD
-fi
+    fi
+}
 
-python /app/manage.py collectstatic --noinput
+collect_static() {
+    python /app/manage.py collectstatic --noinput
+}
 
-python manage.py flush_huey_inflight
-python manage.py run_huey --flush-locks &
+run_background_tasks() {
+    python manage.py flush_huey_inflight
+}
 
-python manage.py register_parsers
-python manage.py initial_license_load
+run_huey_foreground() {
+    python manage.py run_huey --flush-locks
+}
 
-if [ -z "$GUNICORN_WORKERS" ]; then
-    echo "GUNICORN_WORKERS is not set, defaulting to 3"
-    export GUNICORN_WORKERS=3
-fi
+run_huey_background() {
+    python manage.py run_huey --flush-locks &
+}
 
-if [ -z "${GUNICORN_THREADS}" ]; then
-    echo "GUNICORN_THREADS is not set, defaulting to 10"
-    GUNICORN_THREADS=10
-fi
+register_parsers() {
+    python manage.py register_parsers
+}
 
-if [ -z "${GUNICORN_LIMIT_REQUEST_FIELD_SIZE}" ]; then
-    echo "GUNICORN_LIMIT_REQUEST_FIELD_SIZE is not set, defaulting to 16380"
-    GUNICORN_LIMIT_REQUEST_FIELD_SIZE=16380
-fi
+initial_license_load() {
+    if [ "${SO_END_TO_END_TESTS:-}" = "true" ]; then
+        >&2 echo 'Running end-to-end tests and skipping initial license load'
+        return
+    fi
 
-gunicorn config.wsgi --no-control-socket --bind 0.0.0.0:5000 --timeout 1200 --chdir=/app -w $GUNICORN_WORKERS -k gthread --threads $GUNICORN_THREADS --limit-request-field_size $GUNICORN_LIMIT_REQUEST_FIELD_SIZE
+    python manage.py initial_license_load
+}
+
+run_server() {
+    if [ -z "${GUNICORN_WORKERS:-}" ]; then
+        echo "GUNICORN_WORKERS is not set, defaulting to 3"
+        export GUNICORN_WORKERS=3
+    fi
+
+    if [ -z "${GUNICORN_THREADS:-}" ]; then
+        echo "GUNICORN_THREADS is not set, defaulting to 10"
+        GUNICORN_THREADS=10
+    fi
+
+    if [ -z "${GUNICORN_LIMIT_REQUEST_FIELD_SIZE:-}" ]; then
+        echo "GUNICORN_LIMIT_REQUEST_FIELD_SIZE is not set, defaulting to 16380"
+        GUNICORN_LIMIT_REQUEST_FIELD_SIZE=16380
+    fi
+
+    gunicorn config.wsgi --no-control-socket --bind 0.0.0.0:5000 --timeout 1200 --chdir=/app -w $GUNICORN_WORKERS -k gthread --threads $GUNICORN_THREADS --limit-request-field_size $GUNICORN_LIMIT_REQUEST_FIELD_SIZE
+}
+
+case "${ROLE}" in
+    all)
+        wait_for_database
+        reset_sqlite_database
+        run_migrations
+        check_or_create_admin
+        collect_static
+        run_background_tasks
+        run_huey_background
+        register_parsers
+        initial_license_load
+        run_server
+        ;;
+    init)
+        wait_for_database
+        reset_sqlite_database
+        run_migrations
+        check_or_create_admin
+        register_parsers
+        initial_license_load
+        ;;
+    background)
+        wait_for_database
+        run_background_tasks
+        run_huey_foreground
+        ;;
+    api)
+        wait_for_database
+        collect_static
+        register_parsers
+        run_server
+        ;;
+    *)
+        >&2 echo "Unknown role: ${ROLE}"
+        >&2 echo "Usage: $0 <all|init|background|api>"
+        exit 1
+        ;;
+esac

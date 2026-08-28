@@ -44,7 +44,8 @@ class StatusSettingsView(APIView):
     permission_classes = []
 
     @action(detail=True, methods=["get"], url_name="settings")
-    def get(self, request: Request) -> Response:
+    def get(self, request: Request) -> Response:  # pylint: disable=too-many-branches
+        # There are quite a lot of branches, but at least they are not nested too much
         features = []
 
         settings = Settings.load()
@@ -62,8 +63,14 @@ class StatusSettingsView(APIView):
                 features.append("feature_automatic_api_import")
             if settings.feature_automatic_osv_scanning:
                 features.append("feature_automatic_osv_scanning")
+            if settings.feature_automatic_vulnerablecode_scanning:
+                features.append("feature_automatic_vulnerablecode_scanning")
+            if settings.vulnerablecode_base_url:
+                features.append("vulnerablecode_base_url_is_set")
             if settings.feature_exploit_information:
                 features.append("feature_exploit_information")
+            if settings.feature_show_product_header_chips:
+                features.append("feature_show_product_header_chips")
 
             env = environ.Env()
             if env("EMAIL_HOST", default="") or env("EMAIL_PORT", default=""):

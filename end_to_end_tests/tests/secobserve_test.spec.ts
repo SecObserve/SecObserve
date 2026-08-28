@@ -5,18 +5,11 @@ test.describe("SecObserve", async () => {
 
     let page: Page;
 
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
-
     test.beforeAll(async ({ browser }) => {
         page = await browser.newPage();
     });
 
     test("Login", async () => {
-
-        if (process.env.SO_PW_DOCKER) {
-            await delay(60000);
-        }
-
         await page.goto(process.env.SO_PW_FRONTEND_BASE_URL);
 
         await expect(page).toHaveURL(process.env.SO_PW_FRONTEND_BASE_URL + "/#/login");

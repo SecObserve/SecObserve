@@ -150,6 +150,9 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     osv_linux_release = CharField(max_length=255, blank=True)
     automatic_osv_scanning_enabled = BooleanField(default=False)
 
+    vulnerablecode_enabled = BooleanField(default=True)
+    automatic_vulnerablecode_scanning_enabled = BooleanField(default=False)
+
     propagate_branches = JSONField(blank=True, null=True)
     propagate_branches_new_assessment = BooleanField(default=True)
     propagate_branches_new_observation = BooleanField(default=True)

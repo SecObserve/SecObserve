@@ -1,8 +1,9 @@
 from unittest.mock import MagicMock, call, patch
 
+from application.background_tasks.models import Periodic_Task
 from application.background_tasks.services.task_base import (
-    _delete_older_entries,
     _handle_periodic_task_exception,
+    delete_older_task_entries,
     so_periodic_task,
 )
 from unittests.base_test_case import BaseTestCase
@@ -16,9 +17,9 @@ class TestTaskBase(BaseTestCase):
     @patch("application.background_tasks.services.task_base.lock_task")
     @patch("application.background_tasks.services.task_base.logger")
     @patch("application.background_tasks.models.Periodic_Task.save")
-    @patch("application.background_tasks.services.task_base._delete_older_entries")
+    @patch("application.background_tasks.services.task_base.delete_older_task_entries")
     def test_so_periodic_task_successful_execution(
-        self, mock_delete_older_entries, mock_save, mock_logger, mock_lock_task
+        self, mock_delete_older_task_entries, mock_save, mock_logger, mock_lock_task
     ):
         # Setup
         mock_lock_task.return_value = lambda func: func
@@ -36,15 +37,15 @@ class TestTaskBase(BaseTestCase):
         test_function.assert_called_once()
         self.assertEqual(mock_save.call_count, 2)
         mock_lock_task.assert_called_once_with("test_task")
-        mock_delete_older_entries.assert_called_once_with("test_task")
+        mock_delete_older_task_entries.assert_called_once_with("test_task")
 
     @patch("application.background_tasks.services.task_base._handle_periodic_task_exception")
     @patch("application.background_tasks.services.task_base.lock_task")
     @patch("application.background_tasks.services.task_base.logger")
     @patch("application.background_tasks.models.Periodic_Task.save")
-    @patch("application.background_tasks.services.task_base._delete_older_entries")
+    @patch("application.background_tasks.services.task_base.delete_older_task_entries")
     def test_so_periodic_task_exception_handling(
-        self, mock_delete_older_entries, mock_save, mock_logger, mock_lock_task, mock_handle_exception
+        self, mock_delete_older_task_entries, mock_save, mock_logger, mock_lock_task, mock_handle_exception
     ):
         # Setup
         mock_lock_task.return_value = lambda func: func
@@ -63,10 +64,52 @@ class TestTaskBase(BaseTestCase):
         test_function.assert_called_once()
         mock_handle_exception.assert_called_once_with(test_exception)
         self.assertEqual(mock_save.call_count, 2)
-        mock_delete_older_entries.assert_called_once_with("test_task")
+        mock_delete_older_task_entries.assert_called_once_with("test_task")
 
         # Verify that the "finished" log is not called when an exception occurs
         self.assertEqual(mock_logger.info.call_count, 1)
+
+    @patch("application.background_tasks.services.task_base.lock_task")
+    @patch("application.background_tasks.services.task_base.logger")
+    @patch("application.background_tasks.services.task_base.delete_older_task_entries")
+    def test_so_periodic_task_message_truncated(self, mock_delete_older_task_entries, mock_logger, mock_lock_task):
+        # Setup
+        # Periodic_Task.save is deliberately not mocked, so the stored message can be read back
+        mock_lock_task.return_value = lambda func: func
+        test_function = MagicMock(return_value="x" * 300)
+        test_function.__name__ = "test_function"
+
+        # Execute
+        so_periodic_task("test_task")(test_function)()
+
+        # Assert
+        message = Periodic_Task.objects.filter(task="test_task").latest("start_time").message
+        self.assertEqual(255, len(message))
+        self.assertTrue(message.endswith(" ..."))
+        self.assertEqual("x" * 251, message[:251])
+
+    @patch("application.background_tasks.services.task_base._handle_periodic_task_exception")
+    @patch("application.background_tasks.services.task_base.lock_task")
+    @patch("application.background_tasks.services.task_base.logger")
+    @patch("application.background_tasks.services.task_base.delete_older_task_entries")
+    def test_so_periodic_task_exception_message_truncated(
+        self, mock_delete_older_task_entries, mock_logger, mock_lock_task, mock_handle_exception
+    ):
+        # Setup
+        # Periodic_Task.save is deliberately not mocked, so the stored message can be read back
+        mock_lock_task.return_value = lambda func: func
+        test_function = MagicMock(side_effect=Exception("x" * 300))
+        test_function.__name__ = "test_function"
+
+        # Execute
+        with self.assertRaises(Exception):
+            so_periodic_task("test_task")(test_function)()
+
+        # Assert
+        message = Periodic_Task.objects.filter(task="test_task").latest("start_time").message
+        self.assertEqual(255, len(message))
+        self.assertTrue(message.endswith(" ..."))
+        self.assertEqual("x" * 251, message[:251])
 
     # ---------------------------------------------------------------
     # _handle_periodic_task_exception
@@ -189,11 +232,11 @@ class TestTaskBase(BaseTestCase):
         )
 
     # ---------------------------------------------------------------
-    # _delete_older_entries
+    # delete_older_task_entries
     # ---------------------------------------------------------------
 
     @patch("application.background_tasks.services.task_base.Settings.load")
-    def test_delete_older_entries(self, mock_settings_load):
+    def test_delete_older_task_entries(self, mock_settings_load):
         # Setup settings
         mock_settings = MagicMock()
         mock_settings.periodic_task_max_entries = 8
@@ -226,7 +269,7 @@ class TestTaskBase(BaseTestCase):
             )
 
         # Execute
-        _delete_older_entries(task_name)
+        delete_older_task_entries(task_name)
 
         # Assert
         mock_settings_load.assert_called_once()
