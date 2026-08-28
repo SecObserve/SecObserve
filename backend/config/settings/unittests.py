@@ -6,6 +6,25 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "user": "1000/second",
 }
 
+
+class DisableMigrations:
+    """
+    Reports every app as having no migrations, so that database schemas are created directly
+    from the models. Running all migrations takes a considerable amount of time and is done
+    twice for every run of the unit tests, once for the database of the entrypoint and once
+    for the database of the test runner. That the migrations result in the same schema is
+    covered by the end to end tests, which start the backend with a fresh database.
+    """
+
+    def __contains__(self, item: str) -> bool:
+        return True
+
+    def __getitem__(self, item: str) -> None:
+        return None
+
+
+MIGRATION_MODULES = DisableMigrations()
+
 TEMPLATES = [
     {
         # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEMPLATES-BACKEND
