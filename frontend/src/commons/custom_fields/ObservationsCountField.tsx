@@ -1,4 +1,4 @@
-import { useRecordContext } from "react-admin";
+import { RaRecord, useRecordContext } from "react-admin";
 
 import { getSettingListSize } from "../../commons/user_settings/functions";
 import {
@@ -14,10 +14,11 @@ import { get_severity_color } from "../functions";
 interface ObservationsProps {
     label: string;
     withLabel: boolean;
+    record?: RaRecord;
 }
 
 const ObservationsCountField = (props: ObservationsProps) => {
-    const record = useRecordContext();
+    const record = useRecordContext(props);
 
     function get_no_label_margin(): number {
         if (getSettingListSize() === "small" && !props.withLabel) {

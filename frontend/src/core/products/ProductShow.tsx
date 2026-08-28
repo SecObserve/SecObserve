@@ -19,6 +19,7 @@ import {
     WithRecord,
     useRecordContext,
 } from "react-admin";
+import { useParams } from "react-router";
 
 import ApiTokenCreate from "../../access_control/api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../../access_control/api_tokens/ApiTokenEmbeddedList";
@@ -67,6 +68,7 @@ import ProductMemberEmbeddedList from "../product_members/ProductMemberEmbeddedL
 import ServiceCreate from "../services/ServiceCreate";
 import ServiceEmbeddedList from "../services/ServiceEmbeddedList";
 import { Product } from "../types";
+import { BranchFilterProvider } from "./BranchFilterContext";
 import ExportMenu from "./ExportMenu";
 import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
@@ -102,6 +104,7 @@ const ShowActions = (props: ShowActionsProps) => {
 };
 
 const ProductShow = () => {
+    const { id: id } = useParams<any>();
     const { classes } = useStyles();
 
     let filter = {};
@@ -119,7 +122,8 @@ const ProductShow = () => {
     }
 
     return (
-        <Fragment>
+        // The key resets the branches of the filters when another product is shown
+        <BranchFilterProvider key={id}>
             <ProductHeader />
             <Show actions={<ShowActions filter={filter} storeKey={storeKey} />}>
                 <WithRecord
@@ -285,7 +289,7 @@ const ProductShow = () => {
                     )}
                 />
             </Show>
-        </Fragment>
+        </BranchFilterProvider>
     );
 };
 

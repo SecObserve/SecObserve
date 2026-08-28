@@ -20,7 +20,7 @@ Clicking on the name of a branch / version brings up the list of open observatio
 The **Default branch / version** should always be set, when branches / versions are used for the observations.
 
 * The metrics on the dashboard and on the **Metrics** tab are calculated using the observations where the default branch / version is set.
-* The number of severities in the header when showing a product are for the observations where the default branch / version is set as well.
+* The counts in the header when showing a product are for the default branch / version as well, as long as no branch / version is selected in the filter of the **Observations** tab or the **Licenses / Components** tab. Selecting one there makes the counts of that tab in the header follow the selected branch / version.
 * [Issues in GitHub, GitLab or Jira](../integrations/issue_trackers.md) are created only for the default branch / version.
 * The default branch / version cannot be deleted and is exempt from the [housekeeping](#housekeeping).
 

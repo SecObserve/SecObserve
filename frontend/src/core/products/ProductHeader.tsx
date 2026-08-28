@@ -1,5 +1,5 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
-import { Labeled, RecordContextProvider, TextField, useGetOne } from "react-admin";
+import { Identifier, Labeled, RaRecord, RecordContextProvider, TextField, useGetOne } from "react-admin";
 import { useParams } from "react-router-dom";
 
 import products from ".";
@@ -12,24 +12,56 @@ import ShowHeaderDescription from "../../commons/custom_fields/ShowHeaderDescrip
 import { feature_license_management, feature_show_product_header_chips } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import { Product } from "../types";
+import { useBranchFilter } from "./BranchFilterContext";
+
+// The counts of a branch have the same shape as the counts of a product, so the count fields can render either of them
+const useBranchRecord = (product: Product | undefined, branch_id: Identifier | undefined) => {
+    // The counts of the product are the ones of its default branch, so that branch does not have to be loaded
+    const load_branch = branch_id != null && Number(branch_id) !== Number(product?.repository_default_branch);
+    const { data: branch } = useGetOne("branches", { id: branch_id! }, { enabled: load_branch });
+
+    // After navigating to another product, the branch of the previous product can still be in the context
+    if (!load_branch || !branch || !product || Number(branch.product) !== Number(product.id)) {
+        return undefined;
+    }
+
+    return branch;
+};
+
+function has_licenses(record: RaRecord | undefined) {
+    if (!record) {
+        return false;
+    }
+
+    return (
+        record.forbidden_licenses_count +
+            record.review_required_licenses_count +
+            record.unknown_licenses_count +
+            record.allowed_licenses_count +
+            record.ignored_licenses_count >
+        0
+    );
+}
 
 const ProductHeader = () => {
     const { id: id } = useParams<any>();
     const { data: product } = useGetOne<Product>("products", { id: id });
     const { classes } = useStyles();
+    const { observationsBranch, licensesBranch } = useBranchFilter();
+    const observations_branch = useBranchRecord(product, observationsBranch);
+    const licenses_branch = useBranchRecord(product, licensesBranch);
+    // Without a branch in the filter, the counts of the product are shown, which are the ones of the default branch
+    const observations_record = observations_branch ?? product;
+    const licenses_record = licenses_branch ?? product;
 
-    function get_open_observations_label(product: Product | undefined) {
-        if (product?.repository_default_branch == null) {
-            return "Active observations";
+    function get_label(label: string, branch: RaRecord | undefined, product: Product | undefined) {
+        if (branch) {
+            return label + " (" + branch.name + ")";
         }
-        return "Active observations (" + product.repository_default_branch_name + ")";
-    }
-
-    function get_licenses_label(product: Product | undefined) {
         if (product?.repository_default_branch == null) {
-            return "Licenses / Components";
+            return label;
         }
-        return "Licenses / Components (" + product.repository_default_branch_name + ")";
+        return label + " (" + product.repository_default_branch_name + ")";
     }
 
     return (
@@ -68,20 +100,21 @@ const ProductHeader = () => {
                     )}
                     <Stack spacing={8} direction="row">
                         <Labeled>
-                            <ObservationsCountField label={get_open_observations_label(product)} withLabel={true} />
+                            <ObservationsCountField
+                                label={get_label("Active observations", observations_branch, product)}
+                                withLabel={true}
+                                record={observations_record}
+                            />
                         </Labeled>
-                        {feature_license_management() &&
-                            product &&
-                            product.forbidden_licenses_count +
-                                product.review_required_licenses_count +
-                                product.unknown_licenses_count +
-                                product.allowed_licenses_count +
-                                product.ignored_licenses_count >
-                                0 && (
-                                <Labeled>
-                                    <LicensesCountField label={get_licenses_label(product)} withLabel={true} />
-                                </Labeled>
-                            )}
+                        {feature_license_management() && has_licenses(licenses_record) && (
+                            <Labeled>
+                                <LicensesCountField
+                                    label={get_label("Licenses / Components", licenses_branch, product)}
+                                    withLabel={true}
+                                    record={licenses_record}
+                                />
+                            </Labeled>
+                        )}
                     </Stack>
                 </Box>
                 {product?.description && <ShowHeaderDescription description={product.description} />}

@@ -20,6 +20,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { getSettingListSize } from "../../commons/user_settings/functions";
+import { usePublishBranchFilter } from "../../core/products/BranchFilterContext";
 import { getElevation } from "../../metrics/functions";
 import { EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentEmbeddedList from "./LicenseComponentEmbeddedList";
@@ -92,6 +93,8 @@ const LicenseComponentOverview = ({ product }: LicenseComponentOverviewProps) =>
         filter: filters(),
         sort: sort(),
     });
+
+    usePublishBranchFilter("licenses", listContext.filterValues?.branch);
 
     useEffect(() => {
         storeListContext();

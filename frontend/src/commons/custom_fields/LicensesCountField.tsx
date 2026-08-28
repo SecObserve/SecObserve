@@ -1,4 +1,4 @@
-import { useRecordContext } from "react-admin";
+import { RaRecord, useRecordContext } from "react-admin";
 
 import {
     EVALUATION_RESULT_ALLOWED,
@@ -12,10 +12,11 @@ import { get_evaluation_result_color } from "../functions";
 interface LicensesCountProps {
     label: string;
     withLabel: boolean;
+    record?: RaRecord;
 }
 
 const LicensesCountField = (props: LicensesCountProps) => {
-    const record = useRecordContext();
+    const record = useRecordContext(props);
 
     function get_margin(): number {
         if (props.withLabel) {

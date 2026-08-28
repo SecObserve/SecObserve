@@ -21,6 +21,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { usePublishBranchFilter } from "../../core/products/BranchFilterContext";
 import { COMPONENT_TYPE_CHOICES, EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentBulkDeleteButton from "./LicenseComponentBulkDeleteButton";
 import { IDENTIFIER_LICENSE_COMPONENT_EMBEDDED_LIST, setListIdentifier } from "./functions";
@@ -144,6 +145,9 @@ const LicenseComponentEmbeddedList = ({
         disableSyncWithLocation: true,
         storeKey: "license_components.embedded",
     });
+
+    // The list of an expanded row shares the store key with the list above it and has no branch filter of its own
+    usePublishBranchFilter("licenses", listContext.filterValues?.branch, !expand);
 
     useEffect(() => {
         const storage = localStorage.getItem("RaStore.license_components.embedded");
