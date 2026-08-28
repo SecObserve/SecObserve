@@ -180,10 +180,9 @@ On Macs with Apple Silicon, start the development stack with the ARM override fi
 docker compose -f docker-compose-dev.yml -f docker-compose-dev-arm.yaml up --build
 ```
 
-The override (`docker-compose-dev-arm.yaml`):
+The override (`docker-compose-dev-arm.yaml`) runs the frontend, backend and PostgreSQL services with `platform: linux/arm64/v8`.
 
-- Runs the frontend, backend and PostgreSQL services with `platform: linux/arm64/v8`.
-- Installs the frontend's `node_modules` inside the container in a Docker-managed volume, so that native dependencies built for macOS on the host are not mounted into the Linux container.
+The frontend's `node_modules` is installed inside the container in the Docker-managed volume `dev_node_modules`. This is configured in the development Compose files themselves and applies to all platforms, so that native dependencies built on the host (macOS, or Linux with glibc) are not mounted into the Alpine Linux container.
 
 Notes:
 

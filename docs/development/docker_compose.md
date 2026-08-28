@@ -7,6 +7,7 @@ Docker Compose is a tool for defining and running multi-container Docker applica
 * [`docker-compose-dev.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev.yml)
     - Starts the PostgreSQL database, as well as SecObserve's backend and frontend
     - Backend and frontend are build automatically if necessary and are started in development mode with hot reloading
+    - The frontend's dependencies are installed inside the container into the Docker managed volume `dev_node_modules`. This is necessary because packages with native bindings, e.g. `rolldown` and `lightningcss`, are platform and libc specific: `npm` only installs the variant matching the machine it runs on, and the host is usually not Alpine Linux like the container. The `npm install` that `./bin/dev.sh` runs on the host is still needed to provide `node_modules` for the IDE (TypeScript, ESLint, Prettier).
 * [`docker-compose-dev-multi.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-multi.yml)
     - Starts the PostgreSQL database and the frontend, as well as SecObserve's backend split into one container per role: `init` (migrations, admin user, parsers, licenses), `background` (Huey consumer) and `api` (Django development server)
     - The roles are selected by the argument given to the backend's entrypoint, see `docker/backend/dev/django/entrypoint`
@@ -19,7 +20,7 @@ Docker Compose is a tool for defining and running multi-container Docker applica
     - A predefined realm calles `secobserve` is imported on start-up. There is an administrator configured (username: `admin`, password: `admin`) and a regular user for SecObserve (username: `keycloak_user`, password: `keycloak`).
 * [`docker-compose-dev-arm.yaml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-dev-arm.yaml)
     - Overrides the development stack for macOS on Apple Silicon
-    - Runs the main services on ARM64 and installs frontend dependencies inside the container using a Docker-managed volume
+    - Runs the main services on ARM64
     - Start it together with the standard development file:
 
       ```shell
