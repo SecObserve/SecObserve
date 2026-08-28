@@ -377,6 +377,17 @@ export const feature_exploit_information = () => {
     }
 };
 
+export const feature_show_product_header_chips = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_show_product_header_chips = features.indexOf("feature_show_product_header_chips");
+        return feature_show_product_header_chips !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const justificationIsEnabledForStatus = (status: string) => {
     const vex_enabled = feature_vex_enabled();
     const justification_recommended_for_status = [

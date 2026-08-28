@@ -353,6 +353,7 @@ class ProductGroupListSerializer(ProductCoreSerializer):
 
 class ProductGroupSerializer(ProductGroupListSerializer):
     permissions = SerializerMethodField()
+    observation_log_approvals = SerializerMethodField()
 
     class Meta:
         model = Product
@@ -360,10 +361,21 @@ class ProductGroupSerializer(ProductGroupListSerializer):
             "permissions",
             "assessment_approvers",
             "assessment_approver_authorization_groups",
+            "observation_log_approvals",
         ]
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
         return get_product_permissions_for_user(obj)
+
+    def get_observation_log_approvals(self, obj: Product) -> int:
+        observation_logs = Observation_Log.objects.filter(
+            observation__product__product_group=obj,
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL,
+        )
+        if not obj.assessments_need_approval:
+            # Approvals can still be required by products that have enabled them individually
+            observation_logs = observation_logs.filter(observation__product__assessments_need_approval=True)
+        return observation_logs.count()
 
     def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
         return _validate_propagate_branches(value)

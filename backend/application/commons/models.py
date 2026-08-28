@@ -245,6 +245,7 @@ class Settings(Model, DirtyFieldsMixin):
     observation_count_from_metrics = BooleanField(default=False)
 
     feature_cross_scanner_deduplication = BooleanField(default=False)
+    feature_show_product_header_chips = BooleanField(default=False)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """

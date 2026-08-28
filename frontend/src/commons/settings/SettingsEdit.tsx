@@ -219,6 +219,10 @@ const SettingsEdit = () => {
                                     source="feature_cross_scanner_deduplication"
                                     label="Enable cross scanner deduplication"
                                 />
+                                <BooleanInput
+                                    source="feature_show_product_header_chips"
+                                    label="Show chips in Product header"
+                                />
                             </Stack>
                         </Grid>
                         <Grid size={3}>
