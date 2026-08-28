@@ -37,6 +37,8 @@ Docker Compose is a tool for defining and running multi-container Docker applica
     - The environment variables of the backend containers are defined in `docker/backend/prod/django/docker.env`
 * [`docker-compose-unittests.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose-unittests.yml)
     - Starts the unit tests for the backend
+    - The database schemas are generated from the models, the migrations are not executed, see `MIGRATION_MODULES` in `backend/config/settings/unittests.py`. Running all migrations took a considerable amount of time for every run of the unit tests.
+    - That the migrations result in the same schema is covered by the end to end tests, which start the backend with a fresh database and run all migrations
 * [`docker-compose.yml`](https://github.com/SecObserve/SecObserve/blob/dev/docker-compose.yml)
     - This is a link to `docker-compose-dev.yml` and is used as a default for the `docker compose` command
 

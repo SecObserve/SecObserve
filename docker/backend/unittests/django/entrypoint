@@ -2,8 +2,11 @@
 
 set -o errexit
 
+# The schema of this database is created from the models without running the migrations, see
+# config/settings/unittests.py. It is needed while the test runner collects the test modules,
+# some of them read the settings from the database when they are imported.
 rm -f /var/lib/sqlite/secobserve.db
-python manage.py migrate
+python manage.py migrate --run-syncdb
 
 coverage run /app/manage.py test unittests
 # coverage run /app/manage.py test unittests.core.services.test_assessment
