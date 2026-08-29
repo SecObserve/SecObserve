@@ -25,7 +25,7 @@
         "mermaid": "11.17.0",
         "oidc-client-ts": "3.5.0",
         "packageurl-js": "2.0.1",
-        "papaparse": "5.6.0",
+        "papaparse": "5.7.0",
         "prop-types": "15.8.1",
         "query-string": "9.5.0",
         "react": "19.2.8",
