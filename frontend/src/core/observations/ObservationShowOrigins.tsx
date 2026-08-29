@@ -3,7 +3,7 @@ import { Fragment } from "react";
 import { Labeled, RecordContextProvider, TextField, useRecordContext } from "react-admin";
 
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
-import { get_component_purl_url } from "../../commons/functions";
+import { get_purl_url } from "../../commons/functions";
 import { getElevation } from "../../metrics/functions";
 import MermaidDependencies from "./Mermaid_Dependencies";
 
@@ -63,20 +63,20 @@ const ObservationShowOrigins = ({ observation, showDependencies, elevated }: Obs
                                         </Labeled>
                                     )}
                                     {observation.origin_component_purl !== "" &&
-                                        get_component_purl_url(observation.origin_component_purl) === null && (
+                                        get_purl_url(observation.origin_component_purl) === null && (
                                             <Labeled>
                                                 <TextField source="origin_component_purl" label="Component PURL" />
                                             </Labeled>
                                         )}
                                     {observation.origin_component_purl !== "" &&
-                                        get_component_purl_url(observation.origin_component_purl) !== null && (
+                                        get_purl_url(observation.origin_component_purl) !== null && (
                                             <Labeled>
                                                 <TextUrlField
                                                     label="Component PURL"
                                                     text={observation.origin_component_purl}
                                                     url={
                                                         observation.origin_component_purl &&
-                                                        get_component_purl_url(observation.origin_component_purl)
+                                                        get_purl_url(observation.origin_component_purl)
                                                     }
                                                     new_tab={true}
                                                 />

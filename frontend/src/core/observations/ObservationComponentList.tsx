@@ -8,12 +8,15 @@ import {
     ResourceContextProvider,
     TextField,
     TextInput,
+    WithListContext,
     useListController,
 } from "react-admin";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { humanReadableDate } from "../../commons/functions";
+import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
@@ -37,6 +40,10 @@ function listFilters() {
             alwaysOn
         />,
         <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
+        <ProductReferenceInput alwaysOn />,
+        <ProductGroupReferenceInput alwaysOn />,
+        <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
+        <TextInput source="origin_service_name" label="Service" alwaysOn />,
         <TextInput source="scanner" alwaysOn />,
         <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />
     );
@@ -57,13 +64,7 @@ const ObservationsComponentList = ({ component }: ObservationsComponentListProps
 
     const listContext = useListController({
         filter: {
-            product: component.product,
-            branch: component.branch,
-            origin_service: component.origin_service,
-            origin_component_name_version: component.component_name_version,
-            origin_component_purl: component.component_purl,
-            origin_component_cpe: component.component_cpe,
-            origin_component_cyclonedx_bom_link: component.component_cyclonedx_bom_link,
+            origin_component: component.id,
         },
         perPage: getSettingRowsPerPage(),
         resource: "observations",
@@ -82,25 +83,39 @@ const ObservationsComponentList = ({ component }: ObservationsComponentListProps
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterForm filters={listFilters()} />
-                    <Datagrid
-                        size={getSettingListSize()}
-                        sx={{ width: "100%" }}
-                        rowClick={ShowObservations}
-                        resource="observations"
-                        expand={<ObservationExpand showComponent={false} />}
-                        expandSingle
-                        bulkActionButtons={false}
-                    >
-                        <TextField source="title" />
-                        <SeverityField label="Severity" source="current_severity" />
-                        <ChipField source="current_status" label="Status" />
-                        <TextField source="scanner_name" label="Scanner" />
-                        <FunctionField<Observation>
-                            label="Age"
-                            sortBy="last_observation_log"
-                            render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                        />
-                    </Datagrid>
+                    <WithListContext
+                        render={({ data, sort }) => (
+                            <Datagrid
+                                size={getSettingListSize()}
+                                sx={{ width: "100%" }}
+                                rowClick={ShowObservations}
+                                resource="observations"
+                                expand={<ObservationExpand showComponent={false} />}
+                                expandSingle
+                                bulkActionButtons={false}
+                            >
+                                <TextField source="title" />
+                                <SeverityField label="Severity" source="current_severity" />
+                                <ChipField source="current_status" label="Status" />
+                                <TextField source="product_data.name" label="Product" />
+                                {has_attribute("product_data.product_group_name", data, sort) && (
+                                    <TextField source="product_data.product_group_name" label="Group" />
+                                )}
+                                {has_attribute("branch_name", data, sort) && (
+                                    <TextField source="branch_name" label="Branch / Version" />
+                                )}
+                                {has_attribute("origin_service_name", data, sort) && (
+                                    <TextField source="origin_service_name" label="Service" />
+                                )}
+                                <TextField source="scanner_name" label="Scanner" />
+                                <FunctionField<Observation>
+                                    label="Age"
+                                    sortBy="last_observation_log"
+                                    render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
+                                />
+                            </Datagrid>
+                        )}
+                    />
                     <CustomPagination />
                 </div>
             </ListContextProvider>

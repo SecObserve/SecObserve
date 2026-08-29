@@ -3,9 +3,8 @@ import { Labeled, RecordContextProvider, TextField } from "react-admin";
 
 import components from ".";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
-import { feature_vex_enabled, get_component_purl_url } from "../../commons/functions";
+import { get_purl_url } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
-import MermaidDependencies from "../observations/Mermaid_Dependencies";
 
 type ComponentShowComponentProps = {
     component: any;
@@ -20,57 +19,62 @@ const ComponentShowComponent = ({ component, icon }: ComponentShowComponentProps
             {component && (
                 <Stack spacing={1}>
                     {icon && (
-                        <Typography variant="h6">
+                        <Typography
+                            variant="h6"
+                            component="h2"
+                            align="left"
+                            sx={{ alignItems: "center", display: "flex" }}
+                        >
                             <components.icon />
                             &nbsp;&nbsp;Component
                         </Typography>
                     )}
                     {!icon && <Typography variant="h6">Component</Typography>}
                     <Stack direction="row" spacing={4}>
-                        {component.component_name != "" && (
+                        {component.name != "" && (
                             <Labeled>
-                                <TextField source="component_name" label="Name" className={classes.fontBigBold} />
+                                <TextField source="name" label="Name" className={classes.fontBigBold} />
                             </Labeled>
                         )}
-                        {component.component_version != "" && (
+                        {component.version != "" && (
                             <Labeled>
-                                <TextField source="component_version" label="Version" className={classes.fontBigBold} />
+                                <TextField source="version" label="Version" className={classes.fontBigBold} />
                             </Labeled>
                         )}
                     </Stack>
-                    {component.component_type !== "" && (
+                    {component.type !== "" && (
                         <Labeled>
-                            <TextField source="component_type" label="Component type" />
+                            <TextField source="type" label="Type" />
                         </Labeled>
                     )}
-                    {component.component_purl !== "" && get_component_purl_url(component.component_purl) === null && (
+                    {component.purl !== "" && get_purl_url(component.purl) === null && (
                         <Labeled>
-                            <TextField source="component_purl" label="Component PURL" />
+                            <TextField source="purl" label="PURL" />
                         </Labeled>
                     )}
-                    {component.component_purl !== "" && get_component_purl_url(component.component_purl) !== null && (
+                    {component.purl !== "" && get_purl_url(component.purl) !== null && (
                         <Labeled>
                             <TextUrlField
                                 label="PURL"
-                                text={component.component_purl}
-                                url={component.component_purl && get_component_purl_url(component.component_purl)}
+                                text={component.purl}
+                                url={component.purl && get_purl_url(component.purl)}
                                 new_tab={true}
                             />
                         </Labeled>
                     )}
-                    {component.component_cpe != "" && (
+                    {component.cpe != "" && (
                         <Labeled>
-                            <TextField source="component_cpe" label="CPE" />
+                            <TextField source="cpe" label="CPE" />
                         </Labeled>
                     )}
-                    {feature_vex_enabled() && component.component_cyclonedx_bom_link != "" && (
+                    {/* {feature_vex_enabled() && component.cyclonedx_bom_link != "" && (
                         <Labeled>
-                            <TextField source="component_cyclonedx_bom_link" label="CycloneDX BOM Link" />
+                            <TextField source="cyclonedx_bom_link" label="CycloneDX BOM Link" />
                         </Labeled>
                     )}
-                    {component.component_dependencies && component.component_dependencies != "" && (
-                        <MermaidDependencies dependencies={component.component_dependencies} />
-                    )}
+                    {component.dependencies && component.dependencies != "" && (
+                        <MermaidDependencies dependencies={component.dependencies} />
+                    )} */}
                 </Stack>
             )}
         </RecordContextProvider>

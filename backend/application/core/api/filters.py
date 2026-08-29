@@ -278,6 +278,7 @@ class ObservationFilter(FilterSet):
             "api_configuration_name",
             "origin_service",
             "has_potential_duplicates",
+            "origin_component",
             "origin_component_purl_type",
             "origin_component_purl",
             "origin_component_cpe",
@@ -500,39 +501,25 @@ class PotentialDuplicateFilter(FilterSet):
 
 
 class ComponentFilter(FilterSet):
-    component_name_version = CharFilter(field_name="component_name_version", lookup_expr="icontains")
-    product_group = ModelChoiceFilter(
-        field_name="product__product_group",
-        queryset=Product.objects.filter(is_product_group=True),
-    )
-    branch_name = CharFilter(field_name="branch__name", lookup_expr="icontains")
-    origin_service_name = CharFilter(field_name="origin_service__name", lookup_expr="icontains")
+    name_version = CharFilter(field_name="name_version", lookup_expr="icontains")
+    # has_observations and has_licenses are annotated in get_components()
+    has_observations = BooleanFilter(field_name="has_observations")
+    has_licenses = BooleanFilter(field_name="has_licenses")
 
-    ordering = ExtendedOrderingFilter(
+    ordering = OrderingFilter(
         # tuple-mapping retains order
         fields=(
-            ("id", "id"),
-            (("product__name", "branch__name", "component_name_version"), "product_name"),
-            (("component_type", "product__name", "branch__name", "component_name_version"), "component_type"),
-            (("product__product_group__name", "branch__name", "component_name_version"), "product_group_name"),
-            (("branch__name", "product__name", "component_name_version"), "branch_name"),
-            (("component_name_version", "product__name", "branch__name"), "component_name_version_type"),
-            (
-                ("origin_service__name", "product__name", "branch__name", "component_name_version"),
-                "origin_service_name",
-            ),
-            (("has_observations", "product__name", "branch__name", "component_name_version"), "has_observations"),
+            ("name_version", "name_version"),
+            ("name_version", "name_version_type"),
+            ("purl_type", "purl_type"),
+            ("type", "type"),
         ),
     )
 
     class Meta:  # pylint: disable=duplicate-code
         model = Component
         fields = [
-            "product",
-            "branch",
-            "component_name_version",
-            "component_type",
-            "component_purl_type",
-            "origin_service",
-            "has_observations",
+            "name_version",
+            "type",
+            "purl_type",
         ]

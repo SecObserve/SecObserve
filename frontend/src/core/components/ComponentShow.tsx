@@ -3,7 +3,6 @@ import { Fragment } from "react";
 import { PrevNextButtons, Show, TopToolbar, WithRecord } from "react-admin";
 
 import ObservationsComponentList from "../observations/ObservationComponentList";
-import ComponentShowAside from "./ComponentShowAside";
 import ComponentShowComponent from "./ComponentShowComponent";
 
 const ShowActions = () => {
@@ -11,7 +10,7 @@ const ShowActions = () => {
         <TopToolbar>
             <PrevNextButtons
                 linkType="show"
-                sort={{ field: "component_name_version_type", order: "ASC" }}
+                sort={{ field: "name_version_type", order: "ASC" }}
                 queryOptions={{ meta: { api_resource: "component_names" } }}
                 storeKey="components.list"
             />
@@ -40,7 +39,7 @@ export const ComponentComponent = () => {
 };
 const ComponentShow = () => {
     return (
-        <Show actions={<ShowActions />} component={ComponentComponent} aside={<ComponentShowAside />}>
+        <Show actions={<ShowActions />} component={ComponentComponent}>
             <Fragment />
         </Show>
     );
