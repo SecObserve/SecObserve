@@ -10,8 +10,7 @@ type BranchFilterContextValue = {
     setLicensesBranch: (branch: Identifier | undefined) => void;
 };
 
-// The lists are rendered in the tabs, the counts of the product header above them. This context
-// lets the header follow the branch that is selected in the filter of a list.
+// The header with the counts is rendered outside of the tabs that hold the lists with the branch filters
 const BranchFilterContext = createContext<BranchFilterContextValue>({
     observationsBranch: undefined,
     licensesBranch: undefined,

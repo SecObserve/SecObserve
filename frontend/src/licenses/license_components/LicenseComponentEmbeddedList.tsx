@@ -146,7 +146,7 @@ const LicenseComponentEmbeddedList = ({
         storeKey: "license_components.embedded",
     });
 
-    // The list of an expanded row shares the store key with the list above it and has no branch filter of its own
+    // The list of an expanded row has no branch filter of its own, it shares the one of the list above it
     usePublishBranchFilter("licenses", listContext.filterValues?.branch, !expand);
 
     useEffect(() => {

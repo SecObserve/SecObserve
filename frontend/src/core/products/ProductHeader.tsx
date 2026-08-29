@@ -14,13 +14,12 @@ import { useStyles } from "../../commons/layout/themes";
 import { Product } from "../types";
 import { useBranchFilter } from "./BranchFilterContext";
 
-// The counts of a branch have the same shape as the counts of a product, so the count fields can render either of them
 const useBranchRecord = (product: Product | undefined, branch_id: Identifier | undefined) => {
-    // The counts of the product are the ones of its default branch, so that branch does not have to be loaded
+    // The counts of a product are the ones of its default branch, so that branch does not have to be loaded
     const load_branch = branch_id != null && Number(branch_id) !== Number(product?.repository_default_branch);
     const { data: branch } = useGetOne("branches", { id: branch_id! }, { enabled: load_branch });
 
-    // After navigating to another product, the branch of the previous product can still be in the context
+    // The context can still hold the branch of the previously shown product
     if (!load_branch || !branch || !product || Number(branch.product) !== Number(product.id)) {
         return undefined;
     }
@@ -50,7 +49,6 @@ const ProductHeader = () => {
     const { observationsBranch, licensesBranch } = useBranchFilter();
     const observations_branch = useBranchRecord(product, observationsBranch);
     const licenses_branch = useBranchRecord(product, licensesBranch);
-    // Without a branch in the filter, the counts of the product are shown, which are the ones of the default branch
     const observations_record = observations_branch ?? product;
     const licenses_record = licenses_branch ?? product;
 
