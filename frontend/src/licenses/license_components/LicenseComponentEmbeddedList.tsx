@@ -23,6 +23,7 @@ import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { COMPONENT_TYPE_CHOICES, EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentBulkDeleteButton from "./LicenseComponentBulkDeleteButton";
+import { IDENTIFIER_LICENSE_COMPONENT_EMBEDDED_LIST, setListIdentifier } from "./functions";
 
 type LicenseComponentEmbeddedListProps = {
     product: any;
@@ -52,6 +53,8 @@ const LicenseComponentEmbeddedList = ({
     component_purl_type,
     origin_service,
 }: LicenseComponentEmbeddedListProps) => {
+    setListIdentifier(IDENTIFIER_LICENSE_COMPONENT_EMBEDDED_LIST);
+
     const [initialExpand, setInitialExpand] = useState(true);
 
     const showLicenseComponent = (id: any) => {

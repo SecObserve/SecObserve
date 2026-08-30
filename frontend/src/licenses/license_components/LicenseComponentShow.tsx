@@ -3,15 +3,16 @@ import { Fragment } from "react";
 import { PrevNextButtons, Show, TopToolbar, WithRecord, useRecordContext } from "react-admin";
 
 import { PERMISSION_COMPONENT_LICENSE_EDIT } from "../../access_control/types";
-import ComponentShowComponent from "../../core/components/ComponentShowComponent";
 import ConcludedLicense from "./ConcludedLicense";
 import LicenseComponentShowAside from "./LicenseComponentShowAside";
+import LicenseComponentShowComponent from "./LicenseComponentShowComponent";
 import LicenseComponentShowLicense from "./LicenseComponentShowLicense";
+import { IDENTIFIER_LICENSE_COMPONENT_COMPONENT_LIST } from "./functions";
 
 const ShowActions = () => {
     const license_component = useRecordContext();
 
-    const filter = () => {
+    const embeddedListFilter = () => {
         // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
         const filter: { [key: string]: any } = {};
         if (license_component) {
@@ -42,16 +43,32 @@ const ShowActions = () => {
         return filter;
     };
 
+    let filter = null;
+    let storeKey = null;
+
+    if (license_component) {
+        if (
+            localStorage.getItem(IDENTIFIER_LICENSE_COMPONENT_COMPONENT_LIST) === "true" &&
+            license_component.component
+        ) {
+            filter = { component: Number(license_component.component) };
+            storeKey = "component_license_components.embedded";
+        } else {
+            filter = embeddedListFilter();
+            storeKey = "license_components.embedded";
+        }
+    }
+
     return (
         <TopToolbar>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                {license_component && (
+                {filter && storeKey && (
                     <PrevNextButtons
-                        filter={filter()}
+                        filter={filter}
                         queryOptions={{ meta: { api_resource: "license_component_ids" } }}
                         linkType="show"
                         sort={{ field: "evaluation_result", order: "ASC" }}
-                        storeKey="license_components.embedded"
+                        storeKey={storeKey}
                     />
                 )}
                 {license_component?.permissions?.includes(PERMISSION_COMPONENT_LICENSE_EDIT) && <ConcludedLicense />}
@@ -69,7 +86,7 @@ export const LicenseComponentComponent = () => {
                         <LicenseComponentShowLicense licenseComponent={component} direction="row" />
                     </Paper>
                     <Paper sx={{ marginBottom: 1, padding: 2 }}>
-                        <ComponentShowComponent component={component} icon={false} />
+                        <LicenseComponentShowComponent component={component} icon={false} />
                     </Paper>
                 </Box>
             )}

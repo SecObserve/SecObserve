@@ -13,7 +13,7 @@ const listFilters = [
     <TextInput source="name_version" label="Component" alwaysOn />,
     <AutocompleteInputMedium source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
     <AutocompleteInputMedium source="type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
-    <NullableBooleanInput source="has_observations" label="Observations" alwaysOn />,
+    <NullableBooleanInput source="has_observations" label="Active observations" alwaysOn />,
     <NullableBooleanInput source="has_licenses" label="Licenses" alwaysOn />,
 ];
 
