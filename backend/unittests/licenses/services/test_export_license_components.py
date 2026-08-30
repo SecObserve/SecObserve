@@ -92,7 +92,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "",
             "",
             "",
-            None,
+            1,
             "internal_component",
             "internal_component:1.0.0",
             "",

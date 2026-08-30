@@ -1,7 +1,3 @@
-from typing import Optional
-
-from django.conf import settings
-from django.db import connection
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.query import QuerySet
 
@@ -9,29 +5,17 @@ from application.access_control.services.current_user import get_current_user
 from application.core.models import (
     Component,
     Observation,
-    Product_Authorization_Group_Member,
-    Product_Member,
 )
+from application.core.queries.product import get_products
 from application.core.types import Status
 from application.licenses.models import License_Component
 
 
-def get_component_by_id(component_id: str) -> Optional[Component]:
-    # _create_component_view()
-
-    # try:
-    #     return Component.objects.get(id=component_id)
-    # except Component.DoesNotExist:
-    return None
-
-
 def get_components() -> QuerySet[Component]:
-    # _create_component_view()
+    user = get_current_user()
 
-    # user = get_current_user()
-
-    # if user is None:
-    #     return Component.objects.none()
+    if user is None:
+        return Component.objects.none()
 
     components = Component.objects.all().order_by("id")
 
@@ -41,37 +25,19 @@ def get_components() -> QuerySet[Component]:
     )
     license_components = License_Component.objects.filter(component=OuterRef("pk"))
 
+    # The annotations are scoped to the products the user is allowed to read, so that a component
+    # is only returned if it has at least one observation or license component the user can see.
+    if not user.is_superuser:
+        products = get_products().values("pk")
+        active_observations = active_observations.filter(product__in=products)
+        license_components = license_components.filter(product__in=products)
+
     components = components.annotate(
         has_observations=Exists(active_observations),
         has_licenses=Exists(license_components),
     )
 
-    # if not user.is_superuser:
-    #     product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
-    #     product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
-
-    #     product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-    #         product=OuterRef("product_id"),
-    #         authorization_group__users=user,
-    #     )
-
-    #     product_group_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-    #         product=OuterRef("product__product_group"),
-    #         authorization_group__users=user,
-    #     )
-
-    #     components = components.annotate(
-    #         product__member=Exists(product_members),
-    #         product__product_group__member=Exists(product_group_members),
-    #         authorization_group_member=Exists(product_authorization_group_members),
-    #         product_group_authorization_group_member=Exists(product_group_authorization_group_members),
-    #     )
-
-    #     components = components.filter(
-    #         Q(product__member=True)
-    #         | Q(product__product_group__member=True)
-    #         | Q(authorization_group_member=True)
-    #         | Q(product_group_authorization_group_member=True)
-    #     )
+    if not user.is_superuser:
+        components = components.filter(Q(has_observations=True) | Q(has_licenses=True))
 
     return components
