@@ -87,9 +87,7 @@ class ComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     search_fields = ["name_version"]
 
     def get_queryset(self) -> QuerySet[Component]:
-        return (
-            get_components()
-        )
+        return get_components()
 
 
 class ComponentNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):

@@ -5,7 +5,6 @@ from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
-    DO_NOTHING,
     PROTECT,
     RESTRICT,
     SET_NULL,

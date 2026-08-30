@@ -1,5 +1,5 @@
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 # Until now Component was an unmanaged model backed by the database view "core_component",
 # which was created on demand before the first query (see migration 0077). The view has to be
