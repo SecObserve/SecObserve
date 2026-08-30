@@ -193,31 +193,6 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         responses={200: LicenseComponentListSerializer},
         parameters=[OpenApiParameter(name="component", type=str, required=True)],
     )
-    @action(detail=False, methods=["get"])
-    def for_component(self, request: Request) -> Response:
-        component_id = request.query_params.get("component")
-        if not component_id:
-            raise ValidationError("No component id provided")
-        component = get_component_by_id(component_id)
-        if not component or not user_has_permission(component.product, Permissions.Product_View):
-            raise NotFound("No Component matches the given query.")
-        license_component = License_Component.objects.filter(
-            product=component.product,
-            branch=component.branch,
-            origin_service=component.origin_service,
-            component_name_version=component.component_name_version,
-            component_purl=component.component_purl,
-            component_cpe=component.component_cpe,
-            component_dependencies=component.component_dependencies,
-            component_cyclonedx_bom_link=component.component_cyclonedx_bom_link,
-        ).first()
-
-        if license_component:
-            response_serializer = LicenseComponentListSerializer(license_component)
-            return Response(status=HTTP_200_OK, data=response_serializer.data)
-
-        return Response(status=HTTP_204_NO_CONTENT)
-
     @extend_schema(methods=["PATCH"], request=ConcludedLicenseCreateUpdateSerializer, responses={200: None})
     @action(detail=True, methods=["patch"])
     def concluded_license(self, request: Request, pk: int) -> Response:
