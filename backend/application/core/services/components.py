@@ -4,6 +4,7 @@ from packageurl import PackageURL
 
 from application.core.models import Component
 
+from typing import Optional
 
 def get_identity_hash(component: Component) -> str:
     hash_string = _get_string_to_hash(component)
@@ -14,12 +15,7 @@ def _get_string_to_hash(component: Component) -> str:
     if component.purl:
         return component.purl
 
-    hash_string = component.name_version
-    if component.type:
-        hash_string += component.type
-    if component.cpe:
-        hash_string += component.cpe
-    return hash_string
+    return component.name_version
 
 
 def prepare_component(component: Component) -> None:
@@ -69,7 +65,10 @@ def _prepare_name_version(component: Component) -> None:
             component.version = ""
 
 
-def get_or_create_component(component: Component) -> Component:
+def get_or_create_component(component: Component) -> Optional[Component]:
+    if not component.name and not component.purl:
+        return None
+
     prepare_component(component)
     component.identity_hash = get_identity_hash(component)
 
