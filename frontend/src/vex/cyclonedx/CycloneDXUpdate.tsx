@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
 import { Fragment, useState } from "react";
 import { SimpleForm, useNotify, useRefresh } from "react-admin";
 
-import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { fetch_post } from "../../access_control/auth_provider/fetch_instance";
 import EditButton from "../../commons/custom_fields/EditButton";
 import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
@@ -33,20 +33,19 @@ const CycloneDXUpdate = () => {
         data.manufacturer ??= "";
 
         const url = "vex/cyclonedx_document/update/" + data.document_id_prefix + "/" + data.document_base_id + "/";
-        axios_instance
-            .post(url, data, { responseType: "blob" })
-            .then(function (response) {
+        fetch_post(url, data)
+            .then(async function (response) {
                 if (response.status == 204) {
                     setLoading(false);
                     notify("No changes in CycloneDX document", {
                         type: "warning",
                     });
                 } else {
-                    const blob = new Blob([response.data], { type: "application/json" });
+                    const blob = new Blob([await response.text()], { type: "application/json" });
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement("a");
                     link.href = url;
-                    link.download = response.headers["content-disposition"].split("filename=")[1];
+                    link.download = response.headers.get("content-disposition")?.split("filename=")[1] ?? "";
                     link.click();
 
                     refresh();
@@ -57,9 +56,9 @@ const CycloneDXUpdate = () => {
                 }
                 setOpen(false);
             })
-            .catch(async function (error) {
+            .catch(function (error) {
                 setLoading(false);
-                notify(await error.response.data.text(), {
+                notify(error.message, {
                     type: "warning",
                 });
             });

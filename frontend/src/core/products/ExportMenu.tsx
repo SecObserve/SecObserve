@@ -10,7 +10,7 @@ import MenuItem from "@mui/material/MenuItem";
 import { Fragment, MouseEvent, useState } from "react";
 import { useNotify } from "react-admin";
 
-import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { feature_license_management, getIconAndFontColor } from "../../commons/functions";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
@@ -31,10 +31,9 @@ const ExportMenu = (props: ExportMenuProps) => {
     };
 
     const exportDataCsv = async (url: string, filename: string, message: string) => {
-        axios_instance
-            .get(url)
-            .then(function (response) {
-                const blob = new Blob([response.data], { type: "text/csv" });
+        fetch_get(url)
+            .then(async function (response) {
+                const blob = new Blob([await response.text()], { type: "text/csv" });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
@@ -54,13 +53,9 @@ const ExportMenu = (props: ExportMenuProps) => {
     };
 
     const exportDataExcel = async (url: string, filename: string, message: string) => {
-        axios_instance
-            .get(url, {
-                responseType: "arraybuffer",
-                headers: { Accept: "*/*" },
-            })
-            .then(function (response) {
-                const blob = new Blob([response.data], {
+        fetch_get(url)
+            .then(async function (response) {
+                const blob = new Blob([await response.arrayBuffer()], {
                     type: "application/zip",
                 });
                 const url = window.URL.createObjectURL(blob);

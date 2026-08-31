@@ -11,7 +11,7 @@ import {
     useRefresh,
 } from "react-admin";
 
-import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { fetch_post } from "../../access_control/auth_provider/fetch_instance";
 import AddButton from "../../commons/custom_fields/AddButton";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
@@ -49,20 +49,19 @@ const CSAFCreate = () => {
         }
 
         const url = "vex/csaf_document/create/";
-        axios_instance
-            .post(url, data, { responseType: "blob" })
-            .then(function (response) {
+        fetch_post(url, data)
+            .then(async function (response) {
                 if (response.status == 204) {
                     setLoading(false);
                     notify("No vulnerabilities found to create CSAF document", {
                         type: "warning",
                     });
                 } else {
-                    const blob = new Blob([response.data], { type: "application/json" });
+                    const blob = new Blob([await response.text()], { type: "application/json" });
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement("a");
                     link.href = url;
-                    link.download = response.headers["content-disposition"].split("filename=")[1];
+                    link.download = response.headers.get("content-disposition")?.split("filename=")[1] ?? "";
                     link.click();
 
                     refresh();
@@ -73,9 +72,9 @@ const CSAFCreate = () => {
                 }
                 setOpen(false);
             })
-            .catch(async function (error) {
+            .catch(function (error) {
                 setLoading(false);
-                notify(await error.response.data.text(), {
+                notify(error.message, {
                     type: "warning",
                 });
             });

@@ -8,7 +8,7 @@ import { useDropzone } from "react-dropzone";
 import PivotTableUI, { PivotTableUIProps } from "react-pivottable/PivotTableUI";
 import { useSearchParams } from "react-router-dom";
 
-import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import "./PivotTable.css";
 
 // Whitelist of default aggregator names provided by react-pivottable
@@ -161,12 +161,9 @@ const PivotTable = () => {
                 const query = searchParams.toString();
                 const url = `/observations/export_csv/?${query}`;
 
-                const response = await axios_instance.get(url, {
-                    responseType: "blob",
-                });
+                const response = await fetch_get(url);
 
-                // Create a blob from the response and convert to text
-                const csvText = await response.data.text();
+                const csvText = await response.text();
 
                 if (!isMounted) return;
 
