@@ -11,7 +11,7 @@ import { Fragment, MouseEvent, useState } from "react";
 import { useListContext, useNotify } from "react-admin";
 import { useNavigate } from "react-router-dom";
 
-import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { getIconAndFontColor } from "../../commons/functions";
 
 const ExportMenu = () => {
@@ -28,10 +28,9 @@ const ExportMenu = () => {
     };
 
     const exportDataCsv = async (url: string, filename: string, message: string) => {
-        axios_instance
-            .get(url)
-            .then(function (response) {
-                const blob = new Blob([response.data], { type: "text/csv" });
+        fetch_get(url)
+            .then(async function (response) {
+                const blob = new Blob([await response.text()], { type: "text/csv" });
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
@@ -51,13 +50,9 @@ const ExportMenu = () => {
     };
 
     const exportDataExcel = async (url: string, filename: string, message: string) => {
-        axios_instance
-            .get(url, {
-                responseType: "arraybuffer",
-                headers: { Accept: "*/*" },
-            })
-            .then(function (response) {
-                const blob = new Blob([response.data], {
+        fetch_get(url)
+            .then(async function (response) {
+                const blob = new Blob([await response.arrayBuffer()], {
                     type: "application/zip",
                 });
                 const url = window.URL.createObjectURL(blob);
