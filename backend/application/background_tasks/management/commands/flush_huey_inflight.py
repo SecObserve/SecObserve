@@ -22,5 +22,11 @@ class Command(BaseCommand):
             logger.info("Huey statistics are not enabled, no in-flight entries to flush")
             return
 
-        deleted = HueyInflight.delete().where(HueyInflight.queue == huey.name).execute()
+        # Since peewee 4, Model.delete() uses a custom descriptor instead of @classmethod,
+        # which pylint cannot resolve and therefore reports a missing `cls` argument.
+        deleted = (
+            HueyInflight.delete()  # pylint: disable=no-value-for-parameter
+            .where(HueyInflight.queue == huey.name)
+            .execute()
+        )
         logger.info("Flushed %s stale in-flight entries of queue %s", deleted, huey.name)
