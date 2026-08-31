@@ -1,10 +1,10 @@
 import hashlib
+from typing import Optional
 
 from packageurl import PackageURL
 
 from application.core.models import Component
 
-from typing import Optional
 
 def get_identity_hash(component: Component) -> str:
     hash_string = _get_string_to_hash(component)

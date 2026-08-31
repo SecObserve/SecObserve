@@ -276,6 +276,15 @@ class Component(Model):
     purl_type = CharField(max_length=16, blank=True)
     cpe = CharField(max_length=255, blank=True)
 
+    class Meta:
+        indexes = [
+            Index(fields=["name_version"]),
+            Index(fields=["purl"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name_version} ({self.purl_type})" if self.purl_type else self.name_version
+
 
 class ObservationManager(Manager["Observation"]):
     def get_queryset(self) -> QuerySet["Observation"]:

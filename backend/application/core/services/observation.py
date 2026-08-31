@@ -306,16 +306,17 @@ def _normalize_origin_component(observation: Observation) -> None:  # pylint: di
     if observation.origin_component_purl_type is None:
         observation.origin_component_purl_type = ""
 
-    component = Component(
-        name=observation.origin_component_name,
-        version=observation.origin_component_version,
-        name_version=observation.origin_component_name_version,
-        type=observation.origin_component_type,
-        purl=observation.origin_component_purl,
-        purl_type=observation.origin_component_purl_type,
-        cpe=observation.origin_component_cpe,
-    )
-    observation.origin_component = get_or_create_component(component)
+    if not observation.origin_component:
+        component = Component(
+            name=observation.origin_component_name,
+            version=observation.origin_component_version,
+            name_version=observation.origin_component_name_version,
+            type=observation.origin_component_type,
+            purl=observation.origin_component_purl,
+            purl_type=observation.origin_component_purl_type,
+            cpe=observation.origin_component_cpe,
+        )
+        observation.origin_component = get_or_create_component(component)
 
 
 def _normalize_origin_docker(observation: Observation) -> None:

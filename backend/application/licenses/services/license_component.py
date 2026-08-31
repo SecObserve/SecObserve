@@ -65,16 +65,17 @@ def prepare_license_component(component: License_Component, spdx_cache: SPDXLice
     if component.component_purl_type is None:
         component.component_purl_type = ""
 
-    core_component = Component(
-        name=component.component_name,
-        version=component.component_version,
-        name_version=component.component_name_version,
-        type=component.component_type,
-        purl=component.component_purl,
-        purl_type=component.component_purl_type,
-        cpe=component.component_cpe,
-    )
-    component.component = get_or_create_component(core_component)
+    if not component.component:
+        core_component = Component(
+            name=component.component_name,
+            version=component.component_version,
+            name_version=component.component_name_version,
+            type=component.component_type,
+            purl=component.component_purl,
+            purl_type=component.component_purl_type,
+            cpe=component.component_cpe,
+        )
+        component.component = get_or_create_component(core_component)
 
     _prepare_license(component, spdx_cache)
 

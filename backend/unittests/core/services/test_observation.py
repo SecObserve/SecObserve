@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from application.core.models import Observation, Service
+from application.core.models import Component, Observation, Service
 from application.core.services.observation import (
     _get_string_to_hash,
     _normalize_update_impact_score_and_fix_available,
@@ -399,6 +399,46 @@ class TestObservation(BaseTestCase):
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
 
+    # --- origin component ---
+
+    def test_normalize_observation_fields_creates_origin_component(self):
+        observation = Observation(title="empty", origin_component_name_version="component_name:component_version")
+
+        normalize_observation_fields(observation)
+
+        component = Component.objects.get(name_version="component_name:component_version")
+        self.assertEqual(component, observation.origin_component)
+        self.assertEqual("component_name", component.name)
+        self.assertEqual("component_version", component.version)
+
+    def test_normalize_observation_fields_keeps_existing_origin_component(self):
+        component = Component.objects.create(
+            identity_hash="identity_hash",
+            name="component_name",
+            version="component_version",
+            name_version="component_name:component_version",
+        )
+        observation = Observation(
+            title="empty",
+            origin_component_name_version="component_name:component_version",
+            origin_component=component,
+        )
+        components_before = Component.objects.count()
+
+        normalize_observation_fields(observation)
+
+        self.assertEqual(component, observation.origin_component)
+        self.assertEqual(components_before, Component.objects.count())
+
+    def test_normalize_observation_fields_without_origin_component(self):
+        observation = Observation(title="empty")
+        components_before = Component.objects.count()
+
+        normalize_observation_fields(observation)
+
+        self.assertIsNone(observation.origin_component)
+        self.assertEqual(components_before, Component.objects.count())
+
     def test_normalize_observation_fields_origin_docker_image_name_tag_1(self):
         before_observation = Observation(title="empty", origin_docker_image_name_tag="docker_image_name")
         after_observation = deepcopy(before_observation)
@@ -607,6 +647,8 @@ def _get_excludes():
         "STATUS_RISK_ACCEPTED",
         "parser",
         "product",
+        "origin_component",
+        "origin_component_id",
         "identity_hash",
         "observation_notified",
     ]

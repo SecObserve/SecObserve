@@ -30,7 +30,7 @@ class TestComponents(BaseTestCase):
 
         self.assertNotEqual(get_identity_hash(component_1), get_identity_hash(component_2))
 
-    def test_identity_hash_without_purl(self):
+    def test_identity_hash_without_purl_ignores_type_and_cpe(self):
         component_1 = Component(name="component", version="1.0.0", name_version="component:1.0.0")
         component_2 = Component(name="component", version="2.0.0", name_version="component:2.0.0")
         component_3 = Component(name="component", version="1.0.0", name_version="component:1.0.0", type="library")
@@ -41,13 +41,19 @@ class TestComponents(BaseTestCase):
             cpe="cpe:2.3:a:vendor:component:1.0.0:*:*:*:*:*:*:*",
         )
 
+        # without a purl the name and the version define the identity, so the same component
+        # reported once with and once without a type or a cpe is not split into several components
+        self.assertEqual(get_identity_hash(component_1), get_identity_hash(component_3))
+        self.assertEqual(get_identity_hash(component_1), get_identity_hash(component_4))
+        self.assertNotEqual(get_identity_hash(component_1), get_identity_hash(component_2))
+
         hashes = {
             get_identity_hash(component_1),
             get_identity_hash(component_2),
             get_identity_hash(component_3),
             get_identity_hash(component_4),
         }
-        self.assertEqual(4, len(hashes))
+        self.assertEqual(2, len(hashes))
 
     def test_prepare_component_valid_purl(self):
         component = Component(name="django", version="6.0.7", purl="pkg:pypi/django@6.0.7")

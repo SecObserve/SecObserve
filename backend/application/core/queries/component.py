@@ -27,10 +27,13 @@ def get_components() -> QuerySet[Component]:
 
     # The annotations are scoped to the products the user is allowed to read, so that a component
     # is only returned if it has at least one observation or license component the user can see.
+    # The products are resolved before the query is built: as a subquery the permission check
+    # would be repeated in each of the subqueries below and would keep the database from using
+    # the indexes of the product columns.
     if not user.is_superuser:
-        products = get_products().values("pk")
-        active_observations = active_observations.filter(product__in=products)
-        license_components = license_components.filter(product__in=products)
+        product_ids = list(get_products(is_product_group=False).values_list("pk", flat=True))
+        active_observations = active_observations.filter(product_id__in=product_ids)
+        license_components = license_components.filter(product_id__in=product_ids)
 
     components = components.annotate(
         has_observations=Exists(active_observations),

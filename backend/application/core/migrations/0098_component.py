@@ -36,6 +36,14 @@ class Migration(migrations.Migration):
                 ("cpe", models.CharField(blank=True, max_length=255)),
             ],
         ),
+        migrations.AddIndex(
+            model_name="component",
+            index=models.Index(fields=["name_version"], name="core_compon_name_ve_2106e0_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="component",
+            index=models.Index(fields=["purl"], name="core_compon_purl_247d52_idx"),
+        ),
         migrations.AddField(
             model_name="observation",
             name="origin_component",
