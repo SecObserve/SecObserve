@@ -1,4 +1,5 @@
 from rest_framework.serializers import (
+    BooleanField,
     CharField,
     IntegerField,
     ListField,
@@ -11,36 +12,17 @@ from application.core.models import Component
 
 
 class ComponentSerializer(ModelSerializer):
-    product_name = SerializerMethodField()
-    product_group_name = SerializerMethodField()
-    branch_name = SerializerMethodField()
-    component_name_version_type = SerializerMethodField()
-    origin_service_name = SerializerMethodField()
+    name_version_type = SerializerMethodField()
+    # has_observations and has_licenses are annotated in get_components()
+    has_observations = BooleanField(read_only=True)
+    has_licenses = BooleanField(read_only=True)
 
-    def get_product_name(self, obj: Component) -> str:
-        return obj.product.name
-
-    def get_product_group_name(self, obj: Component) -> str:
-        if obj.product.product_group:
-            return obj.product.product_group.name
-        return ""
-
-    def get_branch_name(self, obj: Component) -> str:
-        if obj.branch:
-            return obj.branch.name
-        return ""
-
-    def get_component_name_version_type(self, obj: Component) -> str:
-        if obj.component_name_version:
-            component_name_version_type = obj.component_name_version
-            if obj.component_purl_type:
-                component_name_version_type += f" ({obj.component_purl_type})"
-            return component_name_version_type
-        return ""
-
-    def get_origin_service_name(self, obj: Component) -> str:
-        if obj.origin_service:
-            return obj.origin_service.name
+    def get_name_version_type(self, obj: Component) -> str:
+        if obj.name_version:
+            name_version_type = obj.name_version
+            if obj.purl_type:
+                name_version_type += f" ({obj.purl_type})"
+            return name_version_type
         return ""
 
     class Meta:
@@ -51,7 +33,7 @@ class ComponentSerializer(ModelSerializer):
 class ComponentNameSerializer(ModelSerializer):
     class Meta:
         model = Component
-        fields = ["id", "component_name_version"]
+        fields = ["id", "name_version"]
 
 
 class PURLTypeElementSerializer(Serializer):

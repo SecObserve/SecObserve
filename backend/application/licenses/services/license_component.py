@@ -6,7 +6,8 @@ from packageurl import PackageURL
 from rest_framework.exceptions import ValidationError
 
 from application.commons.services.functions import get_comma_separated_as_list
-from application.core.models import Product
+from application.core.models import Component, Product
+from application.core.services.components import get_or_create_component
 from application.licenses.models import License_Component
 from application.licenses.services.concluded_license import update_concluded_license
 from application.licenses.services.license_policy import (
@@ -63,6 +64,18 @@ def prepare_license_component(component: License_Component, spdx_cache: SPDXLice
 
     if component.component_purl_type is None:
         component.component_purl_type = ""
+
+    if not component.component:
+        core_component = Component(
+            name=component.component_name,
+            version=component.component_version,
+            name_version=component.component_name_version,
+            type=component.component_type,
+            purl=component.component_purl,
+            purl_type=component.component_purl_type,
+            cpe=component.component_cpe,
+        )
+        component.component = get_or_create_component(core_component)
 
     _prepare_license(component, spdx_cache)
 

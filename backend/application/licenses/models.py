@@ -12,14 +12,16 @@ from django.db.models import (
     ForeignKey,
     Index,
     IntegerField,
+    Manager,
     ManyToManyField,
     Model,
+    QuerySet,
     TextField,
 )
 from django.utils import timezone
 
 from application.access_control.models import Authorization_Group, User
-from application.core.models import Branch, Product, Service
+from application.core.models import Branch, Component, Product, Service
 from application.licenses.types import (
     NO_LICENSE_INFORMATION,
     Component_Type,
@@ -88,13 +90,23 @@ class License_Group_Authorization_Group_Member(Model):
         return f"{self.license_group} / {self.authorization_group}"
 
 
+class License_ComponentManager(Manager["License_Component"]):
+    def get_queryset(self) -> QuerySet["License_Component"]:
+        # License components are queried from many places, most of which do not add their own
+        # select_related. The component is joined centrally here to avoid N+1 queries.
+        return super().get_queryset().select_related("component")
+
+
 class License_Component(Model, DirtyFieldsMixin):
+    objects = License_ComponentManager()
+
     identity_hash = CharField(max_length=64)
 
     product = ForeignKey(Product, related_name="license_components", on_delete=CASCADE)
     branch = ForeignKey(Branch, related_name="license_components", on_delete=CASCADE, null=True)
     upload_filename = CharField(max_length=255, blank=True)
 
+    component = ForeignKey(Component, on_delete=CASCADE, null=True)
     component_name = CharField(max_length=255)
     component_version = CharField(max_length=255, blank=True)
     component_name_version = CharField(max_length=513, blank=True)

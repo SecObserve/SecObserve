@@ -8,6 +8,7 @@ from django_filters import (
     CharFilter,
     ChoiceFilter,
     FilterSet,
+    ModelChoiceFilter,
     ModelMultipleChoiceFilter,
     NumberFilter,
     OrderingFilter,
@@ -15,6 +16,7 @@ from django_filters import (
 
 from application.commons.api.extended_ordering_filter import ExtendedOrderingFilter
 from application.commons.types import Age_Choices
+from application.core.models import Product
 from application.licenses.models import (
     Concluded_License,
     License,
@@ -78,8 +80,14 @@ class LicenseComponentFilter(FilterSet):
     effective_license_expression = CharFilter(field_name="effective_license_expression", lookup_expr="icontains")
     effective_non_spdx_license = CharFilter(field_name="effective_non_spdx_license", lookup_expr="icontains")
     age = ChoiceFilter(field_name="age", method="get_age", choices=Age_Choices.AGE_CHOICES)
+    branch_name = CharFilter(field_name="branch__name", lookup_expr="icontains")
     branch_name_exact = CharFilter(field_name="branch__name")
+    origin_service_name = CharFilter(field_name="origin_service__name", lookup_expr="icontains")
     manual_concluded_comment = CharFilter(field_name="manual_concluded_comment", lookup_expr="icontains")
+    product_group = ModelChoiceFilter(
+        field_name="product__product_group",
+        queryset=Product.objects.filter(is_product_group=True),
+    )
 
     def get_age(self, queryset: QuerySet, name: Any, value: Any) -> QuerySet:  # pylint: disable=unused-argument
         days = Age_Choices.get_days_from_age(value)
@@ -102,6 +110,19 @@ class LicenseComponentFilter(FilterSet):
                 "effective_license_name",
             ),
             (("numerical_evaluation_result", "effective_license_name", "component_name_version"), "evaluation_result"),
+            (
+                ("product__name", "effective_license_name", "numerical_evaluation_result", "component_name_version"),
+                "product_name",
+            ),
+            (
+                (
+                    "product__product_group__name",
+                    "effective_license_name",
+                    "numerical_evaluation_result",
+                    "component_name_version",
+                ),
+                "product_group_name",
+            ),
             (
                 ("branch__name", "effective_license_name", "numerical_evaluation_result", "component_name_version"),
                 "branch_name",
@@ -158,6 +179,7 @@ class LicenseComponentFilter(FilterSet):
             "effective_license_expression",
             "effective_non_spdx_license",
             "evaluation_result",
+            "component",
             "component_name_version",
             "component_type",
             "component_purl_type",

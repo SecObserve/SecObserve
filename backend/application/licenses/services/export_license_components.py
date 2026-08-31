@@ -35,6 +35,7 @@ def _get_excludes() -> list[str]:
         "identity_hash",
         "pk",
         "objects",
+        "component",
         "unsaved_declared_licenses",
         "unsaved_concluded_licenses",
         "unsaved_evidences",

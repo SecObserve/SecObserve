@@ -19,13 +19,11 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import (
-    user_has_permission,
     user_has_permission_or_403,
 )
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Branch, Product
 from application.core.queries.branch import get_branch_by_id
-from application.core.queries.component import get_component_by_id
 from application.core.queries.product import get_product_by_id
 from application.licenses.api.filters import (
     ConcludedLicenseFilter,
@@ -193,31 +191,6 @@ class LicenseComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
         responses={200: LicenseComponentListSerializer},
         parameters=[OpenApiParameter(name="component", type=str, required=True)],
     )
-    @action(detail=False, methods=["get"])
-    def for_component(self, request: Request) -> Response:
-        component_id = request.query_params.get("component")
-        if not component_id:
-            raise ValidationError("No component id provided")
-        component = get_component_by_id(component_id)
-        if not component or not user_has_permission(component.product, Permissions.Product_View):
-            raise NotFound("No Component matches the given query.")
-        license_component = License_Component.objects.filter(
-            product=component.product,
-            branch=component.branch,
-            origin_service=component.origin_service,
-            component_name_version=component.component_name_version,
-            component_purl=component.component_purl,
-            component_cpe=component.component_cpe,
-            component_dependencies=component.component_dependencies,
-            component_cyclonedx_bom_link=component.component_cyclonedx_bom_link,
-        ).first()
-
-        if license_component:
-            response_serializer = LicenseComponentListSerializer(license_component)
-            return Response(status=HTTP_200_OK, data=response_serializer.data)
-
-        return Response(status=HTTP_204_NO_CONTENT)
-
     @extend_schema(methods=["PATCH"], request=ConcludedLicenseCreateUpdateSerializer, responses={200: None})
     @action(detail=True, methods=["patch"])
     def concluded_license(self, request: Request, pk: int) -> Response:
