@@ -21,6 +21,7 @@ import { is_external, is_superuser } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import ProductGroupEmbeddedList from "../../core/product_groups/ProductGroupEmbeddedList";
 import ProductEmbeddedList from "../../core/products/ProductEmbeddedList";
+import { get_purl_type_name } from "../../core/types";
 import LicensePolicyAuthorizationGroupMemberEmbeddedList from "../license_policy_authorization_group_members/LicensePolicyAuthorizationGroupMemberEmbeddedList";
 import LicensePolicyItemEmbeddedList from "../license_policy_items/LicensePolicyItemEmbeddedList";
 import LicensePolicyMemberEmbeddedList from "../license_policy_members/LicensePolicyMemberEmbeddedList";
@@ -87,7 +88,14 @@ const LicensePolicyComponent = () => {
                             )}
                             {license_policy.ignore_component_types && (
                                 <Labeled label="Ignore ecosystems">
-                                    <TextArrayField source="ignore_component_type_list" />
+                                    <TextArrayField
+                                        source="ignore_component_type_list"
+                                        record={{
+                                            ...license_policy,
+                                            ignore_component_type_list:
+                                                license_policy.ignore_component_type_list?.map(get_purl_type_name),
+                                        }}
+                                    />
                                 </Labeled>
                             )}
                             <Labeled label="Public">
