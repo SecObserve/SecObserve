@@ -274,7 +274,7 @@ class Component(Model):
     type = CharField(max_length=24, blank=True)
     purl = CharField(max_length=255, blank=True)
     purl_type = CharField(max_length=16, blank=True)
-    cpe = CharField(max_length=255, blank=True)
+    purl_namespace = CharField(max_length=255, blank=True)
 
     class Meta:
         indexes = [

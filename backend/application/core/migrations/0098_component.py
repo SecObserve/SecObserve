@@ -33,6 +33,7 @@ class Migration(migrations.Migration):
                 ("type", models.CharField(blank=True, max_length=24)),
                 ("purl", models.CharField(blank=True, max_length=255)),
                 ("purl_type", models.CharField(blank=True, max_length=16)),
+                ("purl_namespace", models.CharField(blank=True, max_length=255)),
                 ("cpe", models.CharField(blank=True, max_length=255)),
             ],
         ),

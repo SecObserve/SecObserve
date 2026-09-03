@@ -510,8 +510,8 @@ class ComponentFilter(FilterSet):
         # tuple-mapping retains order
         fields=(
             ("name_version", "name_version"),
-            ("name_version", "name_version_type"),
             ("purl_type", "purl_type"),
+            ("purl_namespace", "purl_namespace"),
             ("type", "type"),
         ),
     )
@@ -520,6 +520,7 @@ class ComponentFilter(FilterSet):
         model = Component
         fields = [
             "name_version",
-            "type",
             "purl_type",
+            "purl_namespace",
+            "type",
         ]
