@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from rest_framework.serializers import (
     CharField,
@@ -11,7 +11,11 @@ from rest_framework.serializers import (
 )
 
 from application.access_control.services.current_user import get_current_user
-from application.notifications.models import Notification, Notification_Viewed
+from application.notifications.models import (
+    Notification,
+    Notification_Recipient,
+    Notification_Viewed,
+)
 
 
 class NotificationSerializer(ModelSerializer):
@@ -25,12 +29,18 @@ class NotificationSerializer(ModelSerializer):
         model = Notification
         fields = "__all__"
 
+    def to_representation(self, instance: Notification) -> dict[str, Any]:
+        representation = super().to_representation(instance)
+        if instance.type not in (Notification.TYPE_ASSESSMENT_REQUEST, Notification.TYPE_ASSESSMENT_RESULT):
+            representation.pop("observation_log", None)
+        return representation
+
     def get_message(self, obj: Notification) -> Optional[str]:
         if not obj.message:
             return obj.message
 
         user = get_current_user()
-        if user and user.is_superuser:
+        if user and (user.is_superuser or Notification_Recipient.objects.filter(notification=obj, user=user).exists()):
             return obj.message
 
         return "..."

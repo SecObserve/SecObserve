@@ -44,14 +44,12 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.assessment import assessment_approvers_configured
 from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
 )
-from application.core.services.assessment import (
-    assessment_approvers_configured,
-    is_user_designated_assessment_approver,
-)
+from application.core.services.assessment import is_user_designated_assessment_approver
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )

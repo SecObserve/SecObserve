@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { useEffect } from "react";
 import {
     DateField,
@@ -10,6 +10,7 @@ import {
     WithRecord,
     useGetRecordId,
 } from "react-admin";
+import { Link } from "react-router-dom";
 
 import notifications from ".";
 import { ObservationReferenceField } from "../commons/custom_fields/ObservationReferenceField";
@@ -59,6 +60,15 @@ const NotificationShow = () => {
                         {notification?.product && <ProductReferenceField label="Product" />}
                         {notification?.observation && (
                             <ObservationReferenceField source="observation" label="Observation" />
+                        )}
+                        {notification?.observation_log && (
+                            <Button
+                                component={Link}
+                                to={`/observation_logs/${notification.observation_log}/show`}
+                                variant="outlined"
+                            >
+                                Open assessment
+                            </Button>
                         )}
                         {notification?.user_full_name && <TextField source="user_full_name" label="User" />}
                     </SimpleShowLayout>

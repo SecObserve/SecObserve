@@ -46,17 +46,23 @@ def get_notifications() -> QuerySet[Notification]:
 
         notifications = notifications.filter(
             (
-                Q(product__member=True)
-                | Q(product__product_group__member=True)
-                | Q(authorization_group_member=True)
-                | Q(product_group_authorization_group_member=True)
+                (
+                    Q(product__member=True)
+                    | Q(product__product_group__member=True)
+                    | Q(authorization_group_member=True)
+                    | Q(product_group_authorization_group_member=True)
+                )
+                & (
+                    Q(type=Notification.TYPE_SECURITY_GATE)
+                    | Q(type=Notification.TYPE_TASK)
+                    | Q(type=Notification.TYPE_OBSERVATION)
+                    | Q(type=Notification.TYPE_OBSERVATION_TITLE)
+                )
             )
-            & (
-                Q(type=Notification.TYPE_SECURITY_GATE)
-                | Q(type=Notification.TYPE_TASK)
-                | Q(type=Notification.TYPE_OBSERVATION)
-                | Q(type=Notification.TYPE_OBSERVATION_TITLE)
+            | (
+                Q(type__in=[Notification.TYPE_ASSESSMENT_REQUEST, Notification.TYPE_ASSESSMENT_RESULT])
+                & Q(notification_recipients__user=user)
             )
-        )
+        ).distinct()
 
     return notifications
