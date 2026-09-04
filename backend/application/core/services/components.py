@@ -58,6 +58,7 @@ def _prepare_component(component: Component) -> None:
         try:
             purl = PackageURL.from_string(component.purl)
 
+            component.name_version = ""
             component.name = purl.name
             component.version = purl.version if purl.version else ""
             component.purl_type = purl.type

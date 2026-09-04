@@ -29,7 +29,6 @@ def initialize_license_component_components(apps, schema_editor):
                 license_component.component_name_version,
                 license_component.component_type,
                 license_component.component_purl,
-                license_component.component_cpe,
             )
 
             component_id = component_ids.get(key)
@@ -41,7 +40,6 @@ def initialize_license_component_components(apps, schema_editor):
                         name_version=key[2],
                         type=key[3],
                         purl=key[4],
-                        cpe=key[5],
                     )
                 ).pk
                 component_ids[key] = component_id

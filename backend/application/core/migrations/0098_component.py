@@ -34,7 +34,6 @@ class Migration(migrations.Migration):
                 ("purl", models.CharField(blank=True, max_length=255)),
                 ("purl_type", models.CharField(blank=True, max_length=16)),
                 ("purl_namespace", models.CharField(blank=True, max_length=255)),
-                ("cpe", models.CharField(blank=True, max_length=255)),
             ],
         ),
         migrations.AddIndex(
@@ -48,6 +47,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="observation",
             name="origin_component",
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to="core.component"),
+            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to="core.component"),
         ),
     ]

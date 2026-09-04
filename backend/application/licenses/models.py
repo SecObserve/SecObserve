@@ -6,6 +6,7 @@ from django.db.models import (
     CASCADE,
     PROTECT,
     RESTRICT,
+    SET_NULL,
     BooleanField,
     CharField,
     DateTimeField,
@@ -106,7 +107,7 @@ class License_Component(Model, DirtyFieldsMixin):
     branch = ForeignKey(Branch, related_name="license_components", on_delete=CASCADE, null=True)
     upload_filename = CharField(max_length=255, blank=True)
 
-    component = ForeignKey(Component, on_delete=CASCADE, null=True)
+    component = ForeignKey(Component, on_delete=SET_NULL, null=True)
     component_name = CharField(max_length=255)
     component_version = CharField(max_length=255, blank=True)
     component_name_version = CharField(max_length=513, blank=True)
