@@ -29,7 +29,6 @@ def initialize_observation_components(apps, schema_editor):
                 observation.origin_component_name_version,
                 observation.origin_component_type,
                 observation.origin_component_purl,
-                observation.origin_component_cpe,
             )
 
             component_id = component_ids.get(key)
@@ -41,7 +40,6 @@ def initialize_observation_components(apps, schema_editor):
                         name_version=key[2],
                         type=key[3],
                         purl=key[4],
-                        cpe=key[5],
                     )
                 ).pk
                 component_ids[key] = component_id

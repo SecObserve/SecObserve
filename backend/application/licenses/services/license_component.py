@@ -73,7 +73,6 @@ def prepare_license_component(component: License_Component, spdx_cache: SPDXLice
             type=component.component_type,
             purl=component.component_purl,
             purl_type=component.component_purl_type,
-            cpe=component.component_cpe,
         )
         component.component = get_or_create_component(core_component)
 

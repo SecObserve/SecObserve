@@ -62,6 +62,15 @@ class Status:
 
     STATUS_ACTIVE = [STATUS_OPEN, STATUS_AFFECTED, STATUS_IN_REVIEW]
 
+    STATUS_INACTIVE = [
+        STATUS_RESOLVED,
+        STATUS_DUPLICATE,
+        STATUS_FALSE_POSITIVE,
+        STATUS_NOT_AFFECTED,
+        STATUS_NOT_SECURITY,
+        STATUS_RISK_ACCEPTED,
+    ]
+
 
 class Assessment_Status:
     ASSESSMENT_STATUS_APPROVED = "Approved"
@@ -191,38 +200,48 @@ class VexRemediationCategory:
 
 class PURL_Type:
     PURL_TYPE_CHOICES = {
-        "alpm": "alpm",
-        "apk": "APK",
+        "apk": "Alpine Linux (apk)",
+        "alpm": "Arch Linux (alpm)",
+        "bazel": "Bazel",
+        "otp": "BEAM/OTP (otp)",
         "bitbucket": "Bitbucket",
         "bitnami": "Bitnami",
-        "cargo": "Rust",
+        "brew": "Brew",
+        "vcpkg": "C/C++ (vcpkg)",
+        "chrome-extension": "Chrome (chrome-extension)",
         "cocoapods": "Cocoapods",
         "composer": "Composer",
         "conan": "Conan",
         "conda": "Conda",
-        "cpan": "CPAN Perl",
-        "cran": "CRAN R",
-        "deb": "Debian",
+        "cpan": "CPAN Perl (cpan)",
+        "cran": "CRAN R (cran)",
+        "pub": "Dart (pub)",
+        "deb": "Debian (deb)",
         "docker": "Docker",
-        "gem": "Ruby Gem",
         "generic": "Generic",
+        "git": "Git",
         "github": "GitHub",
-        "golang": "Go",
+        "golang": "Go (golang)",
         "hackage": "Hackage",
         "hex": "Hex",
         "huggingface": "Huggingface",
-        "luarocks": "Lua",
+        "julia": "Julia",
+        "luarocks": "Lua (luarocks)",
         "maven": "Maven",
         "mlflow": "MLflow",
         "npm": "NPM",
         "nuget": "NuGet",
+        "opam": "OCaml (opam)",
         "oci": "OCI",
-        "pub": "Dart",
         "pypi": "PyPI",
-        "rpm": "RPM",
-        "qpkg": "QNX",
+        "qpkg": "QNX (qpkg)",
+        "rpm": "Red Hat (rpm)",
+        "gem": "Ruby (gem)",
+        "cargo": "Rust (cargo)",
         "swid": "SWID",
         "swift": "Swift",
+        "vscode-extension": "Visual Studio Code (vscode-extension)",
+        "yocto": "Yocto",
     }
 
 

@@ -70,18 +70,3 @@ class TestObservationManager(BaseTestCase):
             origin_component_name="component",
             origin_component_version="1.0.0",
         )
-
-    def test_origin_component_does_not_need_an_extra_query(self):
-        with CaptureQueriesContext(connection) as captured_queries:
-            observations = list(Observation.objects.filter(title="observation_manager_test"))
-            for observation in observations:
-                self.assertEqual(self.component, observation.origin_component)
-
-        self.assertEqual(1, len(captured_queries.captured_queries))
-        self.assertIn("JOIN", captured_queries.captured_queries[0]["sql"].upper())
-
-    def test_count_does_not_join_the_component(self):
-        with CaptureQueriesContext(connection) as captured_queries:
-            self.assertEqual(1, Observation.objects.filter(title="observation_manager_test").count())
-
-        self.assertNotIn("JOIN", captured_queries.captured_queries[0]["sql"].upper())

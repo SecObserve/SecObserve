@@ -69,7 +69,9 @@ const ObservationsComponentList = ({ component }: ObservationsComponentListProps
         perPage: getSettingRowsPerPage(),
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
-        filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE },
+        // Components without active observations are shown with all statuses,
+        // otherwise the list would be empty by default.
+        filterDefaultValues: component.has_active_observations ? { current_status: OBSERVATION_STATUS_ACTIVE } : {},
         disableSyncWithLocation: false,
         storeKey: "observations.component",
     });

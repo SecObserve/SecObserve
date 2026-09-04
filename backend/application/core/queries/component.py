@@ -23,6 +23,10 @@ def get_components() -> QuerySet[Component]:
         origin_component=OuterRef("pk"),
         current_status__in=Status.STATUS_ACTIVE,
     )
+    inactive_observations = Observation.objects.filter(
+        origin_component=OuterRef("pk"),
+        current_status__in=Status.STATUS_INACTIVE,
+    )
     license_components = License_Component.objects.filter(component=OuterRef("pk"))
 
     # The annotations are scoped to the products the user is allowed to read, so that a component
@@ -33,14 +37,18 @@ def get_components() -> QuerySet[Component]:
     if not user.is_superuser:
         product_ids = list(get_products(is_product_group=False).values_list("pk", flat=True))
         active_observations = active_observations.filter(product_id__in=product_ids)
+        inactive_observations = inactive_observations.filter(product_id__in=product_ids)
         license_components = license_components.filter(product_id__in=product_ids)
 
     components = components.annotate(
-        has_observations=Exists(active_observations),
+        has_active_observations=Exists(active_observations),
+        has_inactive_observations=Exists(inactive_observations),
         has_licenses=Exists(license_components),
     )
 
     if not user.is_superuser:
-        components = components.filter(Q(has_observations=True) | Q(has_licenses=True))
+        components = components.filter(
+            Q(has_active_observations=True) | Q(has_inactive_observations=True) | Q(has_licenses=True)
+        )
 
     return components

@@ -502,16 +502,17 @@ class PotentialDuplicateFilter(FilterSet):
 
 class ComponentFilter(FilterSet):
     name_version = CharFilter(field_name="name_version", lookup_expr="icontains")
-    # has_observations and has_licenses are annotated in get_components()
-    has_observations = BooleanFilter(field_name="has_observations")
+    # has_active_observations, has_inactive_observations and has_licenses are annotated in get_components()
+    has_active_observations = BooleanFilter(field_name="has_active_observations")
+    has_inactive_observations = BooleanFilter(field_name="has_inactive_observations")
     has_licenses = BooleanFilter(field_name="has_licenses")
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
         fields=(
             ("name_version", "name_version"),
-            ("name_version", "name_version_type"),
             ("purl_type", "purl_type"),
+            ("purl_namespace", "purl_namespace"),
             ("type", "type"),
         ),
     )
@@ -520,6 +521,7 @@ class ComponentFilter(FilterSet):
         model = Component
         fields = [
             "name_version",
-            "type",
             "purl_type",
+            "purl_namespace",
+            "type",
         ]

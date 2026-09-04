@@ -1,10 +1,11 @@
 import { Stack, Typography } from "@mui/material";
-import { Labeled, RecordContextProvider, TextField } from "react-admin";
+import { Labeled, RecordContextProvider, SelectField, TextField } from "react-admin";
 
 import components from ".";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { get_purl_url } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
+import { PURL_TYPE_CHOICES } from "../types";
 
 type ComponentShowComponentProps = {
     component: any;
@@ -42,11 +43,23 @@ const ComponentShowComponent = ({ component, icon }: ComponentShowComponentProps
                             </Labeled>
                         )}
                     </Stack>
-                    {component.type !== "" && (
-                        <Labeled>
-                            <TextField source="type" label="Type" />
-                        </Labeled>
-                    )}
+                    <Stack direction="row" spacing={4}>
+                        {component.purl_type !== "" && (
+                            <Labeled>
+                                <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
+                            </Labeled>
+                        )}
+                        {component.purl_namespace !== "" && (
+                            <Labeled>
+                                <TextField source="purl_namespace" label="Namespace" />
+                            </Labeled>
+                        )}
+                        {component.type !== "" && (
+                            <Labeled>
+                                <TextField source="type" label="Type" />
+                            </Labeled>
+                        )}
+                    </Stack>
                     {component.purl !== "" && get_purl_url(component.purl) === null && (
                         <Labeled>
                             <TextField source="purl" label="PURL" />
@@ -62,19 +75,6 @@ const ComponentShowComponent = ({ component, icon }: ComponentShowComponentProps
                             />
                         </Labeled>
                     )}
-                    {component.cpe != "" && (
-                        <Labeled>
-                            <TextField source="cpe" label="CPE" />
-                        </Labeled>
-                    )}
-                    {/* {feature_vex_enabled() && component.cyclonedx_bom_link != "" && (
-                        <Labeled>
-                            <TextField source="cyclonedx_bom_link" label="CycloneDX BOM Link" />
-                        </Labeled>
-                    )}
-                    {component.dependencies && component.dependencies != "" && (
-                        <MermaidDependencies dependencies={component.dependencies} />
-                    )} */}
                 </Stack>
             )}
         </RecordContextProvider>

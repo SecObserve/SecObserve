@@ -17,10 +17,8 @@ from django.db.models import (
     Index,
     IntegerField,
     JSONField,
-    Manager,
     ManyToManyField,
     Model,
-    QuerySet,
     TextField,
 )
 from django.utils import timezone
@@ -274,7 +272,7 @@ class Component(Model):
     type = CharField(max_length=24, blank=True)
     purl = CharField(max_length=255, blank=True)
     purl_type = CharField(max_length=16, blank=True)
-    cpe = CharField(max_length=255, blank=True)
+    purl_namespace = CharField(max_length=255, blank=True)
 
     class Meta:
         indexes = [
@@ -286,16 +284,7 @@ class Component(Model):
         return f"{self.name_version} ({self.purl_type})" if self.purl_type else self.name_version
 
 
-class ObservationManager(Manager["Observation"]):
-    def get_queryset(self) -> QuerySet["Observation"]:
-        # Observations are queried from many places, most of which do not add their own
-        # select_related. The component is joined centrally here to avoid N+1 queries.
-        return super().get_queryset().select_related("origin_component")
-
-
 class Observation(Model):
-    objects = ObservationManager()
-
     product = ForeignKey(Product, on_delete=CASCADE)
     branch = ForeignKey(Branch, on_delete=CASCADE, null=True)
     parser = ForeignKey("import_observations.Parser", on_delete=PROTECT)
@@ -326,7 +315,7 @@ class Observation(Model):
     vulnerability_id = CharField(max_length=255, blank=True)
     vulnerability_id_aliases = CharField(max_length=512, blank=True)
 
-    origin_component = ForeignKey(Component, on_delete=CASCADE, null=True)
+    origin_component = ForeignKey(Component, on_delete=SET_NULL, null=True)
     origin_component_name = CharField(max_length=255, blank=True)
     origin_component_version = CharField(max_length=255, blank=True)
     origin_component_name_version = CharField(max_length=513, blank=True)

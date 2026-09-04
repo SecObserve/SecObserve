@@ -314,7 +314,6 @@ def _normalize_origin_component(observation: Observation) -> None:  # pylint: di
             type=observation.origin_component_type,
             purl=observation.origin_component_purl,
             purl_type=observation.origin_component_purl_type,
-            cpe=observation.origin_component_cpe,
         )
         observation.origin_component = get_or_create_component(component)
 
