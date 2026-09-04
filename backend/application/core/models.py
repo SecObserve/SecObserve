@@ -17,10 +17,8 @@ from django.db.models import (
     Index,
     IntegerField,
     JSONField,
-    Manager,
     ManyToManyField,
     Model,
-    QuerySet,
     TextField,
 )
 from django.utils import timezone
