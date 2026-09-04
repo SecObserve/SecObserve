@@ -559,7 +559,7 @@ const SettingsEdit = () => {
                                 </FormDataConsumer>
                                 <NumberInput
                                     source="branch_housekeeping_crontab_hour"
-                                    label="Branch housekeeping crontab (hour)"
+                                    label="Housekeeping crontab (hour)"
                                     min={0}
                                     step={1}
                                     validate={validate_0_23}
@@ -625,7 +625,7 @@ const SettingsEdit = () => {
                                 </FormDataConsumer>
                                 <NumberInput
                                     source="branch_housekeeping_crontab_minute"
-                                    label="Branch housekeeping crontab (minute)"
+                                    label="Housekeeping crontab (minute)"
                                     min={0}
                                     step={1}
                                     validate={validate_0_59}

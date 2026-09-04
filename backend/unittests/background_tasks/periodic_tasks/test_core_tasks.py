@@ -1,8 +1,8 @@
 from unittest.mock import patch
 
 from application.background_tasks.periodic_tasks.core_tasks import (
-    task_branch_housekeeping,
     task_expire_risk_acceptances,
+    task_housekeeping,
 )
 from unittests.base_test_case import BaseTestCase
 
@@ -12,10 +12,10 @@ class TestCoreTasks(BaseTestCase):
     # task_branch_housekeeping
     # ---------------------------------------------------------------
 
-    @patch("application.background_tasks.periodic_tasks.core_tasks.delete_inactive_branches_and_set_flags")
+    @patch("application.background_tasks.periodic_tasks.core_tasks.housekeeping")
     def test_task_branch_housekeeping(self, mock_delete_inactive_branches):
         # Execute
-        task_branch_housekeeping()
+        task_housekeeping()
 
         # Assert
         mock_delete_inactive_branches.assert_called_once()
