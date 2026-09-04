@@ -10,7 +10,7 @@ PERIODIC_TASKS: dict[str, str] = {
     ),
     "Import EPSS and cvss-bt": "application.background_tasks.periodic_tasks.epss_tasks.task_import_epss",
     "Import SPDX licenses": "application.background_tasks.periodic_tasks.license_tasks.task_spdx_license_import",
-    "Branch housekeeping": "application.background_tasks.periodic_tasks.core_tasks.task_branch_housekeeping",
+    "Housekeeping": "application.background_tasks.periodic_tasks.core_tasks.task_housekeeping",
     "Expire risk acceptances": "application.background_tasks.periodic_tasks.core_tasks.task_expire_risk_acceptances",
     "Calculate product metrics": (
         "application.background_tasks.periodic_tasks.metrics_tasks.task_calculate_product_metrics"

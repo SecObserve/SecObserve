@@ -77,9 +77,9 @@ class TestPeriodicTaskRun(BaseTestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         expected_tasks = [
-            "Branch housekeeping",
             "Calculate product metrics",
             "Expire risk acceptances",
+            "Housekeeping",
             "Import EPSS and cvss-bt",
             "Import SPDX licenses",
             "Import observations from API configurations, OSV and VulnerableCode",
