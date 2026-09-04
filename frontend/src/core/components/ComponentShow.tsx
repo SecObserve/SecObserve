@@ -60,8 +60,11 @@ const ComponentTabs = ({ component }: ComponentTabsProps) => {
                 syncWithLocation={false}
                 tabs={<TabbedShowLayoutTabs variant="scrollable" scrollButtons="auto" />}
             >
-                {component?.has_observations && (
-                    <Tab label="Observations" icon={<observations.icon />}>
+                {(component?.has_active_observations || component?.has_inactive_observations) && (
+                    <Tab
+                        label={component?.has_active_observations ? "Active Observations" : "Observations"}
+                        icon={<observations.icon />}
+                    >
                         <ObservationsComponentList component={component} />
                     </Tab>
                 )}
@@ -83,9 +86,9 @@ export const ComponentComponent = () => {
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
                         <ComponentShowComponent component={component} icon={true} />
                     </Paper>
-                    {(component?.has_observations || component?.has_licenses) && (
-                        <ComponentTabs component={component} />
-                    )}
+                    {(component?.has_active_observations ||
+                        component?.has_inactive_observations ||
+                        component?.has_licenses) && <ComponentTabs component={component} />}
                 </Box>
             )}
         />

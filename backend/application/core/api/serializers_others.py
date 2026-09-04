@@ -11,8 +11,9 @@ from application.core.models import Component
 
 
 class ComponentSerializer(ModelSerializer):
-    # has_observations and has_licenses are annotated in get_components()
-    has_observations = BooleanField(read_only=True)
+    # has_active_observations, has_inactive_observations and has_licenses are annotated in get_components()
+    has_active_observations = BooleanField(read_only=True)
+    has_inactive_observations = BooleanField(read_only=True)
     has_licenses = BooleanField(read_only=True)
 
     class Meta:

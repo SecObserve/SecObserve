@@ -14,7 +14,8 @@ const listFilters = [
     <AutocompleteInputMedium source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
     <TextInput source="purl_namespace" label="Namespace" alwaysOn />,
     <AutocompleteInputMedium source="type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
-    <NullableBooleanInput source="has_observations" label="Active observations" alwaysOn />,
+    <NullableBooleanInput source="has_active_observations" label="Active observations" alwaysOn />,
+    <NullableBooleanInput source="has_inactive_observations" label="Inactive observations" alwaysOn />,
     <NullableBooleanInput source="has_licenses" label="Licenses" alwaysOn />,
 ];
 
@@ -37,8 +38,19 @@ const ComponentList = () => {
                     <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
                     <TextField source="purl_namespace" label="Namespace" />
                     <TextField source="type" label="Type" />
-                    <BooleanField source="has_observations" label="Active observations" sortable={false} />
-                    <BooleanField source="has_licenses" label="Licenses" sortable={false} />
+                    <BooleanField
+                        source="has_active_observations"
+                        label="Active observations"
+                        sortable={false}
+                        textAlign="center"
+                    />
+                    <BooleanField
+                        source="has_inactive_observations"
+                        label="Inactive observations"
+                        sortable={false}
+                        textAlign="center"
+                    />
+                    <BooleanField source="has_licenses" label="Licenses" sortable={false} textAlign="center" />
                 </Datagrid>
             </List>
         </Fragment>
