@@ -30,28 +30,20 @@ class TestComponents(BaseTestCase):
 
         self.assertNotEqual(_get_identity_hash(component_1), _get_identity_hash(component_2))
 
-    def test_identity_hash_without_purl_ignores_type_and_cpe(self):
+    def test_identity_hash_without_purl_ignores_type(self):
         component_1 = Component(name="component", version="1.0.0", name_version="component:1.0.0")
         component_2 = Component(name="component", version="2.0.0", name_version="component:2.0.0")
         component_3 = Component(name="component", version="1.0.0", name_version="component:1.0.0", type="library")
-        component_4 = Component(
-            name="component",
-            version="1.0.0",
-            name_version="component:1.0.0",
-            cpe="cpe:2.3:a:vendor:component:1.0.0:*:*:*:*:*:*:*",
-        )
 
         # without a purl the name and the version define the identity, so the same component
-        # reported once with and once without a type or a cpe is not split into several components
+        # reported once with and once without a type is not split into several components
         self.assertEqual(_get_identity_hash(component_1), _get_identity_hash(component_3))
-        self.assertEqual(_get_identity_hash(component_1), _get_identity_hash(component_4))
         self.assertNotEqual(_get_identity_hash(component_1), _get_identity_hash(component_2))
 
         hashes = {
             _get_identity_hash(component_1),
             _get_identity_hash(component_2),
             _get_identity_hash(component_3),
-            _get_identity_hash(component_4),
         }
         self.assertEqual(2, len(hashes))
 

@@ -5,7 +5,6 @@ from rest_framework.serializers import (
     ListField,
     ModelSerializer,
     Serializer,
-    SerializerMethodField,
 )
 
 from application.core.models import Component
