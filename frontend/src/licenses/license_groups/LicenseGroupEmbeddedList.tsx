@@ -60,7 +60,7 @@ const LicenseGroupEmbeddedList = ({ license }: LicenseGroupEmbeddedListProps) =>
                         resource="license_groups"
                     >
                         <TextField source="name" label="Name" />
-                        <BooleanField source="is_public" label="Public" />
+                        <BooleanField source="is_public" label="Public" textAlign="center" />
                     </Datagrid>
                     <CustomPagination />
                 </div>

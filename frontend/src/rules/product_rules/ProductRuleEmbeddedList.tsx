@@ -91,7 +91,7 @@ const ProductRuleEmbeddedList = ({ product }: ProductRuleEmbeddedListProps) => {
                                 product.product_group_product_rules_need_approval) && (
                                 <ChipField source="approval_status" />
                             )}
-                        <BooleanField source="enabled" />
+                        <BooleanField source="enabled" textAlign="center" />
                         <TextField source="new_severity" />
                         <TextField source="new_status" />
                         <ReferenceField

@@ -67,7 +67,7 @@ const LicensePolicyAuthorizationGroupMemberEmbeddedList = ({
                                     source="authorization_group_data.name"
                                     label="Authorization Group"
                                 />
-                                <BooleanField source="is_manager" label="Manager" />
+                                <BooleanField source="is_manager" label="Manager" textAlign="center" />
                                 {(is_superuser() || license_policy.is_manager) && (
                                     <WithRecord
                                         render={(license_policy_authorization_group_member) => (

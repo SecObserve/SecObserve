@@ -27,13 +27,12 @@ const ComponentList = () => {
                 perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
                 filters={listFilters}
-                sort={{ field: "name_version_type", order: "ASC" }}
+                sort={{ field: "name_version", order: "ASC" }}
                 disableSyncWithLocation={false}
                 actions={false}
                 storeKey="components.list"
             >
                 <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
-                    {/* <TextField source="name_version_type" label="Component" /> */}
                     <TextField source="name_version" label="Component" />
                     <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
                     <TextField source="purl_namespace" label="Namespace" />

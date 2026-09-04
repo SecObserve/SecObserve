@@ -84,7 +84,7 @@ const LicensePolicyEmbeddedList = ({ license, license_group }: LicensePolicyEmbe
                     >
                         <TextField source="name" label="Name" />
                         <TextField source="parent_name" label="Parent" />
-                        <BooleanField source="is_public" label="Public" />
+                        <BooleanField source="is_public" label="Public" textAlign="center" />
                     </Datagrid>
                     <CustomPagination />
                 </div>

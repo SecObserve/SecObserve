@@ -82,7 +82,7 @@ const GeneralRuleList = () => {
                     <RuleNameURLField source="name" />
                     <ChipField source="type" />
                     {feature_general_rules_need_approval_enabled() && <ChipField source="approval_status" />}
-                    <BooleanField source="enabled" />
+                    <BooleanField source="enabled" textAlign="center" />
                     <TextField source="new_severity" />
                     <TextField source="new_status" />
                     <ReferenceField

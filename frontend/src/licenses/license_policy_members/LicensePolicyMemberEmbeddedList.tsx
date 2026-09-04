@@ -61,7 +61,7 @@ const LicensePolicyMemberEmbeddedList = ({ license_policy }: LicensePolicyMember
                                 resource="users"
                             >
                                 <UserFullNameURLField source="user_data.full_name" label="User" />
-                                <BooleanField source="is_manager" label="Manager" />
+                                <BooleanField source="is_manager" label="Manager" textAlign="center" />
                                 {(is_superuser() || license_policy.is_manager) && (
                                     <WithRecord
                                         render={(license_policy_member) => (
