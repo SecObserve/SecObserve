@@ -44,21 +44,21 @@ const ComponentShowComponent = ({ component, icon }: ComponentShowComponentProps
                         )}
                     </Stack>
                     <Stack direction="row" spacing={4}>
-                    {component.purl_type !== "" && (
-                        <Labeled>
-                            <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
-                        </Labeled>
-                    )}
-                    {component.purl_namespace !== "" && (
-                        <Labeled>
-                            <TextField source="purl_namespace" label="Namespace" />
-                        </Labeled>
-                    )}
-                    {component.type !== "" && (
-                        <Labeled>
-                            <TextField source="type" label="Type" />
-                        </Labeled>
-                    )}
+                        {component.purl_type !== "" && (
+                            <Labeled>
+                                <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
+                            </Labeled>
+                        )}
+                        {component.purl_namespace !== "" && (
+                            <Labeled>
+                                <TextField source="purl_namespace" label="Namespace" />
+                            </Labeled>
+                        )}
+                        {component.type !== "" && (
+                            <Labeled>
+                                <TextField source="type" label="Type" />
+                            </Labeled>
+                        )}
                     </Stack>
                     {component.purl !== "" && get_purl_url(component.purl) === null && (
                         <Labeled>
