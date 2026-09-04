@@ -58,8 +58,8 @@ const LicenseEmbeddedList = ({ license_group }: LicenseEmbeddedListProps) => {
                     >
                         <TextField source="spdx_id" label="SPDX Id" />
                         <TextField source="name" label="Name" />
-                        <BooleanField source="is_osi_approved" label="OSI approved" />
-                        <BooleanField source="is_deprecated" label="Deprecated" />
+                        <BooleanField source="is_osi_approved" label="OSI approved" textAlign="center" />
+                        <BooleanField source="is_deprecated" label="Deprecated" textAlign="center" />
                     </Datagrid>
                     <CustomPagination />
                 </div>

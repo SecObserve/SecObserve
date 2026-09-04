@@ -246,7 +246,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                     render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
                                 />
                                 {product?.has_potential_duplicates && (
-                                    <BooleanField source="has_potential_duplicates" label="Dupl." />
+                                    <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
                                 )}
                             </Datagrid>
                         )}

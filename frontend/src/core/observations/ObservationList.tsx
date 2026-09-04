@@ -175,7 +175,7 @@ const ObservationList = () => {
                                 sortBy="last_observation_log"
                                 render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
                             />
-                            <BooleanField source="has_potential_duplicates" label="Dupl." />
+                            <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
                             {has_attribute("update_impact_score", data, sort) && (
                                 <TextField source="update_impact_score" label="Update impact score" />
                             )}
