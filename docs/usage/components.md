@@ -7,7 +7,7 @@ Components are created automatically, either when [observations are imported](..
 A component exists only once for the whole SecObserve instance, independent of the products it is used in. That way all vulnerabilities and all licenses of one package version can be seen in one place, no matter in how many products, branches / versions, services or scan reports it occurs.
 
 !!! info
-    A `Component` and a `License Component` are two different things. A component is the package itself, e.g. `pkg:npm/lodash@4.17.21`. A license component is the occurrence of a component in one product resp. branch / version, together with its license and the evaluation of that license, see [License management](../usage/license_management.md).
+    A `Component` and a `License Component` are two different things. A component is the package itself, e.g. `pkg:npm/lodash@4.17.21`. A license component is the occurrence of a component in one product, together with its license and the evaluation of that license, see [License management](../usage/license_management.md).
 
 ## Viewing components
 
