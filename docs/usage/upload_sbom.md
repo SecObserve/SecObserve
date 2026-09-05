@@ -1,6 +1,6 @@
 # Upload SBOMs
 
-Uploading an SBOM for a Product or Branch / Version imports all components with their licenses and dependencies. This is a precondition to use [License management](../usage/license_management.md) or [OSV scanning](../integrations/osv_scan.md). When uploading a CycloneDX file, no vulnerabilities will be imported, just components with their licenses. To import vulnerabilities from a CycloneDX file, [Import observations](../usage/import_observations.md) has to be used.
+Uploading an SBOM for a Product or Branch / Version imports all [components](../usage/components.md) with their licenses and dependencies. This is a precondition to use [License management](../usage/license_management.md) or [OSV scanning](../integrations/osv_scan.md). When uploading a CycloneDX file, no vulnerabilities will be imported, just components with their licenses. To import vulnerabilities from a CycloneDX file, [Import observations](../usage/import_observations.md) has to be used.
 
 Currently [CycloneDX](https://cyclonedx.org/) and [SPDX](https://spdx.dev) files are supported, both in JSON format.
 

@@ -7,6 +7,7 @@
 | [Flexible data model with products, product groups and services](../getting_started/data_model.md)  | :material-plus-circle-outline: |
 | [Observations with a wide range of information](../getting_started/anatomy_of_an_observation.md) | :material-plus-circle-outline: |
 | [Multiple branches and versions per product](../usage/branches.md) | :material-plus-circle-outline: |
+| [Identified components with vulnerabilities and licenses across all products](../usage/components.md) | :material-plus-circle-outline: |
 | [Automatic resolution of fixed vulnerabilities](../usage/import_observations.md#import-algorithm) | :material-plus-circle-outline: |
 | [Identification and management of duplicates](../usage/duplicates.md) | :material-plus-circle-outline: |
 | [Manual assessment of severity and status](../usage/assess_observations.md) | :material-plus-circle-outline: |
