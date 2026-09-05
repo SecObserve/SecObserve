@@ -83,6 +83,7 @@ nav:
     - Risk acceptance expiry: usage/risk_acceptance_expiry.md
     - Metrics: usage/metrics.md
     - License management: usage/license_management.md
+    - Components: usage/components.md
     - Users, groups and permissions: usage/users_permissions.md
   - Integrations:
     - Overview: integrations/overview.md

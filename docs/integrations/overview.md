@@ -20,6 +20,8 @@
 
     [:octicons-arrow-right-24: Upload SBOM](../usage/upload_sbom.md)
 
+    [:octicons-arrow-right-24: Components](../usage/components.md)
+
 -   :material-magnify:{ .lg .middle } __Vulnerabilities__
 
     ---

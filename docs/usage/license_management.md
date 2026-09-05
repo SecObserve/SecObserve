@@ -17,11 +17,11 @@ If license management is deactivated:
 
 #### Importing components with licenses
 
-When uploading data from CycloneDX or SPDX SBOMs, the licenses of the components are imported as well, if they are available in the SBOM. The components and licenses are shown in the `License` tab of the Product view.
+When uploading data from CycloneDX or SPDX SBOMs, the licenses of the components are imported as well, if they are available in the SBOM. The usage of a [component](../usage/components.md) in a product resp. branch / version together with its license is called a `License Component`. The license components are shown in the `License` tab of the Product view.
 
 ![License component list](../assets/images/screenshot_license_component_list.png)
 
-After clicking on an entry, the details of the component and its license are shown.
+After clicking on an entry, the details of the license component and its license are shown.
 
 ![License component show](../assets/images/screenshot_license_component_show.png)
 

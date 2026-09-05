@@ -15,6 +15,7 @@ erDiagram
     Product ||--o{ Product_Authorization_Group_Member : has
     Parser ||--o{ Observation: discovered_by
     Observation }o--o| Branch_Version: found_in
+    Observation }o--o| Component : references
     Observation ||--|{ Observation_Log : has
     Observation ||--|{ Reference : has
     Observation ||--|{ Evidence : has
@@ -34,6 +35,12 @@ A `Product` is the representation of the system that is checked for vulnerabilit
 An `Observation` is something that has been discovered by a vulnerability scanner. Not every observation is actually a vulnerability. An assessment can show it is e.g. a false positive or not applicable in the current context.
 
 Every `Observation` belongs to exactly one product.
+
+#### Component
+
+A `Component` is a library, package or other building block that is used in a product. Components are created automatically during imports and are identified by their Package URL, resp. by their name and version if there is no Package URL.
+
+Contrary to most other entities, a `Component` does not belong to a product. It exists once for the whole SecObserve instance and is referenced by the observations and license components of all products it is used in. See more in [Components](../usage/components.md).
 
 #### Branch / Version
 
@@ -90,6 +97,7 @@ erDiagram
     Product }o--o| License_Policy : references
     Product_Group }o--o| License_Policy : references
     License_Component }o--o| License : references
+    License_Component }o--o| Component : references
     License_Component ||--|{ License_Component_Evidence : has
     License_Policy }o--o| License_Policy : parent
     License_Policy ||--o{ License_Policy_Item : has
@@ -107,7 +115,7 @@ The [Linux Foundation](https://www.linuxfoundation.org/) gathers a list of commo
 
 #### License Component
 
-A `License Component` is a library or package used in a product that is licensed under a specific license and has an evaluation of the license according to a license policy. Depending on the license information in the scan report, there are 3 different types of licenses:
+A `License Component` is the usage of a [Component](#component) in a product. It is licensed under a specific license and has an evaluation of the license according to a license policy. Depending on the license information in the scan report, there are 3 different types of licenses:
 
 * a license with a known SPDX identifier
 * a license expression, if the license expression in the scan report is valid [according to the SPDX specification](https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/) and consists only of known SPDX identifiers
