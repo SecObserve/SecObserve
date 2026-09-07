@@ -50,6 +50,8 @@ import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
 import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
 import MetricsStatusCurrent from "../../metrics/MetricsStatusCurrent";
+import notifications from "../../notifications";
+import ProductNotificationSettings from "../../notifications/ProductNotificationSettings";
 import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
@@ -119,7 +121,8 @@ const ProductShow = () => {
             location.pathname.endsWith("api_token") ||
                 location.pathname.endsWith("members") ||
                 location.pathname.endsWith("rules") ||
-                location.pathname.endsWith("api_configurations")
+                location.pathname.endsWith("api_configurations") ||
+                location.pathname.endsWith("notifications")
         );
     }
     const settingsLabel = settingsTabsShow ? "Settings" : "Settings >>>";
@@ -312,6 +315,11 @@ const ProductShow = () => {
                                         <ApiTokenCreate type="product" product={product} />
                                     )}
                                     <ApiTokenEmbeddedList type="product" product={product} />
+                                </Tab>
+                            )}
+                            {settingsTabsShow && (
+                                <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
+                                    <ProductNotificationSettings product={product} />
                                 </Tab>
                             )}
                         </TabbedShowLayout>

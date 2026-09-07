@@ -1,6 +1,6 @@
 from typing import Any
 
-from rest_framework.permissions import BasePermission
+from rest_framework.permissions import SAFE_METHODS, BasePermission
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
@@ -23,3 +23,16 @@ class UserHasNotificationPermission(BasePermission):
             return True
 
         return False
+
+
+class UserHasProductNotificationPermission(BasePermission):
+    def has_object_permission(self, request: Request, view: APIView, obj: Any) -> bool:
+        if not request.user:
+            return False
+
+        # Notification settings are personal, everybody can only change their own ones
+        if obj.user_id == request.user.pk:
+            return True
+
+        # Superusers can read all notification settings, but not change them
+        return bool(request.user.is_superuser and request.method in SAFE_METHODS)

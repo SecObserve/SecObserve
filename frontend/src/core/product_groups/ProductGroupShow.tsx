@@ -44,6 +44,8 @@ import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
 import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
 import MetricsStatusCurrent from "../../metrics/MetricsStatusCurrent";
+import notifications from "../../notifications";
+import ProductNotificationSettings from "../../notifications/ProductNotificationSettings";
 import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
@@ -414,6 +416,9 @@ const ProductGroupShow = () => {
                                     <ApiTokenCreate type="product" product={product_group} />
                                 )}
                                 <ApiTokenEmbeddedList type="product" product={product_group} />
+                            </Tab>
+                            <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
+                                <ProductNotificationSettings product={product_group} is_product_group={true} />
                             </Tab>
                         </TabbedShowLayout>
                     )}

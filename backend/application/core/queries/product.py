@@ -5,6 +5,7 @@ from django.db.models import Count, Exists, OuterRef, Q, Sum
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
+from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
 from application.core.models import (
@@ -107,6 +108,47 @@ def get_products(is_product_group: Optional[bool] = None) -> QuerySet[Product]:
         products = products.filter(is_product_group=is_product_group)
 
     return products
+
+
+def get_member_product_ids(user: User) -> set[int]:
+    """
+    Ids of the products and product groups the given user is a member of, directly or through a
+    product group or an authorization group. Unlike get_products() the user is given explicitly,
+    because notifications are materialized for other users than the current one, and there is no
+    superuser short circuit: a superuser is not implicitly a member of every product.
+
+    A product group has no product group of its own, so it is only included through a direct
+    membership or an authorization group of the group itself. Membership never cascades upwards:
+    being a member of a product does not make the user a member of its product group.
+    """
+    product_members = Product_Member.objects.filter(product=OuterRef("pk"), user=user)
+    product_group_members = Product_Member.objects.filter(product=OuterRef("product_group"), user=user)
+
+    product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
+        product=OuterRef("pk"),
+        authorization_group__users=user,
+    )
+
+    product_group_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
+        product=OuterRef("product_group"),
+        authorization_group__users=user,
+    )
+
+    products = Product.objects.annotate(
+        member=Exists(product_members),
+        product_group_member=Exists(product_group_members),
+        authorization_group_member=Exists(product_authorization_group_members),
+        product_group_authorization_group_member=Exists(product_group_authorization_group_members),
+    )
+
+    products = products.filter(
+        Q(member=True)
+        | Q(product_group_member=True)
+        | Q(authorization_group_member=True)
+        | Q(product_group_authorization_group_member=True)
+    )
+
+    return set(products.values_list("pk", flat=True))
 
 
 def populate_product_count_annotations(

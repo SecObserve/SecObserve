@@ -11,7 +11,11 @@ from rest_framework.serializers import (
 )
 
 from application.access_control.services.current_user import get_current_user
-from application.notifications.models import Notification, Notification_Viewed
+from application.notifications.models import (
+    Notification,
+    Notification_Viewed,
+    Product_Notification,
+)
 
 
 class NotificationSerializer(ModelSerializer):
@@ -62,6 +66,38 @@ class NotificationSerializer(ModelSerializer):
             if Notification_Viewed.objects.filter(notification=obj, user=user).exists():
                 return "Viewed"
         return "New"
+
+
+class ProductNotificationSerializer(ModelSerializer):
+    product_name = SerializerMethodField()
+    user_full_name = SerializerMethodField()
+
+    class Meta:
+        model = Product_Notification
+        fields = "__all__"
+        read_only_fields = ["product", "user"]
+
+    def get_product_name(self, obj: Product_Notification) -> Optional[str]:
+        if obj.product:
+            return obj.product.name
+
+        return None
+
+    def get_user_full_name(self, obj: Product_Notification) -> Optional[str]:
+        if obj.user:
+            return obj.user.full_name
+
+        return None
+
+
+class ProductNotificationPairSerializer(Serializer):
+    """
+    The settings of a product together with the settings it inherits from. The settings of a product
+    are None while the user does not override them, the parent is None for a product group.
+    """
+
+    product_notification = ProductNotificationSerializer(allow_null=True)
+    parent_notification = ProductNotificationSerializer(allow_null=True)
 
 
 class NotificationBulkSerializer(Serializer):

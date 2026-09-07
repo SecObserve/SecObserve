@@ -9,6 +9,9 @@ from application.core.services.housekeeping import (
 from application.core.services.risk_acceptance_expiry_task import (
     expire_risk_acceptances,
 )
+from application.notifications.services.housekeeping import (
+    delete_orphaned_product_notifications,
+)
 
 
 @db_periodic_task(
@@ -20,6 +23,7 @@ from application.core.services.risk_acceptance_expiry_task import (
 @so_periodic_task("Housekeeping")
 def task_housekeeping() -> str:
     message = housekeeping()
+    message += f"\nDeleted {delete_orphaned_product_notifications()} orphaned product notifications."
     return message
 
 
