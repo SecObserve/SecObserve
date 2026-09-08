@@ -16,10 +16,12 @@ from application.core.models import (
     Product_Authorization_Group_Member,
     Product_Member,
 )
-from application.core.services.assessment import (
-    assessment_approval,
+from application.core.queries.assessment import (
     assessment_approvers_configured,
     get_effective_assessment_approvers,
+)
+from application.core.services.assessment import (
+    assessment_approval,
     is_user_designated_assessment_approver,
     user_is_allowed_assessment_approver,
 )

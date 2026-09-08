@@ -42,6 +42,7 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
             .select_related("product")
             .select_related("observation")
             .select_related("observation__product")
+            .select_related("observation_log")
             .select_related("user")
         )
 
