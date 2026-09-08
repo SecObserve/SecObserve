@@ -1,17 +1,10 @@
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    FormControl,
-    FormControlLabel,
-    Radio,
-    RadioGroup,
-    Stack,
-    Typography,
-} from "@mui/material";
-import { useEffect } from "react";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import PersonIcon from "@mui/icons-material/Person";
+import { FormControl, FormControlLabel, Paper, Radio, RadioGroup, Stack, Typography } from "@mui/material";
+import { Fragment, useEffect } from "react";
 import { Title, useTheme } from "react-admin";
 
+import ProductNotificationSettings from "../../notifications/ProductNotificationSettings";
 import {
     METRICS_TIMESPAN_7_DAYS,
     METRICS_TIMESPAN_30_DAYS,
@@ -68,12 +61,17 @@ const UserSettings = () => {
     }
 
     return (
-        <Card sx={{ marginTop: 2 }}>
+        <Fragment>
             <Title title="Settings" />
-            <CardHeader title="Settings" />
-            <CardContent>
+            <Paper sx={{ marginTop: 2, padding: 2 }}>
+                <Typography variant="h6" sx={{ marginBottom: 2, alignItems: "center", display: "flex" }}>
+                    <PersonIcon />
+                    &nbsp;&nbsp;General settings
+                </Typography>
                 <Stack sx={{ width: "100%" }}>
-                    <Typography variant="subtitle1">Theme</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                        Theme
+                    </Typography>
                     <FormControl>
                         <RadioGroup defaultValue={getSettingTheme()} name="radio-buttons-group-theme" row autoFocus>
                             <FormControlLabel
@@ -97,7 +95,7 @@ const UserSettings = () => {
                         </RadioGroup>
                     </FormControl>
 
-                    <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", marginTop: 2 }}>
                         List size
                     </Typography>
                     <FormControl>
@@ -117,7 +115,7 @@ const UserSettings = () => {
                         </RadioGroup>
                     </FormControl>
 
-                    <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", marginTop: 2 }}>
                         Package information preference
                     </Typography>
                     <FormControl>
@@ -141,7 +139,7 @@ const UserSettings = () => {
                         </RadioGroup>
                     </FormControl>
 
-                    <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", marginTop: 2 }}>
                         Metrics Timespan (days)
                     </Typography>
                     <FormControl>
@@ -173,7 +171,7 @@ const UserSettings = () => {
                         </RadioGroup>
                     </FormControl>
 
-                    <Typography variant="subtitle1" sx={{ marginTop: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", marginTop: 2 }}>
                         Rows per page
                     </Typography>
                     <FormControl>
@@ -205,8 +203,18 @@ const UserSettings = () => {
                         </RadioGroup>
                     </FormControl>
                 </Stack>
-            </CardContent>
-        </Card>
+            </Paper>
+
+            <Paper sx={{ marginTop: 2, padding: 2 }}>
+                <Typography variant="h6" sx={{ marginBottom: 2, alignItems: "center", display: "flex" }}>
+                    <NotificationsIcon />
+                    &nbsp;&nbsp;Notifications
+                </Typography>
+                <Stack sx={{ width: "100%" }}>
+                    <ProductNotificationSettings />
+                </Stack>
+            </Paper>
+        </Fragment>
     );
 };
 

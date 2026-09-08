@@ -50,7 +50,10 @@ from application.licenses.api.views import (
     LicensePolicyViewSet,
     LicenseViewSet,
 )
-from application.notifications.api.views import NotificationViewSet
+from application.notifications.api.views import (
+    NotificationViewSet,
+    ProductNotificationViewSet,
+)
 from application.rules.api.views import GeneralRuleViewSet, ProductRuleViewSet
 from application.vex.api.views import (
     CSAFBranchViewSet,
@@ -103,6 +106,7 @@ router.register("api_configurations", ApiConfigurationViewSet, basename="api_con
 router.register("product_rules", ProductRuleViewSet, basename="product_rules")
 router.register("evidences", EvidenceViewSet, basename="evidences")
 router.register("notifications", NotificationViewSet, basename="notifications")
+router.register("product_notifications", ProductNotificationViewSet, basename="product_notifications")
 router.register("vulnerability_checks", VulnerabilityCheckViewSet, basename="vulnerability_checks")
 router.register("potential_duplicates", PotentialDuplicateViewSet, basename="potential_duplicates")
 router.register("vex/csaf", CSAFViewSet, basename="csaf")

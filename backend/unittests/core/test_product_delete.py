@@ -18,6 +18,7 @@ from application.core.types import Status
 from application.import_observations.models import Api_Configuration, Parser
 from application.licenses.models import License_Component
 from application.licenses.types import License_Policy_Evaluation_Result
+from application.notifications.models import Product_Notification
 from application.rules.models import Rule
 from application.vex.models import OpenVEX
 from unittests.base_test_case import BaseTestCase
@@ -44,6 +45,7 @@ class TestProductDeleteCascade(BaseTestCase):
         self.assertFalse(Branch.objects.filter(product_id=product_id).exists())
         self.assertFalse(Service.objects.filter(product_id=product_id).exists())
         self.assertFalse(Product_Member.objects.filter(product_id=product_id).exists())
+        self.assertFalse(Product_Notification.objects.filter(product_id=product_id).exists())
         self.assertFalse(Api_Configuration.objects.filter(product_id=product_id).exists())
         self.assertFalse(Rule.objects.filter(product_id=product_id).exists())
         self.assertFalse(OpenVEX.objects.filter(product_id=product_id).exists())
@@ -139,6 +141,7 @@ class TestProductDeleteCascade(BaseTestCase):
         product.refresh_from_db()
         service = Service.objects.create(name=f"{name}_service", product=product)
         Product_Member.objects.create(product=product, user=self.owner, role=Roles.Owner)
+        Product_Notification.objects.create(product=product, user=self.owner)
         Api_Configuration.objects.create(
             name=f"{name}_api_configuration",
             product=product,
