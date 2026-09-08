@@ -17,7 +17,6 @@ from application.core.models import (
     Product_Authorization_Group_Member,
 )
 from application.core.queries.product import (
-    get_member_product_ids,
     get_products,
     populate_product_count_annotations,
 )
@@ -630,47 +629,3 @@ class TestGetProducts(BaseTestCase):
     #     mock_user.return_value = user
 
     #     self.assertEqual(0, len(get_products(is_product_group=False, with_metrics_annotations=True)))
-
-
-class TestGetMemberProductIds(BaseTestCase):
-    patch.TEST_PREFIX = (
-        "test",
-        "setUp",
-    )
-
-    @classmethod
-    @patch("application.core.signals.get_current_user")
-    def setUpClass(cls, mock_user):
-        mock_user.return_value = None
-        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
-        super().setUpClass()
-
-    def test_member(self):
-        self.assertEqual({1}, get_member_product_ids(User.objects.get(username="db_internal_write")))
-
-    def test_member_of_two_products(self):
-        self.assertEqual({1, 2}, get_member_product_ids(User.objects.get(username="db_internal_read")))
-
-    def test_product_group_member_includes_the_group_itself(self):
-        # db_product_group_user is a member of product group 3, which product 1 belongs to
-        self.assertEqual({1, 3}, get_member_product_ids(User.objects.get(username="db_product_group_user")))
-
-    def test_membership_does_not_cascade_upwards(self):
-        # db_internal_write is a member of product 1, but not of its product group 3
-        self.assertEqual({1}, get_member_product_ids(User.objects.get(username="db_internal_write")))
-
-    def test_authorization_group_member(self):
-        user = User.objects.get(username="db_external")
-        authorization_group = Authorization_Group.objects.create(name="member_product_ids_group")
-        authorization_group.users.add(user)
-        Product_Authorization_Group_Member.objects.create(
-            product=Product.objects.get(pk=1),
-            authorization_group=authorization_group,
-            role=1,
-        )
-
-        self.assertEqual({1, 2}, get_member_product_ids(user))
-
-    def test_no_superuser_short_circuit(self):
-        # db_admin is a member of nothing, being a superuser must not grant membership
-        self.assertEqual(set(), get_member_product_ids(User.objects.get(username="db_admin")))

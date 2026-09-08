@@ -69,35 +69,15 @@ class NotificationSerializer(ModelSerializer):
 
 
 class ProductNotificationSerializer(ModelSerializer):
-    product_name = SerializerMethodField()
-    user_full_name = SerializerMethodField()
-
     class Meta:
         model = Product_Notification
         fields = "__all__"
         read_only_fields = ["product", "user"]
 
-    def get_product_name(self, obj: Product_Notification) -> Optional[str]:
-        if obj.product:
-            return obj.product.name
-
-        return None
-
-    def get_user_full_name(self, obj: Product_Notification) -> Optional[str]:
-        if obj.user:
-            return obj.user.full_name
-
-        return None
-
 
 class ProductNotificationPairSerializer(Serializer):
-    """
-    The settings of a product together with the settings it inherits from. The settings of a product
-    are None while the user does not override them, the parent is None for a product group.
-    """
-
     product_notification = ProductNotificationSerializer(allow_null=True)
-    parent_notification = ProductNotificationSerializer(allow_null=True)
+    template_notification = ProductNotificationSerializer(allow_null=True)
 
 
 class NotificationBulkSerializer(Serializer):

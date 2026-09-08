@@ -4,8 +4,7 @@ from django.db.models import Q
 from django.db.models.query import QuerySet
 
 from application.access_control.services.current_user import get_current_user
-from application.core.models import Product
-from application.core.queries.product import get_member_product_ids
+from application.core.queries.product import get_products
 from application.notifications.models import Product_Notification
 
 
@@ -27,16 +26,7 @@ def get_product_notifications() -> QuerySet[Product_Notification]:
     if user.is_superuser:
         return product_notifications
 
-    # The settings of a product group are inherited by its products, so they are visible for
-    # everybody who is a member of one of them, not only for the members of the product group
-    product_ids = get_member_product_ids(user)
-    product_group_ids = set(
-        Product.objects.filter(pk__in=product_ids, product_group__isnull=False).values_list(
-            "product_group_id", flat=True
-        )
-    )
+    # Rows for products and product groups the user cannot see are hidden instead of being deleted
+    product_ids = list(get_products().values_list("pk", flat=True))
 
-    # Rows for products the user cannot access anymore are hidden instead of being deleted
-    return product_notifications.filter(user=user).filter(
-        Q(product__isnull=True) | Q(product_id__in=product_ids | product_group_ids)
-    )
+    return product_notifications.filter(user=user).filter(Q(product__isnull=True) | Q(product_id__in=product_ids))

@@ -45,10 +45,9 @@ from application.notifications.queries.product_notification import (
 from application.notifications.services.notification import bulk_mark_as_viewed
 from application.notifications.services.product_notification import (
     create_product_notification_override,
-    delete_product_notification_override,
     get_or_create_template,
-    get_parent_notification,
     get_product_notification,
+    get_template_notification,
     is_product_api_token_user,
 )
 from application.notifications.services.send_notifications_base import (
@@ -132,13 +131,13 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
         return Response(status=HTTP_204_NO_CONTENT)
 
 
-class ProductNotificationViewSet(GenericViewSet, RetrieveModelMixin, UpdateModelMixin):
+class ProductNotificationViewSet(GenericViewSet, UpdateModelMixin):
     serializer_class = ProductNotificationSerializer
     permission_classes = (IsAuthenticated, UserHasProductNotificationPermission)
     queryset = Product_Notification.objects.none()
 
     def get_queryset(self) -> QuerySet[Product_Notification]:
-        return get_product_notifications().select_related("product").select_related("user")
+        return get_product_notifications()
 
     @extend_schema(
         methods=["GET"],
@@ -167,13 +166,13 @@ class ProductNotificationViewSet(GenericViewSet, RetrieveModelMixin, UpdateModel
 
         # Products and product groups alike only have settings while the user overrides their parent
         product_notification = get_product_notification(product, user)
-        parent_notification = get_parent_notification(product, user)
+        template_notification = get_template_notification(product, user)
 
         data = {
             "product_notification": (
                 ProductNotificationSerializer(product_notification).data if product_notification else None
             ),
-            "parent_notification": ProductNotificationSerializer(parent_notification).data,
+            "template_notification": ProductNotificationSerializer(template_notification).data,
         }
 
         return Response(status=HTTP_200_OK, data=data)
@@ -199,7 +198,7 @@ class ProductNotificationViewSet(GenericViewSet, RetrieveModelMixin, UpdateModel
         user, product = _get_notification_user_and_product(request)
 
         if request.method == "DELETE":
-            delete_product_notification_override(product, user)
+            Product_Notification.objects.filter(product=product, user=user).delete()
             return Response(status=HTTP_204_NO_CONTENT)
 
         product_notification = create_product_notification_override(product, user)
@@ -230,7 +229,6 @@ def _get_notification_user(request: Request) -> User:
     if not user:
         raise PermissionDenied()
 
-    # Users for product API tokens must never have notification settings
     if is_product_api_token_user(user):
         raise PermissionDenied("Product API tokens do not have notification settings")
 

@@ -5,6 +5,9 @@ from django.db import transaction
 from application.access_control.models import User
 from application.core.models import Product
 from application.notifications.models import Product_Notification
+from application.notifications.queries.product_notification import (
+    get_product_notifications,
+)
 
 NOTIFICATION_FIELDS = (
     "security_gate_changed",
@@ -40,10 +43,10 @@ def get_product_notification(product: Product, user: User) -> Optional[Product_N
     The settings of a product or a product group, None while the user does not override them. Only
     the template always exists, everything below it is an override.
     """
-    return Product_Notification.objects.filter(product=product, user=user).first()
+    return get_product_notifications().filter(product=product, user=user).first()
 
 
-def get_parent_notification(product: Product, user: User) -> Product_Notification:
+def get_template_notification(product: Product, user: User) -> Product_Notification:
     """
     The settings a product inherits from: the settings of its product group when the user overrides
     them, otherwise the user's template. A product group always inherits from the template.
@@ -65,21 +68,12 @@ def create_product_notification_override(product: Product, user: User) -> Produc
     if product_notification:
         return product_notification
 
-    parent = get_parent_notification(product, user)
+    parent = get_template_notification(product, user)
     parent_values = {field: getattr(parent, field) for field in NOTIFICATION_FIELDS}
 
     with transaction.atomic():
-        # In contrast to the template, product and user are covered by the unique constraint
         product_notification, _ = Product_Notification.objects.get_or_create(
             product=product, user=user, defaults=parent_values
         )
 
     return product_notification
-
-
-def delete_product_notification_override(product: Product, user: User) -> None:
-    """
-    Removes the settings of a product, so that it inherits from its parent again. Idempotent: it is
-    no error if the user does not override the product.
-    """
-    Product_Notification.objects.filter(product=product, user=user).delete()

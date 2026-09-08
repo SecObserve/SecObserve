@@ -25,18 +25,7 @@ class TestAuthorizationProductNotifications(TestAuthorizationBase):
         self.assertIsNone(template.product)
         self.assertEqual("db_product_internal", product_notification.product.name)
 
-        # Users can read and change their own notification settings, including the template
-        self._test_api(
-            APITest(
-                "db_internal_write",
-                "get",
-                f"/api/product_notifications/{product_notification.pk}/",
-                None,
-                200,
-                None,
-                no_second_user=True,
-            )
-        )
+        # Users can change their own notification settings, including the template
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -81,19 +70,8 @@ class TestAuthorizationProductNotifications(TestAuthorizationBase):
         self.assertEqual(1, product_notification.product_id)
         self.assertEqual(2, product_notification.user_id)
 
-        # Other users cannot see or change the notification settings
+        # Other users cannot change the notification settings, they are not even visible for them
         expected_data = "{'message': 'No Product_Notification matches the given query.'}"
-        self._test_api(
-            APITest(
-                "db_internal_read",
-                "get",
-                f"/api/product_notifications/{product_notification.pk}/",
-                None,
-                404,
-                expected_data,
-                no_second_user=True,
-            )
-        )
         self._test_api(
             APITest(
                 "db_internal_read",
@@ -106,18 +84,7 @@ class TestAuthorizationProductNotifications(TestAuthorizationBase):
             )
         )
 
-        # Superusers can read all notification settings, but not change them
-        self._test_api(
-            APITest(
-                "db_admin",
-                "get",
-                f"/api/product_notifications/{product_notification.pk}/",
-                None,
-                200,
-                None,
-                no_second_user=True,
-            )
-        )
+        # Not even superusers can change the notification settings of somebody else
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(
             APITest(
@@ -156,7 +123,20 @@ class TestAuthorizationProductNotifications(TestAuthorizationBase):
             )
         )
 
-        # Rows are deleted by the backend, not through the API
+        # Rows are read through for_product, the detail route only accepts changes
+        expected_data = "{'message': 'Method \"GET\" not allowed.'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "get",
+                f"/api/product_notifications/{product_notification.pk}/",
+                None,
+                405,
+                expected_data,
+            )
+        )
+
+        # Rows are deleted through the override action, not through the detail route
         expected_data = "{'message': 'Method \"DELETE\" not allowed.'}"
         self._test_api(
             APITest(
@@ -166,6 +146,43 @@ class TestAuthorizationProductNotifications(TestAuthorizationBase):
                 None,
                 405,
                 expected_data,
+            )
+        )
+
+    def test_authorization_product_group_notifications(self):
+        # db_product_group_user is an owner of db_product_group
+        product_group = Product.objects.get(name="db_product_group")
+        product_group_notification = create_product_notification_override(
+            product_group, User.objects.get(username="db_product_group_user")
+        )
+
+        # Members of the product group can change its notification settings
+        self._test_api(
+            APITest(
+                "db_product_group_user",
+                "patch",
+                f"/api/product_notifications/{product_group_notification.pk}/",
+                {"security_gate_changed": True},
+                200,
+                None,
+                no_second_user=True,
+            )
+        )
+        product_group_notification.refresh_from_db()
+        self.assertTrue(product_group_notification.security_gate_changed)
+
+        # db_internal_write is a member of db_product_internal, but not of its product group,
+        # so the notification settings of the product group are not visible for them
+        expected_data = "{'message': 'No Product_Notification matches the given query.'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                f"/api/product_notifications/{product_group_notification.pk}/",
+                {"security_gate_changed": False},
+                404,
+                expected_data,
+                no_second_user=True,
             )
         )
 
@@ -223,6 +240,52 @@ class TestAuthorizationProductNotificationsOnDemand(TestAuthorizationBase):
 
         self.assertEqual(1, Product_Notification.objects.filter(user=user).count())
         self.assertIsNone(Product_Notification.objects.get(user=user).product)
+
+    def test_override_ignores_invisible_product_group_settings(self):
+        # db_internal_write is a member of db_product_internal, but not of its product group, so
+        # their settings for the product group must not be inherited
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3), observation_new_changed=True)
+
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/product_notifications/override/?product=1",
+                {},
+                200,
+                None,
+                no_second_user=True,
+            )
+        )
+
+        product_notification = Product_Notification.objects.get(user=user, product=1)
+        self.assertTrue(product_notification.security_gate_changed)
+        self.assertFalse(product_notification.observation_new_changed)
+
+    def test_override_inherits_the_visible_product_group_settings(self):
+        # db_product_group_user is an owner of the product group of db_product_internal, so the
+        # very same settings are inherited here
+        user = User.objects.get(username="db_product_group_user")
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3), observation_new_changed=True)
+
+        self._test_api(
+            APITest(
+                "db_product_group_user",
+                "post",
+                "/api/product_notifications/override/?product=1",
+                {},
+                200,
+                None,
+                no_second_user=True,
+            )
+        )
+
+        product_notification = Product_Notification.objects.get(user=user, product=1)
+        self.assertFalse(product_notification.security_gate_changed)
+        self.assertTrue(product_notification.observation_new_changed)
 
     def test_override_creates_and_deletes_the_settings_of_the_product(self):
         user = User.objects.get(username="db_internal_write")

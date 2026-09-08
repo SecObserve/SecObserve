@@ -55,7 +55,7 @@ const ProductNotificationSettings = ({ product, is_product_group }: ProductNotif
                 if (!outdated) {
                     // The template is returned on its own, there is nothing it could inherit from
                     setPair(
-                        product_id ? result.json : { product_notification: result.json, parent_notification: null }
+                        product_id ? result.json : { product_notification: result.json, template_notification: null }
                     );
                 }
             })
@@ -134,7 +134,7 @@ const ProductNotificationSettings = ({ product, is_product_group }: ProductNotif
         return null;
     }
 
-    const parent = pair.parent_notification;
+    const parent = pair.template_notification;
     const own = pair.product_notification;
 
     if (!parent) {

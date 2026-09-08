@@ -7,10 +7,9 @@ from application.core.models import Product
 from application.notifications.models import Product_Notification
 from application.notifications.services.product_notification import (
     create_product_notification_override,
-    delete_product_notification_override,
     get_or_create_template,
-    get_parent_notification,
     get_product_notification,
+    get_template_notification,
     is_product_api_token_user,
 )
 from unittests.base_test_case import BaseTestCase
@@ -28,6 +27,24 @@ class TestProductNotificationService(BaseTestCase):
         mock_user.return_value = None
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
         super().setUpClass()
+
+    def setUp(self) -> None:
+        super().setUp()
+
+        # get_product_notification() only returns rows the current user is allowed to see, which is
+        # resolved in the notifications query and again in get_products() of the core queries
+        self._current_user = None
+        for target in (
+            "application.notifications.queries.product_notification.get_current_user",
+            "application.core.queries.product.get_current_user",
+        ):
+            patcher = patch(target, side_effect=lambda: self._current_user)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def _set_current_user(self, username: str) -> User:
+        self._current_user = User.objects.get(username=username)
+        return self._current_user
 
     # --- is_product_api_token_user ---
 
@@ -58,49 +75,59 @@ class TestProductNotificationService(BaseTestCase):
     # --- get_product_notification ---
 
     def test_get_product_notification_without_override(self):
-        user = User.objects.get(username="db_internal_write")
+        user = self._set_current_user("db_internal_write")
 
         self.assertIsNone(get_product_notification(Product.objects.get(pk=1), user))
 
     def test_get_product_notification_with_override(self):
-        user = User.objects.get(username="db_internal_write")
+        user = self._set_current_user("db_internal_write")
         existing = Product_Notification.objects.create(user=user, product=Product.objects.get(pk=1))
 
         self.assertEqual(existing, get_product_notification(Product.objects.get(pk=1), user))
 
-    # --- get_parent_notification ---
+    # --- get_template_notification ---
 
-    def test_get_parent_notification_is_the_product_group(self):
-        # product group 3 is the product group of product 1
-        user = User.objects.get(username="db_internal_write")
+    def test_get_template_notification_is_the_product_group(self):
+        # db_product_group_user is a member of product group 3, the product group of product 1
+        user = self._set_current_user("db_product_group_user")
         create_product_notification_override(Product.objects.get(pk=3), user)
 
-        parent = get_parent_notification(Product.objects.get(pk=1), user)
+        parent = get_template_notification(Product.objects.get(pk=1), user)
 
         self.assertEqual(3, parent.product_id)
 
-    def test_get_parent_notification_is_the_template_without_product_group_override(self):
-        # product 1 belongs to product group 3, but the user does not override the product group
-        user = User.objects.get(username="db_internal_write")
+    def test_get_template_notification_ignores_an_invisible_product_group(self):
+        # db_internal_write is a member of product 1, but not of its product group 3, so their
+        # settings for the product group are not inherited
+        user = self._set_current_user("db_internal_write")
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3))
 
-        parent = get_parent_notification(Product.objects.get(pk=1), user)
+        parent = get_template_notification(Product.objects.get(pk=1), user)
+
+        self.assertIsNone(parent.product)
+
+    def test_get_template_notification_is_the_template_without_product_group_override(self):
+        # product 1 belongs to product group 3, but the user does not override the product group
+        user = self._set_current_user("db_internal_write")
+
+        parent = get_template_notification(Product.objects.get(pk=1), user)
 
         self.assertIsNone(parent.product)
         # the settings of the product group must not be created as a side effect
         self.assertFalse(Product_Notification.objects.filter(user=user, product=3).exists())
 
-    def test_get_parent_notification_without_product_group(self):
+    def test_get_template_notification_without_product_group(self):
         # product 2 does not belong to a product group
-        user = User.objects.get(username="db_internal_read")
+        user = self._set_current_user("db_internal_read")
 
-        parent = get_parent_notification(Product.objects.get(pk=2), user)
+        parent = get_template_notification(Product.objects.get(pk=2), user)
 
         self.assertIsNone(parent.product)
 
-    def test_get_parent_notification_of_a_product_group_is_the_template(self):
-        user = User.objects.get(username="db_product_group_user")
+    def test_get_template_notification_of_a_product_group_is_the_template(self):
+        user = self._set_current_user("db_product_group_user")
 
-        parent = get_parent_notification(Product.objects.get(pk=3), user)
+        parent = get_template_notification(Product.objects.get(pk=3), user)
 
         self.assertIsNone(parent.product)
 
@@ -108,7 +135,7 @@ class TestProductNotificationService(BaseTestCase):
 
     def test_create_product_notification_override_copies_the_template_values(self):
         # product 2 does not belong to a product group, so it inherits from the template
-        user = User.objects.get(username="db_internal_read")
+        user = self._set_current_user("db_internal_read")
         template = get_or_create_template(user)
         template.security_gate_changed = True
         template.observation_new_changed = True
@@ -124,7 +151,7 @@ class TestProductNotificationService(BaseTestCase):
 
     def test_create_product_notification_override_copies_the_product_group_values(self):
         # product group 3 is the product group of product 1
-        user = User.objects.get(username="db_product_group_user")
+        user = self._set_current_user("db_product_group_user")
         template = get_or_create_template(user)
         template.security_gate_changed = True
         template.save()
@@ -141,7 +168,7 @@ class TestProductNotificationService(BaseTestCase):
 
     def test_create_product_notification_override_without_product_group_override(self):
         # product 1 belongs to product group 3, but the user does not override the product group
-        user = User.objects.get(username="db_internal_write")
+        user = self._set_current_user("db_internal_write")
         template = get_or_create_template(user)
         template.product_rule_to_be_reviewed = True
         template.save()
@@ -154,7 +181,7 @@ class TestProductNotificationService(BaseTestCase):
         self.assertEqual(2, Product_Notification.objects.filter(user=user).count())
 
     def test_create_product_notification_override_for_a_product_group(self):
-        user = User.objects.get(username="db_product_group_user")
+        user = self._set_current_user("db_product_group_user")
         template = get_or_create_template(user)
         template.observation_new_changed = True
         template.save()
@@ -165,7 +192,7 @@ class TestProductNotificationService(BaseTestCase):
         self.assertTrue(product_group_notification.observation_new_changed)
 
     def test_create_product_notification_override_returns_the_existing_row(self):
-        user = User.objects.get(username="db_internal_write")
+        user = self._set_current_user("db_internal_write")
         existing = Product_Notification.objects.create(
             user=user, product=Product.objects.get(pk=1), security_gate_changed=True
         )
@@ -178,7 +205,7 @@ class TestProductNotificationService(BaseTestCase):
         self.assertFalse(Product_Notification.objects.filter(user=user, product__isnull=True).exists())
 
     def test_create_product_notification_override_is_idempotent(self):
-        user = User.objects.get(username="db_internal_write")
+        user = self._set_current_user("db_internal_write")
         product = Product.objects.get(pk=1)
 
         first = create_product_notification_override(product, user)
@@ -192,42 +219,10 @@ class TestProductNotificationService(BaseTestCase):
         self.assertEqual(1, Product_Notification.objects.filter(user=user, product=1).count())
 
     def test_create_product_notification_override_is_per_product(self):
-        user = User.objects.get(username="db_internal_read")
+        user = self._set_current_user("db_internal_read")
 
         first = create_product_notification_override(Product.objects.get(pk=1), user)
         second = create_product_notification_override(Product.objects.get(pk=2), user)
 
         self.assertNotEqual(first, second)
         self.assertEqual(2, Product_Notification.objects.filter(user=user, product__isnull=False).count())
-
-    # --- delete_product_notification_override ---
-
-    def test_delete_product_notification_override_keeps_the_parent(self):
-        user = User.objects.get(username="db_internal_write")
-        create_product_notification_override(Product.objects.get(pk=3), user)
-        create_product_notification_override(Product.objects.get(pk=1), user)
-
-        delete_product_notification_override(Product.objects.get(pk=1), user)
-
-        self.assertFalse(Product_Notification.objects.filter(user=user, product=1).exists())
-        self.assertTrue(Product_Notification.objects.filter(user=user, product=3).exists())
-        self.assertTrue(Product_Notification.objects.filter(user=user, product__isnull=True).exists())
-
-    def test_delete_product_notification_override_of_a_product_group(self):
-        # the products of the group inherit from the template again, their own settings are kept
-        user = User.objects.get(username="db_internal_write")
-        create_product_notification_override(Product.objects.get(pk=3), user)
-        create_product_notification_override(Product.objects.get(pk=1), user)
-
-        delete_product_notification_override(Product.objects.get(pk=3), user)
-
-        self.assertFalse(Product_Notification.objects.filter(user=user, product=3).exists())
-        self.assertTrue(Product_Notification.objects.filter(user=user, product=1).exists())
-        self.assertIsNone(get_parent_notification(Product.objects.get(pk=1), user).product)
-
-    def test_delete_product_notification_override_is_idempotent(self):
-        user = User.objects.get(username="db_internal_write")
-
-        delete_product_notification_override(Product.objects.get(pk=1), user)
-
-        self.assertFalse(Product_Notification.objects.filter(user=user, product=1).exists())

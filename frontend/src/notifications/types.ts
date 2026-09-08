@@ -37,5 +37,5 @@ export interface ProductNotificationPair {
     // null while the user does not override the settings the product inherits
     product_notification: ProductNotification | null;
     // null for a product group, its settings are not an override
-    parent_notification: ProductNotification | null;
+    template_notification: ProductNotification | null;
 }
