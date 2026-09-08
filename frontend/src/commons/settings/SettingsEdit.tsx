@@ -106,6 +106,12 @@ const SettingsEdit = () => {
                         helperText="Time margin in seconds for checks of issued at, not before and expiration of OIDC tokens"
                         sx={{ marginBottom: 2 }}
                     />
+                    <BooleanInput
+                        source="oidc_strict_audience"
+                        label="OIDC strict audience"
+                        helperText="Require the audience claim to be a single string matching the client id. Disable if the OIDC provider issues a list of audiences."
+                        sx={{ marginBottom: 2 }}
+                    />
 
                     <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
                     <Typography variant="h6" sx={{ marginBottom: 2 }}>

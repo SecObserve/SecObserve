@@ -60,6 +60,11 @@ const SettingsShowComponent = () => {
                                 <NumberField source="oidc_clock_skew" />
                             </Labeled>
                         )}
+                        {!settings.oidc_strict_audience && (
+                            <Labeled label="OIDC strict audience">
+                                <BooleanField source="oidc_strict_audience" />
+                            </Labeled>
+                        )}
                     </Paper>
 
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>

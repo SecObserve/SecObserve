@@ -82,3 +82,12 @@ If the user and password is needed to login, e.g. for a local admin user, `#forc
 A time deviation between the OIDC server and the SecObserve backend cannot always be avoided. To prevent the verification of claims issued at, not before and expiry from failing because of it, the parameter `OIDC clock skew`  can be set in the settings.
 
 ![OIDC clock skew](../assets/images/screenshot_oidc_clock_skew.png)
+
+
+## Audience validation
+
+By default SecObserve requires the `aud` claim of a token to be a single string that matches the OIDC client id exactly. This is the strictest interpretation and is recommended wherever the OIDC provider supports it.
+
+Not all OIDC providers work that way. Some always issue `aud` as a list, even when it holds a single entry, and some add the ids of other applications to it. With such a provider the login itself succeeds, but every authenticated request fails with HTTP 401 and the backend logs `Invalid claim format in token (strict)`.
+
+For these providers the parameter `OIDC strict audience` can be switched off in the settings. The `aud` claim is then still validated, but a list is accepted as long as it contains the client id, which is the behaviour [RFC 7519, section 4.1.3](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3) describes.
