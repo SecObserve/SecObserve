@@ -39,27 +39,27 @@ const ImportMenu = ({ product }: ImportMenuProps) => {
             >
                 import
             </Button>
-            <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose}>
-                <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+            <Menu id="basic-menu" anchorEl={anchorEl} open={open} onClose={handleClose} keepMounted>
+                <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()}>
                     <FileUploadObservations />
                 </MenuItem>
                 {feature_license_management() && (
-                    <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+                    <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()}>
                         <FileUploadSBOM />
                     </MenuItem>
                 )}
                 {product.has_api_configurations && (
-                    <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+                    <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()}>
                         <ApiImportObservations product={product} />
                     </MenuItem>
                 )}
                 {product.osv_enabled && product.has_licenses && (
-                    <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+                    <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()}>
                         <ScanOSV product={product} />
                     </MenuItem>
                 )}
                 {vulnerablecode_base_url_is_set() && product.vulnerablecode_enabled && product.has_licenses && (
-                    <MenuItem onKeyDown={(e) => e.stopPropagation()}>
+                    <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()}>
                         <ScanVulnerableCode product={product} />
                     </MenuItem>
                 )}
