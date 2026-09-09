@@ -1,4 +1,4 @@
-import { httpClient } from "../commons/ra-data-django-rest-framework";
+import { httpClient } from "../../commons/ra-data-django-rest-framework";
 
 export async function update_notification_count() {
     const url =

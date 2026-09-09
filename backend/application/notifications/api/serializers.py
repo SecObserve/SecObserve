@@ -11,6 +11,7 @@ from rest_framework.serializers import (
 )
 
 from application.access_control.services.current_user import get_current_user
+from application.core.api.serializers_product import NestedProductSerializerSmall
 from application.notifications.models import (
     Notification,
     Notification_Viewed,
@@ -69,6 +70,8 @@ class NotificationSerializer(ModelSerializer):
 
 
 class ProductNotificationSerializer(ModelSerializer):
+    product_data = NestedProductSerializerSmall(source="product", read_only=True)
+
     class Meta:
         model = Product_Notification
         fields = "__all__"

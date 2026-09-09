@@ -50,6 +50,9 @@ class TestProductNotificationService(BaseTestCase):
             user.email = f"{user.username}@example.com"
             user.save()
 
+        # the fixtures bring notification settings for some users, every test here starts from scratch
+        Product_Notification.objects.all().delete()
+
     def _set_current_user(self, username: str) -> User:
         self._current_user = User.objects.get(username=username)
         return self._current_user

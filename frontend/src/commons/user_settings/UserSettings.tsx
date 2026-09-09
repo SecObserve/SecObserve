@@ -4,7 +4,7 @@ import { FormControl, FormControlLabel, Paper, Radio, RadioGroup, Stack, Typogra
 import { Fragment, useEffect } from "react";
 import { Title, useTheme } from "react-admin";
 
-import ProductNotificationSettings from "../../notifications/ProductNotificationSettings";
+import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
 import {
     METRICS_TIMESPAN_7_DAYS,
     METRICS_TIMESPAN_30_DAYS,

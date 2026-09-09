@@ -54,7 +54,7 @@ class TestGetProductNotifications(BaseTestCase):
         mock_products_user.return_value = user
 
         self.assertEqual(0, len(get_product_notifications()))
-        self.assertFalse(Product_Notification.objects.exists())
+        self.assertFalse(Product_Notification.objects.filter(user=user).exists())
 
     # --- Scoping ---
 
@@ -84,8 +84,10 @@ class TestGetProductNotifications(BaseTestCase):
 
         product_notifications = get_product_notifications()
 
+        # db_internal_read and db_product_group_user have settings in the fixtures
         self.assertEqual(
-            {"db_admin", "db_internal_write"}, set(product_notifications.values_list("user__username", flat=True))
+            {"db_admin", "db_internal_write", "db_internal_read", "db_product_group_user"},
+            set(product_notifications.values_list("user__username", flat=True)),
         )
 
     @patch("application.core.queries.product.get_current_user")
@@ -117,9 +119,9 @@ class TestGetProductNotifications(BaseTestCase):
     @patch("application.core.queries.product.get_current_user")
     @patch("application.notifications.queries.product_notification.get_current_user")
     def test_row_of_product_group_is_visible_for_a_member(self, mock_user, mock_products_user):
-        # db_product_group_user is a member of db_product_group, which db_product_internal belongs to
+        # db_product_group_user is a member of db_product_group, which db_product_internal belongs to,
+        # their settings for the product group come from the fixtures
         user = User.objects.get(username="db_product_group_user")
-        Product_Notification.objects.create(user=user, product=Product.objects.get(name="db_product_group"))
         Product_Notification.objects.create(user=user, product=Product.objects.get(name="db_product_internal"))
         mock_user.return_value = user
         mock_products_user.return_value = user

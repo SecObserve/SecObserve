@@ -13,14 +13,14 @@ import {
 } from "react-admin";
 
 import notifications from ".";
-import { CustomPagination } from "../commons/custom_fields/CustomPagination";
-import { ProductReferenceInput } from "../commons/custom_fields/ProductReferenceInput";
-import { getUserOptionText, has_attribute } from "../commons/functions";
-import ListHeader from "../commons/layout/ListHeader";
-import { AutocompleteInputMedium } from "../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../commons/user_settings/functions";
+import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
+import { getUserOptionText, has_attribute } from "../../commons/functions";
+import ListHeader from "../../commons/layout/ListHeader";
+import { AutocompleteInputMedium } from "../../commons/layout/themes";
+import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { TYPE_CHOICES } from "../types";
 import NotificationBulkMarkAsViewedButton from "./NotificationBulkMarkAsViewedButton";
-import { TYPE_CHOICES } from "./types";
 
 const messageShortened = (message: string | null) => {
     if (message && message.length > 255) {
