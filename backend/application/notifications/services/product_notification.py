@@ -1,21 +1,20 @@
 from typing import Optional
 
 from django.db import transaction
+from django.db.models import BooleanField, Exists, OuterRef, Q, Subquery, Value
+from django.db.models.functions import Coalesce
 
 from application.access_control.models import User
-from application.core.models import Product
+from application.core.models import (
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 from application.notifications.models import Product_Notification
 from application.notifications.queries.product_notification import (
     get_product_notifications,
 )
-
-NOTIFICATION_FIELDS = (
-    "security_gate_changed",
-    "observation_new_changed",
-    "observation_to_be_reviewed",
-    "assessment_to_be_reviewed",
-    "product_rule_to_be_reviewed",
-)
+from application.notifications.types import Product_Notification_Type
 
 PRODUCT_API_TOKEN_USER_PREFIX = "-product-"
 
@@ -69,7 +68,7 @@ def create_product_notification_override(product: Product, user: User) -> Produc
         return product_notification
 
     parent = get_template_notification(product, user)
-    parent_values = {field: getattr(parent, field) for field in NOTIFICATION_FIELDS}
+    parent_values = {field: getattr(parent, field) for field in Product_Notification_Type.PRODUCT_NOTIFICATION_TYPES}
 
     with transaction.atomic():
         product_notification, _ = Product_Notification.objects.get_or_create(
@@ -77,3 +76,61 @@ def create_product_notification_override(product: Product, user: User) -> Produc
         )
 
     return product_notification
+
+
+def get_users_for_product_notification(product: Product, notification_type: str) -> set[User]:
+    """
+    The users who want to be notified about the given kind of event for the given product: the
+    settings of the product win, otherwise the ones of its product group, otherwise the user's
+    template. Users without any settings are never notified, the fields default to False.
+
+    Only active members of the product with an email address are returned, users for product API
+    tokens never are.
+    """
+    if notification_type not in Product_Notification_Type.PRODUCT_NOTIFICATION_TYPES:
+        raise ValueError(f"{notification_type} is not a product notification type")
+
+    product_ids = [product.pk]
+    notification_subqueries = [_get_notification_subquery(product.pk, notification_type)]
+    if product.product_group_id:
+        product_ids.append(product.product_group_id)
+        notification_subqueries.append(_get_notification_subquery(product.product_group_id, notification_type))
+    notification_subqueries.append(_get_notification_subquery(None, notification_type))
+
+    # product_ids contains the product group as well, so all membership paths are covered
+    product_members = Product_Member.objects.filter(product_id__in=product_ids, user=OuterRef("pk"))
+    product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
+        product_id__in=product_ids,
+        authorization_group__users=OuterRef("pk"),
+    )
+
+    return set(
+        User.objects.filter(is_active=True)
+        .exclude(username__startswith=PRODUCT_API_TOKEN_USER_PREFIX)
+        .exclude(email="")
+        .annotate(
+            notification_enabled=Coalesce(*notification_subqueries, Value(False), output_field=BooleanField()),
+            is_product_member=Exists(product_members),
+            is_authorization_group_member=Exists(product_authorization_group_members),
+        )
+        .filter(notification_enabled=True)
+        .filter(Q(is_product_member=True) | Q(is_authorization_group_member=True))
+    )
+
+
+def _get_notification_subquery(product_id: Optional[int], notification_type: str) -> Subquery:
+    """
+    The settings of one tier for the user of the outer query, None when they have none there. The
+    template is not covered by the unique constraint, so the lowest id wins, the same way
+    get_or_create_template() picks one when there are duplicates.
+    """
+    product_notifications = Product_Notification.objects.filter(user=OuterRef("pk"))
+    if product_id is None:
+        product_notifications = product_notifications.filter(product__isnull=True)
+    else:
+        product_notifications = product_notifications.filter(product_id=product_id)
+
+    return Subquery(
+        product_notifications.order_by("pk").values(notification_type)[:1],
+        output_field=BooleanField(),
+    )

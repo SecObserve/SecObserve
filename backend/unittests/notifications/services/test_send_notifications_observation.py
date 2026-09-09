@@ -1,12 +1,15 @@
 from unittest.mock import MagicMock, call, patch
 
+from application.access_control.models import User
 from application.commons.models import Settings
 from application.core.types import Status
 from application.notifications.models import Notification, Observation_Notified
 from application.notifications.services.send_notifications_observation import (
+    _get_observation_notification_statuses,
     _send_observation_notifications,
     send_observation_notification,
 )
+from application.notifications.types import Product_Notification_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -31,11 +34,12 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = None
+        mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_not_called()
         mock_observation_notified_get.assert_called_once_with(observation=self.observation_1)
@@ -58,13 +62,14 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = None
+        mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = 2
         mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
         self.observation_1.current_status = Status.STATUS_OPEN
         self.observation_1.current_priority = None
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_not_called()
         mock_observation_notified_get.assert_called_once_with(observation=self.observation_1)
@@ -87,12 +92,13 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = None
+        mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         mock_notified = MagicMock()
         mock_observation_notified_get.return_value = mock_notified
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_called_once_with(
             self.observation_1,
@@ -120,14 +126,15 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = "Open"
+        mock_get_statuses.return_value = ["Open"]
         mock_get_min_priority.return_value = None
         mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
         self.observation_1.current_status = "Open"
         self.observation_1.current_severity = "Critical"
         self.observation_1.current_priority = None
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_called_once_with(
             self.observation_1,
@@ -153,7 +160,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = "Open"
+        mock_get_statuses.return_value = ["Open"]
         mock_get_min_priority.return_value = None
         self.observation_1.current_status = "Open"
         self.observation_1.current_severity = "Critical"
@@ -164,7 +171,8 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_notified.priority = self.observation_1.current_priority
         mock_observation_notified_get.return_value = mock_notified
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_not_called()
 
@@ -186,7 +194,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = "Open"
+        mock_get_statuses.return_value = ["Open"]
         mock_get_min_priority.return_value = None
         self.observation_1.current_status = "Open"
         self.observation_1.current_severity = "Critical"
@@ -197,7 +205,8 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_notified.priority = None
         mock_observation_notified_get.return_value = mock_notified
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_called_once_with(
             self.observation_1,
@@ -226,12 +235,13 @@ class TestPushNotificationsObservation(BaseTestCase):
     ):
         mock_get_min_severity.return_value = "Medium"
         mock_severity.NUMERICAL_SEVERITIES.get.return_value = 3
-        mock_get_statuses.return_value = None
+        mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         self.observation_1.numerical_severity = 4  # worse than "Medium" (3), does not meet threshold
         mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_not_called()
         mock_severity.NUMERICAL_SEVERITIES.get.assert_called_once_with("Medium")
@@ -254,13 +264,14 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_notifications,
     ):
         mock_get_min_severity.return_value = None
-        mock_get_statuses.return_value = "Open"
+        mock_get_statuses.return_value = ["Open"]
         mock_get_min_priority.return_value = None
         self.observation_1.current_status = "Resolved"  # does not match "Open"
         mock_notified = MagicMock()
         mock_observation_notified_get.return_value = mock_notified
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_called_once_with(
             self.observation_1,
@@ -291,7 +302,7 @@ class TestPushNotificationsObservation(BaseTestCase):
     ):
         mock_get_min_severity.return_value = "Medium"
         mock_severity.NUMERICAL_SEVERITIES.get.return_value = 3
-        mock_get_statuses.return_value = None
+        mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         self.observation_1.numerical_severity = 1  # Critical, better than "Medium" (3), meets threshold
         self.observation_1.current_severity = "Critical"
@@ -299,7 +310,8 @@ class TestPushNotificationsObservation(BaseTestCase):
         self.observation_1.current_priority = None
         mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
 
-        send_observation_notification(self.observation_1)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_called_once_with(
             self.observation_1,
@@ -307,8 +319,43 @@ class TestPushNotificationsObservation(BaseTestCase):
         )
         mock_observation_notified_save.assert_called_once()
 
+    @patch("application.notifications.services.send_notifications_observation._send_observation_notifications")
+    @patch(
+        "application.notifications.services.send_notifications_observation._get_observation_notification_min_priority"
+    )
+    @patch("application.notifications.services.send_notifications_observation._get_observation_notification_statuses")
+    @patch(
+        "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
+    )
+    @patch("application.notifications.models.Observation_Notified.objects.get")
+    def test_send_observation_notification_is_deferred_until_commit(
+        self,
+        mock_observation_notified_get,
+        mock_get_min_severity,
+        mock_get_statuses,
+        mock_get_min_priority,
+        mock_send_notifications,
+    ):
+        mock_get_min_severity.return_value = None
+        mock_get_statuses.return_value = []
+        mock_get_min_priority.return_value = None
+        mock_notified = MagicMock()
+        mock_observation_notified_get.return_value = mock_notified
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_notification(self.observation_1)
+
+            # the task runs after the commit, not while the transaction is still open
+            mock_send_notifications.assert_not_called()
+
+        mock_send_notifications.assert_called_once_with(
+            self.observation_1,
+            f'Observation "{self.observation_1.title}" fell out of notifications',
+        )
+
     # --- _send_observation_notifications ---
 
+    @patch("application.notifications.services.send_notifications_observation.get_users_for_product_notification")
     @patch("application.notifications.services.send_notifications_observation.send_slack_notification")
     @patch("application.notifications.services.send_notifications_observation.send_msteams_notification")
     @patch("application.notifications.services.send_notifications_observation.send_email_notification")
@@ -327,11 +374,13 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_email,
         mock_send_teams,
         mock_send_slack,
+        mock_get_users,
     ):
         mock_current_user.return_value = self.user_internal
         mock_get_notification_email_to.return_value = ""
         mock_get_notification_ms_teams_webhook.return_value = ""
         mock_get_notification_slack_webhook.return_value = ""
+        mock_get_users.return_value = set()
         first_line = f'New notification for observation "{self.observation_1.title}"'
 
         _send_observation_notifications(self.observation_1, first_line)
@@ -351,6 +400,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         )
 
     @patch("application.commons.models.Settings.load")
+    @patch("application.notifications.services.send_notifications_observation.get_users_for_product_notification")
     @patch("application.notifications.services.send_notifications_observation.send_slack_notification")
     @patch("application.notifications.services.send_notifications_observation.send_msteams_notification")
     @patch("application.notifications.services.send_notifications_observation.send_email_notification")
@@ -373,6 +423,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_email,
         mock_send_teams,
         mock_send_slack,
+        mock_get_users,
         mock_settings_load,
     ):
         settings = Settings()
@@ -384,6 +435,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_notification_email_to.return_value = "test1@example.com, test2@example.com"
         mock_get_notification_ms_teams_webhook.return_value = "https://msteams.microsoft.com"
         mock_get_notification_slack_webhook.return_value = "https://secobserve.slack.com"
+        mock_get_users.return_value = set()
         self.observation_1.pk = 1
         first_line = f'New notification for observation "{self.observation_1.title}"'
 
@@ -439,3 +491,192 @@ class TestPushNotificationsObservation(BaseTestCase):
             user=self.user_internal,
             type=Notification.TYPE_OBSERVATION,
         )
+
+    # --- _send_observation_notifications, notifications for the users of the product ---
+
+    def _patch_for_users(self, email_from: str = "secobserve@example.com") -> dict[str, MagicMock]:
+        """The mocks all tests for the user specific notifications need, the webhooks and the
+        notification email addresses of the product are switched off."""
+        patchers = {
+            "get_users": patch(
+                "application.notifications.services.send_notifications_observation."
+                "get_users_for_product_notification"
+            ),
+            "send_email": patch(
+                "application.notifications.services.send_notifications_observation.send_email_notification"
+            ),
+            "base_url": patch(
+                "application.notifications.services.send_notifications_observation.get_base_url_frontend"
+            ),
+            "current_user": patch("application.notifications.services.send_notifications_observation.get_current_user"),
+            "email_to": patch(
+                "application.notifications.services.send_notifications_observation._get_notification_email_to"
+            ),
+            "slack": patch(
+                "application.notifications.services.send_notifications_observation._get_notification_slack_webhook"
+            ),
+            "ms_teams": patch(
+                "application.notifications.services.send_notifications_observation._get_notification_ms_teams_webhook"
+            ),
+            "notification_create": patch("application.notifications.models.Notification.objects.create"),
+            "settings_load": patch("application.commons.models.Settings.load"),
+        }
+
+        mocks = {}
+        for name, patcher in patchers.items():
+            mocks[name] = patcher.start()
+            self.addCleanup(patcher.stop)
+
+        settings = Settings()
+        settings.email_from = email_from
+        mocks["settings_load"].return_value = settings
+        mocks["base_url"].return_value = "https://secobserve.com/"
+        mocks["current_user"].return_value = self.user_internal
+        mocks["email_to"].return_value = ""
+        mocks["slack"].return_value = ""
+        mocks["ms_teams"].return_value = ""
+
+        self.observation_1.pk = 1
+
+        return mocks
+
+    def test_send_observation_notifications_user_with_first_name(self):
+        mocks = self._patch_for_users()
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        _send_observation_notifications(self.observation_1, first_line)
+
+        mocks["get_users"].assert_called_once_with(
+            self.observation_1.product, Product_Notification_Type.OBSERVATION_NEW_CHANGED
+        )
+        mocks["send_email"].assert_called_once_with(
+            "jane@example.com",
+            first_line,
+            "email_observation.tpl",
+            observation=self.observation_1,
+            observation_url="https://secobserve.com/#/observations/1/show",
+            first_line=first_line,
+            first_name=" Jane",
+        )
+
+    def test_send_observation_notifications_user_without_first_name(self):
+        mocks = self._patch_for_users()
+        user = User(id=10, username="jane@example.com", email="jane@example.com", first_name="", full_name="Jane Doe")
+        mocks["get_users"].return_value = {user}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        _send_observation_notifications(self.observation_1, first_line)
+
+        mocks["send_email"].assert_called_once_with(
+            "jane@example.com",
+            first_line,
+            "email_observation.tpl",
+            observation=self.observation_1,
+            observation_url="https://secobserve.com/#/observations/1/show",
+            first_line=first_line,
+            first_name=" Jane Doe",
+        )
+
+    def test_send_observation_notifications_several_users(self):
+        mocks = self._patch_for_users()
+        user_1 = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        user_2 = User(
+            id=11, username="john@example.com", email="john@example.com", first_name="John", full_name="John Doe"
+        )
+        mocks["get_users"].return_value = {user_1, user_2}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        _send_observation_notifications(self.observation_1, first_line)
+
+        expected_calls = [
+            call(
+                "jane@example.com",
+                first_line,
+                "email_observation.tpl",
+                observation=self.observation_1,
+                observation_url="https://secobserve.com/#/observations/1/show",
+                first_line=first_line,
+                first_name=" Jane",
+            ),
+            call(
+                "john@example.com",
+                first_line,
+                "email_observation.tpl",
+                observation=self.observation_1,
+                observation_url="https://secobserve.com/#/observations/1/show",
+                first_line=first_line,
+                first_name=" John",
+            ),
+        ]
+        # get_users_for_product_notification() returns a set, the order is not defined
+        mocks["send_email"].assert_has_calls(expected_calls, any_order=True)
+        self.assertEqual(2, mocks["send_email"].call_count)
+
+    def test_send_observation_notifications_no_users(self):
+        mocks = self._patch_for_users()
+        mocks["get_users"].return_value = set()
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        _send_observation_notifications(self.observation_1, first_line)
+
+        mocks["send_email"].assert_not_called()
+        mocks["notification_create"].assert_called_with(
+            name="New notification for observation",
+            product=self.observation_1.product,
+            observation=self.observation_1,
+            user=self.user_internal,
+            type=Notification.TYPE_OBSERVATION,
+        )
+
+    def test_send_observation_notifications_users_without_email_from(self):
+        mocks = self._patch_for_users(email_from="")
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        _send_observation_notifications(self.observation_1, first_line)
+
+        mocks["get_users"].assert_not_called()
+        mocks["send_email"].assert_not_called()
+
+    # --- _get_observation_notification_statuses ---
+
+    def test_get_observation_notification_statuses_from_the_product(self):
+        self.product_1.observation_notification_statuses = "Open, Risk Accepted"
+
+        self.assertEqual(["Open", "Risk Accepted"], _get_observation_notification_statuses(self.product_1))
+
+    def test_get_observation_notification_statuses_from_the_product_group(self):
+        self.product_1.observation_notification_statuses = ""
+        self.product_group_1.observation_notification_statuses = "Open"
+        self.product_1.product_group = self.product_group_1
+
+        self.assertEqual(["Open"], _get_observation_notification_statuses(self.product_1))
+
+    def test_get_observation_notification_statuses_product_wins_over_product_group(self):
+        self.product_1.observation_notification_statuses = "Duplicate"
+        self.product_group_1.observation_notification_statuses = "Open"
+        self.product_1.product_group = self.product_group_1
+
+        self.assertEqual(["Duplicate"], _get_observation_notification_statuses(self.product_1))
+
+    def test_get_observation_notification_statuses_neither_product_nor_product_group(self):
+        self.product_1.observation_notification_statuses = ""
+        self.product_group_1.observation_notification_statuses = ""
+        self.product_1.product_group = self.product_group_1
+
+        self.assertEqual([], _get_observation_notification_statuses(self.product_1))
+
+    def test_get_observation_notification_statuses_without_product_group(self):
+        self.product_1.observation_notification_statuses = ""
+        self.product_1.product_group = None
+
+        self.assertEqual([], _get_observation_notification_statuses(self.product_1))
