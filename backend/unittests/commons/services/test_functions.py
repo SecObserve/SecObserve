@@ -1,6 +1,12 @@
+from unittest.mock import patch
+
 from rest_framework.exceptions import ValidationError
 
-from application.commons.services.functions import validate_vex_remediations
+from application.commons.models import Settings
+from application.commons.services.functions import (
+    get_base_url_frontend,
+    validate_vex_remediations,
+)
 from unittests.base_test_case import BaseTestCase
 
 
@@ -89,3 +95,21 @@ class TestValidateVexRemediations(BaseTestCase):
                     {"category": 123, "text": "Invalid category."},
                 ]
             )
+
+
+class TestGetBaseUrlFrontend(BaseTestCase):
+    @patch("application.commons.models.Settings.load")
+    def test_get_base_url_frontend_without_slash(self, mock_settings_load):
+        settings = Settings()
+        settings.base_url_frontend = "https://www.example.com"
+        mock_settings_load.return_value = settings
+
+        self.assertEqual("https://www.example.com/", get_base_url_frontend())
+
+    @patch("application.commons.models.Settings.load")
+    def test_get_base_url_frontend_with_slash(self, mock_settings_load):
+        settings = Settings()
+        settings.base_url_frontend = "https://www.example.com/"
+        mock_settings_load.return_value = settings
+
+        self.assertEqual("https://www.example.com/", get_base_url_frontend())

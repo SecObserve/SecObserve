@@ -2,16 +2,18 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 
-from application.access_control.models import User
-from application.core.models import Product
+from application.access_control.models import Authorization_Group, User
+from application.core.models import Product, Product_Authorization_Group_Member
 from application.notifications.models import Product_Notification
 from application.notifications.services.product_notification import (
     create_product_notification_override,
     get_or_create_template,
     get_product_notification,
     get_template_notification,
+    get_users_for_product_notification,
     is_product_api_token_user,
 )
+from application.notifications.types import Product_Notification_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -41,6 +43,12 @@ class TestProductNotificationService(BaseTestCase):
             patcher = patch(target, side_effect=lambda: self._current_user)
             patcher.start()
             self.addCleanup(patcher.stop)
+
+        # get_users_for_product_notification() only returns users who can be reached by email,
+        # the users of the fixtures have none
+        for user in User.objects.all():
+            user.email = f"{user.username}@example.com"
+            user.save()
 
     def _set_current_user(self, username: str) -> User:
         self._current_user = User.objects.get(username=username)
@@ -226,3 +234,136 @@ class TestProductNotificationService(BaseTestCase):
 
         self.assertNotEqual(first, second)
         self.assertEqual(2, Product_Notification.objects.filter(user=user, product__isnull=False).count())
+
+    # --- get_users_for_product_notification ---
+
+    def _get_usernames_for_product_notification(self, product_id: int) -> set[str]:
+        users = get_users_for_product_notification(
+            Product.objects.get(pk=product_id),
+            Product_Notification_Type.SECURITY_GATE_CHANGED,
+        )
+        return {user.username for user in users}
+
+    def test_get_users_for_product_notification_with_unknown_type(self):
+        with self.assertRaises(ValueError):
+            get_users_for_product_notification(Product.objects.get(pk=1), "not_a_notification_type")
+
+    def test_get_users_for_product_notification_without_settings(self):
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_from_the_template(self):
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual({"db_internal_write"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_without_product_group(self):
+        # product 2 does not belong to a product group, db_external is a member of it
+        Product_Notification.objects.create(user=User.objects.get(username="db_external"), security_gate_changed=True)
+
+        self.assertEqual({"db_external"}, self._get_usernames_for_product_notification(2))
+
+    def test_get_users_for_product_notification_from_the_product_group(self):
+        # product group 3 is the product group of product 1
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=False)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3), security_gate_changed=True)
+
+        self.assertEqual({"db_internal_write"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_from_the_product(self):
+        # the settings of the product win over the product group and the template
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=False)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3), security_gate_changed=False)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=1), security_gate_changed=True)
+
+        self.assertEqual({"db_internal_write"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_switched_off_by_the_product(self):
+        # the settings of the product win in the other direction as well
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3), security_gate_changed=True)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=1), security_gate_changed=False)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_switched_off_by_the_product_group(self):
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+        Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3), security_gate_changed=False)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_with_duplicate_templates(self):
+        # The unique constraint cannot cover the template, the lowest id wins
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+        Product_Notification.objects.create(user=user, security_gate_changed=False)
+
+        self.assertEqual({"db_internal_write"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_is_per_type(self):
+        user = User.objects.get(username="db_internal_write")
+        Product_Notification.objects.create(user=user, observation_new_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_of_a_non_member(self):
+        # db_admin is a superuser, but a member of nothing
+        Product_Notification.objects.create(user=User.objects.get(username="db_admin"), security_gate_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_of_a_product_group_member(self):
+        # db_product_group_user is a member of product group 3, which product 1 belongs to
+        Product_Notification.objects.create(
+            user=User.objects.get(username="db_product_group_user"), security_gate_changed=True
+        )
+
+        self.assertEqual({"db_product_group_user"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_of_an_authorization_group_member(self):
+        user = User.objects.get(username="db_external")
+        authorization_group = Authorization_Group.objects.create(name="notification_group")
+        authorization_group.users.add(user)
+        Product_Authorization_Group_Member.objects.create(
+            product=Product.objects.get(pk=1),
+            authorization_group=authorization_group,
+            role=1,
+        )
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual({"db_external"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_excludes_product_api_token_users(self):
+        # the user of the API token of product 2 is a member of it
+        Product_Notification.objects.create(
+            user=User.objects.get(username="-product-2-api_token-"), security_gate_changed=True
+        )
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(2))
+
+    def test_get_users_for_product_notification_excludes_users_without_email(self):
+        user = User.objects.get(username="db_internal_write")
+        user.email = ""
+        user.save()
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_excludes_inactive_users(self):
+        user = User.objects.get(username="db_internal_write")
+        user.is_active = False
+        user.save()
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_of_several_users(self):
+        # db_internal_write and db_internal_read are members of product 1, db_external is not
+        for username in ("db_internal_write", "db_internal_read", "db_external"):
+            Product_Notification.objects.create(user=User.objects.get(username=username), security_gate_changed=True)
+
+        self.assertEqual({"db_internal_write", "db_internal_read"}, self._get_usernames_for_product_notification(1))

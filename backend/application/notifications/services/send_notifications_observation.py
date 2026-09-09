@@ -1,11 +1,19 @@
 from typing import Optional
 
+from huey.contrib.djhuey import on_commit_task
+
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
-from application.commons.services.functions import get_base_url_frontend
+from application.commons.services.functions import (
+    get_base_url_frontend,
+    get_comma_separated_as_list,
+)
 from application.core.models import Observation, Product
 from application.core.types import Severity, Status
 from application.notifications.models import Notification, Observation_Notified
+from application.notifications.services.product_notification import (
+    get_users_for_product_notification,
+)
 from application.notifications.services.send_notifications import (
     _get_email_to_addresses,
     _get_first_name,
@@ -19,72 +27,81 @@ from application.notifications.services.send_notifications_base import (
     send_msteams_notification,
     send_slack_notification,
 )
+from application.notifications.services.tasks import handle_task_exception
+from application.notifications.types import Product_Notification_Type
 
 
+@on_commit_task()
 def send_observation_notification(observation: Observation) -> None:
-    observation_notification_min_severity = _get_observation_notification_min_severity(observation.product)
-    observation_notification_numerical_min_severity = (
-        Severity.NUMERICAL_SEVERITIES.get(observation_notification_min_severity)
-        if observation_notification_min_severity
-        else None
-    )
-    observation_notification_statuses = _get_observation_notification_statuses(observation.product)
-    observation_notification_min_priority = _get_observation_notification_min_priority(observation.product)
-
-    if (
-        (  # pylint: disable=too-many-boolean-expressions
-            observation_notification_numerical_min_severity
-            or observation_notification_statuses
-            or observation_notification_min_priority
+    try:
+        observation_notification_min_severity = _get_observation_notification_min_severity(observation.product)
+        observation_notification_numerical_min_severity = (
+            Severity.NUMERICAL_SEVERITIES.get(observation_notification_min_severity)
+            if observation_notification_min_severity
+            else None
         )
-        and (
-            not observation_notification_numerical_min_severity
-            or observation.numerical_severity <= observation_notification_numerical_min_severity
-        )
-        and (
-            (observation_notification_statuses and observation.current_status in observation_notification_statuses)
-            or (not observation_notification_statuses and observation.current_status in Status.STATUS_ACTIVE)
-        )
-        and (
-            not observation_notification_min_priority
-            or (observation.current_priority and observation.current_priority <= observation_notification_min_priority)
-        )
-    ):
-        try:
-            observation_notified = Observation_Notified.objects.get(observation=observation)
-            new_notification = False
-        except Observation_Notified.DoesNotExist:
-            observation_notified = Observation_Notified(observation=observation)
-            new_notification = True
+        observation_notification_statuses = _get_observation_notification_statuses(observation.product)
+        observation_notification_min_priority = _get_observation_notification_min_priority(observation.product)
 
         if (
-            observation.current_severity != observation_notified.severity
-            or observation.current_status != observation_notified.status
-            or observation.current_priority != observation_notified.priority
-        ):
-            first_line = (
-                f'New notification for observation "{observation.title}"'
-                if new_notification
-                else f'Change in observation "{observation.title}"'
+            (  # pylint: disable=too-many-boolean-expressions
+                observation_notification_numerical_min_severity
+                or observation_notification_statuses
+                or observation_notification_min_priority
             )
+            and (
+                not observation_notification_numerical_min_severity
+                or observation.numerical_severity <= observation_notification_numerical_min_severity
+            )
+            and (
+                (observation_notification_statuses and observation.current_status in observation_notification_statuses)
+                or (not observation_notification_statuses and observation.current_status in Status.STATUS_ACTIVE)
+            )
+            and (
+                not observation_notification_min_priority
+                or (
+                    observation.current_priority
+                    and observation.current_priority <= observation_notification_min_priority
+                )
+            )
+        ):
+            try:
+                observation_notified = Observation_Notified.objects.get(observation=observation)
+                new_notification = False
+            except Observation_Notified.DoesNotExist:
+                observation_notified = Observation_Notified(observation=observation)
+                new_notification = True
+
+            if (
+                observation.current_severity != observation_notified.severity
+                or observation.current_status != observation_notified.status
+                or observation.current_priority != observation_notified.priority
+            ):
+                first_line = (
+                    f'New notification for observation "{observation.title}"'
+                    if new_notification
+                    else f'Change in observation "{observation.title}"'
+                )
+
+                _send_observation_notifications(observation, first_line)
+
+                observation_notified.severity = observation.current_severity
+                observation_notified.status = observation.current_status
+                observation_notified.priority = observation.current_priority
+                observation_notified.save()
+        else:
+            try:
+                observation_notified = Observation_Notified.objects.get(observation=observation)
+            except Observation_Notified.DoesNotExist:
+                return
+
+            first_line = f'Observation "{observation.title}" fell out of notifications'
 
             _send_observation_notifications(observation, first_line)
 
-            observation_notified.severity = observation.current_severity
-            observation_notified.status = observation.current_status
-            observation_notified.priority = observation.current_priority
-            observation_notified.save()
-    else:
-        try:
-            observation_notified = Observation_Notified.objects.get(observation=observation)
-        except Observation_Notified.DoesNotExist:
-            return
-
-        first_line = f'Observation "{observation.title}" fell out of notifications'
-
-        _send_observation_notifications(observation, first_line)
-
-        observation_notified.delete()
+            observation_notified.delete()
+    except Exception as e:
+        handle_task_exception(e)
 
 
 def _send_observation_notifications(observation: Observation, first_line: str) -> None:
@@ -128,6 +145,21 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
             first_line=first_line,
         )
 
+    if settings.email_from:
+        users = get_users_for_product_notification(
+            observation.product, Product_Notification_Type.OBSERVATION_NEW_CHANGED
+        )
+        for user in users:
+            send_email_notification(
+                user.email,
+                first_line,
+                "email_observation.tpl",
+                observation=observation,
+                observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
+                first_line=first_line,
+                first_name=f" {user.first_name}" if user.first_name else f" {user.full_name}",
+            )
+
     first_line = first_line.replace(f' "{observation.title}"', "")
 
     Notification.objects.create(
@@ -149,14 +181,17 @@ def _get_observation_notification_min_severity(product: Product) -> Optional[str
     return None
 
 
-def _get_observation_notification_statuses(product: Product) -> Optional[str]:
+def _get_observation_notification_statuses(product: Product) -> list[str]:
+    statuses = ""
     if product.observation_notification_statuses:
-        return product.observation_notification_statuses
+        statuses = product.observation_notification_statuses
+    elif product.product_group and product.product_group.observation_notification_statuses:
+        statuses = product.product_group.observation_notification_statuses
 
-    if product.product_group and product.product_group.observation_notification_statuses:
-        return product.product_group.observation_notification_statuses
+    if statuses:
+        return get_comma_separated_as_list(statuses)
 
-    return None
+    return []
 
 
 def _get_observation_notification_min_priority(product: Product) -> Optional[int]:

@@ -3,7 +3,7 @@ from typing import Optional
 from application.commons.models import Settings
 from application.core.models import Observation, Product
 from application.core.queries.product import get_product_by_id
-from application.notifications.services.send_notifications import (
+from application.notifications.services.send_notifications_security_gate import (
     send_product_security_gate_notification,
 )
 
