@@ -18,11 +18,11 @@ import users from ".";
 import { is_superuser } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import UserProductMemberEmbeddedList from "../../core/product_members/UserProductMemberEmbeddedList";
+import UserProductNotificationEmbeddedList from "../../notifications/product_notifications/UserProductNotificationEmbeddedList";
 import ApiTokenCreate from "../api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../api_tokens/ApiTokenEmbeddedList";
 import AuthorizationGroupEmbeddedList from "../authorization_groups/AuthorizationGroupEmbeddedList";
 import UserChangePassword from "./UserChangePassword";
-import UserProductNotificationEmbeddedList from "../../notifications/product_notifications/UserProductNotificationEmbeddedList";
 
 const ShowActions = () => {
     const current_user = localStorage.getItem("user");

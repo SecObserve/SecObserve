@@ -14,7 +14,10 @@ import products from "../../core/products";
 import parsers from "../../import_observations/parsers";
 import licenses from "../../licenses/licenses";
 import notifications from "../../notifications/notifications";
-import { get_notification_count, update_notification_count } from "../../notifications/notifications/notification_count";
+import {
+    get_notification_count,
+    update_notification_count,
+} from "../../notifications/notifications/notification_count";
 import general_rules from "../../rules/general_rules";
 import csaf from "../../vex/csaf";
 import cyclonedx from "../../vex/cyclonedx";
