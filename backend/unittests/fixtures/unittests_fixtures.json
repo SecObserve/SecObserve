@@ -972,6 +972,38 @@
         }
     },
     {
+        "model": "notifications.product_notification",
+        "pk": 1,
+        "fields": {
+            "user": 3,
+            "product": null
+        }
+    },
+    {
+        "model": "notifications.product_notification",
+        "pk": 2,
+        "fields": {
+            "user": 3,
+            "product": 1
+        }
+    },
+    {
+        "model": "notifications.product_notification",
+        "pk": 3,
+        "fields": {
+            "user": 3,
+            "product": 2
+        }
+    },
+    {
+        "model": "notifications.product_notification",
+        "pk": 4,
+        "fields": {
+            "user": 6,
+            "product": 3
+        }
+    },
+    {
         "model": "metrics.product_metrics",
         "pk": 1,
         "fields": {

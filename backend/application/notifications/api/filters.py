@@ -4,7 +4,11 @@ from django.db.models import QuerySet, Subquery
 from django_filters import BooleanFilter, CharFilter, FilterSet, OrderingFilter
 
 from application.access_control.services.current_user import get_current_user
-from application.notifications.models import Notification, Notification_Viewed
+from application.notifications.models import (
+    Notification,
+    Notification_Viewed,
+    Product_Notification,
+)
 
 
 class NotificationFilter(FilterSet):
@@ -54,5 +58,21 @@ class NotificationFilter(FilterSet):
             "function",
             "product",
             "observation",
+            "user",
+        ]
+
+
+class ProductNotificationFilter(FilterSet):
+    ordering = OrderingFilter(
+        fields=(
+            ("product__name", "product_data.name"),
+            ("user__full_name", "user"),
+        ),
+    )
+
+    class Meta:
+        model = Product_Notification
+        fields = [
+            "product",
             "user",
         ]

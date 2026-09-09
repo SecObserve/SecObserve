@@ -33,6 +33,26 @@ export interface ProductNotification extends RaRecord {
     product_rule_to_be_reviewed: boolean;
 }
 
+export type NotificationSettingSource =
+    | "security_gate_changed"
+    | "observation_new_changed"
+    | "observation_to_be_reviewed"
+    | "assessment_to_be_reviewed"
+    | "product_rule_to_be_reviewed";
+
+export type NotificationSetting = {
+    source: NotificationSettingSource;
+    label: string;
+};
+
+export const NOTIFICATION_SETTINGS: NotificationSetting[] = [
+    { source: "security_gate_changed", label: "Security gate changed" },
+    { source: "observation_new_changed", label: "Observation new or changed" },
+    { source: "observation_to_be_reviewed", label: "Observation to be reviewed" },
+    { source: "assessment_to_be_reviewed", label: "Assessment to be reviewed" },
+    { source: "product_rule_to_be_reviewed", label: "Product rule to be reviewed" },
+];
+
 export interface ProductNotificationPair {
     // null while the user does not override the settings the product inherits
     product_notification: ProductNotification | null;

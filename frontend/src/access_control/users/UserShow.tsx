@@ -18,6 +18,7 @@ import users from ".";
 import { is_superuser } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import UserProductMemberEmbeddedList from "../../core/product_members/UserProductMemberEmbeddedList";
+import UserProductNotificationEmbeddedList from "../../notifications/product_notifications/UserProductNotificationEmbeddedList";
 import ApiTokenCreate from "../api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../api_tokens/ApiTokenEmbeddedList";
 import AuthorizationGroupEmbeddedList from "../authorization_groups/AuthorizationGroupEmbeddedList";
@@ -214,6 +215,16 @@ const UserComponent = () => {
                             </AccordionSummary>
                             <AccordionDetails>
                                 <UserProductMemberEmbeddedList user={user} is_product_group={false} />
+                            </AccordionDetails>
+                        </Accordion>
+                    )}
+                    {showFullInformation(user) && user.has_product_notifications && (
+                        <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
+                            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                <Typography variant="h6">Product Notifications</Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <UserProductNotificationEmbeddedList user={user} />
                             </AccordionDetails>
                         </Accordion>
                     )}

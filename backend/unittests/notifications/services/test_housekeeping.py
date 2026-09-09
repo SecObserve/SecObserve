@@ -59,9 +59,9 @@ class TestDeleteOrphanedProductNotifications(BaseTestCase):
         self.assertTrue(Product_Notification.objects.filter(pk=product_notification.pk).exists())
 
     def test_row_of_a_product_group_member_survives(self):
-        # db_product_group_user is a member of product group 3
+        # db_product_group_user is a member of product group 3, their settings for it are in the fixtures
         user = User.objects.get(username="db_product_group_user")
-        product_notification = Product_Notification.objects.create(user=user, product=Product.objects.get(pk=3))
+        product_notification = Product_Notification.objects.get(user=user, product=Product.objects.get(pk=3))
 
         self.assertEqual(0, delete_orphaned_product_notifications())
         self.assertTrue(Product_Notification.objects.filter(pk=product_notification.pk).exists())

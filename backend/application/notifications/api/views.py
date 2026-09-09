@@ -21,7 +21,10 @@ from application.authorization.services.authorization import user_has_permission
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Product
 from application.core.queries.product import get_product_by_id
-from application.notifications.api.filters import NotificationFilter
+from application.notifications.api.filters import (
+    NotificationFilter,
+    ProductNotificationFilter,
+)
 from application.notifications.api.permissions import (
     UserHasNotificationPermission,
     UserHasProductNotificationPermission,
@@ -131,13 +134,15 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
         return Response(status=HTTP_204_NO_CONTENT)
 
 
-class ProductNotificationViewSet(GenericViewSet, UpdateModelMixin):
+class ProductNotificationViewSet(GenericViewSet, ListModelMixin, UpdateModelMixin):
     serializer_class = ProductNotificationSerializer
     permission_classes = (IsAuthenticated, UserHasProductNotificationPermission)
     queryset = Product_Notification.objects.none()
+    filterset_class = ProductNotificationFilter
+    filter_backends = [DjangoFilterBackend]
 
     def get_queryset(self) -> QuerySet[Product_Notification]:
-        return get_product_notifications()
+        return get_product_notifications().select_related("product").select_related("user")
 
     @extend_schema(
         methods=["GET"],

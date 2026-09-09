@@ -2,9 +2,9 @@ import ChecklistIcon from "@mui/icons-material/Checklist";
 import { useState } from "react";
 import { Confirm, useListContext, useNotify, useRefresh, useUnselectAll } from "react-admin";
 
-import SmallButton from "../commons/custom_fields/SmallButton";
-import { Spinner } from "../commons/custom_fields/Spinner";
-import { httpClient } from "../commons/ra-data-django-rest-framework";
+import SmallButton from "../../commons/custom_fields/SmallButton";
+import { Spinner } from "../../commons/custom_fields/Spinner";
+import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { update_notification_count } from "./notification_count";
 
 const NotificationBulkMarkAsViewedButton = () => {

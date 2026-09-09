@@ -24,6 +24,7 @@ from application.access_control.queries.authorization_group_member import (
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Product_Authorization_Group_Member, Product_Member
+from application.notifications.models import Product_Notification
 
 
 class NestedAuthorizationGroupSerializer(ModelSerializer):
@@ -118,6 +119,7 @@ class UserSerializer(UserListSerializer):
     has_product_group_members = SerializerMethodField()
     has_product_members = SerializerMethodField()
     has_api_tokens = SerializerMethodField()
+    has_product_notifications = SerializerMethodField()
 
     class Meta:
         model = User
@@ -145,6 +147,7 @@ class UserSerializer(UserListSerializer):
             "has_product_group_members",
             "has_product_members",
             "has_api_tokens",
+            "has_product_notifications",
         ]
 
     def to_representation(self, instance: User) -> dict[str, Any]:
@@ -156,6 +159,7 @@ class UserSerializer(UserListSerializer):
             data.pop("has_product_group_members")
             data.pop("has_product_members")
             data.pop("has_api_tokens")
+            data.pop("has_product_notifications")
 
         return data
 
@@ -173,6 +177,9 @@ class UserSerializer(UserListSerializer):
 
     def get_has_api_tokens(self, obj: User) -> bool:
         return get_api_tokens_for_user(obj).exists()
+
+    def get_has_product_notifications(self, obj: User) -> bool:
+        return Product_Notification.objects.filter(user=obj).exists()
 
 
 class UserUpdateSerializer(ModelSerializer):
