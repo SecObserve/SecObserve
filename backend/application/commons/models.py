@@ -241,6 +241,10 @@ class Settings(Model, DirtyFieldsMixin):
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Time margin in seconds for checks of issued at, not before and expiration of OIDC tokens",
     )
+    oidc_strict_audience = BooleanField(
+        default=True,
+        help_text="Require the audience claim of OIDC tokens to be a single string matching the client id",
+    )
 
     observation_count_from_metrics = BooleanField(default=False)
 

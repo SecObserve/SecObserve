@@ -112,6 +112,7 @@ class TestOIDCAuthentication(BaseTestCase):
 
         settings = Settings.load()
         settings.oidc_clock_skew = 9
+        settings.oidc_strict_audience = True
 
         with self.assertRaises(AuthenticationFailed) as e:
             oidc_authentication = OIDCAuthentication()
@@ -142,6 +143,44 @@ class TestOIDCAuthentication(BaseTestCase):
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    def test_validate_jwt_strict_audience_disabled(
+        self, get_signing_key_mock, pyjwkclient_mock, jwks_uri_mock, jwt_mock
+    ):
+        jwks_uri_mock.return_value = "test_jwks_uri"
+        pyjwkclient_mock.return_value = None
+        mock_py_jwk = MockPyJWK("test_key")
+        get_signing_key_mock.return_value = mock_py_jwk
+        jwt_mock.side_effect = jwt.ExpiredSignatureError("Signature expired")
+
+        settings = Settings.load()
+        settings.oidc_clock_skew = 0
+        settings.oidc_strict_audience = False
+
+        with self.assertRaises(AuthenticationFailed):
+            oidc_authentication = OIDCAuthentication()
+            oidc_authentication._validate_jwt("token")
+
+        jwt_mock.assert_called_with(
+            jwt="token",
+            options={
+                "verify_signature": True,
+                "verify_aud": True,
+                "strict_aud": False,
+                "require": ["exp"],
+                "verify_iat": True,
+                "verify_exp": True,
+                "verify_nbf": True,
+            },
+            key="test_key",
+            algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
+            audience="client_id",
+            leeway=0,
+        )
+
+    @patch("application.access_control.services.oidc_authentication.decode")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._create_user")
     def test_validate_jwt_user_not_found(
@@ -164,6 +203,7 @@ class TestOIDCAuthentication(BaseTestCase):
 
         settings = Settings.load()
         settings.oidc_clock_skew = 7
+        settings.oidc_strict_audience = True
 
         oidc_authentication = OIDCAuthentication()
         user = oidc_authentication._validate_jwt("token")
@@ -216,6 +256,7 @@ class TestOIDCAuthentication(BaseTestCase):
 
         settings = Settings.load()
         settings.oidc_clock_skew = 5
+        settings.oidc_strict_audience = True
 
         oidc_authentication = OIDCAuthentication()
         user = oidc_authentication._validate_jwt("token")
