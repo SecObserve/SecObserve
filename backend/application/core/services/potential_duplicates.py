@@ -67,6 +67,7 @@ def find_potential_duplicates(product: Product, branch: Optional[Branch], servic
         )
     except Exception as e:
         handle_task_exception(e)
+        raise
 
 
 def _get_duplicate_candidates(observations: QuerySet[Observation]) -> list[DuplicateCandidate]:

@@ -16,7 +16,7 @@ from rest_framework.views import exception_handler
 
 from application.access_control.services.current_user import get_current_username
 from application.commons.services.log_message import format_log_message
-from application.notifications.services.send_notifications import (
+from application.notifications.services.send_notifications_exception import (
     send_exception_notification,
 )
 

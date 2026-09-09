@@ -20,7 +20,8 @@ class TestTasks(BaseTestCase):
         exception = Exception("Test exception")
         handle_task_exception(exception, self.user_internal, self.product_1)
 
-        self.assertEqual(mock_logger.call_count, 2)
+        # The traceback is not logged here, it is logged by Huey when the task fails
+        self.assertEqual(mock_logger.call_count, 1)
         mock_format_log_message.assert_called_with(
             message="Error while executing background task",
             data={},

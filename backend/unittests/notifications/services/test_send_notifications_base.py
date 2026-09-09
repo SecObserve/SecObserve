@@ -3,12 +3,16 @@ import os
 from datetime import datetime
 from unittest.mock import patch
 
-from requests import Response
+from requests import HTTPError, Response
 
 from application.commons.models import Settings
 from application.commons.services.functions import get_classname
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
+    _get_first_name,
+    _get_notification_email_to,
+    _get_notification_ms_teams_webhook,
+    _get_notification_slack_webhook,
     is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
@@ -25,8 +29,7 @@ class TestPushNotifications(BaseTestCase):
     def test_send_email_notification_empty_message(self, mock_send_email, mock_create_message):
         mock_create_message.return_value = None
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_email_notification("test@example.com", "subject", "test_template")
+        send_email_notification("test@example.com", "subject", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_send_email.assert_not_called()
@@ -34,12 +37,8 @@ class TestPushNotifications(BaseTestCase):
     @patch("application.commons.models.Settings.load")
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.send_mail")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     def test_send_email_notification_exception(
         self,
-        mock_format,
-        mock_logger,
         mock_send_email,
         mock_create_message,
         mock_settings_load,
@@ -48,7 +47,8 @@ class TestPushNotifications(BaseTestCase):
         settings.email_from = "secobserve@example.com"
         mock_settings_load.return_value = settings
         mock_create_message.return_value = "test_message"
-        mock_send_email.side_effect = Exception("test_exception")
+        exception = Exception("test_exception")
+        mock_send_email.side_effect = exception
 
         with patch.dict(
             "os.environ",
@@ -56,8 +56,11 @@ class TestPushNotifications(BaseTestCase):
                 "EMAIL_HOST": "mail.example.com",
             },
         ):
-            with self.captureOnCommitCallbacks(execute=True):
+            # The exception is not swallowed, so that the background task calling this
+            # function is marked as failed
+            with self.assertRaises(Exception) as context:
                 send_email_notification("test@example.com", "subject", "test_template")
+            self.assertEqual(exception, context.exception)
 
         mock_create_message.assert_called_with("test_template")
         mock_send_email.assert_called_with(
@@ -67,19 +70,13 @@ class TestPushNotifications(BaseTestCase):
             recipient_list=["test@example.com"],
             fail_silently=False,
         )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
 
     @patch("application.commons.models.Settings.load")
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.send_mail")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch.dict(os.environ, {"EMAIL_HOST": "email.example.org"})
     def test_send_email_notification_success(
         self,
-        mock_format,
-        mock_logger,
         mock_send_email,
         mock_create_message,
         mock_settings_load,
@@ -89,8 +86,7 @@ class TestPushNotifications(BaseTestCase):
         mock_settings_load.return_value = settings
         mock_create_message.return_value = "test_message"
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_email_notification("test@example.com", "subject", "test_template")
+        send_email_notification("test@example.com", "subject", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_send_email.assert_called_with(
@@ -100,8 +96,6 @@ class TestPushNotifications(BaseTestCase):
             recipient_list=["test@example.com"],
             fail_silently=False,
         )
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
 
     # --- send_msteams_notification ---
 
@@ -111,8 +105,7 @@ class TestPushNotifications(BaseTestCase):
     def test_send_msteams_notification_internal_host_blocked(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("127.0.0.1", 443))]
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_msteams_notification("https://localhost/webhook", "test_template")
+        send_msteams_notification("https://localhost/webhook", "test_template")
 
         mock_create_message.assert_not_called()
         mock_request.assert_not_called()
@@ -124,26 +117,25 @@ class TestPushNotifications(BaseTestCase):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = None
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_not_called()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_msteams_notification_exception(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_msteams_notification_exception(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
-        mock_request.side_effect = Exception("test_exception")
+        exception = Exception("test_exception")
+        mock_request.side_effect = exception
 
-        with self.captureOnCommitCallbacks(execute=True):
+        # The exception is not swallowed, so that the background task calling this
+        # function is marked as failed
+        with self.assertRaises(Exception) as context:
             send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
+        self.assertEqual(exception, context.exception)
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -154,24 +146,18 @@ class TestPushNotifications(BaseTestCase):
             headers={},
             timeout=60,
         )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_msteams_notification_not_ok(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_msteams_notification_not_ok(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
         response = Response()
         response.status_code = 400
         mock_request.return_value = response
 
-        with self.captureOnCommitCallbacks(execute=True):
+        with self.assertRaises(HTTPError):
             send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
@@ -183,25 +169,18 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             timeout=60,
         )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_msteams_notification_success(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_msteams_notification_success(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
         response = Response()
         response.status_code = 200
         mock_request.return_value = response
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
+        send_msteams_notification("https://tenant.webhook.office.com/webhookb2/test", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -212,23 +191,19 @@ class TestPushNotifications(BaseTestCase):
             headers={},
             timeout=60,
         )
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_msteams_notification_v2_format_exception(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_msteams_notification_v2_format_exception(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
-        mock_request.side_effect = Exception("test_exception")
+        exception = Exception("test_exception")
+        mock_request.side_effect = exception
 
-        with self.captureOnCommitCallbacks(execute=True):
+        with self.assertRaises(Exception) as context:
             send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        self.assertEqual(exception, context.exception)
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -239,25 +214,18 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             timeout=60,
         )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_msteams_notification_v2_format_success(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_msteams_notification_v2_format_success(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
         response = Response()
         response.status_code = 200
         mock_request.return_value = response
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_msteams_notification("https://hooks.example.org/webhook", "test_template")
+        send_msteams_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -268,8 +236,6 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             timeout=60,
         )
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
 
     # --- send_slack_notification ---
 
@@ -280,26 +246,25 @@ class TestPushNotifications(BaseTestCase):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = None
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_not_called()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_slack_notification_exception(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_slack_notification_exception(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
-        mock_request.side_effect = Exception("test_exception")
+        exception = Exception("test_exception")
+        mock_request.side_effect = exception
 
-        with self.captureOnCommitCallbacks(execute=True):
+        # The exception is not swallowed, so that the background task calling this
+        # function is marked as failed
+        with self.assertRaises(Exception) as context:
             send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        self.assertEqual(exception, context.exception)
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -309,24 +274,18 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             timeout=60,
         )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_slack_notification_not_ok(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_slack_notification_not_ok(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
         response = Response()
         response.status_code = 400
         mock_request.return_value = response
 
-        with self.captureOnCommitCallbacks(execute=True):
+        with self.assertRaises(HTTPError):
             send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
@@ -337,25 +296,18 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             timeout=60,
         )
-        mock_logger.assert_called_once()
-        mock_format.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
     @patch("application.notifications.services.send_notifications_base.requests.request")
-    @patch("application.notifications.services.send_notifications_base.logger.error")
-    @patch("application.notifications.services.send_notifications_base.format_log_message")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
-    def test_send_slack_notification_success(
-        self, mock_getaddrinfo, mock_format, mock_logger, mock_request, mock_create_message
-    ):
+    def test_send_slack_notification_success(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
         mock_create_message.return_value = "test_message"
         response = Response()
         response.status_code = 200
         mock_request.return_value = response
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_slack_notification("https://hooks.example.org/webhook", "test_template")
+        send_slack_notification("https://hooks.example.org/webhook", "test_template")
 
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
@@ -365,8 +317,6 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             timeout=60,
         )
-        mock_logger.assert_not_called()
-        mock_format.assert_not_called()
 
     # --- _create_notification_message ---
 
@@ -581,3 +531,78 @@ class TestPushNotifications(BaseTestCase):
 
     def testis_msteams_v2_invalid_url_is_v2(self):
         self.assertTrue(is_msteams_v2("not-a-url"))
+
+    # --- _get_first_name ---
+
+    @patch("application.notifications.services.send_notifications_base.get_user_by_email")
+    def test_get_user_first_name_no_user(self, mock_get_user):
+        mock_get_user.return_value = None
+        self.assertEqual("", _get_first_name("test@example.com"))
+        mock_get_user.assert_called_once_with("test@example.com")
+
+    @patch("application.notifications.services.send_notifications_base.get_user_by_email")
+    def test_get_user_first_name_no_first_name(self, mock_get_user):
+        mock_get_user.return_value = self.user_internal
+        self.assertEqual("", _get_first_name("test@example.com"))
+        mock_get_user.assert_called_once_with("test@example.com")
+
+    @patch("application.notifications.services.send_notifications_base.get_user_by_email")
+    def test_get_user_first_name_success(self, mock_get_user):
+        mock_get_user.return_value = self.user_internal
+        self.user_internal.first_name = "first_name"
+        self.assertEqual(" first_name", _get_first_name("test@example.com"))
+        mock_get_user.assert_called_once_with("test@example.com")
+
+    # --- _get_notification_email_to ---
+
+    def test_notification_email_to_product_email_to(self):
+        self.product_1.notification_email_to = "test@example.com"
+        self.assertEqual("test@example.com", _get_notification_email_to(self.product_1))
+
+    def test_notification_email_to_product_group_email_to(self):
+        self.product_group_1.notification_email_to = "test@example.com"
+        self.product_1.product_group = self.product_group_1
+        self.assertEqual("test@example.com", _get_notification_email_to(self.product_1))
+
+    def test_notification_email_to_product_group_email_to_empty(self):
+        self.product_1.product_group = self.product_group_1
+        self.assertEqual(None, _get_notification_email_to(self.product_1))
+
+    def test_notification_email_to_product_email_to_empty(self):
+        self.assertEqual(None, _get_notification_email_to(self.product_1))
+
+    # --- _get_notification_ms_teams_webhook ---
+
+    def test_get_notification_ms_teams_webhook_product_webhook(self):
+        self.product_1.notification_ms_teams_webhook = "test@example.com"
+        self.assertEqual("test@example.com", _get_notification_ms_teams_webhook(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_product_group_webhook(self):
+        self.product_group_1.notification_ms_teams_webhook = "test@example.com"
+        self.product_1.product_group = self.product_group_1
+        self.assertEqual("test@example.com", _get_notification_ms_teams_webhook(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_product_group_webhook_empty(self):
+        self.product_1.product_group = self.product_group_1
+        self.assertEqual(None, _get_notification_ms_teams_webhook(self.product_1))
+
+    def test_get_notification_ms_teams_webhook_product_webhook_empty(self):
+        self.assertEqual(None, _get_notification_ms_teams_webhook(self.product_1))
+
+    # --- _get_notification_slack_webhook ---
+
+    def test_get_notification_slack_webhook_product_webhook(self):
+        self.product_1.notification_slack_webhook = "test@example.com"
+        self.assertEqual("test@example.com", _get_notification_slack_webhook(self.product_1))
+
+    def test_get_notification_slack_webhook_product_group_webhook(self):
+        self.product_group_1.notification_slack_webhook = "test@example.com"
+        self.product_1.product_group = self.product_group_1
+        self.assertEqual("test@example.com", _get_notification_slack_webhook(self.product_1))
+
+    def test_get_notification_slack_webhook_product_group_webhook_empty(self):
+        self.product_1.product_group = self.product_group_1
+        self.assertEqual(None, _get_notification_slack_webhook(self.product_1))
+
+    def test_get_notification_slack_webhook_product_webhook_empty(self):
+        self.assertEqual(None, _get_notification_slack_webhook(self.product_1))

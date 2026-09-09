@@ -50,3 +50,4 @@ def _process_general_rule_evaluation(rule_id: int) -> None:
         task_record.save()
 
         handle_task_exception(e)
+        raise
