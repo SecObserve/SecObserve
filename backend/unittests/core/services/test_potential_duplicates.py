@@ -173,6 +173,20 @@ class TestSetPotentialDuplicate(BaseTestCase):
             self.assertTrue(observation.has_potential_duplicates)
             self.assertEqual(1, Potential_Duplicate.objects.filter(observation=observation).count())
 
+    @patch("application.core.services.potential_duplicates.handle_task_exception")
+    @patch("application.core.models.Observation.objects.filter")
+    def test_find_potential_duplicates_exception(self, filter_mock, exception_mock):
+        exception = Exception("error")
+        filter_mock.side_effect = exception
+
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            find_potential_duplicates.call_local(self.product_1, None, None)
+        self.assertEqual(exception, context.exception)
+
+        exception_mock.assert_called_once_with(exception)
+
 
 class TestMatchDuplicateCandidates(BaseTestCase):
     def _candidate(self, id, **kwargs):

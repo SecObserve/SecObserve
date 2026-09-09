@@ -12,7 +12,7 @@ from application.background_tasks.models import Periodic_Task
 from application.background_tasks.types import Status
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
-from application.notifications.services.send_notifications import (
+from application.notifications.services.send_notifications_exception import (
     send_task_exception_notification,
 )
 
@@ -23,6 +23,13 @@ MESSAGE_MAX_LENGTH = cast(int, Periodic_Task._meta.get_field("message").max_leng
 
 # Names of all periodic tasks, used to check that the registry is complete
 PERIODIC_TASK_NAMES: set[str] = set()
+
+
+class PeriodicTaskError(Exception):
+    """
+    Raised by a periodic task that has processed all of its items, but where some of them
+    failed. Its message becomes the message of the Periodic_Task entry.
+    """
 
 
 def _truncate_message(message: str) -> str:

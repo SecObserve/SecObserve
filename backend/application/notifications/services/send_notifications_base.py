@@ -8,35 +8,27 @@ import environ
 import requests
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from huey.contrib.djhuey import on_commit_task
 
+from application.access_control.queries.user import get_user_by_email
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
+from application.core.models import Product
 
 logger = logging.getLogger("secobserve.notifications")
 
 
-@on_commit_task()
 def send_email_notification(notification_email_to: str, subject: str, template: str, **kwargs: Any) -> None:
     settings = Settings.load()
     notification_message = _create_notification_message(template, **kwargs)
     env = environ.Env()
     if (env("EMAIL_HOST", default="") or env("EMAIL_PORT", default="")) and notification_message:
-        try:
-            send_mail(
-                subject=subject,
-                message=notification_message,
-                from_email=settings.email_from,
-                recipient_list=[notification_email_to],
-                fail_silently=False,
-            )
-        except Exception as e:
-            logger.error(
-                format_log_message(
-                    message=f"Error while sending email to {notification_email_to}",
-                    exception=e,
-                )
-            )
+        send_mail(
+            subject=subject,
+            message=notification_message,
+            from_email=settings.email_from,
+            recipient_list=[notification_email_to],
+            fail_silently=False,
+        )
 
 
 def is_msteams_v2(webhook: str) -> bool:
@@ -48,54 +40,36 @@ def is_msteams_v2(webhook: str) -> bool:
         return True
 
 
-@on_commit_task()
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
         headers = {"Content-Type": "application/json"} if is_msteams_v2(webhook) else {}
-        try:
-            response = requests.request(
-                method="POST",
-                url=webhook,
-                data=notification_message,
-                headers=headers,
-                allow_redirects=False,
-                timeout=60,
-            )
-            response.raise_for_status()
-        except Exception as e:
-            logger.error(
-                format_log_message(
-                    message=f"Error while calling MS Teams webhook {webhook}",
-                    exception=e,
-                )
-            )
+        response = requests.request(
+            method="POST",
+            url=webhook,
+            data=notification_message,
+            headers=headers,
+            allow_redirects=False,
+            timeout=60,
+        )
+        response.raise_for_status()
 
 
-@on_commit_task()
 def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
     if not _validate_webhook_url(webhook):
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        try:
-            response = requests.request(
-                method="POST",
-                url=webhook,
-                data=notification_message,
-                allow_redirects=False,
-                timeout=60,
-            )
-            response.raise_for_status()
-        except Exception as e:
-            logger.error(
-                format_log_message(
-                    message=f"Error while calling Slack webhook {webhook}",
-                    exception=e,
-                )
-            )
+        response = requests.request(
+            method="POST",
+            url=webhook,
+            data=notification_message,
+            allow_redirects=False,
+            timeout=60,
+        )
+        response.raise_for_status()
 
 
 def send_msteams_notification_test(webhook: str) -> None:
@@ -184,3 +158,50 @@ def _create_notification_message(template: str, **kwargs: Any) -> Optional[str]:
             )
         )
         return None
+
+
+def _get_notification_email_to(product: Product) -> Optional[str]:
+    if product.notification_email_to:
+        return product.notification_email_to
+
+    if product.product_group and product.product_group.notification_email_to:
+        return product.product_group.notification_email_to
+
+    return None
+
+
+def _get_notification_ms_teams_webhook(product: Product) -> Optional[str]:
+    if product.notification_ms_teams_webhook:
+        return product.notification_ms_teams_webhook
+
+    if product.product_group and product.product_group.notification_ms_teams_webhook:
+        return product.product_group.notification_ms_teams_webhook
+
+    return None
+
+
+def _get_notification_slack_webhook(product: Product) -> Optional[str]:
+    if product.notification_slack_webhook:
+        return product.notification_slack_webhook
+
+    if product.product_group and product.product_group.notification_slack_webhook:
+        return product.product_group.notification_slack_webhook
+
+    return None
+
+
+def _get_email_to_addresses(
+    notification_email_to: Optional[str],
+) -> Optional[list[str]]:
+    if not notification_email_to:
+        return None
+
+    email_to_adresses = notification_email_to.split(",")
+    return [item.strip() for item in email_to_adresses]
+
+
+def _get_first_name(email: str) -> str:
+    user = get_user_by_email(email)
+    if user and user.first_name:
+        return f" {user.first_name}"
+    return ""

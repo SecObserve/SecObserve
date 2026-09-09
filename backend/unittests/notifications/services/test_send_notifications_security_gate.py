@@ -389,8 +389,11 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         exception = Exception("test_exception")
         mock_settings_load.side_effect = exception
 
-        with self.captureOnCommitCallbacks(execute=True):
-            send_product_security_gate_notification(self.product_1)
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            send_product_security_gate_notification.call_local(self.product_1)
+        self.assertEqual(exception, context.exception)
 
         mock_handle_task_exception.assert_called_once_with(exception)
         mock_notification_create.assert_not_called()

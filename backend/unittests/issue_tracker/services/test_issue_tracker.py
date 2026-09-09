@@ -13,6 +13,8 @@ from application.issue_tracker.issue_trackers.gitlab_issue_tracker import (
     GitLabIssueTracker,
 )
 from application.issue_tracker.services.issue_tracker import (
+    _push_deleted_observation_to_issue_tracker_background,
+    _push_observation_to_issue_tracker_background,
     issue_tracker_factory,
     push_deleted_observation_to_issue_tracker,
     push_observation_to_issue_tracker,
@@ -152,8 +154,11 @@ class TestIssueTracker(BaseTestCase):
 
         observation = Observation.objects.get(pk=1)
         observation.product.issue_tracker_active = True
-        with self.captureOnCommitCallbacks(execute=True):
-            push_observation_to_issue_tracker(observation, self.user_internal)
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            _push_observation_to_issue_tracker_background.call_local(observation, self.user_internal)
+        self.assertEqual(exception, context.exception)
 
         exception_mock.assert_called_with(exception, self.user_internal)
 
@@ -345,8 +350,11 @@ class TestIssueTracker(BaseTestCase):
 
         product = Product.objects.get(pk=1)
         product.issue_tracker_active = True
-        with self.captureOnCommitCallbacks(execute=True):
-            push_deleted_observation_to_issue_tracker(product, "123", self.user_internal)
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            _push_deleted_observation_to_issue_tracker_background.call_local(product, "123", self.user_internal)
+        self.assertEqual(exception, context.exception)
 
         exception_mock.assert_called_with(exception, self.user_internal)
 

@@ -8,14 +8,12 @@ from application.notifications.models import Notification
 from application.notifications.services.product_notification import (
     get_users_for_product_notification,
 )
-from application.notifications.services.send_notifications import (
+from application.notifications.services.send_notifications_base import (
     _get_email_to_addresses,
     _get_first_name,
     _get_notification_email_to,
     _get_notification_ms_teams_webhook,
     _get_notification_slack_webhook,
-)
-from application.notifications.services.send_notifications_base import (
     is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
@@ -98,3 +96,4 @@ def send_product_security_gate_notification(product: Product) -> None:
         )
     except Exception as e:
         handle_task_exception(e)
+        raise

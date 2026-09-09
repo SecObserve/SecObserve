@@ -70,6 +70,7 @@ def _push_observation_to_issue_tracker_background(observation: Observation, user
                 observation.save()
     except Exception as e:
         handle_task_exception(e, user)
+        raise
 
 
 def push_deleted_observation_to_issue_tracker(product: Product, issue_id: Optional[str], user: Optional[User]) -> None:
@@ -88,6 +89,7 @@ def _push_deleted_observation_to_issue_tracker_background(
             issue_tracker.close_issue_for_deleted_observation(product, issue)
     except Exception as e:
         handle_task_exception(e, user)
+        raise
 
 
 def issue_tracker_factory(product: Product, with_communication: bool = True) -> BaseIssueTracker:

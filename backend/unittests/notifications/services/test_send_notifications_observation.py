@@ -353,6 +353,22 @@ class TestPushNotificationsObservation(BaseTestCase):
             f'Observation "{self.observation_1.title}" fell out of notifications',
         )
 
+    @patch("application.notifications.services.send_notifications_observation.handle_task_exception")
+    @patch(
+        "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
+    )
+    def test_send_observation_notification_exception(self, mock_get_min_severity, mock_handle_task_exception):
+        exception = Exception("test_exception")
+        mock_get_min_severity.side_effect = exception
+
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            send_observation_notification.call_local(self.observation_1)
+        self.assertEqual(exception, context.exception)
+
+        mock_handle_task_exception.assert_called_once_with(exception)
+
     # --- _send_observation_notifications ---
 
     @patch("application.notifications.services.send_notifications_observation.get_users_for_product_notification")
