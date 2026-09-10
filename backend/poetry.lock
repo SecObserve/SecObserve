@@ -2169,14 +2169,14 @@ re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
 name = "peewee"
-version = "4.4.0"
+version = "4.5.0"
 description = "a little orm"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "peewee-4.4.0-py3-none-any.whl", hash = "sha256:c4d6bc13d9a9b22fe691f695f5a5d716645b4bd5387fef27b9cb53ef14fae1e1"},
-    {file = "peewee-4.4.0.tar.gz", hash = "sha256:ea3b013d2366d09bb0bd7b6223f0e3e34125caad5d4dfc23525c668c8aad7026"},
+    {file = "peewee-4.5.0-py3-none-any.whl", hash = "sha256:b210911b0535be1b7c0d1e1a276770575150c8dc981bff92eef494595a51696c"},
+    {file = "peewee-4.5.0.tar.gz", hash = "sha256:4432dc35adc1c159b286205cddce6cff42adf0508e276f17dc57342bafcd0a72"},
 ]
 
 [package.extras]
@@ -3627,4 +3627,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "94c85ffe87f687dc71f93d743403df3bd055884ec6cac496f3675a75f72e72e4"
+content-hash = "a768c1488f85ef049b9c188b53d6d577c213e00294716c4d1b257f44cd04b34f"
