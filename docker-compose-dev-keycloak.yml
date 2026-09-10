@@ -63,6 +63,8 @@ services:
 
   mailpit:
     image: axllent/mailpit:v1.31.1
+    tmpfs:
+      - /tmp
     ports:
       - "1025:1025"
       - "8025:8025"
