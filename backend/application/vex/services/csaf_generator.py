@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import jsonpickle
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound
 
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import user_has_permission_or_403
@@ -76,6 +76,21 @@ def create_csaf_document(parameters: CSAFCreateParameters) -> Optional[CSAFRoot]
     if not user:
         raise ValueError("No user in request")
 
+    # Generate the content before allocating the document id: the counter row
+    # stays locked until the request commits, so the lock must not span the
+    # expensive part of the export.
+    if parameters.product:
+        vulnerabilities, product_tree = _get_content_for_product(
+            parameters.product, parameters.vulnerability_names, parameters.branches
+        )
+    else:
+        vulnerabilities, product_tree = _get_content_for_vulnerabilities(parameters.vulnerability_names)
+
+    if not vulnerabilities:
+        return None
+
+    validate_not_affected_impact_statements(vulnerabilities)
+
     document_base_id = create_document_base_id(parameters.document_id_prefix)
 
     csaf = CSAF.objects.create(
@@ -106,25 +121,6 @@ def create_csaf_document(parameters: CSAFCreateParameters) -> Optional[CSAFRoot]
         CSAF_Branch.objects.create(csaf=csaf, branch=branch)
 
     csaf_root = create_csaf_root(csaf)
-
-    vulnerabilities = []
-
-    if parameters.product:
-        vulnerabilities, product_tree = _get_content_for_product(
-            parameters.product, parameters.vulnerability_names, parameters.branches
-        )
-    else:
-        vulnerabilities, product_tree = _get_content_for_vulnerabilities(parameters.vulnerability_names)
-
-    if not vulnerabilities:
-        csaf.delete()
-        return None
-
-    try:
-        validate_not_affected_impact_statements(vulnerabilities)
-    except ValidationError:
-        csaf.delete()
-        raise
 
     csaf_content = CSAFContent(vulnerabilities, product_tree)
     content_json = jsonpickle.encode(csaf_content, unpicklable=False)
