@@ -41,12 +41,3 @@ services:
       POSTGRES_PASSWORD: ${SO_POSTGRES_PASSWORD:-secobserve}
     ports:
       - "5432:5432"
-
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    profiles:
-      - mailhog
-    entrypoint: ["/bin/sh", "-c", "MailHog &>/dev/null"]
-    ports:
-      - "1025:1025"
-      - "8025:8025"
