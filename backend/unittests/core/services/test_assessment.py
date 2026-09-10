@@ -11,13 +11,14 @@ from application.access_control.models import (
 )
 from application.authorization.services.roles_permissions import Roles
 from application.core.models import (
+    Observation,
     Observation_Log,
     Product,
     Product_Authorization_Group_Member,
     Product_Member,
 )
-from application.core.services.assessment import (
-    assessment_approval,
+from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment_approver import (
     assessment_approvers_configured,
     get_effective_assessment_approvers,
     is_user_designated_assessment_approver,
@@ -26,7 +27,7 @@ from application.core.services.assessment import (
 from application.core.services.observations_bulk_actions import (
     observation_logs_bulk_approval,
 )
-from application.core.types import Assessment_Status
+from application.core.types import Assessment_Status, Severity
 from unittests.base_test_case import BaseTestCase
 
 
@@ -323,3 +324,50 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
             observation_logs_bulk_approval(Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, [self.log.pk])
         self.log.refresh_from_db()
         self.assertEqual(self.log.assessment_status, Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL)
+
+
+class TestSaveAssessmentApprovalNotification(BaseTestCase):
+    """The notification for assessments that need approval is triggered by save_assessment()."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        self.product = Product.objects.get(pk=1)
+        self.observation = Observation.objects.get(pk=4)
+
+    def _save_assessment(self) -> None:
+        save_assessment(
+            observation=self.observation,
+            new_severity=Severity.SEVERITY_HIGH,
+            new_status=None,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="comment",
+            new_vex_justification=None,
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+        )
+
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_assessment_that_needs_approval_is_notified(self, mock_send) -> None:
+        self.product.assessments_need_approval = True
+        self.product.save()
+
+        self._save_assessment()
+
+        mock_send.assert_called_once()
+        observation_log = mock_send.call_args.args[0]
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL, observation_log.assessment_status)
+        self.assertEqual(self.observation, observation_log.observation)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.Rule_Engine")
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_auto_approved_assessment_is_not_notified(
+        self, mock_send, _mock_rule_engine, _mock_security_gate, _mock_issue_tracker, _mock_propagate
+    ) -> None:
+        self._save_assessment()
+
+        mock_send.assert_not_called()

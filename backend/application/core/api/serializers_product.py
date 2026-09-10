@@ -48,7 +48,7 @@ from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
 )
-from application.core.services.assessment import (
+from application.core.services.assessment_approver import (
     assessment_approvers_configured,
     is_user_designated_assessment_approver,
 )
