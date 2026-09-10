@@ -43,7 +43,7 @@ services:
       OIDC_EMAIL: ${SO_OIDC_EMAIL:-email}
       OIDC_GROUPS: ${SO_OIDC_GROUPS:-groups}
       # --- Email ---
-      EMAIL_HOST: mailhog
+      EMAIL_HOST: mailpit
       EMAIL_PORT: 1025
     volumes:
       - ./backend:/app
@@ -61,9 +61,8 @@ services:
     ports:
       - "5432:5432"
 
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    entrypoint: ["/bin/sh", "-c", "MailHog &>/dev/null"]
+  mailpit:
+    image: axllent/mailpit:v1.31.1
     ports:
       - "1025:1025"
       - "8025:8025"

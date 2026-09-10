@@ -47,12 +47,3 @@ services:
       - dev_mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
-
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    profiles:
-      - mailhog
-    entrypoint: ["/bin/sh", "-c", "MailHog &>/dev/null"]
-    ports:
-      - "1025:1025"
-      - "8025:8025"
