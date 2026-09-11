@@ -15,6 +15,9 @@ from application.commons.services.functions import validate_vex_remediations
 from application.core.api.serializers_observation import ObservationListSerializer
 from application.core.api.serializers_product import NestedProductSerializer
 from application.core.models import Product
+from application.notifications.services.send_notifications_product_rule_approval import (
+    send_product_rule_approval_notification,
+)
 from application.rules.models import Rule
 from application.rules.types import Rule_Status, Rule_Type
 
@@ -109,9 +112,16 @@ class ProductRuleSerializer(ModelSerializer):
 
         return super().validate(attrs)
 
+    def create(self, validated_data: dict) -> Rule:
+        rule: Rule = super().create(validated_data)
+        send_product_rule_approval_notification(rule)
+        return rule
+
     def update(self, instance: Rule, validated_data: dict) -> Rule:
         instance.approval_status = ""
-        return super().update(instance, validated_data)
+        rule: Rule = super().update(instance, validated_data)
+        send_product_rule_approval_notification(rule)
+        return rule
 
 
 class RuleApprovalSerializer(Serializer):
