@@ -60,6 +60,7 @@ class Product_Notification(Model):
     observation_new_changed = BooleanField(default=False)
     observation_to_be_reviewed = BooleanField(default=False)
     assessment_to_be_reviewed = BooleanField(default=False)
+    assessment_approval_receipt = BooleanField(default=False)
     product_rule_to_be_reviewed = BooleanField(default=False)
 
     class Meta:

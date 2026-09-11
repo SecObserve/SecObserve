@@ -371,3 +371,41 @@ class TestSaveAssessmentApprovalNotification(BaseTestCase):
         self._save_assessment()
 
         mock_send.assert_not_called()
+
+
+class TestAssessmentApprovalReceiptNotification(BaseTestCase):
+    """The receipt for the author of the assessment is triggered by assessment_approval()."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        # Observation log 1 belongs to observation 1 / product 1, authored by user 2.
+        self.log = Observation_Log.objects.get(pk=1)
+        self.log.assessment_status = Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
+        self.log.save()
+        self.approver = User.objects.get(pk=3)
+
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_receipt_after_rejection(self, mock_user, mock_send) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "not ok", None, None, None)
+
+        mock_send.assert_called_once_with(self.log)
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_REJECTED, self.log.assessment_status)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_receipt_after_approval(
+        self, mock_user, mock_send, _mock_security_gate, _mock_issue_tracker, _mock_propagate
+    ) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_APPROVED, None, None, None, None)
+
+        mock_send.assert_called_once_with(self.log)
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_APPROVED, self.log.assessment_status)

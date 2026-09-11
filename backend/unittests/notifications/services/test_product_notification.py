@@ -158,6 +158,7 @@ class TestProductNotificationService(BaseTestCase):
         self.assertTrue(product_notification.observation_new_changed)
         self.assertFalse(product_notification.observation_to_be_reviewed)
         self.assertFalse(product_notification.assessment_to_be_reviewed)
+        self.assertFalse(product_notification.assessment_approval_receipt)
         self.assertFalse(product_notification.product_rule_to_be_reviewed)
 
     def test_create_product_notification_override_copies_the_product_group_values(self):

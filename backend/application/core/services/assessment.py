@@ -32,6 +32,7 @@ from application.issue_tracker.services.issue_tracker import (
 )
 from application.notifications.services.send_notifications_assessment_approval import (
     send_assessment_approval_notification,
+    send_assessment_approval_receipt_notification,
 )
 from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
@@ -331,6 +332,8 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     observation_log.approval_date = timezone.now()
     observation_log.assessment_status = assessment_status
     observation_log.save()
+
+    send_assessment_approval_receipt_notification(observation_log)
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:

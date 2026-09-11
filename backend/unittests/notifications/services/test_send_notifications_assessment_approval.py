@@ -3,8 +3,10 @@ from unittest.mock import MagicMock, patch
 from application.access_control.models import User
 from application.authorization.services.roles_permissions import Permissions
 from application.commons.models import Settings
+from application.core.types import Assessment_Status
 from application.notifications.services.send_notifications_assessment_approval import (
     send_assessment_approval_notification,
+    send_assessment_approval_receipt_notification,
 )
 from application.notifications.types import Product_Notification_Type
 from unittests.base_test_case import BaseTestCase
@@ -82,7 +84,7 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
             send_assessment_approval_notification(self.observation_log_1)
 
         mocks["has_permission"].assert_called_once_with(
-            self.observation_log_1, Permissions.Observation_Log_Approval, self.user_jane
+            self.product_1, Permissions.Observation_Log_Approval, self.user_jane
         )
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
@@ -149,6 +151,95 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
         # by Huey. It has to be re-raised, so that Huey marks the task as failed.
         with self.assertRaises(Exception) as context:
             send_assessment_approval_notification.call_local(self.observation_log_1)
+        self.assertEqual(exception, context.exception)
+
+        mock_handle_task_exception.assert_called_once_with(exception)
+
+    # --- send_assessment_approval_receipt_notification ---
+
+    def test_send_assessment_approval_receipt_notification_without_email_from(self):
+        mocks = self._patch(email_from="")
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_assessment_approval_receipt_notification(self.observation_log_1)
+
+        mocks["get_users"].assert_not_called()
+        mocks["send_email"].assert_not_called()
+
+    def test_send_assessment_approval_receipt_notification_author_does_not_want_it(self):
+        mocks = self._patch()
+        # the author of observation_log_1 is user_internal, jane only wants other notifications
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_assessment_approval_receipt_notification(self.observation_log_1)
+
+        mocks["get_users"].assert_called_once_with(
+            self.product_1, Product_Notification_Type.ASSESSMENT_APPROVAL_RECEIPT
+        )
+        mocks["send_email"].assert_not_called()
+
+    def test_send_assessment_approval_receipt_notification_approved(self):
+        mocks = self._patch()
+        self.observation_log_1.assessment_status = Assessment_Status.ASSESSMENT_STATUS_APPROVED
+        mocks["get_users"].return_value = {self.user_internal, self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_assessment_approval_receipt_notification(self.observation_log_1)
+
+        # only the author of the assessment gets the receipt
+        mocks["send_email"].assert_called_once_with(
+            self.user_internal.email,
+            'Assessment for observation "observation_1" has been approved',
+            "email_assessment_approval.tpl",
+            observation=self.observation_1,
+            observation_log=self.observation_log_1,
+            observation_log_url="https://secobserve.com/#/observation_logs/3/show",
+            first_line='Assessment for observation "observation_1" has been approved',
+            first_name=f" {self.user_internal.full_name}",
+        )
+
+    def test_send_assessment_approval_receipt_notification_approved_with_edits(self):
+        mocks = self._patch()
+        self.observation_log_1.assessment_status = Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_assessment_approval_receipt_notification(self.observation_log_1)
+
+        self.assertEqual(
+            'Assessment for observation "observation_1" has been approved with edits',
+            mocks["send_email"].call_args.args[1],
+        )
+
+    def test_send_assessment_approval_receipt_notification_rejected(self):
+        mocks = self._patch()
+        self.observation_log_1.assessment_status = Assessment_Status.ASSESSMENT_STATUS_REJECTED
+        self.user_internal.first_name = "Ingrid"
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_assessment_approval_receipt_notification(self.observation_log_1)
+
+        self.assertEqual(
+            'Assessment for observation "observation_1" has been rejected',
+            mocks["send_email"].call_args.args[1],
+        )
+        self.assertEqual(" Ingrid", mocks["send_email"].call_args.kwargs["first_name"])
+
+    @patch("application.commons.models.Settings.load")
+    @patch("application.notifications.services.send_notifications_assessment_approval.handle_task_exception")
+    def test_send_assessment_approval_receipt_notification_exception(
+        self, mock_handle_task_exception, mock_settings_load
+    ):
+        exception = Exception("test_exception")
+        mock_settings_load.side_effect = exception
+
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            send_assessment_approval_receipt_notification.call_local(self.observation_log_1)
         self.assertEqual(exception, context.exception)
 
         mock_handle_task_exception.assert_called_once_with(exception)
