@@ -71,7 +71,7 @@ const ProductRuleApprovalList = ({ product }: ProductRuleApprovalListProps) => {
                                 product.product_group_product_rules_need_approval) && (
                                 <ChipField source="approval_status" />
                             )}
-                        <BooleanField source="enabled" />
+                        <BooleanField source="enabled" textAlign="center" />
                         <ReferenceField
                             source="parser"
                             reference="parsers"

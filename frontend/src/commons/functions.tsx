@@ -120,7 +120,7 @@ export function get_cvss4_url(cvss_vector: string): string {
     return "";
 }
 
-export function get_component_purl_url(component_purl: string): string | null {
+export function get_purl_url(component_purl: string): string | null {
     if (component_purl === "") {
         return null;
     }

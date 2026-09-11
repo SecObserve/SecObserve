@@ -15,9 +15,8 @@ from application.core.models import (
     Product,
 )
 from application.core.queries.observation import get_current_observation_log
-from application.core.services.assessment import (
-    assessment_approval,
-    save_assessment,
+from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment_approver import (
     user_is_allowed_assessment_approver,
 )
 from application.core.services.potential_duplicates import (

@@ -66,7 +66,10 @@ class TestProcessGeneralRuleEvaluation(unittest.TestCase):
         exception = Exception("something went wrong")
         self.mock_evaluate.side_effect = exception
 
-        _process_general_rule_evaluation(1)
+        # The exception is re-raised, so that Huey marks the task as failed
+        with self.assertRaises(Exception) as context:
+            _process_general_rule_evaluation(1)
+        self.assertEqual(exception, context.exception)
 
         self.assertEqual(self.task_record.status, Status.STATUS_FAILURE)
         self.assertEqual(self.task_record.message, "something went wrong")

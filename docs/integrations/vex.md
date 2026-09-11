@@ -8,7 +8,7 @@ A VEX (Vulnerability Exploitability eXchange) document is a form of a security a
 
 ## Feature flag
 
-The VEX feature is is disabled by default because not all installations will use it. It can be enabled by setting the feature flag `FEATURE_VEX` in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve):
+The VEX feature is is disabled by default because not all installations will use it. It can be enabled by setting the feature flag `FEATURE_VEX` in the [Settings](../getting_started/configuration.md#administration-in-secobserve):
 
 ![VEX feature flag](../assets/images/screenshot_vex_feature_flag.png){ width="80%" style="display: block; margin: 0 auto" }
 

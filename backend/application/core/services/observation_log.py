@@ -4,9 +4,12 @@ from typing import Optional
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log
-from application.core.types import Assessment_Status
+from application.core.types import Assessment_Status, Status
 from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
+)
+from application.notifications.services.send_notifications_observation_review import (
+    send_observation_review_notification,
 )
 from application.notifications.services.send_notifications_observation_title import (
     send_observation_title_notification,
@@ -66,6 +69,11 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     ):
         send_observation_notification(observation)
         send_observation_title_notification(observation)
+
+    # The log has a status only when it has been changed, the current status of the observation
+    # makes sure that it has taken effect, an assessment that needs approval hasn't been applied yet
+    if status == Status.STATUS_IN_REVIEW and observation.current_status == Status.STATUS_IN_REVIEW:
+        send_observation_review_notification(observation)
 
     return observation_log
 

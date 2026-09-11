@@ -1,6 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
+    BooleanField,
     CharField,
     DateTimeField,
     ForeignKey,
@@ -50,6 +51,29 @@ class Notification_Viewed(Model):
 
     class Meta:
         db_table = "commons_notification_viewed"
+
+
+class Product_Notification(Model):
+    product = ForeignKey(Product, on_delete=CASCADE, null=True, blank=True)
+    user = ForeignKey(User, on_delete=CASCADE)
+    security_gate_changed = BooleanField(default=False)
+    observation_new_changed = BooleanField(default=False)
+    observation_to_be_reviewed = BooleanField(default=False)
+    assessment_to_be_reviewed = BooleanField(default=False)
+    assessment_approval_receipt = BooleanField(default=False)
+    product_rule_to_be_reviewed = BooleanField(default=False)
+    product_rule_approval_receipt = BooleanField(default=False)
+
+    class Meta:
+        unique_together = (
+            "product",
+            "user",
+        )
+
+    def __str__(self) -> str:
+        if self.product:
+            return f"{self.product} / {self.user}"
+        return str(self.user)
 
 
 class Observation_Notified(Model):

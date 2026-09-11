@@ -62,7 +62,7 @@ class OIDCAuthentication(BaseAuthentication):
             options = Options(
                 verify_signature=True,
                 verify_aud=True,
-                strict_aud=True,
+                strict_aud=settings.oidc_strict_audience,
                 require=["exp"],
                 verify_iat=True,
                 verify_exp=True,

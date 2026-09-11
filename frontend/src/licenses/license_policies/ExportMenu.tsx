@@ -7,7 +7,7 @@ import MenuItem from "@mui/material/MenuItem";
 import { Fragment, MouseEvent, useState } from "react";
 import { useNotify } from "react-admin";
 
-import axios_instance from "../../access_control/auth_provider/axios_instance";
+import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { getIconAndFontColor } from "../../commons/functions";
 
 interface ExportMenuProps {
@@ -40,12 +40,13 @@ const ExportMenu = ({ license_policy }: ExportMenuProps) => {
     const exportLicensePolicy = async (format: string) => {
         const type = format === "yaml" ? "yaml" : "json";
 
-        axios_instance
-            .get("/license_policies/" + license_policy.id + "/export_" + format + "/")
-            .then(function (response) {
-                let blob = new Blob([response.data], { type: "application/" + type });
+        fetch_get("/license_policies/" + license_policy.id + "/export_" + format + "/")
+            .then(async function (response) {
+                let blob;
                 if (format === "json" || format === "sbom_utility") {
-                    blob = new Blob([JSON.stringify(response.data, null, 4)], { type: "application/json" });
+                    blob = new Blob([JSON.stringify(await response.json(), null, 4)], { type: "application/json" });
+                } else {
+                    blob = new Blob([await response.text()], { type: "application/" + type });
                 }
                 const url = window.URL.createObjectURL(blob);
                 const link = document.createElement("a");

@@ -98,7 +98,8 @@ class TestSecurityGate(BaseTestCase):
 
         get_product_mock.return_value = product
 
-        check_security_gate(product)
+        with self.captureOnCommitCallbacks(execute=True):
+            check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
         get_product_mock.assert_called_once_with(
@@ -159,7 +160,8 @@ class TestSecurityGate(BaseTestCase):
 
         get_product_mock.return_value = product
 
-        check_security_gate(product)
+        with self.captureOnCommitCallbacks(execute=True):
+            check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
         get_product_mock.assert_called_once_with(
@@ -222,7 +224,8 @@ class TestSecurityGate(BaseTestCase):
 
         get_product_mock.return_value = product
 
-        check_security_gate(product)
+        with self.captureOnCommitCallbacks(execute=True):
+            check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
         get_product_mock.assert_called_once_with(
@@ -288,7 +291,8 @@ class TestSecurityGate(BaseTestCase):
 
         get_product_mock.return_value = product
 
-        check_security_gate(product)
+        with self.captureOnCommitCallbacks(execute=True):
+            check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
         get_product_mock.assert_called_once_with(
@@ -355,7 +359,8 @@ class TestSecurityGate(BaseTestCase):
 
         get_product_mock.return_value = product
 
-        check_security_gate(product)
+        with self.captureOnCommitCallbacks(execute=True):
+            check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
         get_product_mock.assert_called_once_with(
@@ -424,7 +429,8 @@ class TestSecurityGate(BaseTestCase):
 
         get_product_mock.return_value = product
 
-        check_security_gate(product)
+        with self.captureOnCommitCallbacks(execute=True):
+            check_security_gate(product)
 
         self.assertFalse(product.security_gate_passed)
         get_product_mock.assert_called_once_with(

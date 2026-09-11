@@ -1,16 +1,21 @@
 import logging
 import re
 from datetime import timedelta
+from itertools import batched
 
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
 from application.commons.models import Settings
-from application.core.models import Branch, Observation, Product
+from application.core.models import Branch, Component, Observation, Product
+from application.licenses.models import License_Component
 
 logger = logging.getLogger("secobserve.core")
 
+BULK_BATCH_SIZE = 1000
 
-def delete_inactive_branches_and_set_flags() -> str:
+
+def housekeeping() -> str:
     num_products = 0
     num_deleted_branches = 0
     products = Product.objects.filter(is_product_group=False)
@@ -21,7 +26,12 @@ def delete_inactive_branches_and_set_flags() -> str:
             num_products += 1
         set_product_flags(product)
 
-    return f"Deleted {num_deleted_branches} inactive branches in {num_products} products."
+    num_deleted_components = delete_orphaned_components()
+
+    return (
+        f"Deleted {num_deleted_branches} inactive branches in {num_products} products."
+        f"\nDeleted {num_deleted_components} orphaned components."
+    )
 
 
 def delete_inactive_branches_for_product(product: Product) -> int:
@@ -129,3 +139,23 @@ def set_product_flags(product: Product) -> None:
         or has_potential_duplicates_before != product.has_potential_duplicates
     ):
         product.save()
+
+
+def delete_orphaned_components() -> int:
+    orphaned_components = Component.objects.filter(
+        ~Exists(Observation.objects.filter(origin_component=OuterRef("pk"))),
+        ~Exists(License_Component.objects.filter(component=OuterRef("pk"))),
+    )
+    orphaned_component_ids = list(orphaned_components.values_list("pk", flat=True))
+
+    num_deleted_components = 0
+    for component_ids_batch in batched(orphaned_component_ids, BULK_BATCH_SIZE):
+        deleted_objects = orphaned_components.filter(pk__in=component_ids_batch).delete()
+        num_deleted_components += deleted_objects[1].get("core.Component", 0)
+
+    if num_deleted_components:
+        logger.info(  # pylint: disable=logging-fstring-interpolation
+            f"Deleted {num_deleted_components} orphaned components"
+        )
+
+    return num_deleted_components

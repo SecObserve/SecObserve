@@ -67,10 +67,10 @@ const UserEmbeddedList = () => {
                     >
                         <TextField source="username" />
                         <TextField source="full_name" sx={{ wordBreak: "break-word" }} />
-                        {is_superuser() && <BooleanField source="is_active" label="Active" />}
-                        {is_superuser() && <BooleanField source="is_oidc_user" label="OIDC user" />}
-                        {is_superuser() && <BooleanField source="is_external" label="External" />}
-                        {is_superuser() && <BooleanField source="is_superuser" label="Superuser" />}
+                        {is_superuser() && <BooleanField source="is_active" label="Active" textAlign="center" />}
+                        {is_superuser() && <BooleanField source="is_oidc_user" label="OIDC user" textAlign="center" />}
+                        {is_superuser() && <BooleanField source="is_external" label="External" textAlign="center" />}
+                        {is_superuser() && <BooleanField source="is_superuser" label="Superuser" textAlign="center" />}
                     </Datagrid>
                     <CustomPagination />
                 </div>

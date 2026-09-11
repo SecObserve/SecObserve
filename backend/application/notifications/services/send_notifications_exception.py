@@ -1,16 +1,20 @@
 import logging
 import traceback
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
+
+from huey.contrib.djhuey import on_commit_task
 
 from application.access_control.models import User
-from application.access_control.queries.user import get_user_by_email
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
-from application.commons.services.functions import get_base_url_frontend, get_classname
+from application.commons.services.functions import get_classname
+from application.commons.services.log_message import format_log_message
 from application.core.models import Product
 from application.notifications.models import Notification
 from application.notifications.services.send_notifications_base import (
+    _get_email_to_addresses,
+    _get_first_name,
     is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
@@ -23,62 +27,43 @@ logger = logging.getLogger("secobserve.notifications")
 LAST_EXCEPTIONS: dict[str, datetime] = {}
 
 
-def send_product_security_gate_notification(product: Product) -> None:
-    settings = Settings.load()
-
-    if product.security_gate_passed is None:
-        security_gate_status = "None"
-    elif product.security_gate_passed:
-        security_gate_status = "Passed"
-    else:
-        security_gate_status = "Failed"
-
-    notification_email_to = _get_notification_email_to(product)
-    email_to_addresses = _get_email_to_addresses(notification_email_to)
-    if email_to_addresses and settings.email_from:
-        for email_to_address in email_to_addresses:
-            first_name = _get_first_name(email_to_address)
-            send_email_notification(
-                email_to_address,
-                f"Security gate for {product.name} has changed to {security_gate_status}",
-                "email_product_security_gate.tpl",
-                product=product,
-                security_gate_status=security_gate_status,
-                product_url=f"{get_base_url_frontend()}#/products/{product.id}/show",
-                first_name=first_name,
+@on_commit_task()
+def send_email_notification_background(notification_email_to: str, subject: str, template: str, **kwargs: Any) -> None:
+    try:
+        send_email_notification(notification_email_to, subject, template, **kwargs)
+    except Exception as e:
+        logger.error(
+            format_log_message(
+                message=f"Error while sending email to {notification_email_to}",
+                exception=e,
             )
-
-    notification_ms_teams_webhook = _get_notification_ms_teams_webhook(product)
-    if notification_ms_teams_webhook:
-        template = (
-            "msteams_v2_product_security_gate.tpl"
-            if is_msteams_v2(notification_ms_teams_webhook)
-            else "msteams_product_security_gate.tpl"
-        )
-        send_msteams_notification(
-            notification_ms_teams_webhook,
-            template,
-            product=product,
-            security_gate_status=security_gate_status,
-            product_url=f"{get_base_url_frontend()}#/products/{product.id}/show",
         )
 
-    notification_slack_webhook = _get_notification_slack_webhook(product)
-    if notification_slack_webhook:
-        send_slack_notification(
-            notification_slack_webhook,
-            "slack_product_security_gate.tpl",
-            product=product,
-            security_gate_status=security_gate_status,
-            product_url=f"{get_base_url_frontend()}#/products/{product.id}/show",
+
+@on_commit_task()
+def send_msteams_notification_background(webhook: str, template: str, **kwargs: Any) -> None:
+    try:
+        send_msteams_notification(webhook, template, **kwargs)
+    except Exception as e:
+        logger.error(
+            format_log_message(
+                message=f"Error while calling MS Teams webhook {webhook}",
+                exception=e,
+            )
         )
 
-    Notification.objects.create(
-        name=f"Security gate has changed to {security_gate_status}",
-        product=product,
-        user=get_current_user(),
-        type=Notification.TYPE_SECURITY_GATE,
-    )
+
+@on_commit_task()
+def send_slack_notification_background(webhook: str, template: str, **kwargs: Any) -> None:
+    try:
+        send_slack_notification(webhook, template, **kwargs)
+    except Exception as e:
+        logger.error(
+            format_log_message(
+                message=f"Error while calling Slack webhook {webhook}",
+                exception=e,
+            )
+        )
 
 
 def send_exception_notification(exception: Exception) -> None:
@@ -89,7 +74,7 @@ def send_exception_notification(exception: Exception) -> None:
         if email_to_adresses and settings.email_from:
             for notification_email_to in email_to_adresses:
                 first_name = _get_first_name(notification_email_to)
-                send_email_notification(
+                send_email_notification_background(
                     notification_email_to,
                     f'Exception "{get_classname(exception)}" has occured',
                     "email_exception.tpl",
@@ -106,7 +91,7 @@ def send_exception_notification(exception: Exception) -> None:
                 if is_msteams_v2(settings.exception_ms_teams_webhook)
                 else "msteams_exception.tpl"
             )
-            send_msteams_notification(
+            send_msteams_notification_background(
                 settings.exception_ms_teams_webhook,
                 template,
                 exception_class=get_classname(exception),
@@ -116,7 +101,7 @@ def send_exception_notification(exception: Exception) -> None:
             )
 
         if settings.exception_slack_webhook:
-            send_slack_notification(
+            send_slack_notification_background(
                 settings.exception_slack_webhook,
                 "slack_exception.tpl",
                 exception_class=get_classname(exception),
@@ -147,7 +132,7 @@ def send_task_exception_notification(
         if email_to_adresses and settings.email_from:
             for notification_email_to in email_to_adresses:
                 first_name = _get_first_name(notification_email_to)
-                send_email_notification(
+                send_email_notification_background(
                     notification_email_to,
                     f'Exception "{get_classname(exception)}" has occured in background task',
                     "email_task_exception.tpl",
@@ -167,7 +152,7 @@ def send_task_exception_notification(
                 if is_msteams_v2(settings.exception_ms_teams_webhook)
                 else "msteams_task_exception.tpl"
             )
-            send_msteams_notification(
+            send_msteams_notification_background(
                 settings.exception_ms_teams_webhook,
                 template,
                 function=function,
@@ -180,7 +165,7 @@ def send_task_exception_notification(
             )
 
         if settings.exception_slack_webhook:
-            send_slack_notification(
+            send_slack_notification_background(
                 settings.exception_slack_webhook,
                 "slack_task_exception.tpl",
                 function=function,
@@ -223,7 +208,7 @@ def _ratelimit_exception(exception: Exception, function: str = None, arguments: 
     if key in LAST_EXCEPTIONS:
         last_datetime = LAST_EXCEPTIONS[key]
         difference: timedelta = now - last_datetime
-        if difference.seconds >= settings.exception_rate_limit:
+        if difference.total_seconds() >= settings.exception_rate_limit:
             LAST_EXCEPTIONS[key] = now
             return True
 
@@ -231,53 +216,6 @@ def _ratelimit_exception(exception: Exception, function: str = None, arguments: 
 
     LAST_EXCEPTIONS[key] = now
     return True
-
-
-def _get_notification_email_to(product: Product) -> Optional[str]:
-    if product.notification_email_to:
-        return product.notification_email_to
-
-    if product.product_group and product.product_group.notification_email_to:
-        return product.product_group.notification_email_to
-
-    return None
-
-
-def _get_notification_ms_teams_webhook(product: Product) -> Optional[str]:
-    if product.notification_ms_teams_webhook:
-        return product.notification_ms_teams_webhook
-
-    if product.product_group and product.product_group.notification_ms_teams_webhook:
-        return product.product_group.notification_ms_teams_webhook
-
-    return None
-
-
-def _get_notification_slack_webhook(product: Product) -> Optional[str]:
-    if product.notification_slack_webhook:
-        return product.notification_slack_webhook
-
-    if product.product_group and product.product_group.notification_slack_webhook:
-        return product.product_group.notification_slack_webhook
-
-    return None
-
-
-def _get_email_to_addresses(
-    notification_email_to: Optional[str],
-) -> Optional[list[str]]:
-    if not notification_email_to:
-        return None
-
-    email_to_adresses = notification_email_to.split(",")
-    return [item.strip() for item in email_to_adresses]
-
-
-def _get_first_name(email: str) -> str:
-    user = get_user_by_email(email)
-    if user and user.first_name:
-        return f" {user.first_name}"
-    return ""
 
 
 def _get_stack_trace(exc: Exception, format_as_code: bool) -> str:

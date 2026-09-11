@@ -70,7 +70,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation()
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -88,7 +89,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation(numerical_severity=5)
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -105,7 +107,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation(numerical_severity=1, current_status="Resolved")
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -123,7 +126,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
 
         # priority 5 > threshold 2 → blocked
         observation = _make_observation(numerical_severity=1, current_priority=5)
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -140,7 +144,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
 
         # no priority in observation -> blocked
         observation = _make_observation(current_priority=None)
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -157,7 +162,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
 
         observation = _make_observation(numerical_severity=1, parser_type="SAST")
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -186,7 +192,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.return_value = new_record
 
         observation = _make_observation(numerical_severity=1, current_status="Open")
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         first_line_arg = mock_send.call_args[0][2]
         assert "New notification" in first_line_arg
@@ -218,7 +225,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
             current_status="Open",
             current_priority=1,
         )
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         first_line_arg = mock_send.call_args[0][2]
         assert "Change in" in first_line_arg
@@ -248,7 +256,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
             current_status="Open",
             current_priority=1,
         )
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         mock_send.assert_not_called()
 
@@ -277,11 +286,30 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_otn.return_value = new_record
 
         observation = _make_observation(title="XSS Attack", numerical_severity=1, current_status="Open")
-        send_observation_title_notification(observation)
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_title_notification(observation)
 
         url_arg = mock_send.call_args[0][3]
         assert "XSS Attack" in url_arg
         assert "https://app.example.com/" in url_arg
+
+    # -----------------------------------------------------------------------
+    # Exception handling
+    # -----------------------------------------------------------------------
+
+    @patch(f"{MODULE}.handle_task_exception")
+    @patch(f"{MODULE}.Settings")
+    def test_exception(self, mock_settings_cls, mock_handle_task_exception):
+        exception = Exception("test_exception")
+        mock_settings_cls.load.side_effect = exception
+
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            send_observation_title_notification.call_local(_make_observation())
+        self.assertEqual(exception, context.exception)
+
+        mock_handle_task_exception.assert_called_once_with(exception)
 
 
 # ===========================================================================

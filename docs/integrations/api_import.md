@@ -37,7 +37,7 @@ API imports can be configured to run automatically at a specific time. There is 
 
 #### General setting
 
-In the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) the automatic import can be enabled for the whole SecObserve instance.
+In the `Features` section of the [Settings](../getting_started/configuration.md#administration-in-secobserve) the automatic import can be enabled for the whole SecObserve instance.
 
 ![Settings automatic API import](../assets/images/screenshot_settings_automatic_api_import.png){ width="80%" style="display: block; margin: 0 auto" }
 

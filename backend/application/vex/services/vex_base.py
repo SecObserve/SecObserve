@@ -1,5 +1,6 @@
 from typing import Optional
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -12,9 +13,12 @@ from application.vex.models import VEX_Counter
 
 def create_document_base_id(document_id_prefix: str) -> str:
     year = timezone.now().year
-    counter = VEX_Counter.objects.get_or_create(document_id_prefix=document_id_prefix, year=year)[0]
-    counter.counter += 1
-    counter.save()
+    with transaction.atomic():
+        counter = VEX_Counter.objects.select_for_update().get_or_create(
+            document_id_prefix=document_id_prefix, year=year
+        )[0]
+        counter.counter += 1
+        counter.save()
     return f"{counter.year}_{counter.counter:04d}"
 
 

@@ -1,8 +1,9 @@
 from unittest.mock import patch
 
+from application.background_tasks.models import Periodic_Task
 from application.background_tasks.periodic_tasks.core_tasks import (
-    task_branch_housekeeping,
     task_expire_risk_acceptances,
+    task_housekeeping,
 )
 from unittests.base_test_case import BaseTestCase
 
@@ -12,13 +13,24 @@ class TestCoreTasks(BaseTestCase):
     # task_branch_housekeeping
     # ---------------------------------------------------------------
 
-    @patch("application.background_tasks.periodic_tasks.core_tasks.delete_inactive_branches_and_set_flags")
-    def test_task_branch_housekeeping(self, mock_delete_inactive_branches):
+    @patch("application.background_tasks.periodic_tasks.core_tasks.delete_orphaned_product_notifications")
+    @patch("application.background_tasks.periodic_tasks.core_tasks.housekeeping")
+    def test_task_branch_housekeeping(self, mock_delete_inactive_branches, mock_delete_product_notifications):
+        # Setup
+        mock_delete_inactive_branches.return_value = "Deleted 1 inactive branches in 2 products."
+        mock_delete_product_notifications.return_value = 3
+
         # Execute
-        task_branch_housekeeping()
+        task_housekeeping()
 
         # Assert
         mock_delete_inactive_branches.assert_called_once()
+        mock_delete_product_notifications.assert_called_once()
+        periodic_task = Periodic_Task.objects.get(task="Housekeeping")
+        self.assertEqual(
+            "Deleted 1 inactive branches in 2 products.\nDeleted 3 orphaned product notifications.",
+            periodic_task.message,
+        )
 
     # ---------------------------------------------------------------
     # task_expire_risk_acceptances

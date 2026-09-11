@@ -11,7 +11,7 @@
                 "body": [
                     {
                         "type": "TextBlock",
-                        "text": "{{ first_line }}",
+                        "text": "{{ first_line|escapejs }}",
                         "weight": "bolder",
                         "size": "medium",
                         "wrap": true
@@ -21,15 +21,15 @@
                         "facts": [
                             {
                                 "title": "Severity:",
-                                "value": "{{ observation.current_severity }}"
+                                "value": "{{ observation.current_severity|escapejs }}"
                             },
                             {
                                 "title": "Status:",
-                                "value": "{{ observation.current_status }}"
+                                "value": "{{ observation.current_status|escapejs }}"
                             },
                             {
                                 "title": "Priority:",
-                                "value": "{{ observation.current_priority }}"
+                                "value": "{{ observation.current_priority|escapejs }}"
                             }
                         ]
                     }
@@ -37,8 +37,8 @@
                 "actions": [
                     {
                         "type": "Action.OpenUrl",
-                        "title": "View observation title {{ observation.title }}",
-                        "url": "{{ url }}"
+                        "title": "View observation title {{ observation.title|escapejs }}",
+                        "url": "{{ url|escapejs }}"
                     }
                 ]
             }

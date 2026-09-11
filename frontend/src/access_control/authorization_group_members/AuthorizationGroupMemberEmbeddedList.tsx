@@ -63,7 +63,7 @@ const AuthorizationGroupMemberEmbeddedList = ({ authorization_group }: Authoriza
                                 resource="users"
                             >
                                 <UserFullNameURLField source="user_data.full_name" label="User" />
-                                <BooleanField source="is_manager" label="Manager" />
+                                <BooleanField source="is_manager" label="Manager" textAlign="center" />
                                 {(is_superuser() || authorization_group.is_manager) && (
                                     <WithRecord
                                         render={(authorization_group_member) => (

@@ -33,7 +33,7 @@ Vulnerability data can comprise a **Vulnerability Id** like a CVE or GHSA, a **C
 An observation can be found at different origins:
 
 * **Service**: A service is a self-contained piece of functionality within a product. This can be something like *frontend* or *backend* or the name of a microservice.
-* **Component**: Typically a library (Maven, NPM, PyPI, ...) or a program installed in a docker image, identified by name and version.
+* **[Component](../usage/components.md)**: Typically a library (Maven, NPM, PyPI, ...) or a program installed in a docker image, identified by name and version.
 * **Docker image**: Name and tag of a Docker image, where the observation was found.
 * **Endpoint**: The URL of a web address.
 * **Source file**: Path and name of a source file, start and end lines are optional. The source file will be shown as a link to the source in the repository, if a **Repository prefix** has been configured in the product.

@@ -6,7 +6,7 @@ The [Linux Foundation](https://www.linuxfoundation.org/) gathers a list of commo
 
 ### Configuration
 
-Per default the task to import the SPDX licenses is scheduled to run every night at 01:30 UTC time. This default can be changed by administrators via the [Settings](../getting_started/configuration.md#admininistration-in-secobserve). 
+Per default the task to import the SPDX licenses is scheduled to run every night at 01:30 UTC time. This default can be changed by administrators via the [Settings](../getting_started/configuration.md#administration-in-secobserve). 
 
 ![SPDX license import configuration](../assets/images/screenshot_spdx_license_import.png){ width="80%" style="display: block; margin: 0 auto" }
 

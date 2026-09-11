@@ -8,19 +8,17 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TokenIcon from "@mui/icons-material/Token";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import {
     EditButton,
     PrevNextButtons,
     Show,
     Tab,
     TabbedShowLayout,
-    TabbedShowLayoutTabs,
     TopToolbar,
     WithRecord,
     useRecordContext,
 } from "react-admin";
-import { useLocation } from "react-router";
 
 import ApiTokenCreate from "../../access_control/api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../../access_control/api_tokens/ApiTokenEmbeddedList";
@@ -38,6 +36,7 @@ import {
     PERMISSION_SERVICE_CREATE,
 } from "../../access_control/types";
 import { feature_license_management } from "../../commons/functions";
+import TabsWithSubMenu from "../../commons/layout/TabsWithSubMenu";
 import { useStyles } from "../../commons/layout/themes";
 import observations from "../../core/observations";
 import ApiConfigurationCreate from "../../import_observations/api_configurations/ApiConfigurationCreate";
@@ -50,6 +49,8 @@ import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
 import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
 import MetricsStatusCurrent from "../../metrics/MetricsStatusCurrent";
+import notifications from "../../notifications/notifications";
+import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
 import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
@@ -70,6 +71,8 @@ import ExportMenu from "./ExportMenu";
 import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
+
+const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications"];
 
 type ShowActionsProps = {
     filter: any;
@@ -100,29 +103,6 @@ const ShowActions = (props: ShowActionsProps) => {
 
 const ProductShow = () => {
     const { classes } = useStyles();
-    const [settingsTabsShow, setSettingsTabsShow] = useState(false);
-    const [tabsChanged, setTabsChanged] = useState(false);
-    function showSettingsTabs() {
-        setSettingsTabsShow(true);
-        setTabsChanged(true);
-    }
-
-    function hideSettingsTabs() {
-        setSettingsTabsShow(false);
-        setTabsChanged(true);
-    }
-
-    const location = useLocation();
-    if (!tabsChanged) {
-        setTabsChanged(true);
-        setSettingsTabsShow(
-            location.pathname.endsWith("api_token") ||
-                location.pathname.endsWith("members") ||
-                location.pathname.endsWith("rules") ||
-                location.pathname.endsWith("api_configurations")
-        );
-    }
-    const settingsLabel = settingsTabsShow ? "Settings" : "Settings >>>";
 
     let filter = {};
     let storeKey = "products.list";
@@ -144,8 +124,18 @@ const ProductShow = () => {
             <Show actions={<ShowActions filter={filter} storeKey={storeKey} />}>
                 <WithRecord
                     render={(product) => (
-                        <TabbedShowLayout tabs={<TabbedShowLayoutTabs variant="scrollable" scrollButtons="auto" />}>
-                            <Tab label="Observations" icon={<observations.icon />} onClick={hideSettingsTabs}>
+                        <TabbedShowLayout
+                            tabs={
+                                <TabsWithSubMenu
+                                    variant="scrollable"
+                                    scrollButtons="auto"
+                                    subMenuLabel="Settings"
+                                    subMenuIcon={<SettingsIcon />}
+                                    subMenuPaths={SETTINGS_PATHS}
+                                />
+                            }
+                        >
+                            <Tab label="Observations" icon={<observations.icon />}>
                                 <Stack
                                     direction="row"
                                     spacing={2}
@@ -165,7 +155,7 @@ const ProductShow = () => {
                                 </Stack>
                                 <ObservationsEmbeddedList product={product} />
                             </Tab>
-                            <Tab label="Metrics" path="metrics" icon={<BarChartIcon />} onClick={hideSettingsTabs}>
+                            <Tab label="Metrics" path="metrics" icon={<BarChartIcon />}>
                                 <MetricsHeader repository_default_branch={product.repository_default_branch_name} />
                                 <Stack
                                     direction="row"
@@ -200,17 +190,11 @@ const ProductShow = () => {
                                             <ChecklistIcon />
                                         </Badge>
                                     }
-                                    onClick={hideSettingsTabs}
                                 >
                                     <ProductReviews product={product} />
                                 </Tab>
                             )}
-                            <Tab
-                                label="Vulnerability Checks"
-                                path="vulnerability_checks"
-                                icon={<FactCheckIcon />}
-                                onClick={hideSettingsTabs}
-                            >
+                            <Tab label="Vulnerability Checks" path="vulnerability_checks" icon={<FactCheckIcon />}>
                                 <VulnerabilityCheckEmbeddedList product={product} long_list={true} />
                             </Tab>
                             <Tab
@@ -222,19 +206,13 @@ const ProductShow = () => {
                                 }
                                 path="branches"
                                 icon={<AccountTreeIcon />}
-                                onClick={hideSettingsTabs}
                             >
                                 {product?.permissions?.includes(PERMISSION_BRANCH_CREATE) && (
                                     <BranchCreate product={product} />
                                 )}
                                 <BranchEmbeddedList product={product} />
                             </Tab>
-                            <Tab
-                                label="Services"
-                                path="services"
-                                icon={<ConstructionIcon />}
-                                onClick={hideSettingsTabs}
-                            >
+                            <Tab label="Services" path="services" icon={<ConstructionIcon />}>
                                 {product?.permissions?.includes(PERMISSION_SERVICE_CREATE) && (
                                     <ServiceCreate product={product} />
                                 )}
@@ -250,70 +228,59 @@ const ProductShow = () => {
                                     }
                                     path="licenses"
                                     icon={<license_components.icon />}
-                                    onClick={hideSettingsTabs}
                                 >
                                     <ProductShowLicenseComponents product={product} />
                                 </Tab>
                             )}
-                            <Tab
-                                label={settingsLabel}
-                                path="settings"
-                                icon={<SettingsIcon />}
-                                onClick={showSettingsTabs}
-                            >
+                            <Tab label="Settings" path="settings" icon={<SettingsIcon />}>
                                 <ProductShowProduct product={product} />
                             </Tab>
-                            {settingsTabsShow && (
-                                <Tab label="Rules" path="rules" icon={<general_rules.icon />}>
-                                    <Stack
-                                        direction="row"
-                                        spacing={2}
-                                        sx={{
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
-                                            <ProductRuleCreate product={product} />
-                                        )}
-                                        {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
-                                            <ProductRuleApply product={product} />
-                                        )}
-                                    </Stack>
-                                    <ProductRuleEmbeddedList product={product} />
-                                </Tab>
-                            )}
-                            {settingsTabsShow && (
-                                <Tab label="API Configurations" path="api_configurations" icon={<UploadIcon />}>
-                                    {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_CREATE) && (
-                                        <ApiConfigurationCreate id={product.id} />
+                            <Tab label="Rules" path="rules" icon={<general_rules.icon />}>
+                                <Stack
+                                    direction="row"
+                                    spacing={2}
+                                    sx={{
+                                        alignItems: "center",
+                                    }}
+                                >
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
+                                        <ProductRuleCreate product={product} />
                                     )}
-                                    <ApiConfigurationEmbeddedList product={product} />
-                                </Tab>
-                            )}
-                            {settingsTabsShow && (
-                                <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
-                                    <Typography variant="h6">User members</Typography>
-                                    {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
-                                        <ProductMemberAdd id={product.id} />
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
+                                        <ProductRuleApply product={product} />
                                     )}
-                                    <ProductMemberEmbeddedList product={product} />
+                                </Stack>
+                                <ProductRuleEmbeddedList product={product} />
+                            </Tab>
+                            <Tab label="API Configurations" path="api_configurations" icon={<UploadIcon />}>
+                                {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_CREATE) && (
+                                    <ApiConfigurationCreate id={product.id} />
+                                )}
+                                <ApiConfigurationEmbeddedList product={product} />
+                            </Tab>
+                            <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
+                                <Typography variant="h6">User members</Typography>
+                                {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
+                                    <ProductMemberAdd id={product.id} />
+                                )}
+                                <ProductMemberEmbeddedList product={product} />
 
-                                    <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                    <Typography variant="h6">Authorization group members</Typography>
-                                    {product?.permissions?.includes(
-                                        PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE
-                                    ) && <ProductAuthorizationGroupMemberAdd id={product.id} />}
-                                    <ProductAuthorizationGroupMemberEmbeddedList product={product} />
-                                </Tab>
-                            )}
-                            {settingsTabsShow && (
-                                <Tab label="API Token" path="api_token" icon={<TokenIcon />}>
-                                    {product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
-                                        <ApiTokenCreate type="product" product={product} />
-                                    )}
-                                    <ApiTokenEmbeddedList type="product" product={product} />
-                                </Tab>
-                            )}
+                                <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
+                                <Typography variant="h6">Authorization group members</Typography>
+                                {product?.permissions?.includes(
+                                    PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE
+                                ) && <ProductAuthorizationGroupMemberAdd id={product.id} />}
+                                <ProductAuthorizationGroupMemberEmbeddedList product={product} />
+                            </Tab>
+                            <Tab label="API Token" path="api_token" icon={<TokenIcon />}>
+                                {product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
+                                    <ApiTokenCreate type="product" product={product} />
+                                )}
+                                <ApiTokenEmbeddedList type="product" product={product} />
+                            </Tab>
+                            <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
+                                <ProductNotificationSettings product={product} />
+                            </Tab>
                         </TabbedShowLayout>
                     )}
                 />

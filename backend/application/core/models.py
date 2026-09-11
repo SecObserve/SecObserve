@@ -5,7 +5,6 @@ from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
-    DO_NOTHING,
     PROTECT,
     RESTRICT,
     SET_NULL,
@@ -265,6 +264,26 @@ class Product_Authorization_Group_Member(Model):
         return f"{self.product} / {self.authorization_group}"
 
 
+class Component(Model):
+    identity_hash = CharField(max_length=64, unique=True)
+    name = CharField(max_length=255)
+    version = CharField(max_length=255, blank=True)
+    name_version = CharField(max_length=513, blank=True)
+    type = CharField(max_length=24, blank=True)
+    purl = CharField(max_length=255, blank=True)
+    purl_type = CharField(max_length=16, blank=True)
+    purl_namespace = CharField(max_length=255, blank=True)
+
+    class Meta:
+        indexes = [
+            Index(fields=["name_version"]),
+            Index(fields=["purl"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name_version} ({self.purl_type})" if self.purl_type else self.name_version
+
+
 class Observation(Model):
     product = ForeignKey(Product, on_delete=CASCADE)
     branch = ForeignKey(Branch, on_delete=CASCADE, null=True)
@@ -296,6 +315,7 @@ class Observation(Model):
     vulnerability_id = CharField(max_length=255, blank=True)
     vulnerability_id_aliases = CharField(max_length=512, blank=True)
 
+    origin_component = ForeignKey(Component, on_delete=SET_NULL, null=True)
     origin_component_name = CharField(max_length=255, blank=True)
     origin_component_version = CharField(max_length=255, blank=True)
     origin_component_name_version = CharField(max_length=513, blank=True)
@@ -578,24 +598,3 @@ class Potential_Duplicate(Model):
             "observation",
             "potential_duplicate_observation",
         )
-
-
-class Component(Model):
-    id = CharField(max_length=32, primary_key=True)
-    product = ForeignKey(Product, related_name="components", on_delete=DO_NOTHING)
-    branch = ForeignKey(Branch, related_name="components", on_delete=DO_NOTHING, null=True)
-    origin_service = ForeignKey(Service, on_delete=DO_NOTHING, null=True)
-    component_name = CharField(max_length=255)
-    component_version = CharField(max_length=255, blank=True)
-    component_name_version = CharField(max_length=513, blank=True)
-    component_type = CharField(max_length=24, blank=True)
-    component_purl = CharField(max_length=255, blank=True)
-    component_purl_type = CharField(max_length=16, blank=True)
-    component_cpe = CharField(max_length=255, blank=True)
-    component_dependencies = TextField(max_length=32768, blank=True)
-    component_cyclonedx_bom_link = CharField(max_length=512, blank=True)
-    has_observations = BooleanField()
-
-    class Meta:
-        db_table = "core_component"
-        managed = False

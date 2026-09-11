@@ -1,7 +1,9 @@
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
-from application.core.models import Observation, Product
+from application.core.models import Component, Observation, Product
 from application.import_observations.models import Parser
 from unittests.base_test_case import BaseTestCase
 
@@ -42,3 +44,29 @@ class TestObservation(BaseTestCase):
         self.assertEqual("component:1.0.0", observation.origin_component_name_version)
         product.refresh_from_db()
         self.assertTrue(1, product.has_component)
+
+
+class TestObservationManager(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        call_command(
+            "loaddata",
+            [
+                "unittests/fixtures/unittests_fixtures.json",
+            ],
+        )
+        self.component = Component.objects.create(
+            identity_hash="identity_hash",
+            name="component",
+            version="1.0.0",
+            name_version="component:1.0.0",
+        )
+        Observation.objects.create(
+            title="observation_manager_test",
+            product=Product.objects.get(pk=1),
+            import_last_seen=timezone.now(),
+            parser=Parser.objects.first(),
+            origin_component=self.component,
+            origin_component_name="component",
+            origin_component_version="1.0.0",
+        )

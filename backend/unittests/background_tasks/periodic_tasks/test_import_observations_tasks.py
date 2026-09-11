@@ -4,6 +4,7 @@ from application.background_tasks.models import Periodic_Task
 from application.background_tasks.periodic_tasks.import_observations_tasks import (
     task_api_import,
 )
+from application.background_tasks.types import Status
 from application.commons.models import Settings
 from unittests.base_test_case import BaseTestCase
 
@@ -11,10 +12,13 @@ TASK_NAME = "Import observations from API configurations, OSV and VulnerableCode
 
 
 class TestImportObservationsTasks(BaseTestCase):
+    def _get_task(self) -> Periodic_Task:
+        return Periodic_Task.objects.filter(task=TASK_NAME).latest("start_time")
+
     def _get_task_message(self) -> str:
         # so_periodic_task swallows the return value of the task and stores it on the Periodic_Task
         # entry, so the composed message can only be asserted through the database.
-        return Periodic_Task.objects.filter(task=TASK_NAME).latest("start_time").message
+        return self._get_task().message
 
     # ---------------------------------------------------------------
     # task_api_import
@@ -332,6 +336,9 @@ class TestImportObservationsTasks(BaseTestCase):
         # Check exception was handled
         mock_handle_task_exception.assert_called_once_with(test_exception, product=mock_api_config.product)
 
+        # Check the task is marked as failed, although the remaining imports have been executed
+        self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
+
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
@@ -365,6 +372,9 @@ class TestImportObservationsTasks(BaseTestCase):
         # Assert
         # Check exception was handled
         mock_handle_task_exception.assert_called_once_with(test_exception, product=mock_product)
+
+        # Check the task is marked as failed, although the remaining imports have been executed
+        self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
@@ -403,6 +413,9 @@ class TestImportObservationsTasks(BaseTestCase):
 
         # Check the failed imports are counted with the VulnerableCode counter
         self.assertTrue(self._get_task_message().endswith("\nVulnerableCode scanning failed for 1 products."))
+
+        # Check the task is marked as failed, although the remaining imports have been executed
+        self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
@@ -455,6 +468,8 @@ class TestImportObservationsTasks(BaseTestCase):
         message = self._get_task_message()
         self.assertEqual(255, len(message))
         self.assertTrue(message.endswith(" ..."))
+
+        self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")

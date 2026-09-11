@@ -36,7 +36,8 @@ import license_components from "./licenses/license_components";
 import license_groups from "./licenses/license_groups";
 import license_policies from "./licenses/license_policies";
 import licenses from "./licenses/licenses";
-import notifications from "./notifications";
+import notifications from "./notifications/notifications";
+import product_notifications from "./notifications/product_notifications";
 import general_rules from "./rules/general_rules";
 import product_rules from "./rules/product_rules";
 import csaf from "./vex/csaf";
@@ -168,6 +169,11 @@ const AdminApp = () => {
                 {...notifications} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                 // nosemgrep because the props are well defined in the import
                 recordRepresentation={(record) => `${trim_string(record.name)}`}
+            />
+            <Resource
+                name="product_notifications"
+                {...product_notifications} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
+                // nosemgrep because the props are well defined in the import
             />
             <Resource
                 name="vex/csaf"

@@ -132,7 +132,7 @@ The evaluation performs a full rule engine pass on the affected observations. Th
 
 With the default settings of the product, the rule will be activated right away if enabled. If more control is needed, an approval can be configured:
 
-* For **General rules** the feature `General rules need approval` can be set in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve).
+* For **General rules** the feature `General rules need approval` can be set in the [Settings](../getting_started/configuration.md#administration-in-secobserve).
 * For **Product rules** the setting `Rules need approval` can be set while creating or editing a product. The setting is also available for product groups. If it is set for a product group, it will be inherited by all products in that group.
 
 If the approval is required, the dialog showing the rule  will show a button to either approve or reject the assessment:

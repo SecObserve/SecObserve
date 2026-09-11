@@ -11,7 +11,12 @@ from rest_framework.serializers import (
 )
 
 from application.access_control.services.current_user import get_current_user
-from application.notifications.models import Notification, Notification_Viewed
+from application.core.api.serializers_product import NestedProductSerializerSmall
+from application.notifications.models import (
+    Notification,
+    Notification_Viewed,
+    Product_Notification,
+)
 
 
 class NotificationSerializer(ModelSerializer):
@@ -62,6 +67,20 @@ class NotificationSerializer(ModelSerializer):
             if Notification_Viewed.objects.filter(notification=obj, user=user).exists():
                 return "Viewed"
         return "New"
+
+
+class ProductNotificationSerializer(ModelSerializer):
+    product_data = NestedProductSerializerSmall(source="product", read_only=True)
+
+    class Meta:
+        model = Product_Notification
+        fields = "__all__"
+        read_only_fields = ["product", "user"]
+
+
+class ProductNotificationPairSerializer(Serializer):
+    product_notification = ProductNotificationSerializer(allow_null=True)
+    template_notification = ProductNotificationSerializer(allow_null=True)
 
 
 class NotificationBulkSerializer(Serializer):

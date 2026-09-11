@@ -3,7 +3,10 @@ import logging
 from huey import crontab
 from huey.contrib.djhuey import db_periodic_task
 
-from application.background_tasks.services.task_base import so_periodic_task
+from application.background_tasks.services.task_base import (
+    PeriodicTaskError,
+    so_periodic_task,
+)
 from application.commons import settings_static
 from application.commons.models import Settings
 from application.import_observations.models import Api_Configuration, Product
@@ -28,15 +31,21 @@ logger = logging.getLogger("secobserve.import_observations")
 )
 @so_periodic_task("Import observations from API configurations, OSV and VulnerableCode")
 def task_api_import() -> str:
-    message = _import_api()
-    message = _import_osv(message)
-    message = _import_vulnerablecode(message)
+    message, api_imports_failed = _import_api()
+    message, osv_imports_failed = _import_osv(message)
+    message, vulnerablecode_imports_failed = _import_vulnerablecode(message)
+
+    if api_imports_failed + osv_imports_failed + vulnerablecode_imports_failed > 0:
+        # The imports of the other products have been executed, but the task has to be
+        # marked as failed, so that the failures are not overlooked.
+        raise PeriodicTaskError(message)
 
     return message
 
 
-def _import_api() -> str:
+def _import_api() -> tuple[str, int]:
     message = ""
+    api_imports_failed = 0
 
     settings = Settings.load()
     if not settings.feature_automatic_api_import:
@@ -44,7 +53,6 @@ def _import_api() -> str:
         message += "API import is disabled in settings."
     else:
         product_set = set()
-        api_imports_failed = 0
 
         api_configurations = Api_Configuration.objects.filter(automatic_import_enabled=True)
         for api_configuration in api_configurations:
@@ -80,21 +88,21 @@ def _import_api() -> str:
                 )
             except Exception as e:
                 api_imports_failed += 1
-                logger.warning("API import - %s: failed with exception", api_configuration)
+                logger.exception("API import - %s: failed with exception", api_configuration)
                 handle_task_exception(e, product=api_configuration.product)
 
         message += f"Imported observations for {len(product_set)} products from API configurations."
         if api_imports_failed > 0:
             message += f"\nAPI import failed for {api_imports_failed} configurations."
 
-    return message
+    return message, api_imports_failed
 
 
-def _import_osv(message: str) -> str:
+def _import_osv(message: str) -> tuple[str, int]:
     settings = Settings.load()
     if not settings.feature_automatic_osv_scanning:
         logger.info("OSV scanning is disabled in settings")
-        return message + "\nOSV scanning is disabled in settings."
+        return message + "\nOSV scanning is disabled in settings.", 0
 
     osv_imports_failed = 0
     osv_scanner = OSVScanner()
@@ -115,25 +123,25 @@ def _import_osv(message: str) -> str:
             )
         except Exception as e:
             osv_imports_failed += 1
-            logger.warning("OSV scanning - %s: failed with exception", product)
+            logger.exception("OSV scanning - %s: failed with exception", product)
             handle_task_exception(e, product=product)
 
     message += f"\nImported observations for {len(products)} products from OSV scanning."
     if osv_imports_failed > 0:
         message += f"\nOSV scanning failed for {osv_imports_failed} products."
 
-    return message
+    return message, osv_imports_failed
 
 
-def _import_vulnerablecode(message: str) -> str:
+def _import_vulnerablecode(message: str) -> tuple[str, int]:
     settings = Settings.load()
     if not settings.feature_automatic_vulnerablecode_scanning:
         logger.info("VulnerableCode scanning is disabled in settings")
-        return message + "\nVulnerableCode scanning is disabled in settings."
+        return message + "\nVulnerableCode scanning is disabled in settings.", 0
 
     if not settings.vulnerablecode_base_url:
         logger.info("VulnerableCode base URL is not set")
-        return message + "\nVulnerableCode bade URL is not set."
+        return message + "\nVulnerableCode bade URL is not set.", 0
 
     vulnerablecode_imports_failed = 0
     vulnerablecode_scanner = VulnerableCodeScanner()
@@ -154,11 +162,11 @@ def _import_vulnerablecode(message: str) -> str:
             )
         except Exception as e:
             vulnerablecode_imports_failed += 1
-            logger.warning("VulnerableCode scanning - %s: failed with exception", product)
+            logger.exception("VulnerableCode scanning - %s: failed with exception", product)
             handle_task_exception(e, product=product)
 
     message += f"\nImported observations for {len(products)} products from VulnerableCode scanning."
     if vulnerablecode_imports_failed > 0:
         message += f"\nVulnerableCode scanning failed for {vulnerablecode_imports_failed} products."
 
-    return message
+    return message, vulnerablecode_imports_failed

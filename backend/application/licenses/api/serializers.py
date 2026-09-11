@@ -106,6 +106,8 @@ class NestedLicenseComponentEvidenceSerializer(ModelSerializer):
 
 class LicenseComponentListSerializer(ModelSerializer):
     component_name_version_type = SerializerMethodField()
+    product_name = SerializerMethodField()
+    product_group_name = SerializerMethodField()
     branch_name = SerializerMethodField()
     origin_service_name = SerializerMethodField()
 
@@ -115,6 +117,15 @@ class LicenseComponentListSerializer(ModelSerializer):
             if obj.component_purl_type:
                 component_name_version_type += f" ({obj.component_purl_type})"
             return component_name_version_type
+
+        return ""
+
+    def get_product_name(self, obj: License_Component) -> str:
+        return obj.product.name
+
+    def get_product_group_name(self, obj: License_Component) -> str:
+        if obj.product.product_group:
+            return obj.product.product_group.name
 
         return ""
 

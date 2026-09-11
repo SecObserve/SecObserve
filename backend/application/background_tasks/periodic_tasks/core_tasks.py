@@ -4,10 +4,13 @@ from huey.contrib.djhuey import db_periodic_task
 from application.background_tasks.services.task_base import so_periodic_task
 from application.commons import settings_static
 from application.core.services.housekeeping import (
-    delete_inactive_branches_and_set_flags,
+    housekeeping,
 )
 from application.core.services.risk_acceptance_expiry_task import (
     expire_risk_acceptances,
+)
+from application.notifications.services.housekeeping import (
+    delete_orphaned_product_notifications,
 )
 
 
@@ -17,9 +20,10 @@ from application.core.services.risk_acceptance_expiry_task import (
         hour=settings_static.branch_housekeeping_crontab_hour,
     )
 )
-@so_periodic_task("Branch housekeeping")
-def task_branch_housekeeping() -> str:
-    message = delete_inactive_branches_and_set_flags()
+@so_periodic_task("Housekeeping")
+def task_housekeeping() -> str:
+    message = housekeeping()
+    message += f"\nDeleted {delete_orphaned_product_notifications()} orphaned product notifications."
     return message
 
 

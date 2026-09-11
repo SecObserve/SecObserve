@@ -1,95 +1,101 @@
+from huey.contrib.djhuey import on_commit_task
+
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
 from application.commons.services.functions import get_base_url_frontend
 from application.core.models import Observation
 from application.core.types import Severity, Status
 from application.notifications.models import Notification, Observation_Title_Notified
-from application.notifications.services.send_notifications import (
+from application.notifications.services.send_notifications_base import (
     _get_email_to_addresses,
     _get_first_name,
-)
-from application.notifications.services.send_notifications_base import (
     is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
 )
+from application.notifications.services.tasks import handle_task_exception
 
 
+@on_commit_task()
 def send_observation_title_notification(observation: Observation) -> None:
-    settings = Settings.load()
+    try:
+        settings = Settings.load()
 
-    observation_title_notification_min_severity = settings.observation_title_notification_min_severity
-    observation_title_notification_numerical_min_severity = (
-        Severity.NUMERICAL_SEVERITIES.get(observation_title_notification_min_severity)
-        if observation_title_notification_min_severity
-        else None
-    )
-    observation_title_notification_statuses = settings.observation_title_notification_statuses
-    observation_title_notification_min_priority = settings.observation_title_notification_min_priority
-    observation_title_notification_parser_type = settings.observation_title_notification_parser_type
-
-    if (
-        (  # pylint: disable=too-many-boolean-expressions
-            observation_title_notification_numerical_min_severity
-            or observation_title_notification_statuses
-            or observation_title_notification_min_priority
-            or observation_title_notification_parser_type
+        observation_title_notification_min_severity = settings.observation_title_notification_min_severity
+        observation_title_notification_numerical_min_severity = (
+            Severity.NUMERICAL_SEVERITIES.get(observation_title_notification_min_severity)
+            if observation_title_notification_min_severity
+            else None
         )
-        and (
-            not observation_title_notification_numerical_min_severity
-            or observation.numerical_severity <= observation_title_notification_numerical_min_severity
-        )
-        and (
-            (
-                observation_title_notification_statuses
-                and observation.current_status in observation_title_notification_statuses
-            )
-            or (not observation_title_notification_statuses and observation.current_status in Status.STATUS_ACTIVE)
-        )
-        and (
-            not observation_title_notification_min_priority
-            or (
-                observation.current_priority
-                and observation.current_priority <= observation_title_notification_min_priority
-            )
-        )
-        and (
-            not observation_title_notification_parser_type
-            or observation.parser.type == observation_title_notification_parser_type
-        )
-    ):
-        try:
-            observation_title_notified = Observation_Title_Notified.objects.get(title=observation.title)
-            new_notification = False
-        except Observation_Title_Notified.DoesNotExist:
-            observation_title_notified = Observation_Title_Notified(title=observation.title)
-            new_notification = True
+        observation_title_notification_statuses = settings.observation_title_notification_statuses
+        observation_title_notification_min_priority = settings.observation_title_notification_min_priority
+        observation_title_notification_parser_type = settings.observation_title_notification_parser_type
 
         if (
-            observation.current_severity != observation_title_notified.severity
-            or observation.current_status != observation_title_notified.status
-            or observation.current_priority != observation_title_notified.priority
+            (  # pylint: disable=too-many-boolean-expressions
+                observation_title_notification_numerical_min_severity
+                or observation_title_notification_statuses
+                or observation_title_notification_min_priority
+                or observation_title_notification_parser_type
+            )
+            and (
+                not observation_title_notification_numerical_min_severity
+                or observation.numerical_severity <= observation_title_notification_numerical_min_severity
+            )
+            and (
+                (
+                    observation_title_notification_statuses
+                    and observation.current_status in observation_title_notification_statuses
+                )
+                or (not observation_title_notification_statuses and observation.current_status in Status.STATUS_ACTIVE)
+            )
+            and (
+                not observation_title_notification_min_priority
+                or (
+                    observation.current_priority
+                    and observation.current_priority <= observation_title_notification_min_priority
+                )
+            )
+            and (
+                not observation_title_notification_parser_type
+                or observation.parser.type == observation_title_notification_parser_type
+            )
         ):
-            first_line = (
-                f'New notification for observation title "{observation.title}"'
-                if new_notification
-                else f'Change in observation title "{observation.title}"'
-            )
+            try:
+                observation_title_notified = Observation_Title_Notified.objects.get(title=observation.title)
+                new_notification = False
+            except Observation_Title_Notified.DoesNotExist:
+                observation_title_notified = Observation_Title_Notified(title=observation.title)
+                new_notification = True
 
-            url = (
-                get_base_url_frontend()
-                + '#/observations?filter={"current_status":["Open","Affected","In+review"],"title":"'
-                + observation.title
-                + '"}'
-            )
+            if (
+                observation.current_severity != observation_title_notified.severity
+                or observation.current_status != observation_title_notified.status
+                or observation.current_priority != observation_title_notified.priority
+            ):
+                first_line = (
+                    f'New notification for observation title "{observation.title}"'
+                    if new_notification
+                    else f'Change in observation title "{observation.title}"'
+                )
 
-            _send_observation_title_notifications(settings, observation, first_line, url)
+                url = (
+                    get_base_url_frontend()
+                    + '#/observations?filter={"current_status":["Open","Affected","In+review"],"title":"'
+                    + observation.title
+                    + '"}'
+                )
 
-            observation_title_notified.severity = observation.current_severity
-            observation_title_notified.status = observation.current_status
-            observation_title_notified.priority = observation.current_priority
-            observation_title_notified.save()
+                _send_observation_title_notifications(settings, observation, first_line, url)
+
+                observation_title_notified.severity = observation.current_severity
+                observation_title_notified.status = observation.current_status
+                observation_title_notified.priority = observation.current_priority
+                observation_title_notified.save()
+    except Exception as e:
+        handle_task_exception(e)
+        raise
 
 
 def _send_observation_title_notifications(

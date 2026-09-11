@@ -20,6 +20,8 @@
 
     [:octicons-arrow-right-24: Upload SBOM](../usage/upload_sbom.md)
 
+    [:octicons-arrow-right-24: Components](../usage/components.md)
+
 -   :material-magnify:{ .lg .middle } __Vulnerabilities__
 
     ---
@@ -87,14 +89,14 @@
 
     [:octicons-arrow-right-24: Source code repositories](source_code_repositories.md)
 
--   :material-bell-ring:{ .lg .middle } __Notifications__
+-   :material-bell-ring:{ .lg .middle } __Notification channels__
 
     ---
 
-    SecObserve can send notifications via email, MS Teams or Slack when a security gate changes
-    or an exception occurs.
+    Notifications about observations, security gates, approvals and exceptions can be sent via
+    email, MS Teams or Slack.
 
-    [:octicons-arrow-right-24: Notifications](notifications.md)
+    [:octicons-arrow-right-24: Notification channels](notifications.md)
 
 -   :material-open-in-new:{ .lg .middle } __Information links__
 

@@ -11,7 +11,7 @@
                 "body": [
                     {
                         "type": "TextBlock",
-                        "text": "Security gate for product {{ product.name }} has changed to {{ security_gate_status }}",
+                        "text": "Security gate for product {{ product.name|escapejs }} has changed to {{ security_gate_status|escapejs }}",
                         "weight": "bolder",
                         "size": "medium",
                         "wrap": true
@@ -20,8 +20,8 @@
                 "actions": [
                     {
                         "type": "Action.OpenUrl",
-                        "title": "View Product {{ product.name }}",
-                        "url": "{{ product_url }}"
+                        "title": "View Product {{ product.name|escapejs }}",
+                        "url": "{{ product_url|escapejs }}"
                     }
                 ]
             }

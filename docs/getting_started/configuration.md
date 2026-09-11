@@ -59,10 +59,34 @@ All the `OIDC_*` environment variables are needed for technical reasons. If `OID
 
 More about the configuration for different OpenID Connect providers can be found in [OpenID Connect authentication](../integrations/oidc_authentication.md).
 
-## Admininistration in SecObserve
+## Administration in SecObserve
 
 Other parts of the configuration are done in the administration interface of SecObserve under `Settings`, which can only be accessed by users with the role `Superuser`.
 
 ![Settings](../assets/images/screenshot_settings.png)
 
 The entries shall be checked and adjusted if necessary after installing SecObserve.
+
+#### Notifications
+
+The settings of the section `Notifications` are described in more detail in [Notifications](../usage/notifications.md) and [Notification channels](../integrations/notifications.md).
+
+| Setting | Description |
+|---------|-------------|
+| `Base URL frontend` | Base URL of the frontend, used to set links in notifications correctly. |
+| `Email from` | From address for sending email notifications. If it is not set, no email notifications are sent at all. |
+| `Comma separated email addresses to send exception notifications` | Email addresses that are notified when an exception occurs. |
+| `MS Teams webhook to send exception notifications` | Webhook URL of the Microsoft Teams channel that is notified when an exception occurs. |
+| `Slack webhook to send exception notifications` | Webhook URL of the Slack channel that is notified when an exception occurs. |
+| `Exception rate limit` | Timedelta in seconds when to send the same exception the next time. Default is 3600 seconds. |
+| `Comma separated email to addresses to send observation title notifications` | Email addresses that are notified about new or changed observation titles. |
+| `Webhook URL to send observation title notifications to MS Teams` | Webhook URL of the Microsoft Teams channel that is notified about new or changed observation titles. |
+| `Webhook URL to send observation title notifications to Slack` | Webhook URL of the Slack channel that is notified about new or changed observation titles. |
+| `Minimum severity for observation title notifications` | An observation title is notified when an observation has at least this severity. |
+| `Statuses for observation title notifications` | An observation title is notified when an observation has one of these statuses. If the list is empty, the 3 active statuses `Open`, `Affected` and `In review` are used. |
+| `Minimum priority for observation title notifications` | An observation title is notified when an observation has at least this priority. |
+| `Parser type for observation title notifications` | An observation title is notified when the parser used for the observation has this type. |
+
+!!! note
+
+    At least one of the 4 attributes for observation title notifications has to be set, otherwise no notifications for observation titles are sent.

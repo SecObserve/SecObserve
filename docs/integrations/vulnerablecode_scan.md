@@ -13,7 +13,7 @@ There are 3 preconditions to be met before VulnerableCode can be used for vulner
 
 ## Configuration in Settings
 
-The VulnerableCode parameters are configured in the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve).
+The VulnerableCode parameters are configured in the `Features` section of the [Settings](../getting_started/configuration.md#administration-in-secobserve).
 
 ![Settings VulnerableCode instance](../assets/images/screenshot_settings_vulnerablecode_scanning.png){ width="100%" style="display: block; margin: 0 auto" }
 
@@ -42,7 +42,7 @@ VulnerableCode scanning can be configured to run automatically at a specific tim
 
 #### General setting
 
-In the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) the automatic VulnerableCode scanning can be enabled or disabled for the whole SecObserve instance.
+In the `Features` section of the [Settings](../getting_started/configuration.md#administration-in-secobserve) the automatic VulnerableCode scanning can be enabled or disabled for the whole SecObserve instance.
 
 The hour (in UTC time) and minute, when the automatic [API imports](./api_import.md/#automatic-import), OSV scanning and VulnerableCode scanning will run, can be set in the `Background tasks` section. A restart of the SecObserve instance is required to apply the changes.
 

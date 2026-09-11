@@ -60,6 +60,11 @@ const SettingsShowComponent = () => {
                                 <NumberField source="oidc_clock_skew" />
                             </Labeled>
                         )}
+                        {!settings.oidc_strict_audience && (
+                            <Labeled label="OIDC strict audience">
+                                <BooleanField source="oidc_strict_audience" />
+                            </Labeled>
+                        )}
                     </Paper>
 
                     <Paper sx={{ marginBottom: 2, padding: 2 }}>
@@ -207,17 +212,17 @@ const SettingsShowComponent = () => {
                                 </Labeled>
                             )}
                             {feature_email() && settings.exception_email_to && (
-                                <Labeled label="Exception email to for exception notifications">
+                                <Labeled label="Exception email to">
                                     <TextField source="exception_email_to" />
                                 </Labeled>
                             )}
                             {settings.exception_ms_teams_webhook && (
-                                <Labeled label="Exception MS Teams webhook for exception notifications">
+                                <Labeled label="Exception MS Teams webhook">
                                     <TextField source="exception_ms_teams_webhook" />
                                 </Labeled>
                             )}
                             {settings.exception_slack_webhook && (
-                                <Labeled label="Exception Slack webhook for exception notifications">
+                                <Labeled label="Exception Slack webhook">
                                     <TextField source="exception_slack_webhook" />
                                 </Labeled>
                             )}
@@ -235,7 +240,7 @@ const SettingsShowComponent = () => {
                                 </Labeled>
                             )}
                             {settings.observation_title_notification_slack_webhook && (
-                                <Labeled label="Slack webhook for observation titles notifications">
+                                <Labeled label="Slack webhook for observation title notifications">
                                     <TextField source="observation_title_notification_slack_webhook" />
                                 </Labeled>
                             )}
@@ -351,7 +356,7 @@ const SettingsShowComponent = () => {
                                             <NumberField source="license_import_crontab_hour" />
                                         </Labeled>
                                     )}
-                                    <Labeled label="Branch housekeeping crontab (hour/UTC)">
+                                    <Labeled label="Housekeeping crontab (hour/UTC)">
                                         <NumberField source="branch_housekeeping_crontab_hour" />
                                     </Labeled>
                                     <Labeled label="EPSS and exploit import crontab (hour/UTC)">
@@ -378,7 +383,7 @@ const SettingsShowComponent = () => {
                                             <NumberField source="license_import_crontab_minute" />
                                         </Labeled>
                                     )}
-                                    <Labeled label="Branch housekeeping crontab (minute)">
+                                    <Labeled label="Housekeeping crontab (minute)">
                                         <NumberField source="branch_housekeeping_crontab_minute" />
                                     </Labeled>
                                     <Labeled label="EPSS and exploit import crontab (minutes)">

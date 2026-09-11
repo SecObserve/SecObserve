@@ -7,4 +7,4 @@ Metrics about observations are shown in 2 places:
 
 ![Metrics](../assets/images/screenshot_dashboard.png)
 
-Metrics are calculated in an asychronous task. Per default the task is scheduled to run every 5 minutes. This default can be changed by administrators via the [Settings](../getting_started/configuration.md#admininistration-in-secobserve).
+Metrics are calculated in an asychronous task. Per default the task is scheduled to run every 5 minutes. This default can be changed by administrators via the [Settings](../getting_started/configuration.md#administration-in-secobserve).

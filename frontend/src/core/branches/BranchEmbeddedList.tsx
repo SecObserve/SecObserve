@@ -5,6 +5,7 @@ import {
     DateField,
     FieldProps,
     FilterForm,
+    FunctionField,
     ListContextProvider,
     ResourceContextProvider,
     TextField,
@@ -79,11 +80,13 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                     source="is_default_branch"
                                     label="Default branch / version"
                                     sortable={false}
+                                    textAlign="center"
                                 />
                                 {has_attribute("purl", data, sort) && <TextField source="purl" label="PURL" />}
                                 {has_attribute("cpe23", data, sort) && <TextField source="cpe23" label="CPE 2.3" />}
-                                <WithRecord
+                                <FunctionField
                                     label="Protect"
+                                    textAlign="center"
                                     render={(branch) =>
                                         !branch.is_default_branch && <BooleanField source="housekeeping_protect" />
                                     }

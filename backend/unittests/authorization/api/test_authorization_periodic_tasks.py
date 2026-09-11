@@ -17,7 +17,7 @@ class TestAuthorizationPeriodicTasks(TestAuthorizationBase):
 
         self._test_api(APITest("db_internal_write", "get", "/api/periodic_tasks/1/", None, 403, None))
 
-        expected_data = "{'tasks': ['Branch housekeeping', 'Calculate product metrics', 'Expire risk acceptances', 'Import EPSS and cvss-bt', 'Import SPDX licenses', 'Import observations from API configurations, OSV and VulnerableCode']}"
+        expected_data = "{'tasks': ['Calculate product metrics', 'Expire risk acceptances', 'Housekeeping', 'Import EPSS and cvss-bt', 'Import SPDX licenses', 'Import observations from API configurations, OSV and VulnerableCode']}"
         self._test_api(APITest("db_admin", "get", "/api/periodic_tasks/registered_tasks/", None, 200, expected_data))
 
         self._test_api(APITest("db_internal_write", "get", "/api/periodic_tasks/registered_tasks/", None, 403, None))

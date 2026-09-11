@@ -12,9 +12,9 @@ import {
 } from "react-admin";
 
 import notifications from ".";
-import { ObservationReferenceField } from "../commons/custom_fields/ObservationReferenceField";
-import { ProductReferenceField } from "../commons/custom_fields/ProductReferenceField";
-import { httpClient } from "../commons/ra-data-django-rest-framework";
+import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
+import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
+import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { update_notification_count } from "./notification_count";
 
 const ShowActions = () => {
