@@ -37,6 +37,9 @@ from application.notifications.services.send_notifications_assessment_approval i
 from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
 )
+from application.notifications.services.send_notifications_observation_review import (
+    send_observation_review_notification,
+)
 from application.notifications.services.send_notifications_observation_title import (
     send_observation_title_notification,
 )
@@ -308,6 +311,8 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
         Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
         Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
     ):
+        previous_status = observation_log.observation.current_status
+
         _update_observation(
             observation=observation_log.observation,
             new_severity=observation_log.severity,
@@ -324,6 +329,13 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
 
         send_observation_notification(observation_log.observation)
         send_observation_title_notification(observation_log.observation)
+
+        # The approval applies the status without writing a new observation log
+        if (
+            previous_status != Status.STATUS_IN_REVIEW
+            and observation_log.observation.current_status == Status.STATUS_IN_REVIEW
+        ):
+            send_observation_review_notification(observation_log.observation)
 
         propagate_assessment(observation_log)
 

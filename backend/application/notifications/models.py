@@ -62,6 +62,7 @@ class Product_Notification(Model):
     assessment_to_be_reviewed = BooleanField(default=False)
     assessment_approval_receipt = BooleanField(default=False)
     product_rule_to_be_reviewed = BooleanField(default=False)
+    product_rule_approval_receipt = BooleanField(default=False)
 
     class Meta:
         unique_together = (

@@ -1,8 +1,8 @@
 from datetime import date
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from application.core.services.observation_log import create_observation_log
-from application.core.types import Assessment_Status
+from application.core.types import Assessment_Status, Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -60,3 +60,72 @@ class TestObservationLog(BaseTestCase):
         self.observation_1.product.save.assert_called_once()
         mock_send_observation_notification.assert_called_once()
         mock_send_observation_title_notification.assert_called_with(self.observation_1)
+
+    def _patch_for_review(self) -> MagicMock:
+        """The mocks the tests for the review notification need, so that no database is needed."""
+        patchers = {
+            "observation_save": patch("application.core.models.Observation.save"),
+            "observation_log_save": patch("application.core.models.Observation_Log.save"),
+            "product_save": patch("application.core.models.Product.save"),
+            "current_user": patch("application.core.services.observation_log.get_current_user"),
+            "send_observation": patch("application.core.services.observation_log.send_observation_notification"),
+            "send_title": patch("application.core.services.observation_log.send_observation_title_notification"),
+            "send_review": patch("application.core.services.observation_log.send_observation_review_notification"),
+        }
+
+        mocks = {}
+        for name, patcher in patchers.items():
+            mocks[name] = patcher.start()
+            self.addCleanup(patcher.stop)
+
+        mocks["current_user"].return_value = self.user_internal
+
+        return mocks["send_review"]
+
+    def _create_observation_log(self, status: str) -> None:
+        create_observation_log(
+            observation=self.observation_1,
+            severity="",
+            status=status,
+            priority=None,
+            priority_changed=False,
+            comment="comment",
+            vex_justification="",
+            vex_remediations=None,
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+            risk_acceptance_expiry_date=None,
+        )
+
+    def test_create_observation_log_set_to_in_review(self):
+        mock_send_review = self._patch_for_review()
+        self.observation_1.current_status = Status.STATUS_IN_REVIEW
+
+        self._create_observation_log(Status.STATUS_IN_REVIEW)
+
+        mock_send_review.assert_called_once_with(self.observation_1)
+
+    def test_create_observation_log_set_to_another_status(self):
+        mock_send_review = self._patch_for_review()
+        self.observation_1.current_status = Status.STATUS_OPEN
+
+        self._create_observation_log(Status.STATUS_OPEN)
+
+        mock_send_review.assert_not_called()
+
+    def test_create_observation_log_in_review_not_applied_yet(self):
+        # an assessment that needs approval logs its status without applying it
+        mock_send_review = self._patch_for_review()
+        self.observation_1.current_status = Status.STATUS_OPEN
+
+        self._create_observation_log(Status.STATUS_IN_REVIEW)
+
+        mock_send_review.assert_not_called()
+
+    def test_create_observation_log_still_in_review(self):
+        # the status of the log is empty while it has not been changed
+        mock_send_review = self._patch_for_review()
+        self.observation_1.current_status = Status.STATUS_IN_REVIEW
+
+        self._create_observation_log("")
+
+        mock_send_review.assert_not_called()

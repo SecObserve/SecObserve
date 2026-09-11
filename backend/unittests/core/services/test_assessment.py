@@ -27,7 +27,7 @@ from application.core.services.assessment_approver import (
 from application.core.services.observations_bulk_actions import (
     observation_logs_bulk_approval,
 )
-from application.core.types import Assessment_Status, Severity
+from application.core.types import Assessment_Status, Severity, Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -409,3 +409,46 @@ class TestAssessmentApprovalReceiptNotification(BaseTestCase):
 
         mock_send.assert_called_once_with(self.log)
         self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_APPROVED, self.log.assessment_status)
+
+
+class TestAssessmentApprovalReviewNotification(BaseTestCase):
+    """An approved assessment that sets the status to "In review" applies it without writing a
+    new observation log, so assessment_approval() has to send the review notification itself."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        # Observation log 1 belongs to observation 1 / product 1, authored by user 2.
+        self.log = Observation_Log.objects.get(pk=1)
+        self.log.assessment_status = Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
+        self.log.severity = Severity.SEVERITY_HIGH
+        self.log.status = Status.STATUS_IN_REVIEW
+        self.log.save()
+        self.approver = User.objects.get(pk=3)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.send_observation_review_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_review_notification_after_approval(
+        self, mock_user, mock_send_review, _mock_receipt, _mock_security_gate, _mock_issue_tracker, _mock_propagate
+    ) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_APPROVED, None, None, None, None)
+
+        self.log.observation.refresh_from_db()
+        self.assertEqual(Status.STATUS_IN_REVIEW, self.log.observation.current_status)
+        mock_send_review.assert_called_once_with(self.log.observation)
+
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.send_observation_review_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_no_review_notification_after_rejection(self, mock_user, mock_send_review, _mock_receipt) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "not ok", None, None, None)
+
+        mock_send_review.assert_not_called()

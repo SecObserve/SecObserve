@@ -8,6 +8,7 @@ class Product_Notification_Type:
     ASSESSMENT_TO_BE_REVIEWED = "assessment_to_be_reviewed"
     ASSESSMENT_APPROVAL_RECEIPT = "assessment_approval_receipt"
     PRODUCT_RULE_TO_BE_REVIEWED = "product_rule_to_be_reviewed"
+    PRODUCT_RULE_APPROVAL_RECEIPT = "product_rule_approval_receipt"
 
     PRODUCT_NOTIFICATION_TYPES = (
         SECURITY_GATE_CHANGED,
@@ -16,4 +17,5 @@ class Product_Notification_Type:
         ASSESSMENT_TO_BE_REVIEWED,
         ASSESSMENT_APPROVAL_RECEIPT,
         PRODUCT_RULE_TO_BE_REVIEWED,
+        PRODUCT_RULE_APPROVAL_RECEIPT,
     )

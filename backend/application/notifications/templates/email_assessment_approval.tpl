@@ -4,7 +4,9 @@ Hello{{ first_name }},
 {{ first_line }}
 
 Product:       {{ observation.product.name }}
-Title:         {{ observation.title }}
+{% if observation.branch %}Branch:        {{ observation.branch.name }}
+{% endif %}{% if observation.origin_service %}Service:       {{ observation.origin_service.name }}
+{% endif %}Title:         {{ observation.title }}
 {% if observation_log.severity %}Severity:      {{ observation_log.severity }}
 {% endif %}{% if observation_log.status %}Status:        {{ observation_log.status }}
 {% endif %}{% if observation_log.priority_changed %}Priority:      {{ observation_log.priority }}

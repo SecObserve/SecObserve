@@ -4,6 +4,9 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from application.access_control.services.current_user import get_current_user
+from application.notifications.services.send_notifications_product_rule_approval import (
+    send_product_rule_approval_receipt_notification,
+)
 from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
@@ -21,3 +24,5 @@ def rule_approval(rule: Rule, approval_status: str, rejection_remark: Optional[s
     rule.rejection_remark = rejection_remark if rejection_remark else ""
     rule.approval_date = timezone.now()
     rule.save()
+
+    send_product_rule_approval_receipt_notification(rule)
