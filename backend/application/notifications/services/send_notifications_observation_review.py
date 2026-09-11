@@ -27,10 +27,6 @@ def send_observation_review_notification(observation: Observation) -> None:
         observation_url = f"{get_base_url_frontend()}#/observations/{observation.pk}/show"
 
         for user in _get_reviewers_to_notify(observation):
-            print(vars(user))
-
-
-        for user in _get_reviewers_to_notify(observation):
             send_email_notification(
                 user.email,
                 first_line,
