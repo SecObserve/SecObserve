@@ -4,7 +4,7 @@ When an observation gets the status `Risk accepted`, it is possible to set an ex
 
 The number of days until the expiry date can be configured on 3 different levels:
 
-1. In the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) is the parameter `Risk acceptance expiry (days)`, which is used if there are no specific settings for Products or Product Groups.
+1. In the [Settings](../getting_started/configuration.md#administration-in-secobserve) is the parameter `Risk acceptance expiry (days)`, which is used if there are no specific settings for Products or Product Groups.
 2. Product Groups have the parameter `Risk acceptance expiry`, which can have 3 values:
     * **Standard**: The standard settings are used for all Products, if nothing specific is configured for a Product.
     * **Disabled**: No expiry date is set for the risk acceptance, if nothing specific is configured for a Product.
@@ -20,4 +20,4 @@ The number of `Risk acceptance expiry (days)` will be used to set a default for 
 
 ---
 
-Per default the task to check the risk acceptance expiry is scheduled to run every night at 01:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve).  Hours are always in UTC time.
+Per default the task to check the risk acceptance expiry is scheduled to run every night at 01:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve).  Hours are always in UTC time.

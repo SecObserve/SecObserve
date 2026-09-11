@@ -55,7 +55,7 @@ OSV scanning can be configured to run automatically at a specific time. There is
 
 #### General setting
 
-In the `Features` section of the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) the automatic OSV scanning can be enabled or disabled for the whole SecObserve instance.
+In the `Features` section of the [Settings](../getting_started/configuration.md#administration-in-secobserve) the automatic OSV scanning can be enabled or disabled for the whole SecObserve instance.
 
 ![Settings automatic OSV scanning](../assets/images/screenshot_settings_automatic_osv_scanning.png){ width="65%" style="display: block; margin: 0 auto" }
 

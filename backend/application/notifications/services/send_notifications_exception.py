@@ -208,7 +208,7 @@ def _ratelimit_exception(exception: Exception, function: str = None, arguments: 
     if key in LAST_EXCEPTIONS:
         last_datetime = LAST_EXCEPTIONS[key]
         difference: timedelta = now - last_datetime
-        if difference.seconds >= settings.exception_rate_limit:
+        if difference.total_seconds() >= settings.exception_rate_limit:
             LAST_EXCEPTIONS[key] = now
             return True
 

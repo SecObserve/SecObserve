@@ -381,6 +381,23 @@ class TestPushNotifications(BaseTestCase):
         self.assertFalse(_ratelimit_exception(exception, "test_function", "test_arguments"))
         self.assertEqual(1, len(LAST_EXCEPTIONS.keys()))
 
+    @patch("application.commons.models.Settings.load")
+    def test_ratelimit_exception_true_more_than_a_day(self, mock_settings_load):
+        settings = Settings()
+        settings.exception_rate_limit = 10
+        mock_settings_load.return_value = settings
+
+        # timedelta.seconds only holds the seconds within the day, so the difference has to be
+        # calculated with total_seconds() to not suppress the notification after a long pause
+        LAST_EXCEPTIONS.clear()
+        LAST_EXCEPTIONS["builtins.Exception/test_exception/test_function/test_arguments"] = datetime.now() - timedelta(
+            days=1, seconds=1
+        )
+        exception = Exception("test_exception")
+
+        self.assertTrue(_ratelimit_exception(exception, "test_function", "test_arguments"))
+        self.assertEqual(1, len(LAST_EXCEPTIONS.keys()))
+
     # --- _get_stack_trace ---
 
     @patch("application.notifications.services.send_notifications_exception.traceback.format_tb")

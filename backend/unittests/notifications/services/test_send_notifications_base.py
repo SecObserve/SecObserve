@@ -472,7 +472,7 @@ class TestPushNotifications(BaseTestCase):
                             },
                             {
                                 "title": "Timestamp:",
-                                "value": "2022-12-31 23:59:59.000000"
+                                "value": "2022\\u002D12\\u002D31 23:59:59.000000"
                             },
                             {
                                 "title": "Trace:",
@@ -506,6 +506,21 @@ class TestPushNotifications(BaseTestCase):
             "extra",
             [action["name"] for action in parsed["potentialAction"]][0].split("View observation ")[-1][:4],
         )
+
+    def test_create_notification_message_backslash_breakout_msteams_v2(self):
+        # The adaptive cards for Power Automate are hand-built JSON as well, so they need
+        # the same escaping as the MessageCard and Slack templates
+        self.observation_1.title = 'evil\\", "extra": "x'
+        message = _create_notification_message(
+            "msteams_v2_observation.tpl",
+            observation=self.observation_1,
+            observation_url="observation_url",
+            first_line='New notification for observation "evil\\", "extra": "x"',
+        )
+
+        parsed = json.loads(message)
+        card = parsed["attachments"][0]["content"]
+        self.assertEqual(f"View observation {self.observation_1.title}", card["actions"][0]["title"])
 
     # --- is_msteams_v2 ---
 

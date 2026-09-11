@@ -49,7 +49,7 @@ A flowchart visualizes the import algorithm:
 
 ## Cross-scanner deduplication
 
-Sometimes it makes sense to run different scanners on the same target, e.g. Trivy and Grype for the same Docker container, to make sure not to miss a vulnerability. When the parameter **Enable cross scanner deduplication** in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) is activated, then the second imported observation with for the same product / branch / service / origin and a different scanner will not be stored, but a log entry is written.
+Sometimes it makes sense to run different scanners on the same target, e.g. Trivy and Grype for the same Docker container, to make sure not to miss a vulnerability. When the parameter **Enable cross scanner deduplication** in the [Settings](../getting_started/configuration.md#administration-in-secobserve) is activated, then the second imported observation with for the same product / branch / service / origin and a different scanner will not be stored, but a log entry is written.
 
 ## Initial status of observations
 

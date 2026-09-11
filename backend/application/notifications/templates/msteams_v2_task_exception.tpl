@@ -11,7 +11,7 @@
                 "body": [
                     {
                         "type": "TextBlock",
-                        "text": "Exception {{ exception_class }} has occured while processing background task",
+                        "text": "Exception {{ exception_class|escapejs }} has occured while processing background task",
                         "weight": "bolder",
                         "size": "medium",
                         "wrap": true
@@ -21,31 +21,31 @@
                         "facts": [
                             {
                                 "title": "Function:",
-                                "value": "{{ function }}"
+                                "value": "{{ function|escapejs }}"
                             },
                             {
                                 "title": "Arguments:",
-                                "value": "{{ arguments }}"
+                                "value": "{{ arguments|escapejs }}"
                             },
                             {
                                 "title": "User:",
-                                "value": "{{ user.full_name }}"
+                                "value": "{{ user.full_name|escapejs }}"
                             },
                             {
                                 "title": "Exception class:",
-                                "value": "{{ exception_class }}"
+                                "value": "{{ exception_class|escapejs }}"
                             },
                             {
                                 "title": "Exception message:",
-                                "value": "{{ exception_message }}"
+                                "value": "{{ exception_message|escapejs }}"
                             },
                             {
                                 "title": "Timestamp:",
-                                "value": "{{ date_time|date:"Y-m-d H:i:s.u" }}"
+                                "value": "{{ date_time|date:"Y-m-d H:i:s.u"|escapejs }}"
                             },
                             {
                                 "title": "Trace:",
-                                "value": "{{ exception_trace }}"
+                                "value": "{{ exception_trace|escapejs }}"
                             }
                         ]
                     }

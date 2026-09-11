@@ -11,7 +11,7 @@ Users cannot see only the list of the associated products and their combined met
     * *Standard:* The branches / versions of all products in the group are deleted according to the settings of the product.
     * *Disabled:* Housekeeping for branches / versions is disabled for all products in the group.
     * *Product group specific:* The branches / versions of all products in the group are deleted according to the settings of the product group.
-* The settings for **Notifications** are used, if no notification settings are defined for the product. If there are notification settings defined for the product, they override the settings of the product group.
+* The settings for **Notifications** are used, if no notification settings are defined for the product. If there are notification settings defined for the product, they override the settings of the product group. This applies to the notification settings of the product as well as to the [user specific notifications](notifications.md#user-specific-notifications).
 *  **Security gates:**
     * *Standard:* The security gates of all products in the group are calculated according to the settings of the product.
     * *Disabled:* Security gates are disabled for all products in the group.
