@@ -32,6 +32,7 @@ export interface ProductNotification extends RaRecord {
     assessment_to_be_reviewed: boolean;
     assessment_approval_receipt: boolean;
     product_rule_to_be_reviewed: boolean;
+    product_rule_approval_receipt: boolean;
 }
 
 export type NotificationSettingSource =
@@ -40,7 +41,8 @@ export type NotificationSettingSource =
     | "observation_to_be_reviewed"
     | "assessment_to_be_reviewed"
     | "assessment_approval_receipt"
-    | "product_rule_to_be_reviewed";
+    | "product_rule_to_be_reviewed"
+    | "product_rule_approval_receipt";
 
 export type NotificationSetting = {
     source: NotificationSettingSource;
@@ -54,6 +56,7 @@ export const NOTIFICATION_SETTINGS: NotificationSetting[] = [
     { source: "assessment_to_be_reviewed", label: "Assessment to be reviewed" },
     { source: "assessment_approval_receipt", label: "Assessment approval receipt" },
     { source: "product_rule_to_be_reviewed", label: "Product rule to be reviewed" },
+    { source: "product_rule_approval_receipt", label: "Product rule approval receipt" },
 ];
 
 export interface ProductNotificationPair {

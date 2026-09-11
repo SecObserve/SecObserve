@@ -5,6 +5,7 @@ from application.authorization.services.roles_permissions import Permissions
 from application.commons.models import Settings
 from application.notifications.services.send_notifications_product_rule_approval import (
     send_product_rule_approval_notification,
+    send_product_rule_approval_receipt_notification,
 )
 from application.notifications.types import Product_Notification_Type
 from application.rules.types import Rule_Status
@@ -161,6 +162,105 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
         # by Huey. It has to be re-raised, so that Huey marks the task as failed.
         with self.assertRaises(Exception) as context:
             send_product_rule_approval_notification.call_local(self.product_rule_1)
+        self.assertEqual(exception, context.exception)
+
+        mock_handle_task_exception.assert_called_once_with(exception)
+
+    # --- send_product_rule_approval_receipt_notification ---
+
+    def test_send_product_rule_approval_receipt_notification_without_decision(self):
+        mocks = self._patch()
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_rule_approval_receipt_notification(self.product_rule_1)
+
+        mocks["get_users"].assert_not_called()
+        mocks["send_email"].assert_not_called()
+
+    def test_send_product_rule_approval_receipt_notification_for_a_general_rule(self):
+        mocks = self._patch()
+        self.general_rule.approval_status = Rule_Status.RULE_STATUS_APPROVED
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_rule_approval_receipt_notification(self.general_rule)
+
+        mocks["get_users"].assert_not_called()
+        mocks["send_email"].assert_not_called()
+
+    def test_send_product_rule_approval_receipt_notification_without_email_from(self):
+        mocks = self._patch(email_from="")
+        self.product_rule_1.approval_status = Rule_Status.RULE_STATUS_APPROVED
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_rule_approval_receipt_notification(self.product_rule_1)
+
+        mocks["get_users"].assert_not_called()
+        mocks["send_email"].assert_not_called()
+
+    def test_send_product_rule_approval_receipt_notification_author_does_not_want_it(self):
+        mocks = self._patch()
+        self.product_rule_1.approval_status = Rule_Status.RULE_STATUS_APPROVED
+        # user_internal has created the rule, jane only wants other notifications
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_rule_approval_receipt_notification(self.product_rule_1)
+
+        mocks["get_users"].assert_called_once_with(
+            self.product_1, Product_Notification_Type.PRODUCT_RULE_APPROVAL_RECEIPT
+        )
+        mocks["send_email"].assert_not_called()
+
+    def test_send_product_rule_approval_receipt_notification_approved(self):
+        mocks = self._patch()
+        self.product_rule_1.approval_status = Rule_Status.RULE_STATUS_APPROVED
+        mocks["get_users"].return_value = {self.user_internal, self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_rule_approval_receipt_notification(self.product_rule_1)
+
+        # only the author of the rule gets the receipt
+        mocks["send_email"].assert_called_once_with(
+            self.user_internal.email,
+            'Product rule "rule_1" has been approved',
+            "email_product_rule.tpl",
+            rule=self.product_rule_1,
+            rule_url="https://secobserve.com/#/product_rules/2/show",
+            first_line='Product rule "rule_1" has been approved',
+            first_name=f" {self.user_internal.full_name}",
+        )
+
+    def test_send_product_rule_approval_receipt_notification_rejected(self):
+        mocks = self._patch()
+        self.product_rule_1.approval_status = Rule_Status.RULE_STATUS_REJECTED
+        self.user_internal.first_name = "Ingrid"
+        mocks["get_users"].return_value = {self.user_internal}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_rule_approval_receipt_notification(self.product_rule_1)
+
+        self.assertEqual(
+            'Product rule "rule_1" has been rejected',
+            mocks["send_email"].call_args.args[1],
+        )
+        self.assertEqual(" Ingrid", mocks["send_email"].call_args.kwargs["first_name"])
+
+    @patch("application.commons.models.Settings.load")
+    @patch("application.notifications.services.send_notifications_product_rule_approval.handle_task_exception")
+    def test_send_product_rule_approval_receipt_notification_exception(
+        self, mock_handle_task_exception, mock_settings_load
+    ):
+        exception = Exception("test_exception")
+        mock_settings_load.side_effect = exception
+        self.product_rule_1.approval_status = Rule_Status.RULE_STATUS_APPROVED
+
+        # call_local calls the undecorated function, so that the exception is not swallowed
+        # by Huey. It has to be re-raised, so that Huey marks the task as failed.
+        with self.assertRaises(Exception) as context:
+            send_product_rule_approval_receipt_notification.call_local(self.product_rule_1)
         self.assertEqual(exception, context.exception)
 
         mock_handle_task_exception.assert_called_once_with(exception)

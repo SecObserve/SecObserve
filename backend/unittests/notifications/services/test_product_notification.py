@@ -160,6 +160,7 @@ class TestProductNotificationService(BaseTestCase):
         self.assertFalse(product_notification.assessment_to_be_reviewed)
         self.assertFalse(product_notification.assessment_approval_receipt)
         self.assertFalse(product_notification.product_rule_to_be_reviewed)
+        self.assertFalse(product_notification.product_rule_approval_receipt)
 
     def test_create_product_notification_override_copies_the_product_group_values(self):
         # product group 3 is the product group of product 1

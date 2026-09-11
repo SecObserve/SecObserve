@@ -34,9 +34,10 @@ class TestRuleEngine(BaseTestCase):
             "[ErrorDetail(string='Users cannot approve the rules they created/modified', code='invalid')]",
         )
 
+    @patch("application.rules.services.approval.send_product_rule_approval_receipt_notification")
     @patch("application.rules.services.approval.get_current_user")
     @patch("application.rules.models.Rule.save")
-    def test_rule_approval_successful(self, save_mock, get_current_user_mock):
+    def test_rule_approval_successful(self, save_mock, get_current_user_mock, receipt_mock):
         get_current_user_mock.return_value = self.user_external
         rule = Rule(
             approval_status=Rule_Status.RULE_STATUS_NEEDS_APPROVAL,
@@ -50,3 +51,4 @@ class TestRuleEngine(BaseTestCase):
         self.assertEqual(rule.rejection_remark, "test")
         self.assertIsNotNone(rule.approval_date)
         save_mock.assert_called_once()
+        receipt_mock.assert_called_once_with(rule)
