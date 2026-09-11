@@ -468,3 +468,5 @@ HUEY = {
         "health_check_interval": 60,  # Check worker health every second.
     },
 }
+
+HUEY_STATS = {"database": db_url}
