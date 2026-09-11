@@ -66,6 +66,19 @@ def create_openvex_document(
     if not user:
         raise ValueError("No user in request")
 
+    # Generate the statements before allocating the document id: the counter
+    # row stays locked until the request commits, so the lock must not span
+    # the expensive part of the export.
+    if parameters.product:
+        statements = _get_statements_for_product(
+            parameters.product, parameters.vulnerability_names, parameters.branches
+        )
+    else:
+        statements = _get_statements_for_vulnerabilities(parameters.vulnerability_names)
+
+    if not statements:
+        return None
+
     document_base_id = create_document_base_id(parameters.document_id_prefix)
 
     openvex = OpenVEX.objects.create(
@@ -98,18 +111,6 @@ def create_openvex_document(
         tooling="SecObserve / " + __version__,
         statements=[],
     )
-
-    statements = []
-    if parameters.product:
-        statements = _get_statements_for_product(
-            parameters.product, parameters.vulnerability_names, parameters.branches
-        )
-    else:
-        statements = _get_statements_for_vulnerabilities(parameters.vulnerability_names)
-
-    if not statements:
-        openvex.delete()
-        return None
 
     statements_json = jsonpickle.encode(statements, unpicklable=False)
     statements_hash = hashlib.sha256(statements_json.casefold().encode("utf-8").strip()).hexdigest()
