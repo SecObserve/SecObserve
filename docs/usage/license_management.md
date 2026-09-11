@@ -2,7 +2,7 @@
 
 ## Activating / deactivating license management
 
-License management is activated by default. If it is not used in an organization it can be be deactivted via a feature flag in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve).
+License management is activated by default. If it is not used in an organization it can be be deactivted via a feature flag in the [Settings](../getting_started/configuration.md#administration-in-secobserve).
 
 ![License management configuration](../assets/images/screenshot_license_management_settings.png){ width="80%" style="display: block; margin: 0 auto" }
 

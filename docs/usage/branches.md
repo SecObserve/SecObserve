@@ -38,7 +38,7 @@ The **Housekeeping** background task deletes data that isn't needed anymore. Ina
 
 #### Parameters
 
-The parameters are set globally in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) and can be partially overridden per product.
+The parameters are set globally in the [Settings](../getting_started/configuration.md#administration-in-secobserve) and can be partially overridden per product.
 
 | Parameter global | Description |
 |------------------|-------------|
@@ -48,7 +48,7 @@ The parameters are set globally in the [Settings](../getting_started/configurati
 | **BRANCH_HOUSEKEEPING_KEEP_INACTIVE_DAYS** | Days before inactive branches / versions and their observations are deleted |
 | **BRANCH_HOUSEKEEPING_EXEMPT_BRANCHES** | Regular expression which branches / versions to exempt from deletion |
 
-Per default the `Housekeeping` task, which deletes inactive branches / versions including their observations, is scheduled to run every night at 02:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve). Hours are always in UTC time.
+Per default the `Housekeeping` task, which deletes inactive branches / versions including their observations, is scheduled to run every night at 02:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve). Hours are always in UTC time.
 
 ![Settings housekeeping](../assets/images/settings_cron_housekeeping.png){ width="80%" style="display: block; margin: 0 auto" }
 

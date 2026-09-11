@@ -85,6 +85,7 @@ nav:
     - License management: usage/license_management.md
     - Components: usage/components.md
     - Users, groups and permissions: usage/users_permissions.md
+    - Notifications: usage/notifications.md
   - Integrations:
     - Overview: integrations/overview.md
     - Supported scanners: integrations/supported_scanners.md
@@ -96,7 +97,7 @@ nav:
     - License data: integrations/license_data.md
     - Source code repositories: integrations/source_code_repositories.md
     - Issue trackers: integrations/issue_trackers.md
-    - Notifications: integrations/notifications.md
+    - Notification channels: integrations/notifications.md
     - VEX documents: integrations/vex.md
     - Vulnerability scanning from OSV: integrations/osv_scan.md
     - Vulnerability scanning from VulnerableCode: integrations/vulnerablecode_scan.md

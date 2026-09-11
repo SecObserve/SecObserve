@@ -30,7 +30,7 @@ The parameters for the issue tracker integration are set in the product:
 | **Issue type**       | *(only for Jira)* The issue type to be created. |
 | **Closed status**    | *(only for Jira)* The status to be set when an issue is closed. |
 
-Issues are created or updated by an asynchronous background process after the import or the assessment of an observation has finished. If problems should occur during the transfer, a notification is send, see [Notifications](./notifications.md).
+Issues are created or updated by an asynchronous background process after the import or the assessment of an observation has finished. If problems should occur during the transfer, a notification is send, see [Notifications](../usage/notifications.md).
 
 !!! tip
 

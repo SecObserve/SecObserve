@@ -19,7 +19,7 @@ The user type can be set by flags in the user administration:
 * **External users** do not belong to the organization, e.g. customers or partners.
 * **Internal users** are all users who are not superusers or external users.
 
-When a user logs in with an OIDC account for the first time, it can be automatically determined whether it is an internal or external user by their email address. The parameter `Internal users` in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) takes a comma-separated list of email of regular expression. If one regular expression matches the email address of the user, the user is considered an internal user. If no regular expression matches, the user is considered an external user.
+When a user logs in with an OIDC account for the first time, it can be automatically determined whether it is an internal or external user by their email address. The parameter `Internal users` in the [Settings](../getting_started/configuration.md#administration-in-secobserve) takes a comma-separated list of email of regular expression. If one regular expression matches the email address of the user, the user is considered an internal user. If no regular expression matches, the user is considered an external user.
 
 There are some general permissions based on the user's type:
 

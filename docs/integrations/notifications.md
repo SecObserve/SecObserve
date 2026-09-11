@@ -1,108 +1,79 @@
-# Notifications
+# Notification channels
 
-SecObserve can send notifications to email addresses, Microsoft Teams or Slack for several kinds of events:
+SecObserve can send notifications to email addresses, Microsoft Teams and Slack. This page describes how these channels are set up. *Which* events are notified and *who* receives them is described in [Notifications](../usage/notifications.md).
 
-* When a new observation has been stored or an observation has changed.
-* When a new observation title has been stored or data of observation with this title has changed.
-* When the [security gate](../usage/security_gates.md) of a product changes.
-* When an exception occurs while processing a request.
-* When an exception occurs in a background task.
+## Email
 
-There is a ratelimiting active to prevent flooding of notifications, if a series of exceptions occurs. The same exception is sent only once during a specified timedelta, which can be configured in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve). The default for this timedelta is 1 hour.
-The same exception is sent only once during a specified timedelta, which can be configured in the
-[Settings](../getting_started/configuration.md#admininistration-in-secobserve).
-The default for this timedelta is 1 hour.
+### Configuration
 
-## Notifications to email addresses
+The configuration of email is split into two layers:
 
-### Settings in SecObserve
+* **SMTP transport** (which mail server to use and how to connect to it) is configured with the `EMAIL_*` [environment variables](../getting_started/configuration.md#backend) at deployment time. These are Django settings that are read once at startup, so they are intentionally **not** editable in the administration interface. Email is only enabled when `EMAIL_HOST` or `EMAIL_PORT` is set; if neither is set, the options to send notifications via email are not available.
+* **Addresses** (who emails are sent from and to) are configured at runtime in the [Settings](../getting_started/configuration.md#administration-in-secobserve) and in the settings of a product or product group.
 
-The field `EMAIL_FROM` needs to be set in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) to be able to send notifications to email addresses for both events.
+The field `Email from` needs to be set in the [Settings](../getting_started/configuration.md#administration-in-secobserve), otherwise no email is sent at all.
 
-Email configuration is split into two layers:
+### Notifications for a product
 
-* **SMTP transport** (which mail server to use, how to connect): configured with the `EMAIL_*` [environment variables](../getting_started/configuration.md#backend) at deployment time. These are Django settings that are read once at startup, so they are intentionally **not** editable in the administration UI. Email notifications are only enabled when `EMAIL_HOST` or `EMAIL_PORT` is set; if neither is set, the email notification options are not available.
-* **Addresses** (who emails are sent from and to): configured at runtime in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve) (`EMAIL_FROM`, `EXCEPTION_EMAIL_TO`) and in the `Email` field of a product.
-
-#### Notifications for observations, observation titles and security gates
-
-When creating or editing a product, the field `Email` can be set in the *Notification* section with a comma separated list of email addresses. If the [security gate](../usage/security_gates.md) of the product changes and this field is filled, then a notification is sent each of the email addresses.
+When creating or editing a product or a product group, the field `Email` can be set in the *Notifications* section with a comma separated list of email addresses. Notifications for [observations](../usage/notifications.md#notifications-for-observations) and for the [security gate](../usage/notifications.md#notifications-for-security-gates) of the product are sent to each of these addresses.
 
 ![Email notification](../assets/images/screenshot_email.png)
 
-#### Notifications for exceptions
+### Notifications for a user
 
-An admistrator can configure the field `EXCEPTION_EMAIL_TO` in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve). If an exception occurs while processing a request and this field is filled with a comma separated list of email addresses, a notifications is sent each of the email addresses before returning the HTTP code 500 via the REST API.
+[User specific notifications](../usage/notifications.md#user-specific-notifications) are sent to the email address of the user. Nothing needs to be configured for the channel besides `Email from`, the users decide themselves which events they want to be notified about.
 
-## Notifications to Microsoft Teams and Slack
+## Microsoft Teams
 
-### Microsoft Teams
-
-Notifications about exceptions and observations can both be sent to Mirosoft Teams channels.
-
-#### Incoming Webhooks
+### Incoming webhooks
 
 > **Deprecation notice**
 >
 > Microsoft has announced to discontinue support for incoming webhooks in Teams in favor of Power Automate workflow-based webhooks. Incoming webhooks using URLs from `webhook.office.com` continue to use the legacy MessageCard format; all other URLs are treated as Power Automate webhooks.
 
-For both types of notifications an incoming webhook has to be set for a channel, where the notifications shall appear. How to do this is explained in [Create Incoming Webhooks](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook). Copy the URL of the webhook to the clipboard, to have it available to set it in SecObserve.
+An incoming webhook has to be set for the channel where the notifications shall appear. How to do this is explained in [Create Incoming Webhooks](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook). Copy the URL of the webhook to the clipboard, to have it available to set it in SecObserve.
 
 The messages do not include mentions, but a user can set the "Channel notifications" to "All activities" in Teams, to get an active notification when an entry is generated.
 
-#### Teams Workflows Webhook
+### Teams workflows webhook
 
 To use Power Automate workflow-based webhooks, copy the webhook URL generated by the workflow integration into the input field. SecObserve automatically detects the format from the URL: `webhook.office.com` URLs use the legacy MessageCard format; all other URLs use the Adaptive Card format expected by Power Automate.
 
-### Slack
+## Slack
 
-For both types of notifications an incoming webhook has to be set for a channel, where the notifications shall appear. How to do this is explained in [Sending messages using Incoming Webhooks](https://api.slack.com/messaging/webhooks). Copy the URL of the webhook to the clipboard, to have it available to set it in SecObserve.
+An incoming webhook has to be set for the channel where the notifications shall appear. How to do this is explained in [Sending messages using Incoming Webhooks](https://api.slack.com/messaging/webhooks). Copy the URL of the webhook to the clipboard, to have it available to set it in SecObserve.
 
-#### Notifications for observations, observation titles and security gates
+## Setting webhooks
 
-When creating or editing a product, the fields `MS Teams` and/or `Slack` can be set in the *Notification* section with the copied webhook URL. If the [security gate](../usage/security_gates.md) of the product changes and this field is filled, then a notification is sent to Microsoft Teams and/or Slack.
+### Notifications for a product
+
+When creating or editing a product or a product group, the fields `MS Teams` and/or `Slack` can be set in the *Notifications* section with the copied webhook URL. Notifications for [observations](../usage/notifications.md#notifications-for-observations) and for the [security gate](../usage/notifications.md#notifications-for-security-gates) of the product are sent to these channels.
 
 ![MS Teams notification](../assets/images/screenshot_ms_teams.png)
 
-#### Notifications for exceptions
+### Notifications for observation titles
 
-An admistrator can configure the fields `EXCEPTION_MS_TEAMS_WEBHOOK` and/or `EXCEPTION_SLACK_WEBHOOK` in the [Settings](../getting_started/configuration.md#admininistration-in-secobserve). If an exception occurs while processing a request and this field is filled with the copied webhook URL, a notifications is sent to Microsoft Teams and/or Slack before returning the HTTP code 500 via the REST API.
+An administrator can configure the fields `Webhook URL to send observation title notifications to MS Teams` and/or `Webhook URL to send observation title notifications to Slack` in the [Settings](../getting_started/configuration.md#administration-in-secobserve), see [Notifications for observation titles](../usage/notifications.md#notifications-for-observation-titles).
+
+### Restrictions for webhook URLs
+
+To avoid that SecObserve can be used to call internal services, webhook URLs have to use `https` and the hostname must not resolve to a private, loopback, link-local or otherwise reserved IP address. Webhooks that do not fulfil these requirements are not called and the notification is discarded.
 
 ### Testing webhooks
 
-Next to the input field for `MS Teams` and `Slack` webhooks you will find a button `>> Test` that is enabled when
-the input field is non-empty and it will send a test notification to the configured channel to verify the correct operation of the integration.
+Next to the input field for `MS Teams` and `Slack` webhooks you will find a button `>> Test` that is enabled when the input field is non-empty and it will send a test notification to the configured channel to verify the correct operation of the integration.
 
-## Notifications for observations
+## Notifications for exceptions
 
-To send notifications for new or changed observations, it must be specified in the settings of the Product or the Product Group, which observations will be notified. There are 3 attributes available:
+If an exception occurs while processing a request or in a background task, a notification can be sent to administrators. The destinations are configured in the [Settings](../getting_started/configuration.md#administration-in-secobserve):
 
-* **Minimum severity:** A notification is send, when the observation has a severity that has at least this severity.
-  Example: If the minimum severity is `High`, there will be a notifications for all observations with severity `Critical` or `High`.
-* **Statuses:** A list of statuses the observation must have to be notified.
-  If this field is empty, notifications will be send for the 3 active statuses (`Open`, `Affected`, `In review`).
-* **Minimum priority:** A notification is send, when the observation has a priority that has at least this priority.
-  Example: If the minimum priority is `3`, there will be a notifications for all observations with priorities `1`, `2` or `3`.
+| Setting | Description |
+|---------|-------------|
+| `Comma separated email addresses to send exception notifications` | A comma separated list of email addresses. |
+| `MS Teams webhook to send exception notifications` | The copied webhook URL of a Microsoft Teams channel. |
+| `Slack webhook to send exception notifications` | The copied webhook URL of a Slack channel. |
+| `Exception rate limit` | See below. |
 
-## Notifications for observation titles
+Exceptions while processing a request are the ones that make the REST API return the HTTP code 500. Exceptions in a background task are additionally shown in the user interface, see [Notifications in the user interface](../usage/notifications.md#notifications-in-the-user-interface).
 
-Notifications for observation titles is an aggregation of notifications, by grouping notifications for observations with the same title. To send notifications for titles of new or changed observations, it must be specified in the [SecObserve settings](../getting_started/configuration.md#admininistration-in-secobserve) which observations will be notified. There are 4 attributes available:
-
-* **Minimum severity:** A notification for a title is send, when an observation has a severity that has at least this severity
-  Example: If the minimum severity is `High`, there will be a notifications for all observations with severity `Critical` or `High`.
-* **Statuses:** A list of statuses the observation must have to be notified.
-  If this field is empty, notifications will be send for the 3 active statuses (`Open`, `Affected`, `In review`).
-* **Minimum priority:** A notification for a title is send, when an observation has a priority that has at least this priority.
-  Example: If the minimum priority is `3`, there will be a notifications for all observations with priorities `1`, `2` or `3`.
-* **Parser type:** A notification for a title is send, when the parser used for this observation has the specified type.
-
-## Notifications in the user interface
-
-Notifications are also stored in the database and can be viewed in the user interface.
-
-* **Regular users** can view notifications for changed security gates and exceptions in background tasks for all products where they are a product member.
-* **Administrators** can view all notifications.
-
-![UI notifications](../assets/images/screenshot_notifications.png)
-
-When a notification is deleted, it is removed from the database and won't be visible anymore for all users.
+There is a ratelimiting active to prevent flooding of notifications, if a series of exceptions occurs. The same exception is sent only once during the timedelta configured in `Exception rate limit`. The default for this timedelta is 1 hour.
