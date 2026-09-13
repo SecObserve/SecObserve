@@ -11,13 +11,21 @@ on:
 permissions: {}
 
 jobs:
-  docker_backend_release:
-    runs-on: ubuntu-latest
+  build_backend:
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
       packages: write
       attestations: write
       id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
     steps:
       -
         name: Checkout
@@ -25,9 +33,6 @@ jobs:
         with:
           persist-credentials: false
           ref: 'v${{ github.event.inputs.release }}'
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
@@ -42,23 +47,36 @@ jobs:
         name: Set current date as env variable
         run: echo "CREATED=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       -
-        name: Build and push backend
+        name: Build and push backend by digest
+        id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           file: ./docker/backend/prod/django/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/secobserve/secobserve-backend:${{ github.event.inputs.release }}
-            ghcr.io/secobserve/secobserve-backend:latest
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=ghcr.io/secobserve/secobserve-backend,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             CREATED=${{ env.CREATED }}
             REVISION=${{ github.sha }}
             VERSION=${{ github.event.inputs.release }}
+      -
+        name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      -
+        name: Upload digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digests-backend-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
 
-  docker_frontend_release:
+  merge_backend:
     runs-on: ubuntu-latest
+    needs: [build_backend]
     permissions:
       contents: read
       packages: write
@@ -66,14 +84,53 @@ jobs:
       id-token: write
     steps:
       -
+        name: Download digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: /tmp/digests
+          pattern: digests-backend-*
+          merge-multiple: true
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Create and push multi-platform manifest
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/secobserve/secobserve-backend:${{ github.event.inputs.release }} \
+            -t ghcr.io/secobserve/secobserve-backend:latest \
+            $(printf 'ghcr.io/secobserve/secobserve-backend@sha256:%s ' *)
+        working-directory: /tmp/digests
+
+  build_frontend:
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      -
         name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
           ref: 'v${{ github.event.inputs.release }}'
-      -
-        name: Set up QEMU
-        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
@@ -88,24 +145,71 @@ jobs:
         name: Set current date as env variable
         run: echo "CREATED=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       -
-        name: Build and push frontend
+        name: Build and push frontend by digest
+        id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           file: ./docker/frontend/prod/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/secobserve/secobserve-frontend:${{ github.event.inputs.release }}
-            ghcr.io/secobserve/secobserve-frontend:latest
+          platforms: ${{ matrix.platform }}
+          outputs: type=image,name=ghcr.io/secobserve/secobserve-frontend,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             CREATED=${{ env.CREATED }}
             REVISION=${{ github.sha }}
             VERSION=${{ github.event.inputs.release }}
+      -
+        name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+      -
+        name: Upload digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: digests-frontend-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge_frontend:
+    runs-on: ubuntu-latest
+    needs: [build_frontend]
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      -
+        name: Download digests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: /tmp/digests
+          pattern: digests-frontend-*
+          merge-multiple: true
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      -
+        name: Login to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      -
+        name: Create and push multi-platform manifest
+        run: |
+          docker buildx imagetools create \
+            -t ghcr.io/secobserve/secobserve-frontend:${{ github.event.inputs.release }} \
+            -t ghcr.io/secobserve/secobserve-frontend:latest \
+            $(printf 'ghcr.io/secobserve/secobserve-frontend@sha256:%s ' *)
+        working-directory: /tmp/digests
 
   generate_sboms:
     runs-on: ubuntu-latest
-    needs: [docker_backend_release, docker_frontend_release]
+    needs: [merge_backend, merge_frontend]
     permissions:
       contents: write
     steps:
@@ -208,44 +312,6 @@ jobs:
           commit_message: "chore: generate SBOMs for release ${{ github.event.inputs.release }}"
           branch: "chore/sboms_release_${{ github.event.inputs.release }}"
           file_pattern: "sbom/sbom*.json"
-      # -
-      #   name: Merge SBOM branch into main and delete branch
-      #   uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
-      #   env:
-      #     VERSION: ${{ github.event.inputs.release }}
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     script: |
-      #       const sbomBranch = `chore/sboms_release_${process.env.VERSION}`;
-      #       const targetBranch = 'main';
-            
-      #       console.log(`Merging branch ${sbomBranch} into ${targetBranch}`);
-            
-      #       try {
-      #         // Merge the SBOM branch into main
-      #         await github.rest.repos.merge({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           base: targetBranch,
-      #           head: sbomBranch,
-      #           commit_message: `chore: merge SBOM files for release ${process.env.VERSION}`
-      #         });
-              
-      #         console.log(`Successfully merged ${sbomBranch} into ${targetBranch}`);
-              
-      #         // Delete the SBOM branch after successful merge
-      #         console.log(`Deleting branch ${sbomBranch}`);
-      #         await github.rest.git.deleteRef({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           ref: `heads/${sbomBranch}`
-      #         });
-              
-      #         console.log(`Successfully deleted branch ${sbomBranch}`);
-      #       } catch (error) {
-      #         console.error(`Error during merge or branch deletion: ${error.message}`);
-      #         core.setFailed(error.message);
-      #       }
       -
         name: Add SBOMs to GitHub Release
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
