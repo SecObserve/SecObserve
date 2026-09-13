@@ -41,7 +41,9 @@ jobs:
         run: echo "CREATED=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       -
         name: Downcase repo owner for image
-        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "REPO_OWNER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
       -
         name: Build and push backend by digest
         id: build
@@ -59,10 +61,11 @@ jobs:
             VERSION=dev
       -
         name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+          touch "/tmp/digests/${DIGEST#sha256:}"
       -
         name: Upload digest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -100,13 +103,16 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Downcase repo owner for image
-        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "REPO_OWNER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
       -
         name: Create and push multi-platform manifest
         run: |
+          image="ghcr.io/$REPO_OWNER/secobserve-backend"
           docker buildx imagetools create \
-            -t ghcr.io/${{ env.REPO_OWNER }}/secobserve-backend:dev \
-            $(printf 'ghcr.io/${{ env.REPO_OWNER }}/secobserve-backend@sha256:%s ' *)
+            -t "$image:dev" \
+            $(printf "$image@sha256:%s " *)
         working-directory: /tmp/digests
 
   build_frontend:
@@ -145,7 +151,9 @@ jobs:
         run: echo "CREATED=$(date +'%Y-%m-%dT%H:%M:%S')" >> $GITHUB_ENV
       -
         name: Downcase repo owner for image
-        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "REPO_OWNER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
       -
         name: Build and push frontend by digest
         id: build
@@ -163,10 +171,11 @@ jobs:
             VERSION=dev
       -
         name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+          touch "/tmp/digests/${DIGEST#sha256:}"
       -
         name: Upload digest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -204,11 +213,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Downcase repo owner for image
-        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+        env:
+          OWNER: ${{ github.repository_owner }}
+        run: echo "REPO_OWNER=$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
       -
         name: Create and push multi-platform manifest
         run: |
+          image="ghcr.io/$REPO_OWNER/secobserve-frontend"
           docker buildx imagetools create \
-            -t ghcr.io/${{ env.REPO_OWNER }}/secobserve-frontend:dev \
-            $(printf 'ghcr.io/${{ env.REPO_OWNER }}/secobserve-frontend@sha256:%s ' *)
+            -t "$image:dev" \
+            $(printf "$image@sha256:%s " *)
         working-directory: /tmp/digests
