@@ -1,0 +1,2544 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.6",
+    "serialNumber": "urn:uuid:60c7423f-8d6f-4e4e-aaba-407d906a5756",
+    "version": 1,
+    "metadata": {
+        "timestamp": "2026-09-13T06:22:49Z",
+        "tools": {
+            "components": [
+                {
+                    "bom-ref": "pkg:npm/@cdxgen/cdxgen@13.1.0",
+                    "group": "@cdxgen",
+                    "name": "cdxgen",
+                    "publisher": "OWASP Foundation",
+                    "purl": "pkg:npm/%40cdxgen/cdxgen@13.1.0",
+                    "type": "application",
+                    "version": "13.1.0"
+                }
+            ]
+        },
+        "component": {
+            "type": "application",
+            "name": "SecObserve Backend Application",
+            "version": "1.59.0",
+            "description": "Backend application of SecObserve, the open source vulnerability management system for software development and cloud environments.",
+            "bom-ref": "pkg:pypi/secobserve@1.59.0",
+            "supplier": {
+                "name": "SecObserve Open Source Community and contributors",
+                "url": [
+                    "https://github.com/SecObserve/SecObserve"
+                ]
+            },
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:github/SecObserve/SecObserve@v1.59.0#backend"
+        }
+    },
+    "components": [
+        {
+            "type": "library",
+            "name": "annotated-types",
+            "version": "0.8.0",
+            "description": "Reusable constraint types to use with typing.Annotated",
+            "bom-ref": "pkg:pypi/annotated-types@0.8.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/annotated-types@0.8.0"
+        },
+        {
+            "type": "library",
+            "name": "argon2-cffi-bindings",
+            "version": "26.1.0",
+            "description": "Low-level CFFI bindings for Argon2",
+            "bom-ref": "pkg:pypi/argon2-cffi-bindings@26.1.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "21ca0396fe5ec995dd54431c32698189666f9224810acfa752e50d2bd94d9df2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/argon2-cffi-bindings@26.1.0",
+            "tags": [
+                "crypto",
+                "native",
+                "security"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "argon2-cffi",
+            "version": "25.1.0",
+            "description": "Argon2 for Python",
+            "bom-ref": "pkg:pypi/argon2-cffi@25.1.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "fdc8b074db390fccb6eb4a3604ae7231f219aa669a2652e0f20e16ba513d5741"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/argon2-cffi@25.1.0",
+            "tags": [
+                "crypto",
+                "native",
+                "security"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "asgiref",
+            "version": "3.12.1",
+            "description": "ASGI specs, helper code, and adapters",
+            "bom-ref": "pkg:pypi/asgiref@3.12.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "fe386d1c2bff7259ea95929266d12a8cf9a8b5a1c2598402967d8792e7a7c094"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/asgiref@3.12.1",
+            "tags": [
+                "framework",
+                "http",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "attrs",
+            "version": "26.1.0",
+            "description": "Classes Without Boilerplate",
+            "bom-ref": "pkg:pypi/attrs@26.1.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/attrs@26.1.0"
+        },
+        {
+            "type": "library",
+            "name": "beartype",
+            "version": "0.22.9",
+            "description": "Unbearably fast near-real-time pure-Python runtime-static type-checker.",
+            "bom-ref": "pkg:pypi/beartype@0.22.9",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "d16c9bbc61ea14637596c5f6fbff2ee99cbe3573e46a716401734ef50c3060c2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/beartype@0.22.9"
+        },
+        {
+            "type": "library",
+            "name": "boolean-py",
+            "version": "5.0",
+            "description": "Define boolean algebras, create and parse boolean expressions and create custom boolean DSL.",
+            "bom-ref": "pkg:pypi/boolean-py@5.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "ef28a70bd43115208441b53a045d1549e2f0ec6e3d08a9d142cbc41c1938e8d9"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-2-Clause",
+                        "url": "https://opensource.org/licenses/BSD-2-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/boolean-py@5.0",
+            "tags": [
+                "parse",
+                "tools"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "certifi",
+            "version": "2026.7.22",
+            "description": "Python package for providing Mozilla's CA Bundle.",
+            "bom-ref": "pkg:pypi/certifi@2026.7.22",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MPL-2.0",
+                        "url": "https://opensource.org/licenses/MPL-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/certifi@2026.7.22",
+            "tags": [
+                "bundle"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "cffi",
+            "version": "2.1.1",
+            "description": "Foreign Function Interface for Python calling C code.",
+            "bom-ref": "pkg:pypi/cffi@2.1.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "baed1e86cc735622097354b9d1281406caf42ff42a886d29faa8e8d1630333be"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT-0",
+                        "url": "https://opensource.org/licenses/MIT-0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/cffi@2.1.1",
+            "tags": [
+                "native"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "charset-normalizer",
+            "version": "3.5.1",
+            "description": "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet.",
+            "bom-ref": "pkg:pypi/charset-normalizer@3.5.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "d1ee1e296209fdce05b81b663250eefa02213a2da7b41bf26f7829b8ba3545aa"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/charset-normalizer@3.5.1",
+            "tags": [
+                "tools"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "click",
+            "version": "8.5.0",
+            "description": "Composable command line interface toolkit",
+            "bom-ref": "pkg:pypi/click@8.5.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/click@8.5.0"
+        },
+        {
+            "type": "library",
+            "name": "cryptography",
+            "version": "50.0.1",
+            "description": "cryptography is a package which provides cryptographic recipes and primitives to Python developers.",
+            "bom-ref": "pkg:pypi/cryptography@50.0.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "b8f852c65863251b9e3a1b8c150ce21e59b522dbb6a7d4bc80e680d38388e986"
+                }
+            ],
+            "licenses": [
+                {
+                    "expression": "Apache-2.0 OR BSD-3-Clause"
+                }
+            ],
+            "purl": "pkg:pypi/cryptography@50.0.1",
+            "tags": [
+                "crypto",
+                "security"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "cvss",
+            "version": "3.6",
+            "description": "CVSS2/3/4 library with interactive calculator for Python 2 and Python 3",
+            "bom-ref": "pkg:pypi/cvss@3.6",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "e342c6ad9c7eb69d2aebbbc2768a03cabd57eb947c806e145de5b936219833ea"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-3.0-or-later",
+                        "url": "https://opensource.org/licenses/LGPL-3.0-or-later"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/cvss@3.6",
+            "tags": [
+                "security"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "cyclonedx-python-lib",
+            "version": "11.12.0",
+            "description": "Python library for CycloneDX",
+            "bom-ref": "pkg:pypi/cyclonedx-python-lib@11.12.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "0e807521a921a5c3cb8ce1153f8a61d29eedfe76a46aac2796b7c6b573391a54"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/cyclonedx-python-lib@11.12.0",
+            "tags": [
+                "security"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "defusedcsv",
+            "version": "3.0.0",
+            "description": "Drop-in replacement for Python's CSV library that tries to mitigate CSV injection attacks",
+            "bom-ref": "pkg:pypi/defusedcsv@3.0.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "5e5f2e940cefb5ac60580c8009388bfb154b7853784d34a8f0ff3a52c6130e87"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/defusedcsv@3.0.0",
+            "tags": [
+                "injection"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "defusedxml",
+            "version": "0.7.1",
+            "description": "XML bomb protection for Python stdlib modules",
+            "bom-ref": "pkg:pypi/defusedxml@0.7.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "PSF-2.0",
+                        "url": "https://opensource.org/licenses/PSF-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/defusedxml@0.7.1",
+            "tags": [
+                "xml"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "django-cors-headers",
+            "version": "4.9.0",
+            "description": "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS).",
+            "bom-ref": "pkg:pypi/django-cors-headers@4.9.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "15c7f20727f90044dcee2216a9fd7303741a864865f0c3657e28b7056f61b449"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django-cors-headers@4.9.0",
+            "tags": [
+                "django",
+                "framework",
+                "resource"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "django-dirtyfields",
+            "version": "1.9.9",
+            "description": "Tracking dirty fields on a Django model instance.",
+            "bom-ref": "pkg:pypi/django-dirtyfields@1.9.9",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "80da479ab989331e6f29c90576e5f7d7b3df65b36f16bfd6f5d37a0dbdeda6b0"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django-dirtyfields@1.9.9",
+            "tags": [
+                "django",
+                "framework"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "django-encrypted-model-fields",
+            "version": "0.6.5",
+            "description": "A set of fields that wrap standard Django fields with encryption provided by the python cryptography library.",
+            "bom-ref": "pkg:pypi/django-encrypted-model-fields@0.6.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "b21bbdd8ae2e1a0ea37a5049b3ba46e6e63bf287ad241219a058fac1070796cc"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django-encrypted-model-fields@0.6.5",
+            "tags": [
+                "django",
+                "framework",
+                "http",
+                "security",
+                "web"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "django-environ",
+            "version": "0.14.0",
+            "description": "A package that allows you to utilize 12factor inspired environment variables to configure your Django application.",
+            "bom-ref": "pkg:pypi/django-environ@0.14.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "8dbe8a57f0a540ab8abd6f54f230de5e99e3a2c9d797cb9caecb037bca3d47d8"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django-environ@0.14.0",
+            "tags": [
+                "django",
+                "framework",
+                "tools"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "django-filter",
+            "version": "26.1",
+            "description": "Django-filter is a reusable Django application for allowing users to filter querysets dynamically.",
+            "bom-ref": "pkg:pypi/django-filter@26.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "7d98ef2899218e6242619b532cb1b95af14e09dfcf74844aecb550ad27b59ff2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django-filter@26.1",
+            "tags": [
+                "django",
+                "framework"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "django-picklefield",
+            "version": "3.4.0",
+            "description": "Pickled object field for Django",
+            "bom-ref": "pkg:pypi/django-picklefield@3.4.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "929bcfbae5b48bd22a52bc04521fdfdd152eee36abb9f20228f9480f9df65f45"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django-picklefield@3.4.0",
+            "tags": [
+                "django",
+                "framework"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "Django",
+            "version": "6.1.1",
+            "description": "A high-level Python web framework that encourages rapid development and clean, pragmatic design.",
+            "bom-ref": "pkg:pypi/django@6.1.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "585fb82bf15053c42cf52e67c2f1b54a032dca384759315fd6678ab1870d1d72"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/django@6.1.1",
+            "tags": [
+                "django",
+                "framework",
+                "http",
+                "web",
+                "wsgi"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "djangorestframework",
+            "version": "3.18.0",
+            "description": "Web APIs for Django, made easy.",
+            "bom-ref": "pkg:pypi/djangorestframework@3.18.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "381fc44d3249c9565c5f723850855b734e99030eb30957a49f506d3fe11d7dcb"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/djangorestframework@3.18.0",
+            "tags": [
+                "django",
+                "framework",
+                "http",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "dnspython",
+            "version": "2.8.0",
+            "description": "DNS toolkit",
+            "bom-ref": "pkg:pypi/dnspython@2.8.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "01d9bbc4a2d76bf0db7c1f729812ded6d912bd318d3b1cf81d30c0f845dbf3af"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "ISC",
+                        "url": "https://opensource.org/licenses/ISC"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/dnspython@2.8.0"
+        },
+        {
+            "type": "framework",
+            "name": "drf-spectacular-sidecar",
+            "version": "2026.9.1",
+            "description": "Serve self-contained distribution builds of Swagger UI and Redoc with Django",
+            "bom-ref": "pkg:pypi/drf-spectacular-sidecar@2026.9.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "1e521d0ff78c7ab1a873423fc6e6b82ef6bae863f170762e7410ac63b2c7b72f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                },
+                {
+                    "license": {
+                        "name": "BSD"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/drf-spectacular-sidecar@2026.9.1",
+            "tags": [
+                "django",
+                "framework",
+                "http",
+                "web"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "drf-spectacular",
+            "version": "0.30.0",
+            "description": "Sane and flexible OpenAPI 3 schema generation for Django REST framework",
+            "bom-ref": "pkg:pypi/drf-spectacular@0.30.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "006cf5921ebe20a9bd24f7c846261ebbf78780be5961b0d6e87afaa82afd62ff"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/drf-spectacular@0.30.0",
+            "tags": [
+                "django",
+                "framework",
+                "http",
+                "rest",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "email-validator",
+            "version": "2.2.0",
+            "description": "A robust email address syntax and deliverability validation library.",
+            "bom-ref": "pkg:pypi/email-validator@2.2.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "561977c2d73ce3611850a06fa56b414621e0c8faa9d66f2611407d87465da631"
+                }
+            ],
+            "licenses": [
+                {
+                    "expression": "The Unlicense (Unlicense)"
+                }
+            ],
+            "purl": "pkg:pypi/email-validator@2.2.0",
+            "tags": [
+                "validation"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "et-xmlfile",
+            "version": "2.0.0",
+            "description": "An implementation of lxml.xmlfile for the standard library",
+            "bom-ref": "pkg:pypi/et-xmlfile@2.0.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/et-xmlfile@2.0.0",
+            "tags": [
+                "xml"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "gunicorn",
+            "version": "26.2.0",
+            "description": "WSGI HTTP Server for UNIX",
+            "bom-ref": "pkg:pypi/gunicorn@26.2.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "bd249d0b3f7972f7432f0a6b6ff3b3ee2d129f70cd1ff6c09a9dd9e29a2b88e3"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/gunicorn@26.2.0",
+            "tags": [
+                "http",
+                "tools",
+                "web",
+                "wsgi"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "html-to-markdown",
+            "version": "3.12.0",
+            "description": "High-performance HTML to Markdown converter",
+            "bom-ref": "pkg:pypi/html-to-markdown@3.12.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "5388dbb8c307a39f2983098c877f596b5a9f54dca4d1e2049412f5528721f809"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/html-to-markdown@3.12.0",
+            "tags": [
+                "html"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "huey",
+            "version": "3.3.4",
+            "description": "a little task queue",
+            "bom-ref": "pkg:pypi/huey@3.3.4",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "a6e2e9a8fbda15c2dfb8e33b23a5e6e228326ea8e0087c11027957ef7c210e96"
+                }
+            ],
+            "licenses": [],
+            "purl": "pkg:pypi/huey@3.3.4",
+            "tags": [
+                "framework"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "idna",
+            "version": "3.19",
+            "description": "Internationalized Domain Names in Applications (IDNA)",
+            "bom-ref": "pkg:pypi/idna@3.19",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "815e7be7a7806d54abb586dc943addc79e8b2ee16915059658cbeff4b1b43bf4"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/idna@3.19",
+            "tags": [
+                "tools"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "inflect",
+            "version": "7.5.0",
+            "description": "Correctly generate plurals, singular nouns, ordinals, indefinite articles",
+            "bom-ref": "pkg:pypi/inflect@7.5.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "2aea70e5e70c35d8350b8097396ec155ffd68def678c7ff97f51aa69c1d92344"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/inflect@7.5.0"
+        },
+        {
+            "type": "library",
+            "name": "inflection",
+            "version": "0.5.1",
+            "description": "A port of Ruby on Rails inflector to Python",
+            "bom-ref": "pkg:pypi/inflection@0.5.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "f38b2b640938a4f35ade69ac3d053042959b62a0f1076a5bbaa1b9526605a8a2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/inflection@0.5.1"
+        },
+        {
+            "type": "library",
+            "name": "jira",
+            "version": "3.10.5",
+            "description": "Python library for interacting with JIRA via REST APIs.",
+            "bom-ref": "pkg:pypi/jira@3.10.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "d4da1385c924ee693d6cc9838e56a34e31d74f0d6899934ef35bbd0d2d33997f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/jira@3.10.5",
+            "tags": [
+                "http",
+                "rest",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "jsonpickle",
+            "version": "4.1.2",
+            "description": "jsonpickle encodes/decodes any Python object to/from JSON",
+            "bom-ref": "pkg:pypi/jsonpickle@4.1.2",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "7ffe34426bc797684dbf1dc84185558bd864cd25b1ff5fb01b7405e392d0a937"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/jsonpickle@4.1.2"
+        },
+        {
+            "type": "library",
+            "name": "jsonschema-specifications",
+            "version": "2025.9.1",
+            "description": "The JSON Schema meta-schemas and vocabularies, exposed as a Registry",
+            "bom-ref": "pkg:pypi/jsonschema-specifications@2025.9.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/jsonschema-specifications@2025.9.1",
+            "tags": [
+                "json"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "jsonschema",
+            "version": "4.26.0",
+            "description": "An implementation of JSON Schema validation for Python",
+            "bom-ref": "pkg:pypi/jsonschema@4.26.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/jsonschema@4.26.0",
+            "tags": [
+                "json",
+                "validation"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "license-expression",
+            "version": "30.4.4",
+            "description": "license-expression is a comprehensive utility library to parse, compare, simplify and normalize license expressions (such as SPDX license expressions) using boolean logic.",
+            "bom-ref": "pkg:pypi/license-expression@30.4.4",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "421788fdcadb41f049d2dc934ce666626265aeccefddd25e162a26f23bcbf8a4"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/license-expression@30.4.4",
+            "tags": [
+                "tools"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "licenselynx",
+            "version": "2.3.4",
+            "description": "Deterministically map license strings to its canonical identifier",
+            "bom-ref": "pkg:pypi/licenselynx@2.3.4",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "f1b2da860371a35205185497861c5018e168516eb714a92e9c0f6f9c5c127dc9"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/licenselynx@2.3.4"
+        },
+        {
+            "type": "library",
+            "name": "more-itertools",
+            "version": "11.1.0",
+            "description": "More routines for operating on iterables, beyond itertools",
+            "bom-ref": "pkg:pypi/more-itertools@11.1.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/more-itertools@11.1.0"
+        },
+        {
+            "type": "library",
+            "name": "oauthlib",
+            "version": "3.3.1",
+            "description": "A generic, spec-compliant, thorough implementation of the OAuth request-signing logic",
+            "bom-ref": "pkg:pypi/oauthlib@3.3.1",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "88119c938d2b8fb88561af5f6ee0eec8cc8d552b7bb1f712743136eb7523b7a1"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/oauthlib@3.3.1"
+        },
+        {
+            "type": "library",
+            "name": "openpyxl",
+            "version": "3.1.5",
+            "description": "A Python library to read/write Excel 2010 xlsx/xlsm files",
+            "bom-ref": "pkg:pypi/openpyxl@3.1.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/openpyxl@3.1.5"
+        },
+        {
+            "type": "library",
+            "name": "packageurl-python",
+            "version": "0.17.6",
+            "description": "A purl aka. Package URL parser and builder",
+            "bom-ref": "pkg:pypi/packageurl-python@0.17.6",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "31a85c2717bc41dd818f3c62908685ff9eebcb68588213745b14a6ee9e7df7c9"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/packageurl-python@0.17.6",
+            "tags": [
+                "tools"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "packaging",
+            "version": "26.3",
+            "description": "Core utilities for Python packages",
+            "bom-ref": "pkg:pypi/packaging@26.3",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+                }
+            ],
+            "licenses": [
+                {
+                    "expression": "Apache-2.0 OR BSD-2-Clause"
+                }
+            ],
+            "purl": "pkg:pypi/packaging@26.3"
+        },
+        {
+            "type": "framework",
+            "name": "peewee",
+            "version": "4.4.0",
+            "description": "a little orm",
+            "bom-ref": "pkg:pypi/peewee@4.4.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "c4d6bc13d9a9b22fe691f695f5a5d716645b4bd5387fef27b9cb53ef14fae1e1"
+                }
+            ],
+            "licenses": [],
+            "purl": "pkg:pypi/peewee@4.4.0",
+            "tags": [
+                "database",
+                "framework"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "ply",
+            "version": "3.11",
+            "description": "Python Lex & Yacc",
+            "bom-ref": "pkg:pypi/ply@3.11",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/ply@3.11"
+        },
+        {
+            "type": "library",
+            "name": "psycopg-binary",
+            "version": "3.3.5",
+            "description": "PostgreSQL database adapter for Python -- C optimisation distribution",
+            "bom-ref": "pkg:pypi/psycopg-binary@3.3.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "cd0faa2475ab254ad1b507430131cf7f7f0be927ffdc03c32ad3b33d2ef63f42"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-3.0-only",
+                        "url": "https://opensource.org/licenses/LGPL-3.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/psycopg-binary@3.3.5",
+            "tags": [
+                "database"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "psycopg",
+            "version": "3.3.5",
+            "description": "PostgreSQL database adapter for Python",
+            "bom-ref": "pkg:pypi/psycopg@3.3.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "ce5aa5cdb4f9379f00f487590e5890bfa7df9a164648c969ffa628505e21af4e"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "LGPL-3.0-only",
+                        "url": "https://opensource.org/licenses/LGPL-3.0-only"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/psycopg@3.3.5",
+            "tags": [
+                "database"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "py-ocsf-models",
+            "version": "0.10.0",
+            "description": "This is a Python implementation of the OCSF models. The models are used to represent the data of the OCSF Schema defined in https://schema.ocsf.io/.",
+            "bom-ref": "pkg:pypi/py-ocsf-models@0.10.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "a9d1e245b1c9fba1d2cb8c042253ef1b83a2dbfec30ed69975bbce599b4510bb"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/py-ocsf-models@0.10.0"
+        },
+        {
+            "type": "library",
+            "name": "py-serializable",
+            "version": "2.1.0",
+            "description": "Library for serializing and deserializing Python Objects to and from JSON and XML.",
+            "bom-ref": "pkg:pypi/py-serializable@2.1.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "b56d5d686b5a03ba4f4db5e769dc32336e142fc3bd4d68a8c25579ebb0a67304"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/py-serializable@2.1.0",
+            "tags": [
+                "json",
+                "xml"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "pycparser",
+            "version": "3.0",
+            "description": "C parser in Python",
+            "bom-ref": "pkg:pypi/pycparser@3.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "b727414169a36b7d524c1c3e31839a521725078d7b2ff038656844266160a992"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pycparser@3.0",
+            "tags": [
+                "parse"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "pydantic-core",
+            "version": "2.46.5",
+            "description": "Core functionality for Pydantic validation and serialization",
+            "bom-ref": "pkg:pypi/pydantic-core@2.46.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "657b40d6240c0a7b6a64b30f22d1e3aa631c7e846c621b0c0f6d1d75e2e15ea6"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pydantic-core@2.46.5",
+            "tags": [
+                "framework",
+                "pydantic",
+                "validation"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "pydantic",
+            "version": "2.13.5",
+            "description": "Data validation using Python type hints",
+            "bom-ref": "pkg:pypi/pydantic@2.13.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "346a034f080da3755d8e9cb5e00e8b07de1d39e4f6e2c87d8ab7cafa0b269a73"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pydantic@2.13.5",
+            "tags": [
+                "framework",
+                "hypothesis",
+                "pydantic",
+                "validation"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "PyJWT",
+            "version": "2.13.0",
+            "description": "JSON Web Token implementation in Python",
+            "bom-ref": "pkg:pypi/pyjwt@2.13.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pyjwt@2.13.0",
+            "tags": [
+                "token",
+                "tools",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "PyMySQL",
+            "version": "1.2.0",
+            "description": "Pure Python MySQL Driver",
+            "bom-ref": "pkg:pypi/pymysql@1.2.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "62169ce6d5510f08e140c5e7990ee884a9764024e4a9a27b2cc11f1099322ae0"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pymysql@1.2.0",
+            "tags": [
+                "database",
+                "mysql"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "pyparsing",
+            "version": "3.3.2",
+            "description": "pyparsing - Classes and methods to define and execute parsing grammars",
+            "bom-ref": "pkg:pypi/pyparsing@3.3.2",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pyparsing@3.3.2"
+        },
+        {
+            "type": "library",
+            "name": "PyYAML",
+            "version": "6.0.3",
+            "description": "YAML parser and emitter for Python",
+            "bom-ref": "pkg:pypi/pyyaml@6.0.3",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "214ed4befebe12df36bcc8bc2b64b396ca31be9304b8f59e25c11cf94a4c033b"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/pyyaml@6.0.3"
+        },
+        {
+            "type": "library",
+            "name": "rdflib",
+            "version": "7.6.0",
+            "description": "RDFLib is a Python library for working with RDF, a simple yet powerful language for representing information.",
+            "bom-ref": "pkg:pypi/rdflib@7.6.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "30c0a3ebf4c0e09215f066be7246794b6492e054e782d7ac2a34c9f70a15e0dd"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "BSD-3-Clause",
+                        "url": "https://opensource.org/licenses/BSD-3-Clause"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/rdflib@7.6.0"
+        },
+        {
+            "type": "library",
+            "name": "referencing",
+            "version": "0.37.0",
+            "description": "JSON Referencing + Python",
+            "bom-ref": "pkg:pypi/referencing@0.37.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/referencing@0.37.0"
+        },
+        {
+            "type": "library",
+            "name": "regopy",
+            "version": "1.5.2",
+            "description": "Python interface for the OPA Rego Language and Runtime",
+            "bom-ref": "pkg:pypi/regopy@1.5.2",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "4d444b4481776ccf7cae45c2ca1cbfc44e7b1c0d0994dcea71d0765f63b36eb1"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/regopy@1.5.2"
+        },
+        {
+            "type": "library",
+            "name": "requests-oauthlib",
+            "version": "2.0.0",
+            "description": "OAuthlib authentication support for Requests.",
+            "bom-ref": "pkg:pypi/requests-oauthlib@2.0.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                },
+                {
+                    "license": {
+                        "id": "ISC",
+                        "url": "https://opensource.org/licenses/ISC"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/requests-oauthlib@2.0.0"
+        },
+        {
+            "type": "library",
+            "name": "requests-toolbelt",
+            "version": "1.0.0",
+            "description": "A utility belt for advanced users of python-requests",
+            "bom-ref": "pkg:pypi/requests-toolbelt@1.0.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/requests-toolbelt@1.0.0"
+        },
+        {
+            "type": "library",
+            "name": "requests",
+            "version": "2.34.2",
+            "description": "Python HTTP for Humans.",
+            "bom-ref": "pkg:pypi/requests@2.34.2",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/requests@2.34.2",
+            "tags": [
+                "http",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "rpds-py",
+            "version": "2026.6.3",
+            "description": "Python bindings to Rust's persistent data structures (rpds)",
+            "bom-ref": "pkg:pypi/rpds-py@2026.6.3",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "7b689145a1485c335569bd056464f3243a29af7ed3871c7be31ad624ba239bc7"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/rpds-py@2026.6.3"
+        },
+        {
+            "type": "library",
+            "name": "semantic-version",
+            "version": "2.10.0",
+            "description": "A library implementing the 'SemVer' scheme.",
+            "bom-ref": "pkg:pypi/semantic-version@2.10.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "de78a3b8e0feda74cabc54aab2da702113e33ac9d9eb9d2389bcf1f58b7d9177"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                },
+                {
+                    "license": {
+                        "name": "BSD"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/semantic-version@2.10.0"
+        },
+        {
+            "type": "library",
+            "name": "semver",
+            "version": "3.0.4",
+            "description": "Python helper for Semantic Versioning (https://semver.org)",
+            "bom-ref": "pkg:pypi/semver@3.0.4",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/semver@3.0.4"
+        },
+        {
+            "type": "library",
+            "name": "simplejson",
+            "version": "4.1.2",
+            "description": "Simple, fast, extensible JSON encoder/decoder for Python",
+            "bom-ref": "pkg:pypi/simplejson@4.1.2",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "daccb7f792a8741e1119fdb350c8301df85697943607f26e478c9c039f625687"
+                }
+            ],
+            "licenses": [
+                {
+                    "expression": "MIT OR AFL-2.1"
+                }
+            ],
+            "purl": "pkg:pypi/simplejson@4.1.2",
+            "tags": [
+                "json"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "sortedcontainers",
+            "version": "2.4.0",
+            "description": "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set",
+            "bom-ref": "pkg:pypi/sortedcontainers@2.4.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/sortedcontainers@2.4.0"
+        },
+        {
+            "type": "library",
+            "name": "spdx-tools",
+            "version": "0.8.5",
+            "description": "SPDX parser and tools.",
+            "bom-ref": "pkg:pypi/spdx-tools@0.8.5",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "7c2d5865941be9d2e898f5b084e8d5422dd298dc5a29320ddb198fec304f59c4"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/spdx-tools@0.8.5",
+            "tags": [
+                "tools"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "sqlparse",
+            "version": "0.6.0",
+            "description": "A non-validating SQL parser.",
+            "bom-ref": "pkg:pypi/sqlparse@0.6.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "b861c0288ce2fa56209a9a6412d2e066ac664b3873b89c26c9d8415e8e32996f"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "name": "BSD License"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/sqlparse@0.6.0",
+            "tags": [
+                "database",
+                "sql"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "typeguard",
+            "version": "4.6.0",
+            "description": "Run-time type checker for Python",
+            "bom-ref": "pkg:pypi/typeguard@4.6.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "79878165bb86f2cf5d41d159a0ff1792a796cf496882d2fe1b1c6c7049b9cdd7"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/typeguard@4.6.0"
+        },
+        {
+            "type": "library",
+            "name": "typing-extensions",
+            "version": "4.16.0",
+            "description": "Backported and Experimental Type Hints for Python 3.9+",
+            "bom-ref": "pkg:pypi/typing-extensions@4.16.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "PSF-2.0",
+                        "url": "https://opensource.org/licenses/PSF-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/typing-extensions@4.16.0",
+            "tags": [
+                "devel"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "typing-inspection",
+            "version": "0.4.4",
+            "description": "Runtime typing introspection tools",
+            "bom-ref": "pkg:pypi/typing-inspection@0.4.4",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/typing-inspection@0.4.4",
+            "tags": [
+                "devel"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "tzdata",
+            "version": "2026.3",
+            "description": "Provider of IANA time zone data",
+            "bom-ref": "pkg:pypi/tzdata@2026.3",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "Apache-2.0",
+                        "url": "https://opensource.org/licenses/Apache-2.0"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/tzdata@2026.3"
+        },
+        {
+            "type": "library",
+            "name": "uritemplate",
+            "version": "4.2.0",
+            "description": "Implementation of RFC 6570 URI Templates",
+            "bom-ref": "pkg:pypi/uritemplate@4.2.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "962201ba1c4edcab02e60f9a0d3821e82dfc5d2d6662a21abd533879bdb8a686"
+                }
+            ],
+            "licenses": [
+                {
+                    "expression": "BSD 3-Clause OR Apache-2.0"
+                }
+            ],
+            "purl": "pkg:pypi/uritemplate@4.2.0"
+        },
+        {
+            "type": "library",
+            "name": "uritools",
+            "version": "6.1.3",
+            "description": "URI parsing, classification and composition",
+            "bom-ref": "pkg:pypi/uritools@6.1.3",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "136f113e76e53f85bf2d9cce0c3d40ceec775d0409e7d6de9b28f046a7d42838"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/uritools@6.1.3"
+        },
+        {
+            "type": "library",
+            "name": "urllib3",
+            "version": "2.7.0",
+            "description": "HTTP library with thread-safe connection pooling, file post, and more.",
+            "bom-ref": "pkg:pypi/urllib3@2.7.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/urllib3@2.7.0",
+            "tags": [
+                "http",
+                "web"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "validators",
+            "version": "0.35.0",
+            "description": "Python Data Validation for Humans™",
+            "bom-ref": "pkg:pypi/validators@0.35.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "e8c947097eae7892cb3d26868d637f79f47b4a0554bc6b80065dfe5aac3705dd"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/validators@0.35.0",
+            "tags": [
+                "validation"
+            ]
+        },
+        {
+            "type": "framework",
+            "name": "whitenoise",
+            "version": "6.12.0",
+            "description": "Radically simplified static file serving for WSGI applications",
+            "bom-ref": "pkg:pypi/whitenoise@6.12.0",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "fc5e8c572e33ebf24795b47b6a7da8da3c00cff2349f5b04c02f28d0cc5a3cc2"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/whitenoise@6.12.0",
+            "tags": [
+                "django",
+                "framework",
+                "http",
+                "web",
+                "wsgi"
+            ]
+        },
+        {
+            "type": "library",
+            "name": "xmltodict",
+            "version": "1.0.4",
+            "description": "Makes working with XML feel like you are working with JSON",
+            "bom-ref": "pkg:pypi/xmltodict@1.0.4",
+            "hashes": [
+                {
+                    "alg": "SHA-256",
+                    "content": "a4a00d300b0e1c59fc2bfccb53d7b2e88c32f200df138a0dd2229f842497026a"
+                }
+            ],
+            "licenses": [
+                {
+                    "license": {
+                        "id": "MIT",
+                        "url": "https://opensource.org/licenses/MIT"
+                    }
+                }
+            ],
+            "purl": "pkg:pypi/xmltodict@1.0.4",
+            "tags": [
+                "xml"
+            ]
+        }
+    ],
+    "services": [],
+    "dependencies": [
+        {
+            "ref": "pkg:pypi/annotated-types@0.8.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/argon2-cffi@25.1.0",
+            "dependsOn": [
+                "pkg:pypi/argon2-cffi-bindings@26.1.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/argon2-cffi-bindings@26.1.0",
+            "dependsOn": [
+                "pkg:pypi/cffi@2.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/asgiref@3.12.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/attrs@26.1.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/beartype@0.22.9",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/boolean-py@5.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/certifi@2026.7.22",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/cffi@2.1.1",
+            "dependsOn": [
+                "pkg:pypi/pycparser@3.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/charset-normalizer@3.5.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/click@8.5.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/cryptography@50.0.1",
+            "dependsOn": [
+                "pkg:pypi/cffi@2.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/cvss@3.6",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/cyclonedx-python-lib@11.12.0",
+            "dependsOn": [
+                "pkg:pypi/license-expression@30.4.4",
+                "pkg:pypi/packageurl-python@0.17.6",
+                "pkg:pypi/py-serializable@2.1.0",
+                "pkg:pypi/sortedcontainers@2.4.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/defusedcsv@3.0.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/defusedxml@0.7.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/django@6.1.1",
+            "dependsOn": [
+                "pkg:pypi/asgiref@3.12.1",
+                "pkg:pypi/sqlparse@0.6.0",
+                "pkg:pypi/tzdata@2026.3"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/django-cors-headers@4.9.0",
+            "dependsOn": [
+                "pkg:pypi/asgiref@3.12.1",
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/django-dirtyfields@1.9.9",
+            "dependsOn": [
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/django-encrypted-model-fields@0.6.5",
+            "dependsOn": [
+                "pkg:pypi/cryptography@50.0.1",
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/django-environ@0.14.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/django-filter@26.1",
+            "dependsOn": [
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/django-picklefield@3.4.0",
+            "dependsOn": [
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/djangorestframework@3.18.0",
+            "dependsOn": [
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/dnspython@2.8.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/drf-spectacular@0.30.0",
+            "dependsOn": [
+                "pkg:pypi/django@6.1.1",
+                "pkg:pypi/djangorestframework@3.18.0",
+                "pkg:pypi/inflection@0.5.1",
+                "pkg:pypi/jsonschema@4.26.0",
+                "pkg:pypi/pyyaml@6.0.3",
+                "pkg:pypi/uritemplate@4.2.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/drf-spectacular-sidecar@2026.9.1",
+            "dependsOn": [
+                "pkg:pypi/django@6.1.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/email-validator@2.2.0",
+            "dependsOn": [
+                "pkg:pypi/dnspython@2.8.0",
+                "pkg:pypi/idna@3.19"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/et-xmlfile@2.0.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/gunicorn@26.2.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/html-to-markdown@3.12.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/huey@3.3.4",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/idna@3.19",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/inflect@7.5.0",
+            "dependsOn": [
+                "pkg:pypi/typeguard@4.6.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/inflection@0.5.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/jira@3.10.5",
+            "dependsOn": [
+                "pkg:pypi/defusedxml@0.7.1",
+                "pkg:pypi/packaging@26.3",
+                "pkg:pypi/requests-oauthlib@2.0.0",
+                "pkg:pypi/requests@2.34.2"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/jsonpickle@4.1.2",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/jsonschema@4.26.0",
+            "dependsOn": [
+                "pkg:pypi/attrs@26.1.0",
+                "pkg:pypi/jsonschema-specifications@2025.9.1",
+                "pkg:pypi/referencing@0.37.0",
+                "pkg:pypi/rpds-py@2026.6.3"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/jsonschema-specifications@2025.9.1",
+            "dependsOn": [
+                "pkg:pypi/referencing@0.37.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/license-expression@30.4.4",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/licenselynx@2.3.4",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/more-itertools@11.1.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/oauthlib@3.3.1",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/openpyxl@3.1.5",
+            "dependsOn": [
+                "pkg:pypi/et-xmlfile@2.0.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/packageurl-python@0.17.6",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/packaging@26.3",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/peewee@4.4.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/ply@3.11",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/psycopg@3.3.5",
+            "dependsOn": [
+                "pkg:pypi/psycopg-binary@3.3.5",
+                "pkg:pypi/typing-extensions@4.16.0",
+                "pkg:pypi/tzdata@2026.3"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/psycopg-binary@3.3.5",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/py-ocsf-models@0.10.0",
+            "dependsOn": [
+                "pkg:pypi/email-validator@2.2.0",
+                "pkg:pypi/pydantic@2.13.5"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/py-serializable@2.1.0",
+            "dependsOn": [
+                "pkg:pypi/defusedxml@0.7.1"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/pycparser@3.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/pydantic@2.13.5",
+            "dependsOn": [
+                "pkg:pypi/annotated-types@0.8.0",
+                "pkg:pypi/pydantic-core@2.46.5",
+                "pkg:pypi/typing-extensions@4.16.0",
+                "pkg:pypi/typing-inspection@0.4.4"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/pydantic-core@2.46.5",
+            "dependsOn": [
+                "pkg:pypi/typing-extensions@4.16.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/pyjwt@2.13.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/pymysql@1.2.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/pyparsing@3.3.2",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/pyyaml@6.0.3",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/rdflib@7.6.0",
+            "dependsOn": [
+                "pkg:pypi/pyparsing@3.3.2"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/referencing@0.37.0",
+            "dependsOn": [
+                "pkg:pypi/attrs@26.1.0",
+                "pkg:pypi/rpds-py@2026.6.3",
+                "pkg:pypi/typing-extensions@4.16.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/regopy@1.5.2",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/requests@2.34.2",
+            "dependsOn": [
+                "pkg:pypi/certifi@2026.7.22",
+                "pkg:pypi/idna@3.19",
+                "pkg:pypi/urllib3@2.7.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/requests-oauthlib@2.0.0",
+            "dependsOn": [
+                "pkg:pypi/oauthlib@3.3.1",
+                "pkg:pypi/requests@2.34.2"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/requests-toolbelt@1.0.0",
+            "dependsOn": [
+                "pkg:pypi/requests@2.34.2"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/rpds-py@2026.6.3",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/semantic-version@2.10.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/semver@3.0.4",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/simplejson@4.1.2",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/sortedcontainers@2.4.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/spdx-tools@0.8.5",
+            "dependsOn": [
+                "pkg:pypi/beartype@0.22.9",
+                "pkg:pypi/click@8.5.0",
+                "pkg:pypi/ply@3.11",
+                "pkg:pypi/pyyaml@6.0.3",
+                "pkg:pypi/rdflib@7.6.0",
+                "pkg:pypi/uritools@6.1.3",
+                "pkg:pypi/xmltodict@1.0.4"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/sqlparse@0.6.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/typeguard@4.6.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/typing-extensions@4.16.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/typing-inspection@0.4.4",
+            "dependsOn": [
+                "pkg:pypi/typing-extensions@4.16.0"
+            ]
+        },
+        {
+            "ref": "pkg:pypi/tzdata@2026.3",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/uritemplate@4.2.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/uritools@6.1.3",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/urllib3@2.7.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/validators@0.35.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/whitenoise@6.12.0",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/xmltodict@1.0.4",
+            "dependsOn": []
+        },
+        {
+            "ref": "pkg:pypi/secobserve@1.59.0",
+            "dependsOn": [
+                "pkg:pypi/argon2-cffi@25.1.0",
+                "pkg:pypi/cvss@3.6",
+                "pkg:pypi/cyclonedx-python-lib@11.12.0",
+                "pkg:pypi/defusedcsv@3.0.0",
+                "pkg:pypi/django-cors-headers@4.9.0",
+                "pkg:pypi/django-dirtyfields@1.9.9",
+                "pkg:pypi/django-encrypted-model-fields@0.6.5",
+                "pkg:pypi/django-environ@0.14.0",
+                "pkg:pypi/django-filter@26.1",
+                "pkg:pypi/django-picklefield@3.4.0",
+                "pkg:pypi/django@6.1.1",
+                "pkg:pypi/djangorestframework@3.18.0",
+                "pkg:pypi/drf-spectacular-sidecar@2026.9.1",
+                "pkg:pypi/drf-spectacular@0.30.0",
+                "pkg:pypi/gunicorn@26.2.0",
+                "pkg:pypi/html-to-markdown@3.12.0",
+                "pkg:pypi/huey@3.3.4",
+                "pkg:pypi/inflect@7.5.0",
+                "pkg:pypi/jira@3.10.5",
+                "pkg:pypi/jsonpickle@4.1.2",
+                "pkg:pypi/license-expression@30.4.4",
+                "pkg:pypi/licenselynx@2.3.4",
+                "pkg:pypi/openpyxl@3.1.5",
+                "pkg:pypi/packageurl-python@0.17.6",
+                "pkg:pypi/peewee@4.4.0",
+                "pkg:pypi/psycopg@3.3.5",
+                "pkg:pypi/py-ocsf-models@0.10.0",
+                "pkg:pypi/pyjwt@2.13.0",
+                "pkg:pypi/pymysql@1.2.0",
+                "pkg:pypi/pyyaml@6.0.3",
+                "pkg:pypi/regopy@1.5.2",
+                "pkg:pypi/requests@2.34.2",
+                "pkg:pypi/semver@3.0.4",
+                "pkg:pypi/simplejson@4.1.2",
+                "pkg:pypi/spdx-tools@0.8.5",
+                "pkg:pypi/validators@0.35.0",
+                "pkg:pypi/whitenoise@6.12.0"
+            ]
+        }
+    ],
+    "annotations": [
+        {
+            "bom-ref": "metadata-annotations",
+            "subjects": [
+                "pkg:pypi/secobserve@1.59.0"
+            ],
+            "annotator": {
+                "component": {
+                    "type": "application",
+                    "name": "cdxgen",
+                    "version": "13.1.0",
+                    "group": "@cdxgen",
+                    "bom-ref": "pkg:npm/@cdxgen/cdxgen@13.1.0",
+                    "publisher": "OWASP Foundation",
+                    "purl": "pkg:npm/%40cdxgen/cdxgen@13.1.0"
+                }
+            },
+            "timestamp": "2026-09-13T06:22:49Z",
+            "text": "This Software Bill-of-Materials (SBOM) document was created on Sunday, September 13, 2026 with cdxgen. The data was captured during the build lifecycle phase. The document describes an application named 'SecObserve' with version '1.59.0'."
+        }
+    ]
+}
