@@ -32,7 +32,7 @@ jobs:
           SBOM_UTILITY_VERSION: 0.19.2
           CYCLONE_DX_CLI_VERSION: 0.33.1
         run: |
-          npm install -g @cyclonedx/cdxgen@"$CDXGEN_VERSION"
+          npm install -g @cdxgen/cdxgen@"$CDXGEN_VERSION"
           cd /usr/local/bin
           wget --no-verbose https://github.com/CycloneDX/sbom-utility/releases/download/v"$SBOM_UTILITY_VERSION"/sbom-utility-v"$SBOM_UTILITY_VERSION"-linux-amd64.tar.gz -O - | tar -zxf -
           wget --no-verbose https://github.com/CycloneDX/cyclonedx-cli/releases/download/v"$CYCLONE_DX_CLI_VERSION"/cyclonedx-linux-x64
