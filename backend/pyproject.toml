@@ -25,7 +25,7 @@ django-dirtyfields = "1.9.9"  # https://github.com/romgar/django-dirtyfields
 
 # Django REST Framework
 # ------------------------------------------------------------------------------
-djangorestframework = "3.18.0"  # https://github.com/encode/django-rest-framework
+djangorestframework = "3.18.1"  # https://github.com/encode/django-rest-framework
 django-cors-headers = "4.9.0" # https://github.com/adamchainz/django-cors-headers
 
 # OpenAPI 3
@@ -63,7 +63,7 @@ license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expres
 # Task queue
 # ------------------------------------------------------------------------------
 huey = "3.4.0"  # https://github.com/coleifer/huey
-peewee = "4.5.0"  # https://github.com/coleifer/peewee
+peewee = "4.5.1"  # https://github.com/coleifer/peewee
 
 # Issue tracker
 # ------------------------------------------------------------------------------
@@ -75,7 +75,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.10.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.5"  # https://github.com/spdx/tools-python
-html-to-markdown = "3.12.0"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "3.12.1"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.12.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 licenselynx = "2.3.4"  # https://github.com/licenselynx/licenselynx
 regopy = "1.5.2"  # https://microsoft.github.io/rego-cpp/#python-example
