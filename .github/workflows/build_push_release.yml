@@ -61,10 +61,11 @@ jobs:
             VERSION=${{ github.event.inputs.release }}
       -
         name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+          touch "/tmp/digests/${DIGEST#sha256:}"
       -
         name: Upload digest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -102,9 +103,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Create and push multi-platform manifest
+        env:
+          VERSION: ${{ github.event.inputs.release }}
         run: |
           docker buildx imagetools create \
-            -t ghcr.io/secobserve/secobserve-backend:${{ github.event.inputs.release }} \
+            -t "ghcr.io/secobserve/secobserve-backend:$VERSION" \
             -t ghcr.io/secobserve/secobserve-backend:latest \
             $(printf 'ghcr.io/secobserve/secobserve-backend@sha256:%s ' *)
         working-directory: /tmp/digests
@@ -159,10 +162,11 @@ jobs:
             VERSION=${{ github.event.inputs.release }}
       -
         name: Export digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+          touch "/tmp/digests/${DIGEST#sha256:}"
       -
         name: Upload digest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -200,9 +204,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Create and push multi-platform manifest
+        env:
+          VERSION: ${{ github.event.inputs.release }}
         run: |
           docker buildx imagetools create \
-            -t ghcr.io/secobserve/secobserve-frontend:${{ github.event.inputs.release }} \
+            -t "ghcr.io/secobserve/secobserve-frontend:$VERSION" \
             -t ghcr.io/secobserve/secobserve-frontend:latest \
             $(printf 'ghcr.io/secobserve/secobserve-frontend@sha256:%s ' *)
         working-directory: /tmp/digests
