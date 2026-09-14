@@ -108,6 +108,7 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
 
     notification_email_to = _get_notification_email_to(observation.product)
     email_to_addresses = _get_email_to_addresses(notification_email_to)
+    notified_email_addresses: set[str] = set()
     if email_to_addresses and settings.email_from:
         for email_to_address in email_to_addresses:
             first_name = _get_first_name(email_to_address)
@@ -120,6 +121,7 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
                 first_line=first_line,
                 first_name=first_name,
             )
+            notified_email_addresses.add(email_to_address.lower())
 
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(observation.product)
     if notification_ms_teams_webhook:
@@ -149,6 +151,10 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
             observation.product, Product_Notification_Type.OBSERVATION_NEW_CHANGED
         )
         for user in users:
+            # The user has already been notified through the shared email addresses of the product
+            if user.email.lower() in notified_email_addresses:
+                continue
+
             send_email_notification(
                 user.email,
                 first_line,
