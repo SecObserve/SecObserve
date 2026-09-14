@@ -11,7 +11,7 @@ class TestAuthorizationBranches(TestAuthorizationBase):
     def test_authorization_branches_product_member(self):
         self._test_authorization_branches()
 
-    def _test_authorization_branches_product_authorization_group_member(self):
+    def test_authorization_branches_product_authorization_group_member(self):
         prepare_authorization_groups()
         self._test_authorization_branches()
 
