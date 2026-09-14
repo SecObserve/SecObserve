@@ -1,12 +1,14 @@
 import json
 import os
 from datetime import datetime
+from decimal import Decimal
 from unittest.mock import patch
 
 from requests import HTTPError, Response
 
 from application.commons.models import Settings
 from application.commons.services.functions import get_classname
+from application.core.types import Severity, Status
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
     _get_first_name,
@@ -487,6 +489,84 @@ class TestPushNotifications(BaseTestCase):
 }
 """
 
+        self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_observation_email_minimal(self):
+        self.observation_1.current_severity = Severity.SEVERITY_HIGH
+        self.observation_1.current_status = Status.STATUS_OPEN
+
+        message = _create_notification_message(
+            "email_observation.tpl",
+            observation=self.observation_1,
+            observation_url="observation_url",
+            first_line="first_line",
+            first_name=" Jane",
+        )
+
+        expected_message = """
+Hello Jane,
+
+first_line
+
+Product:           product_1
+Branch:            branch_1
+Title:             observation_1
+Severity:          High
+Status:            Open
+URL:               observation_url
+
+Regards,
+
+SecObserve
+
+"""
+        self.assertEqual(expected_message, message)
+
+    def test_create_notification_message_observation_email_all_fields(self):
+        self.observation_1.current_severity = Severity.SEVERITY_HIGH
+        self.observation_1.current_status = Status.STATUS_OPEN
+        self.observation_1.current_priority = 3
+        self.observation_1.origin_service = self.service_1
+        self.observation_1.vulnerability_id = "CVE-2024-12345"
+        self.observation_1.origin_component_name_version = "component_1:1.0.0"
+        self.observation_1.cvss3_score = Decimal("7.5")
+        self.observation_1.cvss4_score = Decimal("8.7")
+        self.observation_1.epss_score = Decimal("12.345")
+        self.observation_1.scanner = "scanner_1 / 1.0.0"
+
+        message = _create_notification_message(
+            "email_observation.tpl",
+            observation=self.observation_1,
+            observation_url="observation_url",
+            first_line="first_line",
+            first_name=" Jane",
+        )
+
+        expected_message = """
+Hello Jane,
+
+first_line
+
+Product:           product_1
+Branch:            branch_1
+Service:           service_1
+Title:             observation_1
+Vulnerability ID:  CVE-2024-12345
+Component:         component_1:1.0.0
+Severity:          High
+CVSS 4 score:      8.7
+CVSS 3 score:      7.5
+EPSS score (%):    12.345
+Status:            Open
+Priority:          3
+Scanner:           scanner_1 / 1.0.0
+URL:               observation_url
+
+Regards,
+
+SecObserve
+
+"""
         self.assertEqual(expected_message, message)
 
     def test_create_notification_message_backslash_breakout(self):
