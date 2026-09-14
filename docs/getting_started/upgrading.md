@@ -12,16 +12,16 @@
 
 ## Release 1.59.0
 
-**Noteable changes**
+**Notable changes**
 
 * Components are now first class citizens and are created automatically, either when observations are imported or when an SBOM is uploaded. The migration after the update initialises the components and may work longer than usual for installations with a lot of observations or license components. This might break startup healthchecks on Kubernetes installations, which then need to be adapted.
-* Notifications for several events can be sent to users email addresses with a personal opt-in model, see <https://secobserve.github.io/SecObserve/usage/notifications/> for more details.
 * On Kubernetes installations with the architecture `ha` the migration runs as a Helm `pre-upgrade` hook, so the pods of the old release keep writing observations while it is running. It is recommended to pause pipelines that upload data until the upgrade has finished, otherwise the migration and the imports compete for database locks.
+* Notifications for several events can be sent to users email addresses with a personal opt-in model, see <https://secobserve.github.io/SecObserve/usage/notifications/> for more details.
 
 
 ## Release 1.58.0
 
-**Noteable changes**
+**Notable changes**
 
 * There is an architectural change. Background tasks are not queued in a SQLite database anymore, but in the same database as the other SecObserve data.
 
@@ -32,7 +32,7 @@
 
 * The HMAC key to encrypt the JWT to authorize SecObserve users (not OIDC) might not have been initialized properly, which can lead to less secure tokens. With this release it will be initialized with the first use of a token after the update, i.e. the first interaction of a user. All tokens will be unusable and users will have to login again.
 
-**Noteable and breaking changes**
+**Notable and breaking changes**
 
 * There is a new status `Affected` for observations and a new concept called *active* observertions. These are observations with the status `Open`, `Affected` and `In review`, because observations in these status need attention. This changed the name of some attributes in the API from `open_STATUS_observation_count` to `active_STATUS_observation_count`.  
 * Additionally there is a new attribute `priority` for observations.That is a value between 1 and 99 which can be set by Rego rules and assessments.
@@ -78,7 +78,7 @@
 
 ## Release 1.38.0
 
-**Noteable change**
+**Notable change**
 
 * Microsoft is rotating the root certificate for the flexible Azure Database for MySQL see [https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-root-certificate-rotation](https://learn.microsoft.com/en-us/azure/mysql/flexible-server/concepts-root-certificate-rotation). This release contains the new certificates.
 
@@ -90,7 +90,7 @@
 
 ## Release 1.30.0
 
-**Noteable change**
+**Notable change**
 
 * If multiple licenses have been found for a component, they are now evaluated like an `AND` expression. If for example one license is `Allowed` and the other one is `Forbidden`, the component is evaluated as `Forbidden`. An explicit rule in a License Policy is not necessary anymore. This new behaviour comes into effect with the next import of components.
 * There is now an explicit menu in the UI and an API endpoint to import SBOMs to get all components with their licenses and dependencies, see [Upload SBOMs](../usage/upload_sbom.md).
@@ -102,7 +102,7 @@
 * The attribute `unknown_license` in License Components and License Policies has been renamed to `non_spdx_license`. This was necessary to avoid confusion with the License Policy evaluation result `Unknown`, when a license is not included in the License Policy.
 * Additionally the attributes `name`, `version`, `name_version`, `dependencies`, `purl`, `purl_type` and `cpe` in License Components have been renamed to `component_name`, `component_version`, `component_name_version`, `component_dependencies`, `component_purl`, `component_purl_type` and `component_cpe` respectively. This brings it more in line with the component information in Observations.
 
-**Noteable change**
+**Notable change**
 
 * The parser does not need to specified anymore when importing observations from files via the API or the UI. The parser is detected automatically by the content of the imported file. If the parser is still in the attributes of the API call, it will be ignored.
 
