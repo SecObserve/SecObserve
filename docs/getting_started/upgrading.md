@@ -16,6 +16,7 @@
 
 * Components are now first class citizens and are created automatically, either when observations are imported or when an SBOM is uploaded. The migration after the update initialises the components and may work longer than usual for installations with a lot of observations or license components. This might break startup healthchecks on Kubernetes installations, which then need to be adapted.
 * Notifications for several events can be sent to users email addresses with a personal opt-in model, see <https://secobserve.github.io/SecObserve/usage/notifications/> for more details.
+* On Kubernetes installations with the architecture `ha` the migration runs as a Helm `pre-upgrade` hook, so the pods of the old release keep writing observations while it is running. It is recommended to pause pipelines that upload data until the upgrade has finished, otherwise the migration and the imports compete for database locks.
 
 
 ## Release 1.58.0
