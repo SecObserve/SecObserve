@@ -188,6 +188,32 @@ class TestSetPotentialDuplicate(BaseTestCase):
         exception_mock.assert_called_once_with(exception)
 
 
+class TestFindPotentialDuplicatesLocking(BaseTestCase):
+    @patch("application.core.services.potential_duplicates._set_has_potential_duplicates")
+    @patch("application.core.services.potential_duplicates._write_potential_duplicates")
+    @patch("application.core.models.Product.objects.select_for_update")
+    def test_product_is_locked_before_the_rows_are_rewritten(self, select_for_update_mock, write_mock, flags_mock):
+        # The lock has to be taken before the delete in _write_potential_duplicates: taken
+        # after it, a concurrent recalculation of the same scope would still delete the rows
+        # of its own snapshot and insert the same pair a second time.
+        product = Product.objects.create(name="product_for_locking")
+        order = []
+
+        def record_lock(*args, **kwargs):
+            order.append("lock")
+            return Product.objects.none()
+
+        def record_write(*args, **kwargs):
+            order.append("write")
+
+        select_for_update_mock.side_effect = record_lock
+        write_mock.side_effect = record_write
+
+        find_potential_duplicates.call_local(product, None, None)
+
+        self.assertEqual(["lock", "write"], order)
+
+
 class TestMatchDuplicateCandidates(BaseTestCase):
     def _candidate(self, id, **kwargs):
         defaults = {

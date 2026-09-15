@@ -552,3 +552,83 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
 
         mocks["get_users"].assert_not_called()
         mocks["send_email"].assert_not_called()
+
+    def test_send_product_security_gate_notification_user_in_shared_email_addresses(self):
+        mocks = self._patch_for_users()
+        mocks["email_to"].return_value = "jane@example.com"
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+
+        with patch(
+            "application.notifications.services.send_notifications_security_gate._get_first_name"
+        ) as mock_get_first_name:
+            mock_get_first_name.return_value = " Jane"
+            with self.captureOnCommitCallbacks(execute=True):
+                send_product_security_gate_notification(self.product_1)
+
+        mocks["send_email"].assert_called_once_with(
+            "jane@example.com",
+            "Security gate for product product_1 has changed to Passed",
+            "email_product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="Passed",
+            product_url="https://secobserve.com/#/products/1/show",
+            first_name=" Jane",
+        )
+
+    def test_send_product_security_gate_notification_user_in_shared_email_addresses_different_case(self):
+        mocks = self._patch_for_users()
+        mocks["email_to"].return_value = "Jane@Example.com"
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+
+        with patch(
+            "application.notifications.services.send_notifications_security_gate._get_first_name"
+        ) as mock_get_first_name:
+            mock_get_first_name.return_value = " Jane"
+            with self.captureOnCommitCallbacks(execute=True):
+                send_product_security_gate_notification(self.product_1)
+
+        self.assertEqual(1, mocks["send_email"].call_count)
+
+    def test_send_product_security_gate_notification_user_not_in_shared_email_addresses(self):
+        mocks = self._patch_for_users()
+        mocks["email_to"].return_value = "team@example.com"
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+
+        with patch(
+            "application.notifications.services.send_notifications_security_gate._get_first_name"
+        ) as mock_get_first_name:
+            mock_get_first_name.return_value = ""
+            with self.captureOnCommitCallbacks(execute=True):
+                send_product_security_gate_notification(self.product_1)
+
+        expected_calls = [
+            call(
+                "team@example.com",
+                "Security gate for product product_1 has changed to Passed",
+                "email_product_security_gate.tpl",
+                product=self.product_1,
+                security_gate_status="Passed",
+                product_url="https://secobserve.com/#/products/1/show",
+                first_name="",
+            ),
+            call(
+                "jane@example.com",
+                "Security gate for product product_1 has changed to Passed",
+                "email_product_security_gate.tpl",
+                product=self.product_1,
+                security_gate_status="Passed",
+                product_url="https://secobserve.com/#/products/1/show",
+                first_name=" Jane",
+            ),
+        ]
+        mocks["send_email"].assert_has_calls(expected_calls)
+        self.assertEqual(2, mocks["send_email"].call_count)

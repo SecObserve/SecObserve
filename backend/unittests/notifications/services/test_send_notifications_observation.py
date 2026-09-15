@@ -663,6 +663,86 @@ class TestPushNotificationsObservation(BaseTestCase):
         mocks["get_users"].assert_not_called()
         mocks["send_email"].assert_not_called()
 
+    def test_send_observation_notifications_user_in_shared_email_addresses(self):
+        mocks = self._patch_for_users()
+        mocks["email_to"].return_value = "jane@example.com"
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        with patch(
+            "application.notifications.services.send_notifications_observation._get_first_name"
+        ) as mock_get_first_name:
+            mock_get_first_name.return_value = " Jane"
+            _send_observation_notifications(self.observation_1, first_line)
+
+        mocks["send_email"].assert_called_once_with(
+            "jane@example.com",
+            first_line,
+            "email_observation.tpl",
+            observation=self.observation_1,
+            observation_url="https://secobserve.com/#/observations/1/show",
+            first_line=first_line,
+            first_name=" Jane",
+        )
+
+    def test_send_observation_notifications_user_in_shared_email_addresses_different_case(self):
+        mocks = self._patch_for_users()
+        mocks["email_to"].return_value = "Jane@Example.com"
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        with patch(
+            "application.notifications.services.send_notifications_observation._get_first_name"
+        ) as mock_get_first_name:
+            mock_get_first_name.return_value = " Jane"
+            _send_observation_notifications(self.observation_1, first_line)
+
+        self.assertEqual(1, mocks["send_email"].call_count)
+
+    def test_send_observation_notifications_user_not_in_shared_email_addresses(self):
+        mocks = self._patch_for_users()
+        mocks["email_to"].return_value = "team@example.com"
+        user = User(
+            id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
+        )
+        mocks["get_users"].return_value = {user}
+        first_line = f'New notification for observation "{self.observation_1.title}"'
+
+        with patch(
+            "application.notifications.services.send_notifications_observation._get_first_name"
+        ) as mock_get_first_name:
+            mock_get_first_name.return_value = ""
+            _send_observation_notifications(self.observation_1, first_line)
+
+        expected_calls = [
+            call(
+                "team@example.com",
+                first_line,
+                "email_observation.tpl",
+                observation=self.observation_1,
+                observation_url="https://secobserve.com/#/observations/1/show",
+                first_line=first_line,
+                first_name="",
+            ),
+            call(
+                "jane@example.com",
+                first_line,
+                "email_observation.tpl",
+                observation=self.observation_1,
+                observation_url="https://secobserve.com/#/observations/1/show",
+                first_line=first_line,
+                first_name=" Jane",
+            ),
+        ]
+        mocks["send_email"].assert_has_calls(expected_calls)
+        self.assertEqual(2, mocks["send_email"].call_count)
+
     # --- _get_observation_notification_statuses ---
 
     def test_get_observation_notification_statuses_from_the_product(self):

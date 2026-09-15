@@ -109,12 +109,13 @@ class ApiConfigurationSerializer(ModelSerializer):
         exclude = ["automatic_import_service_legacy"]
 
     def to_representation(self, instance: Api_Configuration) -> dict:
-        # Only users who can edit an API Configuration are allowed to see the API key
+        # Only users who can edit an API Configuration are allowed to see the API key and the basis auth password
         data = super().to_representation(instance)
 
         permissions = data.get("product_data", {}).get("permissions", [])
         if Permissions.Api_Configuration_Edit not in permissions:
             data.pop("api_key")
+            data.pop("basic_auth_password")
 
         return data
 

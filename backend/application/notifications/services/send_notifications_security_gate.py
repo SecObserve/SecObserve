@@ -37,6 +37,7 @@ def send_product_security_gate_notification(product: Product) -> None:
 
         notification_email_to = _get_notification_email_to(product)
         email_to_addresses = _get_email_to_addresses(notification_email_to)
+        notified_email_addresses: set[str] = set()
         if email_to_addresses and settings.email_from:
             for email_to_address in email_to_addresses:
                 first_name = _get_first_name(email_to_address)
@@ -49,6 +50,7 @@ def send_product_security_gate_notification(product: Product) -> None:
                     product_url=f"{get_base_url_frontend()}#/products/{product.id}/show",
                     first_name=first_name,
                 )
+                notified_email_addresses.add(email_to_address.lower())
 
         notification_ms_teams_webhook = _get_notification_ms_teams_webhook(product)
         if notification_ms_teams_webhook:
@@ -78,6 +80,10 @@ def send_product_security_gate_notification(product: Product) -> None:
         if settings.email_from:
             users = get_users_for_product_notification(product, Product_Notification_Type.SECURITY_GATE_CHANGED)
             for user in users:
+                # The user has already been notified through the shared email addresses of the product
+                if user.email.lower() in notified_email_addresses:
+                    continue
+
                 send_email_notification(
                     user.email,
                     f"Security gate for product {product.name} has changed to {security_gate_status}",

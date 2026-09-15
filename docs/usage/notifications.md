@@ -102,6 +102,8 @@ A user is only notified for a product if all of the following are true:
 * The user is active and has an email address.
 * The user has the permission required for the event, if there is one.
 
+If the email address of the user is one of the shared email addresses of the product or its product group as well, the notification is sent only once.
+
 ## Notifications in the user interface
 
 Shared notifications are also stored in the database and can be viewed in the user interface. The menu entry **Notifications** shows how many notifications the user has not viewed yet, and notifications can be marked as viewed individually or for a selection of entries.

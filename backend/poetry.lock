@@ -1137,14 +1137,14 @@ typing-extensions = "*"
 
 [[package]]
 name = "djangorestframework"
-version = "3.18.0"
+version = "3.18.1"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "djangorestframework-3.18.0-py3-none-any.whl", hash = "sha256:381fc44d3249c9565c5f723850855b734e99030eb30957a49f506d3fe11d7dcb"},
-    {file = "djangorestframework-3.18.0.tar.gz", hash = "sha256:2323a5111837e0b784dcb8323abc78ecc54fa2a5af7aff2677cf50cdd849477f"},
+    {file = "djangorestframework-3.18.1-py3-none-any.whl", hash = "sha256:f1409d698967aaf82d5d98d76b549c8fba8bd92ebd0d83d24454508f72168dc2"},
+    {file = "djangorestframework-3.18.1.tar.gz", hash = "sha256:605d79fa2ec2f02905492e5ea13d903c2d842d0b4c915a57f7bf02ab9f3c91dd"},
 ]
 
 [package.dependencies]
@@ -1352,30 +1352,30 @@ tornado = ["tornado (>=6.5.7)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "3.12.0"
+version = "3.12.2"
 description = "High-performance HTML to Markdown converter"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-3.12.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:5388dbb8c307a39f2983098c877f596b5a9f54dca4d1e2049412f5528721f809"},
-    {file = "html_to_markdown-3.12.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:72c1d7f82c7a02856d1fa1b295b867a87e56f312df7c861e51c9fe038e1571bd"},
-    {file = "html_to_markdown-3.12.0-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9a51e145b39dfc11cf81770122a3bc37f372eebf092cdb1d1855058efd5fc0da"},
-    {file = "html_to_markdown-3.12.0-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:d2aa7c17165ded95973448ba5ae7a2a70c12ab61afcd3c6b7987f1d5634c721d"},
-    {file = "html_to_markdown-3.12.0-cp310-abi3-win_amd64.whl", hash = "sha256:709fcfcd024fa20dd6939dd2428493963aad0aa65501501a1200904b08680e0a"},
-    {file = "html_to_markdown-3.12.0.tar.gz", hash = "sha256:8314878417951b2eca159938d53d5f2a906fb717b60ef27df277713c8b675c27"},
+    {file = "html_to_markdown-3.12.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e39e04072daa94d6a2b96f0d19a1718af2bc09498a75a176c9680a3ce557c1cf"},
+    {file = "html_to_markdown-3.12.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:24a1853eb9d6f71187b94c7e6bddcc0563f3e24b8f4c289ba211f7b32d47535a"},
+    {file = "html_to_markdown-3.12.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:48ba6a06acd177eadaa3a137986d24027e803b42e969d20454bbbe4fd52b8c94"},
+    {file = "html_to_markdown-3.12.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:dffa66d372912bbb61da6262768b9ddb4874fb112763c01fae7d7294418562cf"},
+    {file = "html_to_markdown-3.12.2-cp310-abi3-win_amd64.whl", hash = "sha256:85d1bbe60106584d0ac58da94a474a59a419d2912b517c05eb17e6161fd95bee"},
+    {file = "html_to_markdown-3.12.2.tar.gz", hash = "sha256:70e3b23c1ab6c9e610b5836d31a23927d106584c360171472d730dfcd60ccc7a"},
 ]
 
 [[package]]
 name = "huey"
-version = "3.3.4"
+version = "3.4.0"
 description = "a little task queue"
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "huey-3.3.4-py3-none-any.whl", hash = "sha256:a6e2e9a8fbda15c2dfb8e33b23a5e6e228326ea8e0087c11027957ef7c210e96"},
-    {file = "huey-3.3.4.tar.gz", hash = "sha256:6de196c6ece2e38b5173f7510600091ab035c0e86b0958d0e5b38a82b9984666"},
+    {file = "huey-3.4.0-py3-none-any.whl", hash = "sha256:d0580762397744026f83baae5f2b97a62474a62b8565ac75bbafefe72f9c784f"},
+    {file = "huey-3.4.0.tar.gz", hash = "sha256:ac9b02e741f13da4092ea19bcaafc73669e97d3153914d2fed2868df144f6dfa"},
 ]
 
 [package.extras]
@@ -1383,6 +1383,7 @@ backends = ["redis (>=3.0.0)"]
 cysqlite = ["cysqlite (>=0.3.5)"]
 postgres = ["psycopg (>=3.2)"]
 redis = ["redis (>=3.0.0)"]
+stats = ["peewee (>=3.17)"]
 
 [[package]]
 name = "idna"
@@ -2169,14 +2170,14 @@ re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
 name = "peewee"
-version = "4.4.0"
+version = "4.5.1"
 description = "a little orm"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "peewee-4.4.0-py3-none-any.whl", hash = "sha256:c4d6bc13d9a9b22fe691f695f5a5d716645b4bd5387fef27b9cb53ef14fae1e1"},
-    {file = "peewee-4.4.0.tar.gz", hash = "sha256:ea3b013d2366d09bb0bd7b6223f0e3e34125caad5d4dfc23525c668c8aad7026"},
+    {file = "peewee-4.5.1-py3-none-any.whl", hash = "sha256:dbbdc93e9be08d1df49ceed48dc5d609bfeda6112848086f1f6c1f1debe70975"},
+    {file = "peewee-4.5.1.tar.gz", hash = "sha256:8005cb45c54e1a282a2f24ddd583f0f7a80cd5d9c635d50d63f57c11d88c392a"},
 ]
 
 [package.extras]
@@ -3627,4 +3628,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "94c85ffe87f687dc71f93d743403df3bd055884ec6cac496f3675a75f72e72e4"
+content-hash = "a5e984e2f34890f543a661544f3442a330e87cce71fa242a70349c3150c41c93"
