@@ -38,10 +38,6 @@ class DuplicateCandidate(NamedTuple):
 DuplicateTypes = dict[tuple[int, int], str]
 
 
-# The lock serializes all recalculations, so that concurrent imports cannot write
-# potential duplicates for the same observations at the same time. If the lock cannot be
-# acquired, Huey retries the task later. The retries have to be high enough to bridge
-# the recalculations of the other tasks waiting for the lock.
 @on_commit_task()
 def find_potential_duplicates(product: Product, branch: Optional[Branch], service: Optional[Service]) -> None:
     try:
@@ -54,6 +50,15 @@ def find_potential_duplicates(product: Product, branch: Optional[Branch], servic
         # and a failed recalculation must not leave the potential duplicates of the
         # product / branch / service deleted.
         with transaction.atomic():
+            # The recalculations of a product also have to be serialized: an atomic block
+            # alone does not exclude them from each other, so two tasks for the same scope
+            # would both delete the rows of their own snapshot and then insert the same pair
+            # twice, which violates the unique constraint. Waiting for the product row here,
+            # before the delete, makes the second task see what the first one has written.
+            # The lock is released with the transaction, so a worker that dies cannot leave
+            # it behind.
+            Product.objects.select_for_update().filter(pk=product.pk).first()
+
             _write_potential_duplicates(observations, duplicate_types)
             _set_has_potential_duplicates(observations, product, duplicate_types)
 
