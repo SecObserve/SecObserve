@@ -28,6 +28,7 @@ export OIDC_EMAIL=dummy
 export OIDC_GROUPS=dummy
 # --- Huey ---
 export HUEY_IMMEDIATE=true
+export HUEY_SQLITE_URL=sqlite:///:memory:
 
 if [ -z "$GITHUB_WORKSPACE" ]; then 
     mypy application
