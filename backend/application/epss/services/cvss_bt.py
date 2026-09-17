@@ -5,15 +5,18 @@ from typing import Optional
 import requests
 from cvss import CVSS3, CVSS4
 from cvss.exceptions import CVSSError
-from django.core.paginator import Paginator
 from django.utils import timezone
 
 from application.commons.models import Settings
 from application.core.models import Observation
 from application.core.services.observation import get_current_severity
-from application.core.types import Severity, Status
+from application.core.types import Severity
 from application.epss.models import Exploit_Information
-from application.epss.queries.exploit_information import get_exploit_information_by_cve
+from application.epss.queries.exploit_information import (
+    get_exploit_information_by_cve,
+    get_exploit_information_by_cves,
+)
+from application.epss.services.epss import batched_cve_observations
 
 logger = logging.getLogger("secobserve.epss")
 
@@ -133,21 +136,16 @@ def _get_year_from_cve(cve: str) -> Optional[int]:
 def apply_exploit_information_observations(settings: Settings) -> int:
     num_observations = 0
 
-    observations = (
-        Observation.objects.filter(vulnerability_id__startswith="CVE-")
-        .exclude(current_status=Status.STATUS_RESOLVED)
-        .order_by("id")
-    )
-
-    paginator = Paginator(observations, 1000)
-    for page_number in paginator.page_range:
-        page = paginator.page(page_number)
-        updates = []
-
-        for observation in page.object_list:
-            if apply_exploit_information(observation, settings):
-                updates.append(observation)
-                num_observations += 1
+    for observations in batched_cve_observations():
+        exploit_informations = get_exploit_information_by_cves(
+            observation.vulnerability_id for observation in observations
+        )
+        updates = [
+            observation
+            for observation in observations
+            if apply_exploit_information(observation, settings, exploit_informations)
+        ]
+        num_observations += len(updates)
 
         Observation.objects.bulk_update(
             updates,
@@ -164,13 +162,20 @@ def apply_exploit_information_observations(settings: Settings) -> int:
     return num_observations
 
 
-def apply_exploit_information(observation: Observation, settings: Settings) -> bool:
+def apply_exploit_information(
+    observation: Observation,
+    settings: Settings,
+    exploit_informations: Optional[dict[str, Exploit_Information]] = None,
+) -> bool:
     if not observation.vulnerability_id.startswith("CVE-"):
         return False
 
     if settings.feature_exploit_information:  # pylint: disable=no-else-return
         # else shall stay for clarity and just in case a return would be forgotten
-        exploit_information = get_exploit_information_by_cve(observation.vulnerability_id)
+        if exploit_informations is None:
+            exploit_information = get_exploit_information_by_cve(observation.vulnerability_id)
+        else:
+            exploit_information = exploit_informations.get(observation.vulnerability_id)
         if not exploit_information:
             return False
 
