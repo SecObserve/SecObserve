@@ -3,8 +3,11 @@ from unittest.mock import patch
 from application.commons.models import Settings
 from application.core.models import Product
 from application.core.services.security_gate import (
+    SEVERITIES,
     check_security_gate,
     check_security_gate_observation,
+    evaluate_security_gate,
+    get_security_gate_thresholds,
 )
 from unittests.base_test_case import BaseTestCase
 
@@ -702,3 +705,81 @@ class TestSecurityGate(BaseTestCase):
 
         check_security_gate_observation(self.observation_1)
         mock.assert_not_called()
+
+
+class TestGetSecurityGateThresholds(BaseTestCase):
+    def test_thresholds_disabled_for_product(self):
+        self.assertIsNone(get_security_gate_thresholds(Product(security_gate_active=False)))
+
+    def test_thresholds_disabled_for_product_group(self):
+        product_group = Product(is_product_group=True, security_gate_active=False)
+        product = Product(product_group=product_group, security_gate_active=True)
+
+        self.assertIsNone(get_security_gate_thresholds(product))
+
+    def test_thresholds_of_product(self):
+        product = Product(
+            security_gate_active=True,
+            security_gate_threshold_critical=1,
+            security_gate_threshold_high=2,
+        )
+
+        self.assertEqual(
+            {"critical": 1, "high": 2, "medium": 0, "low": 0, "none": 0, "unknown": 0},
+            get_security_gate_thresholds(product),
+        )
+
+    def test_thresholds_of_product_group(self):
+        product_group = Product(
+            is_product_group=True,
+            security_gate_active=True,
+            security_gate_threshold_critical=1,
+        )
+        product = Product(
+            product_group=product_group,
+            security_gate_active=False,
+            security_gate_threshold_critical=9,
+        )
+
+        self.assertEqual(
+            {"critical": 1, "high": 0, "medium": 0, "low": 0, "none": 0, "unknown": 0},
+            get_security_gate_thresholds(product),
+        )
+
+    @patch("application.commons.models.Settings.load")
+    def test_thresholds_of_settings(self, mock_settings_load):
+        settings = Settings()
+        settings.security_gate_threshold_critical = 5
+        mock_settings_load.return_value = settings
+
+        thresholds = get_security_gate_thresholds(Product())
+
+        self.assertIsNotNone(thresholds)
+        self.assertEqual(5, thresholds["critical"])
+
+    @patch("application.commons.models.Settings.load")
+    def test_thresholds_disabled_in_settings(self, mock_settings_load):
+        mock_settings_load.return_value = Settings(security_gate_active=False)
+
+        self.assertIsNone(get_security_gate_thresholds(Product()))
+
+
+class TestEvaluateSecurityGate(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.thresholds = {severity: 1 for severity in SEVERITIES}
+        for severity in SEVERITIES:
+            setattr(self.branch_1, f"active_{severity}_observation_count", 1)
+
+    def test_evaluate_at_thresholds(self):
+        self.assertTrue(evaluate_security_gate(self.branch_1, self.thresholds))
+
+    def test_evaluate_above_threshold(self):
+        self.branch_1.active_low_observation_count = 2
+
+        self.assertFalse(evaluate_security_gate(self.branch_1, self.thresholds))
+
+    def test_evaluate_without_counts(self):
+        with self.assertRaises(ValueError):
+            evaluate_security_gate(self.branch_2, self.thresholds)

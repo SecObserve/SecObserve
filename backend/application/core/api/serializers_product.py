@@ -55,6 +55,10 @@ from application.core.services.assessment_approver import (
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
+from application.core.services.security_gate import (
+    evaluate_security_gate,
+    get_security_gate_thresholds,
+)
 from application.core.types import Assessment_Status, Status
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
@@ -847,6 +851,7 @@ class BranchSerializer(ModelSerializer):
     unknown_licenses_count = IntegerField(read_only=True)
     allowed_licenses_count = IntegerField(read_only=True)
     ignored_licenses_count = IntegerField(read_only=True)
+    security_gate_passed = SerializerMethodField()
 
     def validate_purl(self, purl: str) -> str:
         return validate_purl(purl)
@@ -856,6 +861,17 @@ class BranchSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
+
+    def get_security_gate_passed(self, obj: Branch) -> Optional[bool]:
+        # Responses of create and update are not annotated with the observation counts
+        if getattr(obj, "active_critical_observation_count", None) is None:
+            return None
+
+        thresholds = get_security_gate_thresholds(obj.product)
+        if thresholds is None:
+            return None
+
+        return evaluate_security_gate(obj, thresholds)
 
     class Meta:
         model = Branch

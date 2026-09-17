@@ -536,7 +536,8 @@ class BranchViewSet(ModelViewSet):
     search_fields = ["name"]
 
     def get_queryset(self) -> QuerySet[Branch]:
-        return get_branches(with_annotations=True).select_related("product")
+        # The product group is needed to determine the thresholds of the security gate
+        return get_branches(with_annotations=True).select_related("product", "product__product_group")
 
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         instance: Branch = self.get_object()

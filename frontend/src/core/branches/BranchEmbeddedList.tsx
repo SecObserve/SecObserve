@@ -21,6 +21,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import OSVLinuxDistributionField from "../../commons/custom_fields/OSVLinuxDistributionField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
+import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { feature_license_management, has_attribute } from "../../commons/functions";
 import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
@@ -102,6 +103,9 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                             />
                                         )}
                                     />
+                                )}
+                                {has_attribute("security_gate_passed", data, sort) && (
+                                    <SecurityGateTextField label="Security gate" />
                                 )}
                                 <ObservationsCountField label="Active observations" withLabel={false} />
                                 {feature_license_management() && product?.has_licenses && (

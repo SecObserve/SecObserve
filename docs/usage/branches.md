@@ -8,7 +8,7 @@ A product has a list of branches / versions. They can either be created manually
 
 ![Branches / versions in the product](../assets/images/screenshot_product_branches_list.png)
 
-The list of branches / versions shows the severities of open observations for each branch / version.
+The list of branches / versions shows the severities of open observations and the [security gate](security_gates.md#branches--versions) for each branch / version.
 
 Clicking on the name of a branch / version brings up the list of open observations for that branch / version.
 

@@ -46,6 +46,41 @@ class TestProductSerializer(BaseTestCase):
         )
 
 
+class TestBranchSerializerSecurityGate(BaseTestCase):
+    def _annotate(self, branch, critical=0):
+        branch.active_critical_observation_count = critical
+        branch.active_high_observation_count = 0
+        branch.active_medium_observation_count = 0
+        branch.active_low_observation_count = 0
+        branch.active_none_observation_count = 0
+        branch.active_unknown_observation_count = 0
+
+    def test_security_gate_passed(self):
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_threshold_critical = 1
+        self._annotate(self.branch_1, critical=1)
+
+        self.assertTrue(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    def test_security_gate_failed(self):
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_threshold_critical = 1
+        self._annotate(self.branch_1, critical=2)
+
+        self.assertFalse(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    def test_security_gate_disabled(self):
+        self.product_1.security_gate_active = False
+        self._annotate(self.branch_1, critical=2)
+
+        self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    def test_security_gate_without_annotations(self):
+        self.product_1.security_gate_active = True
+
+        self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+
 class TestBranchSerializer(BaseTestCase):
     @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
     @patch("application.core.api.serializers_product.assessment_approvers_configured")
