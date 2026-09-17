@@ -1075,19 +1075,19 @@ tests = ["tox"]
 
 [[package]]
 name = "django-silk"
-version = "5.5.2"
+version = "5.6.0"
 description = "Silky smooth profiling for the Django Framework"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "django_silk-5.5.2-py3-none-any.whl", hash = "sha256:6f11ae724699192bdda247513aa40160fd5e7e3de3083ec307b7151d801d1d51"},
-    {file = "django_silk-5.5.2.tar.gz", hash = "sha256:c488ee1eab763a6f3d0db09a969e7a91b637743f04159cd8d10141386157ec0d"},
+    {file = "django_silk-5.6.0-py3-none-any.whl", hash = "sha256:761300bde25b8ce3c381dc0710e82c792c099c0ee6558fad3165dc560a06dd48"},
+    {file = "django_silk-5.6.0.tar.gz", hash = "sha256:bb741fb8af45eba663e8ed832207d16ecd731496313311f6dfae5fe776bed38e"},
 ]
 
 [package.dependencies]
-Django = ">=4.2"
+Django = ">=5.2"
 gprof2dot = ">=2017.9.19"
 sqlparse = "*"
 
@@ -3628,4 +3628,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "d010f65c589cf76cba80dc4bac8ddd78277fd1d0399e68db74733ea3b0bdd3fc"
+content-hash = "6ce5c16fb9a3074106f39fa749f78ed4d5c9df0cb8b1777795970267341860e3"
