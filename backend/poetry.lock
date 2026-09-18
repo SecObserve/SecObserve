@@ -3180,15 +3180,18 @@ doc = ["Sphinx", "sphinx-rtd-theme"]
 
 [[package]]
 name = "semver"
-version = "3.0.4"
+version = "3.1.0"
 description = "Python helper for Semantic Versioning (https://semver.org)"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "semver-3.0.4-py3-none-any.whl", hash = "sha256:9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746"},
-    {file = "semver-3.0.4.tar.gz", hash = "sha256:afc7d8c584a5ed0a11033af086e8af226a9c0b206f313e0301f8dd7b6b589602"},
+    {file = "semver-3.1.0-py3-none-any.whl", hash = "sha256:6e4998f8b4762acdfea85f9bfd5b4032e0bb50038dc04bf82011b42d5d1145c5"},
+    {file = "semver-3.1.0.tar.gz", hash = "sha256:14bc073439513d7773662a338f4db9829cf16c12b74b9568e2d2689975fbd7fc"},
 ]
+
+[package.extras]
+native = ["fast-semver-rs-backend (>=0.1.1) ; platform_python_implementation == \"CPython\""]
 
 [[package]]
 name = "simplejson"
@@ -3628,4 +3631,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "a589d1a32ddf729f037615b776035b6440e50a810d3a21607c7ac6176e71ae22"
+content-hash = "266ef9d8f08afe34d6fe2ef3da104aaddad735c1992ec8edfa0f997b6a7123d0"
