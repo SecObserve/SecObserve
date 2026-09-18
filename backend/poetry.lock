@@ -1075,19 +1075,19 @@ tests = ["tox"]
 
 [[package]]
 name = "django-silk"
-version = "5.5.2"
+version = "5.6.0"
 description = "Silky smooth profiling for the Django Framework"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"dev\""
 files = [
-    {file = "django_silk-5.5.2-py3-none-any.whl", hash = "sha256:6f11ae724699192bdda247513aa40160fd5e7e3de3083ec307b7151d801d1d51"},
-    {file = "django_silk-5.5.2.tar.gz", hash = "sha256:c488ee1eab763a6f3d0db09a969e7a91b637743f04159cd8d10141386157ec0d"},
+    {file = "django_silk-5.6.0-py3-none-any.whl", hash = "sha256:761300bde25b8ce3c381dc0710e82c792c099c0ee6558fad3165dc560a06dd48"},
+    {file = "django_silk-5.6.0.tar.gz", hash = "sha256:bb741fb8af45eba663e8ed832207d16ecd731496313311f6dfae5fe776bed38e"},
 ]
 
 [package.dependencies]
-Django = ">=4.2"
+Django = ">=5.2"
 gprof2dot = ">=2017.9.19"
 sqlparse = "*"
 
@@ -1352,18 +1352,18 @@ tornado = ["tornado (>=6.5.7)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "3.12.2"
+version = "3.12.4"
 description = "High-performance HTML to Markdown converter"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-3.12.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:e39e04072daa94d6a2b96f0d19a1718af2bc09498a75a176c9680a3ce557c1cf"},
-    {file = "html_to_markdown-3.12.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:24a1853eb9d6f71187b94c7e6bddcc0563f3e24b8f4c289ba211f7b32d47535a"},
-    {file = "html_to_markdown-3.12.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:48ba6a06acd177eadaa3a137986d24027e803b42e969d20454bbbe4fd52b8c94"},
-    {file = "html_to_markdown-3.12.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:dffa66d372912bbb61da6262768b9ddb4874fb112763c01fae7d7294418562cf"},
-    {file = "html_to_markdown-3.12.2-cp310-abi3-win_amd64.whl", hash = "sha256:85d1bbe60106584d0ac58da94a474a59a419d2912b517c05eb17e6161fd95bee"},
-    {file = "html_to_markdown-3.12.2.tar.gz", hash = "sha256:70e3b23c1ab6c9e610b5836d31a23927d106584c360171472d730dfcd60ccc7a"},
+    {file = "html_to_markdown-3.12.4-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:a911f437f009bfdbc42a923949f20f0b589d2aab6a8f8f73b66793898f72cfaa"},
+    {file = "html_to_markdown-3.12.4-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:cb9dca4d8865fba55412cf94478c68f673a86cb70d49c089866b991609eca8d6"},
+    {file = "html_to_markdown-3.12.4-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:8de4cf508f902e89ad8430744c16a429250ed1e71046d563fa6f09170ab690c2"},
+    {file = "html_to_markdown-3.12.4-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:2283c452a112b4bc6adb00cc581ff5b0350bffa801fa36005107dabf472733e2"},
+    {file = "html_to_markdown-3.12.4-cp310-abi3-win_amd64.whl", hash = "sha256:23a7ee73ce7cc0dd077540ce9493886e1b0269d8a68b40aa121e134a4ec6b880"},
+    {file = "html_to_markdown-3.12.4.tar.gz", hash = "sha256:c6cfe3c6753e02002eeb7e06b7aec2da51d2434bde02d5338663b078aa16a84e"},
 ]
 
 [[package]]
@@ -2645,14 +2645,14 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pyjwt"
-version = "2.13.0"
+version = "2.14.0"
 description = "JSON Web Token implementation in Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "pyjwt-2.13.0-py3-none-any.whl", hash = "sha256:66adcc2aff09b3f1bbd95fc1e1577df8ac8723c978552fd43304c8a290ac5728"},
-    {file = "pyjwt-2.13.0.tar.gz", hash = "sha256:41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423"},
+    {file = "pyjwt-2.14.0-py3-none-any.whl", hash = "sha256:ad0cef71c756a56e74863c2919cf0985f72decbcfcb550ee2f422e7c62b5eedc"},
+    {file = "pyjwt-2.14.0.tar.gz", hash = "sha256:77283c83fb56ecf566a886c757a714bc83668e38156de2cce8263302f42e0b86"},
 ]
 
 [package.extras]
@@ -3180,15 +3180,18 @@ doc = ["Sphinx", "sphinx-rtd-theme"]
 
 [[package]]
 name = "semver"
-version = "3.0.4"
+version = "3.1.0"
 description = "Python helper for Semantic Versioning (https://semver.org)"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "semver-3.0.4-py3-none-any.whl", hash = "sha256:9c824d87ba7f7ab4a1890799cec8596f15c1241cb473404ea1cb0c55e4b04746"},
-    {file = "semver-3.0.4.tar.gz", hash = "sha256:afc7d8c584a5ed0a11033af086e8af226a9c0b206f313e0301f8dd7b6b589602"},
+    {file = "semver-3.1.0-py3-none-any.whl", hash = "sha256:6e4998f8b4762acdfea85f9bfd5b4032e0bb50038dc04bf82011b42d5d1145c5"},
+    {file = "semver-3.1.0.tar.gz", hash = "sha256:14bc073439513d7773662a338f4db9829cf16c12b74b9568e2d2689975fbd7fc"},
 ]
+
+[package.extras]
+native = ["fast-semver-rs-backend (>=0.1.1) ; platform_python_implementation == \"CPython\""]
 
 [[package]]
 name = "simplejson"
@@ -3628,4 +3631,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "a5e984e2f34890f543a661544f3442a330e87cce71fa242a70349c3150c41c93"
+content-hash = "266ef9d8f08afe34d6fe2ef3da104aaddad735c1992ec8edfa0f997b6a7123d0"

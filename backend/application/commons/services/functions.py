@@ -28,8 +28,9 @@ def clip_fields(application: str, model: str, my_object: Any) -> None:
     Model = apps.get_model(application, model)
     for field in Model._meta.get_fields():
         if isinstance(field, (CharField, TextField)):
-            _, _, _, key_args = field.deconstruct()
-            max_length = key_args.get("max_length")
+            # field.max_length instead of deconstruct(), which builds a kwargs dict for every
+            # field of every object that is clipped during an import.
+            max_length = field.max_length
             if max_length:
                 value = getattr(my_object, field.name)
                 if value and len(value) > max_length:

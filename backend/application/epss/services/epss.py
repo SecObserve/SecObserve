@@ -1,13 +1,38 @@
 import gzip
 import re
+from collections.abc import Iterator
 from datetime import datetime
+from typing import Optional
 
 import requests
-from django.core.paginator import Paginator
 
 from application.core.models import Observation
 from application.core.types import Status
 from application.epss.models import EPSS_Score, EPSS_Status
+from application.epss.queries.epss_score import get_epss_scores_by_cves
+
+BATCH_SIZE = 1000
+
+
+def batched_cve_observations(batch_size: int = BATCH_SIZE) -> Iterator[list[Observation]]:
+    """Unresolved observations with a CVE, in batches.
+
+    Keyset pagination instead of a paginator: with hundreds of thousands of observations, the
+    growing OFFSET of a paginator makes the last pages far more expensive than the first ones.
+    """
+    observations = (
+        Observation.objects.filter(vulnerability_id__startswith="CVE-")
+        .exclude(current_status=Status.STATUS_RESOLVED)
+        .order_by("id")
+    )
+
+    last_id = 0
+    while True:
+        batch = list(observations.filter(id__gt=last_id)[:batch_size])
+        if not batch:
+            return
+        yield batch
+        last_id = batch[-1].pk
 
 
 def import_epss() -> str:
@@ -59,33 +84,26 @@ def import_epss() -> str:
 def epss_apply_observations() -> str:
     num_observations = 0
 
-    observations = (
-        Observation.objects.filter(vulnerability_id__startswith="CVE-")
-        .exclude(current_status=Status.STATUS_RESOLVED)
-        .order_by("id")
-    )
-
-    paginator = Paginator(observations, 1000)
-
-    for page_number in paginator.page_range:
-        page = paginator.page(page_number)
-        updates = []
-
-        for observation in page.object_list:
-            if apply_epss(observation):
-                updates.append(observation)
-                num_observations += 1
+    for observations in batched_cve_observations():
+        epss_scores = get_epss_scores_by_cves(observation.vulnerability_id for observation in observations)
+        updates = [observation for observation in observations if apply_epss(observation, epss_scores)]
 
         Observation.objects.bulk_update(updates, ["epss_score", "epss_percentile"])
+        num_observations += len(updates)
 
     return f"Applied EPSS scores to {num_observations} observations."
 
 
-def apply_epss(observation: Observation) -> bool:
+def apply_epss(observation: Observation, epss_scores: Optional[dict[str, EPSS_Score]] = None) -> bool:
     if observation.vulnerability_id.startswith("CVE-"):
-        try:
-            epss_score = EPSS_Score.objects.get(cve=observation.vulnerability_id)
-        except EPSS_Score.DoesNotExist:
+        if epss_scores is None:
+            try:
+                epss_score: Optional[EPSS_Score] = EPSS_Score.objects.get(cve=observation.vulnerability_id)
+            except EPSS_Score.DoesNotExist:
+                return False
+        else:
+            epss_score = epss_scores.get(observation.vulnerability_id)
+        if not epss_score:
             return False
 
         new_epss_score = round(epss_score.epss_score * 100, 3) if epss_score.epss_score else None

@@ -445,8 +445,9 @@ elif "mysql" in db["ENGINE"]:
     scheme, port = "mysql", db["PORT"] or 3306
     db_url = f"{scheme}://{db['USER']}:{db['PASSWORD']}@{db['HOST'] or 'localhost'}:{port}/{db['NAME']}"
 else:
-    # Fallback: SQLite file
-    db_url = "sqlite:////var/lib/huey/huey.db"
+    # Fallback: SQLite file. /var/lib/huey only exists in the container images, so tools running
+    # outside of them (linting, type checking) can point this to "sqlite:///:memory:".
+    db_url = env.str("HUEY_SQLITE_URL", "sqlite:////var/lib/huey/huey.db")
 
 HUEY = {
     "huey_class": "application.background_tasks.services.prefixed_sql_storage.PrefixedSqlHuey",

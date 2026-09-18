@@ -351,7 +351,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
 def propagate_assessment(observation_log: Observation_Log) -> None:
     observation = observation_log.observation
 
-    if not observation.branch or not observation.origin_component_name_version:
+    if not observation.branch or not _has_propagation_identity(observation):
         return
 
     propagate_branches = []
@@ -376,12 +376,11 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
                 observations = Observation.objects.filter(
                     product=observation.product,
                     branch=branch,
-                    title=observation.title,
-                    origin_component_name_version=observation.origin_component_name_version,
+                    **_get_propagation_filters(observation),
                 )
-                for observation in observations:
+                for target_observation in observations:
                     save_assessment(
-                        observation=observation,
+                        observation=target_observation,
                         new_severity=observation_log.severity,
                         new_status=observation_log.status,
                         new_priority=observation_log.priority,
@@ -395,7 +394,7 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
 
 
 def set_propagated_assessment_for_new_observation(observation: Observation) -> None:
-    if not observation.branch or not observation.origin_component_name_version:
+    if not observation.branch or not _has_propagation_identity(observation):
         return
 
     propagate_branches = []
@@ -416,8 +415,6 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
     observation_logs = (
         Observation_Log.objects.filter(
             observation__product=observation.product,
-            observation__title=observation.title,
-            observation__origin_component_name_version=observation.origin_component_name_version,
             observation__branch__isnull=False,
             propagated_from__isnull=True,
             general_rule__isnull=True,
@@ -430,6 +427,7 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
                 Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
                 Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             ),
+            **_get_propagation_filters(observation, prefix="observation__"),
         )
         .exclude(observation__branch=observation.branch)
         .exclude(severity="", status="")
@@ -465,6 +463,20 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
             new_risk_acceptance_expiry_date=newest_observation_log.risk_acceptance_expiry_date,
             propagated_from=newest_observation_log,
         )
+
+
+def _has_propagation_identity(observation: Observation) -> bool:
+    return bool(observation.origin_component_name_version or observation.origin_source_file)
+
+
+def _get_propagation_filters(observation: Observation, prefix: str = "") -> dict:
+    return {
+        f"{prefix}title": observation.title,
+        f"{prefix}origin_component_name_version": observation.origin_component_name_version,
+        f"{prefix}origin_source_file": observation.origin_source_file,
+        f"{prefix}origin_source_line_start": observation.origin_source_line_start,
+        f"{prefix}origin_source_line_end": observation.origin_source_line_end,
+    }
 
 
 def _get_product_group_propagate_branches(observation: Observation) -> list:

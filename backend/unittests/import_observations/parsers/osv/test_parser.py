@@ -328,7 +328,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
     def test_get_linux_package_osv_ecosystem_alpine_2(self):
         parser = OSVParser()
         package_osv_ecosystem = parser._get_linux_package_osv_ecosystem(
-            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.59.1-r12?arch=x86_64&distro=3.21.3"),
+            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.59.2-r12?arch=x86_64&distro=3.21.3"),
             None,
         )
         self.assertEqual("Alpine:v3.21", package_osv_ecosystem)
@@ -471,3 +471,45 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
                 ),
             },
         )
+
+
+class TestOSVParserCache(BaseTestCase):
+    def test_osv_cache_is_read_once_per_scan(self):
+        call_command(
+            "loaddata",
+            [
+                "unittests/import_observations/parsers/osv/files/fixtures_osv_cache_java_python.json",
+            ],
+        )
+
+        license_component_java = License_Component(
+            product=self.product_1,
+            branch=self.branch_1,
+            component_name="json",
+            component_version="20190722",
+            component_name_version="json:20190722",
+            component_purl="pkg:maven/org.json/json@20190722?type=jar",
+            component_purl_type="maven",
+        )
+        java_vulnerabilities = {
+            OSV_Vulnerability(
+                id="GHSA-3vqj-43w4-2q58",
+                modified=datetime(2024, 8, 7, 20, 1, 58, 452618, timezone.utc),
+            ),
+            OSV_Vulnerability(
+                id="GHSA-4jq9-2xhw-jpx7",
+                modified=datetime(2024, 10, 30, 19, 23, 43, 662562, timezone.utc),
+            ),
+        }
+
+        # The same advisories for many components: they must not be read once per component
+        osv_components = [
+            OSV_Component(license_component=license_component_java, vulnerabilities=set(java_vulnerabilities))
+            for _ in range(5)
+        ]
+
+        parser = OSVParser()
+        with self.assertNumQueries(1):
+            observations, _ = parser.get_observations(osv_components, self.product_1, self.branch_1)
+
+        self.assertEqual(len(observations), 10)

@@ -1,6 +1,6 @@
 [project]
 name = "SecObserve"
-version = "1.59.1"
+version = "1.59.2"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [{ name = "Stefan Fleckenstein" }]
@@ -35,7 +35,7 @@ drf-spectacular-sidecar = "2026.9.1"  # https://github.com/tfranzel/drf-spectacu
 
 # Token authentication
 # ------------------------------------------------------------------------------
-PyJWT = "2.13.0"  # https://github.com/jpadilla/pyjwt
+PyJWT = "2.14.0"  # https://github.com/jpadilla/pyjwt
 
 # HTTP requests
 # ------------------------------------------------------------------------------
@@ -57,7 +57,7 @@ pyyaml = "6.0.3"  # https://github.com/yaml/pyyaml
 # ------------------------------------------------------------------------------
 packageurl-python = "0.17.6"  # https://github.com/package-url/packageurl-python
 cvss = "3.6"  # https://github.com/RedHatProductSecurity/cvss
-semver = "3.0.4"  # https://github.com/python-semver/python-semver
+semver = "3.1.0"  # https://github.com/python-semver/python-semver
 license-expression = "30.4.4"  # https://github.com/aboutcode-org/license-expression
 
 # Task queue
@@ -75,7 +75,7 @@ inflect = "7.5.0"  # https://github.com/jaraco/inflect
 validators = "0.35.0"  # https://github.com/python-validators/validators
 py-ocsf-models = "0.10.0"  # https://github.com/prowler-cloud/py-ocsf-models
 spdx-tools = "0.8.5"  # https://github.com/spdx/tools-python
-html-to-markdown = "3.12.2"  # https://github.com/Goldziher/html-to-markdown
+html-to-markdown = "3.12.4"  # https://github.com/Goldziher/html-to-markdown
 cyclonedx-python-lib = "11.12.0"  # https://github.com/CycloneDX/cyclonedx-python-lib
 licenselynx = "2.3.4"  # https://github.com/licenselynx/licenselynx
 regopy = "1.5.2"  # https://microsoft.github.io/rego-cpp/#python-example
@@ -88,7 +88,7 @@ Werkzeug = { version = "3.1.8", optional = true }  # https://github.com/pallets/
 ipdb = { version = "0.13.13", optional = true }  # https://github.com/gotcha/ipdb
 # watchgod = { version = "0.8.2", optional = true }  # https://github.com/samuelcolvin/watchgod
 django-extensions = { version = "4.1", optional = true }  # https://github.com/django-extensions/django-extensions
-django-silk = { version = "5.5.2", optional = true }  # https://github.com/jazzband/django-silk
+django-silk = { version = "5.6.0", optional = true }  # https://github.com/jazzband/django-silk
 
 # Unittest dependencies
 # ------------------------------------------------------------------------------

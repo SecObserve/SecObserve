@@ -41,6 +41,11 @@ from application.core.types import (
     Observation_Log_Comment,
     Status,
 )
+from application.epss.models import EPSS_Score, Exploit_Information
+from application.epss.queries.epss_score import get_epss_scores_by_cves
+from application.epss.queries.exploit_information import (
+    get_exploit_information_by_cves,
+)
 from application.epss.services.cvss_bt import apply_exploit_information
 from application.epss.services.epss import apply_epss
 from application.import_observations.exceptions import ParserError
@@ -306,6 +311,16 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     observations_this_run: set[str] = set()
     vulnerability_check_observations: set[Observation] = set()
 
+    # EPSS scores and exploit information are read for every observation of the import, so they
+    # are looked up in one query per batch instead of two queries per observation
+    cves = [
+        imported_observation.vulnerability_id
+        for imported_observation in import_parameters.imported_observations
+        if (imported_observation.vulnerability_id or "").startswith("CVE-")
+    ]
+    epss_scores = get_epss_scores_by_cves(cves)
+    exploit_informations = get_exploit_information_by_cves(cves)
+
     for imported_observation in import_parameters.imported_observations:
         # Set additional data in newly uploaded observation
         _prepare_imported_observation(
@@ -321,7 +336,9 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
             # Check if new observation is already there in the same check
             observation_before = observations_before.get(imported_observation.identity_hash)
             if observation_before:
-                _process_current_observation(imported_observation, observation_before, settings)
+                _process_current_observation(
+                    imported_observation, observation_before, settings, epss_scores, exploit_informations
+                )
 
                 rule_engine.apply_rules_for_observation(observation_before)
                 vex_engine.apply_vex_statements_for_observation(observation_before)
@@ -336,7 +353,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
                 vulnerability_check_observations.add(observation_before)
             else:
                 if not _deduplicate_cross_scanner(imported_observation, settings):
-                    _process_new_observation(imported_observation, settings)
+                    _process_new_observation(imported_observation, settings, epss_scores, exploit_informations)
 
                     set_propagated_assessment_for_new_observation(imported_observation)
 
@@ -617,7 +634,11 @@ def _prepare_imported_observation(import_parameters: ImportParameters, imported_
 
 
 def _process_current_observation(
-    imported_observation: Observation, observation_before: Observation, settings: Settings
+    imported_observation: Observation,
+    observation_before: Observation,
+    settings: Settings,
+    epss_scores: dict[str, EPSS_Score],
+    exploit_informations: dict[str, Exploit_Information],
 ) -> None:
     # Set data in the current observation from the new observation
     observation_before.title = imported_observation.title
@@ -662,33 +683,15 @@ def _process_current_observation(
     observation_before.fix_available = imported_observation.fix_available
     observation_before.update_impact_score = imported_observation.update_impact_score
 
-    apply_epss(observation_before)
-    apply_exploit_information(observation_before, settings)
+    apply_epss(observation_before, epss_scores)
+    apply_exploit_information(observation_before, settings, exploit_informations)
     observation_before.import_last_seen = timezone.now()
     observation_before.save()
 
-    observation_before.references.all().delete()
-    if imported_observation.unsaved_references:
-        for unsaved_reference in imported_observation.unsaved_references:
-            reference = Reference(
-                observation=observation_before,
-                url=unsaved_reference,
-            )
-            clip_fields("core", "Reference", reference)
-            reference.save()
+    _set_references(observation_before, imported_observation.unsaved_references)
+    _set_evidences(observation_before, imported_observation.unsaved_evidences)
 
-    observation_before.evidences.all().delete()
-    if imported_observation.unsaved_evidences:
-        for unsaved_evidence in imported_observation.unsaved_evidences:
-            evidence = Evidence(
-                observation=observation_before,
-                name=unsaved_evidence[0],
-                evidence=unsaved_evidence[1],
-            )
-            clip_fields("core", "Evidence", evidence)
-            evidence.save()
-
-            # Write observation log if status or severity has been changed
+    # Write observation log if status or severity has been changed
     if previous_status != observation_before.current_status or previous_severity != observation_before.current_severity:
         status = observation_before.current_status if previous_status != observation_before.current_status else ""
         severity = (
@@ -709,7 +712,12 @@ def _process_current_observation(
         )
 
 
-def _process_new_observation(imported_observation: Observation, settings: Settings) -> None:
+def _process_new_observation(
+    imported_observation: Observation,
+    settings: Settings,
+    epss_scores: dict[str, EPSS_Score],
+    exploit_informations: dict[str, Exploit_Information],
+) -> None:
     imported_observation.current_severity = get_current_severity(imported_observation)
 
     if not imported_observation.parser_status:
@@ -724,28 +732,12 @@ def _process_new_observation(imported_observation: Observation, settings: Settin
     )
 
     # Observation has not been imported before, so it is a new one
-    apply_epss(imported_observation)
-    apply_exploit_information(imported_observation, settings)
+    apply_epss(imported_observation, epss_scores)
+    apply_exploit_information(imported_observation, settings, exploit_informations)
     imported_observation.save()
 
-    if imported_observation.unsaved_references:
-        for unsaved_reference in imported_observation.unsaved_references:
-            reference = Reference(
-                observation=imported_observation,
-                url=unsaved_reference,
-            )
-            clip_fields("core", "Reference", reference)
-            reference.save()
-
-    if imported_observation.unsaved_evidences:
-        for unsaved_evidence in imported_observation.unsaved_evidences:
-            evidence = Evidence(
-                observation=imported_observation,
-                name=unsaved_evidence[0],
-                evidence=unsaved_evidence[1],
-            )
-            clip_fields("core", "Evidence", evidence)
-            evidence.save()
+    _set_references(imported_observation, imported_observation.unsaved_references)
+    _set_evidences(imported_observation, imported_observation.unsaved_evidences)
 
     create_observation_log(
         observation=imported_observation,
@@ -759,6 +751,42 @@ def _process_new_observation(imported_observation: Observation, settings: Settin
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
+
+
+def _set_references(observation: Observation, unsaved_references: list[str]) -> None:
+    references = []
+    for unsaved_reference in unsaved_references or []:
+        reference = Reference(observation=observation, url=unsaved_reference)
+        clip_fields("core", "Reference", reference)
+        references.append(reference)
+
+    # A re-import of an unchanged observation finds the same references. Comparing them is one
+    # query, rewriting them is one query per reference, on every import of every observation.
+    references_before = list(observation.references.order_by("id").values_list("url", flat=True))
+    if [reference.url for reference in references] == references_before:
+        return
+
+    if references_before:
+        observation.references.all().delete()
+    Reference.objects.bulk_create(references)
+
+
+def _set_evidences(observation: Observation, unsaved_evidences: list[list[str]]) -> None:
+    evidences = []
+    for unsaved_evidence in unsaved_evidences or []:
+        evidence = Evidence(observation=observation, name=unsaved_evidence[0], evidence=unsaved_evidence[1])
+        clip_fields("core", "Evidence", evidence)
+        evidences.append(evidence)
+
+    # Same as for the references, but the evidences also carry the raw finding of the scanner,
+    # which is the largest column that an import writes.
+    evidences_before = list(observation.evidences.order_by("id").values_list("name", "evidence"))
+    if [(evidence.name, evidence.evidence) for evidence in evidences] == evidences_before:
+        return
+
+    if evidences_before:
+        observation.evidences.all().delete()
+    Evidence.objects.bulk_create(evidences)
 
 
 def _deduplicate_cross_scanner(observation: Observation, settings: Settings) -> bool:

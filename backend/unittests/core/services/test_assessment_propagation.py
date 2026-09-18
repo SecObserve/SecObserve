@@ -109,11 +109,34 @@ class BasePropagationTestCase(TestCase):
         self.product.save()
         return product_group
 
-    def _clone_observation(
+    @staticmethod
+    def _clear_component(observation: Observation) -> Observation:
+        # the name and the version have to be cleared as well, otherwise the pre_save
+        # normalization derives origin_component_name_version from them again
+        observation.origin_component_name_version = ""
+        observation.origin_component_name = ""
+        observation.origin_component_version = ""
+        observation.save()
+        return observation
+
+    def _make_observation_dev_source_only(self) -> None:
+        # a SAST / secrets finding: no component, but a source file with line numbers
+        observation = self._clear_component(Observation.objects.get(pk=1))
+        observation.origin_source_file = "src/main.py"
+        observation.origin_source_line_start = 10
+        observation.origin_source_line_end = 12
+        observation.save()
+        self.observation_dev = Observation.objects.get(pk=1)
+
+    def _clone_observation(  # pylint: disable=too-many-arguments
         self,
         branch: Optional[Branch],
         title: Optional[str] = None,
         origin_component_name_version: Optional[str] = None,
+        *,
+        origin_source_file: Optional[str] = None,
+        origin_source_line_start: Optional[int] = None,
+        origin_source_line_end: Optional[int] = None,
     ) -> Observation:
         observation = Observation.objects.get(pk=1)
         observation.pk = None
@@ -122,6 +145,12 @@ class BasePropagationTestCase(TestCase):
             observation.title = title
         if origin_component_name_version is not None:
             observation.origin_component_name_version = origin_component_name_version
+        if origin_source_file is not None:
+            observation.origin_source_file = origin_source_file
+        if origin_source_line_start is not None:
+            observation.origin_source_line_start = origin_source_line_start
+        if origin_source_line_end is not None:
+            observation.origin_source_line_end = origin_source_line_end
         observation.save()
         return observation
 
@@ -224,10 +253,12 @@ class TestPropagateAssessment(BasePropagationTestCase):
         save_assessment_mock.assert_not_called()
 
     @patch("application.core.services.assessment.save_assessment")
-    def test_observation_without_origin_component_name_version(self, save_assessment_mock) -> None:
-        observation_without_component = self._clone_observation(self.branch_dev, "Title", "")
-        self._clone_observation(self.branch_main)
-        source_log = self._create_log(observation_without_component)
+    def test_observation_without_component_and_source_file(self, save_assessment_mock) -> None:
+        # both observations have neither a component nor a source file, so only the
+        # guard can prevent the propagation
+        observation_without_identity = self._clear_component(self._clone_observation(self.branch_dev))
+        self._clear_component(self._clone_observation(self.branch_main))
+        source_log = self._create_log(observation_without_identity)
 
         propagate_assessment(source_log)
 
@@ -287,11 +318,97 @@ class TestPropagateAssessment(BasePropagationTestCase):
 
         save_assessment_mock.assert_not_called()
 
+    @patch("application.core.services.assessment.save_assessment")
+    def test_propagates_to_multiple_matching_branches(self, save_assessment_mock) -> None:
+        second_branch = self._create_branch("db_branch_internal_second")
+        target_observation_1 = self._clone_observation(self.branch_main)
+        target_observation_2 = self._clone_observation(second_branch)
+        source_log = self._create_log(self.observation_dev)
+
+        propagate_assessment(source_log)
+
+        self.assertEqual(2, save_assessment_mock.call_count)
+        self.assertEqual(
+            {target_observation_1, target_observation_2},
+            {call.kwargs["observation"] for call in save_assessment_mock.call_args_list},
+        )
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_propagates_source_only_observation(self, save_assessment_mock) -> None:
+        self._make_observation_dev_source_only()
+        target_observation = self._clone_observation(self.branch_main)
+        source_log = self._create_log(self.observation_dev, severity=Severity.SEVERITY_HIGH)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_called_once_with(
+            observation=target_observation,
+            new_severity=Severity.SEVERITY_HIGH,
+            new_status=Status.STATUS_FALSE_POSITIVE,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="manual assessment",
+            new_vex_justification="",
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+            propagated_from=source_log,
+        )
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_different_origin_source_file_not_propagated(self, save_assessment_mock) -> None:
+        self._make_observation_dev_source_only()
+        self._clone_observation(self.branch_main, origin_source_file="src/other.py")
+        source_log = self._create_log(self.observation_dev)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_different_origin_source_line_start_not_propagated(self, save_assessment_mock) -> None:
+        self._make_observation_dev_source_only()
+        self._clone_observation(self.branch_main, origin_source_line_start=20)
+        source_log = self._create_log(self.observation_dev)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_different_origin_source_line_end_not_propagated(self, save_assessment_mock) -> None:
+        self._make_observation_dev_source_only()
+        self._clone_observation(self.branch_main, origin_source_line_end=22)
+        source_log = self._create_log(self.observation_dev)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_source_file_only_on_target_not_propagated(self, save_assessment_mock) -> None:
+        # the source observation has a component but no source file, the target has both:
+        # all origin fields have to match, not just the component
+        self._clone_observation(self.branch_main, origin_source_file="src/main.py", origin_source_line_start=10)
+        source_log = self._create_log(self.observation_dev)
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
 
 class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.new_branch = self._create_branch("db_branch_internal_new")
+        self.new_observation = self._clone_observation(self.new_branch)
+        self.observation_main = self._clone_observation(self.branch_main)
+
+    def _switch_to_source_only(self) -> None:
+        # rebuild both observations as source-only findings, the clones of setUp still
+        # carry the component of the base test case
+        self.new_observation.delete()
+        self.observation_main.delete()
+        self._make_observation_dev_source_only()
         self.new_observation = self._clone_observation(self.new_branch)
         self.observation_main = self._clone_observation(self.branch_main)
 
@@ -473,11 +590,13 @@ class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
         save_assessment_mock.assert_not_called()
 
     @patch("application.core.services.assessment.save_assessment")
-    def test_observation_without_origin_component_name_version(self, save_assessment_mock) -> None:
-        observation_without_component = self._clone_observation(self.branch_dev, "Title", "")
-        self._create_log(self.observation_main)
+    def test_observation_without_component_and_source_file(self, save_assessment_mock) -> None:
+        # both observations have neither a component nor a source file, so only the
+        # guard can prevent the propagation
+        observation_without_identity = self._clear_component(self._clone_observation(self.branch_dev))
+        self._create_log(self._clear_component(self.observation_main))
 
-        set_propagated_assessment_for_new_observation(observation_without_component)
+        set_propagated_assessment_for_new_observation(observation_without_identity)
 
         save_assessment_mock.assert_not_called()
 
@@ -488,6 +607,72 @@ class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
         self._create_log(self.observation_main)
 
         set_propagated_assessment_for_new_observation(Observation.objects.get(pk=self.new_observation.pk))
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_applies_assessment_of_source_only_observation(self, save_assessment_mock) -> None:
+        self._switch_to_source_only()
+        candidate_log = self._create_log(self.observation_main, severity=Severity.SEVERITY_HIGH)
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_called_once_with(
+            observation=self.new_observation,
+            new_severity=Severity.SEVERITY_HIGH,
+            new_status=Status.STATUS_FALSE_POSITIVE,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="manual assessment",
+            new_vex_justification="",
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+            propagated_from=candidate_log,
+        )
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_excludes_logs_with_different_origin_source_file(self, save_assessment_mock) -> None:
+        self._switch_to_source_only()
+        self.observation_main.origin_source_file = "src/other.py"
+        self.observation_main.save()
+        self._create_log(self.observation_main)
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_excludes_logs_with_different_origin_source_line_start(self, save_assessment_mock) -> None:
+        self._switch_to_source_only()
+        self.observation_main.origin_source_line_start = 20
+        self.observation_main.save()
+        self._create_log(self.observation_main)
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_excludes_logs_with_different_origin_source_line_end(self, save_assessment_mock) -> None:
+        self._switch_to_source_only()
+        self.observation_main.origin_source_line_end = 22
+        self.observation_main.save()
+        self._create_log(self.observation_main)
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_excludes_logs_with_source_file_only_on_candidate(self, save_assessment_mock) -> None:
+        # the new observation has a component but no source file, the candidate has both:
+        # all origin fields have to match, not just the component
+        self.observation_main.origin_source_file = "src/main.py"
+        self.observation_main.origin_source_line_start = 10
+        self.observation_main.save()
+        self._create_log(self.observation_main)
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
 
         save_assessment_mock.assert_not_called()
 

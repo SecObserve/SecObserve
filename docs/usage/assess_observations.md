@@ -73,7 +73,7 @@ Like **Assessments need approval**, the setting can also be configured for a pro
 
 Assessments are often very similar for several branches of a product that contains the same finding. These can be propagated from one branch to others, so that a finding is assessed once and then copied to similar findings in other branches of the same product.
 
-Similar finding are observations within one product that have the same title and the same component (name and version).
+Similar findings are observations within one product that have the same title, the same component (name and version) and the same source location (file, start line and end line). An observation takes part in propagation as soon as it has either a component or a source file, so findings from SCA tools as well as findings from SAST and secrets scanners can be propagated.
 
 ### Configuration
 

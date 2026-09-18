@@ -53,6 +53,8 @@ const createMermaidGraph = (dependencies_str: string) => {
         '      primaryBorderColor: "'.concat(primary_color).concat('"\n') +
         "      primaryTextColor: ".concat(primary_text_color).concat("\n") +
         "      lineColor: ".concat(line_color).concat("\n") +
+        '      dropShadow: ""\n' +
+        "      useGradient: false\n" +
         "      fontFamily: Roboto\n" +
         "      fontSize: 0.875rem\n" +
         "---\n" +

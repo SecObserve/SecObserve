@@ -2,6 +2,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
+from itertools import batched
 from json import dumps, loads
 from typing import Callable, Optional
 
@@ -27,6 +28,7 @@ OSV_VULNERABILITY_URL = "https://api.osv.dev/v1/vulns/"
 OSV_REQUEST_TIMEOUT = 60
 OSV_MAX_RETRIES = 5
 OSV_BACKOFF_FACTOR = 1.0
+OSV_CACHE_BATCH_SIZE = 1000
 
 
 def _get_osv_max_threads() -> int:
@@ -92,6 +94,18 @@ OSV_Non_Linux_Ecosystems = {
 }
 
 
+def _unique_vulnerabilities(data: list[OSV_Component]) -> list[OSV_Vulnerability]:
+    """The vulnerabilities of all components of a scan, deduplicated by id, keeping the newest
+    modification date, so that the cache is not refreshed with an older one."""
+    newest: dict[str, OSV_Vulnerability] = {}
+    for osv_component in data:
+        for vulnerability in osv_component.vulnerabilities:
+            known = newest.get(vulnerability.id)
+            if known is None or vulnerability.modified > known.modified:
+                newest[vulnerability.id] = vulnerability
+    return sorted(newest.values(), key=lambda vulnerability: vulnerability.id)
+
+
 class OSVParser(BaseParser):
     @classmethod
     def get_name(cls) -> str:
@@ -106,17 +120,24 @@ class OSVParser(BaseParser):
     ) -> tuple[list[Observation], str]:
         observations = []
 
+        # The same advisory is reported for many components, so it is looked up, downloaded and
+        # deserialized once per scan instead of once per component.
+        osv_cache = self._fill_osv_cache(_unique_vulnerabilities(data))
+        parsed_vulnerabilities: dict[str, tuple[dict, str]] = {}
+
         for osv_component in data:
-            ordered_vulnerabilities = sorted(osv_component.vulnerabilities, key=lambda x: x.id)
-            osv_cache = self._fill_osv_cache(ordered_vulnerabilities)
+            for vulnerability in sorted(osv_component.vulnerabilities, key=lambda x: x.id):
+                parsed_vulnerability = parsed_vulnerabilities.get(vulnerability.id)
+                if parsed_vulnerability is None:
+                    osv_cache_item = osv_cache.get(vulnerability.id)
+                    if not osv_cache_item:
+                        logger.warning("OSV vulnerability %s not found", vulnerability.id)
+                        continue
+                    osv_vulnerability = loads(osv_cache_item.data)
+                    parsed_vulnerability = (osv_vulnerability, dumps(osv_vulnerability))
+                    parsed_vulnerabilities[vulnerability.id] = parsed_vulnerability
 
-            for vulnerability in ordered_vulnerabilities:
-                osv_cache_item = osv_cache.get(vulnerability.id)
-                if not osv_cache_item:
-                    logger.warning("OSV vulnerability %s not found", vulnerability.id)
-                    continue
-
-                osv_vulnerability = loads(osv_cache_item.data)
+                osv_vulnerability, osv_vulnerability_evidence = parsed_vulnerability
                 if osv_vulnerability.get("withdrawn"):
                     continue
 
@@ -192,25 +213,30 @@ class OSVParser(BaseParser):
 
                     evidence = []
                     evidence.append("OSV Vulnerability")
-                    evidence.append(dumps(osv_vulnerability))
+                    evidence.append(osv_vulnerability_evidence)
                     observation.unsaved_evidences.append(evidence)
 
         return observations, self.get_name()
 
     def _fill_osv_cache(self, ordered_vulnerabilities: list[OSV_Vulnerability]) -> dict[str, OSV_Cache]:
         vulnerability_ids_tmp = {vulnerability.id: vulnerability.modified for vulnerability in ordered_vulnerabilities}
-        vulnerabilities_from_cache = list(OSV_Cache.objects.filter(osv_id__in=vulnerability_ids_tmp))
-        valid_vulnerability_ids = [
+        vulnerabilities_from_cache = []
+        # Batched to stay below the parameter limits of the databases
+        for osv_ids in batched(vulnerability_ids_tmp, OSV_CACHE_BATCH_SIZE):
+            vulnerabilities_from_cache += list(OSV_Cache.objects.filter(osv_id__in=osv_ids))
+        # Sets, because they are looked up once per vulnerability of the whole scan
+        valid_vulnerability_ids = {
             vulnerability.osv_id
             for vulnerability in vulnerabilities_from_cache
             if vulnerability.modified >= vulnerability_ids_tmp[vulnerability.osv_id]
-        ]
-        invalid_vulnerability_ids = [
+        }
+        invalid_vulnerability_ids = {
             vulnerability.osv_id
             for vulnerability in vulnerabilities_from_cache
             if vulnerability.modified < vulnerability_ids_tmp[vulnerability.osv_id]
-        ]
-        OSV_Cache.objects.filter(osv_id__in=invalid_vulnerability_ids).delete()
+        }
+        for osv_ids in batched(invalid_vulnerability_ids, OSV_CACHE_BATCH_SIZE):
+            OSV_Cache.objects.filter(osv_id__in=osv_ids).delete()
         missing_osv_vulnerabilities = []
         for osv_vulnerability in ordered_vulnerabilities:
             if osv_vulnerability.id not in valid_vulnerability_ids:
@@ -230,7 +256,7 @@ class OSVParser(BaseParser):
             osv_cache_items_from_osv = list(executor.map(_read_osv_vulnerability, missing_osv_vulnerabilities))
 
         if osv_cache_items_from_osv:
-            OSV_Cache.objects.bulk_create(osv_cache_items_from_osv)
+            OSV_Cache.objects.bulk_create(osv_cache_items_from_osv, batch_size=OSV_CACHE_BATCH_SIZE)
 
         valid_osv_cache_items = [
             vulnerability
