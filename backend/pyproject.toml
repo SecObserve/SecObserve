@@ -1,6 +1,6 @@
 [project]
 name = "SecObserve"
-version = "1.59.1"
+version = "1.59.2"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [{ name = "Stefan Fleckenstein" }]
