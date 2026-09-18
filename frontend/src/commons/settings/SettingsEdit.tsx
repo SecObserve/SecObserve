@@ -187,6 +187,13 @@ const SettingsEdit = () => {
                                         label="VulnerableCode API key"
                                         validate={validate_255}
                                     />
+                                    <NumberInput
+                                        source="vulnerablecode_cache_ttl_hours"
+                                        label="VulnerableCode cache time to live (hours)"
+                                        min={0}
+                                        step={1}
+                                        validate={validate_0_999999}
+                                    />
                                 </Stack>
                             </Stack>
                         </Grid>

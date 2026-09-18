@@ -224,6 +224,11 @@ class Settings(Model, DirtyFieldsMixin):
     )
     vulnerablecode_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
     # We treat EncryptedCharField as a regular CharField
+    vulnerablecode_cache_ttl_hours = IntegerField(
+        default=23,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
+        help_text="Time to live for VulnerableCode cache in hours",
+    )
     feature_exploit_information = BooleanField(default=True, help_text="Enable CVSS enrichment")
     exploit_information_max_age_years = IntegerField(
         default=10,

@@ -9,6 +9,7 @@ from django.db.models import (
     ForeignKey,
     Index,
     IntegerField,
+    JSONField,
     Model,
     TextField,
 )
@@ -105,3 +106,12 @@ class OSV_Cache(Model):
 
     def __str__(self) -> str:
         return self.osv_id
+
+
+class VulnerableCode_Cache(Model):
+    purl = CharField(max_length=255, unique=True)
+    data = JSONField(default=list)
+    last_updated = DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return self.purl

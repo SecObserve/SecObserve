@@ -128,6 +128,11 @@ const SettingsShowComponent = () => {
                                                 <TextField source="vulnerablecode_api_key" />
                                             </Labeled>
                                         )}
+                                        {settings.vulnerablecode_base_url && (
+                                            <Labeled label="VulnerableCode cache time to live (hours)">
+                                                <NumberField source="vulnerablecode_cache_ttl_hours" />
+                                            </Labeled>
+                                        )}
                                     </Stack>
                                 </Stack>
                             </Grid>
