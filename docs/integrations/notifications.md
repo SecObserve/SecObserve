@@ -21,7 +21,7 @@ When creating or editing a product or a product group, the field `Email` can be 
 
 ### Notifications for a user
 
-[User specific notifications](../usage/notifications.md#user-specific-notifications) are sent to the email address of the user. Nothing needs to be configured for the channel besides `Email from`, the users decide themselves which events they want to be notified about.
+[User specific notifications](../usage/notifications.md#user-specific-notifications) are sent to the email address of the user, which the user maintains themselves in *User menu → Settings → Notifications*. Nothing else needs to be configured for the channel besides `Email from`, the users decide themselves which events they want to be notified about and whether they want them by email at all.
 
 ## Microsoft Teams
 
@@ -54,6 +54,10 @@ When creating or editing a product or a product group, the fields `MS Teams` and
 ### Notifications for observation titles
 
 An administrator can configure the fields `Webhook URL to send observation title notifications to MS Teams` and/or `Webhook URL to send observation title notifications to Slack` in the [Settings](../getting_started/configuration.md#administration-in-secobserve), see [Notifications for observation titles](../usage/notifications.md#notifications-for-observation-titles).
+
+### Notifications for a user
+
+Every user can set a Microsoft Teams and/or a Slack webhook of their own in *User menu → Settings → Notifications*, to receive their [user specific notifications](../usage/notifications.md#user-specific-notifications) there instead of, or in addition to, email. These webhooks are personal: they are never shown to other users, not even to administrators.
 
 ### Restrictions for webhook URLs
 

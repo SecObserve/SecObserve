@@ -417,6 +417,11 @@ export const is_external = () => {
     return user && JSON.parse(user).is_external;
 };
 
+export const is_oidc_user = () => {
+    const user = localStorage.getItem("user");
+    return user && JSON.parse(user).is_oidc_user;
+};
+
 export function has_attribute(attribute: string, data: any, sort: SortPayload | undefined) {
     if (sort?.field === attribute) {
         return true;

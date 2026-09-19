@@ -27,7 +27,7 @@ class TestAuthorizationUsers(TestAuthorizationBase):
         expected_data = "{'id': 1, 'username': 'db_admin', 'full_name': 'db_admin'}"
         self._test_api(APITest("db_internal_write", "get", "/api/users/1/", None, 200, expected_data))
 
-        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False}"
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': False, 'notification_slack_active': False, 'notification_ms_teams_webhook': '', 'notification_slack_webhook': ''}"
         expected_data_product_group = "{'id': 2, 'username': 'db_internal_write', 'full_name': 'db_internal_write'}"
         self._test_api(
             APITest(
@@ -56,7 +56,7 @@ class TestAuthorizationUsers(TestAuthorizationBase):
 
         expected_data = "{'count': 2, 'next': None, 'previous': None, 'results': [{'id': 3, 'username': 'db_internal_read', 'full_name': 'db_internal_read'}, {'id': 4, 'username': 'db_external', 'first_name': '', 'last_name': '', 'full_name': 'db_external', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': True, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-12T19:48:08.514000+01:00', 'has_password': False}]}"
         self._test_api(APITest("db_external", "get", "/api/users/", None, 200, expected_data))
-        expected_data = "{'id': 4, 'username': 'db_external', 'first_name': '', 'last_name': '', 'full_name': 'db_external', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': True, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-12T19:48:08.514000+01:00', 'has_password': False, 'has_authorization_groups': False, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False}"
+        expected_data = "{'id': 4, 'username': 'db_external', 'first_name': '', 'last_name': '', 'full_name': 'db_external', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': True, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-12T19:48:08.514000+01:00', 'has_password': False, 'has_authorization_groups': False, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': False, 'notification_slack_active': False, 'notification_ms_teams_webhook': '', 'notification_slack_webhook': ''}"
         self._test_api(APITest("db_external", "get", "/api/users/4/", None, 200, expected_data))
         expected_data = "{'id': 3, 'username': 'db_internal_read', 'full_name': 'db_internal_read'}"
         self._test_api(APITest("db_external", "get", "/api/users/3/", None, 200, expected_data))
@@ -192,7 +192,7 @@ class TestAuthorizationUsers(TestAuthorizationBase):
             )
         )
 
-        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False}"
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'light', 'setting_list_size': 'medium', 'setting_package_info_preference': 'open/source/insights', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': False, 'notification_slack_active': False, 'notification_ms_teams_webhook': '', 'notification_slack_webhook': ''}"
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -210,7 +210,7 @@ class TestAuthorizationUsers(TestAuthorizationBase):
             "setting_list_size": "small",
             "setting_package_info_preference": "ecosyste.ms",
         }
-        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'dark', 'setting_list_size': 'small', 'setting_package_info_preference': 'ecosyste.ms', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False}"
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'dark', 'setting_list_size': 'small', 'setting_package_info_preference': 'ecosyste.ms', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': False, 'notification_slack_active': False, 'notification_ms_teams_webhook': '', 'notification_slack_webhook': ''}"
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -233,5 +233,95 @@ class TestAuthorizationUsers(TestAuthorizationBase):
                 post_data,
                 400,
                 expected_data,
+            )
+        )
+
+        post_data = {
+            "notification_ms_teams_webhook": "https://example.com/ms_teams",
+            "notification_slack_webhook": "https://example.com/slack",
+        }
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'dark', 'setting_list_size': 'small', 'setting_package_info_preference': 'ecosyste.ms', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': False, 'notification_slack_active': False, 'notification_ms_teams_webhook': 'https://example.com/ms_teams', 'notification_slack_webhook': 'https://example.com/slack'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/users/my_settings/",
+                post_data,
+                200,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
+        # Not even a superuser gets to see the webhooks of another user
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': '', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'dark', 'setting_list_size': 'small', 'setting_package_info_preference': 'ecosyste.ms', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': False, 'notification_slack_active': False}"
+        self._test_api(
+            APITest(
+                "db_admin",
+                "get",
+                "/api/users/2/",
+                None,
+                200,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
+        # The email address and the channels can be set in the same request as the webhooks
+        post_data = {
+            "email": "db_internal_write@example.com",
+            "notification_email_active": True,
+            "notification_ms_teams_active": True,
+            "notification_slack_active": True,
+        }
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': 'db_internal_write@example.com', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'dark', 'setting_list_size': 'small', 'setting_package_info_preference': 'ecosyste.ms', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': True, 'notification_ms_teams_active': True, 'notification_slack_active': True, 'notification_ms_teams_webhook': 'https://example.com/ms_teams', 'notification_slack_webhook': 'https://example.com/slack'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/users/my_settings/",
+                post_data,
+                200,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
+        # A channel cannot be activated without its webhook
+        post_data = {
+            "notification_slack_webhook": "",
+            "notification_slack_active": True,
+        }
+        expected_data = "{'message': 'Slack notifications cannot be activated without a webhook'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/users/my_settings/",
+                post_data,
+                400,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
+        # Empty webhooks must be saved, otherwise they could not be cleared
+        post_data = {
+            "notification_email_active": False,
+            "notification_ms_teams_active": False,
+            "notification_slack_active": False,
+            "notification_ms_teams_webhook": "",
+            "notification_slack_webhook": "",
+        }
+        expected_data = "{'id': 2, 'username': 'db_internal_write', 'first_name': '', 'last_name': '', 'full_name': 'db_internal_write', 'email': 'db_internal_write@example.com', 'is_active': True, 'is_superuser': False, 'is_external': False, 'setting_theme': 'dark', 'setting_list_size': 'small', 'setting_package_info_preference': 'ecosyste.ms', 'setting_metrics_timespan': 'Week', 'setting_rows_per_page': 25, 'permissions': [<Permissions.Product_Create: 1104>, <Permissions.Product_Group_Create: 1004>], 'oidc_groups_hash': '', 'is_oidc_user': False, 'date_joined': '2022-12-07T20:24:53+01:00', 'has_password': False, 'has_authorization_groups': True, 'has_product_group_members': False, 'has_product_members': True, 'has_api_tokens': False, 'has_product_notifications': False, 'notification_email_active': False, 'notification_ms_teams_active': False, 'notification_slack_active': False, 'notification_ms_teams_webhook': '', 'notification_slack_webhook': ''}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/users/my_settings/",
+                post_data,
+                200,
+                expected_data,
+                no_second_user=True,
             )
         )

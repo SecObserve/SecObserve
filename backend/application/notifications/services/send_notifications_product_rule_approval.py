@@ -12,7 +12,7 @@ from application.notifications.services.product_notification import (
     get_users_for_product_notification,
 )
 from application.notifications.services.send_notifications_base import (
-    send_email_notification,
+    send_user_notification,
 )
 from application.notifications.services.tasks import handle_task_exception
 from application.notifications.types import Product_Notification_Type
@@ -29,13 +29,11 @@ def send_product_rule_approval_notification(rule: Rule) -> None:
             return
 
         settings = Settings.load()
-        if not settings.email_from:
-            return
 
         first_line = f'Product rule "{rule.name}" needs approval'
 
         for user in _get_approvers_to_notify(rule, product):
-            _send_rule_email(user, rule, first_line)
+            _send_rule_notification(user, settings, rule, first_line)
     except Exception as e:
         handle_task_exception(e)
         raise
@@ -52,8 +50,6 @@ def send_product_rule_approval_receipt_notification(rule: Rule) -> None:
             return
 
         settings = Settings.load()
-        if not settings.email_from:
-            return
 
         author = _get_author_to_notify(rule, product)
         if not author:
@@ -61,17 +57,18 @@ def send_product_rule_approval_receipt_notification(rule: Rule) -> None:
 
         first_line = f'Product rule "{rule.name}" has been {rule.approval_status.lower()}'
 
-        _send_rule_email(author, rule, first_line)
+        _send_rule_notification(author, settings, rule, first_line)
     except Exception as e:
         handle_task_exception(e)
         raise
 
 
-def _send_rule_email(user: User, rule: Rule, first_line: str) -> None:
-    send_email_notification(
-        user.email,
+def _send_rule_notification(user: User, settings: Settings, rule: Rule, first_line: str) -> None:
+    send_user_notification(
+        user,
+        settings,
         first_line,
-        "email_product_rule.tpl",
+        "product_rule",
         rule=rule,
         rule_url=f"{get_base_url_frontend()}#/product_rules/{rule.pk}/show",
         first_line=first_line,

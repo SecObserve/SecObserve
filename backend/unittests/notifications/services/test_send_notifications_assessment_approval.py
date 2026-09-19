@@ -18,6 +18,8 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
         self.product_1.pk = 1
         self.observation_1.pk = 2
         self.observation_log_1.pk = 3
+        # the author of the assessment is notified, so they need an email address
+        self.user_internal.email = "user_internal@example.com"
         self.user_jane = User(
             id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
         )
@@ -25,15 +27,20 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
 
     def _patch(self, email_from: str = "secobserve@example.com") -> dict[str, MagicMock]:
         """The mocks all tests need: the users who want the notification and their permission to
-        approve are mocked, so that no database is needed."""
+        approve are mocked, so that no database is needed.
+
+        The channels are mocked in send_notifications_base, because that is where
+        send_user_notification calls them, so that the routing to the channels is tested as well."""
         patchers = {
             "get_users": patch(
                 "application.notifications.services.send_notifications_assessment_approval."
                 "get_users_for_product_notification"
             ),
-            "send_email": patch(
-                "application.notifications.services.send_notifications_assessment_approval.send_email_notification"
+            "send_email": patch("application.notifications.services.send_notifications_base.send_email_notification"),
+            "send_msteams": patch(
+                "application.notifications.services.send_notifications_base.send_msteams_notification"
             ),
+            "send_slack": patch("application.notifications.services.send_notifications_base.send_slack_notification"),
             "base_url": patch(
                 "application.notifications.services.send_notifications_assessment_approval.get_base_url_frontend"
             ),
@@ -64,7 +71,8 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             send_assessment_approval_notification(self.observation_log_1)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_assessment_approval_notification_without_users(self):
@@ -89,7 +97,7 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             'Assessment for observation "observation_1" needs approval',
-            "email_assessment_approval.tpl",
+            "email/assessment_approval.tpl",
             observation=self.observation_1,
             observation_log=self.observation_log_1,
             observation_log_url="https://secobserve.com/#/observation_logs/3/show",
@@ -164,7 +172,8 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             send_assessment_approval_receipt_notification(self.observation_log_1)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_assessment_approval_receipt_notification_author_does_not_want_it(self):
@@ -192,7 +201,7 @@ class TestSendNotificationsAssessmentApproval(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             self.user_internal.email,
             'Assessment for observation "observation_1" has been approved',
-            "email_assessment_approval.tpl",
+            "email/assessment_approval.tpl",
             observation=self.observation_1,
             observation_log=self.observation_log_1,
             observation_log_url="https://secobserve.com/#/observation_logs/3/show",

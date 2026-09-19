@@ -1,10 +1,16 @@
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PersonIcon from "@mui/icons-material/Person";
-import { FormControl, FormControlLabel, Paper, Radio, RadioGroup, Stack, Typography } from "@mui/material";
-import { Fragment, useEffect } from "react";
-import { Title, useTheme } from "react-admin";
+import { Divider, FormControl, FormControlLabel, Paper, Radio, RadioGroup, Stack, Typography } from "@mui/material";
+import { Fragment, ReactNode, useEffect, useState } from "react";
+import { BooleanInput, Form, SaveButton, Title, useNotify, useTheme } from "react-admin";
+import { useWatch } from "react-hook-form";
 
 import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
+import Toolbar from "../custom_fields/Toolbar";
+import WebhookTestButton from "../custom_fields/WebhookTestButton";
+import { validate_255, validate_2048 } from "../custom_validators";
+import { is_oidc_user } from "../functions";
+import { TextInputExtraWide } from "../layout/themes";
 import {
     METRICS_TIMESPAN_7_DAYS,
     METRICS_TIMESPAN_30_DAYS,
@@ -12,22 +18,90 @@ import {
     METRICS_TIMESPAN_365_DAYS,
 } from "../types";
 import {
+    NotificationSettings,
     ThemePreference,
     getSettingListSize,
     getSettingMetricsTimespan,
+    getSettingNotifications,
     getSettingPackageInfoPreference,
     getSettingRowsPerPage,
     getSettingTheme,
+    loadSettingNotifications,
     resolveTheme,
     saveSettingListSize,
+    saveSettingNotifications,
     saveSettingPackageInfoPreference,
     saveSettingRowsPerPage,
     saveSettingTheme,
     saveSettingsMetricsTimespan,
+    validateNotificationSettings,
 } from "./functions";
+
+type NotificationChannelRowProps = {
+    activeSource: string;
+    activeLabel: string;
+    children: (readOnly: boolean) => ReactNode;
+};
+
+// The flag of the channel decides whether its email address or webhook URL can be edited. The
+// field is set to readOnly and not to disabled, otherwise react-hook-form would remove its value
+// from the submitted data and the stored value would be cleared.
+const NotificationChannelRow = ({ activeSource, activeLabel, children }: NotificationChannelRowProps) => {
+    const active = useWatch({ name: activeSource });
+
+    return (
+        <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
+            <BooleanInput source={activeSource} label={activeLabel} sx={{ width: "10em" }} />
+            {children(!active)}
+        </Stack>
+    );
+};
 
 const UserSettings = () => {
     const [, setTheme] = useTheme();
+    const notify = useNotify();
+    const [notifications, setNotifications] = useState<NotificationSettings>(getSettingNotifications);
+    // The form is only initialized from defaultValues when it is mounted, so it is remounted
+    // when the settings have been loaded from the API or have been saved
+    const [formKey, setFormKey] = useState(0);
+
+    useEffect(() => {
+        let outdated = false;
+
+        loadSettingNotifications()
+            .then((values) => {
+                if (!outdated) {
+                    setNotifications(values);
+                    setFormKey((key) => key + 1);
+                }
+            })
+            .catch(() => {
+                // The values from the local storage are kept
+            });
+
+        return () => {
+            outdated = true;
+        };
+    }, []);
+
+    async function saveNotifications(values: any) {
+        try {
+            setNotifications(
+                await saveSettingNotifications({
+                    email: values.email ?? "",
+                    notification_email_active: values.notification_email_active ?? false,
+                    notification_ms_teams_webhook: values.notification_ms_teams_webhook ?? "",
+                    notification_ms_teams_active: values.notification_ms_teams_active ?? false,
+                    notification_slack_webhook: values.notification_slack_webhook ?? "",
+                    notification_slack_active: values.notification_slack_active ?? false,
+                })
+            );
+            setFormKey((key) => key + 1);
+            notify("Notification settings saved", { type: "success" });
+        } catch (error: any) {
+            notify(error.message, { type: "warning" });
+        }
+    }
 
     useEffect(() => {
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -212,6 +286,73 @@ const UserSettings = () => {
                 </Typography>
                 <Stack sx={{ width: "100%" }}>
                     <ProductNotificationSettings />
+
+                    <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", marginBottom: 1 }}>
+                        Channels
+                    </Typography>
+                    <Form
+                        key={formKey}
+                        defaultValues={notifications}
+                        validate={validateNotificationSettings}
+                        onSubmit={saveNotifications}
+                    >
+                        <Stack spacing={2}>
+                            <NotificationChannelRow activeSource="notification_email_active" activeLabel="Email">
+                                {(readOnly) => (
+                                    <TextInputExtraWide
+                                        source="email"
+                                        label="Email address to send notifications to"
+                                        validate={validate_255}
+                                        readOnly={readOnly || is_oidc_user()}
+                                        helperText={
+                                            is_oidc_user()
+                                                ? "The email address is maintained by the identity provider"
+                                                : undefined
+                                        }
+                                    />
+                                )}
+                            </NotificationChannelRow>
+                            <NotificationChannelRow activeSource="notification_ms_teams_active" activeLabel="MS Teams">
+                                {(readOnly) => (
+                                    <Fragment>
+                                        <TextInputExtraWide
+                                            source="notification_ms_teams_webhook"
+                                            label="Webhook URL to send notifications to MS Teams"
+                                            validate={validate_2048}
+                                            readOnly={readOnly}
+                                        />
+                                        <WebhookTestButton
+                                            webhookSource="notification_ms_teams_webhook"
+                                            webhookType="msteams"
+                                            disabled={readOnly}
+                                        />
+                                    </Fragment>
+                                )}
+                            </NotificationChannelRow>
+                            <NotificationChannelRow activeSource="notification_slack_active" activeLabel="Slack">
+                                {(readOnly) => (
+                                    <Fragment>
+                                        <TextInputExtraWide
+                                            source="notification_slack_webhook"
+                                            label="Webhook URL to send notifications to Slack"
+                                            validate={validate_2048}
+                                            readOnly={readOnly}
+                                        />
+                                        <WebhookTestButton
+                                            webhookSource="notification_slack_webhook"
+                                            webhookType="slack"
+                                            disabled={readOnly}
+                                        />
+                                    </Fragment>
+                                )}
+                            </NotificationChannelRow>
+                            <Toolbar>
+                                <SaveButton />
+                            </Toolbar>
+                        </Stack>
+                    </Form>
                 </Stack>
             </Paper>
         </Fragment>

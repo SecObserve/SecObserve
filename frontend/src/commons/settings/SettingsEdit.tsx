@@ -320,7 +320,7 @@ const SettingsEdit = () => {
                             validate={validate_255}
                         />
                     )}
-                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
                         <TextInputExtraWide
                             source="exception_ms_teams_webhook"
                             label="MS Teams webhook to send exception notifications"
@@ -328,7 +328,7 @@ const SettingsEdit = () => {
                         />
                         <WebhookTestButton webhookSource="exception_ms_teams_webhook" webhookType="msteams" />
                     </Stack>
-                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
                         <TextInputExtraWide
                             source="exception_slack_webhook"
                             label="Slack webhook to send exception notifications"
@@ -352,7 +352,7 @@ const SettingsEdit = () => {
                             validate={validate_255}
                         />
                     )}
-                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
                         <TextInputExtraWide
                             source="observation_title_notification_ms_teams_webhook"
                             label="Webhook URL to send observation title notifications to MS Teams"
@@ -363,7 +363,7 @@ const SettingsEdit = () => {
                             webhookType="msteams"
                         />
                     </Stack>
-                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "baseline" }}>
                         <TextInputExtraWide
                             source="observation_title_notification_slack_webhook"
                             label="Webhook URL to send observation title notifications to Slack"

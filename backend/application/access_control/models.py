@@ -14,6 +14,7 @@ from django.db.models import (
     IntegerField,
     ManyToManyField,
     Model,
+    TextField,
 )
 from encrypted_model_fields.fields import EncryptedCharField
 
@@ -50,6 +51,13 @@ class User(AbstractUser):
 
     oidc_groups_hash = CharField(max_length=64, blank=True)
     is_oidc_user = BooleanField(default=False)
+
+    notification_ms_teams_webhook = TextField(max_length=2048, blank=True)
+    notification_slack_webhook = TextField(max_length=2048, blank=True)
+
+    notification_email_active = BooleanField(default=True)
+    notification_ms_teams_active = BooleanField(default=False)
+    notification_slack_active = BooleanField(default=False)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.first_name and self.last_name:

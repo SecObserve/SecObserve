@@ -148,6 +148,11 @@ class UserSerializer(UserListSerializer):
             "has_product_members",
             "has_api_tokens",
             "has_product_notifications",
+            "notification_email_active",
+            "notification_ms_teams_active",
+            "notification_slack_active",
+            "notification_ms_teams_webhook",
+            "notification_slack_webhook",
         ]
 
     def to_representation(self, instance: User) -> dict[str, Any]:
@@ -160,6 +165,15 @@ class UserSerializer(UserListSerializer):
             data.pop("has_product_members")
             data.pop("has_api_tokens")
             data.pop("has_product_notifications")
+            data.pop("notification_email_active")
+            data.pop("notification_ms_teams_active")
+            data.pop("notification_slack_active")
+
+        # Webhooks are personal credentials, they are not disclosed to other users,
+        # not even to superusers
+        if user and user.pk != instance.pk:
+            data.pop("notification_ms_teams_webhook", None)
+            data.pop("notification_slack_webhook", None)
 
         return data
 
@@ -288,6 +302,12 @@ class UserSettingsSerializer(ModelSerializer):
             "setting_package_info_preference",
             "setting_metrics_timespan",
             "setting_rows_per_page",
+            "email",
+            "notification_email_active",
+            "notification_ms_teams_active",
+            "notification_slack_active",
+            "notification_ms_teams_webhook",
+            "notification_slack_webhook",
         ]
 
 

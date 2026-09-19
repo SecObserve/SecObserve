@@ -151,6 +151,25 @@ class UserViewSet(ModelViewSet):
         if setting_rows_per_page:
             user.setting_rows_per_page = setting_rows_per_page
 
+        # The notification settings are checked for presence instead of truthiness,
+        # otherwise they could not be cleared or switched off
+        validated_data = request_serializer.validated_data
+        if "email" in validated_data:
+            if user.is_oidc_user and validated_data["email"] != user.email:
+                raise ValidationError("Email of an OIDC user cannot be changed")
+            user.email = validated_data["email"]
+        for notification_field in (
+            "notification_ms_teams_webhook",
+            "notification_slack_webhook",
+            "notification_email_active",
+            "notification_ms_teams_active",
+            "notification_slack_active",
+        ):
+            if notification_field in validated_data:
+                setattr(user, notification_field, validated_data[notification_field])
+
+        _validate_notification_channels(user, validated_data)
+
         user.save()
 
         response_serializer = UserSerializer(request.user)
@@ -345,6 +364,18 @@ class JWTSecretResetView(APIView):
         jwt_secret = JWT_Secret(secret=JWT_Secret.create_secret())
         jwt_secret.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+def _validate_notification_channels(user: User, validated_data: dict[str, Any]) -> None:
+    # Only channels that are switched on by this request are checked, the state of the other
+    # channels is not touched. Otherwise a user without an email address could not save any
+    # settings at all, because notification_email_active is switched on by default.
+    if validated_data.get("notification_email_active") and not user.email:
+        raise ValidationError("Email notifications cannot be activated without an email address")
+    if validated_data.get("notification_ms_teams_active") and not user.notification_ms_teams_webhook:
+        raise ValidationError("MS Teams notifications cannot be activated without a webhook")
+    if validated_data.get("notification_slack_active") and not user.notification_slack_webhook:
+        raise ValidationError("Slack notifications cannot be activated without a webhook")
 
 
 def _get_authenticated_user(data: dict[str, Any] | list[Any]) -> User:

@@ -10,7 +10,7 @@ from application.notifications.services.product_notification import (
     get_users_for_product_notification,
 )
 from application.notifications.services.send_notifications_base import (
-    send_email_notification,
+    send_user_notification,
 )
 from application.notifications.services.tasks import handle_task_exception
 from application.notifications.types import Product_Notification_Type
@@ -20,17 +20,16 @@ from application.notifications.types import Product_Notification_Type
 def send_observation_review_notification(observation: Observation) -> None:
     try:
         settings = Settings.load()
-        if not settings.email_from:
-            return
 
         first_line = f'Observation "{observation.title}" has been set to "In review"'
         observation_url = f"{get_base_url_frontend()}#/observations/{observation.pk}/show"
 
         for user in _get_reviewers_to_notify(observation):
-            send_email_notification(
-                user.email,
+            send_user_notification(
+                user,
+                settings,
                 first_line,
-                "email_observation.tpl",
+                "observation",
                 observation=observation,
                 observation_url=observation_url,
                 first_line=first_line,

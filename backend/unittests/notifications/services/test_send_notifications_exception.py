@@ -116,7 +116,7 @@ class TestPushNotifications(BaseTestCase):
             call(
                 "test1@example.com",
                 'Exception "builtins.Exception" has occured',
-                "email_exception.tpl",
+                "email/exception.tpl",
                 exception_class="builtins.Exception",
                 exception_message="test_exception",
                 exception_trace="",
@@ -126,7 +126,7 @@ class TestPushNotifications(BaseTestCase):
             call(
                 "test2@example.com",
                 'Exception "builtins.Exception" has occured',
-                "email_exception.tpl",
+                "email/exception.tpl",
                 exception_class="builtins.Exception",
                 exception_message="test_exception",
                 exception_trace="",
@@ -137,7 +137,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_v2_exception.tpl",
+            "msteams_v2/exception.tpl",
             exception_class="builtins.Exception",
             exception_message="test_exception",
             exception_trace="",
@@ -145,7 +145,7 @@ class TestPushNotifications(BaseTestCase):
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
-            "slack_exception.tpl",
+            "slack/exception.tpl",
             exception_class="builtins.Exception",
             exception_message="test_exception",
             exception_trace="",
@@ -275,7 +275,7 @@ class TestPushNotifications(BaseTestCase):
             call(
                 "test1@example.com",
                 'Exception "builtins.Exception" has occured in background task',
-                "email_task_exception.tpl",
+                "email/task_exception.tpl",
                 function="test_function",
                 arguments=str(arguments),
                 user=self.user_internal,
@@ -288,7 +288,7 @@ class TestPushNotifications(BaseTestCase):
             call(
                 "test2@example.com",
                 'Exception "builtins.Exception" has occured in background task',
-                "email_task_exception.tpl",
+                "email/task_exception.tpl",
                 function="test_function",
                 arguments=str(arguments),
                 user=self.user_internal,
@@ -302,7 +302,7 @@ class TestPushNotifications(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_v2_task_exception.tpl",
+            "msteams_v2/task_exception.tpl",
             function="test_function",
             arguments=str(arguments),
             user=self.user_internal,
@@ -313,7 +313,7 @@ class TestPushNotifications(BaseTestCase):
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
-            "slack_task_exception.tpl",
+            "slack/task_exception.tpl",
             function="test_function",
             arguments=str(arguments),
             user=self.user_internal,

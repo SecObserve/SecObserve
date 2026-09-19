@@ -8,9 +8,10 @@ import { httpClient } from "../ra-data-django-rest-framework";
 type WebhookTestButtonProps = {
     webhookSource: string;
     webhookType: "msteams" | "slack";
+    disabled?: boolean;
 };
 
-const WebhookTestButton = ({ webhookSource, webhookType }: WebhookTestButtonProps) => {
+const WebhookTestButton = ({ webhookSource, webhookType, disabled = false }: WebhookTestButtonProps) => {
     const webhookUrl = useWatch({ name: webhookSource });
     const notify = useNotify();
     const [loading, setLoading] = useState(false);
@@ -39,10 +40,10 @@ const WebhookTestButton = ({ webhookSource, webhookType }: WebhookTestButtonProp
         <Button
             label="Test"
             onClick={handleTest}
-            disabled={loading || !webhookUrl}
+            disabled={disabled || loading || !webhookUrl}
             startIcon={<SendIcon />}
             size="small"
-            sx={{ minWidth: "80px", height: "40px", alignSelf: "center", marginBottom: "20px" }}
+            sx={{ minWidth: "80px", height: "40px" }}
         />
     );
 };

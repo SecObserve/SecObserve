@@ -359,7 +359,7 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
 
         mock_send_teams.assert_called_once_with(
             "https://teams.webhook.example.com",
-            "msteams_v2_observation_title.tpl",
+            "msteams_v2/observation_title.tpl",
             observation=observation,
             url="http://url",
             first_line="First line",
@@ -385,7 +385,7 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
 
         mock_send_teams.assert_called_once_with(
             "https://tenant.webhook.office.com/webhookb2/test",
-            "msteams_observation_title.tpl",
+            "msteams/observation_title.tpl",
             observation=observation,
             url="http://url",
             first_line="First line",
@@ -407,7 +407,7 @@ class TestSendObservationTitleNotificationsHelper(BaseTestCase):
 
         mock_send_slack.assert_called_once_with(
             "https://hooks.slack.com/test",
-            "slack_observation_title.tpl",
+            "slack/observation_title.tpl",
             observation=observation,
             url="http://url",
             first_line="First line",

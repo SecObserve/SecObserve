@@ -167,17 +167,78 @@ export function getSettingRowsPerPage(): number {
     return rows_per_page;
 }
 
-function saveSetting(setting: any) {
+export type NotificationSettings = {
+    email: string;
+    notification_email_active: boolean;
+    notification_ms_teams_webhook: string;
+    notification_ms_teams_active: boolean;
+    notification_slack_webhook: string;
+    notification_slack_active: boolean;
+};
+
+export function getSettingNotifications(): NotificationSettings {
+    const user = localStorage.getItem("user");
+    const user_json = user ? JSON.parse(user) : {};
+
+    return {
+        email: user_json.email ?? "",
+        notification_email_active: user_json.notification_email_active ?? false,
+        notification_ms_teams_webhook: user_json.notification_ms_teams_webhook ?? "",
+        notification_ms_teams_active: user_json.notification_ms_teams_active ?? false,
+        notification_slack_webhook: user_json.notification_slack_webhook ?? "",
+        notification_slack_active: user_json.notification_slack_active ?? false,
+    };
+}
+
+// The user is reloaded from the API, because an entry in the local storage that has been written
+// before the notification settings existed would show empty values, which a save would then persist
+export async function loadSettingNotifications(): Promise<NotificationSettings> {
+    const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/users/me/";
+
+    const response = await httpClient(url);
+    localStorage.setItem("user", JSON.stringify(response.json));
+
+    return getSettingNotifications();
+}
+
+// A channel needs its email address or webhook URL to be activated, the backend rejects
+// the other combination as well
+export const validateNotificationSettings = (values: any) => {
+    const errors: any = {};
+
+    if (values.notification_email_active && !values.email) {
+        errors.email = "Email address is required to activate email notifications";
+    }
+    if (values.notification_ms_teams_active && !values.notification_ms_teams_webhook) {
+        errors.notification_ms_teams_webhook = "Webhook URL is required to activate MS Teams notifications";
+    }
+    if (values.notification_slack_active && !values.notification_slack_webhook) {
+        errors.notification_slack_webhook = "Webhook URL is required to activate Slack notifications";
+    }
+
+    return errors;
+};
+
+export async function saveSettingNotifications(notifications: NotificationSettings): Promise<NotificationSettings> {
+    await patchUserSettings(notifications);
+
+    return getSettingNotifications();
+}
+
+function patchUserSettings(setting: any) {
     const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/users/my_settings/";
 
-    httpClient(url, {
+    return httpClient(url, {
         method: "PATCH",
         body: JSON.stringify(setting),
-    })
-        .then((response) => {
-            localStorage.setItem("user", JSON.stringify(response.json));
-        })
-        .catch((error) => {
-            console.warn(error.message);
-        });
+    }).then((response) => {
+        localStorage.setItem("user", JSON.stringify(response.json));
+        return response.json;
+    });
+}
+
+function saveSetting(setting: any) {
+    patchUserSettings(setting).catch((error) => {
+        console.warn(error.message);
+    });
 }

@@ -1,6 +1,7 @@
 import ipaddress
 import logging
 import socket
+from collections.abc import Callable
 from typing import Any, Optional
 from urllib.parse import urlsplit
 
@@ -9,6 +10,7 @@ import requests
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
+from application.access_control.models import User
 from application.access_control.queries.user import get_user_by_email
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
@@ -38,6 +40,11 @@ def is_msteams_v2(webhook: str) -> bool:
         return not hostname.endswith("webhook.office.com")
     except Exception:
         return True
+
+
+def get_msteams_template(webhook: str, name: str) -> str:
+    """MS Teams templates come in two formats, the webhook URL decides which one is used."""
+    return f"msteams_v2/{name}.tpl" if is_msteams_v2(webhook) else f"msteams/{name}.tpl"
 
 
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
@@ -72,11 +79,75 @@ def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
         response.raise_for_status()
 
 
+def send_user_notification(
+    user: User,
+    settings: Settings,
+    subject: str,
+    template_base: str,
+    *,
+    notified_email_addresses: Optional[set[str]] = None,
+    notified_webhooks: Optional[set[str]] = None,
+    **kwargs: Any,
+) -> None:
+    """
+    Send one user specific notification to all channels the user has activated. The name of the
+    template is derived from the channel and the given base, e.g. `email/observation.tpl` and
+    `slack/observation.tpl` for the base `observation`.
+
+    Channels that have already been notified through the shared destinations of the product are
+    skipped, so that a user does not get the same notification twice.
+    """
+    if (
+        user.notification_email_active
+        and user.email
+        and settings.email_from
+        and (not notified_email_addresses or user.email.lower() not in notified_email_addresses)
+    ):
+        send_email_notification(user.email, subject, f"email/{template_base}.tpl", **kwargs)
+
+    if (
+        user.notification_ms_teams_active
+        and user.notification_ms_teams_webhook
+        and (not notified_webhooks or user.notification_ms_teams_webhook not in notified_webhooks)
+    ):
+        template = get_msteams_template(user.notification_ms_teams_webhook, template_base)
+        _send_user_webhook_notification(
+            send_msteams_notification, user, user.notification_ms_teams_webhook, template, **kwargs
+        )
+
+    if (
+        user.notification_slack_active
+        and user.notification_slack_webhook
+        and (not notified_webhooks or user.notification_slack_webhook not in notified_webhooks)
+    ):
+        _send_user_webhook_notification(
+            send_slack_notification, user, user.notification_slack_webhook, f"slack/{template_base}.tpl", **kwargs
+        )
+
+
+def _send_user_webhook_notification(
+    send_notification: Callable[..., None], user: User, webhook: str, template: str, **kwargs: Any
+) -> None:
+    """
+    Notifications are sent to many users in one go, so the webhook of one user must not be able to
+    abort the notifications of all the other users.
+    """
+    try:
+        send_notification(webhook, template, **kwargs)
+    except Exception as e:
+        logger.error(
+            format_log_message(
+                message=f"Error while sending notification to a webhook of user {user.username}",
+                exception=e,
+            )
+        )
+
+
 def send_msteams_notification_test(webhook: str) -> None:
     if not _validate_webhook_url(webhook):
         raise ValueError(f"Invalid webhook URL: {webhook}")
     v2 = is_msteams_v2(webhook)
-    template = "msteams_v2_test.tpl" if v2 else "msteams_test.tpl"
+    template = "msteams_v2/test.tpl" if v2 else "msteams/test.tpl"
     notification_message = _create_notification_message(template)
     if notification_message:
         headers = {"Content-Type": "application/json"} if v2 else {}
@@ -94,7 +165,7 @@ def send_msteams_notification_test(webhook: str) -> None:
 def send_slack_notification_test(webhook: str) -> None:
     if not _validate_webhook_url(webhook):
         raise ValueError(f"Invalid webhook URL: {webhook}")
-    notification_message = _create_notification_message("slack_test.tpl")
+    notification_message = _create_notification_message("slack/test.tpl")
     if notification_message:
         response = requests.request(
             method="POST",

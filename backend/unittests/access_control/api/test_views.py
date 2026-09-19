@@ -322,3 +322,101 @@ class TestChangePassword(BaseTestCase):
         django_authenticate_mock.assert_called_with(username="user_admin@example.com", password="current")
         save_mock.assert_called()
         set_password_mock.assert_called_with("new")
+
+
+class TestMySettings(BaseTestCase):
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_email_active_without_email(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_email_active": True}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Email notifications cannot be activated without an email address", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_ms_teams_active_without_webhook(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_ms_teams_active": True}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("MS Teams notifications cannot be activated without a webhook", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_slack_active_without_webhook(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_slack_active": True}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Slack notifications cannot be activated without a webhook", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_channel_activated_with_webhook(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        request_data = {
+            "notification_slack_webhook": "https://example.com/slack",
+            "notification_slack_active": True,
+        }
+        response = api_client.patch("/api/users/my_settings/", request_data, "json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("https://example.com/slack", self.user_internal.notification_slack_webhook)
+        self.assertTrue(self.user_internal.notification_slack_active)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_email_of_oidc_user(self, save_mock, authentication_mock):
+        self.user_internal.is_oidc_user = True
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"email": "changed@example.com"}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Email of an OIDC user cannot be changed", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_unchanged_email_of_oidc_user(self, save_mock, authentication_mock):
+        self.user_internal.is_oidc_user = True
+        self.user_internal.email = "oidc@example.com"
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"email": "oidc@example.com"}, "json")
+
+        self.assertEqual(200, response.status_code)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_email_successful(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        request_data = {
+            "email": "internal@example.com",
+            "notification_email_active": True,
+        }
+        response = api_client.patch("/api/users/my_settings/", request_data, "json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("internal@example.com", self.user_internal.email)
+        self.assertTrue(self.user_internal.notification_email_active)
+        save_mock.assert_called()

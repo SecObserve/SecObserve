@@ -15,7 +15,7 @@ from application.notifications.models import Notification
 from application.notifications.services.send_notifications_base import (
     _get_email_to_addresses,
     _get_first_name,
-    is_msteams_v2,
+    get_msteams_template,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -77,7 +77,7 @@ def send_exception_notification(exception: Exception) -> None:
                 send_email_notification_background(
                     notification_email_to,
                     f'Exception "{get_classname(exception)}" has occured',
-                    "email_exception.tpl",
+                    "email/exception.tpl",
                     exception_class=get_classname(exception),
                     exception_message=str(exception),
                     exception_trace=_get_stack_trace(exception, False),
@@ -86,11 +86,7 @@ def send_exception_notification(exception: Exception) -> None:
                 )
 
         if settings.exception_ms_teams_webhook:
-            template = (
-                "msteams_v2_exception.tpl"
-                if is_msteams_v2(settings.exception_ms_teams_webhook)
-                else "msteams_exception.tpl"
-            )
+            template = get_msteams_template(settings.exception_ms_teams_webhook, "exception")
             send_msteams_notification_background(
                 settings.exception_ms_teams_webhook,
                 template,
@@ -103,7 +99,7 @@ def send_exception_notification(exception: Exception) -> None:
         if settings.exception_slack_webhook:
             send_slack_notification_background(
                 settings.exception_slack_webhook,
-                "slack_exception.tpl",
+                "slack/exception.tpl",
                 exception_class=get_classname(exception),
                 exception_message=str(exception),
                 exception_trace=_get_stack_trace(exception, True),
@@ -135,7 +131,7 @@ def send_task_exception_notification(
                 send_email_notification_background(
                     notification_email_to,
                     f'Exception "{get_classname(exception)}" has occured in background task',
-                    "email_task_exception.tpl",
+                    "email/task_exception.tpl",
                     function=function,
                     arguments=str(arguments),
                     user=user,
@@ -147,11 +143,7 @@ def send_task_exception_notification(
                 )
 
         if settings.exception_ms_teams_webhook:
-            template = (
-                "msteams_v2_task_exception.tpl"
-                if is_msteams_v2(settings.exception_ms_teams_webhook)
-                else "msteams_task_exception.tpl"
-            )
+            template = get_msteams_template(settings.exception_ms_teams_webhook, "task_exception")
             send_msteams_notification_background(
                 settings.exception_ms_teams_webhook,
                 template,
@@ -167,7 +159,7 @@ def send_task_exception_notification(
         if settings.exception_slack_webhook:
             send_slack_notification_background(
                 settings.exception_slack_webhook,
-                "slack_task_exception.tpl",
+                "slack/task_exception.tpl",
                 function=function,
                 arguments=str(arguments),
                 user=user,

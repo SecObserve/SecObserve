@@ -6,6 +6,7 @@ from unittest.mock import patch
 
 from requests import HTTPError, Response
 
+from application.access_control.models import User
 from application.commons.models import Settings
 from application.commons.services.functions import get_classname
 from application.core.types import Severity, Status
@@ -19,6 +20,7 @@ from application.notifications.services.send_notifications_base import (
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
+    send_user_notification,
 )
 from unittests.base_test_case import BaseTestCase
 
@@ -332,7 +334,7 @@ class TestPushNotifications(BaseTestCase):
 
     def test_create_notification_message_security_gate(self):
         message = _create_notification_message(
-            "msteams_product_security_gate.tpl",
+            "msteams/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="security_gate_passed",
             product_url="product_url",
@@ -362,7 +364,7 @@ class TestPushNotifications(BaseTestCase):
     def test_create_notification_message_exception(self):
         exception = Exception("test_exception")
         message = _create_notification_message(
-            "msteams_exception.tpl",
+            "msteams/exception.tpl",
             exception_class=get_classname(exception),
             exception_message=str(exception),
             date_time=datetime(2022, 12, 31, 23, 59, 59),
@@ -395,7 +397,7 @@ class TestPushNotifications(BaseTestCase):
 
     def test_create_notification_message_new_security_gate(self):
         message = _create_notification_message(
-            "msteams_v2_product_security_gate.tpl",
+            "msteams_v2/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="security_gate_passed",
             product_url="product_url",
@@ -437,7 +439,7 @@ class TestPushNotifications(BaseTestCase):
     def test_create_notification_message_new_exception(self):
         exception = Exception("test_exception")
         message = _create_notification_message(
-            "msteams_v2_exception.tpl",
+            "msteams_v2/exception.tpl",
             exception_class=get_classname(exception),
             exception_message=str(exception),
             date_time=datetime(2022, 12, 31, 23, 59, 59),
@@ -496,7 +498,7 @@ class TestPushNotifications(BaseTestCase):
         self.observation_1.current_status = Status.STATUS_OPEN
 
         message = _create_notification_message(
-            "email_observation.tpl",
+            "email/observation.tpl",
             observation=self.observation_1,
             observation_url="observation_url",
             first_line="first_line",
@@ -535,7 +537,7 @@ SecObserve
         self.observation_1.scanner = "scanner_1 / 1.0.0"
 
         message = _create_notification_message(
-            "email_observation.tpl",
+            "email/observation.tpl",
             observation=self.observation_1,
             observation_url="observation_url",
             first_line="first_line",
@@ -574,7 +576,7 @@ SecObserve
         # parity in the hand-built Slack/Teams payloads (template-injection f013).
         self.observation_1.title = 'evil\\", "extra": "x'
         message = _create_notification_message(
-            "msteams_observation.tpl",
+            "msteams/observation.tpl",
             observation=self.observation_1,
             observation_url="observation_url",
             first_line='New notification for observation "evil\\", "extra": "x"',
@@ -592,7 +594,7 @@ SecObserve
         # the same escaping as the MessageCard and Slack templates
         self.observation_1.title = 'evil\\", "extra": "x'
         message = _create_notification_message(
-            "msteams_v2_observation.tpl",
+            "msteams_v2/observation.tpl",
             observation=self.observation_1,
             observation_url="observation_url",
             first_line='New notification for observation "evil\\", "extra": "x"',
@@ -701,3 +703,116 @@ SecObserve
 
     def test_get_notification_slack_webhook_product_webhook_empty(self):
         self.assertEqual(None, _get_notification_slack_webhook(self.product_1))
+
+    # --- templates of the user specific notifications ---
+
+    def test_create_notification_message_assessment_approval_webhooks(self):
+        """The rendered message is posted as the raw body of the request, so it has to be valid JSON."""
+        self.observation_1.title = 'observation "1"'
+        self.observation_log_1.comment = 'back\\slash and "quotes"'
+
+        for template in (
+            "msteams/assessment_approval.tpl",
+            "msteams_v2/assessment_approval.tpl",
+            "slack/assessment_approval.tpl",
+        ):
+            with self.subTest(template=template):
+                message = _create_notification_message(
+                    template,
+                    observation=self.observation_1,
+                    observation_log=self.observation_log_1,
+                    observation_log_url="observation_log_url",
+                    first_line="Assessment needs approval",
+                )
+
+                self.assertIsNotNone(message)
+                json.loads(message)
+                self.assertIn("Assessment needs approval", message)
+                self.assertIn("observation_log_url", message)
+
+    def test_create_notification_message_product_rule_webhooks(self):
+        self.product_rule_1.new_severity = Severity.SEVERITY_HIGH
+        self.product_rule_1.new_status = Status.STATUS_OPEN
+
+        for template in (
+            "msteams/product_rule.tpl",
+            "msteams_v2/product_rule.tpl",
+            "slack/product_rule.tpl",
+        ):
+            with self.subTest(template=template):
+                message = _create_notification_message(
+                    template,
+                    rule=self.product_rule_1,
+                    rule_url="rule_url",
+                    first_line="Product rule needs approval",
+                )
+
+                self.assertIsNotNone(message)
+                json.loads(message)
+                self.assertIn("Product rule needs approval", message)
+                self.assertIn("rule_url", message)
+                self.assertIn("rule_1", message)
+
+    # --- send_user_notification ---
+
+    def _get_user(self, **kwargs) -> User:
+        return User(id=10, username="jane@example.com", email="jane@example.com", full_name="Jane Doe", **kwargs)
+
+    def _get_settings(self, email_from: str = "secobserve@example.com") -> Settings:
+        settings = Settings()
+        settings.email_from = email_from
+        return settings
+
+    @patch("application.notifications.services.send_notifications_base.send_slack_notification")
+    @patch("application.notifications.services.send_notifications_base.send_msteams_notification")
+    @patch("application.notifications.services.send_notifications_base.send_email_notification")
+    def test_send_user_notification_email_only(self, mock_email, mock_msteams, mock_slack):
+        send_user_notification(self._get_user(), self._get_settings(), "subject", "observation", key="value")
+
+        mock_email.assert_called_once_with("jane@example.com", "subject", "email/observation.tpl", key="value")
+        mock_msteams.assert_not_called()
+        mock_slack.assert_not_called()
+
+    @patch("application.notifications.services.send_notifications_base.send_email_notification")
+    def test_send_user_notification_without_email_from(self, mock_email):
+        send_user_notification(self._get_user(), self._get_settings(email_from=""), "subject", "observation")
+
+        mock_email.assert_not_called()
+
+    @patch("application.notifications.services.send_notifications_base.send_email_notification")
+    def test_send_user_notification_email_already_notified(self, mock_email):
+        send_user_notification(
+            self._get_user(),
+            self._get_settings(),
+            "subject",
+            "observation",
+            notified_email_addresses={"jane@example.com"},
+        )
+
+        mock_email.assert_not_called()
+
+    @patch("application.notifications.services.send_notifications_base.send_slack_notification")
+    def test_send_user_notification_slack_already_notified(self, mock_slack):
+        user = self._get_user(notification_slack_active=True, notification_slack_webhook="https://example.com/slack")
+
+        send_user_notification(
+            user,
+            self._get_settings(email_from=""),
+            "subject",
+            "observation",
+            notified_webhooks={"https://example.com/slack"},
+        )
+
+        mock_slack.assert_not_called()
+
+    @patch("application.notifications.services.send_notifications_base.logger.error")
+    @patch("application.notifications.services.send_notifications_base.send_slack_notification")
+    def test_send_user_notification_webhook_exception_is_logged(self, mock_slack, mock_logging):
+        """One broken webhook must not stop the notifications of the other users."""
+        mock_slack.side_effect = Exception("webhook is broken")
+        user = self._get_user(notification_slack_active=True, notification_slack_webhook="https://example.com/slack")
+
+        send_user_notification(user, self._get_settings(email_from=""), "subject", "observation")
+
+        mock_slack.assert_called_once()
+        mock_logging.assert_called_once()

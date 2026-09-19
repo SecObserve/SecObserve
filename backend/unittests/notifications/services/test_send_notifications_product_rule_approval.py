@@ -18,6 +18,8 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
         self.product_1.pk = 1
         self.product_rule_1.pk = 2
         self.product_rule_1.user = self.user_internal
+        # the author of the rule is notified, so they need an email address
+        self.user_internal.email = "user_internal@example.com"
         self.product_rule_1.approval_status = Rule_Status.RULE_STATUS_NEEDS_APPROVAL
         self.user_jane = User(
             id=10, username="jane@example.com", email="jane@example.com", first_name="Jane", full_name="Jane Doe"
@@ -26,15 +28,20 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
 
     def _patch(self, email_from: str = "secobserve@example.com") -> dict[str, MagicMock]:
         """The mocks all tests need: the users who want the notification and their permission to
-        approve rules are mocked, so that no database is needed."""
+        approve rules are mocked, so that no database is needed.
+
+        The channels are mocked in send_notifications_base, because that is where
+        send_user_notification calls them, so that the routing to the channels is tested as well."""
         patchers = {
             "get_users": patch(
                 "application.notifications.services.send_notifications_product_rule_approval."
                 "get_users_for_product_notification"
             ),
-            "send_email": patch(
-                "application.notifications.services.send_notifications_product_rule_approval." "send_email_notification"
+            "send_email": patch("application.notifications.services.send_notifications_base.send_email_notification"),
+            "send_msteams": patch(
+                "application.notifications.services.send_notifications_base.send_msteams_notification"
             ),
+            "send_slack": patch("application.notifications.services.send_notifications_base.send_slack_notification"),
             "base_url": patch(
                 "application.notifications.services.send_notifications_product_rule_approval.get_base_url_frontend"
             ),
@@ -87,7 +94,8 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             send_product_rule_approval_notification(self.product_rule_1)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_product_rule_approval_notification_without_users(self):
@@ -114,7 +122,7 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             'Product rule "rule_1" needs approval',
-            "email_product_rule.tpl",
+            "email/product_rule.tpl",
             rule=self.product_rule_1,
             rule_url="https://secobserve.com/#/product_rules/2/show",
             first_line='Product rule "rule_1" needs approval',
@@ -197,7 +205,8 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             send_product_rule_approval_receipt_notification(self.product_rule_1)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_product_rule_approval_receipt_notification_author_does_not_want_it(self):
@@ -226,7 +235,7 @@ class TestSendNotificationsProductRuleApproval(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             self.user_internal.email,
             'Product rule "rule_1" has been approved',
-            "email_product_rule.tpl",
+            "email/product_rule.tpl",
             rule=self.product_rule_1,
             rule_url="https://secobserve.com/#/product_rules/2/show",
             first_line='Product rule "rule_1" has been approved',
