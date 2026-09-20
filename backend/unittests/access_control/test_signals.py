@@ -27,7 +27,9 @@ class TestSignals(BaseTestCase):
 
     @patch("application.access_control.signals.logger.info")
     @patch("application.access_control.signals.format_log_message")
-    def test_signal_user_login_failed(self, mock_format, mock_logging):
+    @patch("application.access_control.signals.get_current_username")
+    def test_signal_user_login_failed(self, mock_username, mock_format, mock_logging):
+        mock_username.return_value = "user_admin@example.com"
         credentials = {"user": "test_user", "password": "*****"}
         signal_user_login_failed(None, credentials=credentials)
 

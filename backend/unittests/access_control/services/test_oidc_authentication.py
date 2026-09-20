@@ -113,6 +113,7 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 9
         settings.oidc_strict_audience = True
+        settings.save()
 
         with self.assertRaises(AuthenticationFailed) as e:
             oidc_authentication = OIDCAuthentication()
@@ -155,6 +156,7 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 0
         settings.oidc_strict_audience = False
+        settings.save()
 
         with self.assertRaises(AuthenticationFailed):
             oidc_authentication = OIDCAuthentication()
@@ -204,6 +206,7 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 7
         settings.oidc_strict_audience = True
+        settings.save()
 
         oidc_authentication = OIDCAuthentication()
         user = oidc_authentication._validate_jwt("token")
@@ -257,6 +260,7 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 5
         settings.oidc_strict_audience = True
+        settings.save()
 
         oidc_authentication = OIDCAuthentication()
         user = oidc_authentication._validate_jwt("token")

@@ -49,6 +49,9 @@ class TestOSVScanner(BaseTestCase):
             ],
         )
         Parser.objects.create(name="OSV (Open Source Vulnerabilities)", type="SCA", source="Other")
+        # The settings have to exist in the database, otherwise every Settings.load() returns a new
+        # unsaved instance, and unsaved model instances are never equal to each other
+        Settings.load().save()
 
         self.product = Product.objects.get(id=1)
 

@@ -21,9 +21,11 @@ class GlobalRequestMiddleware:
         # the view (and later middleware) are called.
         _requests[current_thread().name] = request
 
-        response = self.get_response(request)
-
-        # Code to be executed for each request/response after
-        # the view is called.
-
-        return response
+        try:
+            return self.get_response(request)
+        finally:
+            # Code to be executed for each request/response after the view is called.
+            # The request must not outlive the response, otherwise the thread would keep it
+            # and everything attached to it, and the next code running in this thread outside
+            # of a request would see the user of the previous one.
+            _requests.pop(current_thread().name, None)
