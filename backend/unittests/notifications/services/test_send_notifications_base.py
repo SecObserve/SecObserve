@@ -16,7 +16,7 @@ from application.notifications.services.send_notifications_base import (
     _get_notification_email_to,
     _get_notification_ms_teams_webhook,
     _get_notification_slack_webhook,
-    is_msteams_v2,
+    _is_msteams_v2,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -607,27 +607,27 @@ SecObserve
     # --- is_msteams_v2 ---
 
     def testis_msteams_v2_office_com_is_v1(self):
-        self.assertFalse(is_msteams_v2("https://tenant.webhook.office.com/webhookb2/abc123"))
+        self.assertFalse(_is_msteams_v2("https://tenant.webhook.office.com/webhookb2/abc123"))
 
     def testis_msteams_v2_subdomain_office_com_is_v1(self):
-        self.assertFalse(is_msteams_v2("https://contoso.webhook.office.com/webhookb2/xyz"))
+        self.assertFalse(_is_msteams_v2("https://contoso.webhook.office.com/webhookb2/xyz"))
 
     def testis_msteams_v2_bare_webhook_office_com_is_v1(self):
-        self.assertFalse(is_msteams_v2("https://webhook.office.com/webhookb2/test"))
+        self.assertFalse(_is_msteams_v2("https://webhook.office.com/webhookb2/test"))
 
     def testis_msteams_v2_power_automate_is_v2(self):
         self.assertTrue(
-            is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke")
+            _is_msteams_v2("https://prod-42.westeurope.logic.azure.com/workflows/abc/triggers/manual/paths/invoke")
         )
 
     def testis_msteams_v2_generic_https_is_v2(self):
-        self.assertTrue(is_msteams_v2("https://hooks.example.org/webhook"))
+        self.assertTrue(_is_msteams_v2("https://hooks.example.org/webhook"))
 
     def testis_msteams_v2_empty_string_is_v2(self):
-        self.assertTrue(is_msteams_v2(""))
+        self.assertTrue(_is_msteams_v2(""))
 
     def testis_msteams_v2_invalid_url_is_v2(self):
-        self.assertTrue(is_msteams_v2("not-a-url"))
+        self.assertTrue(_is_msteams_v2("not-a-url"))
 
     # --- _get_first_name ---
 

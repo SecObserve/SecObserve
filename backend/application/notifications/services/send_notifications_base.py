@@ -33,7 +33,7 @@ def send_email_notification(notification_email_to: str, subject: str, template: 
         )
 
 
-def is_msteams_v2(webhook: str) -> bool:
+def _is_msteams_v2(webhook: str) -> bool:
     """Detect V1 (MessageCard) vs V2 (Power Automate) by URL. Legacy webhook.office.com = V1; everything else = V2."""
     try:
         hostname = urlsplit(webhook).hostname or ""
@@ -44,7 +44,7 @@ def is_msteams_v2(webhook: str) -> bool:
 
 def get_msteams_template(webhook: str, name: str) -> str:
     """MS Teams templates come in two formats, the webhook URL decides which one is used."""
-    return f"msteams_v2/{name}.tpl" if is_msteams_v2(webhook) else f"msteams/{name}.tpl"
+    return f"msteams_v2/{name}.tpl" if _is_msteams_v2(webhook) else f"msteams/{name}.tpl"
 
 
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
@@ -52,7 +52,7 @@ def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> Non
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        headers = {"Content-Type": "application/json"} if is_msteams_v2(webhook) else {}
+        headers = {"Content-Type": "application/json"} if _is_msteams_v2(webhook) else {}
         response = requests.request(
             method="POST",
             url=webhook,
@@ -146,7 +146,7 @@ def _send_user_webhook_notification(
 def send_msteams_notification_test(webhook: str) -> None:
     if not _validate_webhook_url(webhook):
         raise ValueError(f"Invalid webhook URL: {webhook}")
-    v2 = is_msteams_v2(webhook)
+    v2 = _is_msteams_v2(webhook)
     template = "msteams_v2/test.tpl" if v2 else "msteams/test.tpl"
     notification_message = _create_notification_message(template)
     if notification_message:
