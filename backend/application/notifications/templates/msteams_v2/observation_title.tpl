@@ -20,17 +20,21 @@
                         "type": "FactSet",
                         "facts": [
                             {
+                                "title": "Title:",
+                                "value": "{{ observation.title|escapejs }}"
+                            },
+                            {
                                 "title": "Severity:",
                                 "value": "{{ observation.current_severity|escapejs }}"
                             },
                             {
                                 "title": "Status:",
                                 "value": "{{ observation.current_status|escapejs }}"
-                            },
+                            }{% if observation.current_priority %},
                             {
                                 "title": "Priority:",
                                 "value": "{{ observation.current_priority|escapejs }}"
-                            }
+                            }{% endif %}
                         ]
                     }
                 ],

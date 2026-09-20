@@ -18,5 +18,5 @@
             "value": "{{ exception_trace|escapejs }}"
         }],
         "markdown": true
-    }],
+    }]
 }

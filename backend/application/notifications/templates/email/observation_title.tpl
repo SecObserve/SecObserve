@@ -7,7 +7,7 @@ Title:    {{ observation.title }}
 Severity: {{ observation.current_severity }}
 Status:   {{ observation.current_status }}
 {% if observation.current_priority %}Priority: {{ observation.current_priority }}{% endif %}
-URL:      {{ observation_url }}
+URL:      {{ url }}
 
 Regards,
 

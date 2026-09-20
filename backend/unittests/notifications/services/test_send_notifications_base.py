@@ -2,13 +2,16 @@ import json
 import os
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 from unittest.mock import patch
 
 from requests import HTTPError, Response
 
+import config.settings.base as settings_module
 from application.access_control.models import User
 from application.commons.models import Settings
 from application.commons.services.functions import get_classname
+from application.core.models import Observation, Observation_Log
 from application.core.types import Severity, Status
 from application.notifications.services.send_notifications_base import (
     _create_notification_message,
@@ -22,6 +25,7 @@ from application.notifications.services.send_notifications_base import (
     send_slack_notification,
     send_user_notification,
 )
+from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
 
 
@@ -390,7 +394,7 @@ class TestPushNotifications(BaseTestCase):
             "value": ""
         }],
         "markdown": true
-    }],
+    }]
 }
 """
         self.assertEqual(expected_message, message)
@@ -816,3 +820,95 @@ SecObserve
 
         mock_slack.assert_called_once()
         mock_logging.assert_called_once()
+
+    # --- every webhook template has to render as valid JSON ---
+
+    def _get_template_contexts(self) -> dict:
+        """A full and a sparse context per event. The sparse ones leave every optional field empty,
+        which is what the conditional commas in the JSON templates have to survive."""
+        self.observation_1.product = self.product_1
+        self.observation_1.branch = self.branch_1
+        self.observation_1.origin_service = self.service_1
+        self.observation_1.vulnerability_id = "CVE-2024-1234"
+        self.observation_1.origin_component_name_version = "django:5.1.8"
+        self.observation_1.current_severity = Severity.SEVERITY_HIGH
+        self.observation_1.current_status = Status.STATUS_OPEN
+        self.observation_1.current_priority = 3
+        self.observation_1.cvss4_score = Decimal("8.1")
+        self.observation_1.cvss3_score = Decimal("7.5")
+        self.observation_1.epss_score = Decimal("12.34")
+        self.observation_1.scanner = "trivy"
+
+        self.observation_log_1.priority_changed = True
+        self.observation_log_1.vex_justification = "component_not_present"
+        self.observation_log_1.comment = "looks fine"
+
+        sparse_observation = Observation(
+            title="observation_sparse",
+            product=self.product_1,
+            current_severity=Severity.SEVERITY_HIGH,
+            current_status=Status.STATUS_OPEN,
+        )
+        sparse_log = Observation_Log(observation=sparse_observation)
+        sparse_rule = Rule(name="rule_sparse", product=self.product_1)
+
+        exception_context = {
+            "exception_class": "builtins.Exception",
+            "exception_message": "test_exception",
+            "date_time": datetime(2022, 12, 31, 23, 59, 59),
+            "exception_trace": "trace",
+        }
+
+        return {
+            "observation": [
+                {"observation": self.observation_1, "observation_url": "url", "first_line": "first line"},
+                {"observation": sparse_observation, "observation_url": "url", "first_line": "first line"},
+            ],
+            "observation_title": [
+                {"observation": self.observation_1, "url": "url", "first_line": "first line"},
+                {"observation": sparse_observation, "url": "url", "first_line": "first line"},
+            ],
+            "assessment_approval": [
+                {
+                    "observation": self.observation_1,
+                    "observation_log": self.observation_log_1,
+                    "observation_log_url": "url",
+                    "first_line": "first line",
+                },
+                {
+                    "observation": sparse_observation,
+                    "observation_log": sparse_log,
+                    "observation_log_url": "url",
+                    "first_line": "first line",
+                },
+            ],
+            "product_rule": [
+                {"rule": self.product_rule_1, "rule_url": "url", "first_line": "first line"},
+                {"rule": sparse_rule, "rule_url": "url", "first_line": "first line"},
+            ],
+            "product_security_gate": [
+                {"product": self.product_1, "security_gate_status": "Passed", "product_url": "url"},
+            ],
+            "exception": [exception_context],
+            "task_exception": [
+                {**exception_context, "function": "function", "arguments": "arguments", "user": self.user_internal},
+            ],
+            "test": [{}],
+        }
+
+    def test_all_webhook_templates_render_valid_json(self):
+        templates = Path(settings_module.__file__).parent.parent.parent / "application/notifications/templates"
+        contexts = self._get_template_contexts()
+        checked = 0
+
+        for channel in ("msteams", "msteams_v2", "slack"):
+            for template in sorted((templates / channel).glob("*.tpl")):
+                for context in contexts[template.stem]:
+                    with self.subTest(template=f"{channel}/{template.stem}", context=context.get("observation")):
+                        message = _create_notification_message(f"{channel}/{template.stem}.tpl", **context)
+                        self.assertIsNotNone(message)
+                        json.loads(message)
+                        checked += 1
+
+        # 3 channels * 8 templates, with a second context for the 4 templates that have optional fields
+        self.assertEqual(36, checked)

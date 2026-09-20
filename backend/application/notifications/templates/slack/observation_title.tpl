@@ -1,4 +1,14 @@
-{
+{% autoescape off %}{
 	"type": "mrkdwn",
-	"text": "*{{ first_line|escapejs }}*\n\nSeverity: {{ observation.current_severity|escapejs }}\n\nStatus: {{ observation.current_status|escapejs }}\n\n{% if observation.current_priority %}Priority: {{ observation.current_priority|escapejs }}{% endif %}\n\nURL: {{ url|escapejs }}"
-}
+	"text": "{% filter escapejs %}*{{ first_line }}*
+
+Title: {{ observation.title }}
+
+Severity: {{ observation.current_severity }}
+
+Status: {{ observation.current_status }}
+
+{% if observation.current_priority %}Priority: {{ observation.current_priority }}
+
+{% endif %}URL: {{ url }}{% endfilter %}"
+}{% endautoescape %}

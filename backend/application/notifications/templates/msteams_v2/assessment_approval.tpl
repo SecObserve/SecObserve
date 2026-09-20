@@ -22,23 +22,39 @@
                             {
                                 "title": "Product:",
                                 "value": "{{ observation.product.name|escapejs }}"
-                            },
+                            }{% if observation.branch %},
+                            {
+                                "title": "Branch:",
+                                "value": "{{ observation.branch.name|escapejs }}"
+                            }{% endif %}{% if observation.origin_service %},
+                            {
+                                "title": "Service:",
+                                "value": "{{ observation.origin_service.name|escapejs }}"
+                            }{% endif %},
                             {
                                 "title": "Title:",
                                 "value": "{{ observation.title|escapejs }}"
-                            },
+                            }{% if observation_log.severity %},
                             {
                                 "title": "Severity:",
                                 "value": "{{ observation_log.severity|escapejs }}"
-                            },
+                            }{% endif %}{% if observation_log.status %},
                             {
                                 "title": "Status:",
                                 "value": "{{ observation_log.status|escapejs }}"
-                            },
+                            }{% endif %}{% if observation_log.priority_changed %},
+                            {
+                                "title": "Priority:",
+                                "value": "{{ observation_log.priority|escapejs }}"
+                            }{% endif %}{% if observation_log.vex_justification %},
+                            {
+                                "title": "Justification:",
+                                "value": "{{ observation_log.vex_justification|escapejs }}"
+                            }{% endif %}{% if observation_log.comment %},
                             {
                                 "title": "Comment:",
                                 "value": "{{ observation_log.comment|escapejs }}"
-                            }
+                            }{% endif %}
                         ]
                     }
                 ],
