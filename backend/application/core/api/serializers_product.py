@@ -124,17 +124,17 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["repository_branch_housekeeping_exempt_branches"] = ""
 
         if attrs.get("security_gate_active") is True:
-            if not attrs.get("security_gate_threshold_critical"):
+            if attrs.get("security_gate_threshold_critical") is None:
                 attrs["security_gate_threshold_critical"] = settings.security_gate_threshold_critical
-            if not attrs.get("security_gate_threshold_high"):
+            if attrs.get("security_gate_threshold_high") is None:
                 attrs["security_gate_threshold_high"] = settings.security_gate_threshold_high
-            if not attrs.get("security_gate_threshold_medium"):
+            if attrs.get("security_gate_threshold_medium") is None:
                 attrs["security_gate_threshold_medium"] = settings.security_gate_threshold_medium
-            if not attrs.get("security_gate_threshold_low"):
+            if attrs.get("security_gate_threshold_low") is None:
                 attrs["security_gate_threshold_low"] = settings.security_gate_threshold_low
-            if not attrs.get("security_gate_threshold_none"):
+            if attrs.get("security_gate_threshold_none") is None:
                 attrs["security_gate_threshold_none"] = settings.security_gate_threshold_none
-            if not attrs.get("security_gate_threshold_unknown"):
+            if attrs.get("security_gate_threshold_unknown") is None:
                 attrs["security_gate_threshold_unknown"] = settings.security_gate_threshold_unknown
 
         if attrs.get("security_gate_active") is False:
