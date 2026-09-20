@@ -17,12 +17,12 @@ import {
 } from "react-admin";
 
 import general_rules from ".";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { feature_general_rules_need_approval_enabled, is_superuser } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";

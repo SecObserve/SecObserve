@@ -2,8 +2,8 @@ import LaunchIcon from "@mui/icons-material/Launch";
 import { Link, Typography } from "@mui/material";
 import { Fragment } from "react";
 
+import { getResolvedSettingTheme } from "../../access_control/users/functions";
 import { useLinkStyles } from "../../commons/layout/themes";
-import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 interface TextUrlFieldProps {
     text: string | number;

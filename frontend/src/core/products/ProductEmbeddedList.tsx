@@ -10,13 +10,13 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import { SecurityGateTextField } from "../../commons/custom_fields/SecurityGateTextField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { feature_license_management } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { Product } from "../types";
 
 interface ProductEmbeddedListProps {

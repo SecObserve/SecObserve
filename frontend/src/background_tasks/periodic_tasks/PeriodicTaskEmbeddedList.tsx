@@ -13,10 +13,10 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { PeriodicTaskStatusField } from "../../commons/custom_fields/PeriodicTaskStatusField";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { PERIODIC_TASKS_STATUS_CHOICES } from "../types";
 import PeriodicTaskRunNow from "./PeriodicTaskRunNow";
 

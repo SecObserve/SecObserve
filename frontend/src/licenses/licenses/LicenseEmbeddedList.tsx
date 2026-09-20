@@ -10,8 +10,8 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const showLicense = (id: any) => {
     return "../../../../licenses/" + id + "/show";

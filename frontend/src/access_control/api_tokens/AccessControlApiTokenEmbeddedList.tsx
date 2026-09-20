@@ -15,7 +15,7 @@ import { Fragment } from "react/jsx-runtime";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductGroupReferenceField } from "../../commons/custom_fields/ProductGroupReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";
 
 function listFilters() {
     return [<TextInput source="name" id="api_token_name" alwaysOn />];

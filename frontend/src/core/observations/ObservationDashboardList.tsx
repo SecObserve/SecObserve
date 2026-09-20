@@ -10,10 +10,10 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
-import { getSettingListSize } from "../../commons/user_settings/functions";
 import { OBSERVATION_STATUS_ACTIVE } from "../types";
 import { Observation } from "../types";
 import ObservationExpand from "./ObservationExpand";

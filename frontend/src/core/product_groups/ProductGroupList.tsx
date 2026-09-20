@@ -3,12 +3,12 @@ import { CreateButton, Datagrid, List, TextField, TextInput, TopToolbar, WithLis
 
 import product_groups from ".";
 import { PERMISSION_PRODUCT_GROUP_CREATE } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
 import { feature_license_management, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const listFilters = [<TextInput source="name" alwaysOn />];
 

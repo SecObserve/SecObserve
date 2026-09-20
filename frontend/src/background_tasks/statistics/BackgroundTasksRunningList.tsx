@@ -1,7 +1,7 @@
 import { Paper, Typography } from "@mui/material";
 import { Datagrid, FunctionField, ListContextProvider, ResourceContextProvider, TextField, useList } from "react-admin";
 
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize } from "../../access_control/users/functions";
 import { getElevation } from "../../metrics/functions";
 import { BackgroundTaskRunning } from "../types";
 import { formatDuration } from "./functions";

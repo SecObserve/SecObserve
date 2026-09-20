@@ -9,8 +9,8 @@ import { Navigate, useLocation } from "react-router-dom";
 
 import { jwt_signed_in } from "../../access_control/auth_provider/authProvider";
 import { oidc_signed_in } from "../../access_control/auth_provider/oidc";
-import { getTheme } from "../../commons/user_settings/functions";
 import { OIDCSignInButton } from "../auth_provider/OIDCSignInButton";
+import { getTheme } from "../users/functions";
 
 const Login = () => {
     const [loading, setLoading] = useState(false);

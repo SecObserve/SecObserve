@@ -9,7 +9,7 @@ import {
     useList,
 } from "react-admin";
 
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize } from "../../access_control/users/functions";
 import { getElevation } from "../../metrics/functions";
 import { BackgroundTaskBreakdown } from "../types";
 import { formatDuration } from "./functions";

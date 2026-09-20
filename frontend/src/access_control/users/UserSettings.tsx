@@ -5,18 +5,18 @@ import { Fragment, ReactNode, useEffect, useState } from "react";
 import { BooleanInput, Form, SaveButton, Title, useNotify, useTheme } from "react-admin";
 import { useWatch } from "react-hook-form";
 
-import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
-import Toolbar from "../custom_fields/Toolbar";
-import WebhookTestButton from "../custom_fields/WebhookTestButton";
-import { validate_255, validate_2048 } from "../custom_validators";
-import { is_oidc_user } from "../functions";
-import { TextInputExtraWide } from "../layout/themes";
+import Toolbar from "../../commons/custom_fields/Toolbar";
+import WebhookTestButton from "../../commons/custom_fields/WebhookTestButton";
+import { validate_255, validate_2048 } from "../../commons/custom_validators";
+import { is_oidc_user } from "../../commons/functions";
+import { TextInputExtraWide } from "../../commons/layout/themes";
 import {
     METRICS_TIMESPAN_7_DAYS,
     METRICS_TIMESPAN_30_DAYS,
     METRICS_TIMESPAN_90_DAYS,
     METRICS_TIMESPAN_365_DAYS,
-} from "../types";
+} from "../../commons/types";
+import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
 import {
     NotificationSettings,
     ThemePreference,
@@ -349,7 +349,7 @@ const UserSettings = () => {
                                 )}
                             </NotificationChannelRow>
                             <Toolbar>
-                                <SaveButton />
+                                <SaveButton label="Save channels" />
                             </Toolbar>
                         </Stack>
                     </Form>

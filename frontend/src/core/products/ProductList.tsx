@@ -13,6 +13,7 @@ import {
 
 import products from ".";
 import { PERMISSION_PRODUCT_CREATE } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
@@ -22,7 +23,6 @@ import { humanReadableDate } from "../../commons/functions";
 import { feature_license_management, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { Product } from "../types";
 import { AGE_CHOICES } from "../types";
 

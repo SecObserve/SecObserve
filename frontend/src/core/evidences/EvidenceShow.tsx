@@ -12,10 +12,10 @@ import {
 } from "react-admin";
 
 import evidences from ".";
+import { getResolvedSettingTheme } from "../../access_control/users/functions";
 import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { useStyles } from "../../commons/layout/themes";
-import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const ShowActions = () => {
     const evidence = useRecordContext();

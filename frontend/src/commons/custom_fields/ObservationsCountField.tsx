@@ -1,6 +1,6 @@
 import { RaRecord, useRecordContext } from "react-admin";
 
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { getSettingListSize } from "../../access_control/users/functions";
 import {
     OBSERVATION_SEVERITY_CRITICAL,
     OBSERVATION_SEVERITY_HIGH,

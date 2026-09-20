@@ -13,9 +13,9 @@ import {
     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_EDIT,
     ROLE_CHOICES,
 } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { AuthorizationGroupNameURLField } from "../../commons/custom_fields/AuthorizationGroupNameURLField";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import ProductAuthorizationGroupMemberDelete from "./ProductAuthorizationGroupMemberDelete";
 import ProductAuthorizationGroupMemberEdit from "./ProductAuthorizationGroupMemberEdit";
 

@@ -11,7 +11,7 @@ import {
 import CreateButton from "../../commons/custom_fields/CreateButton";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { is_external } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";
 
 const ShowAuthorizationGroups = (id: any) => {
     return "../../../../authorization_groups/" + id + "/show";

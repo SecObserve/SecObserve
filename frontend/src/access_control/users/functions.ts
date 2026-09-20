@@ -6,7 +6,7 @@ import {
     METRICS_TIMESPAN_30_DAYS,
     METRICS_TIMESPAN_90_DAYS,
     METRICS_TIMESPAN_365_DAYS,
-} from "../types";
+} from "../../commons/types";
 
 export type ThemePreference = "light" | "dark" | "system";
 

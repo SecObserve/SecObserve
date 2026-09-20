@@ -14,9 +14,9 @@ import { useEffect, useState } from "react";
 import { Identifier, useNotify } from "react-admin";
 import { Line } from "react-chartjs-2";
 
+import { getSettingsMetricsTimespanInDays } from "../access_control/users/functions";
 import { get_severity_color } from "../commons/functions";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
-import { getSettingsMetricsTimespanInDays } from "../commons/user_settings/functions";
 import {
     OBSERVATION_SEVERITY_CRITICAL,
     OBSERVATION_SEVERITY_HIGH,

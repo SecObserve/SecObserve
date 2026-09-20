@@ -1,8 +1,8 @@
 import { Typography } from "@mui/material";
 import { ReferenceField } from "react-admin";
 
+import { getResolvedSettingTheme } from "../../access_control/users/functions";
 import { useLinkStyles } from "../layout/themes";
-import { getResolvedSettingTheme } from "../user_settings/functions";
 
 interface ObservationReferenceFieldProps {
     source: string;

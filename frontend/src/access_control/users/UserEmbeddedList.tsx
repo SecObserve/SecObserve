@@ -13,7 +13,7 @@ import {
 import CreateButton from "../../commons/custom_fields/CreateButton";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "./functions";
 
 const ShowUsers = (id: any) => {
     return "../../../../users/" + id + "/show";

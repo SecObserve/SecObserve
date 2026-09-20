@@ -12,10 +12,10 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { AuthorizationGroupNameURLField } from "../../commons/custom_fields/AuthorizationGroupNameURLField";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import LicensePolicyAuthorizationGroupMemberAdd from "./LicensePolicyAuthorizationGroupMemberAdd";
 import LicensePolicyAuthorizationGroupMemberEdit from "./LicensePolicyAuthorizationGroupMemberEdit";
 import LicensePolicyAuthorizationGroupMemberRemove from "./LicensePolicyAuthorizationGroupMemberRemove";

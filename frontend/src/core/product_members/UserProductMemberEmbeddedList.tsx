@@ -10,8 +10,8 @@ import {
 } from "react-admin";
 
 import { ROLE_CHOICES } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 type UserProductMemberEmbeddedListProps = {
     user: any;

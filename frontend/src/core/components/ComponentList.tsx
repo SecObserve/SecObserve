@@ -2,10 +2,10 @@ import { Fragment } from "react";
 import { BooleanField, Datagrid, List, NullableBooleanInput, SelectField, TextField, TextInput } from "react-admin";
 
 import components from ".";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { COMPONENT_TYPE_CHOICES } from "../../licenses/types";
 import { PURL_TYPE_CHOICES } from "../types";
 

@@ -2,6 +2,7 @@ import { PackageURL } from "packageurl-js";
 import { RaRecord, SortPayload } from "ra-core";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
+import { getResolvedSettingTheme, getSettingPackageInfoPreference } from "../access_control/users/functions";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import {
     OBSERVATION_SEVERITY_CRITICAL,
@@ -23,7 +24,6 @@ import {
     EVALUATION_RESULT_REVIEW_REQUIRED,
     EVALUATION_RESULT_UNKNOWN,
 } from "../licenses/types";
-import { getResolvedSettingTheme, getSettingPackageInfoPreference } from "./user_settings/functions";
 
 export function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;

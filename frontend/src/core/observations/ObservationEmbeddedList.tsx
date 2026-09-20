@@ -21,13 +21,13 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { usePublishBranchFilter } from "../products/BranchFilterContext";
 import {
     AGE_CHOICES,
