@@ -126,7 +126,12 @@ class UserViewSet(ModelViewSet):
     )
     @action(detail=False, methods=["patch"])
     def my_settings(self, request: Request) -> Response:
-        request_serializer = UserSettingsSerializer(data=request.data)
+        user = request.user
+        if isinstance(user, AnonymousUser):
+            raise PermissionDenied("You must be authenticated to change settings")
+
+        # The serializer needs the user, its validations compare the request with the stored settings
+        request_serializer = UserSettingsSerializer(instance=user, data=request.data)
         if not request_serializer.is_valid():
             raise ValidationError(request_serializer.errors)
 
@@ -135,10 +140,6 @@ class UserViewSet(ModelViewSet):
         setting_package_info_preference = request_serializer.validated_data.get("setting_package_info_preference")
         setting_metrics_timespan = request_serializer.validated_data.get("setting_metrics_timespan")
         setting_rows_per_page = request_serializer.validated_data.get("setting_rows_per_page")
-
-        user = request.user
-        if isinstance(user, AnonymousUser):
-            raise PermissionDenied("You must be authenticated to change settings")
 
         if setting_theme:
             user.setting_theme = setting_theme
@@ -155,8 +156,6 @@ class UserViewSet(ModelViewSet):
         # otherwise they could not be cleared or switched off
         validated_data = request_serializer.validated_data
         if "email" in validated_data:
-            if user.is_oidc_user and validated_data["email"] != user.email:
-                raise ValidationError("Email of an OIDC user cannot be changed")
             user.email = validated_data["email"]
         for notification_field in (
             "notification_ms_teams_webhook",
@@ -167,8 +166,6 @@ class UserViewSet(ModelViewSet):
         ):
             if notification_field in validated_data:
                 setattr(user, notification_field, validated_data[notification_field])
-
-        _validate_notification_channels(user, validated_data)
 
         user.save()
 
@@ -364,18 +361,6 @@ class JWTSecretResetView(APIView):
         jwt_secret = JWT_Secret(secret=JWT_Secret.create_secret())
         jwt_secret.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-def _validate_notification_channels(user: User, validated_data: dict[str, Any]) -> None:
-    # Only channels that are switched on by this request are checked, the state of the other
-    # channels is not touched. Otherwise a user without an email address could not save any
-    # settings at all, because notification_email_active is switched on by default.
-    if validated_data.get("notification_email_active") and not user.email:
-        raise ValidationError("Email notifications cannot be activated without an email address")
-    if validated_data.get("notification_ms_teams_active") and not user.notification_ms_teams_webhook:
-        raise ValidationError("MS Teams notifications cannot be activated without a webhook")
-    if validated_data.get("notification_slack_active") and not user.notification_slack_webhook:
-        raise ValidationError("Slack notifications cannot be activated without a webhook")
 
 
 def _get_authenticated_user(data: dict[str, Any] | list[Any]) -> User:

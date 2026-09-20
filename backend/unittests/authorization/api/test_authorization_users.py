@@ -292,7 +292,7 @@ class TestAuthorizationUsers(TestAuthorizationBase):
             "notification_slack_webhook": "",
             "notification_slack_active": True,
         }
-        expected_data = "{'message': 'Slack notifications cannot be activated without a webhook'}"
+        expected_data = "{'message': 'Notification slack active: Cannot be activated without a webhook'}"
         self._test_api(
             APITest(
                 "db_internal_write",
