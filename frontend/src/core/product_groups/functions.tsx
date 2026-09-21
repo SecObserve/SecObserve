@@ -1,7 +1,8 @@
 import { Divider } from "@mui/material";
 import { Fragment, useState } from "react";
 
-import SectionAccordion from "../../commons/layout/SectionAccordion";
+import ExpandCollapseButtons from "../../commons/layout/ExpandCollapseButtons";
+import SectionAccordion, { ALL_SECTIONS_CLOSED } from "../../commons/layout/SectionAccordion";
 import { getProductGroupEditSections } from "./sections";
 import { ProductGroupBasicsInputs } from "./sections/Basics";
 
@@ -14,17 +15,23 @@ export const ProductGroupCreateEditComponent = ({
     initialDescription,
     setDescription,
 }: ProductGroupCreateEditComponentProps) => {
-    const [expandedSection, setExpandedSection] = useState("");
+    const [expandedSections, setExpandedSections] = useState<string[]>(ALL_SECTIONS_CLOSED);
+    const sections = getProductGroupEditSections();
 
     return (
         <Fragment>
             <ProductGroupBasicsInputs initialDescription={initialDescription} setDescription={setDescription} />
             <Divider flexItem sx={{ marginBottom: 2 }} />
-            {getProductGroupEditSections().map(({ label, icon, Inputs }) => (
+            <ExpandCollapseButtons
+                labels={sections.map((section) => section.label)}
+                expandedSections={expandedSections}
+                setExpandedSections={setExpandedSections}
+            />
+            {sections.map(({ label, icon, Inputs }) => (
                 <SectionAccordion
                     key={label}
-                    expandedSection={expandedSection}
-                    setExpandedSection={setExpandedSection}
+                    expandedSections={expandedSections}
+                    setExpandedSections={setExpandedSections}
                     label={label}
                     icon={icon}
                 >
