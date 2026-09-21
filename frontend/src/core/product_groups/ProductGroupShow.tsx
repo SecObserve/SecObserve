@@ -6,23 +6,12 @@ import TokenIcon from "@mui/icons-material/Token";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
-    ArrayField,
-    BooleanField,
-    ChipField,
-    Datagrid,
     EditButton,
-    Labeled,
-    NumberField,
     PrevNextButtons,
-    ReferenceArrayField,
-    ReferenceField,
     Show,
-    SingleFieldList,
     Tab,
     TabbedShowLayout,
     TabbedShowLayoutTabs,
-    TextArrayField,
-    TextField,
     TopToolbar,
     WithRecord,
     useRecordContext,
@@ -38,8 +27,6 @@ import {
     PERMISSION_PRODUCT_RULE_APPLY,
     PERMISSION_PRODUCT_RULE_CREATE,
 } from "../../access_control/types";
-import MarkdownField from "../../commons/custom_fields/MarkdownField";
-import { feature_email } from "../../commons/functions";
 import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
 import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
@@ -61,6 +48,7 @@ import ProductEmbeddedList from "../products/ProductEmbeddedList";
 import { ProductGroup } from "../types";
 import ProductGroupHeader from "./ProductGroupHeader";
 import ProductGroupReviews from "./ProductGroupReviews";
+import ProductGroupShowProductGroup from "./ProductGroupShowProductGroup";
 
 const ShowActions = () => {
     const product_group = useRecordContext<ProductGroup>();
@@ -128,253 +116,8 @@ const ProductGroupShow = () => {
                                 </Tab>
                             )}
                             <Tab label="Settings" icon={<SettingsIcon />} path="settings">
-                                <Typography variant="h6">Settings</Typography>
-                                <Stack spacing={1}>
-                                    <Labeled>
-                                        <TextField source="name" />
-                                    </Labeled>
-                                    {product_group.description && (
-                                        <Labeled>
-                                            <MarkdownField content={product_group.description} label="Description" />
-                                        </Labeled>
-                                    )}
-                                </Stack>
-                                {product_group.repository_branch_housekeeping_active != null && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            Housekeeping
-                                        </Typography>
-
-                                        <Stack direction="row" spacing={4} sx={{ marginTop: 1 }}>
-                                            <Labeled label="Housekeeping">
-                                                <BooleanField
-                                                    source="repository_branch_housekeeping_active"
-                                                    valueLabelFalse="Disabled"
-                                                    valueLabelTrue="Product group specific"
-                                                />
-                                            </Labeled>
-                                            {product_group.repository_branch_housekeeping_active &&
-                                                product_group.repository_branch_housekeeping_keep_inactive_days && (
-                                                    <Labeled label="Keep inactive">
-                                                        <NumberField source="repository_branch_housekeeping_keep_inactive_days" />
-                                                    </Labeled>
-                                                )}
-                                            {product_group.repository_branch_housekeeping_active &&
-                                                product_group.repository_branch_housekeeping_exempt_branches && (
-                                                    <Labeled label="Exempt branches / versions">
-                                                        <TextField source="repository_branch_housekeeping_exempt_branches" />
-                                                    </Labeled>
-                                                )}
-                                        </Stack>
-                                    </Fragment>
-                                )}
-                                {((feature_email() && product_group.notification_email_to) ||
-                                    product_group.notification_ms_teams_webhook ||
-                                    product_group.notification_slack_webhook ||
-                                    product_group.observation_notification_min_severity ||
-                                    (product_group.observation_notification_status_list &&
-                                        product_group.observation_notification_status_list.length > 0) ||
-                                    product_group.observation_notification_min_priority) && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            Notifications
-                                        </Typography>
-                                        <Stack spacing={1}>
-                                            {feature_email() && product_group.notification_email_to && (
-                                                <Labeled label="Email">
-                                                    <TextField source="notification_email_to" />
-                                                </Labeled>
-                                            )}
-                                            {product_group.notification_ms_teams_webhook && (
-                                                <Labeled label="MS Teams">
-                                                    <TextField source="notification_ms_teams_webhook" />
-                                                </Labeled>
-                                            )}
-                                            {product_group.notification_slack_webhook && (
-                                                <Labeled label="Slack">
-                                                    <TextField source="notification_slack_webhook" />
-                                                </Labeled>
-                                            )}
-                                            {product_group.observation_notification_min_severity && (
-                                                <Labeled label="Minimum severity for observation notifications">
-                                                    <TextField source="observation_notification_min_severity" />
-                                                </Labeled>
-                                            )}
-                                            {product_group.observation_notification_status_list &&
-                                                product_group.observation_notification_status_list.length > 0 && (
-                                                    <Labeled label="Statuses for observation notifications">
-                                                        <TextArrayField source="observation_notification_status_list" />
-                                                    </Labeled>
-                                                )}
-                                            {product_group.observation_notification_min_priority && (
-                                                <Labeled label="Minimum priority for observation notifications">
-                                                    <TextField source="observation_notification_min_priority" />
-                                                </Labeled>
-                                            )}
-                                        </Stack>
-                                    </Fragment>
-                                )}
-                                {product_group.security_gate_active != null && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            Security Gate
-                                        </Typography>
-                                        <Labeled label="Security gate">
-                                            <BooleanField
-                                                source="security_gate_active"
-                                                valueLabelFalse="Disabled"
-                                                valueLabelTrue="Product group specific"
-                                            />
-                                        </Labeled>
-                                        {product_group.security_gate_active && (
-                                            <Stack spacing={1}>
-                                                <Labeled>
-                                                    <NumberField source="security_gate_threshold_critical" />
-                                                </Labeled>
-                                                <Labeled>
-                                                    <NumberField source="security_gate_threshold_high" />
-                                                </Labeled>
-                                                <Labeled>
-                                                    <NumberField source="security_gate_threshold_medium" />
-                                                </Labeled>
-                                                <Labeled>
-                                                    <NumberField source="security_gate_threshold_low" />
-                                                </Labeled>
-                                                <Labeled>
-                                                    <NumberField source="security_gate_threshold_none" />
-                                                </Labeled>
-                                                <Labeled>
-                                                    <NumberField source="security_gate_threshold_unknown" />
-                                                </Labeled>
-                                            </Stack>
-                                        )}
-                                    </Fragment>
-                                )}
-
-                                {(product_group.assessments_need_approval ||
-                                    product_group.product_rules_need_approval ||
-                                    product_group.new_observations_in_review) && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            Review
-                                        </Typography>
-                                        <Stack spacing={1}>
-                                            {product_group.assessments_need_approval && (
-                                                <Labeled label="Assessments need approval">
-                                                    <BooleanField source="assessments_need_approval" />
-                                                </Labeled>
-                                            )}
-                                            {product_group.assessment_approvers &&
-                                                product_group.assessment_approvers.length > 0 && (
-                                                    <Labeled label="Designated approvers">
-                                                        <ReferenceArrayField
-                                                            source="assessment_approvers"
-                                                            reference="users"
-                                                        >
-                                                            <SingleFieldList linkType={false}>
-                                                                <ChipField source="full_name" size="small" />
-                                                            </SingleFieldList>
-                                                        </ReferenceArrayField>
-                                                    </Labeled>
-                                                )}
-                                            {product_group.assessment_approver_authorization_groups &&
-                                                product_group.assessment_approver_authorization_groups.length > 0 && (
-                                                    <Labeled label="Designated approver groups">
-                                                        <ReferenceArrayField
-                                                            source="assessment_approver_authorization_groups"
-                                                            reference="authorization_groups"
-                                                        >
-                                                            <SingleFieldList linkType={false}>
-                                                                <ChipField source="name" size="small" />
-                                                            </SingleFieldList>
-                                                        </ReferenceArrayField>
-                                                    </Labeled>
-                                                )}
-                                            {product_group.product_rules_need_approval && (
-                                                <Labeled label="Rules need approval">
-                                                    <BooleanField source="product_rules_need_approval" />
-                                                </Labeled>
-                                            )}
-                                            {product_group.new_observations_in_review && (
-                                                <Labeled label='Status "In review" for new observations'>
-                                                    <BooleanField source="new_observations_in_review" />
-                                                </Labeled>
-                                            )}
-                                        </Stack>
-                                    </Fragment>
-                                )}
-
-                                {product_group.risk_acceptance_expiry_active != null && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            Risk acceptance expiry
-                                        </Typography>
-
-                                        <Labeled label="Risk acceptance expiry">
-                                            <BooleanField
-                                                source="risk_acceptance_expiry_active"
-                                                valueLabelFalse="Disabled"
-                                                valueLabelTrue="Product group specific"
-                                            />
-                                        </Labeled>
-                                        {product_group.risk_acceptance_expiry_active && (
-                                            <Stack spacing={1}>
-                                                <Labeled label="Risk acceptance expiry (days)">
-                                                    <NumberField source="risk_acceptance_expiry_days" />
-                                                </Labeled>
-                                            </Stack>
-                                        )}
-                                    </Fragment>
-                                )}
-
-                                {product_group.license_policy && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            License management
-                                        </Typography>
-                                        <Labeled label="License policy">
-                                            <ReferenceField
-                                                source="license_policy"
-                                                reference="license_policies"
-                                                link="show"
-                                                sx={{ "& a": { textDecoration: "none" } }}
-                                            >
-                                                <TextField source="name" />
-                                            </ReferenceField>
-                                        </Labeled>
-                                    </Fragment>
-                                )}
-                                {product_group.propagate_branches && product_group.propagate_branches.length > 0 && (
-                                    <Fragment>
-                                        <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                        <Typography variant="h6" sx={{ marginBottom: 1 }}>
-                                            Assessment propagation (experimental)
-                                        </Typography>
-                                        <ArrayField source="propagate_branches">
-                                            <Datagrid
-                                                bulkActionButtons={false}
-                                                rowClick={false}
-                                                sx={{ paddingBottom: 2 }}
-                                            >
-                                                <TextField source="propagate_to" label="Propagate to branches" />
-                                            </Datagrid>
-                                        </ArrayField>
-                                        <Stack>
-                                            <Labeled label="Propagate new assessments to other branches">
-                                                <BooleanField source="propagate_branches_new_assessment" />
-                                            </Labeled>
-                                            <Labeled label="Propagate assessments to new observations">
-                                                <BooleanField source="propagate_branches_new_observation" />
-                                            </Labeled>
-                                        </Stack>
-                                    </Fragment>
-                                )}
+                                {/* Keyed, so that the sections start closed again for the next product group. */}
+                                <ProductGroupShowProductGroup key={product_group.id} product_group={product_group} />
                             </Tab>
                             <Tab label="Rules" path="rules" icon={<general_rules.icon />}>
                                 <Stack

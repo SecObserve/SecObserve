@@ -237,7 +237,8 @@ const ProductShow = () => {
                                 </Tab>
                             )}
                             <Tab label="Settings" path="settings" icon={<SettingsIcon />}>
-                                <ProductShowProduct product={product} />
+                                {/* Keyed, so that the sections start closed again for the next product. */}
+                                <ProductShowProduct key={product.id} product={product} />
                             </Tab>
                             <Tab label="Rules" path="rules" icon={<general_rules.icon />}>
                                 <Stack

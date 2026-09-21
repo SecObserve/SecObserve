@@ -2,22 +2,21 @@ import { Divider } from "@mui/material";
 import { Fragment, useState } from "react";
 
 import SectionAccordion from "../../commons/layout/SectionAccordion";
-import { Product } from "../types";
-import { getProductShowSections } from "./sections";
-import { ProductBasicsFields } from "./sections/Basics";
+import { getProductGroupShowSections } from "./sections";
+import { ProductGroupBasicsFields } from "./sections/Basics";
 
-type ProductShowProductProps = {
-    product: Product;
+type ProductGroupShowProductGroupProps = {
+    product_group: any;
 };
 
-const ProductShowProduct = ({ product }: ProductShowProductProps) => {
+const ProductGroupShowProductGroup = ({ product_group }: ProductGroupShowProductGroupProps) => {
     const [expandedSection, setExpandedSection] = useState("");
 
     return (
         <Fragment>
-            <ProductBasicsFields />
+            <ProductGroupBasicsFields />
             <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-            {getProductShowSections(product).map(({ label, icon, Fields }) => (
+            {getProductGroupShowSections(product_group).map(({ label, icon, Fields }) => (
                 <SectionAccordion
                     key={label}
                     expandedSection={expandedSection}
@@ -25,11 +24,11 @@ const ProductShowProduct = ({ product }: ProductShowProductProps) => {
                     label={label}
                     icon={icon}
                 >
-                    {Fields && <Fields />}
+                    <Fields />
                 </SectionAccordion>
             ))}
         </Fragment>
     );
 };
 
-export default ProductShowProduct;
+export default ProductGroupShowProductGroup;
