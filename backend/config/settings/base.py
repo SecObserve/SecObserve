@@ -470,4 +470,10 @@ HUEY = {
     },
 }
 
-HUEY_STATS = {"database": db_url}
+HUEY_STATS = {
+    "database": db_url,
+    # The statistics keep the newest max_events rows per queue, and every task writes one row per
+    # signal. huey's default of 2000 is filled by a single import that enqueues a task per product,
+    # which leaves the background task statistics showing nothing but those enqueues.
+    "max_events": env.int("HUEY_STATS_MAX_EVENTS", 100000),
+}
