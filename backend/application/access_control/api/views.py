@@ -74,6 +74,12 @@ from application.access_control.queries.user import (
     get_users_without_api_tokens,
 )
 from application.access_control.services.jwt_authentication import create_jwt
+from application.access_control.services.oidc_reauthentication import (
+    OIDCReauthenticationRequired,
+    get_freshly_authenticated_oidc_user,
+    has_oidc_bearer_header,
+    oidc_is_configured,
+)
 from application.access_control.services.user_api_token import (
     create_user_api_token,
     revoke_user_api_token,
@@ -286,13 +292,20 @@ class UserAPITokenCreateView(APIView):
     @extend_schema(
         request=ApiTokenCreateRequestSerializer,
         responses={status.HTTP_201_CREATED: ApiTokenCreateResponseSerializer},
+        description="Either `username` and `password` or an OIDC token in the `Authorization` header "
+        "are needed to authenticate the user. The OIDC authentication must not be older than the "
+        "maximum authentication age configured in the settings.",
     )
     def post(self, request: Request) -> Response:
         request_serializer = ApiTokenCreateRequestSerializer(data=request.data)
         if not request_serializer.is_valid():
             raise ValidationError(request_serializer.errors)
 
-        user = _get_authenticated_user(request_serializer.validated_data)
+        try:
+            user = _get_api_token_user(request, request_serializer.validated_data)
+        except OIDCReauthenticationRequired as e:
+            return _reauthentication_response(e)
+
         name = request_serializer.validated_data.get("name")
         expiration_date = request_serializer.validated_data.get("expiration_date")
 
@@ -315,13 +328,20 @@ class UserAPITokenRevokeView(APIView):
     @extend_schema(
         request=ApiTokenRevokeRequestSerializer,
         responses={status.HTTP_204_NO_CONTENT: None},
+        description="Either `username` and `password` or an OIDC token in the `Authorization` header "
+        "are needed to authenticate the user. The OIDC authentication must not be older than the "
+        "maximum authentication age configured in the settings.",
     )
     def post(self, request: Request) -> Response:
         request_serializer = ApiTokenRevokeRequestSerializer(data=request.data)
         if not request_serializer.is_valid():
             raise ValidationError(request_serializer.errors)
 
-        user = _get_authenticated_user(request_serializer.validated_data)
+        try:
+            user = _get_api_token_user(request, request_serializer.validated_data)
+        except OIDCReauthenticationRequired as e:
+            return _reauthentication_response(e)
+
         name = request_serializer.validated_data.get("name")
 
         revoke_user_api_token(user, name)
@@ -372,3 +392,37 @@ def _get_authenticated_user(data: dict[str, Any] | list[Any]) -> User:
         raise PermissionDenied("Invalid credentials")
 
     return user
+
+
+def _get_api_token_user(request: Request, data: dict[str, Any]) -> User:
+    """Authenticate the user of a request to create or revoke a user API token.
+
+    Users without a usable password, e.g. users authenticated with OIDC, cannot provide
+    a password. For them a recent authentication at the OIDC provider is the proof of
+    identity instead.
+    """
+
+    if not (oidc_is_configured() and has_oidc_bearer_header(request)):
+        return _get_authenticated_user(data)
+
+    user, payload = get_freshly_authenticated_oidc_user(request)
+
+    username = data.get("username")
+    if username and username != user.username:
+        raise ValidationError("Username does not match the authenticated user")
+
+    # The user has been authenticated manually, because the view has no authentication
+    # classes. Setting it in the request makes it available for logging.
+    request.user = user
+    request.auth = payload
+
+    return user
+
+
+def _reauthentication_response(exception: OIDCReauthenticationRequired) -> Response:
+    response = Response(
+        {"message": exception.message, "code": exception.code},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+    logger.warning(format_log_message(message=exception.message, username=exception.username, response=response))
+    return response

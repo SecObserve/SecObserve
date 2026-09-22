@@ -54,14 +54,26 @@ Only one API token can be created per product. If it needs to be replaced, it mu
 
 ##### User API token
 
-An API token for a user can only be created and revoked with API calls. The token can be seen only once, when it is created. Afterwards there is no way to see that API token again. If it is lost it needs to be revoked and a new one has to be created, as only one API token is allowed per user.
+API tokens for a user can be created and revoked in the user's page in the SecObserve frontend or with API calls. A token can be seen only once, when it is created. Afterwards there is no way to see that API token again. If it is lost it needs to be revoked and a new one has to be created. Several API tokens can be created per user, each of them has a name and an optional expiration date.
 
 The API token has the same permissions for the same products as the user.
 
-|                                  |                                         |
-|----------------------------------|-----------------------------------------|
-| **Endpoint to create API token** | `/api/authentication/create_api_token/` |
-| **Endpoint to revoke API token** | `/api/authentication/revoke_api_token/` |
+|                                  |                                              |
+|----------------------------------|----------------------------------------------|
+| **Endpoint to create API token** | `/api/authentication/create_user_api_token/` |
+| **Endpoint to revoke API token** | `/api/authentication/revoke_user_api_token/` |
+
+Because an API token is a long lived credential, the user has to prove their identity when a token is created or revoked. There are two ways to do so:
+
+* **Users with a password:** The parameters `username` and `password` are sent in the body of the request.
+* **Users authenticated with OpenID Connect:** The id token is sent in the `Authorization: Bearer `*`token`*` ` header and the parameters `username` and `password` are omitted. Users authenticated with OpenID Connect have no password in SecObserve, a recent authentication at the OIDC provider is the proof of identity instead. See [OpenID Connect authentication](oidc_authentication.md#user-api-tokens-for-users-authenticated-with-openid-connect) for the details.
+
+The endpoints answer with HTTP status 403 and one of these codes in the body, if the authentication at the OIDC provider is not recent enough or cannot be checked:
+
+| **Code**                        |                                                                                          |
+|---------------------------------|------------------------------------------------------------------------------------------|
+| `oidc_reauthentication_required` | The authentication is older than the configured maximum authentication age                |
+| `oidc_auth_time_missing`         | The id token has no `auth_time` claim, so the age of the authentication cannot be checked |
 
 
 ## Interactive API documentation

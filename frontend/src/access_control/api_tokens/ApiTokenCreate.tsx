@@ -9,7 +9,12 @@ import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave
 import { validate_required, validate_required_32, validate_required_255 } from "../../commons/custom_validators";
 import { AutocompleteInputWide, PasswordInputWide, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import { oidc_signed_in } from "../auth_provider/oidc";
 import { ROLE_CHOICES } from "../types";
+import ApiTokenReauthentication, {
+    clear_reauthentication_attempt,
+    get_reauthentication_message,
+} from "./ApiTokenReauthentication";
 
 type ApiTokenCreateProps = {
     type: "user" | "product";
@@ -31,6 +36,11 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
     const handleRoleCancel = () => setRoleOpen(false);
 
     const [apiToken, setApiToken] = useState("undefined");
+
+    // Users authenticated with OIDC have no password, their recent authentication
+    // at the OIDC provider is the proof of identity instead.
+    const oidc_authentication = type === "user" && oidc_signed_in();
+    const [reauthenticationMessage, setReauthenticationMessage] = useState<string | null>(null);
 
     const [showApiTokenOpen, setShowApiTokenOpen] = useState(false);
     const handleApiTokenOpen = () => setShowApiTokenOpen(true);
@@ -57,12 +67,17 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
             };
         } else if (type === "user") {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/authentication/create_user_api_token/";
-            create_data = {
-                username: user.username,
-                password: data.password,
-                name: data.api_token_name,
-                expiration_date: data.expiration_date,
-            };
+            create_data = oidc_authentication
+                ? {
+                      name: data.api_token_name,
+                      expiration_date: data.expiration_date,
+                  }
+                : {
+                      username: user.username,
+                      password: data.password,
+                      name: data.api_token_name,
+                      expiration_date: data.expiration_date,
+                  };
         } else {
             notify("Type is not product or user", { type: "error" });
             setRoleOpen(false);
@@ -74,6 +89,7 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
             body: JSON.stringify(create_data),
         })
             .then((result) => {
+                clear_reauthentication_attempt();
                 setApiToken(result.json.token);
                 handleApiTokenOpen();
                 notify("API token created", {
@@ -82,6 +98,12 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                 setRoleOpen(false);
             })
             .catch((error) => {
+                const reauthentication_message = get_reauthentication_message(error);
+                if (reauthentication_message) {
+                    setRoleOpen(false);
+                    setReauthenticationMessage(reauthentication_message);
+                    return;
+                }
                 notify(error.message, {
                     type: "warning",
                 });
@@ -107,7 +129,7 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                         {type === "product" && (
                             <AutocompleteInputWide source="role" choices={ROLE_CHOICES} validate={validate_required} />
                         )}
-                        {type === "user" && (
+                        {type === "user" && !oidc_authentication && (
                             <PasswordInputWide source="password" label="Password" validate={validate_required_255} />
                         )}
                         <TextInputWide label="API token name" source="api_token_name" validate={validate_required_32} />
@@ -134,6 +156,10 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <ApiTokenReauthentication
+                message={reauthenticationMessage}
+                onCancel={() => setReauthenticationMessage(null)}
+            />
         </>
     );
 };

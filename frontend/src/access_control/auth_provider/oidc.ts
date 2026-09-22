@@ -56,6 +56,20 @@ export function get_oidc_id_token(): string | null {
     }
 }
 
+/** Sends the user to the OIDC provider to authenticate again.
+ *
+ * `prompt=login` forces the authentication, `max_age=0` makes the `auth_time` claim
+ * mandatory in the id token, which the backend needs to check the age of the authentication.
+ */
+export function oidc_reauthenticate(
+    signinRedirect: (args: { prompt: string; max_age: number }) => Promise<void>
+): Promise<void> {
+    if (location.hash !== "#/login") {
+        localStorage.setItem("last_location", location.hash);
+    }
+    return signinRedirect({ prompt: "login", max_age: 0 });
+}
+
 export const updateRefreshToken = () => {
     const oidcUser = oidcStorageUser();
     if (oidcUser) {

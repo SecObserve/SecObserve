@@ -1,3 +1,4 @@
+import os
 from datetime import date
 from unittest.mock import patch
 
@@ -7,6 +8,11 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.test import APIClient
 
 from application.access_control.api.views import _get_authenticated_user
+from application.access_control.services.oidc_reauthentication import (
+    OIDC_CODE_AUTH_TIME_MISSING,
+    OIDC_CODE_REAUTHENTICATION_REQUIRED,
+    OIDCReauthenticationRequired,
+)
 from unittests.base_test_case import BaseTestCase
 
 
@@ -77,6 +83,101 @@ class TestAPIToken(BaseTestCase):
         user_mock.assert_called_with(request_data)
         api_mock.assert_called_with(self.user_internal, "api_token_name", None)
 
+    # --- create_user_api_token with OIDC ---
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_successful(self, api_mock, oidc_mock):
+        api_mock.return_value = "api_token"
+        oidc_mock.return_value = (self.user_internal, {"auth_time": 1234567890})
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(201, response.status_code)
+        self.assertEqual("api_token", response.data["token"])
+        api_mock.assert_called_with(self.user_internal, "api_token_name", None)
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_reauthentication_required(self, api_mock, oidc_mock):
+        oidc_mock.side_effect = OIDCReauthenticationRequired(
+            OIDC_CODE_REAUTHENTICATION_REQUIRED, "The authentication is too old"
+        )
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(OIDC_CODE_REAUTHENTICATION_REQUIRED, response.data["code"])
+        self.assertEqual("The authentication is too old", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_auth_time_missing(self, api_mock, oidc_mock):
+        oidc_mock.side_effect = OIDCReauthenticationRequired(OIDC_CODE_AUTH_TIME_MISSING, "No auth_time claim")
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(OIDC_CODE_AUTH_TIME_MISSING, response.data["code"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_username_mismatch(self, api_mock, oidc_mock):
+        oidc_mock.return_value = (self.user_internal, {"auth_time": 1234567890})
+
+        api_client = APIClient()
+        request_data = {"username": "another_user@example.com", "name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Username does not match the authenticated user", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views._get_authenticated_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_api_token_header_uses_password(self, api_mock, user_mock):
+        # A leaked API token must not be able to create new API tokens,
+        # only the Authorization header with an OIDC token is accepted.
+        api_mock.return_value = "api_token"
+        user_mock.return_value = self.user_internal
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "not-so-secret", "name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="APIToken api_token_secret"
+        )
+
+        self.assertEqual(201, response.status_code)
+        user_mock.assert_called_with(request_data)
+
+    @patch.dict(os.environ, {"OIDC_AUTHORITY": ""})
+    def test_create_api_token_view_bearer_header_without_oidc(self):
+        # Without OIDC configured, a Bearer header must not lead to an internal server error
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+
     # --- revoke_user_api_token ---
 
     @patch("application.access_control.api.views._get_authenticated_user")
@@ -103,6 +204,51 @@ class TestAPIToken(BaseTestCase):
         self.assertEqual(204, response.status_code)
         user_mock.assert_called_with(request_data)
         revoke_mock.assert_called_with(self.user_internal, "api_token_name")
+
+    # --- revoke_user_api_token with OIDC ---
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_oidc_successful(self, revoke_mock, oidc_mock):
+        oidc_mock.return_value = (self.user_internal, {"auth_time": 1234567890})
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("revoke_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(204, response.status_code)
+        revoke_mock.assert_called_with(self.user_internal, "api_token_name")
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_oidc_reauthentication_required(self, revoke_mock, oidc_mock):
+        oidc_mock.side_effect = OIDCReauthenticationRequired(
+            OIDC_CODE_REAUTHENTICATION_REQUIRED, "The authentication is too old"
+        )
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("revoke_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(OIDC_CODE_REAUTHENTICATION_REQUIRED, response.data["code"])
+        revoke_mock.assert_not_called()
+
+    @patch.dict(os.environ, {"OIDC_AUTHORITY": ""})
+    def test_revoke_api_token_view_bearer_header_without_oidc(self):
+        # Without OIDC configured, a Bearer header must not lead to an internal server error
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("revoke_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
 
 
 class TestAuthenticate(BaseTestCase):
