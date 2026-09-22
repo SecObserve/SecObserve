@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from json import loads
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
 from django.core.management import call_command
 
@@ -157,6 +157,12 @@ class TestOSVScanner(BaseTestCase):
                                     id="GHSA-5hgc-2vfp-mqvc",
                                     modified=datetime(2024, 10, 30, 19, 23, 43, 662562, tzinfo=timezone.utc),
                                 ),
+                                # The second page is merged into the component instead of being
+                                # appended as a second component for the same purl
+                                OSV_Vulnerability(
+                                    id="CVE-2025-00001",
+                                    modified=datetime(2024, 10, 30, 19, 23, 43, 662562, tzinfo=timezone.utc),
+                                ),
                             },
                         ),
                         OSV_Component(
@@ -164,15 +170,6 @@ class TestOSVScanner(BaseTestCase):
                             vulnerabilities={
                                 OSV_Vulnerability(
                                     id="GO-2024-3333", modified=datetime(2024, 12, 20, 20, 37, 27, tzinfo=timezone.utc)
-                                )
-                            },
-                        ),
-                        OSV_Component(
-                            license_component=license_components[0],
-                            vulnerabilities={
-                                OSV_Vulnerability(
-                                    id="CVE-2025-00001",
-                                    modified=datetime(2024, 10, 30, 19, 23, 43, 662562, tzinfo=timezone.utc),
                                 )
                             },
                         ),
@@ -276,3 +273,60 @@ class TestOSVScanner(BaseTestCase):
                 "scanner": "OSV (Open Source Vulnerabilities)",
             },
         )
+
+
+class TestOSVScannerPurlCache(BaseTestCase):
+    """The scanner asks OSV for a purl once, however many components and products use it."""
+
+    def _component(self, purl):
+        return License_Component(component_name="component", component_purl=purl)
+
+    def _response(self, number_of_results):
+        response = MagicMock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"results": [{"vulns": []} for _ in range(number_of_results)]}
+        return response
+
+    @patch("requests.post")
+    def test_a_purl_is_queried_once_per_scanner(self, mock_requests_post):
+        mock_requests_post.return_value = self._response(1)
+        scanner = OSVScanner()
+
+        # Two scans of different products that use the same purl
+        scanner._do_scan([self._component("pkg:pypi/django@5.1.8")])
+        scanner._do_scan([self._component("pkg:pypi/django@5.1.8")])
+
+        mock_requests_post.assert_called_once()
+
+    @patch("requests.post")
+    def test_a_purl_is_queried_once_per_scan(self, mock_requests_post):
+        mock_requests_post.return_value = self._response(2)
+        scanner = OSVScanner()
+
+        osv_components = scanner._do_scan(
+            [
+                self._component("pkg:pypi/django@5.1.8"),
+                self._component("pkg:golang/golang.org/x/net@v0.25.1"),
+                self._component("pkg:pypi/django@5.1.8"),
+            ]
+        )
+
+        # Three components, but only two purls are sent to OSV
+        self.assertEqual(3, len(osv_components))
+        self.assertEqual(
+            '{"queries": [{"package": {"purl": "pkg:pypi/django@5.1.8"}, "page_token": null}, '
+            '{"package": {"purl": "pkg:golang/golang.org/x/net@v0.25.1"}, "page_token": null}]}',
+            mock_requests_post.call_args.kwargs["data"],
+        )
+
+    @patch("requests.post")
+    def test_components_do_not_share_the_cached_vulnerabilities(self, mock_requests_post):
+        mock_requests_post.return_value = self._response(1)
+        scanner = OSVScanner()
+
+        osv_components = scanner._do_scan([self._component("pkg:pypi/django@5.1.8")])
+        osv_components[0].vulnerabilities.add(
+            OSV_Vulnerability(id="CVE-2020-0001", modified=datetime(2024, 1, 1, tzinfo=timezone.utc))
+        )
+
+        self.assertEqual((), scanner.vulnerabilities_by_purl["pkg:pypi/django@5.1.8"])

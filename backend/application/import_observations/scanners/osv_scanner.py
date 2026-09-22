@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional, Tuple
+from itertools import batched
+from typing import Any, Optional
 
 import jsonpickle
 import requests
@@ -33,78 +34,92 @@ class RequestQueries:
     queries: list[RequestPackage]
 
 
+OSV_QUERYBATCH_URL = "https://api.osv.dev/v1/querybatch"
+OSV_QUERYBATCH_SIZE = 500
+OSV_QUERYBATCH_TIMEOUT = 5 * 60
+
+
 class OSVScanner(BaseScanner):
     def __init__(self) -> None:
         super().__init__()
         self.parser = OSVParser()
+        # The same purl is used by many products, and the nightly import keeps one scanner for
+        # the whole run, so OSV is asked for a purl once instead of once per product.
+        self.vulnerabilities_by_purl: dict[str, tuple[OSV_Vulnerability, ...]] = {}
 
     def _do_scan(self, license_components: list[License_Component]) -> Any:
-        next_pages: dict[License_Component, str] = {}
-        osv_components, next_pages = self._do_scan_page(license_components, next_pages)
+        # dict.fromkeys deduplicates the purls and keeps the order of the components
+        missing_purls = list(
+            dict.fromkeys(
+                license_component.component_purl
+                for license_component in license_components
+                if license_component.component_purl not in self.vulnerabilities_by_purl
+            )
+        )
+        if missing_purls:
+            self._query_purls(missing_purls)
 
-        while next_pages:
-            new_osv_components, next_pages = self._do_scan_page(list(next_pages.keys()), next_pages)
-            osv_components += new_osv_components
-        return osv_components
-
-    def _do_scan_page(
-        self,
-        license_components: list[License_Component],
-        next_pages: dict[License_Component, str],
-    ) -> Tuple[list[OSV_Component], dict]:
-
-        osv_components = [
+        return [
             OSV_Component(
                 license_component=license_component,
-                vulnerabilities=set(),
+                # A copy, so that a component cannot change what the cache holds for its purl
+                vulnerabilities=set(self.vulnerabilities_by_purl[license_component.component_purl]),
             )
             for license_component in license_components
         ]
 
-        slice_actual = 0
-        slice_size = 500
+    def _query_purls(self, purls: list[str]) -> None:
+        """Read the vulnerabilities of the given purls from OSV into the cache of this scanner."""
+        vulnerabilities: dict[str, set[OSV_Vulnerability]] = {purl: set() for purl in purls}
+
+        page_tokens: dict[str, str] = {}
+        pending = purls
+        while pending:
+            page_tokens = self._query_purl_page(pending, page_tokens, vulnerabilities)
+            pending = list(page_tokens)
+
+        # Tuples, because CPython shares one empty tuple: most purls have no vulnerabilities at
+        # all, and the cache holds every purl of the whole scan run.
+        self.vulnerabilities_by_purl.update({purl: tuple(found) for purl, found in vulnerabilities.items()})
+
+    def _query_purl_page(
+        self,
+        purls: list[str],
+        page_tokens: dict[str, str],
+        vulnerabilities: dict[str, set[OSV_Vulnerability]],
+    ) -> dict[str, str]:
         results = []
 
-        while slice_actual * slice_size < len(license_components):
+        for purls_batch in batched(purls, OSV_QUERYBATCH_SIZE):
             queries = RequestQueries(
-                queries=[
-                    RequestPackage(
-                        RequestPURL(purl=license_component.component_purl),
-                        next_pages[license_component] if next_pages else None,
-                    )
-                    for license_component in license_components[
-                        (slice_actual * slice_size) : ((slice_actual + 1) * slice_size)  # noqa: E203
-                    ]
-                ]
+                queries=[RequestPackage(RequestPURL(purl=purl), page_tokens.get(purl)) for purl in purls_batch]
             )
 
             response = requests.post(  # nosec B113
                 # This is a false positive, there is a timeout of 5 minutes
-                url="https://api.osv.dev/v1/querybatch",
+                url=OSV_QUERYBATCH_URL,
                 data=jsonpickle.encode(queries, unpicklable=False),
-                timeout=5 * 60,
+                timeout=OSV_QUERYBATCH_TIMEOUT,
             )
 
             response.raise_for_status()
             results.extend(response.json().get("results", []))
 
-            slice_actual += 1
-
-        if len(osv_components) != len(results):
+        if len(purls) != len(results):
             raise ScanException(  # pylint: disable=broad-exception-raised
                 "Number of results is different than number of components"
             )
 
-        new_next_pages: dict[License_Component, str] = {}
-        for i, result in enumerate(results):
+        next_page_tokens: dict[str, str] = {}
+        for purl, result in zip(purls, results):
             for vuln in result.get("vulns", []):
-                osv_components[i].vulnerabilities.add(
+                vulnerabilities[purl].add(
                     OSV_Vulnerability(
                         id=vuln.get("id"),
                         modified=datetime.fromisoformat(vuln.get("modified")),
                     )
                 )
             if result.get("next_page_token"):
-                new_next_pages[osv_components[i].license_component] = result.get("next_page_token")
+                next_page_tokens[purl] = result.get("next_page_token")
 
-        return osv_components, new_next_pages
+        return next_page_tokens
