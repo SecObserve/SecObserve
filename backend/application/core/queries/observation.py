@@ -246,13 +246,18 @@ def get_current_observation_log(observation: Observation) -> Optional[Observatio
         return None
 
 
-def get_current_modifying_observation_log(
-    observation: Observation,
-) -> Optional[Observation_Log]:
+def get_modifying_observation_logs() -> QuerySet[Observation_Log]:
+    return Observation_Log.objects.filter(
+        ~Q(status="") | ~Q(severity="") | ~Q(vex_justification="") | ~Q(vex_remediations__isnull=True)
+    )
+
+
+def get_current_modifying_observation_log(observation: Observation) -> Optional[Observation_Log]:
+    prefetched_logs = getattr(observation, "_vex_modifying_logs", None)
+    if prefetched_logs is not None:
+        return prefetched_logs[0] if prefetched_logs else None
+
     try:
-        return Observation_Log.objects.filter(
-            Q(observation_id=observation.id)
-            & (~Q(status="") | ~Q(severity="") | ~Q(vex_justification="") | (~Q(vex_remediations__isnull=True)))
-        ).latest("created")
+        return get_modifying_observation_logs().filter(observation_id=observation.id).latest("created")
     except Observation_Log.DoesNotExist:
         return None
