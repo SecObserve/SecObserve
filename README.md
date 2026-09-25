@@ -60,6 +60,11 @@ Please see the [Contributing Guidelines](CONTRIBUTING.md) for more information o
 
 SecObserve is licensed under the [3-Clause BSD License](LICENSE.txt)
 
+## Community projects
+
+- **MCP server:** [secobserve-mcp](https://github.com/nh4ttruong/secobserve-mcp) exposes the SecObserve REST API to an LLM agent over the Model Context Protocol: browse and triage observations, manage products, branches and rules, import scan reports and SBOMs, run scans and background jobs, generate VEX documents.
+- **Terraform provider:** [SecObserve Provider](https://registry.terraform.io/providers/pflege-de-labs/secobserve/latest/docs) manages configuration of a SecObserve instance: products, product groups, branches, services, memberships, authorization groups, rules, API import configurations and license policies.
+
 ## Funding
 
 <img src="https://nlnet.nl/logo/banner.svg" width="20%" alt="NLNet">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://nlnet.nl/image/logos/NGI0CommonsFund_tag.svg" width="20%" alt="NLNet">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;https://nlnet.nl/project/SecObservePlus
