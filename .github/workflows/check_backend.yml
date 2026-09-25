@@ -55,7 +55,7 @@ jobs:
       - name: Import linter
         working-directory: ./backend
         run: |
-          lint-imports --no-cache
+          poetry run lint-imports --no-cache
 
   unittests:
     permissions:
