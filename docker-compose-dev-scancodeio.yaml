@@ -1,0 +1,106 @@
+# Docker Compose override for development of VulnerableCode integration.
+# Usage: docker compose -f docker-compose-dev.yml -f docker-compose-dev-scancodeio.yaml up --build
+
+services:
+  redis:
+    image: docker.io/library/redis:8.10.1-alpine
+    # Enable redis data persistence using the "Append Only File" with the
+    # default policy of fsync every second. See https://redis.io/topics/persistence
+    command: redis-server --appendonly yes --loglevel warning
+    volumes:
+      - dev_scancodeio_redis_data:/data
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  scancodeio:
+    image: ghcr.io/aboutcode-org/scancode.io:v38.0.0-full
+    command: sh -c "
+        ./manage.py migrate &&
+        ./manage.py collectstatic --no-input --verbosity 0 --clear &&
+        gunicorn scancodeio.wsgi:application --bind :8000 --timeout 600 \
+          --workers ${GUNICORN_WORKERS:-8} --worker-tmp-dir /dev/shm"
+    env_file:
+      - ./docker/scancodeio/docker.env
+    expose:
+      - 8000
+    volumes:
+      - ./docker/scancodeio/.env:/opt/scancodeio/.env
+      - dev_scancodeio_etc:/etc/scancodeio/
+      - dev_scancodeio_workspace:/var/scancodeio/workspace/
+      - dev_scancodeio_static:/var/scancodeio/static/
+      - dev_scancodeio_healthycode_venv:/opt/healthycode
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_healthy
+
+  worker:
+    image: ghcr.io/aboutcode-org/scancode.io:v38.0.0-full
+    # Ensure that potential db migrations run first by waiting until "scancodeio" is up
+    command: wait-for-it --strict --timeout=600 scancodeio:8000 -- sh -c "
+        ./manage.py rqworker --worker-class scancodeio.worker.ScanCodeIOWorker
+                             --queue-class scancodeio.worker.ScanCodeIOQueue
+                             --verbosity 1"
+    env_file:
+      - ./docker/scancodeio/docker.env
+    volumes:
+      - ./docker/scancodeio/.env:/opt/scancodeio/.env
+      - dev_scancodeio_etc:/etc/scancodeio/
+      - dev_scancodeio_workspace:/var/scancodeio/workspace/
+      - dev_scancodeio_healthycode_venv:/opt/healthycode
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_started
+      redis:
+        condition: service_healthy
+      scancodeio:
+        condition: service_started
+
+  nginx:
+    image: docker.io/library/nginx:1.31.4-alpine
+    ports:
+      - 4100:80
+    volumes:
+      - ./docker/scancodeio/nginx/conf.d/:/etc/nginx/conf.d/
+      - dev_scancodeio_static:/var/scancodeio/static/
+      - dev_scancodeio_webroot:/var/www/html/
+    depends_on:
+      scancodeio:
+        condition: service_started
+    restart: always
+
+  clamav:
+    image: docker.io/clamav/clamav:1.5.4_base
+    volumes:
+      - dev_scancodeio_clamav_data:/var/lib/clamav
+      - dev_scancodeio_workspace:/var/scancodeio/workspace/
+    restart: always
+
+  healthycode:
+    profiles:
+      - healthycode
+    image: ghcr.io/aboutcode-org/healthycode:0.2.0
+    volumes:
+      - dev_scancodeio_healthycode_venv:/opt/healthycode
+    restart: "no"
+
+  backend:
+    depends_on:
+      - postgres
+      - scancodeio
+
+volumes:
+  dev_scancodeio_etc:
+  dev_scancodeio_redis_data:
+  dev_scancodeio_clamav_data:
+  dev_scancodeio_static:
+  dev_scancodeio_workspace:
+  dev_scancodeio_webroot:
+  dev_scancodeio_healthycode_venv:
