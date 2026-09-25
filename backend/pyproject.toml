@@ -99,6 +99,7 @@ django-coverage-plugin = { version = "3.2.2", optional = true }  # https://githu
 # ------------------------------------------------------------------------------
 flake8 = { version = "7.3.0", optional = true }  # https://github.com/PyCQA/flake8
 flake8-isort = { version = "7.0.0", optional = true }  # https://github.com/gforcada/flake8-isort
+Flake8-pyproject = { version = "1.2.4", optional = true }  # https://github.com/john-hen/Flake8-pyproject
 black = { version = "26.5.1", optional = true }  # https://github.com/psf/black
 pylint = { version = "4.0.8", optional = true }  # https://github.com/pylint-dev/pylint
 pylint-django = { version = "2.8.0", optional = true }  # https://github.com/PyCQA/pylint-django
@@ -111,11 +112,156 @@ import-linter = "2.15"  # https://github.com/seddonym/import-linter
 [tool.poetry.extras]
 dev = ["Werkzeug", "ipdb", "django-extensions", "django-silk"]
 unittests = ["coverage", "django-extensions", "django-coverage-plugin"]
-code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL", "import-linter"]
+code_quality = ["flake8", "flake8-isort", "Flake8-pyproject", "black", "pylint", "pylint-django", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL", "import-linter"]
 
 [tool.black]
 line-length = 120
 target-version = ['py314']
+
+[tool.flake8]
+extend-ignore = ["I001", "I003", "I004", "I005"]
+max-line-length = 120
+exclude = [
+    ".tox",
+    ".git",
+    "*/migrations/*",
+    "*/static/CACHE/*",
+    "docs",
+    "node_modules",
+    ".venv",
+    "unittests/*",
+    "*unittests.py",
+]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["application", "config", "unittests"]
+
+[tool.mypy]
+python_version = "3.14"
+disallow_untyped_defs = true
+implicit_optional = true
+no_namespace_packages = true
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+
+[[tool.mypy.overrides]]
+# Django migrations should not produce any errors:
+module = "*.migrations.*"
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.dev"
+
+[tool.pylint.main]
+load-plugins = ["pylint_django"]
+django-settings-module = "config.settings.base"
+ignore-paths = [".*/migrations"]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint."messages control"]
+disable = [
+    "abstract-method",
+    "broad-except",
+    "too-few-public-methods",
+    "missing-docstring",
+    "invalid-name",
+    "duplicate-code",
+]
+
+[tool.pylint.design]
+max-args = 7
+max-attributes = 10
+max-locals = 20
+max-parents = 13
+max-returns = 7
+
+[tool.importlinter]
+root_package = "application"
+
+[[tool.importlinter.contracts]]
+id = "general_layers"
+name = "General layers"
+type = "layers"
+layers = [
+    "application.background_tasks",
+    "application.import_observations",
+    "application.vex | application.epss | application.metrics",
+    "application.core : application.issue_tracker : application.licenses : application.notifications : application.rules",
+    "application.access_control : application.authorization",
+    "application.commons",
+]
+ignore_imports = [
+    "application.access_control.api.filters -> application.authorization.services.roles_permissions",
+    "application.access_control.api.filters -> application.core.models",
+    "application.access_control.api.serializers -> application.core.models",
+    "application.access_control.api.serializers -> application.notifications.models",
+    "application.access_control.queries.user -> application.core.queries.product_member",
+    "application.authorization.services.authorization -> application.*.models",
+    "application.authorization.services.authorization -> application.core.queries.product_member",
+    "application.authorization.services.authorization -> application.core.services.assessment_approver",
+    "application.commons.api.serializers -> application.core.types",
+    "application.commons.models -> application.*.types",
+    "application.core.api.serializers_observation -> application.import_observations.types",
+    "application.core.api.serializers_observation -> application.import_observations.api.serializers",
+    "application.core.api.serializers_observation -> application.import_observations.models",
+    "application.core.api.serializers_product -> application.import_observations.models",
+    "application.core.migrations.0051_convert_origin_component_dependencies -> application.import_observations.parsers.cyclone_dx.dependencies",
+    "application.core.queries.product -> application.metrics.models",
+]
+
+[[tool.importlinter.contracts]]
+id = "module_layers"
+name = "Module layers"
+type = "layers"
+layers = [
+    "(api) | (migrations) | (tasks) | (signals)",
+    "(services)",
+    "(queries)",
+    "(models)",
+    "(types)",
+]
+containers = [
+    "application.access_control",
+    "application.authorization",
+    "application.background_tasks",
+    "application.commons",
+    "application.core",
+    "application.epss",
+    "application.import_observations",
+    "application.issue_tracker",
+    "application.licenses",
+    "application.metrics",
+    "application.notifications",
+    "application.rules",
+    "application.vex",
+]
+ignore_imports = [
+    "application.access_control.queries.api_token -> application.access_control.services.current_user",
+    "application.access_control.queries.authorization_group_member -> application.access_control.services.current_user",
+    "application.access_control.queries.authorization_group -> application.access_control.services.current_user",
+    "application.access_control.queries.user -> application.access_control.services.current_user",
+    "application.access_control.queries.user -> application.core.queries.product_member",
+    "application.commons.models -> application.commons.services.request_cache",
+    "application.core.queries.product_member -> application.access_control.services.current_user",
+]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+include = ["application/**", "config/**"]
+omit = ["**/migrations/**"]
+plugins = ["django_coverage_plugin"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

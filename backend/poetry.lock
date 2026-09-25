@@ -1318,6 +1318,24 @@ isort = ">=5.0.0"
 test = ["pytest"]
 
 [[package]]
+name = "flake8-pyproject"
+version = "1.2.4"
+description = "Flake8 plug-in loading the configuration from pyproject.toml"
+optional = true
+python-versions = ">=3.6"
+groups = ["main"]
+markers = "extra == \"code-quality\""
+files = [
+    {file = "flake8_pyproject-1.2.4-py3-none-any.whl", hash = "sha256:ea34c057f9a9329c76d98723bb2bb498cc6ba8ff9872c4d19932d48c91249a77"},
+]
+
+[package.dependencies]
+Flake8 = ">=5"
+
+[package.extras]
+dev = ["Flit (>=3.4)", "pyTest (>=7)", "pyTest-cov (>=7) ; python_version >= \"3.10\""]
+
+[[package]]
 name = "gprof2dot"
 version = "2025.4.14"
 description = "Generate a dot graph from the output of several profilers."
@@ -3838,11 +3856,11 @@ files = [
 test = ["pytest", "pytest-cov"]
 
 [extras]
-code-quality = ["black", "django-stubs", "djangorestframework-stubs", "flake8", "flake8-isort", "import-linter", "mypy", "pylint", "pylint-django", "types-PyMySQL"]
+code-quality = ["Flake8-pyproject", "black", "django-stubs", "djangorestframework-stubs", "flake8", "flake8-isort", "import-linter", "mypy", "pylint", "pylint-django", "types-PyMySQL"]
 dev = ["Werkzeug", "django-extensions", "django-silk", "ipdb"]
 unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "4751ce70f86a706c362a38541ceb6c6dfa95433382e91ea14227e1ba8be7c76e"
+content-hash = "9430f1408b93b4de72a9d7a1a8d7655daf162bdcf5b431855339792695a236f6"
