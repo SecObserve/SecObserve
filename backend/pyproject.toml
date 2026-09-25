@@ -106,12 +106,12 @@ mypy = { version = "2.3.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "6.1.1", optional = true }  # https://github.com/typeddjango/django-stubs
 djangorestframework-stubs = { version = "3.18.1", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.2.0.20260807", optional = true }  # https://github.com/python/typeshed
-# import-linter = "2.0"  # https://github.com/seddonym/import-linter --> Cannot be build with Docker
+import-linter = "2.15"  # https://github.com/seddonym/import-linter
 
 [tool.poetry.extras]
 dev = ["Werkzeug", "ipdb", "django-extensions", "django-silk"]
 unittests = ["coverage", "django-extensions", "django-coverage-plugin"]
-code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL"]
+code_quality = ["flake8", "flake8-isort", "black", "pylint", "pylint-django", "mypy", "django-stubs", "djangorestframework-stubs", "types-PyMySQL", "import-linter"]
 
 [tool.black]
 line-length = 120
