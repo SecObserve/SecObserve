@@ -1,9 +1,15 @@
-![SecObserve](frontend/public/secobserve.svg)
+
+<div align="center">
+
+<img src="https://raw.githubusercontent.com/SecObserve/SecObserve/dev/docs/assets/images/secobserve_icon.svg" width="80" alt="">
 
 # SecObserve
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8388/badge)](https://www.bestpractices.dev/projects/8388) [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/SecObserve/SecObserve/badge)](https://securityscorecards.dev/viewer/?uri=github.com/SecObserve/SecObserve)
 
+[Overview](#overview) · [Integrations](#integrations) · [Quickstart](#quickstart) · [Documentation](#documentation) · [Code of Conduct](#code-of-conduct) · [Contributing](#contributing) · [License](#license) · [Community projects](#community-projects) · [Funding](#funding)
+
+</div>
 
 SecObserve is an open source vulnerability and license management system for software development teams and cloud environments. It supports a variety of open source vulnerability scanners and integrates easily into CI/CD pipelines. Results about potential security flaws from various vulnerability scanning tools are made available for assessment and reporting.
 
