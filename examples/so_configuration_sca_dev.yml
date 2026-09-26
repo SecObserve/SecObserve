@@ -1,0 +1,36 @@
+trivy_image_backend_current:
+  SCANNER: trivy_image
+  TARGET: "ghcr.io/secobserve/secobserve-backend:dev"
+  FURTHER_PARAMETERS: "--pkg-types os" 
+  REPORT_NAME: "trivy_backend_image.json"
+  SO_ORIGIN_SERVICE: "backend"
+  SO_BRANCH_NAME: "dev"
+
+trivy_image_frontend_current:
+  SCANNER: trivy_image
+  TARGET: "ghcr.io/secobserve/secobserve-frontend:dev"
+  FURTHER_PARAMETERS: "--pkg-types os"
+  REPORT_NAME: "trivy_frontend_image.json"
+  SO_ORIGIN_SERVICE: "frontend"
+  SO_BRANCH_NAME: "dev"
+
+trivy_filesystem_backend_current:
+  SCANNER: trivy_filesystem
+  RUN_DIRECTORY: "."
+  TARGET: "backend/poetry.lock"
+  REPORT_NAME: "trivy_backend_poetry.json"
+  SO_ORIGIN_SERVICE: "backend"
+  SO_BRANCH_NAME: "dev"
+
+trivy_filesystem_frontend_current:
+  SCANNER: trivy_filesystem
+  RUN_DIRECTORY: "."
+  TARGET: "frontend/package-lock.json"
+  REPORT_NAME: "trivy_frontend_npm.json"
+  SO_ORIGIN_SERVICE: "frontend"
+  SO_BRANCH_NAME: "dev"
+
+importer:
+  SO_UPLOAD: "true"
+  SO_API_BASE_URL: "https://secobserve.example.org/api"
+  SO_PRODUCT_NAME: "SecObserve"
