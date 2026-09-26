@@ -1,0 +1,244 @@
+import { ThemeType } from "react-admin";
+
+import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import {
+    METRICS_TIMESPAN_7_DAYS,
+    METRICS_TIMESPAN_30_DAYS,
+    METRICS_TIMESPAN_90_DAYS,
+    METRICS_TIMESPAN_365_DAYS,
+} from "../../commons/types";
+
+export type ThemePreference = "light" | "dark" | "system";
+
+export function getSystemPrefersDark(): boolean {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+export function resolveTheme(preference: ThemePreference): ThemeType {
+    if (preference === "system") {
+        return getSystemPrefersDark() ? "dark" : "light";
+    }
+    return preference;
+}
+
+export function castThemePreference(theme: string): ThemePreference {
+    switch (theme) {
+        case "light":
+            return "light";
+        case "dark":
+            return "dark";
+        case "system":
+            return "system";
+        default:
+            return "light";
+    }
+}
+
+export function getNextTheme(current: ThemePreference): ThemePreference {
+    switch (current) {
+        case "light":
+            return "dark";
+        case "dark":
+            return "system";
+        case "system":
+            return "light";
+        default:
+            return "light";
+    }
+}
+
+export async function saveSettingTheme(theme: string) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.setting_theme = theme;
+    localStorage.setItem("user", JSON.stringify(user));
+    saveSetting({ setting_theme: theme });
+}
+
+export function getSettingTheme(): string {
+    let theme = "light";
+    const storage_theme = localStorage.getItem("theme");
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        theme = user_json.setting_theme ?? theme;
+    } else if (storage_theme) {
+        theme = storage_theme;
+    }
+    return theme;
+}
+
+export function getResolvedSettingTheme(): ThemeType {
+    const user_theme = getSettingTheme();
+    return resolveTheme(castThemePreference(user_theme));
+}
+
+export function saveSettingListSize(list_size: string) {
+    saveSetting({ setting_list_size: list_size });
+}
+
+type ListSize = "small" | "medium" | undefined;
+
+export function getSettingListSize(): ListSize {
+    let list_size: ListSize = "medium";
+
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        list_size = user_json.setting_list_size as ListSize;
+    }
+
+    return list_size;
+}
+
+export function saveSettingPackageInfoPreference(package_info_preference: string) {
+    saveSetting({ setting_package_info_preference: package_info_preference });
+}
+
+type PackageInfoPreference = "open/source/insights" | "ecosyste.ms" | undefined;
+
+export function getSettingPackageInfoPreference(): PackageInfoPreference {
+    let package_info_preference: PackageInfoPreference = "open/source/insights";
+
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        package_info_preference = user_json.setting_package_info_preference as PackageInfoPreference;
+    }
+
+    return package_info_preference;
+}
+
+export function getTheme(): ThemeType {
+    const setting_theme = getSettingTheme() as ThemePreference;
+    return resolveTheme(setting_theme);
+}
+
+export async function saveSettingsMetricsTimespan(setting_metrics_timespan: string) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.setting_metrics_timespan = setting_metrics_timespan;
+    localStorage.setItem("user", JSON.stringify(user));
+    saveSetting({ setting_metrics_timespan: setting_metrics_timespan });
+}
+
+export function getSettingMetricsTimespan(): string {
+    let setting_metrics_timespan = METRICS_TIMESPAN_7_DAYS;
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        setting_metrics_timespan = user_json.setting_metrics_timespan;
+    }
+
+    return setting_metrics_timespan;
+}
+
+export function getSettingsMetricsTimespanInDays(): number {
+    switch (getSettingMetricsTimespan()) {
+        case METRICS_TIMESPAN_7_DAYS:
+            return 7;
+        case METRICS_TIMESPAN_30_DAYS:
+            return 30;
+        case METRICS_TIMESPAN_90_DAYS:
+            return 90;
+        case METRICS_TIMESPAN_365_DAYS:
+            return 365;
+        default:
+            return 7; // Default to Week
+    }
+}
+
+export async function saveSettingRowsPerPage(setting_rows_per_page: number) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.setting_rows_per_page = setting_rows_per_page;
+    localStorage.setItem("user", JSON.stringify(user));
+    saveSetting({ setting_rows_per_page: setting_rows_per_page });
+}
+
+export function getSettingRowsPerPage(): number {
+    let rows_per_page = 25;
+
+    const user = localStorage.getItem("user");
+    if (user) {
+        const user_json = JSON.parse(user);
+        if (user_json.setting_rows_per_page !== undefined) {
+            rows_per_page = user_json.setting_rows_per_page;
+        }
+    }
+
+    return rows_per_page;
+}
+
+export type NotificationSettings = {
+    email: string;
+    notification_email_active: boolean;
+    notification_ms_teams_webhook: string;
+    notification_ms_teams_active: boolean;
+    notification_slack_webhook: string;
+    notification_slack_active: boolean;
+};
+
+export function getSettingNotifications(): NotificationSettings {
+    const user = localStorage.getItem("user");
+    const user_json = user ? JSON.parse(user) : {};
+
+    return {
+        email: user_json.email ?? "",
+        notification_email_active: user_json.notification_email_active ?? false,
+        notification_ms_teams_webhook: user_json.notification_ms_teams_webhook ?? "",
+        notification_ms_teams_active: user_json.notification_ms_teams_active ?? false,
+        notification_slack_webhook: user_json.notification_slack_webhook ?? "",
+        notification_slack_active: user_json.notification_slack_active ?? false,
+    };
+}
+
+// The user is reloaded from the API, because an entry in the local storage that has been written
+// before the notification settings existed would show empty values, which a save would then persist
+export async function loadSettingNotifications(): Promise<NotificationSettings> {
+    const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/users/me/";
+
+    const response = await httpClient(url);
+    localStorage.setItem("user", JSON.stringify(response.json));
+
+    return getSettingNotifications();
+}
+
+// A channel needs its email address or webhook URL to be activated, the backend rejects
+// the other combination as well
+export const validateNotificationSettings = (values: any) => {
+    const errors: any = {};
+
+    if (values.notification_email_active && !values.email) {
+        errors.email = "Email address is required to activate email notifications";
+    }
+    if (values.notification_ms_teams_active && !values.notification_ms_teams_webhook) {
+        errors.notification_ms_teams_webhook = "Webhook URL is required to activate MS Teams notifications";
+    }
+    if (values.notification_slack_active && !values.notification_slack_webhook) {
+        errors.notification_slack_webhook = "Webhook URL is required to activate Slack notifications";
+    }
+
+    return errors;
+};
+
+export async function saveSettingNotifications(notifications: NotificationSettings): Promise<NotificationSettings> {
+    await patchUserSettings(notifications);
+
+    return getSettingNotifications();
+}
+
+function patchUserSettings(setting: any) {
+    const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/users/my_settings/";
+
+    return httpClient(url, {
+        method: "PATCH",
+        body: JSON.stringify(setting),
+    }).then((response) => {
+        localStorage.setItem("user", JSON.stringify(response.json));
+        return response.json;
+    });
+}
+
+function saveSetting(setting: any) {
+    patchUserSettings(setting).catch((error) => {
+        console.warn(error.message);
+    });
+}

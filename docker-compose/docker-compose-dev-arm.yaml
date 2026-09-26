@@ -1,0 +1,12 @@
+# Docker Compose override for development on macOS with Apple Silicon.
+# Usage: docker compose -f docker-compose/docker-compose-dev.yml -f docker-compose/docker-compose-dev-arm.yaml up --build
+
+services:
+  frontend:
+    platform: linux/arm64/v8
+
+  backend:
+    platform: linux/arm64/v8
+
+  postgres:
+    platform: linux/arm64/v8

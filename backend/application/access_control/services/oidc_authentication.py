@@ -23,7 +23,7 @@ ALGORITHMS = ["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"]
 
 
 class OIDCAuthentication(BaseAuthentication):
-    def authenticate(self, request: Request) -> Optional[tuple[User, None]]:
+    def authenticate(self, request: Request) -> Optional[tuple[User, dict]]:
         auth = get_authorization_header(request).split()
         if not auth:
             return None
@@ -41,19 +41,21 @@ class OIDCAuthentication(BaseAuthentication):
             # Authorization header is possibly for another backend
             return None
 
-        user = self._validate_jwt(auth_token)
-        if not user:
+        validated_jwt = self._validate_jwt(auth_token)
+        if not validated_jwt:
             raise AuthenticationFailed("Invalid token.")
+
+        user, payload = validated_jwt
 
         if not user.is_active:
             raise AuthenticationFailed("User is deactivated.")
 
-        return (user, None)
+        return (user, payload)
 
     def authenticate_header(self, request: Request) -> str:
         return OIDC_PREFIX
 
-    def _validate_jwt(self, token: str) -> Optional[User]:
+    def _validate_jwt(self, token: str) -> Optional[tuple[User, dict]]:
         settings = Settings.load()
         try:
             jwks_uri = self._get_jwks_uri()
@@ -82,8 +84,8 @@ class OIDCAuthentication(BaseAuthentication):
             user = get_user_by_username(username)
             if user:
                 user = self._check_user_change(user, payload)
-                return user
-            return self._create_user(username, payload)
+                return user, payload
+            return self._create_user(username, payload), payload
         except PyJWTError as e:
             raise AuthenticationFailed(str(e)) from e
 

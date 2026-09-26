@@ -46,6 +46,41 @@ class TestProductSerializer(BaseTestCase):
         )
 
 
+class TestBranchSerializerSecurityGate(BaseTestCase):
+    def _annotate(self, branch, critical=0):
+        branch.active_critical_observation_count = critical
+        branch.active_high_observation_count = 0
+        branch.active_medium_observation_count = 0
+        branch.active_low_observation_count = 0
+        branch.active_none_observation_count = 0
+        branch.active_unknown_observation_count = 0
+
+    def test_security_gate_passed(self):
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_threshold_critical = 1
+        self._annotate(self.branch_1, critical=1)
+
+        self.assertTrue(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    def test_security_gate_failed(self):
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_threshold_critical = 1
+        self._annotate(self.branch_1, critical=2)
+
+        self.assertFalse(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    def test_security_gate_disabled(self):
+        self.product_1.security_gate_active = False
+        self._annotate(self.branch_1, critical=2)
+
+        self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    def test_security_gate_without_annotations(self):
+        self.product_1.security_gate_active = True
+
+        self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+
 class TestBranchSerializer(BaseTestCase):
     @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
     @patch("application.core.api.serializers_product.assessment_approvers_configured")
@@ -209,6 +244,29 @@ class TestBranchSerializer(BaseTestCase):
         self.assertEqual(4, data["security_gate_threshold_low"])
         self.assertEqual(5, data["security_gate_threshold_none"])
         self.assertEqual(6, data["security_gate_threshold_unknown"])
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_security_gate_active_zero(self, mock_product_member):
+        """Zero is the strictest threshold, it must not be replaced by the default of the settings."""
+        product = Product()
+        product.security_gate_active = True
+        product.security_gate_threshold_critical = 0
+        product.security_gate_threshold_high = 0
+        product.security_gate_threshold_medium = 0
+        product.security_gate_threshold_low = 0
+        product.security_gate_threshold_none = 0
+        product.security_gate_threshold_unknown = 0
+        product.save()
+
+        product_serializer = ProductSerializer(product)
+        data = product_serializer.validate(product_serializer.data)
+
+        self.assertEqual(0, data["security_gate_threshold_critical"])
+        self.assertEqual(0, data["security_gate_threshold_high"])
+        self.assertEqual(0, data["security_gate_threshold_medium"])
+        self.assertEqual(0, data["security_gate_threshold_low"])
+        self.assertEqual(0, data["security_gate_threshold_none"])
+        self.assertEqual(0, data["security_gate_threshold_unknown"])
 
     def test_validate_repository_prefix_empty(self):
         product = Product()

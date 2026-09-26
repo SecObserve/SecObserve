@@ -12,10 +12,10 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import LicensePolicyMemberAdd from "./LicensePolicyMemberAdd";
 import LicensePolicyMemberEdit from "./LicensePolicyMemberEdit";
 import LicensePolicyMemberRemove from "./LicensePolicyMemberRemove";

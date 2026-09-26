@@ -14,12 +14,13 @@ import {
     useNotify,
 } from "react-admin";
 
+import { getSettingListSize } from "../../access_control/users/functions";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { EvaluationResultField } from "../../commons/custom_fields/EvaluationResultField";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { getSettingListSize } from "../../commons/user_settings/functions";
+import { usePublishBranchFilter } from "../../core/products/BranchFilterContext";
 import { getElevation } from "../../metrics/functions";
 import { EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentEmbeddedList from "./LicenseComponentEmbeddedList";
@@ -92,6 +93,8 @@ const LicenseComponentOverview = ({ product }: LicenseComponentOverviewProps) =>
         filter: filters(),
         sort: sort(),
     });
+
+    usePublishBranchFilter("licenses", listContext.filterValues?.branch);
 
     useEffect(() => {
         storeListContext();

@@ -11,7 +11,7 @@ import {
     getSettingTheme,
     resolveTheme,
     saveSettingTheme,
-} from "../../commons/user_settings/functions";
+} from "../../access_control/users/functions";
 
 const ToggleThemeButton = () => {
     const [, setTheme] = useTheme();

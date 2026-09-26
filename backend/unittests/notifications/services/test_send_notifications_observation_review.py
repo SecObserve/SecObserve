@@ -22,15 +22,20 @@ class TestSendNotificationsObservationReview(BaseTestCase):
 
     def _patch(self, email_from: str = "secobserve@example.com") -> dict[str, MagicMock]:
         """The mocks all tests need: the users who want the notification and their permission to
-        assess observations are mocked, so that no database is needed."""
+        assess observations are mocked, so that no database is needed.
+
+        The channels are mocked in send_notifications_base, because that is where
+        send_user_notification calls them, so that the routing to the channels is tested as well."""
         patchers = {
             "get_users": patch(
                 "application.notifications.services.send_notifications_observation_review."
                 "get_users_for_product_notification"
             ),
-            "send_email": patch(
-                "application.notifications.services.send_notifications_observation_review.send_email_notification"
+            "send_email": patch("application.notifications.services.send_notifications_base.send_email_notification"),
+            "send_msteams": patch(
+                "application.notifications.services.send_notifications_base.send_msteams_notification"
             ),
+            "send_slack": patch("application.notifications.services.send_notifications_base.send_slack_notification"),
             "base_url": patch(
                 "application.notifications.services.send_notifications_observation_review.get_base_url_frontend"
             ),
@@ -61,7 +66,8 @@ class TestSendNotificationsObservationReview(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_review_notification(self.observation_1)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_observation_review_notification_without_users(self):
@@ -86,7 +92,7 @@ class TestSendNotificationsObservationReview(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             'Observation "observation_1" has been set to "In review"',
-            "email_observation.tpl",
+            "email/observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/2/show",
             first_line='Observation "observation_1" has been set to "In review"',
@@ -125,6 +131,86 @@ class TestSendNotificationsObservationReview(BaseTestCase):
             {"jane@example.com", "john@example.com"},
             {call.args[0] for call in mocks["send_email"].call_args_list},
         )
+
+    def test_send_observation_review_notification_email_not_active(self):
+        mocks = self._patch()
+        self.user_jane.notification_email_active = False
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_review_notification(self.observation_1)
+
+        mocks["send_email"].assert_not_called()
+
+    def test_send_observation_review_notification_slack(self):
+        mocks = self._patch()
+        self.user_jane.notification_email_active = False
+        self.user_jane.notification_slack_active = True
+        self.user_jane.notification_slack_webhook = "https://example.com/slack"
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_review_notification(self.observation_1)
+
+        mocks["send_email"].assert_not_called()
+        mocks["send_slack"].assert_called_once_with(
+            "https://example.com/slack",
+            "slack/observation.tpl",
+            observation=self.observation_1,
+            observation_url="https://secobserve.com/#/observations/2/show",
+            first_line='Observation "observation_1" has been set to "In review"',
+            first_name=" Jane",
+        )
+
+    def test_send_observation_review_notification_ms_teams_v2(self):
+        mocks = self._patch()
+        self.user_jane.notification_ms_teams_active = True
+        self.user_jane.notification_ms_teams_webhook = "https://example.com/ms_teams"
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_review_notification(self.observation_1)
+
+        # The user wants both channels, so both are notified
+        mocks["send_email"].assert_called_once()
+        self.assertEqual("msteams_v2/observation.tpl", mocks["send_msteams"].call_args.args[1])
+
+    def test_send_observation_review_notification_ms_teams_v1(self):
+        mocks = self._patch()
+        self.user_jane.notification_ms_teams_active = True
+        self.user_jane.notification_ms_teams_webhook = "https://test.webhook.office.com/ms_teams"
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_review_notification(self.observation_1)
+
+        self.assertEqual("msteams/observation.tpl", mocks["send_msteams"].call_args.args[1])
+
+    def test_send_observation_review_notification_webhook_without_url(self):
+        mocks = self._patch()
+        self.user_jane.notification_slack_active = True
+        mocks["get_users"].return_value = {self.user_jane}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_review_notification(self.observation_1)
+
+        mocks["send_slack"].assert_not_called()
+
+    def test_send_observation_review_notification_failing_webhook_does_not_stop_the_others(self):
+        mocks = self._patch()
+        self.user_jane.notification_slack_active = True
+        self.user_jane.notification_slack_webhook = "https://example.com/slack"
+        self.user_john.notification_slack_active = True
+        self.user_john.notification_slack_webhook = "https://example.com/slack_2"
+        mocks["get_users"].return_value = {self.user_jane, self.user_john}
+        mocks["send_slack"].side_effect = [Exception("webhook is broken"), None]
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_observation_review_notification(self.observation_1)
+
+        # Both users are notified, although the webhook of the first one raised an exception
+        self.assertEqual(2, mocks["send_slack"].call_count)
+        self.assertEqual(2, mocks["send_email"].call_count)
 
     @patch("application.commons.models.Settings.load")
     @patch("application.notifications.services.send_notifications_observation_review.handle_task_exception")

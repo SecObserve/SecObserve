@@ -11,11 +11,11 @@ import {
     useNotify,
 } from "react-admin";
 
+import { getSettingListSize } from "../access_control/users/functions";
 import { SeverityField } from "../commons/custom_fields/SeverityField";
 import SmallButton from "../commons/custom_fields/SmallButton";
 import { Spinner } from "../commons/custom_fields/Spinner";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
-import { getSettingListSize } from "../commons/user_settings/functions";
 import ObservationExpand from "../core/observations/ObservationExpand";
 
 interface RuleSimulationProps {

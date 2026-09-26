@@ -12,7 +12,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { PERMISSION_PRODUCT_API_TOKEN_REVOKE, ROLE_CHOICES } from "../../access_control/types";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";
 import ApiTokenRevoke from "./ApiTokenRevoke";
 
 type ApiTokenEmbeddedListProps = {

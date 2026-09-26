@@ -15,10 +15,10 @@ import {
     useRecordContext,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 

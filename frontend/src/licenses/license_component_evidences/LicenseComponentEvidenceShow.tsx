@@ -13,9 +13,9 @@ import {
 } from "react-admin";
 
 import license_component_evidences from ".";
+import { getResolvedSettingTheme } from "../../access_control/users/functions";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { useStyles } from "../../commons/layout/themes";
-import { getResolvedSettingTheme } from "../../commons/user_settings/functions";
 
 const ShowActions = () => {
     const evidence = useRecordContext();

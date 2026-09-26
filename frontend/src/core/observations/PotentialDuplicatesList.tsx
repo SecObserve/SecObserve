@@ -11,10 +11,10 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
 import ObservationBulkDuplicatesButton from "./ObservationBulkDuplicatesButton";
 

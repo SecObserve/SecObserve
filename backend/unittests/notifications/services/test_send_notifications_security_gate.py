@@ -109,7 +109,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "test1@example.com",
                 "Security gate for product product_1 has changed to None",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="None",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -118,7 +118,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "test2@example.com",
                 "Security gate for product product_1 has changed to None",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="None",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -128,14 +128,14 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_v2_product_security_gate.tpl",
+            "msteams_v2/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="None",
             product_url="https://secobserve.com/#/products/1/show",
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
-            "slack_product_security_gate.tpl",
+            "slack/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="None",
             product_url="https://secobserve.com/#/products/1/show",
@@ -202,7 +202,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "test1@example.com",
                 "Security gate for product product_1 has changed to Passed",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="Passed",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -211,7 +211,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "test2@example.com",
                 "Security gate for product product_1 has changed to Passed",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="Passed",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -221,14 +221,14 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_v2_product_security_gate.tpl",
+            "msteams_v2/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
-            "slack_product_security_gate.tpl",
+            "slack/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -295,7 +295,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "test1@example.com",
                 "Security gate for product product_1 has changed to Failed",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="Failed",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -304,7 +304,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "test2@example.com",
                 "Security gate for product product_1 has changed to Failed",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="Failed",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -314,14 +314,14 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_v2_product_security_gate.tpl",
+            "msteams_v2/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Failed",
             product_url="https://secobserve.com/#/products/1/show",
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
-            "slack_product_security_gate.tpl",
+            "slack/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Failed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -408,9 +408,20 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
                 "application.notifications.services.send_notifications_security_gate."
                 "get_users_for_product_notification"
             ),
-            "send_email": patch(
+            "send_email": patch("application.notifications.services.send_notifications_base.send_email_notification"),
+            "send_email_product": patch(
                 "application.notifications.services.send_notifications_security_gate.send_email_notification"
             ),
+            "send_msteams_product": patch(
+                "application.notifications.services.send_notifications_security_gate.send_msteams_notification"
+            ),
+            "send_slack_product": patch(
+                "application.notifications.services.send_notifications_security_gate.send_slack_notification"
+            ),
+            "send_msteams": patch(
+                "application.notifications.services.send_notifications_base.send_msteams_notification"
+            ),
+            "send_slack": patch("application.notifications.services.send_notifications_base.send_slack_notification"),
             "base_url": patch(
                 "application.notifications.services.send_notifications_security_gate.get_base_url_frontend"
             ),
@@ -463,7 +474,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             "Security gate for product product_1 has changed to Passed",
-            "email_product_security_gate.tpl",
+            "email/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -481,7 +492,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             "Security gate for product product_1 has changed to Passed",
-            "email_product_security_gate.tpl",
+            "email/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
@@ -505,7 +516,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "jane@example.com",
                 "Security gate for product product_1 has changed to Passed",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="Passed",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -514,7 +525,7 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             call(
                 "john@example.com",
                 "Security gate for product product_1 has changed to Passed",
-                "email_product_security_gate.tpl",
+                "email/product_security_gate.tpl",
                 product=self.product_1,
                 security_gate_status="Passed",
                 product_url="https://secobserve.com/#/products/1/show",
@@ -550,7 +561,8 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             send_product_security_gate_notification(self.product_1)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_product_security_gate_notification_user_in_shared_email_addresses(self):
@@ -568,15 +580,17 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             with self.captureOnCommitCallbacks(execute=True):
                 send_product_security_gate_notification(self.product_1)
 
-        mocks["send_email"].assert_called_once_with(
+        mocks["send_email_product"].assert_called_once_with(
             "jane@example.com",
             "Security gate for product product_1 has changed to Passed",
-            "email_product_security_gate.tpl",
+            "email/product_security_gate.tpl",
             product=self.product_1,
             security_gate_status="Passed",
             product_url="https://secobserve.com/#/products/1/show",
             first_name=" Jane",
         )
+        # The user has already been notified through the shared email addresses of the product
+        mocks["send_email"].assert_not_called()
 
     def test_send_product_security_gate_notification_user_in_shared_email_addresses_different_case(self):
         mocks = self._patch_for_users()
@@ -593,7 +607,8 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             with self.captureOnCommitCallbacks(execute=True):
                 send_product_security_gate_notification(self.product_1)
 
-        self.assertEqual(1, mocks["send_email"].call_count)
+        self.assertEqual(1, mocks["send_email_product"].call_count)
+        mocks["send_email"].assert_not_called()
 
     def test_send_product_security_gate_notification_user_not_in_shared_email_addresses(self):
         mocks = self._patch_for_users()
@@ -610,25 +625,79 @@ class TestPushNotificationsSecurityGate(BaseTestCase):
             with self.captureOnCommitCallbacks(execute=True):
                 send_product_security_gate_notification(self.product_1)
 
-        expected_calls = [
-            call(
-                "team@example.com",
-                "Security gate for product product_1 has changed to Passed",
-                "email_product_security_gate.tpl",
-                product=self.product_1,
-                security_gate_status="Passed",
-                product_url="https://secobserve.com/#/products/1/show",
-                first_name="",
-            ),
-            call(
-                "jane@example.com",
-                "Security gate for product product_1 has changed to Passed",
-                "email_product_security_gate.tpl",
-                product=self.product_1,
-                security_gate_status="Passed",
-                product_url="https://secobserve.com/#/products/1/show",
-                first_name=" Jane",
-            ),
-        ]
-        mocks["send_email"].assert_has_calls(expected_calls)
-        self.assertEqual(2, mocks["send_email"].call_count)
+        mocks["send_email_product"].assert_called_once_with(
+            "team@example.com",
+            "Security gate for product product_1 has changed to Passed",
+            "email/product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="Passed",
+            product_url="https://secobserve.com/#/products/1/show",
+            first_name="",
+        )
+        mocks["send_email"].assert_called_once_with(
+            "jane@example.com",
+            "Security gate for product product_1 has changed to Passed",
+            "email/product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="Passed",
+            product_url="https://secobserve.com/#/products/1/show",
+            first_name=" Jane",
+        )
+
+    def test_send_product_security_gate_notification_user_webhooks(self):
+        mocks = self._patch_for_users()
+        user = User(
+            id=10,
+            username="jane@example.com",
+            email="jane@example.com",
+            first_name="Jane",
+            full_name="Jane Doe",
+            notification_email_active=False,
+            notification_ms_teams_active=True,
+            notification_ms_teams_webhook="https://example.com/ms_teams",
+            notification_slack_active=True,
+            notification_slack_webhook="https://example.com/slack",
+        )
+        mocks["get_users"].return_value = {user}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_security_gate_notification(self.product_1)
+
+        mocks["send_email"].assert_not_called()
+        mocks["send_msteams"].assert_called_once_with(
+            "https://example.com/ms_teams",
+            "msteams_v2/product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="Passed",
+            product_url="https://secobserve.com/#/products/1/show",
+            first_name=" Jane",
+        )
+        mocks["send_slack"].assert_called_once_with(
+            "https://example.com/slack",
+            "slack/product_security_gate.tpl",
+            product=self.product_1,
+            security_gate_status="Passed",
+            product_url="https://secobserve.com/#/products/1/show",
+            first_name=" Jane",
+        )
+
+    def test_send_product_security_gate_notification_user_webhook_of_the_product(self):
+        mocks = self._patch_for_users()
+        mocks["slack"].return_value = "https://example.com/slack"
+        user = User(
+            id=10,
+            username="jane@example.com",
+            email="jane@example.com",
+            first_name="Jane",
+            full_name="Jane Doe",
+            notification_email_active=False,
+            notification_slack_active=True,
+            notification_slack_webhook="https://example.com/slack",
+        )
+        mocks["get_users"].return_value = {user}
+
+        with self.captureOnCommitCallbacks(execute=True):
+            send_product_security_gate_notification(self.product_1)
+
+        # The webhook of the user is the shared webhook of the product, it is only notified once
+        mocks["send_slack"].assert_not_called()

@@ -15,7 +15,7 @@ import {
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
 import { is_superuser } from "../../commons/functions";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
+import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";
 import AuthorizationGroupMemberAdd from "./AuthorizationGroupMemberAdd";
 import AuthorizationGroupMemberEdit from "./AuthorizationGroupMemberEdit";
 import AuthorizationGroupMemberRemove from "./AuthorizationGroupMemberRemove";

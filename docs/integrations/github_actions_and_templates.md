@@ -409,6 +409,6 @@ importer:
 
 Some real life examples can be found in the SecObserve GitHub repository:
 
-* [so_configuration_code.yml](https://github.com/SecObserve/SecObserve/blob/main/so_configuration_code.yml)
-* [so_configuration_sca_dev.yml](https://github.com/SecObserve/SecObserve/blob/main/so_configuration_sca_dev.yml)
-* [so_configuration_endpoints.yml](https://github.com/SecObserve/SecObserve/blob/main/so_configuration_endpoints.yml)
+* [so_configuration_code.yml](https://github.com/SecObserve/SecObserve/blob/main/docs/examples/so_configuration_code.yml)
+* [so_configuration_sca_dev.yml](https://github.com/SecObserve/SecObserve/blob/main/docs/examples/so_configuration_sca_dev.yml)
+* [so_configuration_endpoints.yml](https://github.com/SecObserve/SecObserve/blob/main/docs/examples/so_configuration_endpoints.yml)

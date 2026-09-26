@@ -1,0 +1,96 @@
+name: "secobserve"
+
+networks:
+  secobserve:
+
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: ./docker/frontend/prod/Dockerfile
+    image: secobserve_frontend_playwright
+    depends_on:
+      backend:
+        condition: service_healthy
+    # The healthcheck itself comes from the image, only the timing is overridden here,
+    # to detect readiness faster than the 30s interval that is appropriate for production.
+    healthcheck:
+      interval: 2s
+      timeout: 5s
+      retries: 30
+      start_period: 2s
+    # Ports are not published, the tests reach the services via the internal network.
+    # Publish them temporarily if you want to debug a run from the host.
+    environment:
+      API_BASE_URL: http://backend:5000/api
+      OIDC_ENABLE: false
+      OIDC_AUTHORITY: dummy
+      OIDC_CLIENT_ID: dummy
+      OIDC_REDIRECT_URI: dummy
+      OIDC_POST_LOGOUT_REDIRECT_URI: dummy
+      OIDC_PROMPT: null
+
+    networks:
+      - secobserve
+
+  backend:
+    build:
+      context: ..
+      dockerfile: ./docker/backend/prod/django/Dockerfile
+    image: secobserve_backend_playwright
+    environment:
+      SO_END_TO_END_TESTS: true
+      # --- Admin user ---
+      ADMIN_USER: admin-user
+      ADMIN_PASSWORD: admin-password
+      ADMIN_EMAIL: admin@example.com
+      # --- Gunicorn ---
+      GUNICORN_WORKERS: 3
+      GUNICORN_THREADS: 10
+      GUNICORN_LIMIT_REQUEST_FIELD_SIZE: 16380
+      # --- Database ---
+      DATABASE_ENGINE: django.db.backends.sqlite3
+      # --- Security ---
+      ALLOWED_HOSTS: backend
+      CORS_ALLOWED_ORIGINS: http://frontend:3000
+      DJANGO_SECRET_KEY: NxYPEF5lNGgk3yonndjSbwP77uNJxOvfKTjF5aVBqsHktNlf1wfJHHvJ8iifk32r
+      FIELD_ENCRYPTION_KEY: DtlkqVb3wlaVdJK_BU-3mB4wwuuf8xx8YNInajiJ7GU=
+      # --- OpenID Connect ---
+      OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-}
+      OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-}
+      OIDC_USERNAME: ${SO_OIDC_USERNAME:-}
+      OIDC_FIRST_NAME: ${SO_OIDC_FIRST_NAME:-}
+      OIDC_LAST_NAME: ${SO_OIDC_LAST_NAME:-}
+      OIDC_FULL_NAME: ${SO_OIDC_FULL_NAME:-}
+      OIDC_EMAIL: ${SO_OIDC_EMAIL:-}
+      OIDC_GROUPS: ${SO_OIDC_GROUPS:-}
+    # The healthcheck itself comes from the image, only the timing is overridden here,
+    # to detect readiness faster than the 30s interval that is appropriate for production.
+    healthcheck:
+      interval: 2s
+      timeout: 5s
+      retries: 60
+      start_period: 5s
+    # Ports are not published, the tests reach the services via the internal network.
+    # Publish them temporarily if you want to debug a run from the host.
+    networks:
+      - secobserve
+
+
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.63.0
+    depends_on:
+      frontend:
+        condition: service_healthy
+    environment:
+      # Needed so that Playwright applies retries and forbidOnly when running in CI
+      - CI=${CI:-}
+      - SO_PW_FRONTEND_BASE_URL=http://frontend:3000
+      - SO_PW_USERNAME=admin-user
+      - SO_PW_PASSWORD=admin-password
+    working_dir: /end_to_end_tests
+    volumes:
+      - ../end_to_end_tests:/end_to_end_tests
+    entrypoint: ["npx", "playwright", "test"]
+    networks:
+      - secobserve

@@ -1,4 +1,4 @@
-import { getResolvedSettingTheme } from "../commons/user_settings/functions";
+import { getResolvedSettingTheme } from "../access_control/users/functions";
 
 export function getGridColor() {
     if (getResolvedSettingTheme() == "dark") {

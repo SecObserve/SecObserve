@@ -12,7 +12,7 @@ from application.notifications.services.product_notification import (
     get_users_for_product_notification,
 )
 from application.notifications.services.send_notifications_base import (
-    send_email_notification,
+    send_user_notification,
 )
 from application.notifications.services.tasks import handle_task_exception
 from application.notifications.types import Product_Notification_Type
@@ -22,13 +22,11 @@ from application.notifications.types import Product_Notification_Type
 def send_assessment_approval_notification(observation_log: Observation_Log) -> None:
     try:
         settings = Settings.load()
-        if not settings.email_from:
-            return
 
         first_line = f'Assessment for observation "{observation_log.observation.title}" needs approval'
 
         for user in _get_approvers_to_notify(observation_log):
-            _send_assessment_email(user, observation_log, first_line)
+            _send_assessment_notification(user, settings, observation_log, first_line)
     except Exception as e:
         handle_task_exception(e)
         raise
@@ -38,8 +36,6 @@ def send_assessment_approval_notification(observation_log: Observation_Log) -> N
 def send_assessment_approval_receipt_notification(observation_log: Observation_Log) -> None:
     try:
         settings = Settings.load()
-        if not settings.email_from:
-            return
 
         author = _get_author_to_notify(observation_log)
         if not author:
@@ -50,17 +46,20 @@ def send_assessment_approval_receipt_notification(observation_log: Observation_L
             f"has been {observation_log.assessment_status.lower()}"
         )
 
-        _send_assessment_email(author, observation_log, first_line)
+        _send_assessment_notification(author, settings, observation_log, first_line)
     except Exception as e:
         handle_task_exception(e)
         raise
 
 
-def _send_assessment_email(user: User, observation_log: Observation_Log, first_line: str) -> None:
-    send_email_notification(
-        user.email,
+def _send_assessment_notification(
+    user: User, settings: Settings, observation_log: Observation_Log, first_line: str
+) -> None:
+    send_user_notification(
+        user,
+        settings,
         first_line,
-        "email_assessment_approval.tpl",
+        "assessment_approval",
         observation=observation_log.observation,
         observation_log=observation_log,
         observation_log_url=f"{get_base_url_frontend()}#/observation_logs/{observation_log.pk}/show",

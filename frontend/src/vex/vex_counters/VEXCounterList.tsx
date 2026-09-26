@@ -2,9 +2,9 @@ import { Fragment } from "react";
 import { BulkDeleteButton, Datagrid, List, NumberField, NumberInput, TextField, TextInput } from "react-admin";
 
 import vex_counters from ".";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 
 const listFilters = [<TextInput source="document_id_prefix" alwaysOn />, <NumberInput source="year" alwaysOn />];
 

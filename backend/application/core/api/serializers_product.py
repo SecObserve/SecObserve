@@ -55,6 +55,10 @@ from application.core.services.assessment_approver import (
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
+from application.core.services.security_gate import (
+    evaluate_security_gate,
+    get_security_gate_thresholds,
+)
 from application.core.types import Assessment_Status, Status
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
@@ -120,17 +124,17 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["repository_branch_housekeeping_exempt_branches"] = ""
 
         if attrs.get("security_gate_active") is True:
-            if not attrs.get("security_gate_threshold_critical"):
+            if attrs.get("security_gate_threshold_critical") is None:
                 attrs["security_gate_threshold_critical"] = settings.security_gate_threshold_critical
-            if not attrs.get("security_gate_threshold_high"):
+            if attrs.get("security_gate_threshold_high") is None:
                 attrs["security_gate_threshold_high"] = settings.security_gate_threshold_high
-            if not attrs.get("security_gate_threshold_medium"):
+            if attrs.get("security_gate_threshold_medium") is None:
                 attrs["security_gate_threshold_medium"] = settings.security_gate_threshold_medium
-            if not attrs.get("security_gate_threshold_low"):
+            if attrs.get("security_gate_threshold_low") is None:
                 attrs["security_gate_threshold_low"] = settings.security_gate_threshold_low
-            if not attrs.get("security_gate_threshold_none"):
+            if attrs.get("security_gate_threshold_none") is None:
                 attrs["security_gate_threshold_none"] = settings.security_gate_threshold_none
-            if not attrs.get("security_gate_threshold_unknown"):
+            if attrs.get("security_gate_threshold_unknown") is None:
                 attrs["security_gate_threshold_unknown"] = settings.security_gate_threshold_unknown
 
         if attrs.get("security_gate_active") is False:
@@ -847,6 +851,7 @@ class BranchSerializer(ModelSerializer):
     unknown_licenses_count = IntegerField(read_only=True)
     allowed_licenses_count = IntegerField(read_only=True)
     ignored_licenses_count = IntegerField(read_only=True)
+    security_gate_passed = SerializerMethodField()
 
     def validate_purl(self, purl: str) -> str:
         return validate_purl(purl)
@@ -856,6 +861,17 @@ class BranchSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
+
+    def get_security_gate_passed(self, obj: Branch) -> Optional[bool]:
+        # Responses of create and update are not annotated with the observation counts
+        if getattr(obj, "active_critical_observation_count", None) is None:
+            return None
+
+        thresholds = get_security_gate_thresholds(obj.product)
+        if thresholds is None:
+            return None
+
+        return evaluate_security_gate(obj, thresholds)
 
     class Meta:
         model = Branch

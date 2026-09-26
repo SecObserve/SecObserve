@@ -10,10 +10,10 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { VEX_STATUS_CHOICES } from "../types";
 
 const ShowVEXStatement = (id: any) => {

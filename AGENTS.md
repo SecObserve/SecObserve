@@ -177,7 +177,7 @@ prettier -w src
 On Macs with Apple Silicon, start the development stack with the ARM override file in addition to the standard development file:
 
 ```bash
-docker compose -f docker-compose-dev.yml -f docker-compose-dev-arm.yaml up --build
+docker compose -f docker-compose/docker-compose-dev.yml -f docker-compose/docker-compose-dev-arm.yaml up --build
 ```
 
 The override (`docker-compose-dev-arm.yaml`) runs the frontend, backend and PostgreSQL services with `platform: linux/arm64/v8`.

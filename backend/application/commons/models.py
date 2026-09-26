@@ -224,6 +224,11 @@ class Settings(Model, DirtyFieldsMixin):
     )
     vulnerablecode_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
     # We treat EncryptedCharField as a regular CharField
+    vulnerablecode_cache_ttl_hours = IntegerField(
+        default=23,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
+        help_text="Time to live for VulnerableCode cache in hours",
+    )
     feature_exploit_information = BooleanField(default=True, help_text="Enable CVSS enrichment")
     exploit_information_max_age_years = IntegerField(
         default=10,
@@ -244,6 +249,12 @@ class Settings(Model, DirtyFieldsMixin):
     oidc_strict_audience = BooleanField(
         default=True,
         help_text="Require the audience claim of OIDC tokens to be a single string matching the client id",
+    )
+    oidc_api_token_max_authentication_age = IntegerField(
+        default=5,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
+        help_text="Maximum age in minutes of the OIDC authentication to create or revoke a user API token, "
+        "0 disables the check",
     )
 
     observation_count_from_metrics = BooleanField(default=False)

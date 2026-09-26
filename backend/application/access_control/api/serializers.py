@@ -148,6 +148,11 @@ class UserSerializer(UserListSerializer):
             "has_product_members",
             "has_api_tokens",
             "has_product_notifications",
+            "notification_email_active",
+            "notification_ms_teams_active",
+            "notification_slack_active",
+            "notification_ms_teams_webhook",
+            "notification_slack_webhook",
         ]
 
     def to_representation(self, instance: User) -> dict[str, Any]:
@@ -160,6 +165,15 @@ class UserSerializer(UserListSerializer):
             data.pop("has_product_members")
             data.pop("has_api_tokens")
             data.pop("has_product_notifications")
+            data.pop("notification_email_active")
+            data.pop("notification_ms_teams_active")
+            data.pop("notification_slack_active")
+
+        # Webhooks are personal credentials, they are not disclosed to other users,
+        # not even to superusers
+        if user and user.pk != instance.pk:
+            data.pop("notification_ms_teams_webhook", None)
+            data.pop("notification_slack_webhook", None)
 
         return data
 
@@ -288,7 +302,33 @@ class UserSettingsSerializer(ModelSerializer):
             "setting_package_info_preference",
             "setting_metrics_timespan",
             "setting_rows_per_page",
+            "email",
+            "notification_email_active",
+            "notification_ms_teams_active",
+            "notification_slack_active",
+            "notification_ms_teams_webhook",
+            "notification_slack_webhook",
         ]
+
+    def validate(self, attrs: dict) -> dict:
+        self.instance: User
+
+        if self.instance.is_oidc_user and "email" in attrs and attrs["email"] != self.instance.email:
+            raise ValidationError({"email": "Cannot be changed for an OIDC user"})
+
+        # A channel can only be activated when its email address or webhook URL is set, either by
+        # this request or before it. Only the channels this request switches on are checked,
+        # otherwise a user without an email address could not save any settings at all, because
+        # notification_email_active is switched on by default.
+        for active_field, value_field, value_name in (
+            ("notification_email_active", "email", "an email address"),
+            ("notification_ms_teams_active", "notification_ms_teams_webhook", "a webhook"),
+            ("notification_slack_active", "notification_slack_webhook", "a webhook"),
+        ):
+            if attrs.get(active_field) and not attrs.get(value_field, getattr(self.instance, value_field)):
+                raise ValidationError({active_field: f"Cannot be activated without {value_name}"})
+
+        return attrs
 
 
 class AuthenticationRequestSerializer(Serializer):
@@ -329,8 +369,10 @@ class ApiTokenSerializer(ModelSerializer):
 
 
 class ApiTokenCreateRequestSerializer(Serializer):
-    username = CharField(max_length=150, required=True)
-    password = CharField(max_length=128, required=True)
+    # username and password are only needed if the request is not authenticated
+    # with an OIDC token in the Authorization header.
+    username = CharField(max_length=150, required=False)
+    password = CharField(max_length=128, required=False)
     name = CharField(max_length=255, required=True)
     expiration_date = DateField(required=False, allow_null=True)
 
@@ -345,6 +387,8 @@ class ApiTokenCreateResponseSerializer(Serializer):
 
 
 class ApiTokenRevokeRequestSerializer(Serializer):
-    username = CharField(max_length=150, required=True)
-    password = CharField(max_length=128, required=True)
+    # username and password are only needed if the request is not authenticated
+    # with an OIDC token in the Authorization header.
+    username = CharField(max_length=150, required=False)
+    password = CharField(max_length=128, required=False)
     name = CharField(max_length=255, required=True)

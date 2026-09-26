@@ -4,9 +4,9 @@ import { marked } from "marked";
 import { Fragment, HTMLAttributes } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 
+import { getResolvedSettingTheme } from "../../access_control/users/functions";
 import { useLinkStyles } from "../../commons/layout/themes";
 import { getPrismTheme } from "../functions";
-import { getResolvedSettingTheme } from "../user_settings/functions";
 import LabeledTextField from "./LabeledTextField";
 
 declare global {

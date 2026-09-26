@@ -13,9 +13,9 @@ import {
     PERMISSION_PRODUCT_MEMBER_EDIT,
     ROLE_CHOICES,
 } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { UserFullNameURLField } from "../../commons/custom_fields/UserFullNameURLField";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import ProductMemberDelete from "./ProductMemberDelete";
 import ProductMemberEdit from "./ProductMemberEdit";
 

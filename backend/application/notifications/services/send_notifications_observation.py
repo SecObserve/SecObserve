@@ -20,10 +20,11 @@ from application.notifications.services.send_notifications_base import (
     _get_notification_email_to,
     _get_notification_ms_teams_webhook,
     _get_notification_slack_webhook,
-    is_msteams_v2,
+    get_msteams_template,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
+    send_user_notification,
 )
 from application.notifications.services.tasks import handle_task_exception
 from application.notifications.types import Product_Notification_Type
@@ -115,7 +116,7 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
             send_email_notification(
                 email_to_address,
                 first_line,
-                "email_observation.tpl",
+                "email/observation.tpl",
                 observation=observation,
                 observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
                 first_line=first_line,
@@ -123,11 +124,11 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
             )
             notified_email_addresses.add(email_to_address.lower())
 
+    notified_webhooks: set[str] = set()
+
     notification_ms_teams_webhook = _get_notification_ms_teams_webhook(observation.product)
     if notification_ms_teams_webhook:
-        template = (
-            "msteams_v2_observation.tpl" if is_msteams_v2(notification_ms_teams_webhook) else "msteams_observation.tpl"
-        )
+        template = get_msteams_template(notification_ms_teams_webhook, "observation")
         send_msteams_notification(
             notification_ms_teams_webhook,
             template,
@@ -135,35 +136,33 @@ def _send_observation_notifications(observation: Observation, first_line: str) -
             observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
             first_line=first_line,
         )
+        notified_webhooks.add(notification_ms_teams_webhook)
 
     notification_slack_webhook = _get_notification_slack_webhook(observation.product)
     if notification_slack_webhook:
         send_slack_notification(
             notification_slack_webhook,
-            "slack_observation.tpl",
+            "slack/observation.tpl",
             observation=observation,
             observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
             first_line=first_line,
         )
+        notified_webhooks.add(notification_slack_webhook)
 
-    if settings.email_from:
-        users = get_users_for_product_notification(
-            observation.product, Product_Notification_Type.OBSERVATION_NEW_CHANGED
+    users = get_users_for_product_notification(observation.product, Product_Notification_Type.OBSERVATION_NEW_CHANGED)
+    for user in users:
+        send_user_notification(
+            user,
+            settings,
+            first_line,
+            "observation",
+            notified_email_addresses=notified_email_addresses,
+            notified_webhooks=notified_webhooks,
+            observation=observation,
+            observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
+            first_line=first_line,
+            first_name=f" {user.first_name}" if user.first_name else f" {user.full_name}",
         )
-        for user in users:
-            # The user has already been notified through the shared email addresses of the product
-            if user.email.lower() in notified_email_addresses:
-                continue
-
-            send_email_notification(
-                user.email,
-                first_line,
-                "email_observation.tpl",
-                observation=observation,
-                observation_url=f"{get_base_url_frontend()}#/observations/{observation.pk}/show",
-                first_line=first_line,
-                first_name=f" {user.first_name}" if user.first_name else f" {user.full_name}",
-            )
 
     first_line = first_line.replace(f' "{observation.title}"', "")
 

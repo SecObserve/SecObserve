@@ -34,7 +34,7 @@ import { basicDark } from "cm6-theme-basic-dark";
 import { basicLight } from "cm6-theme-basic-light";
 import { Labeled } from "react-admin";
 
-import { getTheme } from "../user_settings/functions";
+import { getTheme } from "../../access_control/users/functions";
 import "./MarkdownEdit.css";
 
 interface MarkdownEditProps {

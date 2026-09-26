@@ -1,0 +1,111 @@
+name: "secobserve_prod"
+
+volumes:
+  prod_mysql_data:
+
+networks:
+  traefik:
+  database:
+
+services:
+
+  traefik:
+    image: "traefik:v3.7.13"
+    container_name: "prod_traefik"
+    command:
+      - "--log.level=INFO"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=secobserve_prod_traefik"
+      - "--entrypoints.web.address=:80"
+    labels:
+      - "traefik.enable=true"
+      # - "traefik.http.middlewares.traefik-ipallowlist.ipallowlist.sourcerange=172.18.0.1/24"
+      # - "traefik.http.routers.api.middlewares=traefik-ipallowlist@docker"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.routers.api.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.api.service=api@internal"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - default
+      - traefik
+
+  frontend:
+    image: ghcr.io/secobserve/secobserve-frontend:1.60.0
+    container_name: "prod_secobserve_frontend"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`secobserve.localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    environment:
+      API_BASE_URL: ${SO_API_BASE_URL:-http://secobserve-backend.localhost/api}
+      OIDC_ENABLE: ${SO_OIDC_ENABLE:-false}
+      OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-dummy}
+      OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-dummy}
+      OIDC_REDIRECT_URI: ${SO_OIDC_REDIRECT_URI:-http://secobserve.localhost}
+      OIDC_POST_LOGOUT_REDIRECT_URI: ${SO_OIDC_POST_LOGOUT_REDIRECT_URI:-http://secobserve.localhost}
+      OIDC_SCOPE: ${SO_OIDC_SCOPE:-openid profile email}
+      OIDC_PROMPT: ${SO_OIDC_PROMPT:-}
+    networks:
+      - traefik
+
+  backend:
+    image: ghcr.io/secobserve/secobserve-backend:1.60.0
+    container_name: "prod_secobserve_backend"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`secobserve-backend.localhost`)"
+      - "traefik.http.routers.backend.entrypoints=web"
+    depends_on:
+      - mysql
+    environment:
+      # --- Admin user ---
+      ADMIN_USER: ${SO_ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${SO_ADMIN_PASSWORD:-admin}
+      ADMIN_EMAIL: ${SO_ADMIN_EMAIL:-admin@example.com}
+      # --- Gunicorn ---
+      GUNICORN_WORKERS: ${SO_GUNICORN_WORKERS:-3}
+      GUNICORN_THREADS: ${SO_GUNICORN_THREADS:-10}
+      GUNICORN_LIMIT_REQUEST_FIELD_SIZE: ${SO_GUNICORN_LIMIT_REQUEST_FIELD_SIZE:-16380}
+      # --- Database ---
+      DATABASE_ENGINE: ${SO_DATABASE_ENGINE:-django.db.backends.mysql}
+      DATABASE_HOST: ${SO_DATABASE_HOST:-mysql}
+      DATABASE_PORT: ${SO_DATABASE_PORT:-3306}
+      DATABASE_DB: ${SO_DATABASE_DB:-secobserve}
+      DATABASE_USER: ${SO_DATABASE_USER:-secobserve}
+      DATABASE_PASSWORD: ${SO_DATABASE_PASSWORD:-secobserve}
+      # --- Security ---
+      ALLOWED_HOSTS: ${SO_ALLOWED_HOSTS:-secobserve-backend.localhost}
+      CORS_ALLOWED_ORIGINS: ${SO_CORS_ALLOWED_ORIGINS:-http://secobserve.localhost}
+      DJANGO_SECRET_KEY: ${SO_DJANGO_SECRET_KEY:-NxYPEF5lNGgk3yonndjSbwP77uNJxOvfKTjF5aVBqsHktNlf1wfJHHvJ8iifk32r}
+      FIELD_ENCRYPTION_KEY: ${SO_FIELD_ENCRYPTION_KEY:-DtlkqVb3wlaVdJK_BU-3mB4wwuuf8xx8YNInajiJ7GU=}
+      # --- OpenID Connect ---
+      OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-}
+      OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-}
+      OIDC_USERNAME: ${SO_OIDC_USERNAME:-}
+      OIDC_FIRST_NAME: ${SO_OIDC_FIRST_NAME:-}
+      OIDC_LAST_NAME: ${SO_OIDC_LAST_NAME:-}
+      OIDC_FULL_NAME: ${SO_OIDC_FULL_NAME:-}
+      OIDC_EMAIL: ${SO_OIDC_EMAIL:-}
+      OIDC_GROUPS: ${SO_OIDC_GROUPS:-}
+    networks:
+      - traefik
+      - database
+
+  mysql:
+    image: mysql:8.4.11
+    container_name: "prod_mysql"
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: ${SO_MYSQL_RANDOM_ROOT_PASSWORD:-yes}
+      MYSQL_DATABASE: ${SO_MYSQL_DATABASE:-secobserve}
+      MYSQL_USER: ${SO_MYSQL_USER:-secobserve}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secobserve}
+    volumes:
+      - prod_mysql_data:/var/lib/mysql
+    networks:
+      - database

@@ -67,7 +67,7 @@ class TestOIDCAuthentication(BaseTestCase):
 
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._validate_jwt")
     def test_authenticate_user_deactivated(self, mock):
-        mock.return_value = self.user_internal
+        mock.return_value = (self.user_internal, {"preferred_username": self.user_internal.username})
         self.user_internal.is_active = False
 
         with self.assertRaises(AuthenticationFailed) as e:
@@ -82,14 +82,16 @@ class TestOIDCAuthentication(BaseTestCase):
 
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._validate_jwt")
     def test_authenticate_successful(self, mock):
-        mock.return_value = self.user_internal
+        expected_payload = {"preferred_username": self.user_internal.username, "auth_time": 1234567890}
+        mock.return_value = (self.user_internal, expected_payload)
 
         request = HttpRequest()
         request.META["HTTP_AUTHORIZATION"] = b"Bearer token"
         oidc_authentication = OIDCAuthentication()
-        user, _ = oidc_authentication.authenticate(request)
+        user, payload = oidc_authentication.authenticate(request)
 
         self.assertEqual(self.user_internal, user)
+        self.assertEqual(expected_payload, payload)
 
     # --- authenticate_header ---
 
@@ -113,6 +115,7 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 9
         settings.oidc_strict_audience = True
+        settings.save()
 
         with self.assertRaises(AuthenticationFailed) as e:
             oidc_authentication = OIDCAuthentication()
@@ -155,6 +158,7 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 0
         settings.oidc_strict_audience = False
+        settings.save()
 
         with self.assertRaises(AuthenticationFailed):
             oidc_authentication = OIDCAuthentication()
@@ -204,11 +208,13 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 7
         settings.oidc_strict_audience = True
+        settings.save()
 
         oidc_authentication = OIDCAuthentication()
-        user = oidc_authentication._validate_jwt("token")
+        user, payload = oidc_authentication._validate_jwt("token")
 
         self.assertEqual(user, expected_user)
+        self.assertEqual({"preferred_username": "test_username"}, payload)
         get_user_mock.assert_called_with("test_username")
         jwks_uri_mock.assert_called_once()
         pyjwkclient_mock.assert_called_once_with("test_jwks_uri")
@@ -257,11 +263,13 @@ class TestOIDCAuthentication(BaseTestCase):
         settings = Settings.load()
         settings.oidc_clock_skew = 5
         settings.oidc_strict_audience = True
+        settings.save()
 
         oidc_authentication = OIDCAuthentication()
-        user = oidc_authentication._validate_jwt("token")
+        user, payload = oidc_authentication._validate_jwt("token")
 
         self.assertEqual(self.user_internal, user)
+        self.assertEqual({"preferred_username": self.user_internal.username}, payload)
         get_user_mock.assert_called_with(self.user_internal.username)
         jwks_uri_mock.assert_called_once()
         pyjwkclient_mock.assert_called_once_with("test_jwks_uri")

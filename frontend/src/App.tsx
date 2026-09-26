@@ -10,6 +10,8 @@ import { oidcConfig, updateRefreshToken } from "./access_control/auth_provider/o
 import authorization_groups from "./access_control/authorization_groups";
 import { Login } from "./access_control/login";
 import users from "./access_control/users";
+import UserSettings from "./access_control/users/UserSettings";
+import { getTheme } from "./access_control/users/functions";
 import BackgroundTasksAdministration from "./background_tasks/background_tasks_administration/BackgroundTasksAdministration";
 import periodic_tasks from "./background_tasks/periodic_tasks";
 import { Layout } from "./commons/layout";
@@ -18,8 +20,6 @@ import PivotTable from "./commons/pivot_table/PivotTable";
 import { queryClient } from "./commons/queryClient";
 import drfProvider from "./commons/ra-data-django-rest-framework";
 import settings from "./commons/settings";
-import UserSettings from "./commons/user_settings/UserSettings";
-import { getTheme } from "./commons/user_settings/functions";
 import components from "./core/components";
 import evidences from "./core/evidences";
 import observation_logs from "./core/observation_logs";

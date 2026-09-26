@@ -464,7 +464,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             call(
                 "test1@example.com",
                 first_line,
-                "email_observation.tpl",
+                "email/observation.tpl",
                 observation=self.observation_1,
                 observation_url="https://secobserve.com/#/observations/1/show",
                 first_line=first_line,
@@ -473,7 +473,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             call(
                 "test2@example.com",
                 first_line,
-                "email_observation.tpl",
+                "email/observation.tpl",
                 observation=self.observation_1,
                 observation_url="https://secobserve.com/#/observations/1/show",
                 first_line=first_line,
@@ -483,14 +483,14 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_send_email.assert_has_calls(expected_calls_email)
         mock_send_teams.assert_called_with(
             "https://msteams.microsoft.com",
-            "msteams_v2_observation.tpl",
+            "msteams_v2/observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/1/show",
             first_line=first_line,
         )
         mock_send_slack.assert_called_with(
             "https://secobserve.slack.com",
-            "slack_observation.tpl",
+            "slack/observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/1/show",
             first_line=first_line,
@@ -518,9 +518,20 @@ class TestPushNotificationsObservation(BaseTestCase):
                 "application.notifications.services.send_notifications_observation."
                 "get_users_for_product_notification"
             ),
-            "send_email": patch(
+            "send_email": patch("application.notifications.services.send_notifications_base.send_email_notification"),
+            "send_email_product": patch(
                 "application.notifications.services.send_notifications_observation.send_email_notification"
             ),
+            "send_msteams_product": patch(
+                "application.notifications.services.send_notifications_observation.send_msteams_notification"
+            ),
+            "send_slack_product": patch(
+                "application.notifications.services.send_notifications_observation.send_slack_notification"
+            ),
+            "send_msteams": patch(
+                "application.notifications.services.send_notifications_base.send_msteams_notification"
+            ),
+            "send_slack": patch("application.notifications.services.send_notifications_base.send_slack_notification"),
             "base_url": patch(
                 "application.notifications.services.send_notifications_observation.get_base_url_frontend"
             ),
@@ -572,7 +583,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             first_line,
-            "email_observation.tpl",
+            "email/observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/1/show",
             first_line=first_line,
@@ -590,7 +601,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mocks["send_email"].assert_called_once_with(
             "jane@example.com",
             first_line,
-            "email_observation.tpl",
+            "email/observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/1/show",
             first_line=first_line,
@@ -614,7 +625,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             call(
                 "jane@example.com",
                 first_line,
-                "email_observation.tpl",
+                "email/observation.tpl",
                 observation=self.observation_1,
                 observation_url="https://secobserve.com/#/observations/1/show",
                 first_line=first_line,
@@ -623,7 +634,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             call(
                 "john@example.com",
                 first_line,
-                "email_observation.tpl",
+                "email/observation.tpl",
                 observation=self.observation_1,
                 observation_url="https://secobserve.com/#/observations/1/show",
                 first_line=first_line,
@@ -660,7 +671,8 @@ class TestPushNotificationsObservation(BaseTestCase):
 
         _send_observation_notifications(self.observation_1, first_line)
 
-        mocks["get_users"].assert_not_called()
+        # The users are still determined, because they might want to be notified through a webhook
+        mocks["get_users"].assert_called_once()
         mocks["send_email"].assert_not_called()
 
     def test_send_observation_notifications_user_in_shared_email_addresses(self):
@@ -678,15 +690,17 @@ class TestPushNotificationsObservation(BaseTestCase):
             mock_get_first_name.return_value = " Jane"
             _send_observation_notifications(self.observation_1, first_line)
 
-        mocks["send_email"].assert_called_once_with(
+        mocks["send_email_product"].assert_called_once_with(
             "jane@example.com",
             first_line,
-            "email_observation.tpl",
+            "email/observation.tpl",
             observation=self.observation_1,
             observation_url="https://secobserve.com/#/observations/1/show",
             first_line=first_line,
             first_name=" Jane",
         )
+        # The user has already been notified through the shared email addresses of the product
+        mocks["send_email"].assert_not_called()
 
     def test_send_observation_notifications_user_in_shared_email_addresses_different_case(self):
         mocks = self._patch_for_users()
@@ -703,7 +717,8 @@ class TestPushNotificationsObservation(BaseTestCase):
             mock_get_first_name.return_value = " Jane"
             _send_observation_notifications(self.observation_1, first_line)
 
-        self.assertEqual(1, mocks["send_email"].call_count)
+        self.assertEqual(1, mocks["send_email_product"].call_count)
+        mocks["send_email"].assert_not_called()
 
     def test_send_observation_notifications_user_not_in_shared_email_addresses(self):
         mocks = self._patch_for_users()
@@ -720,28 +735,24 @@ class TestPushNotificationsObservation(BaseTestCase):
             mock_get_first_name.return_value = ""
             _send_observation_notifications(self.observation_1, first_line)
 
-        expected_calls = [
-            call(
-                "team@example.com",
-                first_line,
-                "email_observation.tpl",
-                observation=self.observation_1,
-                observation_url="https://secobserve.com/#/observations/1/show",
-                first_line=first_line,
-                first_name="",
-            ),
-            call(
-                "jane@example.com",
-                first_line,
-                "email_observation.tpl",
-                observation=self.observation_1,
-                observation_url="https://secobserve.com/#/observations/1/show",
-                first_line=first_line,
-                first_name=" Jane",
-            ),
-        ]
-        mocks["send_email"].assert_has_calls(expected_calls)
-        self.assertEqual(2, mocks["send_email"].call_count)
+        mocks["send_email_product"].assert_called_once_with(
+            "team@example.com",
+            first_line,
+            "email/observation.tpl",
+            observation=self.observation_1,
+            observation_url="https://secobserve.com/#/observations/1/show",
+            first_line=first_line,
+            first_name="",
+        )
+        mocks["send_email"].assert_called_once_with(
+            "jane@example.com",
+            first_line,
+            "email/observation.tpl",
+            observation=self.observation_1,
+            observation_url="https://secobserve.com/#/observations/1/show",
+            first_line=first_line,
+            first_name=" Jane",
+        )
 
     # --- _get_observation_notification_statuses ---
 

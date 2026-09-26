@@ -1,12 +1,23 @@
+import os
 from datetime import date
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.urls import reverse
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import (
+    AuthenticationFailed,
+    PermissionDenied,
+    ValidationError,
+)
 from rest_framework.test import APIClient
 
 from application.access_control.api.views import _get_authenticated_user
+from application.access_control.models import User
+from application.access_control.services.oidc_reauthentication import (
+    OIDC_CODE_AUTH_TIME_MISSING,
+    OIDC_CODE_REAUTHENTICATION_REQUIRED,
+    OIDCReauthenticationRequired,
+)
 from unittests.base_test_case import BaseTestCase
 
 
@@ -77,6 +88,101 @@ class TestAPIToken(BaseTestCase):
         user_mock.assert_called_with(request_data)
         api_mock.assert_called_with(self.user_internal, "api_token_name", None)
 
+    # --- create_user_api_token with OIDC ---
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_successful(self, api_mock, oidc_mock):
+        api_mock.return_value = "api_token"
+        oidc_mock.return_value = (self.user_internal, {"auth_time": 1234567890})
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(201, response.status_code)
+        self.assertEqual("api_token", response.data["token"])
+        api_mock.assert_called_with(self.user_internal, "api_token_name", None)
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_reauthentication_required(self, api_mock, oidc_mock):
+        oidc_mock.side_effect = OIDCReauthenticationRequired(
+            OIDC_CODE_REAUTHENTICATION_REQUIRED, "The authentication is too old"
+        )
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(OIDC_CODE_REAUTHENTICATION_REQUIRED, response.data["code"])
+        self.assertEqual("The authentication is too old", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_auth_time_missing(self, api_mock, oidc_mock):
+        oidc_mock.side_effect = OIDCReauthenticationRequired(OIDC_CODE_AUTH_TIME_MISSING, "No auth_time claim")
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(OIDC_CODE_AUTH_TIME_MISSING, response.data["code"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_oidc_username_mismatch(self, api_mock, oidc_mock):
+        oidc_mock.return_value = (self.user_internal, {"auth_time": 1234567890})
+
+        api_client = APIClient()
+        request_data = {"username": "another_user@example.com", "name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Username does not match the authenticated user", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views._get_authenticated_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_api_token_header_uses_password(self, api_mock, user_mock):
+        # A leaked API token must not be able to create new API tokens,
+        # only the Authorization header with an OIDC token is accepted.
+        api_mock.return_value = "api_token"
+        user_mock.return_value = self.user_internal
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "not-so-secret", "name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="APIToken api_token_secret"
+        )
+
+        self.assertEqual(201, response.status_code)
+        user_mock.assert_called_with(request_data)
+
+    @patch.dict(os.environ, {"OIDC_AUTHORITY": ""})
+    def test_create_api_token_view_bearer_header_without_oidc(self):
+        # Without OIDC configured, a Bearer header must not lead to an internal server error
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("create_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+
     # --- revoke_user_api_token ---
 
     @patch("application.access_control.api.views._get_authenticated_user")
@@ -103,6 +209,239 @@ class TestAPIToken(BaseTestCase):
         self.assertEqual(204, response.status_code)
         user_mock.assert_called_with(request_data)
         revoke_mock.assert_called_with(self.user_internal, "api_token_name")
+
+    # --- revoke_user_api_token with OIDC ---
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_oidc_successful(self, revoke_mock, oidc_mock):
+        oidc_mock.return_value = (self.user_internal, {"auth_time": 1234567890})
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("revoke_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(204, response.status_code)
+        revoke_mock.assert_called_with(self.user_internal, "api_token_name")
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_oidc_reauthentication_required(self, revoke_mock, oidc_mock):
+        oidc_mock.side_effect = OIDCReauthenticationRequired(
+            OIDC_CODE_REAUTHENTICATION_REQUIRED, "The authentication is too old"
+        )
+
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("revoke_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual(OIDC_CODE_REAUTHENTICATION_REQUIRED, response.data["code"])
+        revoke_mock.assert_not_called()
+
+    @patch.dict(os.environ, {"OIDC_AUTHORITY": ""})
+    def test_revoke_api_token_view_bearer_header_without_oidc(self):
+        # Without OIDC configured, a Bearer header must not lead to an internal server error
+        api_client = APIClient()
+        request_data = {"name": "api_token_name"}
+        response = api_client.post(
+            reverse("revoke_user_api_token"), request_data, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+
+
+class TestAPITokenAuthenticationRequired(BaseTestCase):
+    """Creating and revoking a user API token needs either username and password or an
+    OIDC token, everything else has to be refused.
+
+    These tests deliberately do not mock `_get_authenticated_user` or `django_authenticate`,
+    so that the credentials are really checked and not only the handling of a refusal.
+    """
+
+    PASSWORD = "not-so-secret-password"  # nosec B105
+    # eliminate false positive, the password is only used for a user in the test database
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.user_with_password = User.objects.create_user(
+            username="user_with_password@example.com", password=self.PASSWORD
+        )
+
+    # --- no credentials at all ---
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_without_credentials(self, api_mock):
+        api_client = APIClient()
+        response = api_client.post(reverse("create_user_api_token"), {"name": "api_token_name"}, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_without_credentials(self, revoke_mock):
+        api_client = APIClient()
+        response = api_client.post(reverse("revoke_user_api_token"), {"name": "api_token_name"}, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        revoke_mock.assert_not_called()
+
+    # --- wrong password ---
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_wrong_password(self, api_mock):
+        api_client = APIClient()
+        request_data = {
+            "username": self.user_with_password.username,
+            "password": "wrong-password",
+            "name": "api_token_name",
+        }
+        response = api_client.post(reverse("create_user_api_token"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_wrong_password(self, revoke_mock):
+        api_client = APIClient()
+        request_data = {
+            "username": self.user_with_password.username,
+            "password": "wrong-password",
+            "name": "api_token_name",
+        }
+        response = api_client.post(reverse("revoke_user_api_token"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        revoke_mock.assert_not_called()
+
+    # --- correct password, to show that the tests above do not refuse everything ---
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_correct_password(self, api_mock):
+        api_mock.return_value = "api_token"
+
+        api_client = APIClient()
+        request_data = {
+            "username": self.user_with_password.username,
+            "password": self.PASSWORD,
+            "name": "api_token_name",
+        }
+        response = api_client.post(reverse("create_user_api_token"), request_data, "json")
+
+        self.assertEqual(201, response.status_code)
+        api_mock.assert_called_with(self.user_with_password, "api_token_name", None)
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_correct_password(self, revoke_mock):
+        api_client = APIClient()
+        request_data = {
+            "username": self.user_with_password.username,
+            "password": self.PASSWORD,
+            "name": "api_token_name",
+        }
+        response = api_client.post(reverse("revoke_user_api_token"), request_data, "json")
+
+        self.assertEqual(204, response.status_code)
+        revoke_mock.assert_called_with(self.user_with_password, "api_token_name")
+
+    # --- other Authorization headers must not replace the password ---
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_jwt_header_without_password(self, api_mock):
+        # A JWT of a signed in user must not be able to create an API token without a password
+        api_client = APIClient()
+        response = api_client.post(
+            reverse("create_user_api_token"),
+            {"name": "api_token_name"},
+            "json",
+            HTTP_AUTHORIZATION="JWT jwt_of_the_user",
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_api_token_header_without_password(self, api_mock):
+        # A leaked API token must not be able to create further API tokens
+        api_client = APIClient()
+        response = api_client.post(
+            reverse("create_user_api_token"),
+            {"name": "api_token_name"},
+            "json",
+            HTTP_AUTHORIZATION="APIToken api_token_secret",
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_jwt_header_without_password(self, revoke_mock):
+        api_client = APIClient()
+        response = api_client.post(
+            reverse("revoke_user_api_token"),
+            {"name": "api_token_name"},
+            "json",
+            HTTP_AUTHORIZATION="JWT jwt_of_the_user",
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        revoke_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_api_token_header_without_password(self, revoke_mock):
+        api_client = APIClient()
+        response = api_client.post(
+            reverse("revoke_user_api_token"),
+            {"name": "api_token_name"},
+            "json",
+            HTTP_AUTHORIZATION="APIToken api_token_secret",
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        revoke_mock.assert_not_called()
+
+    # --- invalid OIDC token ---
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_create_api_token_view_invalid_oidc_token(self, api_mock, oidc_mock):
+        oidc_mock.side_effect = AuthenticationFailed("Invalid token.")
+
+        api_client = APIClient()
+        response = api_client.post(
+            reverse("create_user_api_token"), {"name": "api_token_name"}, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid token.", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_revoke_api_token_view_invalid_oidc_token(self, revoke_mock, oidc_mock):
+        oidc_mock.side_effect = AuthenticationFailed("Invalid token.")
+
+        api_client = APIClient()
+        response = api_client.post(
+            reverse("revoke_user_api_token"), {"name": "api_token_name"}, "json", HTTP_AUTHORIZATION="Bearer token"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid token.", response.data["message"])
+        revoke_mock.assert_not_called()
 
 
 class TestAuthenticate(BaseTestCase):
@@ -322,3 +661,119 @@ class TestChangePassword(BaseTestCase):
         django_authenticate_mock.assert_called_with(username="user_admin@example.com", password="current")
         save_mock.assert_called()
         set_password_mock.assert_called_with("new")
+
+
+class TestMySettings(BaseTestCase):
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_email_active_without_email(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_email_active": True}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "Notification email active: Cannot be activated without an email address", response.data["message"]
+        )
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_ms_teams_active_without_webhook(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_ms_teams_active": True}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(
+            "Notification ms teams active: Cannot be activated without a webhook", response.data["message"]
+        )
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_slack_active_without_webhook(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_slack_active": True}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Notification slack active: Cannot be activated without a webhook", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_channel_activated_with_webhook(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        request_data = {
+            "notification_slack_webhook": "https://example.com/slack",
+            "notification_slack_active": True,
+        }
+        response = api_client.patch("/api/users/my_settings/", request_data, "json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("https://example.com/slack", self.user_internal.notification_slack_webhook)
+        self.assertTrue(self.user_internal.notification_slack_active)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_channel_activated_with_stored_webhook(self, save_mock, authentication_mock):
+        """The webhook does not have to be part of the request, it can have been stored before."""
+        self.user_internal.notification_slack_webhook = "https://example.com/slack"
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"notification_slack_active": True}, "json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertTrue(self.user_internal.notification_slack_active)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_email_of_oidc_user(self, save_mock, authentication_mock):
+        self.user_internal.is_oidc_user = True
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"email": "changed@example.com"}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Email: Cannot be changed for an OIDC user", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_unchanged_email_of_oidc_user(self, save_mock, authentication_mock):
+        self.user_internal.is_oidc_user = True
+        self.user_internal.email = "oidc@example.com"
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"email": "oidc@example.com"}, "json")
+
+        self.assertEqual(200, response.status_code)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_email_successful(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        request_data = {
+            "email": "internal@example.com",
+            "notification_email_active": True,
+        }
+        response = api_client.patch("/api/users/my_settings/", request_data, "json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("internal@example.com", self.user_internal.email)
+        self.assertTrue(self.user_internal.notification_email_active)
+        save_mock.assert_called()

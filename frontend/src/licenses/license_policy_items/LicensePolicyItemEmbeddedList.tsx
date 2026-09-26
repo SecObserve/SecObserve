@@ -15,12 +15,12 @@ import {
     useRecordContext,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { EvaluationResultField } from "../../commons/custom_fields/EvaluationResultField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { EVALUATION_RESULT_CHOICES } from "../types";
 import LicensePolicyItemAdd from "./LicensePolicyItemAdd";
 import LicensePolicyItemEdit from "./LicensePolicyItemEdit";

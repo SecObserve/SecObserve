@@ -1,5 +1,5 @@
 # build environment
-FROM node:26.8.2-alpine@sha256:ef24c5053d50fdc3e4e56eb4e7ddb7861874ab0fdc797046ba897581deb8e868 AS build
+FROM node:26.9.0-alpine@sha256:dbaa92e5758cbbcf85d65d5403fdb530fe3442cbe8c6dbfb7ef23365450d5070 AS build
 
 ARG VERSION=unknown
 
@@ -24,7 +24,7 @@ WORKDIR /app/lib/runtime-env-cra
 RUN npm ci
 
 # production environment
-FROM nginx:stable-alpine-slim@sha256:0ae85631d55f78b0ad8e8468baadd7fa82c1a1285152c63055fd6333dded4e06
+FROM nginx:stable-alpine-slim@sha256:32463212baf0e7d91aded2e9b843a4f2b9e017804b8c9d5bae7b51dcef64389c
 
 USER root
 

@@ -9,7 +9,7 @@ from application.notifications.models import Notification, Observation_Title_Not
 from application.notifications.services.send_notifications_base import (
     _get_email_to_addresses,
     _get_first_name,
-    is_msteams_v2,
+    get_msteams_template,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -108,7 +108,7 @@ def _send_observation_title_notifications(
             send_email_notification(
                 email_to_address,
                 first_line,
-                "email_observation_title.tpl",
+                "email/observation_title.tpl",
                 observation=observation,
                 url=url,
                 first_line=first_line,
@@ -116,11 +116,7 @@ def _send_observation_title_notifications(
             )
 
     if settings.observation_title_notification_ms_teams_webhook:
-        template = (
-            "msteams_v2_observation_title.tpl"
-            if is_msteams_v2(settings.observation_title_notification_ms_teams_webhook)
-            else "msteams_observation_title.tpl"
-        )
+        template = get_msteams_template(settings.observation_title_notification_ms_teams_webhook, "observation_title")
         send_msteams_notification(
             settings.observation_title_notification_ms_teams_webhook,
             template,
@@ -132,7 +128,7 @@ def _send_observation_title_notifications(
     if settings.observation_title_notification_slack_webhook:
         send_slack_notification(
             settings.observation_title_notification_slack_webhook,
-            "slack_observation_title.tpl",
+            "slack/observation_title.tpl",
             observation=observation,
             url=url,
             first_line=first_line,

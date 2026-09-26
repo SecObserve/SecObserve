@@ -1,8 +1,8 @@
 import { Typography } from "@mui/material";
 import { ReferenceField } from "ra-ui-materialui";
 
+import { getResolvedSettingTheme } from "../../access_control/users/functions";
 import { useLinkStyles } from "../layout/themes";
-import { getResolvedSettingTheme } from "../user_settings/functions";
 
 interface ProductReferenceFieldProps {
     link?: any;

@@ -89,8 +89,8 @@ Please run these tools locally before creating a pull request to ensure that you
 All new features and bug fixes in the backend shall be accompanied by unit tests. This ensures that the changes are well-tested and helps prevent regressions. The unittests are run with the commands
 
 ```bash
-docker compose -f docker-compose-unittests.yml build
-docker compose -f docker-compose-unittests.yml up
+docker compose -f docker-compose/docker-compose-unittests.yml build
+docker compose -f docker-compose/docker-compose-unittests.yml up
 ```
 
 from the root directory of the project.

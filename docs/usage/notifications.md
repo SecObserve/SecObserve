@@ -3,13 +3,13 @@
 SecObserve notifies about events that happen to observations, products and the system itself. There are two groups of notifications, which are configured independently of each other:
 
 * **Shared notifications** are configured by an administrator or a product owner and are sent to shared destinations: a list of email addresses, a Microsoft Teams channel or a Slack channel. Everybody who can read that mailbox or channel gets the notification.
-* **User specific notifications** are configured by each user for themselves and are sent as email to that user only.
+* **User specific notifications** are configured by each user for themselves and are sent to that user only, via email, Microsoft Teams or Slack.
 
 This page describes *which* events are notified and *who* receives them. How the delivery to email, Microsoft Teams and Slack is set up is described in [Notification channels](../integrations/notifications.md).
 
 ## Which events are notified
 
-| Event | Shared channels | User email | Configured in |
+| Event | Shared channels | User specific | Configured in |
 |-------|-----------------|:----------:|---------------|
 | A new observation has been stored, or an observation has changed | Email, MS Teams, Slack | :material-check: | [Notifications for observations](#notifications-for-observations) |
 | An observation fell out of the notifications | Email, MS Teams, Slack | :material-check: | [Notifications for observations](#notifications-for-observations) |
@@ -67,7 +67,21 @@ A title is only notified again when the severity, status or priority of an obser
 
 ## User specific notifications
 
-Every user can decide for themselves which events they want to be notified about, per product and per product group. These notifications are always sent as email to the address of the user.
+Every user can decide for themselves which events they want to be notified about, per product and per product group, and through which channels they want to receive them.
+
+### The channels
+
+Unlike the shared notifications, which are configured by an administrator or a product owner, the channels for user specific notifications are maintained by each user in *User menu → Settings → Notifications*. Three channels are available, each with its own switch:
+
+| Channel | What has to be set |
+|---------|--------------------|
+| **Email** | The email address of the user. Switched on by default. |
+| **MS Teams** | A [Microsoft Teams webhook](../integrations/notifications.md#microsoft-teams) of the user, for example for a private channel. Switched off by default. |
+| **Slack** | A [Slack webhook](../integrations/notifications.md#slack) of the user. Switched off by default. |
+
+A channel can only be activated when its email address or webhook URL is set, and a notification is sent to every channel that is active. If a webhook of a user is the same as the shared webhook of the product, the notification is sent only once. The `>> Test` button next to a webhook sends a test notification, to check the webhook before relying on it.
+
+For users that log in via [OIDC](../integrations/oidc_authentication.md) the email address is read-only, because it is provided by the identity provider and would be overwritten with the next login; an administrator can set it for them if the identity provider does not provide an email address.
 
 ### The settings
 
@@ -99,10 +113,10 @@ A user is only notified for a product if all of the following are true:
 
 * The setting for the event is switched on for this product, after the inheritance described above has been applied.
 * The user is a member of the product or of its product group, either directly or through an [authorization group](users_permissions.md).
-* The user is active and has an email address.
+* The user is active and has at least one [active channel](#the-channels), otherwise there is no way to reach them.
 * The user has the permission required for the event, if there is one.
 
-If the email address of the user is one of the shared email addresses of the product or its product group as well, the notification is sent only once.
+If a channel of the user is one of the shared destinations of the product or its product group as well, the notification is sent only once through that channel.
 
 ## Notifications in the user interface
 

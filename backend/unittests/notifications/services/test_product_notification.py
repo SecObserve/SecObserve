@@ -358,6 +358,42 @@ class TestProductNotificationService(BaseTestCase):
 
         self.assertEqual(set(), self._get_usernames_for_product_notification(1))
 
+    def test_get_users_for_product_notification_excludes_users_with_inactive_email(self):
+        user = User.objects.get(username="db_internal_write")
+        user.notification_email_active = False
+        user.save()
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_includes_users_with_a_webhook_only(self):
+        user = User.objects.get(username="db_internal_write")
+        user.email = ""
+        user.notification_slack_active = True
+        user.notification_slack_webhook = "https://example.com/slack"
+        user.save()
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual({"db_internal_write"}, self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_excludes_users_with_an_inactive_webhook(self):
+        user = User.objects.get(username="db_internal_write")
+        user.email = ""
+        user.notification_ms_teams_webhook = "https://example.com/ms_teams"
+        user.save()
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
+    def test_get_users_for_product_notification_excludes_users_with_an_active_webhook_without_url(self):
+        user = User.objects.get(username="db_internal_write")
+        user.email = ""
+        user.notification_ms_teams_active = True
+        user.save()
+        Product_Notification.objects.create(user=user, security_gate_changed=True)
+
+        self.assertEqual(set(), self._get_usernames_for_product_notification(1))
+
     def test_get_users_for_product_notification_excludes_inactive_users(self):
         user = User.objects.get(username="db_internal_write")
         user.is_active = False

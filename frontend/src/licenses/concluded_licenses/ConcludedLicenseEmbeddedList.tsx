@@ -10,11 +10,11 @@ import {
     useListController,
 } from "react-admin";
 
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { getUserOptionText, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { AGE_CHOICES } from "../../core/types";
 
 const showLicense = (id: any) => {

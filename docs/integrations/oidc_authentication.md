@@ -91,3 +91,22 @@ By default SecObserve requires the `aud` claim of a token to be a single string 
 Not all OIDC providers work that way. Some always issue `aud` as a list, even when it holds a single entry, and some add the ids of other applications to it. With such a provider the login itself succeeds, but every authenticated request fails with HTTP 401 and the backend logs `Invalid claim format in token (strict)`.
 
 For these providers the parameter `OIDC strict audience` can be switched off in the settings. The `aud` claim is then still validated, but a list is accepted as long as it contains the client id, which is the behaviour [RFC 7519, section 4.1.3](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3) describes.
+
+
+## User API tokens for users authenticated with OpenID Connect
+
+Users authenticated with OpenID Connect have no password in SecObserve, so they cannot confirm a password when they create or revoke a [user API token](rest_api.md#user-api-token). Instead SecObserve requires a **recent authentication at the OIDC provider** as the proof of identity. The `auth_time` claim of the id token, which states when the user actually authenticated, must not be older than the parameter `OIDC API token max authentication age` in the settings. The default is 5 minutes, the value `0` switches the check off and lets any valid OIDC token create and revoke API tokens.
+
+The `auth_time` claim deliberately does not move forward when the frontend silently renews its token, only a real authentication updates it. If the authentication is too old, the frontend offers to sign in again and sends the user to the OIDC provider with `prompt=login` and `max_age=0`. After the authentication the user returns to the same page and can create or revoke the API token.
+
+The id token is a credential that is stored in the browser, so this makes an API token reachable for anyone who can read it. Keeping the maximum authentication age small limits the time window in which that is possible. The creation of every user API token is written to the log of the backend.
+
+### Providers that do not send `auth_time`
+
+The `auth_time` claim is only required by [OpenID Connect Core, section 3.1.3.6](https://openid.net/specs/openid-connect-core-1_0.html#IDToken) if the authentication was requested with `max_age` or if the claim was requested as an essential claim. Not all providers send it in all cases:
+
+* **Keycloak** sends `auth_time` and honours `prompt=login` and `max_age`, no additional configuration is needed.
+* **Okta** documents `auth_time` as a base claim of the id token. It should be verified for the authorization server that is used.
+* **Microsoft Entra ID** does not send `auth_time` by default. It has to be added as an **optional claim** for id tokens in the token configuration of the app registration.
+
+If the provider never sends `auth_time`, SecObserve answers requests to create or revoke a user API token with HTTP 403 and the code `oidc_auth_time_missing`. The frontend then offers to sign in again once and shows an error afterwards, to avoid an endless loop of redirects. For such a provider the parameter `OIDC API token max authentication age` has to be set to `0`.

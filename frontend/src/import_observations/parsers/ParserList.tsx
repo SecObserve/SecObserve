@@ -2,9 +2,9 @@ import { Fragment } from "react";
 import { AutocompleteInput, Datagrid, List, TextField, TextInput } from "react-admin";
 
 import parsers from ".";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListHeader from "../../commons/layout/ListHeader";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import { PARSER_SOURCE_CHOICES, SCANNER_TYPE_CHOICES } from "../types";
 
 const listFilters = [

@@ -9,6 +9,11 @@ import Toolbar from "../../commons/custom_fields/Toolbar";
 import { validate_required_255 } from "../../commons/custom_validators";
 import { PasswordInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import { oidc_signed_in } from "../auth_provider/oidc";
+import ApiTokenReauthentication, {
+    clear_reauthentication_attempt,
+    get_reauthentication_message,
+} from "./ApiTokenReauthentication";
 
 type ApiTokenRevokeProps = {
     type: "user" | "product";
@@ -25,6 +30,11 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
+    // Users authenticated with OIDC have no password, their recent authentication
+    // at the OIDC provider is the proof of identity instead.
+    const oidc_authentication = type === "user" && oidc_signed_in();
+    const [reauthenticationMessage, setReauthenticationMessage] = useState<string | null>(null);
+
     const handleApiTokenRevoke = async (data: any) => {
         let method;
         let url;
@@ -36,11 +46,13 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
         } else if (type === "user") {
             method = "POST";
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/authentication/revoke_user_api_token/";
-            revoke_data = {
-                username: user.username,
-                password: data.password,
-                name: name,
-            };
+            revoke_data = oidc_authentication
+                ? { name: name }
+                : {
+                      username: user.username,
+                      password: data.password,
+                      name: name,
+                  };
         } else {
             notify("Type is not product or user", { type: "error" });
             setOpen(false);
@@ -52,6 +64,7 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
             body: type === "user" ? JSON.stringify(revoke_data) : null,
         })
             .then(() => {
+                clear_reauthentication_attempt();
                 notify("API token revoked", {
                     type: "success",
                 });
@@ -59,6 +72,12 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
                 setOpen(false);
             })
             .catch((error) => {
+                const reauthentication_message = get_reauthentication_message(error);
+                if (reauthentication_message) {
+                    setOpen(false);
+                    setReauthenticationMessage(reauthentication_message);
+                    return;
+                }
                 notify(error.message, {
                     type: "warning",
                 });
@@ -80,7 +99,7 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
                                     label="Revoke"
                                     color="error"
                                     icon={<DeleteIcon />}
-                                    alwaysEnable={type === "product"}
+                                    alwaysEnable={type === "product" || oidc_authentication}
                                 />
                             </Toolbar>
                         }
@@ -88,12 +107,16 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
                         <Typography sx={{ marginBottom: 2 }}>
                             Are you sure you want to revoke the {type} API token {name}?
                         </Typography>
-                        {type === "user" && (
+                        {type === "user" && !oidc_authentication && (
                             <PasswordInputWide source="password" label="Password" validate={validate_required_255} />
                         )}
                     </SimpleForm>
                 </DialogContent>
             </Dialog>
+            <ApiTokenReauthentication
+                message={reauthenticationMessage}
+                onCancel={() => setReauthenticationMessage(null)}
+            />
         </>
     );
 };

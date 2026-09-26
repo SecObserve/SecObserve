@@ -13,9 +13,9 @@ import {
 } from "react-admin";
 
 import { PERMISSION_API_CONFIGURATION_DELETE, PERMISSION_API_CONFIGURATION_EDIT } from "../../access_control/types";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import APIConfigurationDelete from "./ApiConfigurationDelete";
 import ApiConfigurationEdit from "./ApiConfigurationEdit";
 

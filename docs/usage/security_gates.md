@@ -22,3 +22,15 @@ A product can decide how to deal with security gates by setting the `Security ga
 * **Product specific**: Use product specific thresholds to calculate the security gate.
 
 ![Security Gate Edit](../assets/images/screenshot_security_gate_2.png)
+
+## Branches / versions
+
+The security gate of a product is calculated for its [default branch / version](branches.md#default-branch--version).
+
+The same thresholds are applied to every other branch / version as well. The result is shown in the list of branches / versions of a product and is part of the branches API, so that a CI/CD pipeline can check the security gate of the branch it has just scanned:
+
+```
+GET /api/branches/?product=<product_id>&name=<branch_name>
+```
+
+The attribute `security_gate_passed` of a branch / version is `true` if it is under or at the thresholds, `false` if it exceeds at least one threshold and `null` if the security gate is disabled for the product.

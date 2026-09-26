@@ -84,8 +84,8 @@ def get_users_for_product_notification(product: Product, notification_type: str)
     settings of the product win, otherwise the ones of its product group, otherwise the user's
     template. Users without any settings are never notified, the fields default to False.
 
-    Only active members of the product with an email address are returned, users for product API
-    tokens never are.
+    Only active members of the product who can be reached through at least one of their activated
+    notification channels are returned, users for product API tokens never are.
     """
     if notification_type not in Product_Notification_Type.PRODUCT_NOTIFICATION_TYPES:
         raise ValueError(f"{notification_type} is not a product notification type")
@@ -107,7 +107,7 @@ def get_users_for_product_notification(product: Product, notification_type: str)
     return set(
         User.objects.filter(is_active=True)
         .exclude(username__startswith=PRODUCT_API_TOKEN_USER_PREFIX)
-        .exclude(email="")
+        .filter(_get_usable_channel_filter())
         .annotate(
             notification_enabled=Coalesce(*notification_subqueries, Value(False), output_field=BooleanField()),
             is_product_member=Exists(product_members),
@@ -115,6 +115,18 @@ def get_users_for_product_notification(product: Product, notification_type: str)
         )
         .filter(notification_enabled=True)
         .filter(Q(is_product_member=True) | Q(is_authorization_group_member=True))
+    )
+
+
+def _get_usable_channel_filter() -> Q:
+    """
+    A user can only be notified when at least one of their notification channels is activated and
+    has its email address or webhook URL set.
+    """
+    return (
+        (Q(notification_email_active=True) & ~Q(email=""))
+        | (Q(notification_ms_teams_active=True) & ~Q(notification_ms_teams_webhook=""))
+        | (Q(notification_slack_active=True) & ~Q(notification_slack_webhook=""))
     )
 
 

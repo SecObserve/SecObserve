@@ -18,6 +18,7 @@ import {
 } from "react-admin";
 
 import observations from ".";
+import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
@@ -25,7 +26,6 @@ import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { getSettingListSize, getSettingRowsPerPage } from "../../commons/user_settings/functions";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
