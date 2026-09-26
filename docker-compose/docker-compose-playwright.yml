@@ -1,10 +1,12 @@
+name: "secobserve"
+
 networks:
   secobserve:
 
 services:
   frontend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/frontend/prod/Dockerfile
     image: secobserve_frontend_playwright
     depends_on:
@@ -33,7 +35,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/backend/prod/django/Dockerfile
     image: secobserve_backend_playwright
     environment:
@@ -88,7 +90,7 @@ services:
       - SO_PW_PASSWORD=admin-password
     working_dir: /end_to_end_tests
     volumes:
-      - ./end_to_end_tests:/end_to_end_tests
+      - ../end_to_end_tests:/end_to_end_tests
     entrypoint: ["npx", "playwright", "test"]
     networks:
       - secobserve

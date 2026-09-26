@@ -1,3 +1,5 @@
+name: "secobserve"
+
 volumes:
   dev_mysql_data:
   dev_node_modules:
@@ -5,13 +7,13 @@ volumes:
 services:
   frontend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/frontend/dev/Dockerfile
     image: secobserve_frontend_dev
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend/:/app
+      - ../frontend/:/app
       # Dependencies are installed inside the container, so that native bindings
       # match the container's platform and libc instead of the host's.
       - dev_node_modules:/app/node_modules
@@ -19,20 +21,20 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/backend/dev/django/Dockerfile
     image: secobserve_backend_dev
     depends_on:
       - mysql
     env_file:
-      - ./docker/backend/dev/django/docker.env
+      - ../docker/backend/dev/django/docker.env
     environment:
       # --- Database ---
       DATABASE_ENGINE: ${SO_DATABASE_ENGINE:-django.db.backends.mysql}
       DATABASE_HOST: ${SO_DATABASE_HOST:-mysql}
       DATABASE_PORT: ${SO_DATABASE_PORT:-3306}
     volumes:
-      - ./backend:/app
+      - ../backend:/app
     ports:
       - "8000:8000"
 
