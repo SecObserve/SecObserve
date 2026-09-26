@@ -1,3 +1,5 @@
+name: "secobserve"
+
 volumes:
   prod_mysql_data:
   prod_postgres_data:
@@ -5,7 +7,7 @@ volumes:
 services:
   frontend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/frontend/prod/Dockerfile
       args:
         VERSION: prod_test
@@ -23,7 +25,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/backend/prod/django/Dockerfile
       args:
         VERSION: prod_test
@@ -32,7 +34,7 @@ services:
     depends_on:
       - postgres
     env_file:
-      - ./docker/backend/prod/django/docker.env
+      - ../docker/backend/prod/django/docker.env
     ports:
       - "5000:5000"
 

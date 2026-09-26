@@ -1,7 +1,9 @@
+name: "secobserve"
+
 services:
   django:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/backend/unittests/django/Dockerfile
     image: secobserve_backend_unittests
     environment:
@@ -28,4 +30,4 @@ services:
       OIDC_EMAIL: email
       OIDC_GROUPS: groups
     volumes:
-      - ./backend:/home
+      - ../backend:/home

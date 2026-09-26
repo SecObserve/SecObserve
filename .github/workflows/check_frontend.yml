@@ -58,11 +58,11 @@ jobs:
 
       - name: Build images
         run: |
-          docker compose -f docker-compose-playwright.yml build
+          docker compose -f docker-compose/docker-compose-playwright.yml build
 
       - name: End-to-end tests
         run: |
-          docker compose -f docker-compose-playwright.yml up --no-build --abort-on-container-exit --exit-code-from playwright
+          docker compose -f docker-compose/docker-compose-playwright.yml up --no-build --abort-on-container-exit --exit-code-from playwright
 
       - name: Upload Playwright report
         if: failure()

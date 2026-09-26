@@ -1,3 +1,5 @@
+name: "secobserve"
+
 volumes:
   dev_mysql_data:
   dev_postgres_data:
@@ -6,7 +8,7 @@ volumes:
 services:
   frontend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/frontend/prod/Dockerfile
     image: secobserve_frontend_keycloak
     profiles:
@@ -24,14 +26,14 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: ./docker/backend/dev/django/Dockerfile
     image: secobserve_backend_dev
     depends_on:
       - postgres
       - keycloak
     env_file:
-      - ./docker/backend/dev/django/docker.env
+      - ../docker/backend/dev/django/docker.env
     environment:
       # --- OpenID Connect ---
       OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-http://keycloak:8080/realms/secobserve}
@@ -46,7 +48,7 @@ services:
       EMAIL_HOST: mailpit
       EMAIL_PORT: 1025
     volumes:
-      - ./backend:/app
+      - ../backend:/app
     ports:
       - "8000:8000"
 
@@ -77,7 +79,7 @@ services:
       - KC_HTTPS_ENABLED=false
       - KC_HOSTNAME_STRICT_HTTPS=false
     volumes:
-      - ./keycloak:/opt/keycloak/data/import
+      - ../keycloak:/opt/keycloak/data/import
     ports:
       - 8080:8080
     command: start-dev --import-realm

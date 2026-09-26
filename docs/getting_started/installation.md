@@ -7,7 +7,7 @@
 
 ## Docker Compose
 
-SecObserve provides 2 Docker Compose files as templates for productive use: `docker-compose-prod-mysql.yml` and `docker-compose-prod-postgres.yml`. Both start [Traefik](https://doc.traefik.io/traefik/v3.0/) as an edge router as well as the SecObserve frontend and backend plus a database (either MySQL or PostgreSQL).
+SecObserve provides 2 Docker Compose files as templates for productive use in the folder `docker-compose`: [`docker-compose-prod-postgres.yml`](https://github.com/SecObserve/SecObserve/blob/main/docker-compose/docker-compose-prod-postgres.yml) and [`docker-compose-prod-mysql.yml`](https://github.com/SecObserve/SecObserve/blob/main/docker-compose/docker-compose-prod-mysql.yml). Both start [Traefik](https://doc.traefik.io/traefik/v3.0/) as an edge router as well as the SecObserve frontend and backend plus a database (either PostgreSQL or MySQL).
 
 Without any changes to the Docker Compose file, 3 URL's are available:
 
@@ -17,7 +17,7 @@ Without any changes to the Docker Compose file, 3 URL's are available:
 
 
 ```include {language=yaml title="docker-compose-prod-postgres.yml"}
-docker-compose-prod-postgres.yml
+docker-compose/docker-compose-prod-postgres.yml
 ```
 
 #### Configuration for Traefik
