@@ -3656,15 +3656,15 @@ typing_extensions = ">=4.14.0"
 
 [[package]]
 name = "types-pymysql"
-version = "1.2.0.20260807"
+version = "1.2.0.20260923"
 description = "Typing stubs for PyMySQL"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "types_pymysql-1.2.0.20260807-py3-none-any.whl", hash = "sha256:2a722284451649e1c2564655cba4963c0661851d04cc10195b7c002fab8e55f6"},
-    {file = "types_pymysql-1.2.0.20260807.tar.gz", hash = "sha256:7fd4a7767925dbb0fd3e73fd488184fcd98b7612f8066cda280453b17864264f"},
+    {file = "types_pymysql-1.2.0.20260923-py3-none-any.whl", hash = "sha256:2042fc2d0745eba181c3070221fdc9ac12baaa4908f79c1cb0f953c8c44efcc5"},
+    {file = "types_pymysql-1.2.0.20260923.tar.gz", hash = "sha256:2d02420956deeed7366c3b2b7dfaac3b33ad800d754327857f7b38f59751a59c"},
 ]
 
 [[package]]
@@ -3882,4 +3882,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "1f38d15d96cbcd05658c67bf207437887fd487d125794603af9f8fa492a0b3a1"
+content-hash = "414bd6bbddbbf7271d4b4377c7667efe7e427cdcc801e9b6856c8ad88edd1c0b"
