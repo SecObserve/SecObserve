@@ -187,6 +187,7 @@ MIDDLEWARE = [
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "application.commons.services.global_request.GlobalRequestMiddleware",
+    "application.notifications.api.exception_handler.ExceptionNotificationMiddleware",
     "application.commons.services.request_cache.RequestCacheMiddleware",
     "application.commons.services.security_headers.SecurityHeadersMiddleware",
 ]
