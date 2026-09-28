@@ -1,7 +1,5 @@
-from tempfile import NamedTemporaryFile
-
 from django.db.models import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
@@ -19,6 +17,7 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.services.export import excel_response
 from application.core.api.filters import (
     EvidenceFilter,
     ObservationFilter,
@@ -231,22 +230,9 @@ class ObservationViewSet(ModelViewSet):
         responses={200: None},
     )
     @action(detail=False, methods=["get"])
-    def export_excel(self, request: Request) -> HttpResponse:
+    def export_excel(self, request: Request) -> FileResponse:
         queryset = self._filter_queryset(request)
-        workbook = export_observations_excel(queryset)
-
-        with NamedTemporaryFile() as tmp:
-            workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
-            # export works fine without .flush()
-            tmp.seek(0)
-            stream = tmp.read()
-
-        response = HttpResponse(
-            content=stream,
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        response["Content-Disposition"] = "attachment; filename=observations.xlsx"
-        return response
+        return excel_response(export_observations_excel(queryset), "observations.xlsx")
 
     @extend_schema(
         methods=["GET"],

@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any, cast
 
 from django.db.models import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -33,6 +33,7 @@ from application.access_control.queries.api_token import get_api_token_by_id
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
 from application.commons.models import Settings
+from application.commons.services.export import excel_response
 from application.commons.services.log_message import format_log_message
 from application.core.api.filters import (
     BranchFilter,
@@ -284,7 +285,7 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
         ],
     )
     @action(detail=True, methods=["get"])
-    def export_observations_excel(self, request: Request, pk: int) -> HttpResponse:
+    def export_observations_excel(self, request: Request, pk: int) -> FileResponse:
         product = self.__get_product(pk)
 
         statuses = self.request.query_params.getlist("status")
@@ -292,20 +293,7 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
             if status and (status, status) not in Status.STATUS_CHOICES:
                 raise ValidationError(f"Status {status} is not a valid choice")
 
-        workbook = export_observations_excel_for_product(product, statuses)
-        with NamedTemporaryFile() as tmp:
-            workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
-            # export works fine without .flush()
-            tmp.seek(0)
-            stream = tmp.read()
-
-        response = HttpResponse(
-            content=stream,
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        response["Content-Disposition"] = "attachment; filename=observations.xlsx"
-
-        return response
+        return excel_response(export_observations_excel_for_product(product, statuses), "observations.xlsx")
 
     @extend_schema(
         methods=["GET"],
