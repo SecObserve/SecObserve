@@ -23,14 +23,25 @@ from application.metrics.services.age import get_days
 
 def calculate_product_metrics() -> str:
     settings = Settings.load()
+    today = timezone.localdate()
+
+    # Metrics of today are up to date if they have been calculated for the current change of the product
+    todays_observation_changes = dict(
+        Product_Metrics.objects.filter(date=today).values_list("product_id", "last_observation_change")
+    )
+    todays_license_changes = dict(
+        Product_License_Metrics.objects.filter(date=today).values_list("product_id", "last_license_change")
+    )
 
     num_products = 0
-    license_metrics_calculated = False
     for product in Product.objects.filter(is_product_group=False):
-        observation_metrics_calculated = bool(calculate_observation_metrics_for_product(product))
-        if settings.feature_license_management:
-            license_metrics_calculated = bool(calculate_license_metrics_for_product(product))
-        num_products += observation_metrics_calculated or license_metrics_calculated
+        observations_changed = todays_observation_changes.get(product.pk) != product.last_observation_change
+        licenses_changed = todays_license_changes.get(product.pk) != product.last_license_change
+        observation_metrics_calculated = observations_changed and calculate_observation_metrics_for_product(product)
+        license_metrics_calculated = (
+            settings.feature_license_management and licenses_changed and calculate_license_metrics_for_product(product)
+        )
+        num_products += bool(observation_metrics_calculated or license_metrics_calculated)
 
     product_metrics_status = Product_Metrics_Status.load()
     product_metrics_status.last_calculated = timezone.now()
@@ -52,8 +63,8 @@ def calculate_observation_metrics_for_product(  # pylint: disable=too-many-branc
 
     latest_product_metrics = _get_latest_product_observation_metrics(product)
 
-    if timezone.localdate(product.last_observation_change) < today and latest_product_metrics:
-        # No relevant changes of observations today, but we might need to update the metrics
+    if latest_product_metrics and latest_product_metrics.last_observation_change == product.last_observation_change:
+        # No relevant changes of observations since the latest metrics, but we might need to update the metrics
         # if there are no metrics for today or previous days.
         iteration_date = latest_product_metrics.date + timedelta(days=1)
         while iteration_date <= today:
@@ -75,12 +86,13 @@ def calculate_observation_metrics_for_product(  # pylint: disable=too-many-branc
                 not_affected=latest_product_metrics.not_affected,
                 not_security=latest_product_metrics.not_security,
                 risk_accepted=latest_product_metrics.risk_accepted,
+                last_observation_change=latest_product_metrics.last_observation_change,
             )
             iteration_date += timedelta(days=1)
             metrics_calculated = True
     else:
-        # Either there are relevant changes of observations today or there are no metrics yet at all,
-        # so we need to calculate the metrics for today.
+        # Either there are relevant changes of observations since the latest metrics or there are no metrics
+        # yet at all, so we need to calculate the metrics for today.
         observation_metrics = Observation.objects.filter(
             product=product,
             branch=product.repository_default_branch,
@@ -123,7 +135,7 @@ def calculate_observation_metrics_for_product(  # pylint: disable=too-many-branc
         Product_Metrics.objects.update_or_create(
             product=product,
             date=today,
-            defaults=observation_metrics,
+            defaults=observation_metrics | {"last_observation_change": product.last_observation_change},
         )
         metrics_calculated = True
 
@@ -140,8 +152,11 @@ def calculate_license_metrics_for_product(  # pylint: disable=too-many-branches
 
     latest_product_license_metrics = _get_latest_product_license_metrics(product)
 
-    if timezone.localdate(product.last_license_change) < today and latest_product_license_metrics:
-        # No relevant changes of observations today, but we might need to update the metrics
+    if (
+        latest_product_license_metrics
+        and latest_product_license_metrics.last_license_change == product.last_license_change
+    ):
+        # No relevant changes of licenses since the latest metrics, but we might need to update the metrics
         # if there are no metrics for today or previous days.
         iteration_date = latest_product_license_metrics.date + timedelta(days=1)
         while iteration_date <= today:
@@ -153,12 +168,13 @@ def calculate_license_metrics_for_product(  # pylint: disable=too-many-branches
                 ignored=latest_product_license_metrics.ignored,
                 review_required=latest_product_license_metrics.review_required,
                 unknown=latest_product_license_metrics.unknown,
+                last_license_change=latest_product_license_metrics.last_license_change,
             )
             iteration_date += timedelta(days=1)
             metrics_calculated = True
     else:
-        # Either there are relevant changes of licenses today or there are no metrics yet at all,
-        # so we need to calculate the metrics for today.
+        # Either there are relevant changes of licenses since the latest metrics or there are no metrics
+        # yet at all, so we need to calculate the metrics for today.
         license_metrics = License_Component.objects.filter(
             product=product,
             branch=product.repository_default_branch,
@@ -188,7 +204,7 @@ def calculate_license_metrics_for_product(  # pylint: disable=too-many-branches
         Product_License_Metrics.objects.update_or_create(
             product=product,
             date=today,
-            defaults=license_metrics,
+            defaults=license_metrics | {"last_license_change": product.last_license_change},
         )
         metrics_calculated = True
 
