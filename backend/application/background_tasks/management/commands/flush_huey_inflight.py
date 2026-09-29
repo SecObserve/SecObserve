@@ -10,7 +10,7 @@ from application.background_tasks.types import Status
 
 logger = logging.getLogger("secobserve.background_tasks")
 
-STALE_MESSAGE = "Task did not finish, the container was restarted while it was running"
+STALE_MESSAGE = "Task did not finish, it was still marked as running when the container started"
 
 
 class Command(BaseCommand):
