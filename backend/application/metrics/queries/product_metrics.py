@@ -1,9 +1,15 @@
+from typing import Optional
+
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.query import QuerySet
-from django.utils import timezone
 
 from application.access_control.services.current_user import get_current_user
-from application.core.models import Product_Authorization_Group_Member, Product_Member
+from application.core.models import (
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
+from application.core.queries.product import get_latest_metrics_pks
 from application.metrics.models import Product_Metrics
 
 
@@ -48,5 +54,12 @@ def get_product_metrics() -> QuerySet[Product_Metrics]:
     return product_metrics
 
 
-def get_todays_product_metrics() -> QuerySet[Product_Metrics]:
-    return get_product_metrics().filter(date=timezone.localdate())
+def get_latest_product_metrics(product: Optional[Product]) -> QuerySet[Product_Metrics]:
+    products = Product.objects.filter(is_product_group=False)
+    if product:
+        if product.is_product_group:
+            products = products.filter(product_group=product)
+        else:
+            products = products.filter(pk=product.pk)
+
+    return get_product_metrics().filter(pk__in=get_latest_metrics_pks(Product_Metrics, products))
