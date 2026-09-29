@@ -1281,15 +1281,15 @@ tests = ["asttokens (>=2.1.0)", "coverage", "coverage-enable-subprocess", "ipyth
 
 [[package]]
 name = "flake8"
-version = "7.4.0"
+version = "7.4.1"
 description = "the modular source code checker: pep8 pyflakes and co"
 optional = true
 python-versions = ">=3.10"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "flake8-7.4.0-py2.py3-none-any.whl", hash = "sha256:7c8d371b6d1a2d0c1f9cdf9f865c91f16f880e6cf7b1da0fcfaba31006532f38"},
-    {file = "flake8-7.4.0.tar.gz", hash = "sha256:d3e0beb3d152209b4dc50fa5e3132844bf4ee4ff994cec87d6913d06b8eb5afc"},
+    {file = "flake8-7.4.1-py2.py3-none-any.whl", hash = "sha256:78480274a6d7289d9cb8eafeda241fac57d4ea687d26e32dfdca37b72cdeddad"},
+    {file = "flake8-7.4.1.tar.gz", hash = "sha256:84ea5afcaf344487b0ea5baaebb8100f4cfaebc01f755998f75876664029f587"},
 ]
 
 [package.dependencies]
@@ -3882,4 +3882,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "414bd6bbddbbf7271d4b4377c7667efe7e427cdcc801e9b6856c8ad88edd1c0b"
+content-hash = "7cb6c372a6e269ec051895ef2fd7aa9d638aa8ec68846b4e7fd5030329cf9f50"
