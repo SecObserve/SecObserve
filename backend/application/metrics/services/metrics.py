@@ -1,7 +1,8 @@
-from datetime import timedelta
-from typing import Optional
+from datetime import datetime, timedelta
+from itertools import batched
+from typing import Optional, TypeVar
 
-from django.db.models import Count, Q
+from django.db.models import Count, F, Max, Q
 from django.utils import timezone
 
 from application.commons.models import Settings
@@ -20,209 +21,173 @@ from application.metrics.queries.product_metrics import (
 )
 from application.metrics.services.age import get_days
 
+OBSERVATION_COUNTS = {
+    "active_critical": Count(
+        "pk", filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_CRITICAL)
+    ),
+    "active_high": Count(
+        "pk", filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_HIGH)
+    ),
+    "active_medium": Count(
+        "pk", filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_MEDIUM)
+    ),
+    "active_low": Count(
+        "pk", filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_LOW)
+    ),
+    "active_none": Count(
+        "pk", filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_NONE)
+    ),
+    "active_unknown": Count(
+        "pk", filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_UNKNOWN)
+    ),
+    "open": Count("pk", filter=Q(current_status=Status.STATUS_OPEN)),
+    "affected": Count("pk", filter=Q(current_status=Status.STATUS_AFFECTED)),
+    "resolved": Count("pk", filter=Q(current_status=Status.STATUS_RESOLVED)),
+    "duplicate": Count("pk", filter=Q(current_status=Status.STATUS_DUPLICATE)),
+    "false_positive": Count("pk", filter=Q(current_status=Status.STATUS_FALSE_POSITIVE)),
+    "in_review": Count("pk", filter=Q(current_status=Status.STATUS_IN_REVIEW)),
+    "not_affected": Count("pk", filter=Q(current_status=Status.STATUS_NOT_AFFECTED)),
+    "not_security": Count("pk", filter=Q(current_status=Status.STATUS_NOT_SECURITY)),
+    "risk_accepted": Count("pk", filter=Q(current_status=Status.STATUS_RISK_ACCEPTED)),
+}
+
+LICENSE_COUNTS = {
+    "allowed": Count("pk", filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED)),
+    "forbidden": Count("pk", filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_FORBIDDEN)),
+    "ignored": Count("pk", filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_IGNORED)),
+    "review_required": Count("pk", filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED)),
+    "unknown": Count("pk", filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_UNKNOWN)),
+}
+
+# Stays below the parameter limits of the databases
+BATCH_SIZE = 1000
+
+Metrics = TypeVar("Metrics", Product_Metrics, Product_License_Metrics)
+
 
 def calculate_product_metrics() -> str:
     settings = Settings.load()
-    today = timezone.localdate()
 
-    # Metrics of today are up to date if they have been calculated for the current change of the product
-    todays_observation_changes = dict(
-        Product_Metrics.objects.filter(date=today).values_list("product_id", "last_observation_change")
+    products = Product.objects.filter(is_product_group=False).values_list(
+        "pk", "last_observation_change", "last_license_change"
     )
-    todays_license_changes = dict(
-        Product_License_Metrics.objects.filter(date=today).values_list("product_id", "last_license_change")
-    )
+    observation_changes = {}
+    license_changes = {}
+    for product_id, last_observation_change, last_license_change in products:
+        observation_changes[product_id] = last_observation_change
+        license_changes[product_id] = last_license_change
 
-    num_products = 0
-    for product in Product.objects.filter(is_product_group=False):
-        observations_changed = todays_observation_changes.get(product.pk) != product.last_observation_change
-        licenses_changed = todays_license_changes.get(product.pk) != product.last_license_change
-        observation_metrics_calculated = observations_changed and calculate_observation_metrics_for_product(product)
-        license_metrics_calculated = (
-            settings.feature_license_management and licenses_changed and calculate_license_metrics_for_product(product)
+    products_calculated = _calculate_metrics(
+        Product_Metrics, Observation, OBSERVATION_COUNTS, "last_observation_change", observation_changes
+    )
+    if settings.feature_license_management:
+        products_calculated |= _calculate_metrics(
+            Product_License_Metrics, License_Component, LICENSE_COUNTS, "last_license_change", license_changes
         )
-        num_products += bool(observation_metrics_calculated or license_metrics_calculated)
 
     product_metrics_status = Product_Metrics_Status.load()
     product_metrics_status.last_calculated = timezone.now()
     product_metrics_status.save()
 
-    if num_products == 1:
+    if len(products_calculated) == 1:
         return "Calculated metrics for 1 product."
 
-    return f"Calculated metrics for {num_products} products."
+    return f"Calculated metrics for {len(products_calculated)} products."
 
 
-def calculate_observation_metrics_for_product(  # pylint: disable=too-many-branches
-    product: Product,
-) -> bool:
-    # There are quite a lot of branches, but at least they are not nested too much
-
-    metrics_calculated = False
+def _calculate_metrics(
+    metrics_model: type[Metrics],
+    counted_model: type[Observation] | type[License_Component],
+    counts: dict[str, Count],
+    change_field: str,
+    product_changes: dict[int, datetime],
+) -> set[int]:
+    # Metrics are up to date if they have been calculated for the current change of the product
     today = timezone.localdate()
+    todays_metrics = {
+        product_id: (pk, change)
+        for pk, product_id, change in metrics_model.objects.filter(date=today).values_list(
+            "pk", "product_id", change_field
+        )
+    }
+    changed_product_ids = [
+        product_id
+        for product_id, change in product_changes.items()
+        if todays_metrics.get(product_id, (None, None))[1] != change
+    ]
 
-    latest_product_metrics = _get_latest_product_observation_metrics(product)
+    new_metrics: list[Metrics] = []
+    updated_metrics: list[Metrics] = []
+    for product_ids in batched(changed_product_ids, BATCH_SIZE):
+        latest_metrics = _get_latest_metrics(metrics_model, product_ids)
+        recalculated_product_ids = []
+        for product_id in product_ids:
+            latest = latest_metrics.get(product_id)
+            if latest and getattr(latest, change_field) == product_changes[product_id]:
+                # No relevant changes since the latest metrics, which are copied up to today
+                iteration_date = latest.date + timedelta(days=1)
+                while iteration_date <= today:
+                    new_metrics.append(
+                        metrics_model(
+                            product_id=product_id,
+                            date=iteration_date,
+                            **{field: getattr(latest, field) for field in [*counts, change_field]},
+                        )
+                    )
+                    iteration_date += timedelta(days=1)
+            else:
+                recalculated_product_ids.append(product_id)
 
-    if latest_product_metrics and latest_product_metrics.last_observation_change == product.last_observation_change:
-        # No relevant changes of observations since the latest metrics, but we might need to update the metrics
-        # if there are no metrics for today or previous days.
-        iteration_date = latest_product_metrics.date + timedelta(days=1)
-        while iteration_date <= today:
-            Product_Metrics.objects.create(
-                product=product,
-                date=iteration_date,
-                active_critical=latest_product_metrics.active_critical,
-                active_high=latest_product_metrics.active_high,
-                active_medium=latest_product_metrics.active_medium,
-                active_low=latest_product_metrics.active_low,
-                active_none=latest_product_metrics.active_none,
-                active_unknown=latest_product_metrics.active_unknown,
-                open=latest_product_metrics.open,
-                affected=latest_product_metrics.affected,
-                resolved=latest_product_metrics.resolved,
-                duplicate=latest_product_metrics.duplicate,
-                false_positive=latest_product_metrics.false_positive,
-                in_review=latest_product_metrics.in_review,
-                not_affected=latest_product_metrics.not_affected,
-                not_security=latest_product_metrics.not_security,
-                risk_accepted=latest_product_metrics.risk_accepted,
-                last_observation_change=latest_product_metrics.last_observation_change,
+        calculated_counts = _count(counted_model, counts, recalculated_product_ids)
+        for product_id in recalculated_product_ids:
+            metrics = metrics_model(
+                product_id=product_id,
+                date=today,
+                **calculated_counts.get(product_id, dict.fromkeys(counts, 0)),
+                **{change_field: product_changes[product_id]},
             )
-            iteration_date += timedelta(days=1)
-            metrics_calculated = True
-    else:
-        # Either there are relevant changes of observations since the latest metrics or there are no metrics
-        # yet at all, so we need to calculate the metrics for today.
-        observation_metrics = Observation.objects.filter(
-            product=product,
-            branch=product.repository_default_branch,
-        ).aggregate(
-            active_critical=Count(
-                "pk",
-                filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_CRITICAL),
-            ),
-            active_high=Count(
-                "pk",
-                filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_HIGH),
-            ),
-            active_medium=Count(
-                "pk",
-                filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_MEDIUM),
-            ),
-            active_low=Count(
-                "pk",
-                filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_LOW),
-            ),
-            active_none=Count(
-                "pk",
-                filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_NONE),
-            ),
-            active_unknown=Count(
-                "pk",
-                filter=Q(current_status__in=Status.STATUS_ACTIVE, current_severity=Severity.SEVERITY_UNKNOWN),
-            ),
-            open=Count("pk", filter=Q(current_status=Status.STATUS_OPEN)),
-            affected=Count("pk", filter=Q(current_status=Status.STATUS_AFFECTED)),
-            resolved=Count("pk", filter=Q(current_status=Status.STATUS_RESOLVED)),
-            duplicate=Count("pk", filter=Q(current_status=Status.STATUS_DUPLICATE)),
-            false_positive=Count("pk", filter=Q(current_status=Status.STATUS_FALSE_POSITIVE)),
-            in_review=Count("pk", filter=Q(current_status=Status.STATUS_IN_REVIEW)),
-            not_affected=Count("pk", filter=Q(current_status=Status.STATUS_NOT_AFFECTED)),
-            not_security=Count("pk", filter=Q(current_status=Status.STATUS_NOT_SECURITY)),
-            risk_accepted=Count("pk", filter=Q(current_status=Status.STATUS_RISK_ACCEPTED)),
+            if product_id in todays_metrics:
+                metrics.pk = todays_metrics[product_id][0]
+                updated_metrics.append(metrics)
+            else:
+                new_metrics.append(metrics)
+
+    metrics_model.objects.bulk_create(new_metrics, BATCH_SIZE)
+    metrics_model.objects.bulk_update(updated_metrics, [*counts, change_field], BATCH_SIZE)
+
+    return {metrics.product_id for metrics in new_metrics + updated_metrics}
+
+
+def _get_latest_metrics(metrics_model: type[Metrics], product_ids: tuple[int, ...]) -> dict[int, Metrics]:
+    latest_dates = dict(
+        metrics_model.objects.filter(product_id__in=product_ids)
+        .values("product_id")
+        .annotate(latest_date=Max("date"))
+        .values_list("product_id", "latest_date")
+    )
+    return {
+        metrics.product_id: metrics
+        for metrics in metrics_model.objects.filter(product_id__in=product_ids, date__in=set(latest_dates.values()))
+        if metrics.date == latest_dates[metrics.product_id]
+    }
+
+
+def _count(
+    counted_model: type[Observation] | type[License_Component], counts: dict[str, Count], product_ids: list[int]
+) -> dict[int, dict[str, int]]:
+    # Only the observations and licenses of the default branch are counted, or those without a branch
+    # if the product has no default branch
+    rows = (
+        counted_model.objects.filter(product_id__in=product_ids)
+        .filter(
+            Q(branch=F("product__repository_default_branch"))
+            | Q(branch__isnull=True, product__repository_default_branch__isnull=True)
         )
-
-        Product_Metrics.objects.update_or_create(
-            product=product,
-            date=today,
-            defaults=observation_metrics | {"last_observation_change": product.last_observation_change},
-        )
-        metrics_calculated = True
-
-    return metrics_calculated
-
-
-def calculate_license_metrics_for_product(  # pylint: disable=too-many-branches
-    product: Product,
-) -> bool:
-    # There are quite a lot of branches, but at least they are not nested too much
-
-    metrics_calculated = False
-    today = timezone.localdate()
-
-    latest_product_license_metrics = _get_latest_product_license_metrics(product)
-
-    if (
-        latest_product_license_metrics
-        and latest_product_license_metrics.last_license_change == product.last_license_change
-    ):
-        # No relevant changes of licenses since the latest metrics, but we might need to update the metrics
-        # if there are no metrics for today or previous days.
-        iteration_date = latest_product_license_metrics.date + timedelta(days=1)
-        while iteration_date <= today:
-            Product_License_Metrics.objects.create(
-                product=product,
-                date=iteration_date,
-                allowed=latest_product_license_metrics.allowed,
-                forbidden=latest_product_license_metrics.forbidden,
-                ignored=latest_product_license_metrics.ignored,
-                review_required=latest_product_license_metrics.review_required,
-                unknown=latest_product_license_metrics.unknown,
-                last_license_change=latest_product_license_metrics.last_license_change,
-            )
-            iteration_date += timedelta(days=1)
-            metrics_calculated = True
-    else:
-        # Either there are relevant changes of licenses since the latest metrics or there are no metrics
-        # yet at all, so we need to calculate the metrics for today.
-        license_metrics = License_Component.objects.filter(
-            product=product,
-            branch=product.repository_default_branch,
-        ).aggregate(
-            allowed=Count(
-                "pk",
-                filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED),
-            ),
-            forbidden=Count(
-                "pk",
-                filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_FORBIDDEN),
-            ),
-            ignored=Count(
-                "pk",
-                filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_IGNORED),
-            ),
-            review_required=Count(
-                "pk",
-                filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_REVIEW_REQUIRED),
-            ),
-            unknown=Count(
-                "pk",
-                filter=Q(evaluation_result=License_Policy_Evaluation_Result.RESULT_UNKNOWN),
-            ),
-        )
-
-        Product_License_Metrics.objects.update_or_create(
-            product=product,
-            date=today,
-            defaults=license_metrics | {"last_license_change": product.last_license_change},
-        )
-        metrics_calculated = True
-
-    return metrics_calculated
-
-
-def _get_latest_product_observation_metrics(product: Product) -> Optional[Product_Metrics]:
-    try:
-        return Product_Metrics.objects.filter(product=product).latest("date")
-    except Product_Metrics.DoesNotExist:
-        return None
-
-
-def _get_latest_product_license_metrics(product: Product) -> Optional[Product_License_Metrics]:
-    try:
-        return Product_License_Metrics.objects.filter(product=product).latest("date")
-    except Product_License_Metrics.DoesNotExist:
-        return None
+        .values("product_id")
+        .annotate(**counts)
+        .values_list("product_id", *counts)
+    )
+    return {product_id: dict(zip(counts, values)) for product_id, *values in rows}
 
 
 def get_product_metrics_timeline(product: Optional[Product], age: str) -> dict:
