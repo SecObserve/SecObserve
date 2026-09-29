@@ -1,4 +1,8 @@
-from application.core.models import Branch
+from typing import Optional
+
+from django.utils import timezone
+
+from application.core.models import Branch, Product
 
 
 def set_default_branch(branch: Branch, created: bool) -> None:
@@ -11,9 +15,16 @@ def set_default_branch(branch: Branch, created: bool) -> None:
                 other_branch.is_default_branch = False
                 other_branch.save()
 
-            branch.product.repository_default_branch = branch
-            branch.product.save()
+            _set_repository_default_branch(branch.product, branch)
         else:
             if branch.product.repository_default_branch == branch:
-                branch.product.repository_default_branch = None
-                branch.product.save()
+                _set_repository_default_branch(branch.product, None)
+
+
+def _set_repository_default_branch(product: Product, branch: Optional[Branch]) -> None:
+    if product.repository_default_branch_id != (branch.pk if branch else None):
+        # The metrics count the observations and licenses of the default branch
+        product.last_observation_change = timezone.now()
+        product.last_license_change = product.last_observation_change
+    product.repository_default_branch = branch
+    product.save()
