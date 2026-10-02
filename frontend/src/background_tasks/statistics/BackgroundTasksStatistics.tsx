@@ -42,7 +42,11 @@ const BackgroundTasksStatistics = () => {
 
     return statistics ? (
         <Stack spacing={2} sx={{ marginTop: 2 }}>
-            <BackgroundTasksCounts counts={statistics.counts} />
+            <BackgroundTasksCounts
+                counts={statistics.counts}
+                pending={statistics.pending}
+                running={statistics.running.length}
+            />
             <BackgroundTasksTimeline timeline={statistics.throughput} />
             <Stack direction="row" spacing={2} sx={{ alignItems: "flex-start" }}>
                 <BackgroundTasksFinishedList breakdown={statistics.registered} />
