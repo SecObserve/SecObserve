@@ -22,7 +22,10 @@ def vex_statement_pre_delete(  # pylint: disable=unused-argument
 
 @receiver(pre_save, sender=VEX_Document)
 @receiver(pre_save, sender=VEX_Statement)
-def vex_pre_save(sender: Any, instance: VEX_Document | VEX_Statement, **kwargs: Any) -> None:
+def vex_pre_save(  # pylint: disable=unused-argument
+    sender: Any, instance: VEX_Document | VEX_Statement, **kwargs: Any
+) -> None:
+    # sender is needed according to Django documentation
     # Documents and statements come from uploaded VEX files, which are validated here against the columns.
     try:
         instance.full_clean()
