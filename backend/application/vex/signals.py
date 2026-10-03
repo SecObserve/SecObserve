@@ -27,8 +27,9 @@ def vex_pre_save(  # pylint: disable=unused-argument
 ) -> None:
     # sender is needed according to Django documentation
     # Documents and statements come from uploaded VEX files, which are validated here against the columns.
+    # Uniqueness is left to the parsers, which replace an existing document before creating it.
     try:
-        instance.full_clean()
+        instance.full_clean(validate_unique=False)
     except DjangoValidationError as e:
         if isinstance(instance, VEX_Document):
             label = f"VEX document {instance.document_id}"
