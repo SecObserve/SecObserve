@@ -5,6 +5,7 @@ import {
     BooleanField,
     ChipField,
     Datagrid,
+    DateInput,
     FilterButton,
     FunctionField,
     List,
@@ -39,6 +40,10 @@ import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
 import { IDENTIFIER_OBSERVATION_LIST, setListIdentifier } from "./functions";
 
+// The picked day is a day in the browser's time zone, sent as the instant it starts or ends.
+const startOfDay = (value: string) => (value ? new Date(value + "T00:00:00").toISOString() : value);
+const endOfDay = (value: string) => (value ? new Date(value + "T23:59:59.999").toISOString() : value);
+
 function listFilters() {
     const filters = [];
     filters.push(
@@ -63,6 +68,8 @@ function listFilters() {
         <TextInput source="origin_kubernetes_qualified_resource" label="Kubernetes resource" />,
         <TextInput source="scanner" alwaysOn />,
         <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,
+        <DateInput source="created_after" label="Created from" parse={startOfDay} />,
+        <DateInput source="created_before" label="Created until" parse={endOfDay} />,
         <NullableBooleanInput source="has_potential_duplicates" label="Duplicates" alwaysOn />,
         <AutocompleteInput source="origin_component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />
     );
