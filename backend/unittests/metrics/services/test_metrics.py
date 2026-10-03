@@ -1,9 +1,9 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from unittest.mock import patch
 
 from django.utils import timezone
 
-from application.core.models import Branch, Observation
+from application.core.models import Branch, Observation, Product
 from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.licenses.models import License_Component
@@ -838,17 +838,17 @@ class TestGetProductMetricsTimeline(BaseTestCase):
 
 
 class TestGetProductMetricsCurrent(BaseTestCase):
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_no_product_no_metrics(self, mock_get_todays):
-        mock_get_todays.return_value = QuerySetStub([])
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_no_product_no_metrics(self, mock_get_latest):
+        mock_get_latest.return_value = QuerySetStub([])
 
         result = get_product_metrics_current(None)
 
         expected = _initialize_response_data()
         self.assertEqual(result, expected)
 
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_no_product_with_metrics(self, mock_get_todays):
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_no_product_with_metrics(self, mock_get_latest):
         metrics = [
             ProductMetricsStub(
                 active_critical=1,
@@ -865,7 +865,7 @@ class TestGetProductMetricsCurrent(BaseTestCase):
                 resolved=50,
             ),
         ]
-        mock_get_todays.return_value = QuerySetStub(metrics)
+        mock_get_latest.return_value = QuerySetStub(metrics)
 
         result = get_product_metrics_current(None)
 
@@ -875,31 +875,50 @@ class TestGetProductMetricsCurrent(BaseTestCase):
         self.assertEqual(result["open"], 44)
         self.assertEqual(result["resolved"], 55)
 
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_single_product_filters(self, mock_get_todays):
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_single_product_filters(self, mock_get_latest):
         self.product_1.is_product_group = False
         metrics = [ProductMetricsStub(active_critical=7, open=3)]
-        metrics_qs = QuerySetStub(metrics)
-        mock_get_todays.return_value = metrics_qs
+        mock_get_latest.return_value = QuerySetStub(metrics)
 
         result = get_product_metrics_current(self.product_1)
 
         self.assertEqual(result["active_critical"], 7)
         self.assertEqual(result["open"], 3)
-        metrics_qs.assert_filtered_with(self, product=self.product_1)
+        mock_get_latest.assert_called_once_with(self.product_1)
 
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_product_group_filters(self, mock_get_todays):
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_product_group_filters(self, mock_get_latest):
         self.product_group_1.is_product_group = True
         metrics = [ProductMetricsStub(active_critical=4, open=2)]
-        metrics_qs = QuerySetStub(metrics)
-        mock_get_todays.return_value = metrics_qs
+        mock_get_latest.return_value = QuerySetStub(metrics)
 
         result = get_product_metrics_current(self.product_group_1)
 
         self.assertEqual(result["active_critical"], 4)
         self.assertEqual(result["open"], 2)
-        metrics_qs.assert_filtered_with(self, product__product_group=self.product_group_1)
+        mock_get_latest.assert_called_once_with(self.product_group_1)
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_latest_metrics_per_product_when_none_for_today(self, mock_user):
+        mock_user.return_value = self.user_admin
+        today = timezone.localdate()
+        product_group = Product.objects.create(name="product_group", is_product_group=True)
+        product_yesterday = Product.objects.create(name="product_yesterday", product_group=product_group)
+        Product_Metrics.objects.create(product=product_yesterday, date=today - timedelta(days=1), active_high=1, open=2)
+        product_today = Product.objects.create(name="product_today", product_group=product_group)
+        Product_Metrics.objects.create(product=product_today, date=today - timedelta(days=1), active_high=90, open=90)
+        Product_Metrics.objects.create(product=product_today, date=today, active_high=10, open=20)
+
+        result = get_product_metrics_current(product_group)
+
+        self.assertEqual(11, result["active_high"])
+        self.assertEqual(22, result["open"])
+
+        result = get_product_metrics_current(product_yesterday)
+
+        self.assertEqual(1, result["active_high"])
+        self.assertEqual(2, result["open"])
 
 
 class TestGetCodechartaMetrics(BaseTestCase):
