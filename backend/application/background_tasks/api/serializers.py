@@ -67,3 +67,4 @@ class BackgroundTaskStatisticsSerializer(Serializer):
     throughput = BackgroundTaskThroughputSerializer()
     counts = BackgroundTaskCountsSerializer()
     running = BackgroundTaskInflightSerializer(many=True)
+    pending = IntegerField()
