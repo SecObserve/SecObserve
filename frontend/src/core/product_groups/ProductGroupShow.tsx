@@ -4,7 +4,6 @@ import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TokenIcon from "@mui/icons-material/Token";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
-import { Fragment } from "react";
 import {
     EditButton,
     PrevNextButtons,
@@ -37,12 +36,15 @@ import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
 import ProductRuleEmbeddedList from "../../rules/product_rules/ProductRuleEmbeddedList";
+import observations from "../observations";
+import ObservationGroupEmbeddedList from "../observations/ObservationGroupEmbeddedList";
 import ProductAuthorizationGroupMemberAdd from "../product_authorization_group_members/ProductAuthorizationGroupMemberAdd";
 import ProductAuthorizationGroupMemberEmbeddedList from "../product_authorization_group_members/ProductAuthorizationGroupMemberEmbeddedList";
 import ProductMemberAdd from "../product_members/ProductMemberAdd";
 import ProductMemberEmbeddedList from "../product_members/ProductMemberEmbeddedList";
 import product from "../products";
 import ExportMenu from "../products/ExportMenu";
+import { FilterValuesProvider } from "../products/FilterValuesContext";
 import ProductCreateDialog from "../products/ProductCreateDialog";
 import ProductEmbeddedList from "../products/ProductEmbeddedList";
 import { ProductGroup } from "../types";
@@ -70,7 +72,7 @@ const ShowActions = () => {
 
 const ProductGroupShow = () => {
     return (
-        <Fragment>
+        <FilterValuesProvider>
             <ProductGroupHeader />
             <Show actions={<ShowActions />}>
                 <WithRecord
@@ -79,6 +81,9 @@ const ProductGroupShow = () => {
                             <Tab label="Products" icon={<product.icon />}>
                                 <ProductCreateDialog productGroupId={product_group.id} />
                                 <ProductEmbeddedList product_group={product_group} />
+                            </Tab>
+                            <Tab label="Observations" path="observations" icon={<observations.icon />}>
+                                <ObservationGroupEmbeddedList product_group={product_group} />
                             </Tab>
                             <Tab label="Metrics" path="metrics" icon={<BarChartIcon />}>
                                 <MetricsHeader repository_default_branch={undefined} />
@@ -167,7 +172,7 @@ const ProductGroupShow = () => {
                     )}
                 />
             </Show>
-        </Fragment>
+        </FilterValuesProvider>
     );
 };
 

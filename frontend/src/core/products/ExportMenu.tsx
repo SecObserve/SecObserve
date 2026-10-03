@@ -7,12 +7,14 @@ import { ListItemIcon } from "@mui/material";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import queryString from "query-string";
 import { Fragment, MouseEvent, useState } from "react";
 import { useNotify } from "react-admin";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { feature_license_management, getIconAndFontColor } from "../../commons/functions";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import { useFilterValues } from "./FilterValuesContext";
 
 interface ExportMenuProps {
     product: any;
@@ -21,6 +23,7 @@ interface ExportMenuProps {
 
 const ExportMenu = (props: ExportMenuProps) => {
     const notify = useNotify();
+    const filterValues = useFilterValues();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
@@ -82,6 +85,16 @@ const ExportMenu = (props: ExportMenuProps) => {
             "secobserve_codecharta_metrics.csv",
             "CodeCharta metrics"
         );
+    };
+
+    const currentViewQuery = () => queryString.stringify({ ...filterValues, product_group: props.product.id });
+
+    const exportCurrentViewExcel = async () => {
+        exportDataExcel("/observations/export_excel/?" + currentViewQuery(), "observations.xlsx", "Observations");
+    };
+
+    const exportCurrentViewCsv = async () => {
+        exportDataCsv("/observations/export_csv/?" + currentViewQuery(), "observations.csv", "Observations");
     };
 
     const exportAllObservationsExcel = async () => {
@@ -199,6 +212,22 @@ const ExportMenu = (props: ExportMenuProps) => {
                     },
                 }}
             >
+                {filterValues && (
+                    <MenuItem onClick={exportCurrentViewExcel}>
+                        <ListItemIcon>
+                            <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
+                        </ListItemIcon>
+                        Current view / Excel
+                    </MenuItem>
+                )}
+                {filterValues && (
+                    <MenuItem onClick={exportCurrentViewCsv} divider>
+                        <ListItemIcon>
+                            <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
+                        </ListItemIcon>
+                        Current view / CSV
+                    </MenuItem>
+                )}
                 <MenuItem onClick={exportOpenObservationsExcel}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />

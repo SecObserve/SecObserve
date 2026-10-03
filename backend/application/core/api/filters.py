@@ -27,6 +27,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.product import get_default_branch_filter
 from application.core.types import Severity, Status
 from application.licenses.models import License_Component
 
@@ -225,6 +226,7 @@ class ObservationFilter(FilterSet):
         queryset=Product.objects.filter(is_product_group=True),
     )
     cve_known_exploited = BooleanFilter(field_name="cve_known_exploited", method="get_cve_known_exploited")
+    default_branch = BooleanFilter(method="get_default_branch")
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -315,6 +317,19 @@ class ObservationFilter(FilterSet):
             return queryset.exclude(cve_found_in="")
         if value is False:
             return queryset.filter(cve_found_in="")
+        return queryset
+
+    def get_default_branch(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Optional[bool],
+    ) -> QuerySet:
+        # name is used as a positional argument
+        if value is True:
+            return queryset.filter(get_default_branch_filter())
+        if value is False:
+            return queryset.exclude(get_default_branch_filter())
         return queryset
 
 

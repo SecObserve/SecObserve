@@ -188,7 +188,7 @@ def _populate_observation_counts_from_observations(
 
     counts = (
         Observation.objects.filter(
-            _get_default_branch_filter(),
+            get_default_branch_filter(),
             current_status__in=Status.STATUS_ACTIVE,
             **product_filter,
         )
@@ -238,7 +238,7 @@ def _populate_license_counts_from_components(
     )
 
     counts = (
-        License_Component.objects.filter(_get_default_branch_filter(), **product_filter)
+        License_Component.objects.filter(get_default_branch_filter(), **product_filter)
         .values(grouping_field, "evaluation_result")
         .annotate(count=Count("pk"))
     )
@@ -273,7 +273,7 @@ def _populate_license_counts_from_metrics(
                 setattr(product, f"{metric_field}_licenses_count", count[metric_field] or 0)
 
 
-def _get_default_branch_filter() -> Q:
+def get_default_branch_filter() -> Q:
     return Q(branch__is_default_branch=True) | (
         Q(branch__isnull=True) & Q(product__repository_default_branch__isnull=True)
     )
