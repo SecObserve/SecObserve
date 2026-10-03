@@ -123,7 +123,7 @@ class Settings(Model, DirtyFieldsMixin):
     background_epss_import_crontab_hour = IntegerField(
         default=3,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour crontab expression for EPSS import (UTC)",
+        help_text="Hour crontab expression for EPSS import (server time zone)",
     )
 
     branch_housekeeping_crontab_minute = IntegerField(
@@ -134,7 +134,7 @@ class Settings(Model, DirtyFieldsMixin):
     branch_housekeeping_crontab_hour = IntegerField(
         default=2,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour crontab expression for branch housekeeping (UTC)",
+        help_text="Hour crontab expression for branch housekeeping (server time zone)",
     )
     branch_housekeeping_active = BooleanField(default=True, help_text="Delete inactive branches")
     branch_housekeeping_keep_inactive_days = IntegerField(
@@ -171,7 +171,7 @@ class Settings(Model, DirtyFieldsMixin):
     risk_acceptance_expiry_crontab_hour = IntegerField(
         default=1,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour crontab expression for checking risk acceptance expiry (UTC)",
+        help_text="Hour crontab expression for checking risk acceptance expiry (server time zone)",
     )
 
     feature_automatic_api_import = BooleanField(default=True, help_text="Enable automatic API imports")
@@ -183,7 +183,7 @@ class Settings(Model, DirtyFieldsMixin):
     api_import_crontab_hour = IntegerField(
         default=4,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour crontab expression for API imports (UTC)",
+        help_text="Hour crontab expression for API imports (server time zone)",
     )
 
     password_validator_minimum_length = IntegerField(
@@ -211,7 +211,7 @@ class Settings(Model, DirtyFieldsMixin):
     license_import_crontab_hour = IntegerField(
         default=1,
         validators=[MinValueValidator(0), MaxValueValidator(23)],
-        help_text="Hour crontab expression for importing licenses (UTC)",
+        help_text="Hour crontab expression for importing licenses (server time zone)",
     )
     feature_automatic_osv_scanning = BooleanField(default=True, help_text="Enable automatic OSV scanning")
     feature_automatic_vulnerablecode_scanning = BooleanField(

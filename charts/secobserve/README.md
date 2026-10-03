@@ -229,6 +229,18 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 			<td>OIDC groups</td>
 		</tr>
 		<tr>
+			<td>backend.env[12]</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
+  "name": "TIME_ZONE",
+  "value": "CET"
+}
+</pre>
+</td>
+			<td>IANA time zone of the server, used for the dates and times in the user interface and the hours of the background tasks</td>
+		</tr>
+		<tr>
 			<td>backend.env[1]</td>
 			<td>object</td>
 			<td><pre lang="json">

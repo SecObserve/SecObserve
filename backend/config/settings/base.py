@@ -4,6 +4,7 @@ Base settings to build other settings files upon.
 
 from pathlib import Path
 from socket import gethostbyname, gethostname
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import environ
 from django.utils.csp import CSP
@@ -33,11 +34,12 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", gethostbyname(gethostname())] + [
     x.strip() for x in env("ALLOWED_HOSTS").split(",")
 ]
 
-# Local time zone. Choices are
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# though not all of them may be available with every OS.
-# In Windows, this must be set to your system time zone.
-TIME_ZONE = "CET"
+# https://docs.djangoproject.com/en/dev/ref/settings/#time-zone
+TIME_ZONE = env.str("TIME_ZONE", default="CET")
+try:
+    ZoneInfo(TIME_ZONE)
+except (ZoneInfoNotFoundError, ValueError) as e:
+    raise ValueError(f"TIME_ZONE '{TIME_ZONE}' is not a valid IANA time zone, e.g. 'Europe/Berlin'") from e
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = "en-us"
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
@@ -450,7 +452,7 @@ HUEY = {
     "results": False,  # Store return values of tasks.
     "store_none": False,  # If a task returns None, do not save to results.
     "immediate": HUEY_IMMEDIATE,  # Check the variable for documentation
-    "utc": True,  # Use UTC for all times internally.
+    "utc": False,  # Crontabs are evaluated in the local time of the process, which Django sets to TIME_ZONE.
     "consumer": {
         "workers": 3,  # Number of worker threads/processes.
         "worker_type": "thread",

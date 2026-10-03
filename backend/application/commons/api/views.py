@@ -1,4 +1,5 @@
 import environ
+from django.conf import settings as django_settings
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -83,6 +84,7 @@ class StatusSettingsView(APIView):
         if request.user.is_authenticated:
             content["risk_acceptance_expiry_days"] = settings.risk_acceptance_expiry_days
             content["vex_justification_style"] = settings.vex_justification_style
+            content["time_zone"] = django_settings.TIME_ZONE
 
         return Response(content)
 

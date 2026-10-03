@@ -7,6 +7,7 @@ import jsonpickle
 from defusedcsv import csv
 from django.db.models.query import QuerySet
 from django.http import HttpResponse
+from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.styles import Font
@@ -28,6 +29,12 @@ def _escape_formula(value: Any) -> Any:
         cleaned = "'" + cleaned
 
     return cleaned
+
+
+def _to_local_time(value: Any) -> Any:
+    if isinstance(value, datetime) and timezone.is_aware(value):
+        return timezone.localtime(value)
+    return value
 
 
 def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_keys: list[str]) -> Workbook:
@@ -59,7 +66,8 @@ def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_key
                     if key in foreign_keys and getattr(current_object, key):
                         value = str(getattr(current_object, key))
                     if value and isinstance(value, datetime):
-                        value = value.replace(tzinfo=None)
+                        # Excel cannot store a time zone
+                        value = _to_local_time(value).replace(tzinfo=None)
                     if value and isinstance(value, (dict, list)):
                         value = str(value)
                     value = _escape_formula(value)
@@ -106,7 +114,7 @@ def export_csv(
                         value = str(getattr(current_object, key))
                     if value and isinstance(value, str):
                         value = value.replace("\n", " NEWLINE ").replace("\r", "")
-                    fields.append(value)
+                    fields.append(_to_local_time(value))
 
             writer.writerow(fields)
 
