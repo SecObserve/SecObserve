@@ -221,8 +221,9 @@ class ObservationFilter(FilterSet):
     )
     scanner = CharFilter(field_name="scanner", lookup_expr="icontains")
     age = ChoiceFilter(field_name="age", method="get_age", choices=Age_Choices.AGE_CHOICES)
-    # created_after / created_before, inclusive; a date without a time zone is read in TIME_ZONE.
+    # <name>_after / <name>_before, inclusive; a date without a time zone is read in TIME_ZONE.
     created = DateTimeFromToRangeFilter(field_name="created")
+    last_observation_log = DateTimeFromToRangeFilter(field_name="last_observation_log")
     product_group = ModelChoiceFilter(
         field_name="product__product_group",
         queryset=Product.objects.filter(is_product_group=True),
