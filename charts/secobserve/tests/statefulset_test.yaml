@@ -36,6 +36,14 @@ tests:
           path: spec.template.spec.containers[1].env[6].valueFrom.secretKeyRef.name
           value: test-release-postgresql
 
+  - it: keeps the HTTP liveness probe of the API, as the consumer runs in the same container
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].livenessProbe.httpGet.path
+          value: /api/status/health/
+      - notExists:
+          path: spec.template.spec.containers[1].livenessProbe.exec
+
   - it: uses a configured application Secret
     set:
       backend.existingSecret: shared-secobserve-secrets
