@@ -24,6 +24,7 @@ import {
     EVALUATION_RESULT_REVIEW_REQUIRED,
     EVALUATION_RESULT_UNKNOWN,
 } from "../licenses/types";
+import { getServerDate } from "./time_zone";
 
 export function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -238,10 +239,9 @@ export const humanReadableDate = (date: string | undefined) => {
         return "";
     }
 
-    const today = new Date().setHours(23, 59, 59, 999);
-    const diffInMs = Date.parse(date).valueOf() - today.valueOf();
+    const diffInMs = Date.parse(getServerDate(new Date(date))) - Date.parse(getServerDate(new Date()));
     const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
-    return rtf.format(Math.trunc(diffInDays), "day").replace(" ago", "");
+    return rtf.format(diffInDays, "day").replace(" ago", "");
 };
 
 export function set_settings_in_local_storage() {
@@ -279,9 +279,7 @@ export function settings_risk_acceptance_expiry_date(): string | null {
         if (risk_acceptance_expiry_days === null) {
             return null;
         }
-        const date = new Date();
-        date.setDate(date.getDate() + risk_acceptance_expiry_days);
-        return date.toISOString().split("T")[0];
+        return getServerDate(new Date(Date.now() + risk_acceptance_expiry_days * 24 * 60 * 60 * 1000));
     } catch {
         return null;
     }

@@ -3,7 +3,6 @@ import { Fragment } from "react";
 import {
     ArrayField,
     Datagrid,
-    DateField,
     Labeled,
     ReferenceField,
     SimpleShowLayout,
@@ -14,6 +13,7 @@ import {
 import { Link } from "react-router-dom";
 
 import { getResolvedSettingTheme } from "../../access_control/users/functions";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { is_superuser } from "../../commons/functions";
@@ -108,9 +108,9 @@ const MetaData = () => {
                                 />
                             </Labeled>
                         )}
-                        <DateField source="last_observation_log" label="Last change" showTime />
-                        <DateField source="import_last_seen" label="Last seen" showTime />
-                        <DateField source="created" showTime />
+                        <DateTimeField source="last_observation_log" label="Last change" />
+                        <DateTimeField source="import_last_seen" label="Last seen" />
+                        <DateTimeField source="created" />
                     </SimpleShowLayout>
                 )}
             />

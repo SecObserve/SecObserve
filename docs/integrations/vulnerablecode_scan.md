@@ -44,7 +44,7 @@ VulnerableCode scanning can be configured to run automatically at a specific tim
 
 In the `Features` section of the [Settings](../getting_started/configuration.md#administration-in-secobserve) the automatic VulnerableCode scanning can be enabled or disabled for the whole SecObserve instance.
 
-The hour (in UTC time) and minute, when the automatic [API imports](./api_import.md/#automatic-import), OSV scanning and VulnerableCode scanning will run, can be set in the `Background tasks` section. A restart of the SecObserve instance is required to apply the changes.
+The hour (in the time zone of the server, see [`TIME_ZONE`](../getting_started/configuration.md#backend)) and minute, when the automatic [API imports](./api_import.md/#automatic-import), OSV scanning and VulnerableCode scanning will run, can be set in the `Background tasks` section. A restart of the SecObserve instance is required to apply the changes.
 
 ![Settings background tasks](../assets/images/screenshot_settings_background_api_osv.png){ width="70%" style="display: block; margin: 0 auto" }
 

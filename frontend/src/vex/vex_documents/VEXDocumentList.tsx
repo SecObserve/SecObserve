@@ -1,18 +1,10 @@
 import { Fragment } from "react";
-import {
-    BulkDeleteButton,
-    Datagrid,
-    DateField,
-    List,
-    TextField,
-    TextInput,
-    TopToolbar,
-    WithListContext,
-} from "react-admin";
+import { BulkDeleteButton, Datagrid, List, TextField, TextInput, TopToolbar, WithListContext } from "react-admin";
 
 import vex_documents from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import VEXDocumentImport from "./VEXDocumentImport";
@@ -54,7 +46,7 @@ const VEXDocumentList = () => {
                             <TextField source="type" />
                             <TextField source="document_id" label="Document ID" />
                             <TextField source="version" />
-                            <DateField source="current_release_date" label="Current release" />
+                            <DateTimeField source="current_release_date" label="Current release" showTime={false} />
                             <TextField source="author" sx={{ wordBreak: "break-word" }} />
                             {has_attribute("role", data, sort) && <TextField source="role" />}
                         </Datagrid>
