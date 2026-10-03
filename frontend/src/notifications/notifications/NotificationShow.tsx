@@ -1,7 +1,6 @@
 import { Typography } from "@mui/material";
 import { useEffect } from "react";
 import {
-    DateField,
     PrevNextButtons,
     Show,
     SimpleShowLayout,
@@ -12,6 +11,7 @@ import {
 } from "react-admin";
 
 import notifications from ".";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
@@ -52,7 +52,7 @@ const NotificationShow = () => {
                         </Typography>
                         <TextField source="type" />
                         <TextField source="name" />
-                        <DateField source="created" showTime={true} />
+                        <DateTimeField source="created" />
                         {notification?.message && <TextField source="message" />}
                         {notification?.function && <TextField source="function" />}
                         {notification?.arguments && <TextField source="arguments" />}

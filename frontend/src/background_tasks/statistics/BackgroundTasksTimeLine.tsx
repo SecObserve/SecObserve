@@ -2,6 +2,7 @@ import { Paper } from "@mui/material";
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
+import { getServerTimeZone } from "../../commons/time_zone";
 import { getBackgroundColor, getElevation, getFontColor, getGridColor } from "../../metrics/functions";
 import { BackgroundTaskThroughput } from "../types";
 
@@ -20,6 +21,7 @@ const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
                 hour: "2-digit",
                 minute: "2-digit",
                 hour12: false,
+                timeZone: getServerTimeZone(),
             })
         );
     }
