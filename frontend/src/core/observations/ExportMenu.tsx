@@ -12,6 +12,7 @@ import { useListContext, useNotify } from "react-admin";
 import { useNavigate } from "react-router-dom";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
+import { resolveDateFilters } from "../../commons/custom_fields/DateRangeFilter";
 import { getIconAndFontColor } from "../../commons/functions";
 
 const ExportMenu = () => {
@@ -82,7 +83,7 @@ const ExportMenu = () => {
     };
 
     const queryParams = () => {
-        const query = { ...filterValues, ...sort };
+        const query = { ...resolveDateFilters(filterValues), ...sort };
         return queryString.stringify(query);
     };
 
