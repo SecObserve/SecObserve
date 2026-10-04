@@ -9,6 +9,8 @@ import environ
 from django.utils.csp import CSP
 
 from application.__init__ import __version__
+from config.settings.database_options import postgresql_options
+from config.settings.huey_database import create_huey_database
 
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # application/
@@ -89,6 +91,9 @@ else:
             DATABASES["default"]["OPTIONS"]["ssl"] = {"ca": "/app/BaltimoreCyberTrustRoot_combined.crt.pem"}
         if env("MYSQL_AZURE", default="false") == "flexible":
             DATABASES["default"]["OPTIONS"]["ssl"] = {"ca": "/app/combined-ca-certificates.pem"}
+
+    if env("DATABASE_ENGINE") == "django.db.backends.postgresql":
+        DATABASES["default"]["OPTIONS"] = postgresql_options(env)
 
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -186,6 +191,7 @@ MIDDLEWARE = [
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "application.commons.services.global_request.GlobalRequestMiddleware",
+    "application.notifications.api.exception_handler.ExceptionNotificationMiddleware",
     "application.commons.services.request_cache.RequestCacheMiddleware",
     "application.commons.services.security_headers.SecurityHeadersMiddleware",
 ]
@@ -437,22 +443,14 @@ if HUEY_IMMEDIATE not in [True, False]:
     raise ValueError("HUEY_IMMEDIATE must be True or False")
 
 db = DATABASES["default"]
-
-if "postgresql" in db["ENGINE"]:
-    scheme, port = "postgresql", db["PORT"] or 5432
-    db_url = f"{scheme}://{db['USER']}:{db['PASSWORD']}@{db['HOST'] or 'localhost'}:{port}/{db['NAME']}"
-elif "mysql" in db["ENGINE"]:
-    scheme, port = "mysql", db["PORT"] or 3306
-    db_url = f"{scheme}://{db['USER']}:{db['PASSWORD']}@{db['HOST'] or 'localhost'}:{port}/{db['NAME']}"
-else:
-    # Fallback: SQLite file. /var/lib/huey only exists in the container images, so tools running
-    # outside of them (linting, type checking) can point this to "sqlite:///:memory:".
-    db_url = env.str("HUEY_SQLITE_URL", "sqlite:////var/lib/huey/huey.db")
+huey_sqlite_url = env.str("HUEY_SQLITE_URL", "sqlite:////var/lib/huey/huey.db")
+huey_database = create_huey_database(db, huey_sqlite_url)
+huey_stats_database = create_huey_database(db, huey_sqlite_url)
 
 HUEY = {
     "huey_class": "application.background_tasks.services.prefixed_sql_storage.PrefixedSqlHuey",
     "name": "secobserve",
-    "database": db_url,  # forwarded as a kwarg to SqlHuey -> SqlStorage
+    "database": huey_database,
     "results": False,  # Store return values of tasks.
     "store_none": False,  # If a task returns None, do not save to results.
     "immediate": HUEY_IMMEDIATE,  # Check the variable for documentation
@@ -471,7 +469,7 @@ HUEY = {
 }
 
 HUEY_STATS = {
-    "database": db_url,
+    "database": huey_stats_database,
     # The statistics keep the newest max_events rows per queue, and every task writes one row per
     # signal. huey's default of 2000 is filled by a single import that enqueues a task per product,
     # which leaves the background task statistics showing nothing but those enqueues.

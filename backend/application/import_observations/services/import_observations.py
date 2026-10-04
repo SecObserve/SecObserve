@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, Tuple
 
 from django.core.files.base import File
-from django.db import connection
+from django.db import connection, transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -291,6 +291,19 @@ def api_check_connection(
 
 
 def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tuple[int, int, int]:
+    observations_before_query = get_observations_for_vulnerability_check(
+        import_parameters.product,
+        import_parameters.branch,
+        import_parameters.service,
+        import_parameters.filename,
+        import_parameters.api_configuration_name,
+    )
+    if not transaction.get_autocommit():
+        # The import locks the product (with its first observation log) and all these observations anyway. Lock them
+        # first, the product before the observations by id, in the order of find_potential_duplicates and EPSS.
+        Product.objects.select_for_update().filter(pk=import_parameters.product.pk).first()
+        list(observations_before_query.select_for_update().order_by("pk").values_list("pk", flat=True))
+
     observations_new = 0
     observations_updated = 0
 
@@ -299,13 +312,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
 
     # Read current observations for the same vulnerability check, to find updated and resolved observations
     observations_before: dict[str, Observation] = {}
-    for observation_before_for_dict in get_observations_for_vulnerability_check(
-        import_parameters.product,
-        import_parameters.branch,
-        import_parameters.service,
-        import_parameters.filename,
-        import_parameters.api_configuration_name,
-    ):
+    for observation_before_for_dict in observations_before_query:
         observations_before[observation_before_for_dict.identity_hash] = observation_before_for_dict
 
     observations_this_run: set[str] = set()

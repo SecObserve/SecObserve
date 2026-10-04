@@ -1,10 +1,11 @@
 import logging
 import re
 import traceback
-from typing import Optional
+from typing import Any, Optional
 
 import inflect
 from django.db.models.deletion import ProtectedError, RestrictedError
+from django.http import HttpRequest, HttpResponse
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_401_UNAUTHORIZED,
@@ -12,15 +13,18 @@ from rest_framework.status import (
     HTTP_409_CONFLICT,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from rest_framework.views import exception_handler
+from rest_framework.views import exception_handler, set_rollback
 
 from application.access_control.services.current_user import get_current_username
+from application.commons.services.global_request import get_current_request
 from application.commons.services.log_message import format_log_message
 from application.notifications.services.send_notifications_exception import (
     send_exception_notification,
 )
 
 logger = logging.getLogger("secobserve.exception_handler")
+
+EXCEPTION_TO_NOTIFY = "secobserve_exception_to_notify"
 
 
 def custom_exception_handler(exc: Exception, context: dict) -> Response:
@@ -46,7 +50,7 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response:
             response.data["message"] = "Internal server error, check logs for details"
             logger.error(format_log_message(response=response, exception=exc, username=get_current_username()))
             logger.error(traceback.format_exc())
-            send_exception_notification(exc)
+            _handle_server_error(exc)
         else:
             if response.status_code < 500:
                 if response.status_code in (HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN):
@@ -65,11 +69,38 @@ def custom_exception_handler(exc: Exception, context: dict) -> Response:
                 # to avoid leaking internal technical information.
                 logger.error(format_log_message(response=response, exception=exc, username=get_current_username()))
                 logger.error(traceback.format_exc())
-                send_exception_notification(exc)
+                _handle_server_error(exc)
                 response.data = {}
                 response.data["message"] = "Internal server error, check logs for details"
 
     return response
+
+
+def _handle_server_error(exc: Exception) -> None:
+    # REST framework only rolls back the request transaction for an APIException.
+    set_rollback()
+
+    request = get_current_request()
+    if request:
+        # The notification is written to the database, which has to wait until the rollback is done.
+        setattr(request, EXCEPTION_TO_NOTIFY, exc)
+    else:
+        send_exception_notification(exc)
+
+
+class ExceptionNotificationMiddleware:
+    def __init__(self, get_response: Any) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        # Middleware runs outside of the transaction of ATOMIC_REQUESTS.
+        response = self.get_response(request)
+
+        exception = getattr(request, EXCEPTION_TO_NOTIFY, None)
+        if exception:
+            send_exception_notification(exception)
+
+        return response
 
 
 def format_exception_message(exc: Exception) -> str:

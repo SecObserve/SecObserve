@@ -45,4 +45,5 @@ export interface BackgroundTaskStatistics {
     throughput: BackgroundTaskThroughput;
     counts: BackgroundTaskCounts;
     running: BackgroundTaskRunning[];
+    pending: number;
 }
