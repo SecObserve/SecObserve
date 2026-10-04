@@ -5,19 +5,22 @@ import { BackgroundTaskCounts } from "../types";
 
 interface BackgroundTasksCountsProps {
     counts: BackgroundTaskCounts;
+    pending: number;
+    running: number;
 }
 
-const COUNT_ITEMS: { label: string; value: (counts: BackgroundTaskCounts) => number }[] = [
-    { label: "Queued", value: (counts) => Math.max(0, counts.enqueued - counts.executing) },
-    { label: "Executing", value: (counts) => Math.max(0, counts.executing - counts.complete - counts.error) },
-    { label: "Completed (24h)", value: (counts) => counts.complete },
-    { label: "Errors (24h)", value: (counts) => counts.error },
-];
-
 const BackgroundTasksCounts = (props: BackgroundTasksCountsProps) => {
+    // Events can be pruned or lost, so Queued and Executing are not derived from their counts.
+    const items = [
+        { label: "Queued", value: props.pending },
+        { label: "Executing", value: props.running },
+        { label: "Completed (24h)", value: props.counts.complete },
+        { label: "Errors (24h)", value: props.counts.error },
+    ];
+
     return (
         <Stack direction="row" spacing={2}>
-            {COUNT_ITEMS.map((item) => (
+            {items.map((item) => (
                 <Paper
                     key={item.label}
                     elevation={getElevation()}
@@ -29,7 +32,7 @@ const BackgroundTasksCounts = (props: BackgroundTasksCountsProps) => {
                         alignItems: "center",
                     }}
                 >
-                    <Typography variant="h4">{item.value(props.counts)}</Typography>
+                    <Typography variant="h4">{item.value}</Typography>
                     <Typography variant="body2" sx={{ marginTop: 1 }}>
                         {item.label}
                     </Typography>
