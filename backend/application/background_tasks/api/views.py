@@ -88,6 +88,7 @@ class BackgroundTaskView(APIView):
             "throughput": stats.throughput(minutes=60),
             "counts": stats.window_counts(seconds=86400),
             "running": stats.inflight(),
+            "pending": huey.pending_count(),
         }
 
         serializer = BackgroundTaskStatisticsSerializer(content)
