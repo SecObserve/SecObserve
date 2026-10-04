@@ -1,11 +1,13 @@
 import time
 from datetime import timedelta
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import peewee
 from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db import OperationalError as DjangoOperationalError
 from django.db import connection
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
@@ -97,6 +99,20 @@ class TestCheckBackgroundTasksCommand(TestCase):
         self.huey._stats = None
 
         call_command(COMMAND)
+
+    def test_database_errors_pass(self) -> None:
+        self._periodic_task("Calculate product metrics", 13)
+        errors = [
+            (f"{MODULE}.Periodic_Task.objects.filter", DjangoOperationalError("connection refused")),
+            (f"{MODULE}.HueyInflight.select", peewee.OperationalError("connection refused")),
+        ]
+        for target, error in errors:
+            with self.subTest(error=type(error)), patch(target, side_effect=error):
+                stderr = StringIO()
+
+                call_command(COMMAND, stderr=stderr)
+
+                self.assertIn("Background tasks could not be checked: connection refused", stderr.getvalue())
 
     def test_database_access_is_bounded(self) -> None:
         cases = [
