@@ -25,6 +25,9 @@ class DisableMigrations:
 
 MIGRATION_MODULES = DisableMigrations()
 
+# The expected values of the tests are in CET, whatever TIME_ZONE the environment sets
+TIME_ZONE = "CET"
+
 TEMPLATES = [
     {
         # https://docs.djangoproject.com/en/dev/ref/settings/#std:setting-TEMPLATES-BACKEND
