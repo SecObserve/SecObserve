@@ -41,7 +41,9 @@ def create_huey_database(database_settings: dict[str, Any], sqlite_url: str) -> 
             password=password,
             host=host,
             port=int(database_settings.get("PORT") or 5432),
-            **database_settings.get("OPTIONS", {}),
+            # Without it, connecting to an unreachable server blocks for about 2 minutes, which is
+            # longer than the timeout of the liveness probe that connects while Django starts
+            **({"connect_timeout": 10} | database_settings.get("OPTIONS", {})),
         )
     if "mysql" in engine:
         return ReconnectMySQLDatabase(
