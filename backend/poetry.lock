@@ -2947,15 +2947,15 @@ crypto = ["cryptography (>=3.4.0)"]
 
 [[package]]
 name = "pylint"
-version = "4.0.9"
+version = "4.0.10"
 description = "python code static checker"
 optional = true
 python-versions = ">=3.10.0"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "pylint-4.0.9-py3-none-any.whl", hash = "sha256:c4ba5bbaf1e70ecf05f08cd7d6091ea04824b79a2b2d9f5b10dc25fc34cb1124"},
-    {file = "pylint-4.0.9.tar.gz", hash = "sha256:6f1305780229ae720e89b8aff2b3ff857cbb268fbab98c8b586960267667ad34"},
+    {file = "pylint-4.0.10-py3-none-any.whl", hash = "sha256:c259421f734e6262407b6a421a26f9513b13ac2c5ac2c160775c1658afb57fea"},
+    {file = "pylint-4.0.10.tar.gz", hash = "sha256:bf19280b10f2185bfbc898a28ac0b85c958af2e6d684a94984e12d3ac975d9f4"},
 ]
 
 [package.dependencies]
@@ -3957,4 +3957,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "0d6728da1c7d39597f23b7535a642a774503649e81288d29012d2e0fa2bd296c"
+content-hash = "8be685023a38d2130f6194b82b05d8a40e4a97a8b3a7ab128c6f0b7de8f61886"
