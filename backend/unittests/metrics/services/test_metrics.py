@@ -3,7 +3,9 @@ from unittest.mock import patch
 
 from django.utils import timezone
 
-from application.core.models import Branch, Observation, Product
+from application.access_control.models import User
+from application.authorization.services.roles_permissions import Roles
+from application.core.models import Branch, Observation, Product, Product_Member
 from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.licenses.models import License_Component
@@ -919,6 +921,47 @@ class TestGetProductMetricsCurrent(BaseTestCase):
 
         self.assertEqual(1, result["active_high"])
         self.assertEqual(2, result["open"])
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_latest_metrics_for_all_products_when_none_for_today(self, mock_user):
+        mock_user.return_value = self.user_admin
+        # Fixtures loaded by other test classes may leave older metrics behind, which would be counted as well
+        Product_Metrics.objects.all().delete()
+        today = timezone.localdate()
+        product_yesterday = Product.objects.create(name="product_yesterday")
+        Product_Metrics.objects.create(product=product_yesterday, date=today - timedelta(days=2), active_high=80)
+        Product_Metrics.objects.create(product=product_yesterday, date=today - timedelta(days=1), active_high=1)
+        product_today = Product.objects.create(name="product_today")
+        Product_Metrics.objects.create(product=product_today, date=today - timedelta(days=1), active_high=90)
+        Product_Metrics.objects.create(product=product_today, date=today, active_high=10)
+        Product.objects.create(name="product_without_metrics")
+
+        result = get_product_metrics_current(None)
+
+        self.assertEqual(11, result["active_high"])
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_latest_metrics_only_for_authorized_products(self, mock_user):
+        user = User.objects.create(username="user_metrics@example.com")
+        mock_user.return_value = user
+        today = timezone.localdate()
+        product_member = Product.objects.create(name="product_member")
+        Product_Member.objects.create(product=product_member, user=user, role=Roles.Reader)
+        Product_Metrics.objects.create(product=product_member, date=today - timedelta(days=1), active_high=1)
+        product_group = Product.objects.create(name="product_group", is_product_group=True)
+        Product_Member.objects.create(product=product_group, user=user, role=Roles.Reader)
+        product_group_member = Product.objects.create(name="product_group_member", product_group=product_group)
+        Product_Metrics.objects.create(product=product_group_member, date=today, active_high=10)
+        product_not_member = Product.objects.create(name="product_not_member")
+        Product_Metrics.objects.create(product=product_not_member, date=today - timedelta(days=1), active_high=100)
+
+        result = get_product_metrics_current(None)
+
+        self.assertEqual(11, result["active_high"])
+
+        result = get_product_metrics_current(product_not_member)
+
+        self.assertEqual(0, result["active_high"])
 
 
 class TestGetCodechartaMetrics(BaseTestCase):
