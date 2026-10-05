@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         # Bounds the queries of this command. The statistics connection that opens while Django
-        # starts is only bounded by the keepalive settings of the database connections.
+        # starts is bounded by the connect timeout and the keepalive settings of the Huey database.
         connection_params = _bounded_connection_params(connection.vendor)
         connection.settings_dict["OPTIONS"].update(connection_params)
         stats = getattr(huey, "_stats", None)
