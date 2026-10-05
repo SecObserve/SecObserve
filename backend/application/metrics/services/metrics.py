@@ -15,8 +15,8 @@ from application.metrics.models import (
     Product_Metrics_Status,
 )
 from application.metrics.queries.product_metrics import (
+    get_latest_product_metrics,
     get_product_metrics,
-    get_todays_product_metrics,
 )
 from application.metrics.services.age import get_days
 
@@ -266,12 +266,7 @@ def get_product_metrics_timeline(product: Optional[Product], age: str) -> dict:
 
 
 def get_product_metrics_current(product: Optional[Product]) -> dict:
-    product_metrics = get_todays_product_metrics()
-    if product:
-        if product.is_product_group:
-            product_metrics = product_metrics.filter(product__product_group=product)
-        else:
-            product_metrics = product_metrics.filter(product=product)
+    product_metrics = get_latest_product_metrics(product)
 
     response_data: dict = _initialize_response_data()
     if len(product_metrics) > 0:

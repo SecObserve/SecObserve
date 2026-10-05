@@ -46,6 +46,15 @@ spec:
             - background
           env:
             {{- include "secobserve.backendEnv" . | nindent 12 }}
+          {{- if .Values.backend.background.livenessProbe.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                - python
+                - /app/manage.py
+                - check_background_tasks
+            {{- omit .Values.backend.background.livenessProbe "enabled" | toYaml | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
           {{- with .Values.backend.volumeMounts }}

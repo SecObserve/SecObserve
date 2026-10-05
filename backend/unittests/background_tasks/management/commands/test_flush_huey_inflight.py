@@ -7,9 +7,6 @@ from django.test import TestCase
 from django.utils import timezone
 from huey.contrib.stats import HueyInflight
 
-from application.background_tasks.management.commands.flush_huey_inflight import (
-    STALE_MESSAGE,
-)
 from application.background_tasks.models import Periodic_Task
 from application.background_tasks.types import Status
 
@@ -98,7 +95,9 @@ class TestFlushStalePeriodicTasks(TestCase):
 
         running.refresh_from_db()
         self.assertEqual(Status.STATUS_FAILURE, running.status)
-        self.assertEqual(STALE_MESSAGE, running.message)
+        self.assertEqual(
+            "Task did not finish, it was still marked as running when the container started", running.message
+        )
 
     def test_finished_tasks_are_left_alone(self) -> None:
         success = self._periodic_task("Housekeeping", Status.STATUS_SUCCESS)

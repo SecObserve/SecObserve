@@ -131,6 +131,27 @@ backend:
     # @section -- Backend
     replicaCount: 1
 
+    livenessProbe:
+      # -- restart the background container when a task has been running for longer than `HUEY_TASK_MAX_RUNTIME_HOURS`, only used when `architecture` is `ha`
+      # @section -- Backend
+      enabled: true
+
+      # -- seconds after the container has started before the first probe
+      # @section -- Backend
+      initialDelaySeconds: 300
+
+      # -- seconds between two probes
+      # @section -- Backend
+      periodSeconds: 300
+
+      # -- seconds after which a probe counts as failed
+      # @section -- Backend
+      timeoutSeconds: 60
+
+      # -- number of consecutive failed probes before the container is restarted
+      # @section -- Backend
+      failureThreshold: 2
+
   init:
     # -- number of retries for the init Job, only used when `architecture` is `ha`
     # @section -- Backend
