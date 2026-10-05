@@ -1,9 +1,11 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from unittest.mock import patch
 
 from django.utils import timezone
 
-from application.core.models import Branch, Observation
+from application.access_control.models import User
+from application.authorization.services.roles_permissions import Roles
+from application.core.models import Branch, Observation, Product, Product_Member
 from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.licenses.models import License_Component
@@ -838,17 +840,17 @@ class TestGetProductMetricsTimeline(BaseTestCase):
 
 
 class TestGetProductMetricsCurrent(BaseTestCase):
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_no_product_no_metrics(self, mock_get_todays):
-        mock_get_todays.return_value = QuerySetStub([])
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_no_product_no_metrics(self, mock_get_latest):
+        mock_get_latest.return_value = QuerySetStub([])
 
         result = get_product_metrics_current(None)
 
         expected = _initialize_response_data()
         self.assertEqual(result, expected)
 
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_no_product_with_metrics(self, mock_get_todays):
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_no_product_with_metrics(self, mock_get_latest):
         metrics = [
             ProductMetricsStub(
                 active_critical=1,
@@ -865,7 +867,7 @@ class TestGetProductMetricsCurrent(BaseTestCase):
                 resolved=50,
             ),
         ]
-        mock_get_todays.return_value = QuerySetStub(metrics)
+        mock_get_latest.return_value = QuerySetStub(metrics)
 
         result = get_product_metrics_current(None)
 
@@ -875,31 +877,91 @@ class TestGetProductMetricsCurrent(BaseTestCase):
         self.assertEqual(result["open"], 44)
         self.assertEqual(result["resolved"], 55)
 
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_single_product_filters(self, mock_get_todays):
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_single_product_filters(self, mock_get_latest):
         self.product_1.is_product_group = False
         metrics = [ProductMetricsStub(active_critical=7, open=3)]
-        metrics_qs = QuerySetStub(metrics)
-        mock_get_todays.return_value = metrics_qs
+        mock_get_latest.return_value = QuerySetStub(metrics)
 
         result = get_product_metrics_current(self.product_1)
 
         self.assertEqual(result["active_critical"], 7)
         self.assertEqual(result["open"], 3)
-        metrics_qs.assert_filtered_with(self, product=self.product_1)
+        mock_get_latest.assert_called_once_with(self.product_1)
 
-    @patch("application.metrics.services.metrics.get_todays_product_metrics")
-    def test_product_group_filters(self, mock_get_todays):
+    @patch("application.metrics.services.metrics.get_latest_product_metrics")
+    def test_product_group_filters(self, mock_get_latest):
         self.product_group_1.is_product_group = True
         metrics = [ProductMetricsStub(active_critical=4, open=2)]
-        metrics_qs = QuerySetStub(metrics)
-        mock_get_todays.return_value = metrics_qs
+        mock_get_latest.return_value = QuerySetStub(metrics)
 
         result = get_product_metrics_current(self.product_group_1)
 
         self.assertEqual(result["active_critical"], 4)
         self.assertEqual(result["open"], 2)
-        metrics_qs.assert_filtered_with(self, product__product_group=self.product_group_1)
+        mock_get_latest.assert_called_once_with(self.product_group_1)
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_latest_metrics_per_product_when_none_for_today(self, mock_user):
+        mock_user.return_value = self.user_admin
+        today = timezone.localdate()
+        product_group = Product.objects.create(name="product_group", is_product_group=True)
+        product_yesterday = Product.objects.create(name="product_yesterday", product_group=product_group)
+        Product_Metrics.objects.create(product=product_yesterday, date=today - timedelta(days=1), active_high=1, open=2)
+        product_today = Product.objects.create(name="product_today", product_group=product_group)
+        Product_Metrics.objects.create(product=product_today, date=today - timedelta(days=1), active_high=90, open=90)
+        Product_Metrics.objects.create(product=product_today, date=today, active_high=10, open=20)
+
+        result = get_product_metrics_current(product_group)
+
+        self.assertEqual(11, result["active_high"])
+        self.assertEqual(22, result["open"])
+
+        result = get_product_metrics_current(product_yesterday)
+
+        self.assertEqual(1, result["active_high"])
+        self.assertEqual(2, result["open"])
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_latest_metrics_for_all_products_when_none_for_today(self, mock_user):
+        mock_user.return_value = self.user_admin
+        # Fixtures loaded by other test classes may leave older metrics behind, which would be counted as well
+        Product_Metrics.objects.all().delete()
+        today = timezone.localdate()
+        product_yesterday = Product.objects.create(name="product_yesterday")
+        Product_Metrics.objects.create(product=product_yesterday, date=today - timedelta(days=2), active_high=80)
+        Product_Metrics.objects.create(product=product_yesterday, date=today - timedelta(days=1), active_high=1)
+        product_today = Product.objects.create(name="product_today")
+        Product_Metrics.objects.create(product=product_today, date=today - timedelta(days=1), active_high=90)
+        Product_Metrics.objects.create(product=product_today, date=today, active_high=10)
+        Product.objects.create(name="product_without_metrics")
+
+        result = get_product_metrics_current(None)
+
+        self.assertEqual(11, result["active_high"])
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_latest_metrics_only_for_authorized_products(self, mock_user):
+        user = User.objects.create(username="user_metrics@example.com")
+        mock_user.return_value = user
+        today = timezone.localdate()
+        product_member = Product.objects.create(name="product_member")
+        Product_Member.objects.create(product=product_member, user=user, role=Roles.Reader)
+        Product_Metrics.objects.create(product=product_member, date=today - timedelta(days=1), active_high=1)
+        product_group = Product.objects.create(name="product_group", is_product_group=True)
+        Product_Member.objects.create(product=product_group, user=user, role=Roles.Reader)
+        product_group_member = Product.objects.create(name="product_group_member", product_group=product_group)
+        Product_Metrics.objects.create(product=product_group_member, date=today, active_high=10)
+        product_not_member = Product.objects.create(name="product_not_member")
+        Product_Metrics.objects.create(product=product_not_member, date=today - timedelta(days=1), active_high=100)
+
+        result = get_product_metrics_current(None)
+
+        self.assertEqual(11, result["active_high"])
+
+        result = get_product_metrics_current(product_not_member)
+
+        self.assertEqual(0, result["active_high"])
 
 
 class TestGetCodechartaMetrics(BaseTestCase):

@@ -468,10 +468,17 @@ HUEY = {
     },
 }
 
+# A task running for longer than this is considered stuck by the command check_background_tasks
+HUEY_TASK_MAX_RUNTIME_HOURS = env.float("HUEY_TASK_MAX_RUNTIME_HOURS", 12)
+if HUEY_TASK_MAX_RUNTIME_HOURS <= 0:
+    raise ValueError("HUEY_TASK_MAX_RUNTIME_HOURS must be greater than 0")
+
 HUEY_STATS = {
     "database": huey_stats_database,
     # The statistics keep the newest max_events rows per queue, and every task writes one row per
     # signal. huey's default of 2000 is filled by a single import that enqueues a task per product,
     # which leaves the background task statistics showing nothing but those enqueues.
     "max_events": env.int("HUEY_STATS_MAX_EVENTS", 100000),
+    # huey's default of 6 hours would prune the in-flight entry of a stuck task before it is reported as stuck
+    "inflight_hours": HUEY_TASK_MAX_RUNTIME_HOURS + 6,
 }

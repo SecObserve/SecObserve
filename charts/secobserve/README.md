@@ -2,9 +2,9 @@
 
 ## Installing the chart
 
-The chart can be installed from the OCI repository using `helm install secobserve --version 1.2.4 oci://ghcr.io/SecObserve/charts/secobserve`.
+The chart can be installed from the OCI repository using `helm install secobserve --version 1.3.0 oci://ghcr.io/SecObserve/charts/secobserve`.
 
-![Version: 1.2.4](https://img.shields.io/badge/Version-1.2.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.60.0](https://img.shields.io/badge/AppVersion-1.60.0-informational?style=flat-square)
+![Version: 1.3.0](https://img.shields.io/badge/Version-1.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.60.1](https://img.shields.io/badge/AppVersion-1.60.1-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system
 designed for software development teams and cloud-native environments.
@@ -35,6 +35,8 @@ across their software projects, enhancing visibility and improving DevSecOps wor
 With the default `architecture: single`, all roles run in one Pod and the chart supports exactly one application replica. The Huey queue of a SQLite installation is persisted in a dedicated PersistentVolumeClaim.
 
 Set `architecture: ha` to split the backend into separate workloads: an `init` Job, a scalable `api` Deployment, a `background` Deployment running the Huey consumer, and a separate `frontend` Deployment. `backend.background.replicaCount` is limited to 1, because the Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue. The PersistentVolumeClaim is not created for this architecture.
+
+The `background` container has a liveness probe that restarts it when a task has been running for longer than `HUEY_TASK_MAX_RUNTIME_HOURS` (default 12), for example because its worker thread is blocked on a dead database connection. Set `HUEY_TASK_MAX_RUNTIME_HOURS` in `backend.env` above the longest regular runtime of a task, or disable the probe with `backend.background.livenessProbe.enabled=false`. The `single` architecture has no such probe, because the consumer shares its container with the API.
 
 Application and bundled PostgreSQL resource names are derived from the Helm release name. External databases can be configured through `database.*` values with `postgresql.enabled=false`.
 
@@ -182,6 +184,51 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 </pre>
 </td>
 			<td>number of API replicas, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
+			<td>backend.background.livenessProbe.enabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+true
+</pre>
+</td>
+			<td>restart the background container when a task has been running for longer than `HUEY_TASK_MAX_RUNTIME_HOURS`, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
+			<td>backend.background.livenessProbe.failureThreshold</td>
+			<td>int</td>
+			<td><pre lang="json">
+2
+</pre>
+</td>
+			<td>number of consecutive failed probes before the container is restarted</td>
+		</tr>
+		<tr>
+			<td>backend.background.livenessProbe.initialDelaySeconds</td>
+			<td>int</td>
+			<td><pre lang="json">
+300
+</pre>
+</td>
+			<td>seconds after the container has started before the first probe</td>
+		</tr>
+		<tr>
+			<td>backend.background.livenessProbe.periodSeconds</td>
+			<td>int</td>
+			<td><pre lang="json">
+300
+</pre>
+</td>
+			<td>seconds between two probes</td>
+		</tr>
+		<tr>
+			<td>backend.background.livenessProbe.timeoutSeconds</td>
+			<td>int</td>
+			<td><pre lang="json">
+60
+</pre>
+</td>
+			<td>seconds after which a probe counts as failed</td>
 		</tr>
 		<tr>
 			<td>backend.background.replicaCount</td>

@@ -1,6 +1,6 @@
 {
     "name": "secobserve",
-    "version": "1.60.0",
+    "version": "1.60.1",
     "license": "BSD-3-Clause",
     "description": "SecObserve is an open source vulnerability management system for software development and cloud environments.",
     "private": true,
@@ -11,7 +11,7 @@
         "@fortawesome/free-brands-svg-icons": "7.3.1",
         "@fortawesome/free-solid-svg-icons": "7.3.1",
         "@fortawesome/react-fontawesome": "3.5.0",
-        "@mdxeditor/editor": "4.3.0",
+        "@mdxeditor/editor": "4.3.1",
         "@mui/icons-material": "9.4.0",
         "@mui/material": "9.4.0",
         "@textea/json-viewer": "4.0.1",
