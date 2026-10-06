@@ -26,11 +26,12 @@ COLUMNS = [
     ExportColumn("Title", "title", 50),
     ExportColumn("Vulnerability ID", "vulnerability_id", 20),
     ExportColumn("Vulnerability ID aliases", "vulnerability_id_aliases", 20),
-    ExportColumn("Severity", "current_severity", 12),
-    ExportColumn("Status", "current_status", 14),
-    ExportColumn("Priority", "current_priority", 10),
-    ExportColumn("VEX justification", "current_vex_justification", 20),
-    ExportColumn("VEX remediations", "current_vex_remediations", 20),
+    ExportColumn("Current severity", "current_severity", 12),
+    ExportColumn("Current numerical severity", "numerical_severity", 12),
+    ExportColumn("Current status", "current_status", 14),
+    ExportColumn("Current priority", "current_priority", 10),
+    ExportColumn("Current VEX justification", "current_vex_justification", 20),
+    ExportColumn("Current VEX remediations", "current_vex_remediations", 20),
     ExportColumn("Risk acceptance expiry date", "risk_acceptance_expiry_date", 14),
     ExportColumn("Assessment comment", "observation_log_comment", 40),
     ExportColumn("CVSS 4 score", "cvss4_score", 10),
@@ -126,7 +127,7 @@ COLUMNS = [
 COLUMNS.sort(key=lambda column: column.header.casefold())
 
 # Model fields that are deliberately not exported
-EXCLUDED_FIELDS = ["identity_hash", "numerical_severity", "origin_component"]
+EXCLUDED_FIELDS = ["identity_hash", "origin_component"]
 
 
 def export_observations_excel(observations: QuerySet) -> Workbook:
