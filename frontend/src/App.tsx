@@ -1,12 +1,12 @@
 import { useRef } from "react";
-import { Admin, CustomRoutes, Resource, addRefreshAuthToAuthProvider, addRefreshAuthToDataProvider } from "react-admin";
+import { Admin, CustomRoutes, Resource, addRefreshAuthToAuthProvider } from "react-admin";
 import { useAuth } from "react-oidc-context";
 import { AuthProvider } from "react-oidc-context";
 import { Route } from "react-router";
 
 import AccessControlAdministration from "./access_control/access_control_administration/AccessControlAdministration";
 import authProvider, { getIsLoggingOut } from "./access_control/auth_provider/authProvider";
-import { oidcConfig, updateRefreshToken } from "./access_control/auth_provider/oidc";
+import { onSigninCallback, updateRefreshToken, userManager } from "./access_control/auth_provider/oidc";
 import authorization_groups from "./access_control/authorization_groups";
 import { Login } from "./access_control/login";
 import users from "./access_control/users";
@@ -47,8 +47,12 @@ import vex_counters from "./vex/vex_counters";
 import vex_documents from "./vex/vex_documents";
 import vex_statements from "./vex/vex_statements";
 
-const refreshDataProvider = addRefreshAuthToDataProvider(drfProvider(), updateRefreshToken);
-const refreshAuthProvider = addRefreshAuthToAuthProvider(authProvider, updateRefreshToken);
+// The data provider renews the OIDC tokens itself, before each request
+const dataProvider = drfProvider();
+// A failed token renewal must not log out, updateRefreshToken() sends the user to sign in again if needed
+const refreshAuthProvider = addRefreshAuthToAuthProvider(authProvider, () =>
+    updateRefreshToken().catch(() => undefined)
+);
 const defaultTheme = getTheme();
 
 const AdminApp = () => {
@@ -66,7 +70,7 @@ const AdminApp = () => {
     return (
         <Admin
             title=""
-            dataProvider={refreshDataProvider}
+            dataProvider={dataProvider}
             queryClient={queryClient}
             authProvider={refreshAuthProvider}
             dashboard={Dashboard}
@@ -283,7 +287,7 @@ const AdminApp = () => {
 };
 
 const App = () => (
-    <AuthProvider {...oidcConfig}>
+    <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
         <AdminApp />
     </AuthProvider>
 );
