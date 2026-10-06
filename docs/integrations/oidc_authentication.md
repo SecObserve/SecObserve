@@ -84,6 +84,20 @@ A time deviation between the OIDC server and the SecObserve backend cannot alway
 ![OIDC clock skew](../assets/images/screenshot_oidc_clock_skew.png)
 
 
+## Token renewal
+
+The frontend authenticates against the backend with the id token and renews the tokens before they expire. For a reliable renewal, the OIDC provider has to fulfil some requirements:
+
+* **Refresh tokens:** The provider has to issue a refresh token. Depending on the provider, the refresh token grant has to be enabled for the client and/or the scope `offline_access` has to be added to `OIDC_SCOPE`. Without a refresh token, the frontend falls back to a renewal in a hidden iframe with `prompt=none`. This often fails because browsers block third-party cookies, and then users have to sign in again.
+* **Id token on renewal:** The provider has to return a new id token when the refresh token is used. Otherwise the old id token expires and users have to sign in again. In this case the frontend writes the warning `OIDC token renewal did not provide a new id token` to the browser console.
+
+Whether a refresh token has been issued can be checked in the local storage of the browser: The entry `oidc.user:<OIDC_AUTHORITY>:<OIDC_CLIENT_ID>` must contain a `refresh_token`.
+
+Providers with refresh token rotation accept every refresh token only once. The frontend makes sure that only one renewal runs at a time, even with several browser tabs open.
+
+If the renewal fails nevertheless, users are sent to the OIDC provider to sign in again and return to the page they have been on. As long as their session at the OIDC provider is active, they don't need to enter anything.
+
+
 ## Audience validation
 
 By default SecObserve requires the `aud` claim of a token to be a single string that matches the OIDC client id exactly. This is the strictest interpretation and is recommended wherever the OIDC provider supports it.

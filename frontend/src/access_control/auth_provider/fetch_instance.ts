@@ -1,7 +1,7 @@
 import { HttpError } from "react-admin";
 
 import { jwt_signed_in } from "../../access_control/auth_provider/authProvider";
-import { get_oidc_id_token, oidc_signed_in } from "../../access_control/auth_provider/oidc";
+import { get_oidc_id_token, oidc_request_with_retry, oidc_signed_in } from "../../access_control/auth_provider/oidc";
 
 const base_url = window.__RUNTIME_CONFIG__.API_BASE_URL;
 
@@ -27,7 +27,14 @@ function parse_json(body: string): any {
     }
 }
 
-async function fetch_instance(url: string, options: RequestInit): Promise<Response> {
+function fetch_instance(url: string, options: RequestInit): Promise<Response> {
+    if (oidc_signed_in()) {
+        return oidc_request_with_retry(() => fetch_with_authorization(url, options));
+    }
+    return fetch_with_authorization(url, options);
+}
+
+async function fetch_with_authorization(url: string, options: RequestInit): Promise<Response> {
     const response = await fetch(full_url(url), {
         ...options,
         headers: { ...authorization_header(), ...options.headers },
