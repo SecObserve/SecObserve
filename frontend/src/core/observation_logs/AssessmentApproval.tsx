@@ -25,6 +25,43 @@ import {
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
 
+type VEXEditInputsProps = {
+    justificationEnabled: boolean;
+    remediationsEnabled: boolean;
+};
+
+// Empty inputs keep the values of the assessment
+export const VEXEditInputs = ({ justificationEnabled, remediationsEnabled }: VEXEditInputsProps) => (
+    <Fragment>
+        {justificationEnabled && settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
+            <AutocompleteInputWide
+                source="vex_justification"
+                label="VEX justification"
+                choices={OBSERVATION_VEX_JUSTIFICATION_CHOICES}
+            />
+        )}
+        {justificationEnabled && settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CYCLONEDX && (
+            <AutocompleteInputWide
+                source="vex_justification"
+                label="VEX justification"
+                choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
+            />
+        )}
+        {remediationsEnabled && (
+            <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations">
+                <SimpleFormIterator disableReordering inline>
+                    <AutocompleteInputMedium
+                        source="category"
+                        label=""
+                        choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                    />
+                    <TextInputWide source="text" multiline={true} minRows={3} />
+                </SimpleFormIterator>
+            </ArrayInput>
+        )}
+    </Fragment>
+);
+
 type AssessmentApprovalProps = {
     observation_log: RaRecord;
 };
@@ -115,35 +152,11 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                                 maxLength={4096}
                             />
                         )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
-                            justificationEnabled &&
-                            settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
-                                <AutocompleteInputWide
-                                    source="vex_justification"
-                                    label="VEX justification"
-                                    choices={OBSERVATION_VEX_JUSTIFICATION_CHOICES}
-                                />
-                            )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
-                            justificationEnabled &&
-                            settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CYCLONEDX && (
-                                <AutocompleteInputWide
-                                    source="vex_justification"
-                                    label="VEX justification"
-                                    choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
-                                />
-                            )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && remediationsEnabled && (
-                            <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations">
-                                <SimpleFormIterator disableReordering inline>
-                                    <AutocompleteInputMedium
-                                        source="category"
-                                        label=""
-                                        choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
-                                    />
-                                    <TextInputWide source="text" multiline={true} minRows={3} />
-                                </SimpleFormIterator>
-                            </ArrayInput>
+                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && (
+                            <VEXEditInputs
+                                justificationEnabled={justificationEnabled}
+                                remediationsEnabled={remediationsEnabled}
+                            />
                         )}
                     </SimpleForm>
                 </DialogContent>

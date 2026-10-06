@@ -914,6 +914,41 @@ class TestObservationLogBulkApprovalSerializer(BaseTestCase):
 
         self.assertEqual(new_attrs, attrs)
 
+    def test_approved_with_vex_justification_raises(self):
+        serializer = ObservationLogBulkApprovalSerializer()
+        attrs = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+            "observation_log_vex_justification": "component_not_present",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            serializer.validate(attrs)
+
+        self.assertIn("VEX justification for observation log cannot be set with approval", str(e.exception))
+
+    def test_approved_with_edits_and_vex_valid(self):
+        data = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "observation_log_comment": "Edited comment",
+            "observation_log_vex_justification": "component_not_present",
+            "observation_log_vex_remediations": [{"category": "workaround", "text": "Blocked"}],
+            "observation_logs": [1, 2],
+        }
+        serializer = ObservationLogBulkApprovalSerializer(data=data)
+
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
+    def test_vex_remediations_are_validated(self):
+        for remediations, valid in [("", True), (None, True), ("not a list", False), (["text"], False)]:
+            with self.subTest(remediations=remediations):
+                data = {
+                    "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+                    "observation_log_comment": "Edited comment",
+                    "observation_log_vex_remediations": remediations,
+                    "observation_logs": [1],
+                }
+                self.assertEqual(valid, ObservationLogBulkApprovalSerializer(data=data).is_valid())
+
 
 class TestObservationLogApprovalBaseSerializer(BaseTestCase):
     """Tests for the shared _validate_approval method of ObservationLogApprovalBaseSerializer"""

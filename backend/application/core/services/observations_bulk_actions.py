@@ -143,15 +143,24 @@ def _check_observations(product: Optional[Product], observation_ids: list[int]) 
     return observations
 
 
-def observation_logs_bulk_approval(
+def observation_logs_bulk_approval(  # pylint: disable=too-many-positional-arguments
     assessment_status: str,
     rejection_remark: str,
     observation_log_comment: Optional[str],
+    observation_log_vex_justification: Optional[str],
+    observation_log_vex_remediations: Optional[str],
     observation_log_ids: list[int],
 ) -> None:
     observation_logs = _check_observation_logs(None, observation_log_ids)
     for observation_log in observation_logs:
-        assessment_approval(observation_log, assessment_status, rejection_remark, observation_log_comment, None, None)
+        assessment_approval(
+            observation_log,
+            assessment_status,
+            rejection_remark,
+            observation_log_comment,
+            observation_log_vex_justification,
+            observation_log_vex_remediations,
+        )
         set_potential_duplicate_both_ways(observation_log.observation)
 
 

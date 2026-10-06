@@ -8,6 +8,7 @@ import SmallButton from "../../commons/custom_fields/SmallButton";
 import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
 import { validate_required, validate_required_255 } from "../../commons/custom_validators";
+import { justificationIsEnabledForStatus, remediationsAreEnabledForStatus } from "../../commons/functions";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import {
@@ -17,6 +18,7 @@ import {
     ASSESSMENT_STATUS_CHOICES,
     ASSESSMENT_STATUS_REJECTED,
 } from "../types";
+import { VEXEditInputs } from "./AssessmentApproval";
 
 type AssessmentBulkApprovalProps = {
     storeKey: string;
@@ -40,6 +42,11 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         selectedRecords.length > 0 && selectedRecords.every((r) => r.comment === selectedRecords[0].comment);
 
     const firstComment = selectedRecords[0]?.comment ?? "";
+    // Only offered when every selected assessment has a status the edited value applies to
+    const justificationEnabled =
+        selectedRecords.length > 0 && selectedRecords.every((r) => justificationIsEnabledForStatus(r.status));
+    const remediationsEnabled =
+        selectedRecords.length > 0 && selectedRecords.every((r) => remediationsAreEnabledForStatus(r.status));
 
     useEffect(() => {
         if (allSame) {
@@ -60,6 +67,12 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         }
         if (data.assessment_status === ASSESSMENT_STATUS_APPROVED_WITH_EDITS) {
             post_data.observation_log_comment = comment;
+            if (justificationEnabled) {
+                post_data.observation_log_vex_justification = data.vex_justification;
+            }
+            if (remediationsEnabled) {
+                post_data.observation_log_vex_remediations = data.vex_remediations;
+            }
         }
 
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/observation_logs/bulk_approval/", {
@@ -124,6 +137,12 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                                 label="Comment of Observation Log *"
                                 overlayContainer={dialogRef.current ?? null}
                                 maxLength={4096}
+                            />
+                        )}
+                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && (
+                            <VEXEditInputs
+                                justificationEnabled={justificationEnabled}
+                                remediationsEnabled={remediationsEnabled}
                             />
                         )}
                     </SimpleForm>

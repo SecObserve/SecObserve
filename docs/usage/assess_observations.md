@@ -48,6 +48,8 @@ Be aware, that the user who has created the assessment is not allowed to approve
 
 ![Assessment approval](../assets/images/screenshot_assessment_approval.png){ width="60%" style="display: block; margin: 0 auto" }
 
+With **Approved with edits**, the approver can change the comment, the VEX justification and the VEX remediations before the assessment gets active. Several assessments can be approved at once from the list of approvals. **Approved with edits** is offered there when all selected assessments have the same comment, the VEX justification and remediations when all of them have a status they apply to. Empty fields keep the values of each assessment.
+
 ### Restricting who may approve
 
 By default, any user with the permission to approve (role `Writer`, `Maintainer` or `Owner`) may approve another user's assessment. In larger organizations the approval often has to be done by a dedicated, independent party, for example a security team. To enforce this, designated approvers can be configured per product. The fields are shown once **Assessments need approval** is enabled:
