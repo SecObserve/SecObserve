@@ -31,7 +31,7 @@ const ExportMenu = (props: ExportMenuProps) => {
         setAnchorEl(null);
     };
 
-    // Exports of large product groups take a while, the button stays disabled to avoid starting them twice
+    // Exports of large product groups take a while, the button shows a spinner and can't start them twice
     const startExport = (message: string) => {
         setExporting(true);
         notify(message + " export started", { type: "info" });
@@ -200,7 +200,8 @@ const ExportMenu = (props: ExportMenuProps) => {
                 size="small"
                 sx={{ paddingTop: 0, paddingBottom: 0, paddingLeft: "5px", paddingRight: "5px" }}
                 startIcon={<DownloadIcon />}
-                disabled={exporting}
+                loading={exporting}
+                loadingPosition="start"
             >
                 Export
             </Button>
