@@ -1,3 +1,5 @@
+// The icon of the index, which can't be imported here, because the index imports the approval list that imports this file
+import ObservationLogIcon from "@mui/icons-material/List";
 import { Box, Paper, Stack, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
@@ -17,7 +19,6 @@ import {
     useRecordContext,
 } from "react-admin";
 
-import observation_logs from ".";
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
@@ -85,7 +86,7 @@ const VEXRemediationHeader = () => (
     </TableHead>
 );
 
-const ObservationLogComponent = () => {
+export const ObservationLogComponent = () => {
     return (
         <WithRecord
             render={(observation_log) => (
@@ -93,7 +94,7 @@ const ObservationLogComponent = () => {
                     <Paper sx={{ marginBottom: 2, padding: 2, width: "100%" }}>
                         <Stack spacing={1}>
                             <Typography variant="h6" sx={{ alignItems: "center", display: "flex", marginBottom: 1 }}>
-                                <observation_logs.icon />
+                                <ObservationLogIcon />
                                 &nbsp;&nbsp;Observation Log
                             </Typography>
                             <Labeled label="User">
