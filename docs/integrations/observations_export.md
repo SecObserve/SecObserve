@@ -4,4 +4,4 @@ Observations of a product can be exported to Excel or CSV. When showing a produc
 
 ![Export](../assets/images/screenshot_export.png)
 
-The columns start with the identification of an observation, its links to SecObserve and its current assessment, followed by risk scores, origins and detection details. The columns showing where the current severity, status and priority came from and the single parts of the origins are at the end.
+The columns are sorted alphabetically by their header.

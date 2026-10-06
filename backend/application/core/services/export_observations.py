@@ -15,8 +15,6 @@ from application.commons.services.functions import get_base_url_frontend
 from application.core.models import Observation, Observation_Log, Product
 from application.core.types import Observation_Log_Comment
 
-# The first columns identify an observation and show its current assessment, the columns that
-# explain how the current values came about and the details of the origins follow at the end.
 COLUMNS = [
     ExportColumn("ID", "id", 10),
     ExportColumn("Observation URL", "observation_url", 20),
@@ -124,6 +122,8 @@ COLUMNS = [
     ExportColumn("Issue tracker issue closed", "issue_tracker_issue_closed", 10),
     ExportColumn("Jira initial status", "issue_tracker_jira_initial_status", 20),
 ]
+# Alphabetical, so a new column has an obvious place
+COLUMNS.sort(key=lambda column: column.header.casefold())
 
 # Model fields that are deliberately not exported
 EXCLUDED_FIELDS = ["identity_hash", "numerical_severity", "origin_component"]

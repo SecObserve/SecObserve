@@ -90,6 +90,7 @@ class TestExportObservations(BaseTestCase):
         annotations = {"observation_url", "product_url", "observation_log_comment"}
         fields = {field.name for field in Observation._meta.concrete_fields}
 
+        # A new field of Observation has to be added to COLUMNS or EXCLUDED_FIELDS
         self.assertEqual(set(), fields - exported - set(EXCLUDED_FIELDS))
         self.assertEqual(set(), exported - fields - annotations)
         self.assertEqual(len(HEADERS), len(set(HEADERS)))
@@ -102,7 +103,7 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual(HEADERS, rows[0])
         self.assertEqual(
             [self.observation_critical.pk, self.observation_low.pk, self.observation_other.pk],
-            [row[0] for row in rows[1:]],
+            [self._value(row, "ID") for row in rows[1:]],
         )
         critical = rows[1]
         self.assertEqual(
@@ -135,7 +136,7 @@ class TestExportObservations(BaseTestCase):
 
         _, rows = self._excel_rows(export_observations_excel_for_product(self.product_a, ["Open"]))
 
-        self.assertEqual([self.observation_critical.pk], [row[0] for row in rows[1:]])
+        self.assertEqual([self.observation_critical.pk], [self._value(row, "ID") for row in rows[1:]])
 
     def test_excel_empty(self):
         _, rows = self._excel_rows(export_observations_excel_for_product(self.product_a, ["Duplicate"]))
@@ -151,7 +152,7 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual(HEADERS, rows[0])
         self.assertEqual(4, len(rows))
         critical = rows[1]
-        self.assertEqual(str(self.observation_critical.pk), critical[0])
+        self.assertEqual(str(self.observation_critical.pk), self._value(critical, "ID"))
         self.assertEqual("line 1 NEWLINE line 2", self._value(critical, "Description"))
         self.assertEqual(
             '[{"category": "workaround", "text": "restart"}]', self._value(critical, "Assessment VEX remediations")
