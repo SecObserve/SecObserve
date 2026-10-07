@@ -204,6 +204,41 @@ class TestCVSS_BT(BaseTestCase):
         observation = Observation.objects.get(title="poc_github")
         self.assertEqual("", observation.cve_found_in)
 
+    def test_apply_exploit_information_observations_without_query_per_observation(self) -> None:
+        parser = Parser(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)
+        parser.save()
+        product = Product(name="CVSS_BT Test")
+        product.save()
+
+        for number in range(3):
+            Observation(
+                title=f"observation {number}",
+                vulnerability_id=f"CVE-2025-010{number}",
+                parser_severity=Severity.SEVERITY_UNKNOWN,
+                product=product,
+                import_last_seen=timezone.now(),
+                parser=parser,
+            ).save()
+            Exploit_Information.objects.create(
+                cve=f"CVE-2025-010{number}",
+                base_cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                cisa_kev=True,
+            )
+
+        settings = Settings.load()
+
+        # Observations, their exploit information, the update and the empty next batch.
+        # A field missing in EXPLOIT_INFORMATION_FIELDS would add one query per observation.
+        with self.assertNumQueries(4):
+            num_observations = apply_exploit_information_observations(settings)
+
+        self.assertEqual(3, num_observations)
+        for observation in Observation.objects.filter(product=product):
+            self.assertEqual("CISA KEV", observation.cve_found_in)
+            self.assertEqual("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", observation.cvss3_vector)
+            self.assertEqual(7.5, observation.cvss3_score)
+            self.assertEqual(Severity.SEVERITY_HIGH, observation.current_severity)
+
 
 class MockResponse:
     def __init__(self):
