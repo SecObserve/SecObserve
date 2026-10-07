@@ -136,7 +136,7 @@ SecObserve is an open-source vulnerability management system designed for softwa
 
 ### Key Patterns
 - **Pages**: List, Show, Create, and Edit components for each entity (aligned with react-admin patterns).
-- **Runtime Config**: `runtime-env-cra` library injects environment variables at build time.
+- **Runtime Config**: The script `frontend/bin/runtime-env.sh` injects environment variables at runtime.
 
 ### Development Workflow
 
