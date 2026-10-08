@@ -285,6 +285,15 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
         self.assertEqual(description, observation.description)
         self.assertEqual("CVE-2023-22025, CVE-2023-22081", observation.vulnerability_id_aliases)
 
+    def test_is_version_in_ranges_rpm_without_epoch(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:rpm/almalinux/NetworkManager@1.54.0-3.el9?distro=almalinux-9.6")
+        affected = {"ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1:1.46.0-26.el9_4"}]}]}
+
+        self.assertFalse(parser._is_version_in_ranges(purl, "1.54.0-3.el9", affected)[0])
+        self.assertTrue(parser._is_version_in_ranges(purl, "1.36.0-4.el9_0", affected)[0])
+        self.assertTrue(parser._is_version_in_ranges(purl, "0:1.54.0-3.el9", affected)[0])
+
     def test_linux_rpm_ecosystem_not_found(self):
         call_command(
             "loaddata",
@@ -438,9 +447,9 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
                 product=self.product_1,
                 branch=self.branch_1,
                 component_name="java-21-openjdk-devel",
-                component_version="21.0.7.0.6-1.el9",
-                component_name_version="java-21-openjdk-devel:21.0.7.0.6-1.el9",
-                component_purl="pkg:rpm/redhat/java-21-openjdk-devel@21.0.7.0.6-1.el9",
+                component_version="21.0.0.0.35-2.el9",
+                component_name_version="java-21-openjdk-devel:21.0.0.0.35-2.el9",
+                component_purl="pkg:rpm/redhat/java-21-openjdk-devel@21.0.0.0.35-2.el9",
                 component_purl_type="rpm",
                 component_dependencies="",
             ),

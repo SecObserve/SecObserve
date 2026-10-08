@@ -94,6 +94,12 @@ OSV_Non_Linux_Ecosystems = {
 }
 
 
+def _parse_rpm_version_without_epoch(version: Optional[str]) -> Optional[RpmVersion]:
+    """For a component version without epoch: an absent epoch would count as 0 and sort below
+    every fixed version that has one, although a package keeps its epoch within a distribution."""
+    return RpmVersion.parse(version.split(":", 1)[-1] if version else version)
+
+
 def _unique_vulnerabilities(data: list[OSV_Component]) -> list[OSV_Vulnerability]:
     """The vulnerabilities of all components of a scan, deduplicated by id, keeping the newest
     modification date, so that the cache is not refreshed with an older one."""
@@ -487,7 +493,7 @@ class OSVParser(BaseParser):
 
         version_parser: Callable[[str | None], ExtendedSemVer | RpmVersion | None] = ExtendedSemVer.parse
         if parsed_purl.type == "rpm":
-            version_parser = RpmVersion.parse
+            version_parser = RpmVersion.parse if ":" in version else _parse_rpm_version_without_epoch
 
         events = self._get_events(affected)
 
