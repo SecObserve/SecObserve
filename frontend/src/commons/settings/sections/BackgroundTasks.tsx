@@ -1,5 +1,5 @@
 import PublicIcon from "@mui/icons-material/Public";
-import { Chip, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, TextField, Typography } from "@mui/material";
 import { ReactNode } from "react";
 import { Labeled, NumberField, NumberInput, useRecordContext } from "react-admin";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -126,29 +126,30 @@ export const BackgroundTasksInputs = () => {
             <Typography variant="body2" sx={{ marginBottom: 3 }}>
                 The settings in this section require a restart of the SecObserve backend to take effect.
             </Typography>
-
-            <NumberInput
-                source="background_product_metrics_interval_minutes"
-                label="Product metrics interval (minutes)"
-                min={0}
-                step={1}
-                validate={validate_0_999999}
-                helperText="Calculate product metrics every x minutes"
-                sx={{ marginBottom: 2 }}
-            />
-
             <ScheduleTable
                 settings={settings}
                 renderRunsAt={(schedule) => <RunsAtInput settings={settings} schedule={schedule} />}
             />
+            <Stack sx={{ alignItems: "flex-start" }}>
+                <NumberInput
+                    source="background_product_metrics_interval_minutes"
+                    label="Product metrics interval (minutes)"
+                    min={0}
+                    step={1}
+                    validate={validate_0_999999}
+                    helperText="Calculate product metrics every x minutes"
+                    sx={{ marginBottom: 2 }}
+                />
 
-            <NumberInput
-                source="periodic_task_max_entries"
-                label="Number of entries of Tracked Tasks to keep per task"
-                min={1}
-                step={1}
-                validate={validate_1_999999}
-            />
+                <NumberInput
+                    source="periodic_task_max_entries"
+                    label="Number of entries of Tracked Tasks to keep per task"
+                    min={1}
+                    step={1}
+                    validate={validate_1_999999}
+                    sx={{ minWidth: "22em" }}
+                />
+            </Stack>
         </>
     );
 };
@@ -162,15 +163,15 @@ export const BackgroundTasksFields = () => {
     return (
         <>
             <TimeZoneChip />
-            <Labeled label="Product metrics interval (minutes)" sx={{ marginBottom: 2 }}>
-                <NumberField source="background_product_metrics_interval_minutes" />
-            </Labeled>
-
             <ScheduleTable settings={settings} renderRunsAt={(schedule) => runsAt(settings, schedule)} />
-
-            <Labeled label="Number of entries of Tracked Tasks to keep per task">
-                <NumberField source="periodic_task_max_entries" />
-            </Labeled>
+            <Stack sx={{ alignItems: "flex-start" }}>
+                <Labeled label="Product metrics interval (minutes)" sx={{ marginBottom: 2 }}>
+                    <NumberField source="background_product_metrics_interval_minutes" />
+                </Labeled>
+                <Labeled label="Number of entries of Tracked Tasks to keep per task">
+                    <NumberField source="periodic_task_max_entries" />
+                </Labeled>
+            </Stack>
         </>
     );
 };
