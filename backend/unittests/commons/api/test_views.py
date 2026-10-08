@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+from django.test import override_settings
 from rest_framework.status import (
     HTTP_200_OK,
     HTTP_204_NO_CONTENT,
@@ -19,6 +20,22 @@ class TestViews(BaseTestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual({"version": "unittest_version"}, response.data)
+
+    @override_settings(BACKGROUND_TASKS_TIME_ZONE="Asia/Ho_Chi_Minh")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_status_settings_background_tasks_time_zone(self, mock_authentication):
+        mock_authentication.return_value = self.user_internal, None
+
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual("Asia/Ho_Chi_Minh", response.data["background_tasks_time_zone"])
+
+    def test_status_settings_background_tasks_time_zone_unauthenticated(self):
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertNotIn("background_tasks_time_zone", response.data)
 
     def test_health(self):
         api_client = APIClient()
