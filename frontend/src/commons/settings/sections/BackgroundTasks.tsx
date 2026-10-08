@@ -1,10 +1,30 @@
-import { Grid, Stack, Typography } from "@mui/material";
+import PublicIcon from "@mui/icons-material/Public";
+import { Chip, Grid, Stack, Typography } from "@mui/material";
 import { FormDataConsumer, Labeled, NumberField, NumberInput, useRecordContext } from "react-admin";
 
 import { validate_0_23, validate_0_59, validate_0_999999, validate_1_999999 } from "../../custom_validators";
+import { settings_background_tasks_time_zone } from "../../functions";
+
+const TimeZoneChip = () => {
+    const time_zone = settings_background_tasks_time_zone();
+    const offset = new Intl.DateTimeFormat("en-US", { timeZone: time_zone, timeZoneName: "longOffset" })
+        .formatToParts(new Date())
+        .find((part) => part.type === "timeZoneName")?.value;
+    return (
+        <Chip
+            icon={<PublicIcon />}
+            label={`${time_zone} · ${offset === "GMT" ? "UTC+00:00" : offset?.replace("GMT", "UTC")}`}
+            title="The hours and minutes of the background tasks are in this time zone, set with BACKGROUND_TASKS_TIME_ZONE"
+            size="small"
+            variant="outlined"
+            sx={{ display: "flex", width: "fit-content", marginBottom: 2 }}
+        />
+    );
+};
 
 export const BackgroundTasksInputs = () => (
     <>
+        <TimeZoneChip />
         <Typography variant="body2" sx={{ marginBottom: 3 }}>
             The settings in this section require a restart of the SecObserve backend to take effect.
         </Typography>
@@ -144,6 +164,7 @@ export const BackgroundTasksFields = () => {
 
     return (
         <>
+            <TimeZoneChip />
             <Labeled label="Product metrics interval (minutes)" sx={{ marginBottom: 2 }}>
                 <NumberField source="background_product_metrics_interval_minutes" />
             </Labeled>
@@ -151,22 +172,22 @@ export const BackgroundTasksFields = () => {
             <Grid container spacing={2} sx={{ width: "100%" }}>
                 <Grid size={3}>
                     <Stack spacing={2}>
-                        <Labeled label="Risk acceptance expiry crontab (hour/UTC)">
+                        <Labeled label="Risk acceptance expiry crontab (hour)">
                             <NumberField source="risk_acceptance_expiry_crontab_hour" />
                         </Labeled>
                         {settings.feature_license_management && (
-                            <Labeled label="License import crontab (hour/UTC)">
+                            <Labeled label="License import crontab (hour)">
                                 <NumberField source="license_import_crontab_hour" />
                             </Labeled>
                         )}
-                        <Labeled label="Housekeeping crontab (hour/UTC)">
+                        <Labeled label="Housekeeping crontab (hour)">
                             <NumberField source="branch_housekeeping_crontab_hour" />
                         </Labeled>
-                        <Labeled label="EPSS and exploit import crontab (hour/UTC)">
+                        <Labeled label="EPSS and exploit import crontab (hour)">
                             <NumberField source="background_epss_import_crontab_hour" />
                         </Labeled>
                         {(settings.feature_automatic_api_import || settings.feature_automatic_osv_scanning) && (
-                            <Labeled label="API import, OSV and VulnerableCode scanning crontab (hour/UTC)">
+                            <Labeled label="API import, OSV and VulnerableCode scanning crontab (hour)">
                                 <NumberField source="api_import_crontab_hour" />
                             </Labeled>
                         )}
