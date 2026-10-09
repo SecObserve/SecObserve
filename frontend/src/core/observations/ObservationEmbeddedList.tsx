@@ -20,6 +20,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import { usePublishBranchFilter } from "../products/BranchFilterContext";
+import { usePublishFilterValues } from "../products/FilterValuesContext";
 import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationBulkDeleteButton from "./ObservationBulkDeleteButton";
@@ -88,6 +89,7 @@ const ObservationsListContent = ({ product }: ObservationsEmbeddedListProps) => 
     });
 
     usePublishBranchFilter("observations", listContext.filterValues?.branch);
+    usePublishFilterValues(listContext.filterValues, listContext.sort);
 
     if (listContext.isLoading) {
         return <div>Loading...</div>;

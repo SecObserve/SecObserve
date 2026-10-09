@@ -23,7 +23,8 @@ const SCAN = "Scan";
 const TRIAGE = "Triage";
 
 // Without a product, all filters are offered; with a product only those for the data the product has.
-export function observationFilters(product?: Product, review = false) {
+// product_filters replace the filters for product and product group, e.g. in the observations of a product group.
+export function observationFilters(product?: Product, review = false, product_filters?: ReactElement[]) {
     const primary: ReactElement[] = [];
     const secondary: SecondaryFilter[] = [];
 
@@ -53,26 +54,30 @@ export function observationFilters(product?: Product, review = false) {
     }
 
     if (!product) {
-        const productFilters = [
-            {
-                column: ORIGIN,
-                source: "product",
-                label: "Product",
-                input: <ProductReferenceInput key="product" alwaysOn />,
-                reference: "products",
-            },
-            {
-                column: ORIGIN,
-                source: "product_group",
-                label: "Product group",
-                input: <ProductGroupReferenceInput key="product_group" alwaysOn />,
-                reference: "product_groups",
-            },
-        ];
-        if (review) {
-            secondary.push(...productFilters);
+        if (product_filters) {
+            primary.push(...product_filters);
         } else {
-            primary.push(...productFilters.map((filter) => filter.input));
+            const productFilters = [
+                {
+                    column: ORIGIN,
+                    source: "product",
+                    label: "Product",
+                    input: <ProductReferenceInput key="product" alwaysOn />,
+                    reference: "products",
+                },
+                {
+                    column: ORIGIN,
+                    source: "product_group",
+                    label: "Product group",
+                    input: <ProductGroupReferenceInput key="product_group" alwaysOn />,
+                    reference: "product_groups",
+                },
+            ];
+            if (review) {
+                secondary.push(...productFilters);
+            } else {
+                primary.push(...productFilters.map((filter) => filter.input));
+            }
         }
         secondary.push(
             { column: ORIGIN, input: <TextInput source="branch_name" label="Branch / Version" /> },
@@ -184,10 +189,11 @@ export function observationFilters(product?: Product, review = false) {
 interface ObservationFilterBarProps {
     product?: Product;
     review?: boolean;
+    product_filters?: ReactElement[];
     saveQuery?: boolean;
 }
 
-export const ObservationFilterBar = ({ product, review, saveQuery }: ObservationFilterBarProps) => {
-    const { primary, secondary } = observationFilters(product, review);
+export const ObservationFilterBar = ({ product, review, product_filters, saveQuery }: ObservationFilterBarProps) => {
+    const { primary, secondary } = observationFilters(product, review, product_filters);
     return <FilterBar filters={primary} moreFilters={secondary} saveQuery={saveQuery} />;
 };

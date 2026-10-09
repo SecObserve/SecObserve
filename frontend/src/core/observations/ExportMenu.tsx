@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { resolveDateFilters } from "../../commons/custom_fields/DateRangeFilter";
 import { getIconAndFontColor } from "../../commons/functions";
+import { getOrderingQuery } from "../../commons/ra-data-django-rest-framework";
 
 const ExportMenu = () => {
     const notify = useNotify();
@@ -75,15 +76,15 @@ const ExportMenu = () => {
     };
 
     const exportObservationsExcel = async () => {
-        exportDataExcel("/observations/export_excel/?" + queryParams(), "open_observations.xlsx", "Observations");
+        exportDataExcel("/observations/export_excel/?" + queryParams(), "observations.xlsx", "Observations");
     };
 
     const exportObservationsCsv = async () => {
-        exportDataCsv("/observations/export_csv/?" + queryParams(), "open_observations.csv", "Observations");
+        exportDataCsv("/observations/export_csv/?" + queryParams(), "observations.csv", "Observations");
     };
 
     const queryParams = () => {
-        const query = { ...resolveDateFilters(filterValues), ...sort };
+        const query = { ...resolveDateFilters(filterValues), ...getOrderingQuery({ sort }) };
         return queryString.stringify(query);
     };
 

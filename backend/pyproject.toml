@@ -1,6 +1,6 @@
 [project]
 name = "SecObserve"
-version = "1.60.1"
+version = "1.61.0"
 description = "SecObserve is an open source vulnerability management system for software development and cloud environments."
 license = "BSD-3-Clause"
 authors = [{ name = "Stefan Fleckenstein" }]
@@ -14,7 +14,7 @@ package-mode = false
 # Django
 # ------------------------------------------------------------------------------
 gunicorn = "26.2.0"  # https://github.com/benoitc/gunicorn
-django = "6.1.1"  # https://www.djangoproject.com/
+django = "6.1.2"  # https://www.djangoproject.com/
 django-environ = "0.14.0"  # https://github.com/joke2k/django-environ
 django-filter = "26.2"  # https://github.com/carltongibson/django-filter 
 django-picklefield = "3.4.0"  # https://github.com/gintas/django-picklefield 
