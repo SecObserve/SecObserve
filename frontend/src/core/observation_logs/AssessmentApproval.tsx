@@ -24,6 +24,7 @@ import {
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
+import { approvalStatus } from "./functions";
 
 export const VEXJustificationInput = ({ validate }: { validate?: Validator[] }) => (
     <Fragment>
@@ -68,8 +69,8 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
     const [open, setOpen] = useState(false);
     const [decision, setDecision] = useState(ASSESSMENT_STATUS_APPROVED);
     const [comment, setComment] = useState(observation_log.comment);
-    const justificationEnabled = justificationIsEnabledForStatus(observation_log.status);
-    const remediationsEnabled = remediationsAreEnabledForStatus(observation_log.status);
+    const justificationEnabled = justificationIsEnabledForStatus(approvalStatus(observation_log));
+    const remediationsEnabled = remediationsAreEnabledForStatus(approvalStatus(observation_log));
     const refresh = useRefresh();
     const notify = useNotify();
 

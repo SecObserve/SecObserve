@@ -28,6 +28,7 @@ import {
     ASSESSMENT_STATUS_REJECTED,
 } from "../types";
 import { VEXJustificationInput, VEXRemediationsInput } from "./AssessmentApproval";
+import { approvalStatus } from "./functions";
 
 const remediationsKey = (record: RaRecord) =>
     JSON.stringify(
@@ -100,8 +101,10 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const [comment, setComment] = useState("");
 
     // Only offered when every selected assessment has a status the value applies to
-    const justificationEnabled = allLoaded && selectedRecords.every((r) => justificationIsEnabledForStatus(r.status));
-    const remediationsEnabled = allLoaded && selectedRecords.every((r) => remediationsAreEnabledForStatus(r.status));
+    const justificationEnabled =
+        allLoaded && selectedRecords.every((r) => justificationIsEnabledForStatus(approvalStatus(r)));
+    const remediationsEnabled =
+        allLoaded && selectedRecords.every((r) => remediationsAreEnabledForStatus(approvalStatus(r)));
 
     const send = (post_data: Record<string, any>) => {
         setPending(null);
