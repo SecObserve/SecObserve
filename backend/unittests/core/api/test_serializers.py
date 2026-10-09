@@ -938,6 +938,15 @@ class TestObservationLogBulkApprovalSerializer(BaseTestCase):
 
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
+    def test_approved_with_edits_without_comment_keeps_the_comments(self):
+        data = {
+            "assessment_status": Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "observation_log_vex_justification": "component_not_present",
+            "observation_logs": [1, 2],
+        }
+
+        self.assertTrue(ObservationLogBulkApprovalSerializer(data=data).is_valid())
+
     def test_vex_remediations_are_validated(self):
         for remediations, valid in [("", True), (None, True), ("not a list", False), (["text"], False)]:
             with self.subTest(remediations=remediations):
@@ -1039,7 +1048,7 @@ class TestObservationLogApprovalBaseSerializer(BaseTestCase):
         with self.assertRaises(ValidationError) as e:
             self.serializer._validate_approval(attrs)
 
-        self.assertIn("Approval with edits needs an observation log comment", str(e.exception))
+        self.assertIn("Approval with edits needs a comment, a VEX justification or VEX remediations", str(e.exception))
 
     def test_approved_with_edits_with_comment_valid(self):
         attrs = {

@@ -660,10 +660,12 @@ class ObservationLogApprovalBaseSerializer(Serializer):
             if attrs.get("observation_log_vex_remediations"):
                 raise ValidationError("VEX remediation for observation log cannot be set with approval or rejection")
 
-        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
-            "observation_log_comment"
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not (
+            attrs.get("observation_log_comment")
+            or attrs.get("observation_log_vex_justification")
+            or attrs.get("observation_log_vex_remediations")
         ):
-            raise ValidationError("Approval with edits needs an observation log comment")
+            raise ValidationError("Approval with edits needs a comment, a VEX justification or VEX remediations")
 
 
 class ObservationLogApprovalSerializer(ObservationLogApprovalBaseSerializer):
@@ -678,6 +680,11 @@ class ObservationLogApprovalSerializer(ObservationLogApprovalBaseSerializer):
     observation_log_vex_remediations = JSONField(required=False, allow_null=True)
 
     def validate(self, attrs: dict) -> dict:
+        # A bulk approval may keep the different comments of the observation logs, a single one always has one
+        if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not attrs.get(
+            "observation_log_comment"
+        ):
+            raise ValidationError("Approval with edits needs an observation log comment")
         self._validate_approval(attrs)
         return super().validate(attrs)
 

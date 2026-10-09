@@ -310,11 +310,6 @@ export const ASSESSMENT_STATUS_CHOICES = [
     { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
 ];
 
-export const ASSESSMENT_STATUS_BULK_CHOICES = [
-    { id: ASSESSMENT_STATUS_APPROVED, name: ASSESSMENT_STATUS_APPROVED },
-    { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
-];
-
 export const PURL_TYPE_CHOICES = [
     { id: "apk", name: "Alpine Linux (apk)" },
     { id: "alpm", name: "Arch Linux (alpm)" },

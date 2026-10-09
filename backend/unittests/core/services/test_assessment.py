@@ -356,6 +356,30 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         self.assertEqual(VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT, self.log.vex_justification)
         self.assertEqual(remediations, self.log.vex_remediations)
 
+    @patch("application.core.services.observations_bulk_actions.user_is_allowed_assessment_approver", return_value=True)
+    @patch("application.core.services.observations_bulk_actions.user_has_permission", return_value=True)
+    @patch("application.core.services.observations_bulk_actions.get_current_user")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_bulk_approval_with_edits_keeps_the_comment(
+        self, mock_user_assessment, mock_user_bulk, _mock_perm, _mock_approver
+    ) -> None:
+        mock_user_assessment.return_value = self.owner
+        mock_user_bulk.return_value = self.owner
+        comment = self.log.comment
+
+        observation_logs_bulk_approval(
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "",
+            None,
+            VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
+            None,
+            [self.log.pk],
+        )
+
+        self.log.refresh_from_db()
+        self.assertEqual(comment, self.log.comment)
+        self.assertEqual(VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT, self.log.vex_justification)
+
 
 class TestSaveAssessmentApprovalNotification(BaseTestCase):
     """The notification for assessments that need approval is triggered by save_assessment()."""
