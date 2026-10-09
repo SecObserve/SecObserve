@@ -13,6 +13,8 @@ from application.core.api.serializers_observation import (
 )
 from application.core.api.serializers_product import (
     BranchSerializer,
+    NestedProductListSerializer,
+    NestedProductSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductGroupSerializer,
     ProductMemberSerializer,
@@ -44,6 +46,16 @@ class TestProductSerializer(BaseTestCase):
         mock_permissions.assert_has_calls(
             [call(self.product_1, Permissions.Product_Edit), call(self.product_1, Permissions.Product_Edit)]
         )
+
+    @patch("application.core.api.serializers_product.get_product_permissions_for_user")
+    def test_issue_tracker_api_key_hidden_in_nested_serializers(self, mock_permissions):
+        mock_permissions.return_value = {Permissions.Product_View, Permissions.Product_Edit}
+        self.product_1.issue_tracker_api_key = "secret-token"
+        self.product_1.repository_default_branch = None
+        self.product_1.save()
+
+        self.assertNotIn("issue_tracker_api_key", NestedProductSerializer(self.product_1).data)
+        self.assertNotIn("issue_tracker_api_key", NestedProductListSerializer(self.product_1).data)
 
 
 class TestBranchSerializerSecurityGate(BaseTestCase):
