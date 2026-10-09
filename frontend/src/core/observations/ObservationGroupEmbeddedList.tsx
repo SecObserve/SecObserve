@@ -1,12 +1,14 @@
+import { FormControl } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
+    BooleanInput,
+    BooleanInputProps,
     FilterButton,
     Identifier,
     ListContextProvider,
     ListToolbar,
     ReferenceInput,
     ResourceContextProvider,
-    SelectInput,
     TopToolbar,
     useListController,
 } from "react-admin";
@@ -22,6 +24,14 @@ import { IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST, setListIdentifier } from ".
 
 const STORE_KEY = "observations.embedded.group";
 
+// A FormControl gets the same dense margins from the theme as the other filter inputs,
+// the medium switch has about the height of their text fields
+const DefaultBranchInput = (props: BooleanInputProps) => (
+    <FormControl fullWidth={false}>
+        <BooleanInput {...props} size="medium" />
+    </FormControl>
+);
+
 function groupFilters(product_group: ProductGroup) {
     return listFilters([
         <ReferenceInput
@@ -34,13 +44,12 @@ function groupFilters(product_group: ProductGroup) {
         >
             <AutocompleteInputMedium optionText="name" />
         </ReferenceInput>,
-        <SelectInput
+        <DefaultBranchInput
             source="default_branch"
-            label="Branches"
-            choices={[{ id: true, name: "Default branches" }]}
-            emptyText="All branches"
-            // Shows "All branches" instead of an empty field when the filter is removed
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
+            label="Default branches"
+            // On by default with filterDefaultValues, a defaultValue is not allowed for an alwaysOn filter.
+            // Off removes the filter to show all branches, false would show only the other branches.
+            parse={(value) => value || null}
             alwaysOn
         />,
     ]);
