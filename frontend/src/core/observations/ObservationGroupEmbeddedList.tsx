@@ -1,53 +1,29 @@
 import { useEffect, useState } from "react";
 import {
-    AutocompleteArrayInput,
-    ChipField,
-    Datagrid,
-    FilterForm,
-    FunctionField,
+    FilterButton,
     Identifier,
     ListContextProvider,
-    NullableBooleanInput,
+    ListToolbar,
     ReferenceInput,
     ResourceContextProvider,
     SelectInput,
-    TextField,
-    TextInput,
-    WithListContext,
+    TopToolbar,
     useListController,
 } from "react-admin";
 
-import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
+import { getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { usePublishFilterValues } from "../products/FilterValuesContext";
-import {
-    AGE_CHOICES,
-    OBSERVATION_SEVERITY_CHOICES,
-    OBSERVATION_STATUS_ACTIVE,
-    OBSERVATION_STATUS_CHOICES,
-    Observation,
-    ProductGroup,
-} from "../types";
+import { OBSERVATION_STATUS_ACTIVE, ProductGroup } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
-import ObservationExpand from "./ObservationExpand";
+import { ObservationDatagrid, listFilters } from "./ObservationList";
 import { IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST, setListIdentifier } from "./functions";
 
 const STORE_KEY = "observations.embedded.group";
 
-function listFilters(product_group: ProductGroup) {
-    const filters = [
-        <SelectInput
-            source="default_branch"
-            label="Branches"
-            choices={[{ id: true, name: "Default branches" }]}
-            emptyText="All branches"
-            // Shows "All branches" instead of an empty field when the filter is removed
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
-            alwaysOn
-        />,
+function groupFilters(product_group: ProductGroup) {
+    return listFilters([
         <ReferenceInput
             source="product"
             reference="products"
@@ -58,24 +34,16 @@ function listFilters(product_group: ProductGroup) {
         >
             <AutocompleteInputMedium optionText="name" />
         </ReferenceInput>,
-        <TextInput source="title" alwaysOn />,
-        <AutocompleteArrayInput
-            source="current_severity"
-            label="Severity"
-            choices={OBSERVATION_SEVERITY_CHOICES}
+        <SelectInput
+            source="default_branch"
+            label="Branches"
+            choices={[{ id: true, name: "Default branches" }]}
+            emptyText="All branches"
+            // Shows "All branches" instead of an empty field when the filter is removed
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}
             alwaysOn
         />,
-        <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
-        <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
-        <TextInput source="origin_component_name_version" label="Component" alwaysOn />,
-        <TextInput source="scanner" alwaysOn />,
-        <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,
-    ];
-    if (feature_exploit_information()) {
-        filters.push(<NullableBooleanInput source="cve_known_exploited" label="CVE exploited" alwaysOn />);
-    }
-    filters.push(<NullableBooleanInput source="fix_available" label="Fix available" alwaysOn />);
-    return filters;
+    ]);
 }
 
 type ObservationGroupEmbeddedListProps = {
@@ -125,40 +93,18 @@ const ObservationGroupListContent = ({ product_group }: ObservationGroupEmbedded
         <ResourceContextProvider value="observations">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <FilterForm filters={listFilters(product_group)} />
-                    <WithListContext
-                        render={({ data, sort }) => (
-                            <Datagrid
-                                size={getSettingListSize()}
-                                sx={{ width: "100%" }}
-                                rowClick="show"
-                                bulkActionButtons={<ObservationBulkAssessment product={null} storeKey={STORE_KEY} />}
-                                resource="observations"
-                                expand={<ObservationExpand showComponent={true} />}
-                                expandSingle
-                            >
-                                <TextField source="product_data.name" label="Product" />
-                                {has_attribute("branch_name", data, sort) && (
-                                    <TextField source="branch_name" label="Branch / Version" />
-                                )}
-                                <TextField source="title" />
-                                <SeverityField label="Severity" source="current_severity" />
-                                <ChipField source="current_status" label="Status" />
-                                {has_attribute("origin_component_name_version", data, sort) && (
-                                    <TextField
-                                        source="origin_component_name_version"
-                                        label="Component"
-                                        sx={{ wordBreak: "break-word" }}
-                                    />
-                                )}
-                                <TextField source="scanner_name" label="Scanner" />
-                                <FunctionField<Observation>
-                                    label="Age"
-                                    sortBy="last_observation_log"
-                                    render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                                />
-                            </Datagrid>
-                        )}
+                    <ListToolbar
+                        filters={groupFilters(product_group)}
+                        // Saved queries are shared with the observation list, where a query saved here would lack the product group
+                        actions={
+                            <TopToolbar>
+                                <FilterButton disableSaveQuery />
+                            </TopToolbar>
+                        }
+                    />
+                    <ObservationDatagrid
+                        bulkActionButtons={<ObservationBulkAssessment product={null} storeKey={STORE_KEY} />}
+                        hideProductGroup
                     />
                     <CustomPagination />
                 </div>
