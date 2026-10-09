@@ -106,7 +106,7 @@ const ExportMenu = (props: ExportMenuProps) => {
         queryString.stringify({
             ...filterValues,
             ...(sort ? getOrderingQuery({ sort }) : {}),
-            product_group: props.product.id,
+            ...(props.is_product_group ? { product_group: props.product.id } : { product: props.product.id }),
         });
 
     const exportCurrentViewExcel = async () => {
@@ -242,7 +242,7 @@ const ExportMenu = (props: ExportMenuProps) => {
                     },
                 }}
             >
-                {props.is_product_group && filterValues && (
+                {filterValues && (
                     <MenuItem onClick={exportCurrentViewExcel}>
                         <ListItemIcon>
                             <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
@@ -250,7 +250,7 @@ const ExportMenu = (props: ExportMenuProps) => {
                         Current view / Excel
                     </MenuItem>
                 )}
-                {props.is_product_group && filterValues && (
+                {filterValues && (
                     <MenuItem onClick={exportCurrentViewCsv} divider>
                         <ListItemIcon>
                             <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />

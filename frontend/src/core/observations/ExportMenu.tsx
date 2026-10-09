@@ -75,11 +75,11 @@ const ExportMenu = () => {
     };
 
     const exportObservationsExcel = async () => {
-        exportDataExcel("/observations/export_excel/?" + queryParams(), "open_observations.xlsx", "Observations");
+        exportDataExcel("/observations/export_excel/?" + queryParams(), "observations.xlsx", "Observations");
     };
 
     const exportObservationsCsv = async () => {
-        exportDataCsv("/observations/export_csv/?" + queryParams(), "open_observations.csv", "Observations");
+        exportDataCsv("/observations/export_csv/?" + queryParams(), "observations.csv", "Observations");
     };
 
     const queryParams = () => {
