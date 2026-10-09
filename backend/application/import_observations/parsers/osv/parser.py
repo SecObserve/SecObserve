@@ -31,32 +31,6 @@ OSV_BACKOFF_FACTOR = 1.0
 OSV_CACHE_BATCH_SIZE = 1000
 
 
-def _get_osv_max_threads() -> int:
-    return env.int("OSV_MAX_THREADS", default=32)
-
-
-def _create_osv_session() -> requests.Session:
-    # urllib3 decrements `total` on every retried error, so connection/SSL failures (the
-    # SSL EOF seen under load) are retried too, even though they are neither "connect" nor
-    # "read" errors in its taxonomy.
-    retry = Retry(
-        total=OSV_MAX_RETRIES,
-        backoff_factor=OSV_BACKOFF_FACTOR,
-        status_forcelist=(429, 500, 502, 503, 504),
-        # Only idempotent GETs are retried; verify idempotency before adding other methods.
-        allowed_methods=frozenset({"GET"}),
-        # Let urllib3 retry the status_forcelist codes silently; the caller's
-        # raise_for_status() surfaces a clear HTTPError once the retries are exhausted.
-        raise_on_status=False,
-    )
-    # Only one host (api.osv.dev) is contacted, so a single connection pool is enough; size it
-    # to the worker count so concurrent threads reuse pooled connections instead of opening new ones.
-    adapter = HTTPAdapter(max_retries=retry, pool_connections=1, pool_maxsize=_get_osv_max_threads())
-    session = requests.Session()
-    session.mount("https://", adapter)
-    return session
-
-
 @dataclass(frozen=True)
 class OSV_Vulnerability:
     id: str
@@ -92,24 +66,6 @@ OSV_Non_Linux_Ecosystems = {
     "gem": "RubyGems",
     "swift": "SwiftURL",
 }
-
-
-def _parse_rpm_version_without_epoch(version: Optional[str]) -> Optional[RpmVersion]:
-    """For a component version without epoch: an absent epoch would count as 0 and sort below
-    every fixed version that has one, although a package keeps its epoch within a distribution."""
-    return RpmVersion.parse(version.split(":", 1)[-1] if version else version)
-
-
-def _unique_vulnerabilities(data: list[OSV_Component]) -> list[OSV_Vulnerability]:
-    """The vulnerabilities of all components of a scan, deduplicated by id, keeping the newest
-    modification date, so that the cache is not refreshed with an older one."""
-    newest: dict[str, OSV_Vulnerability] = {}
-    for osv_component in data:
-        for vulnerability in osv_component.vulnerabilities:
-            known = newest.get(vulnerability.id)
-            if known is None or vulnerability.modified > known.modified:
-                newest[vulnerability.id] = vulnerability
-    return sorted(newest.values(), key=lambda vulnerability: vulnerability.id)
 
 
 class OSVParser(BaseParser):
@@ -493,7 +449,7 @@ class OSVParser(BaseParser):
 
         version_parser: Callable[[str | None], ExtendedSemVer | RpmVersion | None] = ExtendedSemVer.parse
         if parsed_purl.type == "rpm":
-            version_parser = RpmVersion.parse if ":" in version else _parse_rpm_version_without_epoch
+            version, version_parser = self._get_rpm_version_and_parser(parsed_purl, version)
 
         events = self._get_events(affected)
 
@@ -522,6 +478,18 @@ class OSVParser(BaseParser):
 
         return None, None, events
 
+    def _get_rpm_version_and_parser(
+        self, parsed_purl: PackageURL, version: str
+    ) -> tuple[str, Callable[[str | None], RpmVersion | None]]:
+        if ":" in version:
+            return version, RpmVersion.parse
+
+        epoch = parsed_purl.qualifiers.get("epoch") if isinstance(parsed_purl.qualifiers, dict) else None
+        if epoch and epoch.isdigit():
+            return f"{epoch}:{version}", RpmVersion.parse
+
+        return version, _parse_rpm_version_without_epoch
+
     def _get_events(self, affected: dict) -> list[Event]:
         events = []
 
@@ -539,3 +507,49 @@ class OSVParser(BaseParser):
                     events.append(event)
                     event = Event(osv_range.get("type", ""), introduced="", fixed="")
         return events
+
+
+def _get_osv_max_threads() -> int:
+    return env.int("OSV_MAX_THREADS", default=32)
+
+
+def _create_osv_session() -> requests.Session:
+    # urllib3 decrements `total` on every retried error, so connection/SSL failures (the
+    # SSL EOF seen under load) are retried too, even though they are neither "connect" nor
+    # "read" errors in its taxonomy.
+    retry = Retry(
+        total=OSV_MAX_RETRIES,
+        backoff_factor=OSV_BACKOFF_FACTOR,
+        status_forcelist=(429, 500, 502, 503, 504),
+        # Only idempotent GETs are retried; verify idempotency before adding other methods.
+        allowed_methods=frozenset({"GET"}),
+        # Let urllib3 retry the status_forcelist codes silently; the caller's
+        # raise_for_status() surfaces a clear HTTPError once the retries are exhausted.
+        raise_on_status=False,
+    )
+    # Only one host (api.osv.dev) is contacted, so a single connection pool is enough; size it
+    # to the worker count so concurrent threads reuse pooled connections instead of opening new ones.
+    adapter = HTTPAdapter(max_retries=retry, pool_connections=1, pool_maxsize=_get_osv_max_threads())
+    session = requests.Session()
+    session.mount("https://", adapter)
+    return session
+
+
+def _parse_rpm_version_without_epoch(version: Optional[str]) -> Optional[RpmVersion]:
+    """Only used when neither the component version nor the purl has an epoch. The epoch is then
+    unknown rather than 0, so the epoch of the fixed versions is ignored as well. This deliberately
+    departs from RPM, where a missing epoch counts as 0, because SBOMs often leave the epoch out.
+    An explicit epoch, including 0, is still compared strictly."""
+    return RpmVersion.parse(version.split(":", 1)[-1] if version else version)
+
+
+def _unique_vulnerabilities(data: list[OSV_Component]) -> list[OSV_Vulnerability]:
+    """The vulnerabilities of all components of a scan, deduplicated by id, keeping the newest
+    modification date, so that the cache is not refreshed with an older one."""
+    newest: dict[str, OSV_Vulnerability] = {}
+    for osv_component in data:
+        for vulnerability in osv_component.vulnerabilities:
+            known = newest.get(vulnerability.id)
+            if known is None or vulnerability.modified > known.modified:
+                newest[vulnerability.id] = vulnerability
+    return sorted(newest.values(), key=lambda vulnerability: vulnerability.id)

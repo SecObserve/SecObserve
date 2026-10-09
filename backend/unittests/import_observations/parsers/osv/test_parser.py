@@ -292,7 +292,37 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
 
         self.assertFalse(parser._is_version_in_ranges(purl, "1.54.0-3.el9", affected)[0])
         self.assertTrue(parser._is_version_in_ranges(purl, "1.36.0-4.el9_0", affected)[0])
+        # An explicit epoch 0 is known and compared strictly, a missing one is unknown
         self.assertTrue(parser._is_version_in_ranges(purl, "0:1.54.0-3.el9", affected)[0])
+
+    def test_is_version_in_ranges_rpm_epoch_from_purl(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:rpm/almalinux/NetworkManager@1.54.0-3.el9?distro=almalinux-9.6&epoch=1")
+        affected = {"ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1:1.46.0-26.el9_4"}]}]}
+
+        self.assertFalse(parser._is_version_in_ranges(purl, "1.54.0-3.el9", affected)[0])
+        self.assertTrue(parser._is_version_in_ranges(purl, "1.36.0-4.el9_0", affected)[0])
+
+    def test_is_version_in_ranges_rpm_epoch_0_from_purl(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:rpm/almalinux/NetworkManager@1.54.0-3.el9?distro=almalinux-9.6&epoch=0")
+        affected = {"ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1:1.46.0-26.el9_4"}]}]}
+
+        self.assertTrue(parser._is_version_in_ranges(purl, "1.54.0-3.el9", affected)[0])
+
+    def test_is_version_in_ranges_rpm_version_epoch_precedes_purl(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:rpm/almalinux/NetworkManager@1.54.0-3.el9?distro=almalinux-9.6&epoch=0")
+        affected = {"ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1:1.46.0-26.el9_4"}]}]}
+
+        self.assertFalse(parser._is_version_in_ranges(purl, "1:1.54.0-3.el9", affected)[0])
+
+    def test_is_version_in_ranges_rpm_invalid_epoch_in_purl(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:rpm/almalinux/NetworkManager@1.54.0-3.el9?distro=almalinux-9.6&epoch=x")
+        affected = {"ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "1:1.46.0-26.el9_4"}]}]}
+
+        self.assertFalse(parser._is_version_in_ranges(purl, "1.54.0-3.el9", affected)[0])
 
     def test_linux_rpm_ecosystem_not_found(self):
         call_command(
