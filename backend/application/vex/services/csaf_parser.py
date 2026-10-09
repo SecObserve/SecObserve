@@ -30,8 +30,9 @@ def parse_csaf_data(data: dict) -> None:
     _find_products_in_relationships(product_tree.get("relationships", []), products)
 
     relationships: dict[str, Relationship] = _process_relationships(product_tree)
+    groups: dict[str, list[str]] = _process_product_groups(product_tree)
 
-    product_purls, vex_statements = _process_vulnerabilities(data, csaf_document, products, relationships)
+    product_purls, vex_statements = _process_vulnerabilities(data, csaf_document, products, relationships, groups)
 
     apply_vex_statements_after_import(product_purls, vex_statements)
 
@@ -127,11 +128,23 @@ def _process_relationships(product_tree: dict) -> dict[str, Relationship]:
     return relationships
 
 
+def _process_product_groups(product_tree: dict) -> dict[str, list[str]]:
+    groups: dict[str, list[str]] = {}
+
+    for product_group in product_tree.get("product_groups", []):
+        group_id = product_group.get("group_id")
+        if group_id:
+            groups[group_id] = product_group.get("product_ids", [])
+
+    return groups
+
+
 def _process_vulnerabilities(
     data: dict,
     csaf_document: VEX_Document,
     products: dict[str, str],
     relationships: dict[str, Relationship],
+    groups: dict[str, list[str]],
 ) -> tuple[set[str], set[VEX_Statement]]:
     vulnerabilities = data.get("vulnerabilities", [])
     if not vulnerabilities:
@@ -164,7 +177,7 @@ def _process_vulnerabilities(
                 vulnerability_id=vulnerability_id,
                 description=_get_description(vulnerability),
                 status=VEX_Status.VEX_STATUS_AFFECTED,
-                remediation=_get_remediation(vulnerability, product_id),
+                remediation=_get_remediation(vulnerability, product_id, groups),
                 product_purl=product_component.product_purl,
                 component_purl=product_component.component_purl,
             )
@@ -180,8 +193,8 @@ def _process_vulnerabilities(
                 vulnerability_id=vulnerability_id,
                 description=_get_description(vulnerability),
                 status=VEX_Status.VEX_STATUS_NOT_AFFECTED,
-                justification=_get_justification(vulnerability, product_id),
-                impact=_get_impact(vulnerability, product_id),
+                justification=_get_justification(vulnerability, product_id, groups),
+                impact=_get_impact(vulnerability, product_id, groups),
                 product_purl=product_component.product_purl,
                 component_purl=product_component.component_purl,
             )
@@ -246,33 +259,37 @@ def _get_description(vulnerability: dict) -> str:
     return ""
 
 
-def _get_remediation(vulnerability: dict, product_id: str) -> str:
+def _resolve_product_ids(item: dict, groups: dict[str, list[str]]) -> set[str]:
+    ids = set(item.get("product_ids", []))
+    for group_id in item.get("group_ids", []):
+        ids.update(groups.get(group_id, []))
+    return ids
+
+
+def _get_remediation(vulnerability: dict, product_id: str, groups: dict[str, list[str]]) -> str:
     remediations = vulnerability.get("remediations", [])
     for remediation in remediations:
         if remediation.get("category") == "mitigation":
-            product_ids = remediation.get("product_ids", [])
-            if product_id in product_ids:
+            if product_id in _resolve_product_ids(remediation, groups):
                 return remediation.get("details", "")
 
     return ""
 
 
-def _get_justification(vulnerability: dict, product_id: str) -> str:
+def _get_justification(vulnerability: dict, product_id: str, groups: dict[str, list[str]]) -> str:
     flags = vulnerability.get("flags", [])
     for flag in flags:
-        product_ids = flag.get("product_ids", [])
-        if product_id in product_ids:
+        if product_id in _resolve_product_ids(flag, groups):
             return flag.get("label", "")
 
     return ""
 
 
-def _get_impact(vulnerability: dict, product_id: str) -> str:
+def _get_impact(vulnerability: dict, product_id: str, groups: dict[str, list[str]]) -> str:
     threats = vulnerability.get("threats", [])
     for threat in threats:
         if threat.get("category") == "impact":
-            product_ids = threat.get("product_ids", [])
-            if product_id in product_ids:
+            if product_id in _resolve_product_ids(threat, groups):
                 return threat.get("details", "")
 
     return ""
