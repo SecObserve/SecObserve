@@ -88,7 +88,7 @@ const ObservationGroupListContent = ({ product_group }: ObservationGroupEmbedded
         resource: "observations",
         sort: { field: "current_severity", order: "ASC" },
         filterDefaultValues: { current_status: OBSERVATION_STATUS_ACTIVE, default_branch: true },
-        disableSyncWithLocation: false,
+        disableSyncWithLocation: true,
         storeKey: STORE_KEY,
     });
 
