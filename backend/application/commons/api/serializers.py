@@ -22,6 +22,7 @@ class StatusSettingsSerializer(Serializer):
     features = ListField(child=CharField(), min_length=0, max_length=200, required=True)
     risk_acceptance_expiry_days = IntegerField()
     vex_justification_style = CharField()
+    background_tasks_time_zone = CharField()
 
 
 class SettingsSerializer(ModelSerializer):

@@ -25,6 +25,7 @@ const ExportMenu = (props: ExportMenuProps) => {
     const notify = useNotify();
     const filterValues = useFilterValues();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [exporting, setExporting] = useState(false);
     const open = Boolean(anchorEl);
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -33,7 +34,18 @@ const ExportMenu = (props: ExportMenuProps) => {
         setAnchorEl(null);
     };
 
+    // Exports of large product groups take a while, the button shows a spinner and can't start them twice
+    const startExport = (message: string) => {
+        setExporting(true);
+        notify(message + " export started", { type: "info" });
+    };
+
+    const observationsFilename = (suffix: string) => {
+        return props.product.name.replace(/[\\/:*?"<>|\s]+/g, "_") + "_" + suffix;
+    };
+
     const exportDataCsv = async (url: string, filename: string, message: string) => {
+        startExport(message);
         fetch_get(url)
             .then(async function (response) {
                 const blob = new Blob([await response.text()], { type: "text/csv" });
@@ -51,11 +63,13 @@ const ExportMenu = (props: ExportMenuProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setExporting(false));
         handleClose();
     };
 
     const exportDataExcel = async (url: string, filename: string, message: string) => {
+        startExport(message);
         fetch_get(url)
             .then(async function (response) {
                 const blob = new Blob([await response.arrayBuffer()], {
@@ -75,7 +89,8 @@ const ExportMenu = (props: ExportMenuProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setExporting(false));
         handleClose();
     };
 
@@ -100,7 +115,7 @@ const ExportMenu = (props: ExportMenuProps) => {
     const exportAllObservationsExcel = async () => {
         exportDataExcel(
             "/products/" + props.product.id + "/export_observations_excel/",
-            "all_observations.xlsx",
+            observationsFilename("all_observations.xlsx"),
             "Observations"
         );
     };
@@ -110,7 +125,7 @@ const ExportMenu = (props: ExportMenuProps) => {
             "/products/" +
                 props.product.id +
                 "/export_observations_excel/?status=Open&status=Affected&status=In%20review",
-            "open_observations.xlsx",
+            observationsFilename("active_observations.xlsx"),
             "Observations"
         );
     };
@@ -118,7 +133,7 @@ const ExportMenu = (props: ExportMenuProps) => {
     const exportAllObservationsCsv = async () => {
         exportDataCsv(
             "/products/" + props.product.id + "/export_observations_csv/",
-            "all_observations.csv",
+            observationsFilename("all_observations.csv"),
             "Observations"
         );
     };
@@ -128,7 +143,7 @@ const ExportMenu = (props: ExportMenuProps) => {
             "/products/" +
                 props.product.id +
                 "/export_observations_csv/?status=Open&status=Affected&status=In%20review",
-            "open_observations.csv",
+            observationsFilename("active_observations.csv"),
             "Observations"
         );
     };
@@ -198,6 +213,8 @@ const ExportMenu = (props: ExportMenuProps) => {
                 size="small"
                 sx={{ paddingTop: 0, paddingBottom: 0, paddingLeft: "5px", paddingRight: "5px" }}
                 startIcon={<DownloadIcon />}
+                loading={exporting}
+                loadingPosition="start"
             >
                 Export
             </Button>
