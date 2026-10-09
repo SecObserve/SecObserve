@@ -1,0 +1,137 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://github.com/SecObserve/SecObserve/secobserve_license_policy_schema_1.0.0.json",
+    "title": "SecObserve License Policy Schema",
+    "description": "The SecObserve License Policy Schema specifies the format of license policies exported in the JSON format.",
+    "type": "object",
+    "properties": {
+        "description": {
+            "type": "string",
+            "description": "Description of the license policy."
+        },
+        "ignore_component_types": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "description": "List of PURL types that should be ignored in the license policy.",
+            "items": {
+                "type": "string",
+                "description": "PURL type that should be ignored in the license policy.",
+                "enum": [
+                    "alpm",
+                    "apk",
+                    "bitbucket",
+                    "bitnami",
+                    "cargo",
+                    "cocoapods",
+                    "composer",
+                    "conan",
+                    "conda",
+                    "cpan",
+                    "cran",
+                    "deb",
+                    "docker",
+                    "gem",
+                    "generic",
+                    "github",
+                    "golang",
+                    "hackage",
+                    "hex",
+                    "huggingface",
+                    "luarocks",
+                    "maven",
+                    "mlflow",
+                    "npm",
+                    "nuget",
+                    "oci",
+                    "pub",
+                    "pypi",
+                    "rpm",
+                    "qpkg",
+                    "swid",
+                    "swift"
+                ]
+            }
+        },
+        "items": {
+            "type": "array",
+            "uniqueItems": true,
+            "minItems": 1,
+            "description": "",
+            "items": {
+                "properties": {
+                    "comment": {
+                        "type": "string",
+                        "description": "Comment, why the license is included in the policy with the defined evaluation result."
+                    },
+                    "evaluation_result": {
+                        "type": "string",
+                        "description": "The evaluation result for the license.",
+                        "enum": [
+                            "Allowed",
+                            "Forbidden",
+                            "Ignored",
+                            "Review required",
+                            "Unknown"
+                        ]
+                    },
+                    "from_parent": {
+                        "type": "boolean",
+                        "description": "Indicates if the evaluation result was inherited from a parent policy."
+                    },
+                    "license_group": {
+                        "type": "string",
+                        "description": "Name of the license group containing the license."
+                    },
+                    "license_expression": {
+                        "type": "string",
+                        "description": "License expression according to the SPDX specification."
+                    },
+                    "non_spdx_license": {
+                        "type": "string",
+                        "description": "Name of a license that is not part of the SPDX specification."
+                    },
+                    "spdx_license": {
+                        "type": "string",
+                        "description": "SPDX identifier of the license."
+                    }
+                },
+                "required": [
+                    "evaluation_result",
+                    "from_parent"
+                ],
+                "oneOf": [
+                    {
+                        "required": [
+                            "license_expression"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "non_spdx_license"
+                        ]
+                    },
+                    {
+                        "required": [
+                            "spdx_license"
+                        ]
+                    }
+                ],
+                "additionalProperties": false
+            }
+        },
+        "name": {
+            "type": "string",
+            "description": "Name of the license policy."
+        },
+        "parent": {
+            "type": "string",
+            "description": "Name of the parent license policy."
+        }
+    },
+    "required": [
+        "items",
+        "name"
+    ],
+    "additionalProperties": false
+}
