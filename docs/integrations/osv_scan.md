@@ -59,7 +59,7 @@ In the `Features` section of the [Settings](../getting_started/configuration.md#
 
 ![Settings automatic OSV scanning](../assets/images/screenshot_settings_automatic_osv_scanning.png){ width="65%" style="display: block; margin: 0 auto" }
 
-The hour (in UTC time) and minute, when the automatic [API imports](./api_import.md/#automatic-import) and OSV scanning will run, can be set in the `Background tasks` section. A restart of the SecObserve instance is required to apply the changes.
+The hour (in UTC, unless [`BACKGROUND_TASKS_TIME_ZONE`](../getting_started/configuration.md#time-zone-of-the-background-tasks) is set) and minute, when the automatic [API imports](./api_import.md/#automatic-import) and OSV scanning will run, can be set in the `Background tasks` section. A restart of the SecObserve instance is required to apply the changes.
 
 ![Settings automatic OSV scanning](../assets/images/screenshot_settings_background_api_osv.png){ width="70%" style="display: block; margin: 0 auto" }
 

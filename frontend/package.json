@@ -1,6 +1,6 @@
 {
     "name": "secobserve",
-    "version": "1.60.0",
+    "version": "1.60.1",
     "license": "BSD-3-Clause",
     "description": "SecObserve is an open source vulnerability management system for software development and cloud environments.",
     "private": true,
@@ -11,7 +11,7 @@
         "@fortawesome/free-brands-svg-icons": "7.3.1",
         "@fortawesome/free-solid-svg-icons": "7.3.1",
         "@fortawesome/react-fontawesome": "3.5.0",
-        "@mdxeditor/editor": "4.3.0",
+        "@mdxeditor/editor": "4.3.2",
         "@mui/icons-material": "9.4.0",
         "@mui/material": "9.4.0",
         "@textea/json-viewer": "4.0.1",
@@ -37,11 +37,10 @@
         "react-oidc-context": "3.3.1",
         "react-pivottable": "0.11.1",
         "react-syntax-highlighter": "16.1.1",
-        "runtime-env-cra": "file:lib/runtime-env-cra",
         "tss-react": "4.9.21"
     },
     "scripts": {
-        "start": "NODE_ENV=development ./node_modules/runtime-env-cra/lib/index.js --config-name=./public/runtime-env.js && vite",
+        "start": "sh ./bin/runtime-env.sh ./.env ./public/runtime-env.js && vite",
         "build": "tsc && vite build",
         "serve": "vite preview",
         "lint": "eslint src",
@@ -58,7 +57,7 @@
         "@microsoft/eslint-formatter-sarif": "3.1.0",
         "@trivago/prettier-plugin-sort-imports": "6.0.2",
         "@types/humanize-duration": "3.27.4",
-        "@types/node": "25.9.8",
+        "@types/node": "25.9.9",
         "@types/papaparse": " 5.5.2",
         "@types/prop-types": "15.7.15",
         "@types/react": "19.3.0",
@@ -68,15 +67,15 @@
         "@typescript-eslint/eslint-plugin": "8.71.0",
         "@typescript-eslint/parser": "8.71.0",
         "@vitejs/plugin-react": "6.1.1",
-        "eslint": "10.11.0",
+        "eslint": "10.12.0",
         "eslint-plugin-react": "7.37.5",
         "eslint-plugin-react-hooks": "7.1.1",
-        "eslint-plugin-security": "4.1.0",
-        "globals": "17.12.0",
+        "eslint-plugin-security": "4.2.0",
+        "globals": "17.13.0",
         "prettier": "3.9.9",
         "rewire": "9.0.1",
         "typescript": "6.0.3",
-        "vite": "8.3.1",
+        "vite": "8.3.2",
         "yaml": "2.9.1"
     }
 }

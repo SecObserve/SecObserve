@@ -1,6 +1,6 @@
 import gzip
 import re
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from datetime import datetime
 from typing import Optional
 
@@ -13,16 +13,24 @@ from application.epss.queries.epss_score import get_epss_scores_by_cves
 
 BATCH_SIZE = 1000
 
+# Fields read and written by apply_epss()
+EPSS_FIELDS = ("vulnerability_id", "epss_score", "epss_percentile")
 
-def batched_cve_observations(batch_size: int = BATCH_SIZE) -> Iterator[list[Observation]]:
+
+def batched_cve_observations(fields: Sequence[str], batch_size: int = BATCH_SIZE) -> Iterator[list[Observation]]:
     """Unresolved observations with a CVE, in batches.
 
     Keyset pagination instead of a paginator: with hundreds of thousands of observations, the
     growing OFFSET of a paginator makes the last pages far more expensive than the first ones.
+
+    Only the given fields are loaded, because the large text and JSON fields of hundreds of
+    thousands of observations need gigabytes of memory. Accessing any other field of the
+    returned observations costs one query per observation.
     """
     observations = (
         Observation.objects.filter(vulnerability_id__startswith="CVE-")
         .exclude(current_status=Status.STATUS_RESOLVED)
+        .only(*fields)
         .order_by("id")
     )
 
@@ -42,39 +50,42 @@ def import_epss() -> str:
         stream=True,
     )
     response.raise_for_status()
-    extracted_data = gzip.decompress(response.content)
+    # Like response.content, undo a Content-Encoding of the HTTP response
+    response.raw.decode_content = True
 
     EPSS_Score.objects.all().delete()
 
     counter = 0
     scores = []
     num_epss_scores = 0
-    for line in extracted_data.split(b"\n"):
-        decoded_line = line.decode()
+    # Decompressed while it is downloaded, to not hold the whole file in memory
+    with gzip.open(response.raw, "rt") as lines:
+        for line in lines:
+            decoded_line = line.rstrip("\r\n")
 
-        if decoded_line.startswith("#"):
-            epss_date = re.search(r"(\d{4}-\d{2}-\d{2})", decoded_line)
-            if epss_date:
-                epss_status = EPSS_Status.load()
-                epss_status.score_date = datetime.strptime(epss_date.group(0), "%Y-%m-%d")
-                epss_status.save()
+            if decoded_line.startswith("#"):
+                epss_date = re.search(r"(\d{4}-\d{2}-\d{2})", decoded_line)
+                if epss_date:
+                    epss_status = EPSS_Status.load()
+                    epss_status.score_date = datetime.strptime(epss_date.group(0), "%Y-%m-%d")
+                    epss_status.save()
 
-        if decoded_line.startswith("CVE"):
-            elements = decoded_line.split(",")
-            if len(elements) == 3:
-                scores.append(
-                    EPSS_Score(
-                        cve=elements[0],
-                        epss_score=elements[1],
-                        epss_percentile=elements[2],
+            if decoded_line.startswith("CVE"):
+                elements = decoded_line.split(",")
+                if len(elements) == 3:
+                    scores.append(
+                        EPSS_Score(
+                            cve=elements[0],
+                            epss_score=elements[1],
+                            epss_percentile=elements[2],
+                        )
                     )
-                )
-                num_epss_scores += 1
-                counter += 1
-            if counter == 1000:
-                EPSS_Score.objects.bulk_create(scores)
-                counter = 0
-                scores = []
+                    num_epss_scores += 1
+                    counter += 1
+                if counter == 1000:
+                    EPSS_Score.objects.bulk_create(scores)
+                    counter = 0
+                    scores = []
     if scores:
         EPSS_Score.objects.bulk_create(scores)
 
@@ -84,7 +95,7 @@ def import_epss() -> str:
 def epss_apply_observations() -> str:
     num_observations = 0
 
-    for observations in batched_cve_observations():
+    for observations in batched_cve_observations(EPSS_FIELDS):
         epss_scores = get_epss_scores_by_cves(observation.vulnerability_id for observation in observations)
         updates = [observation for observation in observations if apply_epss(observation, epss_scores)]
 

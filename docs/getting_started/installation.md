@@ -99,6 +99,8 @@ Set `architecture: ha` to run the backend roles as separate workloads instead: a
 
 `backend.background.replicaCount` is limited to 1. The Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue, so a second consumer would enqueue periodic tasks twice and reset the state of the first one. For the same reason the `background` Deployment uses the `Recreate` strategy.
 
+The `background` container has a liveness probe that restarts it when a task has been running for longer than [`HUEY_TASK_MAX_RUNTIME_HOURS`](configuration.md#backend), because a worker thread that is blocked forever keeps the lock of its task and all later runs of the task are skipped. The restart runs the startup flushes, which release the locks and mark the interrupted periodic tasks as failed. Tasks that other worker threads are running at that moment are lost and run again at their next schedule. When the probe can't reach the database, it passes, because a restart doesn't help then. Configure the probe with `backend.background.livenessProbe.*` or disable it with `backend.background.livenessProbe.enabled=false`. The `single` architecture has no such probe, because the consumer shares its container with the API.
+
 For SQLite installations the queue is persisted in a dedicated PersistentVolumeClaim. Configure `huey.persistence.existingClaim` to reuse a claim or `huey.persistence.storageClass` to select a storage class. The PersistentVolumeClaim is not created for `architecture: ha`, which requires PostgreSQL or MySQL.
 
 #### Scaling the API

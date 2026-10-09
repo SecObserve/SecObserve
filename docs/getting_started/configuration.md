@@ -43,7 +43,9 @@ A part of the configuration is done with environment variables, which need to be
 | `EMAIL_HOST_USER`      | optional    | Username used to authenticate against the SMTP server. Default is empty. |
 | `EMAIL_HOST_PASSWORD`  | optional    | Password used to authenticate against the SMTP server. Default is empty. |
 | `EMAIL_USE_TLS`        | optional    | `true`: use a TLS (secure) connection to the SMTP server, `false`: otherwise. Default is `false`. |
+| `BACKGROUND_TASKS_TIME_ZONE` | optional | [IANA time zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) of the hours and minutes of the background tasks in the `Settings`, e.g. `Europe/Berlin`. Default is `UTC`. The backend does not start if the value is not a valid time zone. See [Time zone of the background tasks](#time-zone-of-the-background-tasks). |
 | `HUEY_STATS_MAX_EVENTS` | optional   | Number of events the background task statistics keep per queue. Every task writes one event per signal, so a low value lets a single import that enqueues a task per product push everything else out of the statistics. Default is `100000`. |
+| `HUEY_TASK_MAX_RUNTIME_HOURS` | optional | Hours after which a running background task is considered stuck, for example because its worker thread is blocked on a dead database connection. The command `check_background_tasks`, which the Helm chart uses as liveness probe of the `background` container, exits with an error when a task has been running for longer. Set it above the longest regular runtime of a task, otherwise that task is killed by the restart before it can finish. Default is `12`. |
 | `OSV_MAX_THREADS`      | optional    | Maximum number of concurrent connections used when fetching vulnerability data from `api.osv.dev` during an OSV scan. Default is `32`. Lower it if the OSV API returns connection resets or SSL errors under load. |
 
 
@@ -71,6 +73,18 @@ Other parts of the configuration are done in the administration interface of Sec
 ![Settings](../assets/images/screenshot_settings.png)
 
 The entries shall be checked and adjusted if necessary after installing SecObserve.
+
+#### Time zone of the background tasks
+
+The hours and minutes of the background tasks in the section `Background tasks` are in UTC, unless the environment variable `BACKGROUND_TASKS_TIME_ZONE` is set to another time zone. The settings show the time zone that is used.
+
+The stored hours are not converted when the time zone is changed, so after the change the tasks run at the same hour on the clock of the new time zone. To change the time zone:
+
+1. Set `BACKGROUND_TASKS_TIME_ZONE`, e.g. to `Asia/Ho_Chi_Minh`.
+2. If a task shall keep running at the same time as before, adapt its hour in the section `Background tasks`. For example the EPSS import, which runs at 03:00 UTC by default, has to be set to 10:00 in `Asia/Ho_Chi_Minh` (UTC+7).
+3. Restart the backend, like for every change in the section `Background tasks`.
+
+In a time zone with daylight saving time, a task that is scheduled in the hour that is skipped in spring does not run on that day, and a task in the hour that is repeated in autumn runs twice.
 
 #### Notifications
 

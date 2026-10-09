@@ -7,7 +7,7 @@ import queryString from "query-string";
 import { DataProvider, Identifier, fetchUtils } from "react-admin";
 
 import { jwt_signed_in } from "../../access_control/auth_provider/authProvider";
-import { get_oidc_id_token, oidc_signed_in, updateRefreshToken } from "../../access_control/auth_provider/oidc";
+import { get_oidc_id_token, oidc_request_with_retry, oidc_signed_in } from "../../access_control/auth_provider/oidc";
 import { resolveDateFilters } from "../custom_fields/DateRangeFilter";
 
 const base_url = window.__RUNTIME_CONFIG__.API_BASE_URL;
@@ -63,13 +63,9 @@ function createOptionsFromTokenOIDC() {
 
 export async function httpClient(url: string, options?: fetchUtils.Options | undefined) {
     if (oidc_signed_in()) {
-        return updateRefreshToken()
-            .then(() => {
-                return fetchUtils.fetchJson(url, Object.assign(createOptionsFromTokenOIDC(), options));
-            })
-            .catch((error: Error) => {
-                throw error;
-            });
+        return oidc_request_with_retry(() =>
+            fetchUtils.fetchJson(url, Object.assign(createOptionsFromTokenOIDC(), options))
+        );
     } else if (jwt_signed_in()) {
         return fetchUtils.fetchJson(url, Object.assign(createOptionsFromTokenJWT(), options));
     } else {
