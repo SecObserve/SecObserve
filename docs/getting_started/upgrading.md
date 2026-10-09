@@ -10,6 +10,16 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.61.0
+
+**Security notice**
+
+* This release fixes [GHSA-xw8h-vrwc-9f5r](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-xw8h-vrwc-9f5r).
+
+**Breaking changes**
+
+* The exports of observations to Excel and CSV have more human readable column names and some of the filenames have been changed.
+
 ## Release 1.59.0
 
 **Notable changes**
