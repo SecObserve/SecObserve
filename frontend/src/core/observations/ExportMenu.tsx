@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { getIconAndFontColor } from "../../commons/functions";
+import { getOrderingQuery } from "../../commons/ra-data-django-rest-framework";
 
 const ExportMenu = () => {
     const notify = useNotify();
@@ -82,7 +83,7 @@ const ExportMenu = () => {
     };
 
     const queryParams = () => {
-        const query = { ...filterValues, ...sort };
+        const query = { ...filterValues, ...getOrderingQuery({ sort }) };
         return queryString.stringify(query);
     };
 

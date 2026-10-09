@@ -61,8 +61,11 @@ class TestObservationFilterDefaultBranch(BaseTestCase):
             mock_authenticate.return_value = User.objects.get(username="db_admin"), None
             return APIClient().get(url)
 
-    def _get_titles(self, query: str) -> set[str]:
-        response = self._get_as_admin(f"/api/observations/?product_group={self.group.pk}&{query}")
+    def _get_titles(self, query: str = "") -> set[str]:
+        url = f"/api/observations/?product_group={self.group.pk}"
+        if query:
+            url += f"&{query}"
+        response = self._get_as_admin(url)
         self.assertEqual(200, response.status_code)
         return {observation["title"] for observation in response.data["results"]}
 
@@ -81,7 +84,7 @@ class TestObservationFilterDefaultBranch(BaseTestCase):
     def test_default_branch_absent(self):
         self.assertEqual(
             {"with_branches_main", "with_branches_feature", "with_branches_none", "without_branches_none"},
-            self._get_titles("ordering=title"),
+            self._get_titles(),
         )
 
     def test_default_branch_matches_header_counts(self):

@@ -13,7 +13,7 @@ import { useNotify } from "react-admin";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { feature_license_management, getIconAndFontColor } from "../../commons/functions";
-import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import { getOrderingQuery, httpClient } from "../../commons/ra-data-django-rest-framework";
 import { useFilterValues } from "./FilterValuesContext";
 
 interface ExportMenuProps {
@@ -23,7 +23,7 @@ interface ExportMenuProps {
 
 const ExportMenu = (props: ExportMenuProps) => {
     const notify = useNotify();
-    const filterValues = useFilterValues();
+    const { filterValues, sort } = useFilterValues();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [exporting, setExporting] = useState(false);
     const open = Boolean(anchorEl);
@@ -102,14 +102,27 @@ const ExportMenu = (props: ExportMenuProps) => {
         );
     };
 
-    const currentViewQuery = () => queryString.stringify({ ...filterValues, product_group: props.product.id });
+    const currentViewQuery = () =>
+        queryString.stringify({
+            ...filterValues,
+            ...(sort ? getOrderingQuery({ sort }) : {}),
+            product_group: props.product.id,
+        });
 
     const exportCurrentViewExcel = async () => {
-        exportDataExcel("/observations/export_excel/?" + currentViewQuery(), "observations.xlsx", "Observations");
+        exportDataExcel(
+            "/observations/export_excel/?" + currentViewQuery(),
+            observationsFilename("current_view_observations.xlsx"),
+            "Observations"
+        );
     };
 
     const exportCurrentViewCsv = async () => {
-        exportDataCsv("/observations/export_csv/?" + currentViewQuery(), "observations.csv", "Observations");
+        exportDataCsv(
+            "/observations/export_csv/?" + currentViewQuery(),
+            observationsFilename("current_view_observations.csv"),
+            "Observations"
+        );
     };
 
     const exportAllObservationsExcel = async () => {
@@ -229,7 +242,7 @@ const ExportMenu = (props: ExportMenuProps) => {
                     },
                 }}
             >
-                {filterValues && (
+                {props.is_product_group && filterValues && (
                     <MenuItem onClick={exportCurrentViewExcel}>
                         <ListItemIcon>
                             <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
@@ -237,7 +250,7 @@ const ExportMenu = (props: ExportMenuProps) => {
                         Current view / Excel
                     </MenuItem>
                 )}
-                {filterValues && (
+                {props.is_product_group && filterValues && (
                     <MenuItem onClick={exportCurrentViewCsv} divider>
                         <ListItemIcon>
                             <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />

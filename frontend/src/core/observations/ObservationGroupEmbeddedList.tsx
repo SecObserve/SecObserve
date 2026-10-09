@@ -83,7 +83,7 @@ const ObservationGroupListContent = ({ product_group }: ObservationGroupEmbedded
         storeKey: STORE_KEY,
     });
 
-    usePublishFilterValues(listContext.filterValues);
+    usePublishFilterValues(listContext.filterValues, listContext.sort);
 
     if (listContext.isLoading) {
         return <div>Loading...</div>;
