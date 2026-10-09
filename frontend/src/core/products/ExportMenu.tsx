@@ -112,7 +112,7 @@ const ExportMenu = (props: ExportMenuProps) => {
     const exportCurrentViewExcel = async () => {
         exportDataExcel(
             "/observations/export_excel/?" + currentViewQuery(),
-            observationsFilename("current_view_observations.xlsx"),
+            observationsFilename("current_selection_observations.xlsx"),
             "Observations"
         );
     };
@@ -120,7 +120,7 @@ const ExportMenu = (props: ExportMenuProps) => {
     const exportCurrentViewCsv = async () => {
         exportDataCsv(
             "/observations/export_csv/?" + currentViewQuery(),
-            observationsFilename("current_view_observations.csv"),
+            observationsFilename("current_selection_observations.csv"),
             "Observations"
         );
     };
@@ -247,7 +247,7 @@ const ExportMenu = (props: ExportMenuProps) => {
                         <ListItemIcon>
                             <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
                         </ListItemIcon>
-                        Current view / Excel
+                        Current selection / Excel
                     </MenuItem>
                 )}
                 {filterValues && (
@@ -255,7 +255,7 @@ const ExportMenu = (props: ExportMenuProps) => {
                         <ListItemIcon>
                             <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
                         </ListItemIcon>
-                        Current view / CSV
+                        Current selection / CSV
                     </MenuItem>
                 )}
                 <MenuItem onClick={exportOpenObservationsExcel}>

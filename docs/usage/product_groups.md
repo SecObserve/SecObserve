@@ -21,4 +21,4 @@ Users can not only see the list of the associated products, their observations a
 
 The *Observations* tab of a product group shows the observations of all products in the group. By default, it shows the active observations of the default branches, the same scope as the counts in the header of the product group. The filters and columns are the same as in the list of all observations.
 
-The `Export` menu of the product group exports the current view of the *Observations* tab to an Excel or CSV file, with the filters and the sort order of the list. These entries are shown when the *Observations* tab is open.
+The `Export` menu of the product group exports the current selection of the *Observations* tab to an Excel or CSV file, with the filters and the sort order of the list. These entries are shown when the *Observations* tab is open.
