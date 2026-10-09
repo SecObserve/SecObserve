@@ -680,6 +680,7 @@ class NestedProductSerializer(ModelSerializer):
             "authorization_group_members",
             "assessment_approvers",
             "assessment_approver_authorization_groups",
+            "issue_tracker_api_key",
         ]
 
     def get_permissions(self, product: Product) -> Optional[set[Permissions]]:
@@ -716,6 +717,7 @@ class NestedProductListSerializer(ModelSerializer):
             "assessment_approvers",
             "assessment_approver_authorization_groups",
             "is_product_group",
+            "issue_tracker_api_key",
             "new_observations_in_review",
         ]
 

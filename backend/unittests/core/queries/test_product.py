@@ -1,3 +1,4 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -629,3 +630,58 @@ class TestGetProducts(BaseTestCase):
     #     mock_user.return_value = user
 
     #     self.assertEqual(0, len(get_products(is_product_group=False, with_metrics_annotations=True)))
+
+
+class TestPopulateProductCountAnnotationsFromMetrics(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.today = timezone.localdate()
+
+    def _create_metrics(self, product, days_ago, count):
+        day = self.today - timedelta(days=days_ago)
+        Product_Metrics.objects.create(product=product, date=day, active_critical=count)
+        Product_License_Metrics.objects.create(product=product, date=day, forbidden=count)
+
+    def _populate(self, products, is_product_group):
+        with self.assertNumQueries(2):
+            populate_product_count_annotations(
+                products, is_product_group=is_product_group, use_metrics=True, include_license_counts=True
+            )
+
+    def _assert_counts(self, product, count):
+        self.assertEqual(count, product.active_critical_observation_count)
+        self.assertEqual(count, product.forbidden_licenses_count)
+
+    def test_products_use_latest_metrics_up_to_today(self):
+        product_yesterday = Product.objects.create(name="product_yesterday")
+        self._create_metrics(product_yesterday, 2, 20)
+        self._create_metrics(product_yesterday, 1, 10)
+        product_today = Product.objects.create(name="product_today")
+        self._create_metrics(product_today, 1, 30)
+        self._create_metrics(product_today, 0, 3)
+        self._create_metrics(product_today, -1, 40)
+        product_without_metrics = Product.objects.create(name="product_without_metrics")
+        products = [product_yesterday, product_today, product_without_metrics]
+
+        self._populate(products, is_product_group=False)
+
+        self._assert_counts(product_yesterday, 10)
+        self._assert_counts(product_today, 3)
+        self._assert_counts(product_without_metrics, 0)
+
+    def test_product_groups_sum_latest_metrics_of_children(self):
+        product_group = Product.objects.create(name="product_group", is_product_group=True)
+        product_today = Product.objects.create(name="product_today", product_group=product_group)
+        self._create_metrics(product_today, 1, 20)
+        self._create_metrics(product_today, 0, 2)
+        product_yesterday = Product.objects.create(name="product_yesterday", product_group=product_group)
+        self._create_metrics(product_yesterday, 3, 30)
+        self._create_metrics(product_yesterday, 1, 3)
+        Product.objects.create(name="product_without_metrics", product_group=product_group)
+        product_group_without_metrics = Product.objects.create(name="product_group_empty", is_product_group=True)
+        product_groups = [product_group, product_group_without_metrics]
+
+        self._populate(product_groups, is_product_group=True)
+
+        self._assert_counts(product_group, 5)
+        self._assert_counts(product_group_without_metrics, 0)

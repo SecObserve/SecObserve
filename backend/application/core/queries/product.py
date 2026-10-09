@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from typing import Optional
 
-from django.db.models import Count, Exists, OuterRef, Q, Sum
+from django.db.models import Count, Exists, OuterRef, Q, Subquery, Sum
 from django.db.models.query import QuerySet
 from django.utils import timezone
 
@@ -188,7 +188,7 @@ def _populate_observation_counts_from_observations(
 
     counts = (
         Observation.objects.filter(
-            _get_default_branch_filter(),
+            get_default_branch_filter(),
             current_status__in=Status.STATUS_ACTIVE,
             **product_filter,
         )
@@ -209,13 +209,12 @@ def _populate_observation_counts_from_metrics(
 ) -> None:
     products_by_id = {product.pk: product for product in products}
     grouping_field = "product__product_group_id" if is_product_group else "product_id"
-    product_filter = (
-        {"product__product_group_id__in": product_ids} if is_product_group else {"product_id__in": product_ids}
-    )
     metric_fields = tuple(SEVERITY_MAPPING.values())
 
     counts = (
-        Product_Metrics.objects.filter(date=timezone.localdate(), **product_filter)
+        Product_Metrics.objects.filter(
+            pk__in=get_latest_metrics_pks(Product_Metrics, _get_metrics_products(is_product_group, product_ids))
+        )
         .values(grouping_field)
         .annotate(**{metric_field: Sum(metric_field) for metric_field in metric_fields})
     )
@@ -238,7 +237,7 @@ def _populate_license_counts_from_components(
     )
 
     counts = (
-        License_Component.objects.filter(_get_default_branch_filter(), **product_filter)
+        License_Component.objects.filter(get_default_branch_filter(), **product_filter)
         .values(grouping_field, "evaluation_result")
         .annotate(count=Count("pk"))
     )
@@ -256,13 +255,12 @@ def _populate_license_counts_from_metrics(
 ) -> None:
     products_by_id = {product.pk: product for product in products}
     grouping_field = "product__product_group_id" if is_product_group else "product_id"
-    product_filter = (
-        {"product__product_group_id__in": product_ids} if is_product_group else {"product_id__in": product_ids}
-    )
     metric_fields = tuple(EVALUATION_RESULT_MAPPING.values())
 
     counts = (
-        Product_License_Metrics.objects.filter(date=timezone.localdate(), **product_filter)
+        Product_License_Metrics.objects.filter(
+            pk__in=get_latest_metrics_pks(Product_License_Metrics, _get_metrics_products(is_product_group, product_ids))
+        )
         .values(grouping_field)
         .annotate(**{metric_field: Sum(metric_field) for metric_field in metric_fields})
     )
@@ -273,7 +271,24 @@ def _populate_license_counts_from_metrics(
                 setattr(product, f"{metric_field}_licenses_count", count[metric_field] or 0)
 
 
-def _get_default_branch_filter() -> Q:
+def get_latest_metrics_pks(
+    metrics_model: type[Product_Metrics] | type[Product_License_Metrics],
+    products: QuerySet[Product],
+) -> QuerySet:
+    # The metrics job may not have run yet today, so fall back to each product's latest row.
+    latest_metrics = metrics_model.objects.filter(product=OuterRef("pk"), date__lte=timezone.localdate())
+    # Ordering by the full (product, date) key lets MySQL read the index backwards instead of sorting all rows.
+    latest_metrics = latest_metrics.order_by("-product_id", "-date")
+    return products.values(latest_pk=Subquery(latest_metrics.values("pk")[:1]))
+
+
+def _get_metrics_products(is_product_group: bool, product_ids: list[int]) -> QuerySet[Product]:
+    if is_product_group:
+        return Product.objects.filter(product_group_id__in=product_ids)
+    return Product.objects.filter(pk__in=product_ids)
+
+
+def get_default_branch_filter() -> Q:
     return Q(branch__is_default_branch=True) | (
         Q(branch__isnull=True) & Q(product__repository_default_branch__isnull=True)
     )

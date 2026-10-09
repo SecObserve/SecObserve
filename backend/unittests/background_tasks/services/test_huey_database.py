@@ -32,6 +32,13 @@ class TestHueyDatabase(TestCase):
                 self.assertEqual("database.example.com", database.connect_params["host"])
                 self.assertEqual(5432, database.connect_params["port"])
 
+    def test_postgresql_bounds_connecting(self):
+        database_settings = self._database_settings("django.db.backends.postgresql", "password")
+        self.assertEqual(10, create_huey_database(database_settings, "").connect_params["connect_timeout"])
+
+        database_settings["OPTIONS"] = {"connect_timeout": 3}
+        self.assertEqual(3, create_huey_database(database_settings, "").connect_params["connect_timeout"])
+
     def test_mysql_preserves_credentials(self):
         for password in ("p[ass]word", "?#/%:@&=", "false", "1234"):
             with self.subTest(password=password):

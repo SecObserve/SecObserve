@@ -1,10 +1,9 @@
-import { UserManager } from "oidc-client-ts";
 import { AuthProvider } from "react-admin";
 
 import { set_settings_in_local_storage } from "../../commons/functions";
 import { queryClient } from "../../commons/queryClient";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
-import { oidcConfig, oidcStorageKey, oidc_signed_in } from "./oidc";
+import { oidc_signed_in, oidc_signin_again, userManager } from "./oidc";
 
 let _isLoggingOut = false;
 export function getIsLoggingOut(): boolean {
@@ -53,8 +52,7 @@ const authProvider: AuthProvider = {
         localStorage.removeItem("notification_count");
 
         if (oidc_signed_in()) {
-            const user_manager = new UserManager(oidcConfig);
-            return user_manager.signoutRedirect();
+            return userManager.signoutRedirect();
         }
 
         _isLoggingOut = false;
@@ -66,9 +64,7 @@ const authProvider: AuthProvider = {
                 localStorage.setItem("last_location", location.hash);
             }
             if (oidc_signed_in()) {
-                const user_manager = new UserManager(oidcConfig);
-                localStorage.removeItem(oidcStorageKey);
-                return user_manager.signinRedirect();
+                return oidc_signin_again();
             }
             throw error;
         }

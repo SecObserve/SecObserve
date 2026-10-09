@@ -29,6 +29,7 @@ import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { feature_exploit_information, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { usePublishBranchFilter } from "../products/BranchFilterContext";
+import { usePublishFilterValues } from "../products/FilterValuesContext";
 import {
     AGE_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -182,6 +183,7 @@ const ObservationsListContent = ({ product }: ObservationsEmbeddedListProps) => 
     });
 
     usePublishBranchFilter("observations", listContext.filterValues?.branch);
+    usePublishFilterValues(listContext.filterValues, listContext.sort);
 
     if (listContext.isLoading) {
         return <div>Loading...</div>;

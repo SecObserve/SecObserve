@@ -70,6 +70,7 @@ import ServiceEmbeddedList from "../services/ServiceEmbeddedList";
 import { Product } from "../types";
 import { BranchFilterProvider } from "./BranchFilterContext";
 import ExportMenu from "./ExportMenu";
+import { FilterValuesProvider } from "./FilterValuesContext";
 import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
@@ -124,172 +125,174 @@ const ProductShow = () => {
     return (
         // The key resets the branches of the filters when another product is shown
         <BranchFilterProvider key={id}>
-            <ProductHeader />
-            <Show actions={<ShowActions filter={filter} storeKey={storeKey} />}>
-                <WithRecord
-                    render={(product) => (
-                        <TabbedShowLayout
-                            tabs={
-                                <TabsWithSubMenu
-                                    variant="scrollable"
-                                    scrollButtons="auto"
-                                    subMenuLabel="Settings"
-                                    subMenuIcon={<SettingsIcon />}
-                                    subMenuPaths={SETTINGS_PATHS}
-                                />
-                            }
-                        >
-                            <Tab label="Observations" icon={<observations.icon />}>
-                                <Stack
-                                    direction="row"
-                                    spacing={2}
-                                    sx={{
-                                        alignItems: "center",
-                                    }}
-                                >
-                                    <ShowDefaultBranchObservationsButton product={product} />
-                                    {product?.permissions?.includes(PERMISSION_OBSERVATION_CREATE) && (
-                                        <ObservationCreate
-                                            id={product.id}
-                                            risk_acceptance_expiry_date_calculated={
-                                                product.risk_acceptance_expiry_date_calculated
-                                            }
-                                        />
-                                    )}
-                                </Stack>
-                                <ObservationsEmbeddedList product={product} />
-                            </Tab>
-                            <Tab label="Metrics" path="metrics" icon={<BarChartIcon />}>
-                                <MetricsHeader repository_default_branch={product.repository_default_branch_name} />
-                                <Stack
-                                    direction="row"
-                                    spacing={2}
-                                    sx={{
-                                        alignItems: "center",
-                                        marginTop: 1,
-                                        marginBottom: 1,
-                                    }}
-                                >
-                                    <MetricsSeveritiesCurrent product_id={product.id} />
-                                    <MetricsSeveritiesTimeline product_id={product.id} />
-                                    <MetricsStatusCurrent product_id={product.id} />
-                                </Stack>
-                            </Tab>
-                            {product.observation_reviews +
-                                product.observation_log_approvals +
-                                product.product_rule_approvals >
-                                0 && (
-                                <Tab
-                                    label="Reviews"
-                                    path="reviews"
-                                    icon={
-                                        <Badge
-                                            badgeContent={
-                                                product.observation_reviews +
-                                                product.observation_log_approvals +
-                                                product.product_rule_approvals
-                                            }
-                                            color="secondary"
-                                        >
-                                            <ChecklistIcon />
-                                        </Badge>
-                                    }
-                                >
-                                    <ProductReviews product={product} />
-                                </Tab>
-                            )}
-                            <Tab label="Vulnerability Checks" path="vulnerability_checks" icon={<FactCheckIcon />}>
-                                <VulnerabilityCheckEmbeddedList product={product} long_list={true} />
-                            </Tab>
-                            <Tab
-                                label={
-                                    <Fragment>
-                                        <Typography className={classes.tabFont}>Branches</Typography>
-                                        <Typography className={classes.tabFont}>Versions</Typography>
-                                    </Fragment>
+            <FilterValuesProvider>
+                <ProductHeader />
+                <Show actions={<ShowActions filter={filter} storeKey={storeKey} />}>
+                    <WithRecord
+                        render={(product) => (
+                            <TabbedShowLayout
+                                tabs={
+                                    <TabsWithSubMenu
+                                        variant="scrollable"
+                                        scrollButtons="auto"
+                                        subMenuLabel="Settings"
+                                        subMenuIcon={<SettingsIcon />}
+                                        subMenuPaths={SETTINGS_PATHS}
+                                    />
                                 }
-                                path="branches"
-                                icon={<AccountTreeIcon />}
                             >
-                                {product?.permissions?.includes(PERMISSION_BRANCH_CREATE) && (
-                                    <BranchCreate product={product} />
+                                <Tab label="Observations" icon={<observations.icon />}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={2}
+                                        sx={{
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <ShowDefaultBranchObservationsButton product={product} />
+                                        {product?.permissions?.includes(PERMISSION_OBSERVATION_CREATE) && (
+                                            <ObservationCreate
+                                                id={product.id}
+                                                risk_acceptance_expiry_date_calculated={
+                                                    product.risk_acceptance_expiry_date_calculated
+                                                }
+                                            />
+                                        )}
+                                    </Stack>
+                                    <ObservationsEmbeddedList product={product} />
+                                </Tab>
+                                <Tab label="Metrics" path="metrics" icon={<BarChartIcon />}>
+                                    <MetricsHeader repository_default_branch={product.repository_default_branch_name} />
+                                    <Stack
+                                        direction="row"
+                                        spacing={2}
+                                        sx={{
+                                            alignItems: "center",
+                                            marginTop: 1,
+                                            marginBottom: 1,
+                                        }}
+                                    >
+                                        <MetricsSeveritiesCurrent product_id={product.id} />
+                                        <MetricsSeveritiesTimeline product_id={product.id} />
+                                        <MetricsStatusCurrent product_id={product.id} />
+                                    </Stack>
+                                </Tab>
+                                {product.observation_reviews +
+                                    product.observation_log_approvals +
+                                    product.product_rule_approvals >
+                                    0 && (
+                                    <Tab
+                                        label="Reviews"
+                                        path="reviews"
+                                        icon={
+                                            <Badge
+                                                badgeContent={
+                                                    product.observation_reviews +
+                                                    product.observation_log_approvals +
+                                                    product.product_rule_approvals
+                                                }
+                                                color="secondary"
+                                            >
+                                                <ChecklistIcon />
+                                            </Badge>
+                                        }
+                                    >
+                                        <ProductReviews product={product} />
+                                    </Tab>
                                 )}
-                                <BranchEmbeddedList product={product} />
-                            </Tab>
-                            <Tab label="Services" path="services" icon={<ConstructionIcon />}>
-                                {product?.permissions?.includes(PERMISSION_SERVICE_CREATE) && (
-                                    <ServiceCreate product={product} />
-                                )}
-                                <ServiceEmbeddedList product={product} />
-                            </Tab>
-                            {feature_license_management() && product.has_licenses && (
+                                <Tab label="Vulnerability Checks" path="vulnerability_checks" icon={<FactCheckIcon />}>
+                                    <VulnerabilityCheckEmbeddedList product={product} long_list={true} />
+                                </Tab>
                                 <Tab
                                     label={
                                         <Fragment>
-                                            <Typography className={classes.tabFont}>Licenses</Typography>
-                                            <Typography className={classes.tabFont}>Components</Typography>
+                                            <Typography className={classes.tabFont}>Branches</Typography>
+                                            <Typography className={classes.tabFont}>Versions</Typography>
                                         </Fragment>
                                     }
-                                    path="licenses"
-                                    icon={<license_components.icon />}
+                                    path="branches"
+                                    icon={<AccountTreeIcon />}
                                 >
-                                    <ProductShowLicenseComponents product={product} />
+                                    {product?.permissions?.includes(PERMISSION_BRANCH_CREATE) && (
+                                        <BranchCreate product={product} />
+                                    )}
+                                    <BranchEmbeddedList product={product} />
                                 </Tab>
-                            )}
-                            <Tab label="Settings" path="settings" icon={<SettingsIcon />}>
-                                {/* Keyed, so that the sections start closed again for the next product. */}
-                                <ProductShowProduct key={product.id} product={product} />
-                            </Tab>
-                            <Tab label="Rules" path="rules" icon={<general_rules.icon />}>
-                                <Stack
-                                    direction="row"
-                                    spacing={2}
-                                    sx={{
-                                        alignItems: "center",
-                                    }}
-                                >
-                                    {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
-                                        <ProductRuleCreate product={product} />
+                                <Tab label="Services" path="services" icon={<ConstructionIcon />}>
+                                    {product?.permissions?.includes(PERMISSION_SERVICE_CREATE) && (
+                                        <ServiceCreate product={product} />
                                     )}
-                                    {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
-                                        <ProductRuleApply product={product} />
+                                    <ServiceEmbeddedList product={product} />
+                                </Tab>
+                                {feature_license_management() && product.has_licenses && (
+                                    <Tab
+                                        label={
+                                            <Fragment>
+                                                <Typography className={classes.tabFont}>Licenses</Typography>
+                                                <Typography className={classes.tabFont}>Components</Typography>
+                                            </Fragment>
+                                        }
+                                        path="licenses"
+                                        icon={<license_components.icon />}
+                                    >
+                                        <ProductShowLicenseComponents product={product} />
+                                    </Tab>
+                                )}
+                                <Tab label="Settings" path="settings" icon={<SettingsIcon />}>
+                                    {/* Keyed, so that the sections start closed again for the next product. */}
+                                    <ProductShowProduct key={product.id} product={product} />
+                                </Tab>
+                                <Tab label="Rules" path="rules" icon={<general_rules.icon />}>
+                                    <Stack
+                                        direction="row"
+                                        spacing={2}
+                                        sx={{
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_CREATE) && (
+                                            <ProductRuleCreate product={product} />
+                                        )}
+                                        {product?.permissions?.includes(PERMISSION_PRODUCT_RULE_APPLY) && (
+                                            <ProductRuleApply product={product} />
+                                        )}
+                                    </Stack>
+                                    <ProductRuleEmbeddedList product={product} />
+                                </Tab>
+                                <Tab label="API Configurations" path="api_configurations" icon={<UploadIcon />}>
+                                    {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_CREATE) && (
+                                        <ApiConfigurationCreate id={product.id} />
                                     )}
-                                </Stack>
-                                <ProductRuleEmbeddedList product={product} />
-                            </Tab>
-                            <Tab label="API Configurations" path="api_configurations" icon={<UploadIcon />}>
-                                {product?.permissions?.includes(PERMISSION_API_CONFIGURATION_CREATE) && (
-                                    <ApiConfigurationCreate id={product.id} />
-                                )}
-                                <ApiConfigurationEmbeddedList product={product} />
-                            </Tab>
-                            <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
-                                <Typography variant="h6">User members</Typography>
-                                {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
-                                    <ProductMemberAdd id={product.id} />
-                                )}
-                                <ProductMemberEmbeddedList product={product} />
+                                    <ApiConfigurationEmbeddedList product={product} />
+                                </Tab>
+                                <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
+                                    <Typography variant="h6">User members</Typography>
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
+                                        <ProductMemberAdd id={product.id} />
+                                    )}
+                                    <ProductMemberEmbeddedList product={product} />
 
-                                <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
-                                <Typography variant="h6">Authorization group members</Typography>
-                                {product?.permissions?.includes(
-                                    PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE
-                                ) && <ProductAuthorizationGroupMemberAdd id={product.id} />}
-                                <ProductAuthorizationGroupMemberEmbeddedList product={product} />
-                            </Tab>
-                            <Tab label="API Token" path="api_token" icon={<TokenIcon />}>
-                                {product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
-                                    <ApiTokenCreate type="product" product={product} />
-                                )}
-                                <ApiTokenEmbeddedList type="product" product={product} />
-                            </Tab>
-                            <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
-                                <ProductNotificationSettings product={product} />
-                            </Tab>
-                        </TabbedShowLayout>
-                    )}
-                />
-            </Show>
+                                    <Divider sx={{ marginTop: 2, marginBottom: 2 }} />
+                                    <Typography variant="h6">Authorization group members</Typography>
+                                    {product?.permissions?.includes(
+                                        PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE
+                                    ) && <ProductAuthorizationGroupMemberAdd id={product.id} />}
+                                    <ProductAuthorizationGroupMemberEmbeddedList product={product} />
+                                </Tab>
+                                <Tab label="API Token" path="api_token" icon={<TokenIcon />}>
+                                    {product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_CREATE) && (
+                                        <ApiTokenCreate type="product" product={product} />
+                                    )}
+                                    <ApiTokenEmbeddedList type="product" product={product} />
+                                </Tab>
+                                <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
+                                    <ProductNotificationSettings product={product} />
+                                </Tab>
+                            </TabbedShowLayout>
+                        )}
+                    />
+                </Show>
+            </FilterValuesProvider>
         </BranchFilterProvider>
     );
 };

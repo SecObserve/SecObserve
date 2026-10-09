@@ -40,3 +40,55 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[1].name
           value: wait-for-migrations
+
+  - it: restarts the consumer when a task has been running for too long
+    set:
+      architecture: ha
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe
+          value:
+            exec:
+              command:
+                - python
+                - /app/manage.py
+                - check_background_tasks
+            initialDelaySeconds: 300
+            periodSeconds: 300
+            timeoutSeconds: 60
+            failureThreshold: 2
+
+  - it: applies overrides of the liveness probe
+    set:
+      architecture: ha
+      backend.background.livenessProbe:
+        initialDelaySeconds: 600
+        periodSeconds: 120
+        timeoutSeconds: 30
+        failureThreshold: 5
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.exec.command[2]
+          value: check_background_tasks
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 600
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 120
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 30
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 5
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.enabled
+
+  - it: has no liveness probe when it is disabled
+    set:
+      architecture: ha
+      backend.background.livenessProbe.enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe

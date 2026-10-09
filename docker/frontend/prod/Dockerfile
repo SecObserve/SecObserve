@@ -20,25 +20,18 @@ RUN sed -i 's/version_unknown/'"${VERSION}"'/g' ./src/commons/about/About.tsx &&
 RUN ASSET_HASH=$(sha256sum ./build/assets/* | sha256sum | cut -d ' ' -f 1) && \
         sed -i 's/hash_unknown/'"${ASSET_HASH}"'/g' ./build/index.html
 
-WORKDIR /app/lib/runtime-env-cra
-RUN npm ci
-
 # production environment
 FROM nginx:stable-alpine-slim@sha256:32463212baf0e7d91aded2e9b843a4f2b9e017804b8c9d5bae7b51dcef64389c
 
 USER root
 
-# kics-scan ignore-block
-# versions of dependencies from distribution are ok
-RUN apk add --no-cache --virtual --update npm && \
-        npm i -g node
-
 COPY --from=build /app/build /usr/share/nginx/html
-COPY --from=build /app/lib/runtime-env-cra /usr/share/nginx/html/lib/runtime-env-cra
 COPY ./frontend/.env.no_oidc /usr/share/nginx/html/.env
 COPY ./frontend/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY ./frontend/nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY ./frontend/robots.txt /usr/share/nginx/html/robots.txt
+# generates runtime-env.js from the environment variables, executed by the entrypoint of the nginx image
+COPY --chmod=755 ./frontend/bin/runtime-env.sh /docker-entrypoint.d/40-runtime-env.sh
 
 ARG user=so_nginx
 ARG group=so_nginx
@@ -76,4 +69,4 @@ WORKDIR /usr/share/nginx/html
 
 USER ${user}
 
-CMD ["/bin/sh", "-c", "./lib/runtime-env-cra/lib/index.js --strict false && nginx -g \"daemon off;\""]
+CMD ["nginx", "-g", "daemon off;"]
