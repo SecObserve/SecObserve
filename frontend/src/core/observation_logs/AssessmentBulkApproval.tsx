@@ -89,17 +89,19 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const [loading, setLoading] = useState(false);
 
     const selectedRecords = data.filter((record) => selectedIds.includes(record.id));
-    const count = selectedRecords.length;
+    const count = selectedIds.length;
     const first = selectedRecords[0];
+    // The selection can span several pages, but only the records of the current page are known
+    const allLoaded = count > 0 && selectedRecords.length === count;
 
-    const sameComment = allEqual(selectedRecords, (record) => record.comment ?? "");
-    const sameJustification = allEqual(selectedRecords, (record) => record.vex_justification ?? "");
-    const sameRemediations = allEqual(selectedRecords, remediationsKey);
+    const sameComment = allLoaded && allEqual(selectedRecords, (record) => record.comment ?? "");
+    const sameJustification = allLoaded && allEqual(selectedRecords, (record) => record.vex_justification ?? "");
+    const sameRemediations = allLoaded && allEqual(selectedRecords, remediationsKey);
     const [comment, setComment] = useState("");
 
     // Only offered when every selected assessment has a status the value applies to
-    const justificationEnabled = count > 0 && selectedRecords.every((r) => justificationIsEnabledForStatus(r.status));
-    const remediationsEnabled = count > 0 && selectedRecords.every((r) => remediationsAreEnabledForStatus(r.status));
+    const justificationEnabled = allLoaded && selectedRecords.every((r) => justificationIsEnabledForStatus(r.status));
+    const remediationsEnabled = allLoaded && selectedRecords.every((r) => remediationsAreEnabledForStatus(r.status));
 
     const send = (post_data: Record<string, any>) => {
         setPending(null);
@@ -166,6 +168,13 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         }
         if (sent.some((field) => field.source === "comment") && !comment.trim()) {
             notify("The comment of the observation log is required", { type: "warning" });
+            return;
+        }
+        // Empty values are not applied, the assessments keep theirs
+        if (!sent.some((field) => field.source === "comment" || data[field.source]?.length > 0)) {
+            notify("Enter a comment, a VEX justification or VEX remediations, or choose Approved", {
+                type: "warning",
+            });
             return;
         }
         for (const field of sent) {
@@ -253,7 +262,7 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                                 <VEXRemediationsInput />
                             ) : (
                                 <DifferentValues source="vex_remediations" label="VEX remediations" count={count}>
-                                    <VEXRemediationsInput />
+                                    <VEXRemediationsInput validate={validate_required} />
                                 </DifferentValues>
                             ))}
                         {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&

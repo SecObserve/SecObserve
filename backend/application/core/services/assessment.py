@@ -284,7 +284,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     rejection_remark: Optional[str],
     observation_log_comment: Optional[str],
     observation_log_vex_justification: Optional[str],
-    observation_log_vex_remediations: Optional[str],
+    observation_log_vex_remediations: Optional[list[dict]],
 ) -> None:
     if observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
         raise ValidationError("Observation log does not need approval")

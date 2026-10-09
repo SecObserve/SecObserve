@@ -46,8 +46,8 @@ export const VEXJustificationInput = ({ validate }: { validate?: Validator[] }) 
     </Fragment>
 );
 
-export const VEXRemediationsInput = () => (
-    <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations">
+export const VEXRemediationsInput = ({ validate }: { validate?: Validator[] }) => (
+    <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations" validate={validate}>
         <SimpleFormIterator disableReordering inline>
             <AutocompleteInputMedium
                 source="category"

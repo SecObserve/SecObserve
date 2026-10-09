@@ -148,7 +148,7 @@ def observation_logs_bulk_approval(  # pylint: disable=too-many-positional-argum
     rejection_remark: str,
     observation_log_comment: Optional[str],
     observation_log_vex_justification: Optional[str],
-    observation_log_vex_remediations: Optional[str],
+    observation_log_vex_remediations: Optional[list[dict]],
     observation_log_ids: list[int],
 ) -> None:
     observation_logs = _check_observation_logs(None, observation_log_ids)
