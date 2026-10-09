@@ -7,12 +7,14 @@ import { ListItemIcon } from "@mui/material";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import queryString from "query-string";
 import { Fragment, MouseEvent, useState } from "react";
 import { useNotify } from "react-admin";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { feature_license_management, getIconAndFontColor } from "../../commons/functions";
-import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import { getOrderingQuery, httpClient } from "../../commons/ra-data-django-rest-framework";
+import { useFilterValues } from "./FilterValuesContext";
 
 interface ExportMenuProps {
     product: any;
@@ -21,6 +23,7 @@ interface ExportMenuProps {
 
 const ExportMenu = (props: ExportMenuProps) => {
     const notify = useNotify();
+    const { filterValues, sort } = useFilterValues();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const [exporting, setExporting] = useState(false);
     const open = Boolean(anchorEl);
@@ -96,6 +99,29 @@ const ExportMenu = (props: ExportMenuProps) => {
             "/metrics/export_codecharta?product_id=" + props.product.id,
             "secobserve_codecharta_metrics.csv",
             "CodeCharta metrics"
+        );
+    };
+
+    const currentViewQuery = () =>
+        queryString.stringify({
+            ...filterValues,
+            ...(sort ? getOrderingQuery({ sort }) : {}),
+            product_group: props.product.id,
+        });
+
+    const exportCurrentViewExcel = async () => {
+        exportDataExcel(
+            "/observations/export_excel/?" + currentViewQuery(),
+            observationsFilename("current_view_observations.xlsx"),
+            "Observations"
+        );
+    };
+
+    const exportCurrentViewCsv = async () => {
+        exportDataCsv(
+            "/observations/export_csv/?" + currentViewQuery(),
+            observationsFilename("current_view_observations.csv"),
+            "Observations"
         );
     };
 
@@ -216,6 +242,22 @@ const ExportMenu = (props: ExportMenuProps) => {
                     },
                 }}
             >
+                {props.is_product_group && filterValues && (
+                    <MenuItem onClick={exportCurrentViewExcel}>
+                        <ListItemIcon>
+                            <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
+                        </ListItemIcon>
+                        Current view / Excel
+                    </MenuItem>
+                )}
+                {props.is_product_group && filterValues && (
+                    <MenuItem onClick={exportCurrentViewCsv} divider>
+                        <ListItemIcon>
+                            <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
+                        </ListItemIcon>
+                        Current view / CSV
+                    </MenuItem>
+                )}
                 <MenuItem onClick={exportOpenObservationsExcel}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
