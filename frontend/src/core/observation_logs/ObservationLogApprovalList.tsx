@@ -4,6 +4,7 @@ import {
     AutocompleteInput,
     ChipField,
     Datagrid,
+    DateField,
     FilterForm,
     FunctionField,
     ListContextProvider,
