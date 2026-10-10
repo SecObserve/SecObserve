@@ -33,7 +33,8 @@ const ComponentList = () => {
                 storeKey="components.list"
             >
                 <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
-                    <TextField source="name_version" label="Component" />
+                    <TextField source="name" label="Component" sortBy="name_version" />
+                    <TextField source="version" label="Version" sortable={false} />
                     <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
                     <TextField source="purl_namespace" label="Namespace" />
                     <TextField source="type" label="Type" />
