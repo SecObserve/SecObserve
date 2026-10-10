@@ -12,6 +12,7 @@ import { Fragment, MouseEvent, useState } from "react";
 import { useNotify } from "react-admin";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
+import { resolveDateFilters } from "../../commons/custom_fields/DateRangeFilter";
 import { feature_license_management, getIconAndFontColor } from "../../commons/functions";
 import { getOrderingQuery, httpClient } from "../../commons/ra-data-django-rest-framework";
 import { useFilterValues } from "./FilterValuesContext";
@@ -104,7 +105,7 @@ const ExportMenu = (props: ExportMenuProps) => {
 
     const currentViewQuery = () =>
         queryString.stringify({
-            ...filterValues,
+            ...resolveDateFilters(filterValues ?? {}),
             ...(sort ? getOrderingQuery({ sort }) : {}),
             ...(props.is_product_group ? { product_group: props.product.id } : { product: props.product.id }),
         });

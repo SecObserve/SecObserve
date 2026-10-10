@@ -8,6 +8,7 @@ import { DataProvider, Identifier, fetchUtils } from "react-admin";
 
 import { jwt_signed_in } from "../../access_control/auth_provider/authProvider";
 import { get_oidc_id_token, oidc_request_with_retry, oidc_signed_in } from "../../access_control/auth_provider/oidc";
+import { resolveDateFilters } from "../custom_fields/DateRangeFilter";
 
 const base_url = window.__RUNTIME_CONFIG__.API_BASE_URL;
 
@@ -21,7 +22,7 @@ const getPaginationQuery = (params: any) => {
 const getFilterQuery = (params: any) => {
     const { q: search, ...otherSearchParams } = params.filter;
     return {
-        ...otherSearchParams,
+        ...resolveDateFilters(otherSearchParams),
         search,
     };
 };
