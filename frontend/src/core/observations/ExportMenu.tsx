@@ -15,7 +15,13 @@ import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { getIconAndFontColor } from "../../commons/functions";
 import { getOrderingQuery } from "../../commons/ra-data-django-rest-framework";
 
-const ExportMenu = () => {
+type ExportMenuProps = {
+    resource?: string;
+    title?: string;
+};
+
+// Exports the list with its filters and sort order, used for observations and components
+const ExportMenu = ({ resource = "observations", title = "Observations" }: ExportMenuProps) => {
     const notify = useNotify();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -74,12 +80,12 @@ const ExportMenu = () => {
         handleClose();
     };
 
-    const exportObservationsExcel = async () => {
-        exportDataExcel("/observations/export_excel/?" + queryParams(), "observations.xlsx", "Observations");
+    const exportExcel = async () => {
+        exportDataExcel(`/${resource}/export_excel/?` + queryParams(), `${resource}.xlsx`, title);
     };
 
-    const exportObservationsCsv = async () => {
-        exportDataCsv("/observations/export_csv/?" + queryParams(), "observations.csv", "Observations");
+    const exportCsv = async () => {
+        exportDataCsv(`/${resource}/export_csv/?` + queryParams(), `${resource}.csv`, title);
     };
 
     const queryParams = () => {
@@ -112,30 +118,32 @@ const ExportMenu = () => {
                     },
                 }}
             >
-                <MenuItem onClick={exportObservationsExcel}>
+                <MenuItem onClick={exportExcel}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
                     </ListItemIcon>
-                    Observations / Excel
+                    {title} / Excel
                 </MenuItem>
-                <MenuItem onClick={exportObservationsCsv}>
+                <MenuItem onClick={exportCsv}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
                     </ListItemIcon>
-                    Observations / CSV
+                    {title} / CSV
                 </MenuItem>
-                <Divider />
-                <MenuItem
-                    onClick={() => {
-                        navigate("/pivot_table?" + queryParams());
-                        handleClose();
-                    }}
-                >
-                    <ListItemIcon>
-                        <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
-                    </ListItemIcon>
-                    Observations / Pivot Table
-                </MenuItem>
+                {resource === "observations" && <Divider />}
+                {resource === "observations" && (
+                    <MenuItem
+                        onClick={() => {
+                            navigate("/pivot_table?" + queryParams());
+                            handleClose();
+                        }}
+                    >
+                        <ListItemIcon>
+                            <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
+                        </ListItemIcon>
+                        Observations / Pivot Table
+                    </MenuItem>
+                )}
             </Menu>
         </Fragment>
     );
