@@ -124,7 +124,8 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual(
             '[{"category": "workaround", "text": "restart"}]', self._value(critical, "Assessment VEX remediations")
         )
-        self.assertEqual(datetime(2026, 9, 28, 10, 30), self._value(critical, "Last seen"))
+        # Local time in TIME_ZONE, which is CET in the unit tests
+        self.assertEqual(datetime(2026, 9, 28, 12, 30), self._value(critical, "Last seen"))
         self.assertIsNone(self._value(rows[3], "Branch / Version"))
         self.assertEqual("A2", worksheet.freeze_panes)
         self.assertEqual(f"A1:{get_column_letter(len(COLUMNS))}4", worksheet.auto_filter.ref)
