@@ -30,6 +30,8 @@ import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
 import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
+import { ObservationLogComponent } from "./ObservationLogShow";
+import ObservationLogShowAside from "./ObservationLogShowAside";
 import { commentShortened } from "./functions";
 
 type BulkActionButtonsProps = {
@@ -173,6 +175,13 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                 }
                                 rowClick={ShowObservationLogs}
                                 resource="observation_logs"
+                                // Everything the show page has, so that several assessments can be checked before a bulk approval
+                                expand={
+                                    <Stack direction="row" sx={{ alignItems: "flex-start" }}>
+                                        <ObservationLogComponent />
+                                        <ObservationLogShowAside />
+                                    </Stack>
+                                }
                             >
                                 <TextField source="observation_data.title" label="Observation" />
                                 {(!product || is_product_group) && (
@@ -247,6 +256,27 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
+                                {has_attribute("risk_acceptance_expiry_date", data, sort) && (
+                                    <DateField
+                                        source="risk_acceptance_expiry_date"
+                                        label="Risk acceptance expiry"
+                                        emptyText="---"
+                                        sortable={false}
+                                    />
+                                )}
+                                {feature_vex_enabled() &&
+                                    data?.some((element: any) => element.vex_remediations?.length > 0) && (
+                                        // Only the categories, the texts are in the expanded row
+                                        <FunctionField
+                                            label="VEX remediations"
+                                            render={(record) =>
+                                                record.vex_remediations
+                                                    ?.map((remediation: any) => remediation.category)
+                                                    .join(", ") || "---"
+                                            }
+                                            sortable={false}
+                                        />
+                                    )}
                                 <FunctionField
                                     label="Comment"
                                     render={(record) => commentShortened(record.comment)}

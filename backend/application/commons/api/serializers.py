@@ -23,6 +23,7 @@ class StatusSettingsSerializer(Serializer):
     risk_acceptance_expiry_days = IntegerField()
     vex_justification_style = CharField()
     time_zone = CharField()
+    background_tasks_time_zone = CharField()
 
 
 class SettingsSerializer(ModelSerializer):

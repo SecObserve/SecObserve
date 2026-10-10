@@ -20,4 +20,4 @@ The number of `Risk acceptance expiry (days)` will be used to set a default for 
 
 ---
 
-Per default the task to check the risk acceptance expiry is scheduled to run every night at 01:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve).  Hours are in the time zone of the server, see [`TIME_ZONE`](../getting_started/configuration.md#backend).
+Per default the task to check the risk acceptance expiry is scheduled to run every night at 01:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve).  Hours are in UTC, unless [`BACKGROUND_TASKS_TIME_ZONE`](../getting_started/configuration.md#time-zone-of-the-background-tasks) is set.

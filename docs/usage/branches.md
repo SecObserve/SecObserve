@@ -43,12 +43,12 @@ The parameters are set globally in the [Settings](../getting_started/configurati
 | Parameter global | Description |
 |------------------|-------------|
 | **BRANCH_HOUSEKEEPING_CRONTAB_MINUTE** | Minutes crontab expression for housekeeping |
-| **BRANCH_HOUSEKEEPING_CRONTAB_HOUR** | Hours crontab expression for housekeeping (server time zone) |
+| **BRANCH_HOUSEKEEPING_CRONTAB_HOUR** | Hours crontab expression for housekeeping (UTC, unless `BACKGROUND_TASKS_TIME_ZONE` is set) |
 | **BRANCH_HOUSEKEEPING_ACTIVE** | If this parameter is set, inactive branches / versions will be deleted automatically. |
 | **BRANCH_HOUSEKEEPING_KEEP_INACTIVE_DAYS** | Days before inactive branches / versions and their observations are deleted |
 | **BRANCH_HOUSEKEEPING_EXEMPT_BRANCHES** | Regular expression which branches / versions to exempt from deletion |
 
-Per default the `Housekeeping` task, which deletes inactive branches / versions including their observations, is scheduled to run every night at 02:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve). Hours are in the time zone of the server, see [`TIME_ZONE`](../getting_started/configuration.md#backend).
+Per default the `Housekeeping` task, which deletes inactive branches / versions including their observations, is scheduled to run every night at 02:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve). Hours are in UTC, unless [`BACKGROUND_TASKS_TIME_ZONE`](../getting_started/configuration.md#time-zone-of-the-background-tasks) is set.
 
 ![Settings housekeeping](../assets/images/settings_cron_housekeeping.png){ width="80%" style="display: block; margin: 0 auto" }
 

@@ -35,6 +35,7 @@ import {
     IDENTIFIER_OBSERVATION_COMPONENT_LIST,
     IDENTIFIER_OBSERVATION_DASHBOARD_LIST,
     IDENTIFIER_OBSERVATION_EMBEDDED_LIST,
+    IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST,
     IDENTIFIER_OBSERVATION_LIST,
     IDENTIFIER_OBSERVATION_REVIEW_LIST,
     IDENTIFIER_OBSERVATION_REVIEW_LIST_PRODUCT,
@@ -53,6 +54,10 @@ const ShowActions = () => {
     } else if (observation && localStorage.getItem(IDENTIFIER_OBSERVATION_EMBEDDED_LIST) === "true") {
         filter = { product: observation.product };
         storeKey = "observations.embedded";
+    } else if (observation && localStorage.getItem(IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST) === "true") {
+        filter = { product_group: observation.product_data.product_group };
+        filterDefaultValues = { current_status: OBSERVATION_STATUS_ACTIVE, default_branch: true };
+        storeKey = "observations.embedded.group";
     } else if (localStorage.getItem(IDENTIFIER_OBSERVATION_DASHBOARD_LIST) === "true") {
         filter = {
             age: "Past 7 days",

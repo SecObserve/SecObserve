@@ -285,6 +285,15 @@ export function settings_risk_acceptance_expiry_date(): string | null {
     }
 }
 
+export function settings_background_tasks_time_zone(): string {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        return settings.background_tasks_time_zone ?? "UTC";
+    } catch {
+        return "UTC";
+    }
+}
+
 export function settings_vex_justification_style(): string | null {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");

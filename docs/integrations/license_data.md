@@ -10,7 +10,7 @@ Per default the task to import the SPDX licenses is scheduled to run every night
 
 ![SPDX license import configuration](../assets/images/screenshot_spdx_license_import.png){ width="80%" style="display: block; margin: 0 auto" }
 
-Hour is in the time zone of the server, see [`TIME_ZONE`](../getting_started/configuration.md#backend).
+Hour is in UTC, unless [`BACKGROUND_TASKS_TIME_ZONE`](../getting_started/configuration.md#time-zone-of-the-background-tasks) is set.
 
 ## ScanCode LicenseDB
 

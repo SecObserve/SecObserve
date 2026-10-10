@@ -1,6 +1,6 @@
-from huey import crontab
 from huey.contrib.djhuey import db_periodic_task
 
+from application.background_tasks.services.crontab import crontab_in_time_zone
 from application.background_tasks.services.task_base import so_periodic_task
 from application.commons import settings_static
 from application.core.services.housekeeping import (
@@ -15,7 +15,7 @@ from application.notifications.services.housekeeping import (
 
 
 @db_periodic_task(
-    crontab(
+    crontab_in_time_zone(
         minute=settings_static.branch_housekeeping_crontab_minute,
         hour=settings_static.branch_housekeeping_crontab_hour,
     )
@@ -28,7 +28,7 @@ def task_housekeeping() -> str:
 
 
 @db_periodic_task(
-    crontab(
+    crontab_in_time_zone(
         minute=settings_static.risk_acceptance_expiry_crontab_minute,
         hour=settings_static.risk_acceptance_expiry_crontab_hour,
     )

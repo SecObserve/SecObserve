@@ -20,6 +20,21 @@ from application.epss.services.epss import batched_cve_observations
 
 logger = logging.getLogger("secobserve.epss")
 
+# Fields read and written by apply_exploit_information(), including get_current_severity()
+EXPLOIT_INFORMATION_FIELDS = (
+    "vulnerability_id",
+    "cvss3_score",
+    "cvss3_vector",
+    "cvss4_score",
+    "cvss4_vector",
+    "cve_found_in",
+    "current_severity",
+    "parser_severity",
+    "rule_severity",
+    "rule_rego_severity",
+    "assessment_severity",
+)
+
 
 def import_cvss_bt() -> str:
     response = requests.get(  # nosec B113
@@ -136,7 +151,7 @@ def _get_year_from_cve(cve: str) -> Optional[int]:
 def apply_exploit_information_observations(settings: Settings) -> int:
     num_observations = 0
 
-    for observations in batched_cve_observations():
+    for observations in batched_cve_observations(EXPLOIT_INFORMATION_FIELDS):
         exploit_informations = get_exploit_information_by_cves(
             observation.vulnerability_id for observation in observations
         )

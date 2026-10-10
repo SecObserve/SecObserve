@@ -1,16 +1,20 @@
 import json
 import logging
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Optional
+from tempfile import TemporaryFile
+from typing import Any, Iterable, Optional, Sequence
 
 import jsonpickle
 from defusedcsv import csv
 from django.db.models.query import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from openpyxl import Workbook
+from openpyxl.cell import WriteOnlyCell
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
 
 logger = logging.getLogger("secobserve.commons")
 
@@ -35,6 +39,79 @@ def _to_local_time(value: Any) -> Any:
     if isinstance(value, datetime) and timezone.is_aware(value):
         return timezone.localtime(value)
     return value
+
+
+@dataclass(frozen=True)
+class ExportColumn:
+    header: str
+    field: str
+    width: int = 20
+
+
+def export_excel_columns(rows: Iterable[Sequence[Any]], title: str, columns: Sequence[ExportColumn]) -> Workbook:
+    # A write-only workbook streams the rows to a temporary file instead of keeping every cell in memory.
+    workbook = Workbook(write_only=True)
+    workbook.iso_dates = True
+    worksheet = workbook.create_sheet(title)
+    worksheet.freeze_panes = "A2"
+
+    font_bold = Font(bold=True)
+    header = []
+    for col_num, column in enumerate(columns, start=1):
+        worksheet.column_dimensions[get_column_letter(col_num)].width = column.width
+        cell = WriteOnlyCell(worksheet, value=column.header)
+        cell.font = font_bold
+        header.append(cell)
+    worksheet.append(header)
+
+    row_count = 0
+    for row in rows:
+        worksheet.append([_excel_value(value) for value in row])
+        row_count += 1
+    worksheet.auto_filter.ref = f"A1:{get_column_letter(len(columns))}{row_count + 1}"
+
+    return workbook
+
+
+def _excel_value(value: Any) -> Any:
+    if isinstance(value, datetime):
+        # Excel cannot store a time zone
+        return _to_local_time(value).replace(tzinfo=None)
+    if isinstance(value, (dict, list)):
+        value = json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return _escape_formula(value)
+
+
+def export_csv_columns(response: HttpResponse, rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn]) -> None:
+    writer = csv.writer(response)  # nosemgrep
+    # defusedcsv is actually used but not detected by Semgrep
+
+    writer.writerow([column.header for column in columns])
+    for row in rows:
+        writer.writerow([_csv_value(value) for value in row])
+
+
+def _csv_value(value: Any) -> Any:
+    if isinstance(value, datetime):
+        return _to_local_time(value)
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    if isinstance(value, str):
+        return value.replace("\n", " NEWLINE ").replace("\r", "")
+    return value
+
+
+def excel_response(workbook: Workbook, filename: str) -> FileResponse:
+    # FileResponse closes the file once it has been sent, which deletes it.
+    file = TemporaryFile()  # pylint: disable=consider-using-with
+    workbook.save(file)
+    file.seek(0)
+    return FileResponse(
+        file,
+        as_attachment=True,
+        filename=filename,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
 
 
 def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_keys: list[str]) -> Workbook:

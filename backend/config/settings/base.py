@@ -449,6 +449,15 @@ huey_sqlite_url = env.str("HUEY_SQLITE_URL", "sqlite:////var/lib/huey/huey.db")
 huey_database = create_huey_database(db, huey_sqlite_url)
 huey_stats_database = create_huey_database(db, huey_sqlite_url)
 
+# The hours and minutes of the background tasks in the settings are in this time zone
+BACKGROUND_TASKS_TIME_ZONE = env.str("BACKGROUND_TASKS_TIME_ZONE", default="UTC")
+try:
+    ZoneInfo(BACKGROUND_TASKS_TIME_ZONE)
+except (ZoneInfoNotFoundError, ValueError) as e:
+    raise ValueError(
+        f"BACKGROUND_TASKS_TIME_ZONE '{BACKGROUND_TASKS_TIME_ZONE}' is not a valid IANA time zone, e.g. 'Europe/Berlin'"
+    ) from e
+
 HUEY = {
     "huey_class": "application.background_tasks.services.prefixed_sql_storage.PrefixedSqlHuey",
     "name": "secobserve",

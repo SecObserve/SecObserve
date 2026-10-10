@@ -7,12 +7,14 @@ import { ListItemIcon } from "@mui/material";
 import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import queryString from "query-string";
 import { Fragment, MouseEvent, useState } from "react";
 import { useNotify } from "react-admin";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { feature_license_management, getIconAndFontColor } from "../../commons/functions";
-import { httpClient } from "../../commons/ra-data-django-rest-framework";
+import { getOrderingQuery, httpClient } from "../../commons/ra-data-django-rest-framework";
+import { useFilterValues } from "./FilterValuesContext";
 
 interface ExportMenuProps {
     product: any;
@@ -21,7 +23,9 @@ interface ExportMenuProps {
 
 const ExportMenu = (props: ExportMenuProps) => {
     const notify = useNotify();
+    const { filterValues, sort } = useFilterValues();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [exporting, setExporting] = useState(false);
     const open = Boolean(anchorEl);
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -30,7 +34,18 @@ const ExportMenu = (props: ExportMenuProps) => {
         setAnchorEl(null);
     };
 
+    // Exports of large product groups take a while, the button shows a spinner and can't start them twice
+    const startExport = (message: string) => {
+        setExporting(true);
+        notify(message + " export started", { type: "info" });
+    };
+
+    const observationsFilename = (suffix: string) => {
+        return props.product.name.replace(/[\\/:*?"<>|\s]+/g, "_") + "_" + suffix;
+    };
+
     const exportDataCsv = async (url: string, filename: string, message: string) => {
+        startExport(message);
         fetch_get(url)
             .then(async function (response) {
                 const blob = new Blob([await response.text()], { type: "text/csv" });
@@ -48,11 +63,13 @@ const ExportMenu = (props: ExportMenuProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setExporting(false));
         handleClose();
     };
 
     const exportDataExcel = async (url: string, filename: string, message: string) => {
+        startExport(message);
         fetch_get(url)
             .then(async function (response) {
                 const blob = new Blob([await response.arrayBuffer()], {
@@ -72,7 +89,8 @@ const ExportMenu = (props: ExportMenuProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setExporting(false));
         handleClose();
     };
 
@@ -84,10 +102,33 @@ const ExportMenu = (props: ExportMenuProps) => {
         );
     };
 
+    const currentViewQuery = () =>
+        queryString.stringify({
+            ...filterValues,
+            ...(sort ? getOrderingQuery({ sort }) : {}),
+            ...(props.is_product_group ? { product_group: props.product.id } : { product: props.product.id }),
+        });
+
+    const exportCurrentViewExcel = async () => {
+        exportDataExcel(
+            "/observations/export_excel/?" + currentViewQuery(),
+            observationsFilename("current_selection_observations.xlsx"),
+            "Observations"
+        );
+    };
+
+    const exportCurrentViewCsv = async () => {
+        exportDataCsv(
+            "/observations/export_csv/?" + currentViewQuery(),
+            observationsFilename("current_selection_observations.csv"),
+            "Observations"
+        );
+    };
+
     const exportAllObservationsExcel = async () => {
         exportDataExcel(
             "/products/" + props.product.id + "/export_observations_excel/",
-            "all_observations.xlsx",
+            observationsFilename("all_observations.xlsx"),
             "Observations"
         );
     };
@@ -97,7 +138,7 @@ const ExportMenu = (props: ExportMenuProps) => {
             "/products/" +
                 props.product.id +
                 "/export_observations_excel/?status=Open&status=Affected&status=In%20review",
-            "open_observations.xlsx",
+            observationsFilename("active_observations.xlsx"),
             "Observations"
         );
     };
@@ -105,7 +146,7 @@ const ExportMenu = (props: ExportMenuProps) => {
     const exportAllObservationsCsv = async () => {
         exportDataCsv(
             "/products/" + props.product.id + "/export_observations_csv/",
-            "all_observations.csv",
+            observationsFilename("all_observations.csv"),
             "Observations"
         );
     };
@@ -115,7 +156,7 @@ const ExportMenu = (props: ExportMenuProps) => {
             "/products/" +
                 props.product.id +
                 "/export_observations_csv/?status=Open&status=Affected&status=In%20review",
-            "open_observations.csv",
+            observationsFilename("active_observations.csv"),
             "Observations"
         );
     };
@@ -185,6 +226,8 @@ const ExportMenu = (props: ExportMenuProps) => {
                 size="small"
                 sx={{ paddingTop: 0, paddingBottom: 0, paddingLeft: "5px", paddingRight: "5px" }}
                 startIcon={<DownloadIcon />}
+                loading={exporting}
+                loadingPosition="start"
             >
                 Export
             </Button>
@@ -199,6 +242,22 @@ const ExportMenu = (props: ExportMenuProps) => {
                     },
                 }}
             >
+                {filterValues && (
+                    <MenuItem onClick={exportCurrentViewExcel}>
+                        <ListItemIcon>
+                            <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
+                        </ListItemIcon>
+                        Current selection / Excel
+                    </MenuItem>
+                )}
+                {filterValues && (
+                    <MenuItem onClick={exportCurrentViewCsv} divider>
+                        <ListItemIcon>
+                            <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
+                        </ListItemIcon>
+                        Current selection / CSV
+                    </MenuItem>
+                )}
                 <MenuItem onClick={exportOpenObservationsExcel}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />

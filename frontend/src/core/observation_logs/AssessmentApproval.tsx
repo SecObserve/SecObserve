@@ -1,7 +1,7 @@
 import ApprovalIcon from "@mui/icons-material/Approval";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
-import { ArrayInput, RaRecord, SimpleForm, SimpleFormIterator, useNotify, useRefresh } from "react-admin";
+import { ArrayInput, RaRecord, SimpleForm, SimpleFormIterator, Validator, useNotify, useRefresh } from "react-admin";
 
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
@@ -24,6 +24,41 @@ import {
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
+import { approvalStatus } from "./functions";
+
+export const VEXJustificationInput = ({ validate }: { validate?: Validator[] }) => (
+    <Fragment>
+        {settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
+            <AutocompleteInputWide
+                source="vex_justification"
+                label="VEX justification"
+                choices={OBSERVATION_VEX_JUSTIFICATION_CHOICES}
+                validate={validate}
+            />
+        )}
+        {settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CYCLONEDX && (
+            <AutocompleteInputWide
+                source="vex_justification"
+                label="VEX justification"
+                choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
+                validate={validate}
+            />
+        )}
+    </Fragment>
+);
+
+export const VEXRemediationsInput = ({ validate }: { validate?: Validator[] }) => (
+    <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations" validate={validate}>
+        <SimpleFormIterator disableReordering inline>
+            <AutocompleteInputMedium
+                source="category"
+                label=""
+                choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+            />
+            <TextInputWide source="text" multiline={true} minRows={3} />
+        </SimpleFormIterator>
+    </ArrayInput>
+);
 
 type AssessmentApprovalProps = {
     observation_log: RaRecord;
@@ -34,8 +69,8 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
     const [open, setOpen] = useState(false);
     const [decision, setDecision] = useState(ASSESSMENT_STATUS_APPROVED);
     const [comment, setComment] = useState(observation_log.comment);
-    const justificationEnabled = justificationIsEnabledForStatus(observation_log.status);
-    const remediationsEnabled = remediationsAreEnabledForStatus(observation_log.status);
+    const justificationEnabled = justificationIsEnabledForStatus(approvalStatus(observation_log));
+    const remediationsEnabled = remediationsAreEnabledForStatus(approvalStatus(observation_log));
     const refresh = useRefresh();
     const notify = useNotify();
 
@@ -106,6 +141,12 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                                 label="Remark for rejection"
                             />
                         )}
+                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && justificationEnabled && (
+                            <VEXJustificationInput />
+                        )}
+                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && remediationsEnabled && (
+                            <VEXRemediationsInput />
+                        )}
                         {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && (
                             <MarkdownEdit
                                 initialValue={observation_log.comment}
@@ -114,36 +155,6 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                                 overlayContainer={dialogRef.current ?? null}
                                 maxLength={4096}
                             />
-                        )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
-                            justificationEnabled &&
-                            settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
-                                <AutocompleteInputWide
-                                    source="vex_justification"
-                                    label="VEX justification"
-                                    choices={OBSERVATION_VEX_JUSTIFICATION_CHOICES}
-                                />
-                            )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
-                            justificationEnabled &&
-                            settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CYCLONEDX && (
-                                <AutocompleteInputWide
-                                    source="vex_justification"
-                                    label="VEX justification"
-                                    choices={OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES}
-                                />
-                            )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && remediationsEnabled && (
-                            <ArrayInput source="vex_remediations" defaultValue={""} label="VEX remediations">
-                                <SimpleFormIterator disableReordering inline>
-                                    <AutocompleteInputMedium
-                                        source="category"
-                                        label=""
-                                        choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
-                                    />
-                                    <TextInputWide source="text" multiline={true} minRows={3} />
-                                </SimpleFormIterator>
-                            </ArrayInput>
                         )}
                     </SimpleForm>
                 </DialogContent>

@@ -1,10 +1,11 @@
-import { Fragment } from "react";
+import { Fragment, ReactElement } from "react";
 import {
     AutocompleteArrayInput,
     AutocompleteInput,
     BooleanField,
     ChipField,
     Datagrid,
+    DateInput,
     FilterButton,
     FunctionField,
     List,
@@ -39,7 +40,12 @@ import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
 import { IDENTIFIER_OBSERVATION_LIST, setListIdentifier } from "./functions";
 
-function listFilters() {
+// The picked day is a day in the browser's time zone, sent as the instant it starts or ends.
+const startOfDay = (value: string) => (value ? new Date(value + "T00:00:00").toISOString() : value);
+const endOfDay = (value: string) => (value ? new Date(value + "T23:59:59.999").toISOString() : value);
+
+// Also used by the observations tab of a product group, which replaces the product filters
+export function listFilters(product_filters: ReactElement[]) {
     const filters = [];
     filters.push(
         <TextInput source="title" alwaysOn />,
@@ -51,8 +57,7 @@ function listFilters() {
         />,
         <AutocompleteArrayInput source="current_status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
         <NumberInput source="current_priority" label="Priority" step={1} min={1} max={99} sx={{ width: "7em" }} />,
-        <ProductReferenceInput alwaysOn />,
-        <ProductGroupReferenceInput alwaysOn />,
+        ...product_filters,
         <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
         <TextInput source="origin_service_name" label="Service" />,
         <TextInput source="origin_component_name_version" label="Component" />,
@@ -63,6 +68,8 @@ function listFilters() {
         <TextInput source="origin_kubernetes_qualified_resource" label="Kubernetes resource" />,
         <TextInput source="scanner" alwaysOn />,
         <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,
+        <DateInput source="created_after" label="Created from" parse={startOfDay} />,
+        <DateInput source="created_before" label="Created until" parse={endOfDay} />,
         <NullableBooleanInput source="has_potential_duplicates" label="Duplicates" alwaysOn />,
         <AutocompleteInput source="origin_component_purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />
     );
@@ -82,6 +89,88 @@ const ListActions = () => (
 
 const BulkActionButtons = () => <ObservationBulkAssessment product={null} storeKey="observations.list" />;
 
+type ObservationDatagridProps = {
+    bulkActionButtons: ReactElement;
+    hideProductGroup?: boolean;
+};
+
+export const ObservationDatagrid = ({ bulkActionButtons, hideProductGroup }: ObservationDatagridProps) => (
+    <WithListContext
+        render={({ data, sort }) => (
+            <Datagrid
+                size={getSettingListSize()}
+                sx={{ width: "100%" }}
+                rowClick="show"
+                bulkActionButtons={bulkActionButtons}
+                expand={<ObservationExpand showComponent={true} />}
+                expandSingle
+            >
+                <TextField source="title" />
+                <SeverityField label="Severity" source="current_severity" />
+                <ChipField source="current_status" label="Status" />
+                {has_attribute("current_priority", data, sort) && (
+                    <ChipField source="current_priority" label="Priority" />
+                )}
+                {has_attribute("epss_score", data, sort) && <NumberField source="epss_score" label="EPSS" />}
+                <TextField source="product_data.name" label="Product" />
+                {!hideProductGroup && has_attribute("product_data.product_group_name", data, sort) && (
+                    <TextField source="product_data.product_group_name" label="Group" />
+                )}
+                {has_attribute("branch_name", data, sort) && (
+                    <TextField source="branch_name" label="Branch / Version" />
+                )}
+                {has_attribute("origin_service_name", data, sort) && (
+                    <TextField source="origin_service_name" label="Service" />
+                )}
+                {has_attribute("origin_component_name_version", data, sort) && (
+                    <TextField
+                        source="origin_component_name_version"
+                        label="Component"
+                        sx={{ wordBreak: "break-word" }}
+                    />
+                )}
+                {has_attribute("origin_docker_image_name_tag_short", data, sort) && (
+                    <TextField
+                        source="origin_docker_image_name_tag_short"
+                        label="Container"
+                        sx={{ wordBreak: "break-word" }}
+                    />
+                )}
+                {has_attribute("origin_endpoint_hostname", data, sort) && (
+                    <TextField source="origin_endpoint_hostname" label="Host" sx={{ wordBreak: "break-word" }} />
+                )}
+                {has_attribute("origin_source_file_short", data, sort) && (
+                    <TextField source="origin_source_file_short" label="Source" sx={{ wordBreak: "break-word" }} />
+                )}
+                {has_attribute("origin_cloud_qualified_resource", data, sort) && (
+                    <TextField
+                        source="origin_cloud_qualified_resource"
+                        label="Cloud resource"
+                        sx={{ wordBreak: "break-word" }}
+                    />
+                )}
+                {has_attribute("origin_kubernetes_qualified_resource", data, sort) && (
+                    <TextField
+                        source="origin_kubernetes_qualified_resource"
+                        label="Kubernetes resource"
+                        sx={{ wordBreak: "break-word" }}
+                    />
+                )}
+                <TextField source="scanner_name" label="Scanner" />
+                <FunctionField<Observation>
+                    label="Age"
+                    sortBy="last_observation_log"
+                    render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
+                />
+                <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
+                {has_attribute("update_impact_score", data, sort) && (
+                    <TextField source="update_impact_score" label="Update impact score" />
+                )}
+            </Datagrid>
+        )}
+    />
+);
+
 const ObservationList = () => {
     setListIdentifier(IDENTIFIER_OBSERVATION_LIST);
 
@@ -91,7 +180,7 @@ const ObservationList = () => {
             <List
                 perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
-                filters={listFilters()}
+                filters={listFilters([<ProductReferenceInput alwaysOn />, <ProductGroupReferenceInput alwaysOn />])}
                 sort={{ field: "current_severity", order: "ASC" }}
                 filterDefaultValues={{ current_status: OBSERVATION_STATUS_ACTIVE }}
                 disableSyncWithLocation={false}
@@ -99,89 +188,7 @@ const ObservationList = () => {
                 actions={<ListActions />}
                 sx={{ marginTop: 1 }}
             >
-                <WithListContext
-                    render={({ data, sort }) => (
-                        <Datagrid
-                            size={getSettingListSize()}
-                            rowClick="show"
-                            bulkActionButtons={<BulkActionButtons />}
-                            expand={<ObservationExpand showComponent={true} />}
-                            expandSingle
-                        >
-                            <TextField source="title" />
-                            <SeverityField label="Severity" source="current_severity" />
-                            <ChipField source="current_status" label="Status" />
-                            {has_attribute("current_priority", data, sort) && (
-                                <ChipField source="current_priority" label="Priority" />
-                            )}
-                            {has_attribute("epss_score", data, sort) && (
-                                <NumberField source="epss_score" label="EPSS" />
-                            )}
-                            <TextField source="product_data.name" label="Product" />
-                            {has_attribute("product_data.product_group_name", data, sort) && (
-                                <TextField source="product_data.product_group_name" label="Group" />
-                            )}
-                            {has_attribute("branch_name", data, sort) && (
-                                <TextField source="branch_name" label="Branch / Version" />
-                            )}
-                            {has_attribute("origin_service_name", data, sort) && (
-                                <TextField source="origin_service_name" label="Service" />
-                            )}
-                            {has_attribute("origin_component_name_version", data, sort) && (
-                                <TextField
-                                    source="origin_component_name_version"
-                                    label="Component"
-                                    sx={{ wordBreak: "break-word" }}
-                                />
-                            )}
-                            {has_attribute("origin_docker_image_name_tag_short", data, sort) && (
-                                <TextField
-                                    source="origin_docker_image_name_tag_short"
-                                    label="Container"
-                                    sx={{ wordBreak: "break-word" }}
-                                />
-                            )}
-                            {has_attribute("origin_endpoint_hostname", data, sort) && (
-                                <TextField
-                                    source="origin_endpoint_hostname"
-                                    label="Host"
-                                    sx={{ wordBreak: "break-word" }}
-                                />
-                            )}
-                            {has_attribute("origin_source_file_short", data, sort) && (
-                                <TextField
-                                    source="origin_source_file_short"
-                                    label="Source"
-                                    sx={{ wordBreak: "break-word" }}
-                                />
-                            )}
-                            {has_attribute("origin_cloud_qualified_resource", data, sort) && (
-                                <TextField
-                                    source="origin_cloud_qualified_resource"
-                                    label="Cloud resource"
-                                    sx={{ wordBreak: "break-word" }}
-                                />
-                            )}
-                            {has_attribute("origin_kubernetes_qualified_resource", data, sort) && (
-                                <TextField
-                                    source="origin_kubernetes_qualified_resource"
-                                    label="Kubernetes resource"
-                                    sx={{ wordBreak: "break-word" }}
-                                />
-                            )}
-                            <TextField source="scanner_name" label="Scanner" />
-                            <FunctionField<Observation>
-                                label="Age"
-                                sortBy="last_observation_log"
-                                render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                            />
-                            <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
-                            {has_attribute("update_impact_score", data, sort) && (
-                                <TextField source="update_impact_score" label="Update impact score" />
-                            )}
-                        </Datagrid>
-                    )}
-                />
+                <ObservationDatagrid bulkActionButtons={<BulkActionButtons />} />
             </List>
         </Fragment>
     );
