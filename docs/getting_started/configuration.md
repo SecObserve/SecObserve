@@ -47,6 +47,7 @@ A part of the configuration is done with environment variables, which need to be
 | `HUEY_STATS_MAX_EVENTS` | optional   | Number of events the background task statistics keep per queue. Every task writes one event per signal, so a low value lets a single import that enqueues a task per product push everything else out of the statistics. Default is `100000`. |
 | `HUEY_TASK_MAX_RUNTIME_HOURS` | optional | Hours after which a running background task is considered stuck, for example because its worker thread is blocked on a dead database connection. The command `check_background_tasks`, which the Helm chart uses as liveness probe of the `background` container, exits with an error when a task has been running for longer. Set it above the longest regular runtime of a task, otherwise that task is killed by the restart before it can finish. Default is `12`. |
 | `OSV_MAX_THREADS`      | optional    | Maximum number of concurrent connections used when fetching vulnerability data from `api.osv.dev` during an OSV scan. Default is `32`. Lower it if the OSV API returns connection resets or SSL errors under load. |
+| `TIME_ZONE`            | optional    | [IANA time zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) of the server, e.g. `Asia/Ho_Chi_Minh`. Default is `CET`. Dates that the server calculates, like the day of the metrics or the expiry date of a risk acceptance, are in this time zone. The backend does not start if the value is not a valid time zone. |
 
 
 #### Frontend
