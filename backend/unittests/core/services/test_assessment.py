@@ -318,6 +318,30 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
         with self.assertRaises(ValidationError):
             assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "ok", None, None, None)
 
+    @patch("application.core.services.assessment.get_current_user")
+    def test_approval_with_edits_changes_the_status(self, mock_user) -> None:
+        mock_user.return_value = self.owner
+
+        assessment_approval(
+            self.log,
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            "",
+            None,
+            None,
+            None,
+            Severity.SEVERITY_MEDIUM,
+            Status.STATUS_FALSE_POSITIVE,
+        )
+
+        self.log.refresh_from_db()
+        self.assertEqual(Status.STATUS_FALSE_POSITIVE, self.log.status)
+        # The severity is the same as before, only the status gets a line
+        self.assertEqual(
+            "Set by parser\n\nStatus changed by approver from Open to False positive",
+            self.log.comment,
+        )
+        self.assertEqual(Status.STATUS_FALSE_POSITIVE, self.log.observation.current_status)
+
     @patch("application.core.services.observations_bulk_actions.user_has_permission", return_value=True)
     @patch("application.core.services.observations_bulk_actions.get_current_user")
     @patch("application.core.services.assessment.get_current_user")
