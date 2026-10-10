@@ -1,6 +1,8 @@
 from datetime import date, datetime, timedelta
+from datetime import timezone as dt_timezone
 from unittest.mock import patch
 
+from django.test import override_settings
 from django.utils import timezone
 
 from application.access_control.models import User
@@ -810,14 +812,14 @@ class TestGetProductMetricsTimeline(BaseTestCase):
         self.assertEqual(result["2025-06-15"]["open"], 5)
         metrics_qs.assert_filtered_with(self, product__product_group=self.product_group_1)
 
-    @patch("application.metrics.services.metrics.timezone")
+    @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
+    @patch("django.utils.timezone.now")
     @patch("application.metrics.services.metrics.get_days")
     @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_age_filter_applied(self, mock_get_metrics, mock_get_days, mock_timezone):
+    def test_age_filter_applied(self, mock_get_metrics, mock_get_days, mock_now):
         mock_get_days.return_value = 7
-
-        now = datetime(2025, 6, 15, 14, 30, 0)
-        mock_timezone.now.return_value = now
+        # Already 2025-06-15 in TIME_ZONE
+        mock_now.return_value = datetime(2025, 6, 14, 20, 0, tzinfo=dt_timezone.utc)
 
         metrics_qs = QuerySetStub([])
         mock_get_metrics.return_value = metrics_qs
@@ -825,8 +827,7 @@ class TestGetProductMetricsTimeline(BaseTestCase):
         result = get_product_metrics_timeline(None, "Past 7 days")
 
         self.assertEqual(result, {})
-        expected_threshold = datetime(2025, 6, 8, 0, 0, 0)
-        metrics_qs.assert_filtered_with(self, date__gte=expected_threshold)
+        metrics_qs.assert_filtered_with(self, date__gte=date(2025, 6, 8))
 
     @patch("application.metrics.services.metrics.get_days")
     @patch("application.metrics.services.metrics.get_product_metrics")
