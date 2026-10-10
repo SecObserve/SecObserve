@@ -278,13 +278,15 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
     return False
 
 
-def assessment_approval(  # pylint: disable=too-many-positional-arguments
+def assessment_approval(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     observation_log: Observation_Log,
     assessment_status: str,
     rejection_remark: Optional[str],
     observation_log_comment: Optional[str],
     observation_log_vex_justification: Optional[str],
     observation_log_vex_remediations: Optional[list[dict]],
+    observation_log_severity: Optional[str] = None,
+    observation_log_status: Optional[str] = None,
 ) -> None:
     if observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL:
         raise ValidationError("Observation log does not need approval")
@@ -304,6 +306,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
             observation_log.vex_justification = observation_log_vex_justification
         if observation_log_vex_remediations:
             observation_log.vex_remediations = observation_log_vex_remediations
+        _apply_approver_severity_and_status(observation_log, observation_log_severity, observation_log_status)
         observation_log.save()
 
     if assessment_status in (
@@ -346,6 +349,31 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     observation_log.save()
 
     send_assessment_approval_receipt_notification(observation_log)
+
+
+def _apply_approver_severity_and_status(
+    observation_log: Observation_Log, severity: Optional[str], status: Optional[str]
+) -> None:
+    # An empty severity or status of the observation log leaves the one of the observation unchanged
+    previous_severity = observation_log.severity or observation_log.observation.current_severity
+    previous_status = observation_log.status or observation_log.observation.current_status
+    changes = []
+
+    if severity and severity != previous_severity:
+        observation_log.severity = severity
+        changes.append(f"Severity changed by approver from {previous_severity} to {severity}")
+
+    if status and status != previous_status:
+        observation_log.status = status
+        observation_log.risk_acceptance_expiry_date = (
+            calculate_risk_acceptance_expiry_date(observation_log.observation.product)
+            if status == Status.STATUS_RISK_ACCEPTED
+            else None
+        )
+        changes.append(f"Status changed by approver from {previous_status} to {status}")
+
+    if changes:
+        observation_log.comment = "\n\n".join([observation_log.comment] + changes)
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:

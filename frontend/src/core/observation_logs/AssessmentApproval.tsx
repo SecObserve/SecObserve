@@ -1,7 +1,16 @@
 import ApprovalIcon from "@mui/icons-material/Approval";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
-import { ArrayInput, RaRecord, SimpleForm, SimpleFormIterator, Validator, useNotify, useRefresh } from "react-admin";
+import {
+    ArrayInput,
+    FormDataConsumer,
+    RaRecord,
+    SimpleForm,
+    SimpleFormIterator,
+    Validator,
+    useNotify,
+    useRefresh,
+} from "react-admin";
 
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
@@ -21,10 +30,12 @@ import {
     ASSESSMENT_STATUS_CHOICES,
     ASSESSMENT_STATUS_REJECTED,
     OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES,
+    OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_CHOICES,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
-import { approvalStatus } from "./functions";
+import { approvalSeverity, approvalStatus } from "./functions";
 
 export const VEXJustificationInput = ({ validate }: { validate?: Validator[] }) => (
     <Fragment>
@@ -69,8 +80,6 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
     const [open, setOpen] = useState(false);
     const [decision, setDecision] = useState(ASSESSMENT_STATUS_APPROVED);
     const [comment, setComment] = useState(observation_log.comment);
-    const justificationEnabled = justificationIsEnabledForStatus(approvalStatus(observation_log));
-    const remediationsEnabled = remediationsAreEnabledForStatus(approvalStatus(observation_log));
     const refresh = useRefresh();
     const notify = useNotify();
 
@@ -83,10 +92,12 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
         }
         if (data.assessment_status === ASSESSMENT_STATUS_APPROVED_WITH_EDITS) {
             patch.observation_log_comment = comment;
-            if (justificationEnabled) {
+            patch.observation_log_severity = data.approval_severity;
+            patch.observation_log_status = data.approval_status;
+            if (justificationIsEnabledForStatus(data.approval_status)) {
                 patch.observation_log_vex_justification = data.vex_justification;
             }
-            if (remediationsEnabled) {
+            if (remediationsAreEnabledForStatus(data.approval_status)) {
                 patch.observation_log_vex_remediations = data.vex_remediations;
             }
         }
@@ -141,11 +152,36 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                                 label="Remark for rejection"
                             />
                         )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && justificationEnabled && (
-                            <VEXJustificationInput />
-                        )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && remediationsEnabled && (
-                            <VEXRemediationsInput />
+                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && (
+                            <Fragment>
+                                {/* Prefilled with the assessment, a change is added to the comment */}
+                                <AutocompleteInputMedium
+                                    source="approval_severity"
+                                    label="Severity"
+                                    choices={OBSERVATION_SEVERITY_CHOICES}
+                                    defaultValue={approvalSeverity(observation_log)}
+                                    validate={validate_required}
+                                />
+                                <AutocompleteInputMedium
+                                    source="approval_status"
+                                    label="Status"
+                                    choices={OBSERVATION_STATUS_CHOICES}
+                                    defaultValue={approvalStatus(observation_log)}
+                                    validate={validate_required}
+                                />
+                                <FormDataConsumer>
+                                    {({ formData }) => (
+                                        <Fragment>
+                                            {justificationIsEnabledForStatus(formData.approval_status) && (
+                                                <VEXJustificationInput />
+                                            )}
+                                            {remediationsAreEnabledForStatus(formData.approval_status) && (
+                                                <VEXRemediationsInput />
+                                            )}
+                                        </Fragment>
+                                    )}
+                                </FormDataConsumer>
+                            </Fragment>
                         )}
                         {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && (
                             <MarkdownEdit

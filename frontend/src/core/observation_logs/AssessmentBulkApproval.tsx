@@ -26,9 +26,11 @@ import {
     ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
     ASSESSMENT_STATUS_CHOICES,
     ASSESSMENT_STATUS_REJECTED,
+    OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_CHOICES,
 } from "../types";
 import { VEXJustificationInput, VEXRemediationsInput } from "./AssessmentApproval";
-import { approvalStatus } from "./functions";
+import { approvalSeverity, approvalStatus } from "./functions";
 
 const remediationsKey = (record: RaRecord) =>
     JSON.stringify(
@@ -96,15 +98,20 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const allLoaded = count > 0 && selectedRecords.length === count;
 
     const sameComment = allLoaded && allEqual(selectedRecords, (record) => record.comment ?? "");
+    const sameSeverity = allLoaded && allEqual(selectedRecords, approvalSeverity);
+    const sameStatus = allLoaded && allEqual(selectedRecords, approvalStatus);
     const sameJustification = allLoaded && allEqual(selectedRecords, (record) => record.vex_justification ?? "");
     const sameRemediations = allLoaded && allEqual(selectedRecords, remediationsKey);
     const [comment, setComment] = useState("");
 
+    // The statuses after the approval: the one of the form when it applies to all, otherwise each assessment's own
+    const statusesAfter = (formData: any): string[] =>
+        sameStatus || formData.change_status ? [formData.status] : selectedRecords.map(approvalStatus);
     // Only offered when every selected assessment has a status the value applies to
-    const justificationEnabled =
-        allLoaded && selectedRecords.every((r) => justificationIsEnabledForStatus(approvalStatus(r)));
-    const remediationsEnabled =
-        allLoaded && selectedRecords.every((r) => remediationsAreEnabledForStatus(approvalStatus(r)));
+    const justificationEnabled = (formData: any) =>
+        allLoaded && statusesAfter(formData).every(justificationIsEnabledForStatus);
+    const remediationsEnabled = (formData: any) =>
+        allLoaded && statusesAfter(formData).every(remediationsAreEnabledForStatus);
 
     const send = (post_data: Record<string, any>) => {
         setPending(null);
@@ -147,16 +154,18 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         }
 
         const fields = [
+            { name: "severity", source: "severity", enabled: true, same: sameSeverity },
+            { name: "status", source: "status", enabled: true, same: sameStatus },
             {
                 name: "VEX justification",
                 source: "vex_justification",
-                enabled: justificationEnabled,
+                enabled: justificationEnabled(data),
                 same: sameJustification,
             },
             {
                 name: "VEX remediations",
                 source: "vex_remediations",
-                enabled: remediationsEnabled,
+                enabled: remediationsEnabled(data),
                 same: sameRemediations,
             },
             { name: "comment", source: "comment", enabled: true, same: sameComment },
@@ -175,9 +184,12 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         }
         // Empty values are not applied, the assessments keep theirs
         if (!sent.some((field) => field.source === "comment" || data[field.source]?.length > 0)) {
-            notify("Enter a comment, a VEX justification or VEX remediations, or choose Approved", {
-                type: "warning",
-            });
+            notify(
+                "Enter a comment, a severity, a status, a VEX justification or VEX remediations, or choose Approved",
+                {
+                    type: "warning",
+                }
+            );
             return;
         }
         for (const field of sent) {
@@ -206,6 +218,23 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
         setOpen(true);
     };
 
+    const severityInput = (
+        <AutocompleteInputMedium
+            source="severity"
+            label="Severity"
+            choices={OBSERVATION_SEVERITY_CHOICES}
+            validate={validate_required}
+        />
+    );
+    const statusInput = (
+        <AutocompleteInputMedium
+            source="status"
+            label="Status"
+            choices={OBSERVATION_STATUS_CHOICES}
+            validate={validate_required}
+        />
+    );
+
     const commentInput = (
         <MarkdownEdit
             initialValue={comment}
@@ -229,6 +258,8 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                         onSubmit={assessmentUpdate}
                         toolbar={<ToolbarCancelSave onClick={handleCancel} />}
                         defaultValues={{
+                            severity: sameSeverity ? approvalSeverity(first) : undefined,
+                            status: sameStatus ? approvalStatus(first) : undefined,
                             vex_justification: sameJustification ? first?.vex_justification : undefined,
                             vex_remediations:
                                 sameRemediations && first?.vex_remediations?.length
@@ -250,24 +281,54 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                                 label="Remark for rejection"
                             />
                         )}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
-                            justificationEnabled &&
-                            (sameJustification ? (
-                                <VEXJustificationInput />
-                            ) : (
-                                <DifferentValues source="vex_justification" label="VEX justification" count={count}>
-                                    <VEXJustificationInput validate={validate_required} />
-                                </DifferentValues>
-                            ))}
-                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
-                            remediationsEnabled &&
-                            (sameRemediations ? (
-                                <VEXRemediationsInput />
-                            ) : (
-                                <DifferentValues source="vex_remediations" label="VEX remediations" count={count}>
-                                    <VEXRemediationsInput validate={validate_required} />
-                                </DifferentValues>
-                            ))}
+                        {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && (
+                            <Fragment>
+                                {sameSeverity ? (
+                                    severityInput
+                                ) : (
+                                    <DifferentValues source="severity" label="Severity" count={count}>
+                                        {severityInput}
+                                    </DifferentValues>
+                                )}
+                                {sameStatus ? (
+                                    statusInput
+                                ) : (
+                                    <DifferentValues source="status" label="Status" count={count}>
+                                        {statusInput}
+                                    </DifferentValues>
+                                )}
+                                <FormDataConsumer>
+                                    {({ formData }) => (
+                                        <Fragment>
+                                            {justificationEnabled(formData) &&
+                                                (sameJustification ? (
+                                                    <VEXJustificationInput />
+                                                ) : (
+                                                    <DifferentValues
+                                                        source="vex_justification"
+                                                        label="VEX justification"
+                                                        count={count}
+                                                    >
+                                                        <VEXJustificationInput validate={validate_required} />
+                                                    </DifferentValues>
+                                                ))}
+                                            {remediationsEnabled(formData) &&
+                                                (sameRemediations ? (
+                                                    <VEXRemediationsInput />
+                                                ) : (
+                                                    <DifferentValues
+                                                        source="vex_remediations"
+                                                        label="VEX remediations"
+                                                        count={count}
+                                                    >
+                                                        <VEXRemediationsInput validate={validate_required} />
+                                                    </DifferentValues>
+                                                ))}
+                                        </Fragment>
+                                    )}
+                                </FormDataConsumer>
+                            </Fragment>
+                        )}
                         {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&
                             (sameComment ? (
                                 commentInput

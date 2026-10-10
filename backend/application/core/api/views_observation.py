@@ -315,6 +315,8 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             request_serializer.validated_data.get("observation_log_comment"),
             request_serializer.validated_data.get("observation_log_vex_justification"),
             request_serializer.validated_data.get("observation_log_vex_remediations"),
+            request_serializer.validated_data.get("observation_log_severity"),
+            request_serializer.validated_data.get("observation_log_status"),
         )
 
         set_potential_duplicate_both_ways(observation_log.observation)
@@ -339,6 +341,8 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             request_serializer.validated_data.get("observation_log_vex_justification"),
             request_serializer.validated_data.get("observation_log_vex_remediations"),
             request_serializer.validated_data.get("observation_logs"),
+            request_serializer.validated_data.get("observation_log_severity"),
+            request_serializer.validated_data.get("observation_log_status"),
         )
         return Response(status=HTTP_204_NO_CONTENT)
 
