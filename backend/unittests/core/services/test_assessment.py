@@ -372,11 +372,12 @@ class TestAssessmentApprovalEnforcement(BaseTestCase):
             VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
             remediations,
             [self.log.pk],
+            Severity.SEVERITY_HIGH,
         )
 
         self.log.refresh_from_db()
         self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS, self.log.assessment_status)
-        self.assertEqual("Edited comment", self.log.comment)
+        self.assertEqual("Edited comment\n\nSeverity changed by approver from Medium to High", self.log.comment)
         self.assertEqual(VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT, self.log.vex_justification)
         self.assertEqual(remediations, self.log.vex_remediations)
 

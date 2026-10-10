@@ -666,10 +666,14 @@ class ObservationLogApprovalBaseSerializer(Serializer):
 
         if attrs.get("assessment_status") == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS and not (
             attrs.get("observation_log_comment")
+            or attrs.get("observation_log_severity")
+            or attrs.get("observation_log_status")
             or attrs.get("observation_log_vex_justification")
             or attrs.get("observation_log_vex_remediations")
         ):
-            raise ValidationError("Approval with edits needs a comment, a VEX justification or VEX remediations")
+            raise ValidationError(
+                "Approval with edits needs a comment, a severity, a status, a VEX justification or VEX remediations"
+            )
 
 
 class ObservationLogApprovalSerializer(ObservationLogApprovalBaseSerializer):
@@ -705,6 +709,8 @@ class ObservationLogBulkApprovalSerializer(ObservationLogApprovalBaseSerializer)
         allow_blank=True,
     )
     observation_log_vex_remediations = JSONField(required=False, allow_null=True)
+    observation_log_severity = ChoiceField(choices=Severity.SEVERITY_CHOICES, required=False, allow_blank=True)
+    observation_log_status = ChoiceField(choices=Status.STATUS_CHOICES, required=False, allow_blank=True)
     observation_logs = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
 
     def validate(self, attrs: dict) -> dict:

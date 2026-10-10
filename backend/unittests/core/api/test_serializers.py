@@ -1060,7 +1060,10 @@ class TestObservationLogApprovalBaseSerializer(BaseTestCase):
         with self.assertRaises(ValidationError) as e:
             self.serializer._validate_approval(attrs)
 
-        self.assertIn("Approval with edits needs a comment, a VEX justification or VEX remediations", str(e.exception))
+        self.assertIn(
+            "Approval with edits needs a comment, a severity, a status, a VEX justification or VEX remediations",
+            str(e.exception),
+        )
 
     def test_approved_with_edits_with_comment_valid(self):
         attrs = {
