@@ -50,7 +50,7 @@ class ConcludedLicenseFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
         time_threshold = today - timedelta(days=int(days))
         return queryset.filter(last_updated__gte=time_threshold)
 
@@ -95,7 +95,7 @@ class LicenseComponentFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
+        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
         time_threshold = today - timedelta(days=int(days))
         return queryset.filter(last_change__gte=time_threshold)
 

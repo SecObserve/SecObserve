@@ -219,7 +219,9 @@ def get_product_metrics_timeline(product: Optional[Product], age: str) -> dict:
 
     days = get_days(age)
     if days:
-        product_metrics = product_metrics.filter(date__gte=timezone.localdate() - timedelta(days=int(days)))
+        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        time_threshold = today - timedelta(days=int(days))
+        product_metrics = product_metrics.filter(date__gte=time_threshold)
 
     response_data: dict = {}
 

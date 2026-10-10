@@ -12,15 +12,6 @@ export function getServerTimeZone(): string {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
-/** Current offset of the server time zone, e.g. "UTC+07:00" */
-export function getServerTimeZoneOffset(): string {
-    const offset =
-        new Intl.DateTimeFormat("en-US", { timeZone: getServerTimeZone(), timeZoneName: "longOffset" })
-            .formatToParts(new Date())
-            .find((part) => part.type === "timeZoneName")?.value ?? "GMT";
-    return offset === "GMT" ? "UTC+00:00" : offset.replace("GMT", "UTC");
-}
-
 /** Calendar date in the server time zone, e.g. "2026-10-03" */
 export function getServerDate(date: Date): string {
     const parts = new Intl.DateTimeFormat("en-US", {
