@@ -285,7 +285,7 @@ true
 }
 </pre>
 </td>
-			<td>IANA time zone of the server, used for the dates and times in the user interface and the hours of the background tasks</td>
+			<td>IANA time zone of the server, used for the dates and times in the user interface, the start of a day and the times in exports</td>
 		</tr>
 		<tr>
 			<td>backend.env[1]</td>

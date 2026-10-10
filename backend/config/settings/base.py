@@ -465,7 +465,7 @@ HUEY = {
     "results": False,  # Store return values of tasks.
     "store_none": False,  # If a task returns None, do not save to results.
     "immediate": HUEY_IMMEDIATE,  # Check the variable for documentation
-    "utc": False,  # Crontabs are evaluated in the local time of the process, which Django sets to TIME_ZONE.
+    "utc": True,  # Use UTC for all times internally.
     "consumer": {
         "workers": 3,  # Number of worker threads/processes.
         "worker_type": "thread",
