@@ -1,5 +1,14 @@
 import { Fragment } from "react";
-import { BooleanField, Datagrid, List, NullableBooleanInput, SelectField, TextField, TextInput } from "react-admin";
+import {
+    BooleanField,
+    Datagrid,
+    List,
+    NullableBooleanInput,
+    SelectField,
+    TextField,
+    TextInput,
+    TopToolbar,
+} from "react-admin";
 
 import components from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
@@ -7,6 +16,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { COMPONENT_TYPE_CHOICES } from "../../licenses/types";
+import ExportMenu from "../observations/ExportMenu";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
@@ -29,7 +39,11 @@ const ComponentList = () => {
                 filters={listFilters}
                 sort={{ field: "name_version", order: "ASC" }}
                 disableSyncWithLocation={false}
-                actions={false}
+                actions={
+                    <TopToolbar>
+                        <ExportMenu resource="components" title="Components" />
+                    </TopToolbar>
+                }
                 storeKey="components.list"
             >
                 <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>

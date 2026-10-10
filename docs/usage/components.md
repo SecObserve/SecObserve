@@ -17,6 +17,8 @@ The **Components** entry in the navigation shows the list of all components, fro
 
 Users see only components that are used in at least one product they have access to.
 
+The `Export` button exports the components of the list, with its filters and its sort order, to an Excel or CSV file.
+
 ## Identification of components
 
 Components are identified by their [Package URL](https://github.com/package-url/purl-spec) (PURL), ignoring upper and lower case. Qualifiers and subpaths of a PURL are not part of the identification, so `pkg:deb/debian/curl@8.5.0?arch=amd64` and `pkg:deb/debian/curl@8.5.0?arch=arm64` are the same component.

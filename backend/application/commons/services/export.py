@@ -7,6 +7,8 @@ from typing import Any, Iterable, Optional, Sequence
 
 import jsonpickle
 from defusedcsv import csv
+from django.db.models import CharField, Value
+from django.db.models.functions import Cast, Concat
 from django.db.models.query import QuerySet
 from django.http import FileResponse, HttpResponse
 from openpyxl import Workbook
@@ -39,6 +41,15 @@ class ExportColumn:
     header: str
     field: str
     width: int = 20
+
+
+def frontend_url(base_url_frontend: str, route: str, id_field: str) -> Concat:
+    return Concat(
+        Value(f"{base_url_frontend}#/{route}/"),
+        Cast(id_field, output_field=CharField()),
+        Value("/show"),
+        output_field=CharField(),
+    )
 
 
 def export_excel_columns(rows: Iterable[Sequence[Any]], title: str, columns: Sequence[ExportColumn]) -> Workbook:
