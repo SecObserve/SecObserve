@@ -39,6 +39,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         for row in worksheet.values:
             for value in row:
                 actual_values.append(value)
+        # The fixtures are in UTC, the export is in TIME_ZONE (CET)
         expected_values = [
             "Branch",
             "Branch id",
@@ -99,7 +100,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "",
             "",
             "1.0.0",
-            datetime(2022, 12, 15, 16, 10, 35, 513000),
+            datetime(2022, 12, 15, 17, 10, 35, 513000),
             "",
             "No license information",
             "",
@@ -108,7 +109,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             None,
             "Allowed",
             1,
-            datetime(2022, 12, 15, 16, 10, 35, 513000),
+            datetime(2022, 12, 15, 17, 10, 35, 513000),
             "",
             "No license information",
             "",
@@ -121,7 +122,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "internal license",
             None,
             None,
-            datetime(2022, 12, 15, 16, 10, 35, 513000),
+            datetime(2022, 12, 15, 17, 10, 35, 513000),
             "",
             "",
             "No license information",
