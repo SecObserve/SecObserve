@@ -11,6 +11,7 @@ import ShowHeaderChip from "../../commons/custom_fields/ShowHeaderChip";
 import ShowHeaderDescription from "../../commons/custom_fields/ShowHeaderDescription";
 import { feature_license_management, feature_show_product_header_chips } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
+import { getServerTimeZone } from "../../commons/time_zone";
 import { Product } from "../types";
 import { useBranchFilter } from "./BranchFilterContext";
 
@@ -126,7 +127,9 @@ const ProductHeader = () => {
                             {product.last_observation_change && (
                                 <ShowHeaderChip
                                     label="Last change"
-                                    value={new Date(product.last_observation_change).toLocaleString()}
+                                    value={new Date(product.last_observation_change).toLocaleString(undefined, {
+                                        timeZone: getServerTimeZone(),
+                                    })}
                                 />
                             )}
                         </Stack>

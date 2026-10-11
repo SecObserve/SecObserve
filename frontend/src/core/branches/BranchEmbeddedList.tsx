@@ -2,7 +2,6 @@ import { Stack } from "@mui/material";
 import {
     BooleanField,
     Datagrid,
-    DateField,
     FieldProps,
     FilterForm,
     FunctionField,
@@ -19,6 +18,7 @@ import {
 import { PERMISSION_BRANCH_DELETE, PERMISSION_BRANCH_EDIT, PERMISSION_PRODUCT_EDIT } from "../../access_control/types";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import LicensesCountField from "../../commons/custom_fields/LicensesCountField";
 import OSVLinuxDistributionField from "../../commons/custom_fields/OSVLinuxDistributionField";
 import ObservationsCountField from "../../commons/custom_fields/ObservationsCountField";
@@ -111,7 +111,7 @@ const BranchEmbeddedList = ({ product }: BranchEmbeddedListProps) => {
                                 {feature_license_management() && product?.has_licenses && (
                                     <LicensesCountField label="Licenses / Components" withLabel={false} />
                                 )}
-                                <DateField source="last_import" showTime />
+                                <DateTimeField source="last_import" />
                                 <WithRecord
                                     render={(branch) => (
                                         <Stack direction="row" spacing={4}>

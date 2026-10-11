@@ -5,6 +5,7 @@ import { Labeled, useNotify } from "react-admin";
 
 import LabeledTextField from "../commons/custom_fields/LabeledTextField";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
+import { getServerTimeZone } from "../commons/time_zone";
 import { getElevation } from "./functions";
 
 interface MetricsHeaderProps {
@@ -84,7 +85,9 @@ const MetricsHeader = (props: MetricsHeaderProps) => {
                     <Labeled sx={{ marginLeft: get_margin_left(props.repository_default_branch) }}>
                         <LabeledTextField
                             label="Metrics last calculated"
-                            text={new Date(data.last_calculated).toLocaleString()}
+                            text={new Date(data.last_calculated).toLocaleString(undefined, {
+                                timeZone: getServerTimeZone(),
+                            })}
                         />
                     </Labeled>
                     <Labeled sx={{ marginLeft: 8 }}>

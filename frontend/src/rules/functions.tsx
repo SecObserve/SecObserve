@@ -8,7 +8,6 @@ import {
     BooleanInput,
     ChipField,
     Datagrid,
-    DateField,
     Labeled,
     ReferenceField,
     ReferenceInput,
@@ -19,6 +18,7 @@ import {
 import { useWatch } from "react-hook-form";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 
+import { DateTimeField } from "../commons/custom_fields/DateTimeField";
 // import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
 // import rego from "react-syntax-highlighter/dist/esm/languages/prism/rego";
 
@@ -346,7 +346,7 @@ export const RuleShowComponent = ({ rule }: any) => {
                                     rule.approval_status === RULE_STATUS_REJECTED ? "Rejection date" : "Approval date"
                                 }
                             >
-                                <DateField source="approval_date" showTime />
+                                <DateTimeField source="approval_date" />
                             </Labeled>
                         )}
                         {rule.rejection_remark && (

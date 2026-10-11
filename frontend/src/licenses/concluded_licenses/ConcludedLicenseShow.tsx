@@ -1,7 +1,6 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
-    DateField,
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
@@ -14,6 +13,7 @@ import {
 
 import concluded_licenses from ".";
 import { PERMISSION_CONCLUDED_LICENSE_DELETE } from "../../access_control/types";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 
 const ShowActions = () => {
@@ -77,7 +77,7 @@ const ConcludedLicenseComponent = () => {
                                 <TextField source="user_data.full_name" label="User" />
                             </Labeled>
                             <Labeled>
-                                <DateField source="last_updated" showTime />
+                                <DateTimeField source="last_updated" />
                             </Labeled>
                         </Stack>{" "}
                     </Paper>

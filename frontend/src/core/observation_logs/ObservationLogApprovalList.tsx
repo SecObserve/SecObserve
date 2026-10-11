@@ -20,6 +20,7 @@ import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types"
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
@@ -283,7 +284,7 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                     sortable={false}
                                     sx={{ wordBreak: "break-word" }}
                                 />
-                                <DateField source="created" showTime />
+                                <DateTimeField source="created" />
                             </Datagrid>
                         )}
                     />

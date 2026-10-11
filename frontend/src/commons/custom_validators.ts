@@ -1,5 +1,7 @@
 import { maxLength, maxValue, minValue, required } from "react-admin";
 
+import { getServerDate } from "./time_zone";
+
 export const validate_required = [required()];
 
 export const validate_required_32 = [required(), maxLength(32)];
@@ -20,7 +22,5 @@ export const validate_1_999999 = [minValue(1), maxValue(999999)];
 export const validate_2000_9999 = [minValue(2000), maxValue(9999)];
 
 export function validate_after_today() {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return [minValue(tomorrow.toISOString().split("T")[0])];
+    return [minValue(getServerDate(new Date(Date.now() + 24 * 60 * 60 * 1000)))];
 }

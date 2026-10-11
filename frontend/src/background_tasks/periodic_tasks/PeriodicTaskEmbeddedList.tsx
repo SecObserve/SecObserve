@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
     AutocompleteInput,
     Datagrid,
-    DateField,
     FilterForm,
     FunctionField,
     ListContextProvider,
@@ -15,6 +14,7 @@ import {
 
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { PeriodicTaskStatusField } from "../../commons/custom_fields/PeriodicTaskStatusField";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { PERIODIC_TASKS_STATUS_CHOICES } from "../types";
@@ -84,7 +84,7 @@ const PeriodicTaskEmbeddedList = () => {
                         resource="periodic_tasks"
                     >
                         <TextField source="task" />
-                        <DateField source="start_time" showTime />
+                        <DateTimeField source="start_time" />
                         <FunctionField source="duration" render={(record) => `${humanizeDuration(record.duration)}`} />
                         <PeriodicTaskStatusField label="Status" />
                         <TextField source="message" sortable={false} sx={{ whiteSpace: "pre-line" }} />
