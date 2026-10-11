@@ -18,6 +18,16 @@ ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 APPS_DIR = ROOT_DIR / "application"
 env = environ.Env()
 
+
+def env_time_zone(name: str, default: str) -> str:
+    value = env.str(name, default=default)
+    try:
+        ZoneInfo(value)
+    except (ZoneInfoNotFoundError, ValueError) as e:
+        raise ValueError(f"{name} '{value}' is not a valid IANA time zone, e.g. 'Europe/Berlin'") from e
+    return value
+
+
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
 if READ_DOT_ENV_FILE:
     # OS environment variables take precedence over variables from .env
@@ -35,11 +45,8 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", gethostbyname(gethostname())] + [
     x.strip() for x in env("ALLOWED_HOSTS").split(",")
 ]
 
-# Local time zone. Choices are
-# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
-# though not all of them may be available with every OS.
-# In Windows, this must be set to your system time zone.
-TIME_ZONE = "CET"
+# https://docs.djangoproject.com/en/dev/ref/settings/#time-zone
+TIME_ZONE = env_time_zone("TIME_ZONE", "CET")
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = "en-us"
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
@@ -449,13 +456,7 @@ huey_database = create_huey_database(db, huey_sqlite_url)
 huey_stats_database = create_huey_database(db, huey_sqlite_url)
 
 # The hours and minutes of the background tasks in the settings are in this time zone
-BACKGROUND_TASKS_TIME_ZONE = env.str("BACKGROUND_TASKS_TIME_ZONE", default="UTC")
-try:
-    ZoneInfo(BACKGROUND_TASKS_TIME_ZONE)
-except (ZoneInfoNotFoundError, ValueError) as e:
-    raise ValueError(
-        f"BACKGROUND_TASKS_TIME_ZONE '{BACKGROUND_TASKS_TIME_ZONE}' is not a valid IANA time zone, e.g. 'Europe/Berlin'"
-    ) from e
+BACKGROUND_TASKS_TIME_ZONE = env_time_zone("BACKGROUND_TASKS_TIME_ZONE", "UTC")
 
 HUEY = {
     "huey_class": "application.background_tasks.services.prefixed_sql_storage.PrefixedSqlHuey",
