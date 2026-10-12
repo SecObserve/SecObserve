@@ -2,7 +2,6 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     ChipField,
-    DateField,
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
@@ -16,6 +15,7 @@ import {
 } from "react-admin";
 
 import csafs from ".";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import CSAFUpdate from "./CSAFUpdate";

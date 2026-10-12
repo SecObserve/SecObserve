@@ -1,7 +1,6 @@
 import {
     ChipField,
     Datagrid,
-    DateField,
     ListContextProvider,
     ResourceContextProvider,
     TextField,
@@ -11,6 +10,7 @@ import {
 
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
 
 type ObservationLogEmbeddedListProps = {

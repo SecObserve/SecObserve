@@ -2,6 +2,7 @@ import { Paper, Typography } from "@mui/material";
 import { Datagrid, FunctionField, ListContextProvider, ResourceContextProvider, TextField, useList } from "react-admin";
 
 import { getSettingListSize } from "../../access_control/users/functions";
+import { format_date_time } from "../../commons/functions";
 import { getElevation } from "../../metrics/functions";
 import { BackgroundTaskRunning } from "../types";
 import { formatDuration } from "./functions";
@@ -22,10 +23,7 @@ const BackgroundTasksRunningList = (props: BackgroundTasksRunningListProps) => {
                 <ListContextProvider value={listContext}>
                     <Datagrid size={getSettingListSize()} bulkActionButtons={false} rowClick={false}>
                         <TextField source="task" label="Task" sx={{ wordBreak: "break-word" }} />
-                        <FunctionField
-                            label="Started"
-                            render={(record) => new Date(record.started * 1000).toLocaleString()}
-                        />
+                        <FunctionField label="Started" render={(record) => format_date_time(record.started * 1000)} />
                         <FunctionField label="Elapsed" render={(record) => formatDuration(record.elapsed)} />
                     </Datagrid>
                 </ListContextProvider>

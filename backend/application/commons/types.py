@@ -41,3 +41,19 @@ class VEX_Justification_Styles:
         (STYLE_CSAF_OPENVEX, STYLE_CSAF_OPENVEX),
         (STYLE_CYCLONEDX, STYLE_CYCLONEDX),
     ]
+
+
+class Date_Format_Choices:
+    DATE_FORMAT_ISO8601 = "ISO8601"
+    DATE_FORMAT_BROWSER = "BROWSER"
+    DATE_FORMAT_US = "US"
+    DATE_FORMAT_UK = "UK"
+    DATE_FORMAT_EUROPE = "EUROPE"
+
+    DATE_FORMAT_CHOICES = [
+        (DATE_FORMAT_ISO8601, "ISO 8601 (2024-12-31 23:59:59)"),
+        (DATE_FORMAT_BROWSER, "Browser locale"),
+        (DATE_FORMAT_US, "US (12/31/2024, 11:59:59 PM)"),
+        (DATE_FORMAT_UK, "UK (31/12/2024, 23:59:59)"),
+        (DATE_FORMAT_EUROPE, "Europe (31.12.2024, 23:59:59)"),
+    ]

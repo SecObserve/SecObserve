@@ -1,3 +1,4 @@
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import LockIcon from "@mui/icons-material/Lock";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -15,6 +16,7 @@ import {
     transformBranchHousekeeping,
 } from "./sections/BranchHousekeeping";
 import { FeaturesFields, FeaturesInputs, transformFeatures } from "./sections/Features";
+import { FormatsFields, FormatsInputs } from "./sections/Formats";
 import { NotificationsFields, NotificationsInputs, transformNotifications } from "./sections/Notifications";
 import { PasswordValidationFields, PasswordValidationInputs } from "./sections/PasswordValidation";
 import { SecurityGatesFields, SecurityGatesInputs } from "./sections/SecurityGates";
@@ -47,6 +49,12 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         Inputs: FeaturesInputs,
         Fields: FeaturesFields,
         transform: transformFeatures,
+    },
+    {
+        label: "Formats",
+        icon: <CalendarMonthIcon />,
+        Inputs: FormatsInputs,
+        Fields: FormatsFields,
     },
     {
         label: "Housekeeping for branches",

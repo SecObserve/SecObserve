@@ -86,6 +86,16 @@ The stored hours are not converted when the time zone is changed, so after the c
 
 In a time zone with daylight saving time, a task that is scheduled in the hour that is skipped in spring does not run on that day, and a task in the hour that is repeated in autumn runs twice.
 
+#### Formats
+
+The section `Formats` defines the format that is used to display dates and times in the frontend.
+
+| Setting | Description |
+|---------|-------------|
+| `Date format` | `Browser locale`: the locale of the browser (default), `ISO 8601`: `2024-12-31 23:59:59`, `US`: `12/31/2024, 11:59:59 PM`, `UK`: `31/12/2024, 23:59:59`, `Europe`: `31.12.2024, 23:59:59`. |
+
+A change of the date format takes effect after a reload of the frontend.
+
 #### Notifications
 
 The settings of the section `Notifications` are described in more detail in [Notifications](../usage/notifications.md) and [Notification channels](../integrations/notifications.md).

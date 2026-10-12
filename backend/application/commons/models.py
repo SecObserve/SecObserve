@@ -12,7 +12,7 @@ from django.db.models import (
 from encrypted_model_fields.fields import EncryptedCharField
 
 from application.commons.services.request_cache import cache_for_request
-from application.commons.types import VEX_Justification_Styles
+from application.commons.types import Date_Format_Choices, VEX_Justification_Styles
 from application.core.types import Severity
 from application.import_observations.types import Parser_Type
 
@@ -70,6 +70,13 @@ class Settings(Model, DirtyFieldsMixin):
         max_length=255,
         default="",
         help_text="Base URL of the frontend, used to set links in notifications correctly",
+    )
+
+    date_format = CharField(
+        max_length=16,
+        choices=Date_Format_Choices.DATE_FORMAT_CHOICES,
+        default=Date_Format_Choices.DATE_FORMAT_BROWSER,
+        help_text="Format to display dates and times in the frontend",
     )
 
     exception_ms_teams_webhook = TextField(

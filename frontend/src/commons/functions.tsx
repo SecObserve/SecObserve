@@ -24,6 +24,7 @@ import {
     EVALUATION_RESULT_REVIEW_REQUIRED,
     EVALUATION_RESULT_UNKNOWN,
 } from "../licenses/types";
+import { DATE_FORMAT_BROWSER, DATE_FORMAT_EUROPE, DATE_FORMAT_ISO8601, DATE_FORMAT_UK, DATE_FORMAT_US } from "./types";
 
 export function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -307,6 +308,44 @@ export function settings_vex_justification_style(): string | null {
     } catch {
         return null;
     }
+}
+
+export function settings_date_format(): string {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        return settings.date_format ?? DATE_FORMAT_BROWSER;
+    } catch {
+        return DATE_FORMAT_BROWSER;
+    }
+}
+
+/** The locales that Intl uses to render dates and times in the configured date format. */
+export function date_format_locales(date_format: string): string | undefined {
+    switch (date_format) {
+        case DATE_FORMAT_ISO8601:
+            // sv-SE renders dates and times as 2024-12-31 23:59:59
+            return "sv-SE";
+        case DATE_FORMAT_US:
+            return "en-US";
+        case DATE_FORMAT_UK:
+            return "en-GB";
+        case DATE_FORMAT_EUROPE:
+            return "de-DE";
+        default:
+            return undefined;
+    }
+}
+
+/** Format a date and time in the configured date format, for values that are not rendered with a DateField. */
+export function format_date_time(value: string | number | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toLocaleString(date_format_locales(settings_date_format()));
+}
+
+/** Format a date in the configured date format, for values that are not rendered with a DateField. */
+export function format_date(value: string | number | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toLocaleDateString(date_format_locales(settings_date_format()));
 }
 
 export const feature_general_rules_need_approval_enabled = () => {

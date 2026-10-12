@@ -3,7 +3,6 @@ import {
     BooleanInput,
     ChipField,
     Datagrid,
-    DateField,
     FunctionField,
     List,
     ReferenceInput,
@@ -15,6 +14,7 @@ import {
 import notifications from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { getUserOptionText, has_attribute } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";

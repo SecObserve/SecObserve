@@ -6,7 +6,6 @@ import {
     ArrayField,
     ChipField,
     Datagrid,
-    DateField,
     Labeled,
     NumberField,
     PrevNextButtons,
@@ -20,6 +19,7 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
+import { DateField } from "../../commons/custom_fields/DateField";
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { is_superuser } from "../../commons/functions";
