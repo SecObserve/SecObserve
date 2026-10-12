@@ -13,10 +13,10 @@ import {
 import components from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import ListExportMenu from "../../commons/custom_fields/ListExportMenu";
 import ListHeader from "../../commons/layout/ListHeader";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { COMPONENT_TYPE_CHOICES } from "../../licenses/types";
-import ExportMenu from "../observations/ExportMenu";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
@@ -41,7 +41,7 @@ const ComponentList = () => {
                 disableSyncWithLocation={false}
                 actions={
                     <TopToolbar>
-                        <ExportMenu resource="components" title="Components" />
+                        <ListExportMenu resource="components" title="Components" />
                     </TopToolbar>
                 }
                 storeKey="components.list"

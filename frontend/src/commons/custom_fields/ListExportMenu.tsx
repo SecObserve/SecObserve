@@ -12,16 +12,17 @@ import { useListContext, useNotify } from "react-admin";
 import { useNavigate } from "react-router-dom";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
-import { getIconAndFontColor } from "../../commons/functions";
-import { getOrderingQuery } from "../../commons/ra-data-django-rest-framework";
+import { getIconAndFontColor } from "../functions";
+import { getOrderingQuery } from "../ra-data-django-rest-framework";
 
-type ExportMenuProps = {
-    resource?: string;
-    title?: string;
+type ListExportMenuProps = {
+    resource: string;
+    title: string;
+    pivotTable?: boolean;
 };
 
-// Exports the list with its filters and sort order, used for observations and components
-const ExportMenu = ({ resource = "observations", title = "Observations" }: ExportMenuProps) => {
+// Exports the list with its filters and sort order
+const ListExportMenu = ({ resource, title, pivotTable }: ListExportMenuProps) => {
     const notify = useNotify();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -130,23 +131,25 @@ const ExportMenu = ({ resource = "observations", title = "Observations" }: Expor
                     </ListItemIcon>
                     {title} / CSV
                 </MenuItem>
-                {resource === "observations" && <Divider />}
-                {resource === "observations" && (
-                    <MenuItem
-                        onClick={() => {
-                            navigate("/pivot_table?" + queryParams());
-                            handleClose();
-                        }}
-                    >
-                        <ListItemIcon>
-                            <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
-                        </ListItemIcon>
-                        Observations / Pivot Table
-                    </MenuItem>
+                {pivotTable && (
+                    <Fragment>
+                        <Divider />
+                        <MenuItem
+                            onClick={() => {
+                                navigate("/pivot_table?" + queryParams());
+                                handleClose();
+                            }}
+                        >
+                            <ListItemIcon>
+                                <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
+                            </ListItemIcon>
+                            Observations / Pivot Table
+                        </MenuItem>
+                    </Fragment>
                 )}
             </Menu>
         </Fragment>
     );
 };
 
-export default ExportMenu;
+export default ListExportMenu;

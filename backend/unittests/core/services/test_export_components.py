@@ -42,6 +42,7 @@ class TestExportComponents(BaseTestCase):
                 "Active observations": "False",
                 "Component URL": f"https://secobserve.example.com/#/components/{component.pk}/show",
                 "Ecosystem": "maven",
+                "ID": str(component.pk),
                 "Inactive observations": "False",
                 "Licenses": "False",
                 "Name": "snakeyaml",
