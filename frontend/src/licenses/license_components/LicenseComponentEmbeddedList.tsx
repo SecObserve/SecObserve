@@ -79,8 +79,8 @@ const LicenseComponentEmbeddedList = ({
                 choices={EVALUATION_RESULT_CHOICES}
                 alwaysOn
             />,
-            <TextInput source="component_name_version" label="Component" alwaysOn />,
-            <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
+            <TextInput source="component_name" label="Component" alwaysOn />,
+            <TextInput source="component_version" label="Version" alwaysOn />,
             <ReferenceInput
                 source="component_purl_type"
                 reference="purl_types"
@@ -88,7 +88,8 @@ const LicenseComponentEmbeddedList = ({
                 alwaysOn
             >
                 <AutocompleteInputMedium optionText="name" label="Ecosystem" />
-            </ReferenceInput>
+            </ReferenceInput>,
+            <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />
         );
         if (product?.has_services) {
             filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);

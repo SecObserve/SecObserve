@@ -73,6 +73,8 @@ class ConcludedLicenseFilter(FilterSet):
 
 
 class LicenseComponentFilter(FilterSet):
+    component_name = CharFilter(field_name="component_name", lookup_expr="icontains")
+    component_version = CharFilter(field_name="component_version", lookup_expr="icontains")
     component_name_version = CharFilter(field_name="component_name_version", lookup_expr="icontains")
     effective_license_name = CharFilter(field_name="effective_license_name", lookup_expr="icontains")
     effective_license_name_exact = CharFilter(field_name="effective_license_name")
@@ -127,7 +129,7 @@ class LicenseComponentFilter(FilterSet):
                 ("branch__name", "effective_license_name", "numerical_evaluation_result", "component_name_version"),
                 "branch_name",
             ),
-            ("component_name_version", "component_name_version"),
+            (("component_name", "component_version", "component_purl_type"), "component_name_version"),
             ("component_name_version", "component_name_version_type"),
             (
                 (

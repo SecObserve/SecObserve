@@ -10,7 +10,8 @@ import { COMPONENT_TYPE_CHOICES } from "../../licenses/types";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
-    <TextInput source="name_version" label="Component" alwaysOn />,
+    <TextInput source="name" label="Component" alwaysOn />,
+    <TextInput source="version" label="Version" alwaysOn />,
     <AutocompleteInputMedium source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
     <TextInput source="purl_namespace" label="Namespace" alwaysOn />,
     <AutocompleteInputMedium source="type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
