@@ -1150,14 +1150,14 @@ typing-extensions = "*"
 
 [[package]]
 name = "djangorestframework"
-version = "3.18.1"
+version = "3.18.3"
 description = "Web APIs for Django, made easy."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "djangorestframework-3.18.1-py3-none-any.whl", hash = "sha256:f1409d698967aaf82d5d98d76b549c8fba8bd92ebd0d83d24454508f72168dc2"},
-    {file = "djangorestframework-3.18.1.tar.gz", hash = "sha256:605d79fa2ec2f02905492e5ea13d903c2d842d0b4c915a57f7bf02ab9f3c91dd"},
+    {file = "djangorestframework-3.18.3-py3-none-any.whl", hash = "sha256:8544bb674846731b1e3c9b309236ee1dc412905a0aa725be2ec193ca950a7d12"},
+    {file = "djangorestframework-3.18.3.tar.gz", hash = "sha256:446a9b352e7eff630421ab3f2328bd2401b109a9470afa4a31189994911ed030"},
 ]
 
 [package.dependencies]
@@ -1506,18 +1506,18 @@ tornado = ["tornado (>=6.5.7)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "3.17.1"
+version = "3.17.2"
 description = "High-performance HTML to Markdown converter"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-3.17.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:602b4feba60d533436e5b28f4c88255be2d309249b37d41fbd63eefce55f773f"},
-    {file = "html_to_markdown-3.17.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:6d3a5cf6eb51abfca9143f0743cba661bfcd00387622602af61bd4a2546830d6"},
-    {file = "html_to_markdown-3.17.1-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:9aa6786dab21c8389eb2f594c6a5dfac441f5c48469125211425a112a6cb92cc"},
-    {file = "html_to_markdown-3.17.1-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:36433aecc8b87bed6e4a388c5bcb382a983d0b8f66846bb4f0494c906e4e8909"},
-    {file = "html_to_markdown-3.17.1-cp310-abi3-win_amd64.whl", hash = "sha256:8616ca78a1371adb7287842af330ffff42214b4983e06787d1901ea47f40ef05"},
-    {file = "html_to_markdown-3.17.1.tar.gz", hash = "sha256:e70fcd2cc9ff9d5c3af26a2b46efb3d949cbc0e0f1ee6e29b6f0050da9131e20"},
+    {file = "html_to_markdown-3.17.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:56f926847daa5ac64b09d68a5ebf9c3f9430eeeca8b58d21e144ca355bed502a"},
+    {file = "html_to_markdown-3.17.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:f8c89bb60e80bf198f28ebc87272144dc53a1b9d8ad921b3c8346b8cb6c47c4f"},
+    {file = "html_to_markdown-3.17.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:950825d77566d22419c439d478a6ad2c313df869cf65c3fe5c9a2b5e80b1c682"},
+    {file = "html_to_markdown-3.17.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b7cd3878f8cad0061df479baad1a65ea1277db5b9921de7ba23e4acd2abe419c"},
+    {file = "html_to_markdown-3.17.2-cp310-abi3-win_amd64.whl", hash = "sha256:e1cf82a4aa0b853bebbfe33df1c1c66d1e95da8d6adf674b354269d66d235543"},
+    {file = "html_to_markdown-3.17.2.tar.gz", hash = "sha256:fbe859ee45c5ea8b444ce3dea0bc3bcf7641561e64a30ad485244f3e8d99c76f"},
 ]
 
 [[package]]
@@ -2446,14 +2446,14 @@ re2 = ["google-re2 (>=1.1)"]
 
 [[package]]
 name = "peewee"
-version = "4.5.2"
+version = "4.5.3"
 description = "a little orm"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "peewee-4.5.2-py3-none-any.whl", hash = "sha256:a7765c76834c84799b533aeaa0afeebdcd123b894faefbcebe495fbf4c7548ba"},
-    {file = "peewee-4.5.2.tar.gz", hash = "sha256:10724cf1a6bda2bcdc4da17c376e6ed1d875f16dcabbb42594123cba1304d598"},
+    {file = "peewee-4.5.3-py3-none-any.whl", hash = "sha256:4c5db9d2a3c4ae9a5725b229c29af51dbd063193f3a6c03b837974a90e44548c"},
+    {file = "peewee-4.5.3.tar.gz", hash = "sha256:434576afaf806428a01f84af74c42fde59372c4f6a6eba26d9b5372113344a8a"},
 ]
 
 [package.extras]
@@ -4026,4 +4026,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "a89210d205f13b0158d438afc8cfb7d61a84484a8c98c7a6236721a524a53aff"
+content-hash = "5c59171ff035f117f0bb1275e18a80ccdd1406b2424551f9f24468dfb3b646b3"
