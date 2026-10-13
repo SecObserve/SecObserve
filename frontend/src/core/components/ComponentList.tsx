@@ -20,7 +20,8 @@ import { COMPONENT_TYPE_CHOICES } from "../../licenses/types";
 import { PURL_TYPE_CHOICES } from "../types";
 
 const listFilters = [
-    <TextInput source="name_version" label="Component" alwaysOn />,
+    <TextInput source="name" label="Component" alwaysOn />,
+    <TextInput source="version" label="Version" alwaysOn />,
     <AutocompleteInputMedium source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} alwaysOn />,
     <TextInput source="purl_namespace" label="Namespace" alwaysOn />,
     <AutocompleteInputMedium source="type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
@@ -47,7 +48,8 @@ const ComponentList = () => {
                 storeKey="components.list"
             >
                 <Datagrid size={getSettingListSize()} rowClick="show" bulkActionButtons={false}>
-                    <TextField source="name_version" label="Component" />
+                    <TextField source="name" label="Component" sortBy="name_version" />
+                    <TextField source="version" label="Version" sortable={false} />
                     <SelectField source="purl_type" label="Ecosystem" choices={PURL_TYPE_CHOICES} />
                     <TextField source="purl_namespace" label="Namespace" />
                     <TextField source="type" label="Type" />
