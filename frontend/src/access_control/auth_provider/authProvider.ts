@@ -100,7 +100,8 @@ const authProvider: AuthProvider = {
             fullName = user_json.full_name;
         }
 
-        set_settings_in_local_storage();
+        // The date format of the frontend is read from these settings, wait for them before rendering
+        await set_settings_in_local_storage();
 
         return Promise.resolve({ id, fullName, avatar });
     },

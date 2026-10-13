@@ -245,8 +245,8 @@ export const humanReadableDate = (date: string | undefined) => {
     return rtf.format(Math.trunc(diffInDays), "day").replace(" ago", "");
 };
 
-export function set_settings_in_local_storage() {
-    httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/status/settings/").then((response) => {
+export function set_settings_in_local_storage(): Promise<void> {
+    return httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/status/settings/").then((response) => {
         localStorage.setItem("settings", JSON.stringify(response.json));
     });
 }
@@ -310,13 +310,25 @@ export function settings_vex_justification_style(): string | null {
     }
 }
 
+// DateField calls this for every row and column of a list, so cache the parsed value per raw settings
+let settings_date_format_cache: { raw: string | null; value: string } | null = null;
+
 export function settings_date_format(): string {
-    try {
-        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
-        return settings.date_format ?? DATE_FORMAT_BROWSER;
-    } catch {
-        return DATE_FORMAT_BROWSER;
+    const raw = localStorage.getItem("settings");
+    if (settings_date_format_cache !== null && settings_date_format_cache.raw === raw) {
+        return settings_date_format_cache.value;
     }
+
+    let value: string;
+    try {
+        const settings = JSON.parse(raw ?? "{}");
+        value = settings.date_format ?? DATE_FORMAT_BROWSER;
+    } catch {
+        value = DATE_FORMAT_BROWSER;
+    }
+
+    settings_date_format_cache = { raw: raw, value: value };
+    return value;
 }
 
 /** The locales that Intl uses to render dates and times in the configured date format. */
@@ -346,6 +358,12 @@ export function format_date_time(value: string | number | Date): string {
 export function format_date(value: string | number | Date): string {
     const date = value instanceof Date ? value : new Date(value);
     return date.toLocaleDateString(date_format_locales(settings_date_format()));
+}
+
+/** Format a time in the configured date format, for values that are not rendered with a DateField. */
+export function format_time(value: string | number | Date): string {
+    const date = value instanceof Date ? value : new Date(value);
+    return date.toLocaleTimeString(date_format_locales(settings_date_format()), { hour: "2-digit", minute: "2-digit" });
 }
 
 export const feature_general_rules_need_approval_enabled = () => {

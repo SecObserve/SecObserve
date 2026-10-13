@@ -10,7 +10,8 @@ export const FormatsInputs = () => (
                 source="date_format"
                 label="Date format"
                 choices={DATE_FORMAT_CHOICES}
-                helperText="Format to display dates and times in the frontend, a reload of the page is needed to apply a change"
+                row={false}
+                helperText="Format to display dates and times in the frontend, other users need to reload the page to apply a change"
                 sx={{ marginBottom: 2 }}
             />
         </Grid>

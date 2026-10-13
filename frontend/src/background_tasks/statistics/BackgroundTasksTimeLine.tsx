@@ -2,6 +2,7 @@ import { Paper } from "@mui/material";
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from "chart.js";
 import { Bar } from "react-chartjs-2";
 
+import { format_time } from "../../commons/functions";
 import { getBackgroundColor, getElevation, getFontColor, getGridColor } from "../../metrics/functions";
 import { BackgroundTaskThroughput } from "../types";
 
@@ -15,13 +16,7 @@ const BackgroundTasksTimeline = (props: BackgroundTasksTimelineProps) => {
     const length = props.timeline.complete.length;
     const labels = [];
     for (let i = 0; i < length; i++) {
-        labels.push(
-            new Date(Date.now() - (length - 1 - i) * 60 * 1000).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false,
-            })
-        );
+        labels.push(format_time(Date.now() - (length - 1 - i) * 60 * 1000));
     }
 
     const chart_data = {
