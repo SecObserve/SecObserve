@@ -21,6 +21,16 @@ class TestViews(BaseTestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual({"version": "unittest_version"}, response.data)
 
+    @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_status_settings_time_zone(self, mock_authentication):
+        mock_authentication.return_value = self.user_internal, None
+
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual("Asia/Ho_Chi_Minh", response.data["time_zone"])
+
     @override_settings(BACKGROUND_TASKS_TIME_ZONE="Asia/Ho_Chi_Minh")
     @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
     def test_status_settings_background_tasks_time_zone(self, mock_authentication):

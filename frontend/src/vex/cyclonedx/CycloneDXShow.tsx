@@ -1,7 +1,6 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import {
     ChipField,
-    DateField,
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
@@ -16,6 +15,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import cyclonedxs from ".";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import CycloneDXUpdate from "./CycloneDXUpdate";
@@ -122,10 +122,10 @@ const CycloneDXComponent = () => {
                                 Tracking
                             </Typography>
                             <Labeled>
-                                <DateField source="first_issued" showTime={true} />
+                                <DateTimeField source="first_issued" />
                             </Labeled>
                             <Labeled>
-                                <DateField source="last_updated" showTime={true} />
+                                <DateTimeField source="last_updated" />
                             </Labeled>
                         </Stack>
                     </Paper>

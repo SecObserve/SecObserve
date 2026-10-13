@@ -1,7 +1,6 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import {
     ChipField,
-    DateField,
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
@@ -16,6 +15,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import openvexs from ".";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import OpenVEXUpdate from "./OpenVEXUpdate";
@@ -113,10 +113,10 @@ const OpenVEXComponent = () => {
                                 Tracking
                             </Typography>
                             <Labeled>
-                                <DateField source="timestamp" showTime={true} />
+                                <DateTimeField source="timestamp" />
                             </Labeled>
                             <Labeled>
-                                <DateField source="last_updated" showTime={true} />
+                                <DateTimeField source="last_updated" />
                             </Labeled>
                         </Stack>
                     </Paper>

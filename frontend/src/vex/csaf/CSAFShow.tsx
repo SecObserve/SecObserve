@@ -2,7 +2,6 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     ChipField,
-    DateField,
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
@@ -16,6 +15,7 @@ import {
 } from "react-admin";
 
 import csafs from ".";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import CSAFUpdate from "./CSAFUpdate";
@@ -114,18 +114,10 @@ const CSAFComponent = () => {
                                 Tracking
                             </Typography>
                             <Labeled>
-                                <DateField
-                                    source="tracking_initial_release_date"
-                                    showTime={true}
-                                    label="Initial release date"
-                                />
+                                <DateTimeField source="tracking_initial_release_date" label="Initial release date" />
                             </Labeled>
                             <Labeled>
-                                <DateField
-                                    source="tracking_current_release_date"
-                                    showTime={true}
-                                    label="Current release date"
-                                />
+                                <DateTimeField source="tracking_current_release_date" label="Current release date" />
                             </Labeled>
                             <Labeled>
                                 <TextField source="tracking_status" />

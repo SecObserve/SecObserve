@@ -3,7 +3,6 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typog
 import { Fragment } from "react";
 import {
     BooleanField,
-    DateField,
     EditButton,
     Labeled,
     PrevNextButtons,
@@ -15,6 +14,7 @@ import {
 } from "react-admin";
 
 import users from ".";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { is_superuser } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import UserProductMemberEmbeddedList from "../../core/product_members/UserProductMemberEmbeddedList";
@@ -114,7 +114,7 @@ const UserComponent = () => {
                                     )}
                                     {user.date_joined && (
                                         <Labeled label="Created">
-                                            <DateField source="date_joined" showTime />
+                                            <DateTimeField source="date_joined" />
                                         </Labeled>
                                     )}
                                     {user.has_password != undefined && (

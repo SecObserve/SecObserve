@@ -2,7 +2,6 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     ChipField,
-    DateField,
     DeleteButton,
     Labeled,
     PrevNextButtons,
@@ -13,6 +12,7 @@ import {
 } from "react-admin";
 
 import vex_documents from ".";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import { useStyles } from "../../commons/layout/themes";
 import VEXStatementEmbeddedList from "../vex_statements/VEXStatementEmbeddedList";
 
@@ -59,10 +59,10 @@ const VEXDocumentComponent = () => {
                                 <TextField source="version" />
                             </Labeled>
                             <Labeled label="Current release date">
-                                <DateField source="current_release_date" showTime />
+                                <DateTimeField source="current_release_date" />
                             </Labeled>
                             <Labeled label="Initial release date">
-                                <DateField source="initial_release_date" showTime />
+                                <DateTimeField source="initial_release_date" />
                             </Labeled>
                             <Labeled label="Author">
                                 <TextField source="author" />

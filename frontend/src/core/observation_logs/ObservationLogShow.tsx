@@ -20,6 +20,7 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
+import { DateTimeField } from "../../commons/custom_fields/DateTimeField";
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { is_superuser } from "../../commons/functions";
@@ -200,7 +201,7 @@ export const ObservationLogComponent = () => {
                                 <MarkdownField content={observation_log.comment} label="Comment" />
                             </Labeled>
                             <Labeled label="Created">
-                                <DateField source="created" showTime />
+                                <DateTimeField source="created" />
                             </Labeled>
                         </Stack>
                     </Paper>
@@ -255,7 +256,7 @@ export const ObservationLogComponent = () => {
                                                 : "Approval date"
                                         }
                                     >
-                                        <DateField source="approval_date" showTime />
+                                        <DateTimeField source="approval_date" />
                                     </Labeled>
                                 )}
                                 {observation_log.rejection_remark && (
