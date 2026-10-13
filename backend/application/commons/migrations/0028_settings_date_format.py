@@ -15,11 +15,11 @@ class Migration(migrations.Migration):
             name="date_format",
             field=models.CharField(
                 choices=[
-                    ("ISO8601", "ISO 8601 (2024-12-31 23:59:59)"),
                     ("BROWSER", "Browser locale"),
-                    ("US", "US (12/31/2024, 11:59:59 PM)"),
+                    ("ISO8601", "ISO 8601 (2024-12-31 23:59:59)"),
                     ("UK", "UK (31/12/2024, 23:59:59)"),
-                    ("EUROPE", "Europe (31.12.2024, 23:59:59)"),
+                    ("US", "US (12/31/2024, 11:59:59 PM)"),
+                    ("DOTTED", "Dotted (31.12.2024, 23:59:59)"),
                 ],
                 default="BROWSER",
                 help_text="Format to display dates and times in the frontend",

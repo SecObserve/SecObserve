@@ -24,7 +24,7 @@ import {
     EVALUATION_RESULT_REVIEW_REQUIRED,
     EVALUATION_RESULT_UNKNOWN,
 } from "../licenses/types";
-import { DATE_FORMAT_BROWSER, DATE_FORMAT_EUROPE, DATE_FORMAT_ISO8601, DATE_FORMAT_UK, DATE_FORMAT_US } from "./types";
+import { DATE_FORMAT_BROWSER, DATE_FORMAT_DOTTED, DATE_FORMAT_ISO8601, DATE_FORMAT_UK, DATE_FORMAT_US } from "./types";
 
 export function getErrorMessage(error: unknown) {
     if (error instanceof Error) return error.message;
@@ -341,7 +341,7 @@ export function date_format_locales(date_format: string): string | undefined {
             return "en-US";
         case DATE_FORMAT_UK:
             return "en-GB";
-        case DATE_FORMAT_EUROPE:
+        case DATE_FORMAT_DOTTED:
             return "de-DE";
         default:
             return undefined;

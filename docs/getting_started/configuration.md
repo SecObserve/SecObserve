@@ -92,7 +92,7 @@ The section `Formats` defines the format that is used to display dates and times
 
 | Setting | Description |
 |---------|-------------|
-| `Date format` | `Browser locale`: the locale of the browser (default), `ISO 8601`: `2024-12-31 23:59:59`, `US`: `12/31/2024, 11:59:59 PM`, `UK`: `31/12/2024, 23:59:59`, `Europe`: `31.12.2024, 23:59:59`. |
+| `Date format` | `Browser locale`: the locale of the browser (default), `ISO 8601`: `2024-12-31 23:59:59`, `UK`: `31/12/2024, 23:59:59`, `US`: `12/31/2024, 11:59:59 PM`, `Dotted`: `31.12.2024, 23:59:59`. |
 
 A change of the date format takes effect for other users after a reload of the frontend.
 

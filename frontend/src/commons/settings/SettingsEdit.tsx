@@ -34,8 +34,8 @@ const SettingsEdit = () => {
                 transform={transform_settings}
                 mutationOptions={{
                     onSuccess: async (data: any) => {
-                        // The frontend reads the date format from these settings, so refresh them after a save
-                        await set_settings_in_local_storage();
+                        // The save itself has succeeded, so a failed refresh must not hide that.
+                        await set_settings_in_local_storage().catch(() => undefined);
                         notify("ra.notification.updated", { type: "info", messageArgs: { smart_count: 1 } });
                         redirect("show", "settings", data.id, data);
                     },
