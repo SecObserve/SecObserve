@@ -21,6 +21,7 @@ import {
 import observations from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import ListExportMenu from "../../commons/custom_fields/ListExportMenu";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
@@ -35,7 +36,6 @@ import {
     Observation,
     PURL_TYPE_CHOICES,
 } from "../types";
-import ExportMenu from "./ExportMenu";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
 import { IDENTIFIER_OBSERVATION_LIST, setListIdentifier } from "./functions";
@@ -82,7 +82,7 @@ export function listFilters(product_filters: ReactElement[]) {
 
 const ListActions = () => (
     <TopToolbar>
-        <ExportMenu />
+        <ListExportMenu resource="observations" title="Observations" pivotTable />
         <FilterButton />
     </TopToolbar>
 );
