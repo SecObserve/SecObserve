@@ -1,8 +1,6 @@
-from datetime import timedelta
 from typing import Any
 
 from django.db.models import QuerySet
-from django.utils import timezone
 from django_filters import (
     BooleanFilter,
     CharFilter,
@@ -15,6 +13,7 @@ from django_filters import (
 )
 
 from application.commons.api.extended_ordering_filter import ExtendedOrderingFilter
+from application.commons.services.functions import get_start_of_day
 from application.commons.types import Age_Choices
 from application.core.models import Product
 from application.licenses.models import (
@@ -50,9 +49,7 @@ class ConcludedLicenseFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(last_updated__gte=time_threshold)
+        return queryset.filter(last_updated__gte=get_start_of_day(days))
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -97,9 +94,7 @@ class LicenseComponentFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(last_change__gte=time_threshold)
+        return queryset.filter(last_change__gte=get_start_of_day(days))
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order

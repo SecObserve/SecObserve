@@ -1,10 +1,13 @@
+from datetime import datetime, timezone
 from unittest.mock import patch
 
+from django.test import override_settings
 from rest_framework.exceptions import ValidationError
 
 from application.commons.models import Settings
 from application.commons.services.functions import (
     get_base_url_frontend,
+    get_start_of_day,
     validate_vex_remediations,
 )
 from unittests.base_test_case import BaseTestCase
@@ -113,3 +116,18 @@ class TestGetBaseUrlFrontend(BaseTestCase):
         mock_settings_load.return_value = settings
 
         self.assertEqual("https://www.example.com/", get_base_url_frontend())
+
+
+@override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
+@patch("django.utils.timezone.now")
+class TestGetStartOfDay(BaseTestCase):
+    def test_get_start_of_day_today(self, mock_now):
+        # 2026-03-11 03:00 in TIME_ZONE, but still 2026-03-10 in UTC
+        mock_now.return_value = datetime(2026, 3, 10, 20, 0, tzinfo=timezone.utc)
+
+        self.assertEqual(datetime(2026, 3, 10, 17, 0, tzinfo=timezone.utc), get_start_of_day(0))
+
+    def test_get_start_of_day_days_ago(self, mock_now):
+        mock_now.return_value = datetime(2026, 3, 10, 20, 0, tzinfo=timezone.utc)
+
+        self.assertEqual(datetime(2026, 3, 3, 17, 0, tzinfo=timezone.utc), get_start_of_day(7))
