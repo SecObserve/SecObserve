@@ -1,7 +1,6 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 import {
     ChipField,
-    DateField,
     DeleteWithConfirmButton,
     Labeled,
     PrevNextButtons,
@@ -16,6 +15,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import openvexs from ".";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { delete_permission, update_permission } from "../functions";
 import OpenVEXUpdate from "./OpenVEXUpdate";

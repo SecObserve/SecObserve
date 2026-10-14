@@ -519,6 +519,8 @@ class PotentialDuplicateFilter(FilterSet):
 
 
 class ComponentFilter(FilterSet):
+    name = CharFilter(field_name="name", lookup_expr="icontains")
+    version = CharFilter(field_name="version", lookup_expr="icontains")
     name_version = CharFilter(field_name="name_version", lookup_expr="icontains")
     purl_namespace = CharFilter(field_name="purl_namespace", lookup_expr="icontains")
     # has_active_observations, has_inactive_observations and has_licenses are annotated in get_components()

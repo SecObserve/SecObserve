@@ -1,6 +1,5 @@
 import {
     Datagrid,
-    DateField,
     FilterForm,
     ListContextProvider,
     ReferenceField,
@@ -13,6 +12,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ProductGroupReferenceField } from "../../commons/custom_fields/ProductGroupReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";

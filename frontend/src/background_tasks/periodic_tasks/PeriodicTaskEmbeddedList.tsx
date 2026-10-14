@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
     AutocompleteInput,
     Datagrid,
-    DateField,
     FilterForm,
     FunctionField,
     ListContextProvider,
@@ -15,6 +14,7 @@ import {
 
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { PeriodicTaskStatusField } from "../../commons/custom_fields/PeriodicTaskStatusField";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { PERIODIC_TASKS_STATUS_CHOICES } from "../types";

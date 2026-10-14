@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Labeled, useNotify } from "react-admin";
 
 import LabeledTextField from "../commons/custom_fields/LabeledTextField";
+import { format_date_time } from "../commons/functions";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import { getElevation } from "./functions";
 
@@ -84,7 +85,7 @@ const MetricsHeader = (props: MetricsHeaderProps) => {
                     <Labeled sx={{ marginLeft: get_margin_left(props.repository_default_branch) }}>
                         <LabeledTextField
                             label="Metrics last calculated"
-                            text={new Date(data.last_calculated).toLocaleString()}
+                            text={format_date_time(data.last_calculated)}
                         />
                     </Labeled>
                     <Labeled sx={{ marginLeft: 8 }}>

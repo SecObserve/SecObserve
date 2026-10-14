@@ -1,8 +1,9 @@
 import { Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
-import { ChipField, DateField, Labeled, RecordContextProvider, TextField, useRecordContext } from "react-admin";
+import { ChipField, Labeled, RecordContextProvider, TextField, useRecordContext } from "react-admin";
 
 import observations from ".";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";

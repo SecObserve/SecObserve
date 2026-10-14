@@ -100,7 +100,8 @@ const authProvider: AuthProvider = {
             fullName = user_json.full_name;
         }
 
-        set_settings_in_local_storage();
+        // Not awaited, pages don't wait for getIdentity and a failure must not hide the identity
+        set_settings_in_local_storage().catch(() => undefined);
 
         return Promise.resolve({ id, fullName, avatar });
     },
