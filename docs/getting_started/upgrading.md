@@ -10,6 +10,17 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.62.0
+
+**Noteable changes**
+
+* Administrators should set the environment variable `TIME_ZONE` (current default is `CET`), see [Configuration](configuration.md#backend) for more information how to set this values. It controls:
+    * The day of the metrics, i.e. when a new day of the metrics starts
+    * The expiry dates of risk acceptances and API tokens
+    * The start of the day at midnight for the age filters of observations, products and licenses, e.g. `Today` or `Past 7 days`
+    * The times in the exports to Excel and CSV, which were in UTC before. Excel files contain the local time without a time zone, CSV files contain the time with its offset, e.g. `2026-09-28 12:30:00+02:00`,
+    * The hours of the background tasks in the `Settings`. They stay in UTC if `TIME_ZONE` is not set, so the schedules of existing installations don't move, see [Time zone of the background tasks](configuration.md#time-zone-of-the-background-tasks).
+
 ## Release 1.61.0
 
 **Security notice**

@@ -7,3 +7,5 @@ Observations of a product can be exported to Excel or CSV. When showing a produc
 When the *Observations* tab is open, the menu also shows the entries `Current selection / Excel` and `Current selection / CSV`. They export the observations of the list with its filters and its sort order.
 
 The columns are sorted alphabetically by their header.
+
+Times are in the time zone of the server, see [`TIME_ZONE`](../getting_started/configuration.md#backend).

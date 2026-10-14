@@ -158,6 +158,8 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual(
             '[{"category": "workaround", "text": "restart"}]', self._value(critical, "Assessment VEX remediations")
         )
+        # Local time in TIME_ZONE, which is CET in the unit tests
+        self.assertEqual("2026-09-28 12:30:00+02:00", self._value(critical, "Last seen"))
 
     def test_csv_empty(self):
         response = HttpResponse(content_type="text/csv")
