@@ -455,8 +455,8 @@ huey_sqlite_url = env.str("HUEY_SQLITE_URL", "sqlite:////var/lib/huey/huey.db")
 huey_database = create_huey_database(db, huey_sqlite_url)
 huey_stats_database = create_huey_database(db, huey_sqlite_url)
 
-# The hours and minutes of the background tasks in the settings are in this time zone
-BACKGROUND_TASKS_TIME_ZONE = env_time_zone("BACKGROUND_TASKS_TIME_ZONE", "UTC")
+# The deprecated variable still wins; without TIME_ZONE the schedules stay in UTC instead of moving to its CET default
+BACKGROUND_TASKS_TIME_ZONE = env_time_zone("BACKGROUND_TASKS_TIME_ZONE", env.str("TIME_ZONE", default="UTC"))
 
 HUEY = {
     "huey_class": "application.background_tasks.services.prefixed_sql_storage.PrefixedSqlHuey",

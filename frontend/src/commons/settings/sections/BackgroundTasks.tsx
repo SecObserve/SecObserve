@@ -62,7 +62,7 @@ const TimeZoneChip = () => {
         <Chip
             icon={<PublicIcon />}
             label={`${time_zone} · ${offset === "GMT" ? "UTC+00:00" : offset?.replace("GMT", "UTC")}`}
-            title="The tasks run at these times in this time zone, set with BACKGROUND_TASKS_TIME_ZONE"
+            title="The tasks run at these times in this time zone, set with TIME_ZONE"
             size="small"
             variant="outlined"
             sx={{ display: "flex", width: "fit-content", marginBottom: 2 }}
