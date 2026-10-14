@@ -5,7 +5,11 @@ from unittest import TestCase
 from django.http import HttpResponse
 from django.test import SimpleTestCase, override_settings
 
-from application.commons.services.export import _escape_formula, export_csv, export_excel
+from application.commons.services.export import (
+    _escape_formula,
+    export_csv,
+    export_excel,
+)
 
 
 class TestEscapeFormula(TestCase):
