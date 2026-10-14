@@ -119,14 +119,15 @@ class TestGetBaseUrlFrontend(BaseTestCase):
 
 
 @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
-@patch("django.utils.timezone.now")
 class TestGetStartOfDay(BaseTestCase):
+    @patch("django.utils.timezone.now")
     def test_get_start_of_day_today(self, mock_now):
         # 2026-03-11 03:00 in TIME_ZONE, but still 2026-03-10 in UTC
         mock_now.return_value = datetime(2026, 3, 10, 20, 0, tzinfo=timezone.utc)
 
         self.assertEqual(datetime(2026, 3, 10, 17, 0, tzinfo=timezone.utc), get_start_of_day(0))
 
+    @patch("django.utils.timezone.now")
     def test_get_start_of_day_days_ago(self, mock_now):
         mock_now.return_value = datetime(2026, 3, 10, 20, 0, tzinfo=timezone.utc)
 
