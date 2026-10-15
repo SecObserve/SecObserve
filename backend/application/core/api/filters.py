@@ -11,9 +11,13 @@ from django_filters import (
     MultipleChoiceFilter,
     OrderingFilter,
 )
+from rest_framework.exceptions import ValidationError
 
 from application.commons.api.extended_ordering_filter import ExtendedOrderingFilter
-from application.commons.services.functions import get_start_of_day
+from application.commons.services.functions import (
+    get_start_of_day,
+    is_full_text_search_available,
+)
 from application.commons.types import Age_Choices
 from application.core.models import (
     Branch,
@@ -27,6 +31,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.observation import filter_observations_full_text
 from application.core.queries.product import get_default_branch_filter
 from application.core.types import Severity, Status
 from application.licenses.models import License_Component
@@ -227,6 +232,7 @@ class ObservationFilter(FilterSet):
     )
     cve_known_exploited = BooleanFilter(field_name="cve_known_exploited", method="get_cve_known_exploited")
     default_branch = BooleanFilter(method="get_default_branch")
+    full_text_search = CharFilter(method="get_full_text_search")
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -329,6 +335,17 @@ class ObservationFilter(FilterSet):
         if value is False:
             return queryset.exclude(get_default_branch_filter())
         return queryset
+
+    def get_full_text_search(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: str,
+    ) -> QuerySet:
+        # name is used as a positional argument
+        if not is_full_text_search_available():
+            raise ValidationError("Full text search is only available with PostgreSQL")
+        return filter_observations_full_text(queryset, value)
 
 
 class ObservationLogFilter(FilterSet):
