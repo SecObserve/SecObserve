@@ -12,6 +12,9 @@ import {
 import { KeyboardEvent, MouseEvent, useState } from "react";
 import { useListContext } from "react-admin";
 
+import { date_format_locales, settings_date_format } from "../functions";
+import { DATE_FORMAT_ISO8601 } from "../types";
+
 // The filter state keeps the token, so saved queries and shared links stay relative.
 const PRESETS = [
     { token: "Today", label: "Today", days: 0, age: "Today" },
@@ -77,10 +80,11 @@ export const resolveDateFilters = (filter: Record<string, any>): Record<string, 
     );
 
 const formatDay = (day: string, withYear: boolean) =>
-    new Date(day + "T00:00:00").toLocaleDateString(undefined, {
+    new Date(day + "T00:00:00").toLocaleDateString(date_format_locales(settings_date_format()), {
         day: "2-digit",
         month: "2-digit",
-        year: withYear ? "numeric" : undefined,
+        // Without the year the locale of ISO 8601 renders 01/10 instead of a date like 2026-10-01
+        year: withYear || settings_date_format() === DATE_FORMAT_ISO8601 ? "numeric" : undefined,
     });
 
 const displayValue = (value: unknown): string => {
