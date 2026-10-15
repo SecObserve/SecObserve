@@ -454,6 +454,17 @@ export const feature_show_product_header_chips = () => {
     }
 };
 
+export const feature_full_text_search = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_full_text_search = features.indexOf("feature_full_text_search");
+        return feature_full_text_search !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const justificationIsEnabledForStatus = (status: string) => {
     const vex_enabled = feature_vex_enabled();
     const justification_recommended_for_status = [

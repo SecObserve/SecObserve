@@ -14,6 +14,7 @@ from application.commons.api.serializers import (
     VersionSerializer,
 )
 from application.commons.models import Settings
+from application.commons.services.functions import is_full_text_search_available
 
 
 class VersionView(APIView):
@@ -72,6 +73,8 @@ class StatusSettingsView(APIView):
                 features.append("feature_exploit_information")
             if settings.feature_show_product_header_chips:
                 features.append("feature_show_product_header_chips")
+            if is_full_text_search_available():
+                features.append("feature_full_text_search")
 
             env = environ.Env()
             if env("EMAIL_HOST", default="") or env("EMAIL_PORT", default=""):
