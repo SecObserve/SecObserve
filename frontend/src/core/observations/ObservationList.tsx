@@ -16,7 +16,12 @@ import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import ListExportMenu from "../../commons/custom_fields/ListExportMenu";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { has_attribute, humanReadableDate } from "../../commons/functions";
+import {
+    feature_exploit_information,
+    feature_full_text_search,
+    has_attribute,
+    humanReadableDate,
+} from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";

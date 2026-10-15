@@ -52,6 +52,26 @@ class TestViews(BaseTestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertNotIn("date_format", response.data)
 
+    @patch("application.commons.services.functions.connection")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_status_settings_full_text_search_postgresql(self, mock_authentication, mock_connection):
+        mock_authentication.return_value = self.user_internal, None
+        mock_connection.vendor = "postgresql"
+
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertIn("feature_full_text_search", response.data["features"])
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_status_settings_full_text_search_not_postgresql(self, mock_authentication):
+        mock_authentication.return_value = self.user_internal, None
+
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertNotIn("feature_full_text_search", response.data["features"])
+
     def test_health(self):
         api_client = APIClient()
         response = api_client.get("/api/status/health/")

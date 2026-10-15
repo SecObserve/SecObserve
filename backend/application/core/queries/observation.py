@@ -1,5 +1,6 @@
 from typing import Optional
 
+from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.query import QuerySet
 
@@ -15,6 +16,9 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+
+# Without stemming and stop words, to be independent of the language of the texts
+FULL_TEXT_SEARCH_CONFIG = "simple"
 
 
 def get_observation_by_id(observation_id: int) -> Optional[Observation]:
@@ -261,3 +265,48 @@ def get_current_modifying_observation_log(observation: Observation) -> Optional[
         return get_modifying_observation_logs().filter(observation_id=observation.id).latest("created")
     except Observation_Log.DoesNotExist:
         return None
+
+
+# The search vectors must be the same as the ones of the indexes in
+# migration 0100_observation_full_text_search, otherwise the indexes are not used.
+def get_observation_search_vector() -> SearchVector:
+    return SearchVector(
+        "title",
+        "description",
+        "recommendation",
+        "vulnerability_id",
+        "vulnerability_id_aliases",
+        config=FULL_TEXT_SEARCH_CONFIG,
+    )
+
+
+def get_observation_log_search_vector() -> SearchVector:
+    return SearchVector("comment", config=FULL_TEXT_SEARCH_CONFIG)
+
+
+class PrefixSearchQuery(SearchQuery):
+    # websearch_to_tsquery only matches complete words. All its lexemes are turned into prefixes,
+    # e.g. 'inject' & !'sql' into 'inject':* & !'sql':*, so that "inject" finds "injection" as well.
+    # Pattern and replacement are dollar-quoted, to need no escaping of quotes and backslashes.
+    template = r"regexp_replace((%(function)s(%(expressions)s))::text, $$'((?:[^']|'')*)'$$, $$'\1':*$$, 'g')::tsquery"
+
+    def __init__(self, value: str) -> None:
+        super().__init__(value, search_type="websearch", config=FULL_TEXT_SEARCH_CONFIG)
+
+
+def filter_observations_full_text(queryset: QuerySet[Observation], value: str) -> QuerySet[Observation]:
+    query = PrefixSearchQuery(value)
+
+    matching_observations = (
+        Observation.objects.alias(full_text_search=get_observation_search_vector())
+        .filter(full_text_search=query)
+        .values("id")
+    )
+    matching_observation_logs = (
+        Observation_Log.objects.alias(full_text_search=get_observation_log_search_vector())
+        .filter(full_text_search=query)
+        .values("observation_id")
+    )
+
+    # A union instead of an OR condition, because PostgreSQL can use both indexes only this way
+    return queryset.filter(id__in=matching_observations.union(matching_observation_logs))

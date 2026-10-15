@@ -18,7 +18,12 @@ import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { has_attribute, humanReadableDate } from "../../commons/functions";
+import {
+    feature_exploit_information,
+    feature_full_text_search,
+    has_attribute,
+    humanReadableDate,
+} from "../../commons/functions";
 import { usePublishBranchFilter } from "../products/BranchFilterContext";
 import { usePublishFilterValues } from "../products/FilterValuesContext";
 import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";

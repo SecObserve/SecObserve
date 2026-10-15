@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from django.apps import apps
+from django.db import connection
 from django.db.models.fields import CharField, TextField
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -92,3 +93,7 @@ def validate_vex_remediations(value: Any) -> Optional[list[dict]]:
 def get_start_of_day(days_ago: int) -> datetime:
     today = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
     return today - timedelta(days=days_ago)
+
+
+def is_full_text_search_available() -> bool:
+    return connection.vendor == "postgresql"
