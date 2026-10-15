@@ -1,7 +1,6 @@
 from typing import Iterator, Optional
 
-from django.db.models import CharField, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Cast, Concat
+from django.db.models import OuterRef, Q, Subquery
 from django.db.models.query import QuerySet
 from django.http import HttpResponse
 from openpyxl import Workbook
@@ -10,6 +9,7 @@ from application.commons.services.export import (
     ExportColumn,
     export_csv_columns,
     export_excel_columns,
+    frontend_url,
 )
 from application.commons.services.functions import get_base_url_frontend
 from application.core.models import Observation, Observation_Log, Product
@@ -150,8 +150,8 @@ def _get_rows(observations: QuerySet) -> Iterator[tuple]:
     base_url_frontend = get_base_url_frontend()
     observations = observations.annotate(
         observation_log_comment=_newest_comment(),
-        observation_url=_frontend_url(base_url_frontend, "observations", "pk"),
-        product_url=_frontend_url(base_url_frontend, "products", "product_id"),
+        observation_url=frontend_url(base_url_frontend, "observations", "pk"),
+        product_url=frontend_url(base_url_frontend, "products", "product_id"),
     )
     # One query with joins instead of loading the related objects row by row
     return observations.values_list(*[column.field for column in COLUMNS]).iterator(chunk_size=2000)
@@ -166,15 +166,6 @@ def _newest_comment() -> Subquery:
         .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
         .order_by("-created", "-id")
         .values("comment")[:1]
-    )
-
-
-def _frontend_url(base_url_frontend: str, route: str, id_field: str) -> Concat:
-    return Concat(
-        Value(f"{base_url_frontend}#/{route}/"),
-        Cast(id_field, output_field=CharField()),
-        Value("/show"),
-        output_field=CharField(),
     )
 
 

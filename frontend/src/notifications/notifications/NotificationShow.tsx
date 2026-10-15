@@ -1,7 +1,6 @@
 import { Typography } from "@mui/material";
 import { useEffect } from "react";
 import {
-    DateField,
     PrevNextButtons,
     Show,
     SimpleShowLayout,
@@ -12,6 +11,7 @@ import {
 } from "react-admin";
 
 import notifications from ".";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ObservationReferenceField } from "../../commons/custom_fields/ObservationReferenceField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";

@@ -5,7 +5,7 @@ import { Labeled, NumberField, NumberInput, useRecordContext } from "react-admin
 import { useFormContext, useWatch } from "react-hook-form";
 
 import { validate_0_999999, validate_1_999999 } from "../../custom_validators";
-import { settings_background_tasks_time_zone } from "../../functions";
+import { format_date, settings_background_tasks_time_zone } from "../../functions";
 
 type Schedule = {
     label: string;
@@ -50,7 +50,7 @@ function nextRun(at: string): string {
         .format(now)
         .split("-")
         .map(Number);
-    return new Date(year, month - 1, at > serverTime ? day : day + 1).toLocaleDateString() + ", " + at;
+    return format_date(new Date(year, month - 1, at > serverTime ? day : day + 1)) + ", " + at;
 }
 
 const TimeZoneChip = () => {
@@ -62,7 +62,7 @@ const TimeZoneChip = () => {
         <Chip
             icon={<PublicIcon />}
             label={`${time_zone} · ${offset === "GMT" ? "UTC+00:00" : offset?.replace("GMT", "UTC")}`}
-            title="The tasks run at these times in this time zone, set with BACKGROUND_TASKS_TIME_ZONE"
+            title="The tasks run at these times in this time zone, set with TIME_ZONE"
             size="small"
             variant="outlined"
             sx={{ display: "flex", width: "fit-content", marginBottom: 2 }}

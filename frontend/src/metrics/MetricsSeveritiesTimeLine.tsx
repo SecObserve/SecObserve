@@ -15,7 +15,7 @@ import { Identifier, useNotify } from "react-admin";
 import { Line } from "react-chartjs-2";
 
 import { getSettingsMetricsTimespanInDays } from "../access_control/users/functions";
-import { get_severity_color } from "../commons/functions";
+import { format_date, get_severity_color } from "../commons/functions";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import {
     OBSERVATION_SEVERITY_CRITICAL,
@@ -39,7 +39,7 @@ const MetricsSeveritiesTimeline = (props: MetricsSeveritiesTimelineProps) => {
 
     const days = [];
     for (let i = getSettingsMetricsTimespanInDays() - 1; i >= 0; i--) {
-        days.push(new Date(Date.now() - i * 24 * 60 * 60 * 1000).toLocaleDateString());
+        days.push(format_date(Date.now() - i * 24 * 60 * 60 * 1000));
     }
 
     function get_metrics(date: Date, metrics_data: any) {

@@ -14,11 +14,11 @@ import {
 import observations from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import ListExportMenu from "../../commons/custom_fields/ListExportMenu";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
 import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
-import ExportMenu from "./ExportMenu";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
 import { ObservationFilterBar } from "./ObservationFilterBar";
@@ -119,7 +119,11 @@ const ObservationList = () => {
             disableSyncWithLocation={false}
             storeKey="observations.list"
         >
-            <ListHeader icon={observations.icon} title="Observations" actions={<ExportMenu />} />
+            <ListHeader
+                icon={observations.icon}
+                title="Observations"
+                actions={<ListExportMenu resource="observations" title="Observations" pivotTable />}
+            />
             <ListView
                 pagination={<CustomPagination />}
                 filters={<ObservationFilterBar saveQuery />}

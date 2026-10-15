@@ -6,6 +6,7 @@ import {
     ListContextProvider,
     ReferenceInput,
     ResourceContextProvider,
+    SelectField,
     TextField,
     TextInput,
     WithListContext,
@@ -22,6 +23,7 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { has_attribute } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { usePublishBranchFilter } from "../../core/products/BranchFilterContext";
+import { PURL_TYPE_CHOICES } from "../../core/types";
 import { COMPONENT_TYPE_CHOICES, EVALUATION_RESULT_CHOICES } from "../types";
 import LicenseComponentBulkDeleteButton from "./LicenseComponentBulkDeleteButton";
 import { IDENTIFIER_LICENSE_COMPONENT_EMBEDDED_LIST, setListIdentifier } from "./functions";
@@ -77,8 +79,8 @@ const LicenseComponentEmbeddedList = ({
                 choices={EVALUATION_RESULT_CHOICES}
                 alwaysOn
             />,
-            <TextInput source="component_name_version" label="Component" alwaysOn />,
-            <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />,
+            <TextInput source="component_name" label="Component" alwaysOn />,
+            <TextInput source="component_version" label="Version" alwaysOn />,
             <ReferenceInput
                 source="component_purl_type"
                 reference="purl_types"
@@ -86,7 +88,8 @@ const LicenseComponentEmbeddedList = ({
                 alwaysOn
             >
                 <AutocompleteInputMedium optionText="name" label="Ecosystem" />
-            </ReferenceInput>
+            </ReferenceInput>,
+            <AutocompleteInputMedium source="component_type" label="Type" choices={COMPONENT_TYPE_CHOICES} alwaysOn />
         );
         if (product?.has_services) {
             filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
@@ -196,7 +199,15 @@ const LicenseComponentEmbeddedList = ({
                                         sortable={true}
                                     />
                                 )}
-                                <TextField source="component_name_version_type" label="Component" />
+                                <TextField source="component_name" label="Component" sortBy="component_name_version" />
+                                <TextField source="component_version" label="Version" sortable={false} />
+                                {has_attribute("component_purl_type", data, sort) && (
+                                    <SelectField
+                                        source="component_purl_type"
+                                        label="Ecosystem"
+                                        choices={PURL_TYPE_CHOICES}
+                                    />
+                                )}
                                 {has_attribute("component_type", data, sort) && (
                                     <TextField source="component_type" label="Type" />
                                 )}

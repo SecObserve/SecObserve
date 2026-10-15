@@ -1,4 +1,5 @@
 from django.db.models import QuerySet
+from django.http import FileResponse, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
@@ -16,6 +17,7 @@ from rest_framework.viewsets import GenericViewSet
 
 from application.authorization.services.authorization import user_has_permission
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.services.export import excel_response
 from application.core.api.filters import ComponentFilter
 from application.core.api.serializers_others import (
     ComponentNameSerializer,
@@ -26,6 +28,10 @@ from application.core.api.serializers_others import (
 from application.core.models import Component
 from application.core.queries.component import get_components
 from application.core.queries.product import get_product_by_id
+from application.core.services.export_components import (
+    export_components_csv,
+    export_components_excel,
+)
 from application.core.services.purl_type import get_purl_type, get_purl_types
 
 
@@ -88,6 +94,21 @@ class ComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     def get_queryset(self) -> QuerySet[Component]:
         return get_components()
+
+    @extend_schema(methods=["GET"], responses={200: None})
+    @action(detail=False, methods=["get"])
+    def export_excel(self, request: Request) -> FileResponse:
+        components = self.filter_queryset(self.get_queryset())
+        return excel_response(export_components_excel(components), "components.xlsx")
+
+    @extend_schema(methods=["GET"], responses={200: None})
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request: Request) -> HttpResponse:
+        components = self.filter_queryset(self.get_queryset())
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=components.csv"
+        export_components_csv(response, components)
+        return response
 
 
 class ComponentNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):

@@ -12,8 +12,8 @@
         "@fortawesome/free-solid-svg-icons": "7.3.1",
         "@fortawesome/react-fontawesome": "3.5.0",
         "@mdxeditor/editor": "4.3.2",
-        "@mui/icons-material": "9.4.0",
-        "@mui/material": "9.4.0",
+        "@mui/icons-material": "9.5.0",
+        "@mui/material": "9.5.0",
         "@textea/json-viewer": "4.0.1",
         "chart.js": "4.5.1",
         "cm6-theme-basic-dark": "0.2.0",
@@ -36,7 +36,7 @@
         "react-is": "19.3.0",
         "react-oidc-context": "3.3.1",
         "react-pivottable": "0.11.1",
-        "react-syntax-highlighter": "16.1.1",
+        "react-syntax-highlighter": "16.1.2",
         "tss-react": "4.9.21"
     },
     "scripts": {
@@ -72,10 +72,10 @@
         "eslint-plugin-react-hooks": "7.1.1",
         "eslint-plugin-security": "4.2.0",
         "globals": "17.13.0",
-        "prettier": "3.9.9",
+        "prettier": "3.9.10",
         "rewire": "9.0.1",
         "typescript": "6.0.3",
-        "vite": "8.3.3",
+        "vite": "8.3.4",
         "yaml": "2.9.1"
     }
 }

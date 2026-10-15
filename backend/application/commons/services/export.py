@@ -7,8 +7,11 @@ from typing import Any, Iterable, Optional, Sequence
 
 import jsonpickle
 from defusedcsv import csv
+from django.db.models import CharField, Value
+from django.db.models.functions import Cast, Concat
 from django.db.models.query import QuerySet
 from django.http import FileResponse, HttpResponse
+from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
@@ -34,11 +37,26 @@ def _escape_formula(value: Any) -> Any:
     return cleaned
 
 
+def _to_local_time(value: Any) -> Any:
+    if isinstance(value, datetime) and timezone.is_aware(value):
+        return timezone.localtime(value)
+    return value
+
+
 @dataclass(frozen=True)
 class ExportColumn:
     header: str
     field: str
     width: int = 20
+
+
+def frontend_url(base_url_frontend: str, route: str, id_field: str) -> Concat:
+    return Concat(
+        Value(f"{base_url_frontend}#/{route}/"),
+        Cast(id_field, output_field=CharField()),
+        Value("/show"),
+        output_field=CharField(),
+    )
 
 
 def export_excel_columns(rows: Iterable[Sequence[Any]], title: str, columns: Sequence[ExportColumn]) -> Workbook:
@@ -68,7 +86,7 @@ def export_excel_columns(rows: Iterable[Sequence[Any]], title: str, columns: Seq
 
 def _excel_value(value: Any) -> Any:
     if isinstance(value, datetime):
-        return value.replace(tzinfo=None)
+        return _to_local_time(value).replace(tzinfo=None)
     if isinstance(value, (dict, list)):
         value = json.dumps(value, ensure_ascii=False, sort_keys=True)
     return _escape_formula(value)
@@ -84,6 +102,7 @@ def export_csv_columns(response: HttpResponse, rows: Iterable[Sequence[Any]], co
 
 
 def _csv_value(value: Any) -> Any:
+    value = _to_local_time(value)
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False, sort_keys=True)
     if isinstance(value, str):
@@ -133,7 +152,7 @@ def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_key
                     if key in foreign_keys and getattr(current_object, key):
                         value = str(getattr(current_object, key))
                     if value and isinstance(value, datetime):
-                        value = value.replace(tzinfo=None)
+                        value = _to_local_time(value).replace(tzinfo=None)
                     if value and isinstance(value, (dict, list)):
                         value = str(value)
                     value = _escape_formula(value)
@@ -180,7 +199,7 @@ def export_csv(
                         value = str(getattr(current_object, key))
                     if value and isinstance(value, str):
                         value = value.replace("\n", " NEWLINE ").replace("\r", "")
-                    fields.append(value)
+                    fields.append(_to_local_time(value))
 
             writer.writerow(fields)
 

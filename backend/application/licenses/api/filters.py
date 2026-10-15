@@ -1,8 +1,6 @@
-from datetime import timedelta
 from typing import Any
 
 from django.db.models import QuerySet
-from django.utils import timezone
 from django_filters import (
     BooleanFilter,
     CharFilter,
@@ -15,6 +13,7 @@ from django_filters import (
 )
 
 from application.commons.api.extended_ordering_filter import ExtendedOrderingFilter
+from application.commons.services.functions import get_start_of_day
 from application.commons.types import Age_Choices
 from application.core.models import Product
 from application.licenses.models import (
@@ -50,9 +49,7 @@ class ConcludedLicenseFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(last_updated__gte=time_threshold)
+        return queryset.filter(last_updated__gte=get_start_of_day(days))
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -73,6 +70,8 @@ class ConcludedLicenseFilter(FilterSet):
 
 
 class LicenseComponentFilter(FilterSet):
+    component_name = CharFilter(field_name="component_name", lookup_expr="icontains")
+    component_version = CharFilter(field_name="component_version", lookup_expr="icontains")
     component_name_version = CharFilter(field_name="component_name_version", lookup_expr="icontains")
     effective_license_name = CharFilter(field_name="effective_license_name", lookup_expr="icontains")
     effective_license_name_exact = CharFilter(field_name="effective_license_name")
@@ -95,9 +94,7 @@ class LicenseComponentFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(last_change__gte=time_threshold)
+        return queryset.filter(last_change__gte=get_start_of_day(days))
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -127,7 +124,7 @@ class LicenseComponentFilter(FilterSet):
                 ("branch__name", "effective_license_name", "numerical_evaluation_result", "component_name_version"),
                 "branch_name",
             ),
-            ("component_name_version", "component_name_version"),
+            (("component_name", "component_version", "component_purl_type"), "component_name_version"),
             ("component_name_version", "component_name_version_type"),
             (
                 (
