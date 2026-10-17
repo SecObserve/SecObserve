@@ -2964,19 +2964,19 @@ crypto = ["cryptography (>=3.4.0)"]
 
 [[package]]
 name = "pylint"
-version = "4.1.2"
+version = "4.1.3"
 description = "python code static checker"
 optional = true
 python-versions = ">=3.10.0"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "pylint-4.1.2-py3-none-any.whl", hash = "sha256:e34c8636edc7d60a2eaadca4ad6c18a49e202361987a26e81b2a17fa92be28e1"},
-    {file = "pylint-4.1.2.tar.gz", hash = "sha256:235f13dc418c0041c649b42a5c35c99f2ffc6ca8b6a7574958eac5335906a68a"},
+    {file = "pylint-4.1.3-py3-none-any.whl", hash = "sha256:a85357cae24f33ad8d86c8f3daaa92c600ae4012b54a57299cee76000e9364cf"},
+    {file = "pylint-4.1.3.tar.gz", hash = "sha256:9928603068edfa0d1a3c167f174b099d4b97c3db75d32d0fcdd029770b4713a9"},
 ]
 
 [package.dependencies]
-astroid = ">=4.3.3,<=4.4"
+astroid = ">=4.3.4,<=4.4"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = {version = ">=0.3.7", markers = "python_version >= \"3.12\""}
 isort = ">=5,<5.13 || >5.13,<10"
@@ -4026,4 +4026,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "da9f3007921838ae92aebc408fb56ac3c2a525beecba3002782026b5205f481d"
+content-hash = "2b669f63d00c2a383c4abbe6cac6cbf290dc3359fec1661ad7d5b897f7dd2ee6"
