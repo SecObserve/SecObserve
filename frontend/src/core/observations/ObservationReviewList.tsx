@@ -1,111 +1,31 @@
 import { Fragment } from "react";
 import {
-    AutocompleteArrayInput,
-    AutocompleteInput,
     BooleanField,
     ChipField,
     Datagrid,
-    FilterForm,
     FunctionField,
     ListContextProvider,
-    NullableBooleanInput,
     NumberField,
     ResourceContextProvider,
     TextField,
-    TextInput,
     WithListContext,
     useListController,
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
-import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
-import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
-import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
-import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import {
-    AGE_CHOICES,
-    OBSERVATION_SEVERITY_CHOICES,
-    OBSERVATION_STATUS_IN_REVIEW,
-    Observation,
-    PURL_TYPE_CHOICES,
-    Product,
-} from "../types";
+import { OBSERVATION_STATUS_IN_REVIEW, Observation } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
+import { ObservationFilterBar } from "./ObservationFilterBar";
 import {
     IDENTIFIER_OBSERVATION_REVIEW_LIST,
     IDENTIFIER_OBSERVATION_REVIEW_LIST_PRODUCT,
     setListIdentifier,
 } from "./functions";
-
-function listFilters(product: Product) {
-    const filters = [];
-    if (product?.has_branches) {
-        filters.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
-    }
-    filters.push(
-        <TextInput source="title" alwaysOn />,
-        <AutocompleteArrayInput
-            source="current_severity"
-            label="Severity"
-            choices={OBSERVATION_SEVERITY_CHOICES}
-            alwaysOn
-        />
-    );
-    if (!product) {
-        filters.push(
-            <ProductReferenceInput alwaysOn />,
-            <ProductGroupReferenceInput alwaysOn />,
-            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
-            <TextInput source="origin_service_name" label="Service" alwaysOn />
-        );
-    }
-    if (product?.has_services) {
-        filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
-    }
-
-    if (!product || product?.has_component) {
-        filters.push(<TextInput source="origin_component_name_version" label="Component" alwaysOn />);
-        filters.push(
-            <AutocompleteInput
-                source="origin_component_purl_type"
-                label="Ecosystem"
-                choices={PURL_TYPE_CHOICES}
-                alwaysOn
-            />
-        );
-    }
-    if (!product || product?.has_docker_image) {
-        filters.push(<TextInput source="origin_docker_image_name_tag_short" label="Container" alwaysOn />);
-    }
-    if (!product || product?.has_endpoint) {
-        filters.push(<TextInput source="origin_endpoint_hostname" label="Host" alwaysOn />);
-    }
-    if (!product || product?.has_source) {
-        filters.push(<TextInput source="origin_source_file" label="Source" alwaysOn />);
-    }
-    if (!product || product?.has_cloud_resource) {
-        filters.push(<TextInput source="origin_cloud_qualified_resource" label="Cloud resource" alwaysOn />);
-    }
-    if (!product || product?.has_kubernetes_resource) {
-        filters.push(<TextInput source="origin_kubernetes_qualified_resource" label="Kubernetes resource" alwaysOn />);
-    }
-
-    filters.push(
-        <TextInput source="scanner" alwaysOn />,
-        <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />
-    );
-    if (product?.has_potential_duplicates) {
-        filters.push(<NullableBooleanInput source="has_potential_duplicates" label="Duplicates" alwaysOn />);
-    }
-
-    return filters;
-}
 
 const ShowObservations = (id: any) => {
     return "../../../../observations/" + id + "/show";
@@ -162,7 +82,7 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
         <ResourceContextProvider value="observations">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <FilterForm filters={listFilters(product)} />
+                    <ObservationFilterBar product={product} review />
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid

@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
 import { getIconAndFontColor } from "../functions";
 import { getOrderingQuery } from "../ra-data-django-rest-framework";
+import { resolveDateFilters } from "./DateRangeFilter";
 
 type ListExportMenuProps = {
     resource: string;
@@ -90,7 +91,7 @@ const ListExportMenu = ({ resource, title, pivotTable }: ListExportMenuProps) =>
     };
 
     const queryParams = () => {
-        const query = { ...filterValues, ...getOrderingQuery({ sort }) };
+        const query = { ...resolveDateFilters(filterValues), ...getOrderingQuery({ sort }) };
         return queryString.stringify(query);
     };
 

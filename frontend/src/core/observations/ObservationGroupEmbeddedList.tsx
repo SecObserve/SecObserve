@@ -3,13 +3,10 @@ import { useEffect, useState } from "react";
 import {
     BooleanInput,
     BooleanInputProps,
-    FilterButton,
     Identifier,
     ListContextProvider,
-    ListToolbar,
     ReferenceInput,
     ResourceContextProvider,
-    TopToolbar,
     useListController,
 } from "react-admin";
 
@@ -19,7 +16,8 @@ import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { usePublishFilterValues } from "../products/FilterValuesContext";
 import { OBSERVATION_STATUS_ACTIVE, ProductGroup } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
-import { ObservationDatagrid, listFilters } from "./ObservationList";
+import { ObservationFilterBar } from "./ObservationFilterBar";
+import { ObservationDatagrid } from "./ObservationList";
 import { IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST, setListIdentifier } from "./functions";
 
 const STORE_KEY = "observations.embedded.group";
@@ -32,8 +30,8 @@ const DefaultBranchInput = (props: BooleanInputProps) => (
     </FormControl>
 );
 
-function groupFilters(product_group: ProductGroup) {
-    return listFilters([
+function groupProductFilters(product_group: ProductGroup) {
+    return [
         <ReferenceInput
             source="product"
             reference="products"
@@ -52,7 +50,7 @@ function groupFilters(product_group: ProductGroup) {
             parse={(value) => value || null}
             alwaysOn
         />,
-    ]);
+    ];
 }
 
 type ObservationGroupEmbeddedListProps = {
@@ -102,15 +100,7 @@ const ObservationGroupListContent = ({ product_group }: ObservationGroupEmbedded
         <ResourceContextProvider value="observations">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <ListToolbar
-                        filters={groupFilters(product_group)}
-                        // Saved queries are shared with the observation list, where a query saved here would lack the product group
-                        actions={
-                            <TopToolbar>
-                                <FilterButton disableSaveQuery />
-                            </TopToolbar>
-                        }
-                    />
+                    <ObservationFilterBar product_filters={groupProductFilters(product_group)} />
                     <ObservationDatagrid
                         bulkActionButtons={<ObservationBulkAssessment product={null} storeKey={STORE_KEY} />}
                         hideProductGroup
