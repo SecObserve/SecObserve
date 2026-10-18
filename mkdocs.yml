@@ -75,6 +75,7 @@ nav:
     - Import observations: usage/import_observations.md
     - Upload SBOMs: usage/upload_sbom.md
     - Assess observations: usage/assess_observations.md
+    - Full text search: usage/full_text_search.md
     - Product groups: usage/product_groups.md
     - Branches and Versions: usage/branches.md
     - Rule engine: usage/rule_engine.md
