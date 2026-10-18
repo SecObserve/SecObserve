@@ -14,6 +14,7 @@ import { FilterBar, SecondaryFilter } from "../../commons/custom_fields/FilterBa
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
+import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWidth";
 import { feature_exploit_information } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES, PURL_TYPE_CHOICES, Product } from "../types";
@@ -29,15 +30,14 @@ export function observationFilters(product?: Product, review = false, product_fi
     const secondary: SecondaryFilter[] = [];
 
     if (product?.has_branches) {
-        primary.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
+        primary.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn autoWidth />);
     }
     primary.push(
-        <TextInput source="title" alwaysOn />,
+        <TextInputAutoWidth source="title" alwaysOn />,
         <AutocompleteArrayInput
             source="current_severity"
             label="Severity"
             choices={OBSERVATION_SEVERITY_CHOICES}
-            limitTags={1}
             alwaysOn
         />
     );
@@ -47,49 +47,19 @@ export function observationFilters(product?: Product, review = false, product_fi
                 source="current_status"
                 label="Status"
                 choices={OBSERVATION_STATUS_CHOICES}
-                limitTags={1}
                 alwaysOn
             />
         );
     }
 
     if (!product) {
-        if (product_filters) {
-            primary.push(...product_filters);
-        } else {
-            const productFilters = [
-                {
-                    column: ORIGIN,
-                    source: "product",
-                    label: "Product",
-                    input: <ProductReferenceInput key="product" alwaysOn />,
-                    reference: "products",
-                },
-                {
-                    column: ORIGIN,
-                    source: "product_group",
-                    label: "Product group",
-                    input: <ProductGroupReferenceInput key="product_group" alwaysOn />,
-                    reference: "product_groups",
-                },
-            ];
-            if (review) {
-                secondary.push(...productFilters);
-            } else {
-                primary.push(...productFilters.map((filter) => filter.input));
-            }
-        }
-        secondary.push(
-            { column: ORIGIN, input: <TextInput source="branch_name" label="Branch / Version" /> },
-            { column: ORIGIN, input: <TextInput source="origin_service_name" label="Service" /> }
+        primary.push(
+            ...(product_filters ?? [
+                <ProductReferenceInput key="product" alwaysOn autoWidth />,
+                <ProductGroupReferenceInput key="product_group" alwaysOn autoWidth />,
+            ]),
+            <TextInputAutoWidth source="branch_name" label="Branch / Version" alwaysOn />
         );
-    } else if (product.has_services) {
-        secondary.push({
-            column: ORIGIN,
-            label: "Service",
-            input: <ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />,
-            reference: "services",
-        });
     }
 
     primary.push(
@@ -103,56 +73,8 @@ export function observationFilters(product?: Product, review = false, product_fi
         />
     );
 
-    if (!product || product.has_component) {
-        secondary.push(
-            { column: ORIGIN, input: <TextInput source="origin_component_name_version" label="Component" /> },
-            {
-                column: ORIGIN,
-                input: product ? (
-                    <ReferenceInput
-                        source="origin_component_purl_type"
-                        reference="purl_types"
-                        filter={{ product: product.id, for_observations: true }}
-                    >
-                        <AutocompleteInputMedium optionText="name" label="Ecosystem" />
-                    </ReferenceInput>
-                ) : (
-                    <AutocompleteInput
-                        source="origin_component_purl_type"
-                        label="Ecosystem"
-                        choices={PURL_TYPE_CHOICES}
-                    />
-                ),
-                label: "Ecosystem",
-            }
-        );
-    }
-    if (!product || product.has_docker_image) {
-        secondary.push({
-            column: ORIGIN,
-            input: <TextInput source="origin_docker_image_name_tag_short" label="Container" />,
-        });
-    }
-    if (!product || product.has_endpoint) {
-        secondary.push({ column: ORIGIN, input: <TextInput source="origin_endpoint_hostname" label="Host" /> });
-    }
-    if (!product || product.has_source) {
-        secondary.push({ column: ORIGIN, input: <TextInput source="origin_source_file" label="Source" /> });
-    }
-    if (!product || product.has_cloud_resource) {
-        secondary.push({
-            column: ORIGIN,
-            input: <TextInput source="origin_cloud_qualified_resource" label="Cloud resource" />,
-        });
-    }
-    if (!product || product.has_kubernetes_resource) {
-        secondary.push({
-            column: ORIGIN,
-            input: <TextInput source="origin_kubernetes_qualified_resource" label="Kubernetes resource" />,
-        });
-    }
-
     secondary.push(
+        ...originFilters(product),
         { column: SCAN, input: <TextInput source="scanner" label="Scanner" /> },
         { column: SCAN, input: <TextInput source="upload_filename" label="Filename" /> },
         { column: SCAN, input: <TextInput source="api_configuration_name" label="API configuration" /> }
@@ -184,6 +106,73 @@ export function observationFilters(product?: Product, review = false, product_fi
     }
 
     return { primary, secondary };
+}
+
+// The filters for the origin of observations, also used by the list of assessments to be approved.
+// Without a product, all are offered; with a product only those for the data the product has.
+export function originFilters(product?: Product): SecondaryFilter[] {
+    const filters: SecondaryFilter[] = [];
+
+    if (!product) {
+        filters.push({ column: ORIGIN, input: <TextInput source="origin_service_name" label="Service" /> });
+    } else if (product.has_services) {
+        filters.push({
+            column: ORIGIN,
+            label: "Service",
+            input: <ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />,
+            reference: "services",
+        });
+    }
+    if (!product || product.has_component) {
+        filters.push(
+            { column: ORIGIN, input: <TextInput source="origin_component_name_version" label="Component" /> },
+            {
+                column: ORIGIN,
+                input: product ? (
+                    <ReferenceInput
+                        source="origin_component_purl_type"
+                        reference="purl_types"
+                        filter={{ product: product.id, for_observations: true }}
+                    >
+                        <AutocompleteInputMedium optionText="name" label="Ecosystem" />
+                    </ReferenceInput>
+                ) : (
+                    <AutocompleteInput
+                        source="origin_component_purl_type"
+                        label="Ecosystem"
+                        choices={PURL_TYPE_CHOICES}
+                    />
+                ),
+                label: "Ecosystem",
+            }
+        );
+    }
+    if (!product || product.has_docker_image) {
+        filters.push({
+            column: ORIGIN,
+            input: <TextInput source="origin_docker_image_name_tag_short" label="Container" />,
+        });
+    }
+    if (!product || product.has_endpoint) {
+        filters.push({ column: ORIGIN, input: <TextInput source="origin_endpoint_hostname" label="Host" /> });
+    }
+    if (!product || product.has_source) {
+        filters.push({ column: ORIGIN, input: <TextInput source="origin_source_file" label="Source" /> });
+    }
+    if (!product || product.has_cloud_resource) {
+        filters.push({
+            column: ORIGIN,
+            input: <TextInput source="origin_cloud_qualified_resource" label="Cloud resource" />,
+        });
+    }
+    if (!product || product.has_kubernetes_resource) {
+        filters.push({
+            column: ORIGIN,
+            input: <TextInput source="origin_kubernetes_qualified_resource" label="Kubernetes resource" />,
+        });
+    }
+
+    return filters;
 }
 
 interface ObservationFilterBarProps {

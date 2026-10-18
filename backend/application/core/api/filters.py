@@ -366,6 +366,9 @@ class ObservationLogFilter(FilterSet):
         field_name="observation__origin_kubernetes_qualified_resource",
         lookup_expr="icontains",
     )
+    origin_component_purl_type = CharFilter(field_name="observation__origin_component_purl_type")
+    scanner = CharFilter(field_name="observation__scanner", lookup_expr="icontains")
+    created = DateTimeFromToRangeFilter(field_name="created")
 
     ordering = OrderingFilter(
         # tuple-mapping retains order

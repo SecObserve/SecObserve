@@ -5,14 +5,13 @@ import {
     BooleanInputProps,
     Identifier,
     ListContextProvider,
-    ReferenceInput,
     ResourceContextProvider,
     useListController,
 } from "react-admin";
 
 import { getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { AutocompleteInputMedium } from "../../commons/layout/themes";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { usePublishFilterValues } from "../products/FilterValuesContext";
 import { OBSERVATION_STATUS_ACTIVE, ProductGroup } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
@@ -32,16 +31,7 @@ const DefaultBranchInput = (props: BooleanInputProps) => (
 
 function groupProductFilters(product_group: ProductGroup) {
     return [
-        <ReferenceInput
-            source="product"
-            reference="products"
-            filter={{ product_group: product_group.id }}
-            queryOptions={{ meta: { api_resource: "product_names" } }}
-            sort={{ field: "name", order: "ASC" }}
-            alwaysOn
-        >
-            <AutocompleteInputMedium optionText="name" />
-        </ReferenceInput>,
+        <ProductReferenceInput key="product" product_group={product_group.id} alwaysOn autoWidth />,
         <DefaultBranchInput
             source="default_branch"
             label="Default branches"

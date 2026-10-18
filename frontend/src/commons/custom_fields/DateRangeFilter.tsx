@@ -131,6 +131,8 @@ export const DateRangeFilter = ({ fields }: DateRangeFilterProps) => {
         value = agePreset.token;
     }
     const current = field ?? fields[0];
+    // An empty filter with several fields must not look like a filter of only one of them
+    const label = field || fields.length === 1 ? current.label : "Dates";
     const text = displayValue(value);
 
     const open = (event: MouseEvent<HTMLElement> | KeyboardEvent<HTMLElement>) => {
@@ -154,7 +156,7 @@ export const DateRangeFilter = ({ fields }: DateRangeFilterProps) => {
     return (
         <>
             <TextField
-                label={current.label}
+                label={label}
                 value={text}
                 size="small"
                 margin="dense"

@@ -2,12 +2,14 @@ import { Identifier } from "ra-core";
 import { ReferenceInput } from "ra-ui-materialui";
 
 import { AutocompleteInputMedium, AutocompleteInputWide } from "../layout/themes";
+import { AutocompleteInputAutoWidth } from "./AutocompleteInputAutoWidth";
 
 interface BranchReferenceInputProps {
     product: Identifier;
     source: string;
     label?: string;
     alwaysOn?: boolean;
+    autoWidth?: boolean;
     defaultValue?: string;
     for_license_components?: boolean;
 }
@@ -17,6 +19,7 @@ export const BranchReferenceInput = ({
     source,
     label,
     alwaysOn,
+    autoWidth,
     defaultValue,
     for_license_components,
 }: BranchReferenceInputProps) => {
@@ -31,7 +34,12 @@ export const BranchReferenceInput = ({
             filter={{ product: product, for_license_components: for_license_components }}
             alwaysOn={alwaysOn}
         >
-            {alwaysOn && <AutocompleteInputMedium optionText="name" label={label} defaultValue={defaultValue} />}
+            {alwaysOn && autoWidth && (
+                <AutocompleteInputAutoWidth optionText="name" label={label} defaultValue={defaultValue} />
+            )}
+            {alwaysOn && !autoWidth && (
+                <AutocompleteInputMedium optionText="name" label={label} defaultValue={defaultValue} />
+            )}
             {!alwaysOn && <AutocompleteInputWide optionText="name" label={label} defaultValue={defaultValue} />}
         </ReferenceInput>
     );

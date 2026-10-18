@@ -1,7 +1,7 @@
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { Badge, Box, Button, Chip, Divider, Popover, Stack, Typography } from "@mui/material";
 import queryString from "query-string";
-import { ReactElement, useState } from "react";
+import { ReactElement, useRef, useState } from "react";
 import {
     AddSavedQueryDialog,
     FilterForm,
@@ -53,7 +53,8 @@ interface FilterBarProps {
 export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBarProps) => {
     const { filterValues, displayedFilters, setFilters, sort, perPage, resource } = useListContext();
     const navigate = useNavigate();
-    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const barRef = useRef<HTMLDivElement>(null);
+    const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
     const [dialog, setDialog] = useState<"add" | "remove" | null>(null);
     const [savedQueries] = useSavedQueries(resource);
 
@@ -68,6 +69,7 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
 
     return (
         <Box
+            ref={barRef}
             sx={{
                 display: "flex",
                 flexWrap: "wrap",
@@ -77,14 +79,17 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
                 "& > form": { display: "contents" },
                 // compact primary inputs, so that the usual set fits into one row at 1440px
                 "& .filter-field .RaFilterFormInput-spacer": { width: 8 },
-                "& .filter-field > .ra-input.MuiTextField-root": { width: "9em" },
-                "& .filter-field .MuiAutocomplete-root": { width: "auto", minWidth: "10em" },
             }}
         >
             <FilterForm filters={filters} />
             <Button
                 size="small"
-                onClick={(event) => setAnchorEl(event.currentTarget)}
+                onClick={(event) => {
+                    const bar = barRef.current?.getBoundingClientRect();
+                    const button = event.currentTarget.getBoundingClientRect();
+                    // below the whole bar, so that the popover doesn't cover any always-on filter
+                    setPosition({ top: bar?.bottom ?? button.bottom, left: button.left });
+                }}
                 startIcon={
                     <Badge badgeContent={active.length} color="primary">
                         <FilterListIcon />
@@ -105,14 +110,14 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
                         </>
                     }
                     onDelete={() => setFilters({ ...filterValues, [sourceOf(filter)]: undefined }, displayedFilters)}
-                    sx={{ marginBottom: 1.75, marginLeft: 1 }}
+                    sx={{ marginBottom: 1.75, marginTop: 1.75, marginLeft: 1 }}
                 />
             ))}
             <Popover
-                open={Boolean(anchorEl)}
-                anchorEl={anchorEl}
-                onClose={() => setAnchorEl(null)}
-                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                open={Boolean(position)}
+                anchorReference="anchorPosition"
+                anchorPosition={position ?? { top: 0, left: 0 }}
+                onClose={() => setPosition(null)}
                 // the form must stay mounted, otherwise a debounced change is lost when the popover closes
                 keepMounted
             >
@@ -158,7 +163,7 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
                                                     displayedFilters: JSON.stringify(query.value.displayedFilters),
                                                 }),
                                             });
-                                            setAnchorEl(null);
+                                            setPosition(null);
                                         }}
                                     />
                                 ))}
@@ -172,7 +177,7 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
                                 disabled={Object.keys(filterValues).length === 0}
                                 onClick={() => {
                                     setDialog(currentIsSaved ? "remove" : "add");
-                                    setAnchorEl(null);
+                                    setPosition(null);
                                 }}
                             >
                                 {currentIsSaved ? "Remove saved query…" : "Save current query…"}
@@ -184,7 +189,7 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
                             disabled={Object.keys(filterValues).length === 0}
                             onClick={() => {
                                 setFilters({}, {});
-                                setAnchorEl(null);
+                                setPosition(null);
                             }}
                         >
                             Remove all filters
