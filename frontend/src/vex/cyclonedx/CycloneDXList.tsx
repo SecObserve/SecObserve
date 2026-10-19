@@ -24,6 +24,7 @@ import CycloneDXCreate from "./CycloneDXCreate";
 const listFilters = [
     <ProductReferenceInput alwaysOn />,
     <TextInput source="vulnerability_names__name" label="Vulnerability" alwaysOn />,
+    <TextInput source="branches__branch__name" label="Branch / Version" alwaysOn />,
 ];
 
 const ListActions = () => (

@@ -1,9 +1,10 @@
 import { Box, Paper, Stack, TableHead, Typography } from "@mui/material";
 import { Fragment } from "react";
-import { ArrayField, Datagrid, DateField, Labeled, TextField, WithRecord } from "react-admin";
+import { ArrayField, Datagrid, Labeled, TextField, WithRecord } from "react-admin";
 import { Link } from "react-router-dom";
 
 import { getResolvedSettingTheme } from "../../access_control/users/functions";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { ProductReferenceField } from "../../commons/custom_fields/ProductReferenceField";
 import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { useLinkStyles } from "../../commons/layout/themes";

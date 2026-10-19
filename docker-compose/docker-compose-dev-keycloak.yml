@@ -64,7 +64,7 @@ services:
       - "5432:5432"
 
   mailpit:
-    image: axllent/mailpit:v1.31.4
+    image: axllent/mailpit:v1.31.5
     tmpfs:
       - /tmp
     ports:
@@ -72,7 +72,7 @@ services:
       - "8025:8025"
 
   keycloak:
-    image: keycloak/keycloak:26.8.0
+    image: keycloak/keycloak:26.8.1
     environment:
       - KC_BOOTSTRAP_ADMIN_USERNAME=admin
       - KC_BOOTSTRAP_ADMIN_PASSWORD=admin

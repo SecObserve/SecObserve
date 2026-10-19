@@ -3,23 +3,20 @@ import { useEffect, useState } from "react";
 import {
     BooleanInput,
     BooleanInputProps,
-    FilterButton,
     Identifier,
     ListContextProvider,
-    ListToolbar,
-    ReferenceInput,
     ResourceContextProvider,
-    TopToolbar,
     useListController,
 } from "react-admin";
 
 import { getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
-import { AutocompleteInputMedium } from "../../commons/layout/themes";
+import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { usePublishFilterValues } from "../products/FilterValuesContext";
 import { OBSERVATION_STATUS_ACTIVE, ProductGroup } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
-import { ObservationDatagrid, listFilters } from "./ObservationList";
+import { ObservationFilterBar } from "./ObservationFilterBar";
+import { ObservationDatagrid } from "./ObservationList";
 import { IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST, setListIdentifier } from "./functions";
 
 const STORE_KEY = "observations.embedded.group";
@@ -32,18 +29,9 @@ const DefaultBranchInput = (props: BooleanInputProps) => (
     </FormControl>
 );
 
-function groupFilters(product_group: ProductGroup) {
-    return listFilters([
-        <ReferenceInput
-            source="product"
-            reference="products"
-            filter={{ product_group: product_group.id }}
-            queryOptions={{ meta: { api_resource: "product_names" } }}
-            sort={{ field: "name", order: "ASC" }}
-            alwaysOn
-        >
-            <AutocompleteInputMedium optionText="name" />
-        </ReferenceInput>,
+function groupProductFilters(product_group: ProductGroup) {
+    return [
+        <ProductReferenceInput key="product" product_group={product_group.id} alwaysOn autoWidth />,
         <DefaultBranchInput
             source="default_branch"
             label="Default branches"
@@ -52,7 +40,7 @@ function groupFilters(product_group: ProductGroup) {
             parse={(value) => value || null}
             alwaysOn
         />,
-    ]);
+    ];
 }
 
 type ObservationGroupEmbeddedListProps = {
@@ -102,15 +90,7 @@ const ObservationGroupListContent = ({ product_group }: ObservationGroupEmbedded
         <ResourceContextProvider value="observations">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <ListToolbar
-                        filters={groupFilters(product_group)}
-                        // Saved queries are shared with the observation list, where a query saved here would lack the product group
-                        actions={
-                            <TopToolbar>
-                                <FilterButton disableSaveQuery />
-                            </TopToolbar>
-                        }
-                    />
+                    <ObservationFilterBar product_filters={groupProductFilters(product_group)} />
                     <ObservationDatagrid
                         bulkActionButtons={<ObservationBulkAssessment product={null} storeKey={STORE_KEY} />}
                         hideProductGroup

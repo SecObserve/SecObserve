@@ -37,6 +37,21 @@ class TestViews(BaseTestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertNotIn("background_tasks_time_zone", response.data)
 
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_status_settings_date_format(self, mock_authentication):
+        mock_authentication.return_value = self.user_internal, None
+
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertEqual("BROWSER", response.data["date_format"])
+
+    def test_status_settings_date_format_unauthenticated(self):
+        response = APIClient().get("/api/status/settings/")
+
+        self.assertEqual(HTTP_200_OK, response.status_code)
+        self.assertNotIn("date_format", response.data)
+
     def test_health(self):
         api_client = APIClient()
         response = api_client.get("/api/status/health/")

@@ -85,6 +85,7 @@ class StatusSettingsView(APIView):
             content["risk_acceptance_expiry_days"] = settings.risk_acceptance_expiry_days
             content["vex_justification_style"] = settings.vex_justification_style
             content["background_tasks_time_zone"] = django_settings.BACKGROUND_TASKS_TIME_ZONE
+            content["date_format"] = settings.date_format
 
         return Response(content)
 

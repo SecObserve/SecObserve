@@ -3,7 +3,6 @@ import { Accordion, AccordionDetails, AccordionSummary, Box, Paper, Stack, Typog
 import { Fragment } from "react";
 import {
     BooleanField,
-    DateField,
     EditButton,
     Labeled,
     PrevNextButtons,
@@ -15,6 +14,7 @@ import {
 } from "react-admin";
 
 import users from ".";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { is_superuser } from "../../commons/functions";
 import { useStyles } from "../../commons/layout/themes";
 import UserProductMemberEmbeddedList from "../../core/product_members/UserProductMemberEmbeddedList";

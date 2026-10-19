@@ -2,7 +2,6 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
     ChipField,
-    DateField,
     DeleteButton,
     Labeled,
     PrevNextButtons,
@@ -13,6 +12,7 @@ import {
 } from "react-admin";
 
 import vex_documents from ".";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { useStyles } from "../../commons/layout/themes";
 import VEXStatementEmbeddedList from "../vex_statements/VEXStatementEmbeddedList";
 

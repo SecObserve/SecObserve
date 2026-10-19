@@ -1,11 +1,9 @@
 import { Stack } from "@mui/material";
-import { Fragment } from "react";
+import { Fragment, ReactElement } from "react";
 import {
     AutocompleteInput,
     ChipField,
     Datagrid,
-    DateField,
-    FilterForm,
     FunctionField,
     ListContextProvider,
     ReferenceInput,
@@ -18,15 +16,19 @@ import {
 
 import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
+import { AutocompleteInputAutoWidth } from "../../commons/custom_fields/AutocompleteInputAutoWidth";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DateField } from "../../commons/custom_fields/DateField";
+import { DateRangeFilter } from "../../commons/custom_fields/DateRangeFilter";
+import { FilterBar, SecondaryFilter } from "../../commons/custom_fields/FilterBar";
 import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
-import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
+import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWidth";
 import { feature_vex_enabled, getUserOptionText, has_attribute } from "../../commons/functions";
-import { AutocompleteInputMedium } from "../../commons/layout/themes";
+import { originFilters } from "../observations/ObservationFilterBar";
 import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
 import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
@@ -52,60 +54,41 @@ const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
     );
 };
 
-function listFilters(product: any, is_product_group: boolean) {
-    const filters = [];
+// The list of a product group offers the filters of the list without a product, its products are the ones of the group.
+function approvalFilters(product: any, is_product_group: boolean) {
+    const scoped = is_product_group ? undefined : product;
+    const primary: ReactElement[] = [];
 
-    filters.push(<TextInput source="observation_title" label="Observation title" alwaysOn />);
-
+    if (scoped?.has_branches) {
+        primary.push(<BranchReferenceInput source="branch" product={scoped.id} alwaysOn autoWidth />);
+    }
+    primary.push(<TextInputAutoWidth source="observation_title" label="Observation title" alwaysOn />);
     if (!product) {
-        filters.push(
-            <ProductReferenceInput alwaysOn />,
-            <ProductGroupReferenceInput alwaysOn />,
-            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
-            <TextInput source="origin_service_name" label="Service" alwaysOn />
+        primary.push(
+            <ProductReferenceInput key="product" alwaysOn autoWidth />,
+            <ProductGroupReferenceInput key="product_group" alwaysOn autoWidth />
         );
     } else if (is_product_group) {
-        filters.push(
-            <ProductReferenceInput alwaysOn />,
-            <TextInput source="branch_name" label="Branch / Version" alwaysOn />,
-            <TextInput source="origin_service_name" label="Service" alwaysOn />
-        );
+        primary.push(<ProductReferenceInput key="product" product_group={product.id} alwaysOn autoWidth />);
     }
-
-    if (product?.has_branches) {
-        filters.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn />);
+    if (!scoped) {
+        primary.push(<TextInputAutoWidth source="branch_name" label="Branch / Version" alwaysOn />);
     }
-    if (product?.has_services) {
-        filters.push(<ServiceReferenceInput source="origin_service" product={product.id} alwaysOn />);
-    }
-
-    if (!product || product?.has_component) {
-        filters.push(<TextInput source="origin_component_name_version" label="Component" alwaysOn />);
-    }
-    if (!product || product?.has_docker_image) {
-        filters.push(<TextInput source="origin_docker_image_name_tag_short" label="Container" alwaysOn />);
-    }
-    if (!product || product?.has_endpoint) {
-        filters.push(<TextInput source="origin_endpoint_hostname" label="Host" alwaysOn />);
-    }
-    if (!product || product?.has_source) {
-        filters.push(<TextInput source="origin_source_file" label="Source" alwaysOn />);
-    }
-    if (!product || product?.has_cloud_resource) {
-        filters.push(<TextInput source="origin_cloud_qualified_resource" label="Cloud resource" alwaysOn />);
-    }
-    if (!product || product?.has_kubernetes_resource) {
-        filters.push(<TextInput source="origin_kubernetes_qualified_resource" label="Kubernetes resource" alwaysOn />);
-    }
-
-    filters.push(
+    primary.push(
         <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
-            <AutocompleteInputMedium optionText={getUserOptionText} />
+            <AutocompleteInputAutoWidth optionText={getUserOptionText} />
         </ReferenceInput>,
         <AutocompleteInput source="severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />,
-        <AutocompleteInput source="status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />
+        <AutocompleteInput source="status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
+        <DateRangeFilter key="date" fields={[{ source: "created", label: "Created" }]} alwaysOn />
     );
-    return filters;
+
+    const secondary: SecondaryFilter[] = [
+        ...originFilters(scoped),
+        { column: "Scan", input: <TextInput source="scanner" label="Scanner" /> },
+    ];
+
+    return { primary, secondary };
 }
 
 type ObservationLogApprovalListProps = {
@@ -124,6 +107,7 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
     if (product) {
         storeKey = is_product_group ? "observation_logs.approvalproductgroup" : "observation_logs.approvalproduct";
     }
+    const { primary, secondary } = approvalFilters(product, is_product_group);
     const listContext = useListController({
         filter: filter,
         perPage: getSettingRowsPerPage(),
@@ -160,7 +144,7 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
         <ResourceContextProvider value="observation_logs">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <FilterForm filters={listFilters(product, is_product_group)} />
+                    <FilterBar filters={primary} moreFilters={secondary} />
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid

@@ -1,8 +1,6 @@
-from datetime import timedelta
 from typing import Any, Optional
 
 from django.db.models import Q, QuerySet
-from django.utils import timezone
 from django_filters import (
     BooleanFilter,
     CharFilter,
@@ -15,6 +13,7 @@ from django_filters import (
 )
 
 from application.commons.api.extended_ordering_filter import ExtendedOrderingFilter
+from application.commons.services.functions import get_start_of_day
 from application.commons.types import Age_Choices
 from application.core.models import (
     Branch,
@@ -73,9 +72,7 @@ class ProductFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(last_observation_change__gte=time_threshold)
+        return queryset.filter(last_observation_change__gte=get_start_of_day(days))
 
     class Meta:
         model = Product
@@ -305,9 +302,7 @@ class ObservationFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(last_observation_log__gte=time_threshold)
+        return queryset.filter(last_observation_log__gte=get_start_of_day(days))
 
     def get_cve_known_exploited(
         self,
@@ -371,6 +366,9 @@ class ObservationLogFilter(FilterSet):
         field_name="observation__origin_kubernetes_qualified_resource",
         lookup_expr="icontains",
     )
+    origin_component_purl_type = CharFilter(field_name="observation__origin_component_purl_type")
+    scanner = CharFilter(field_name="observation__scanner", lookup_expr="icontains")
+    created = DateTimeFromToRangeFilter(field_name="created")
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -435,9 +433,7 @@ class ObservationLogFilter(FilterSet):
         if days is None:
             return queryset
 
-        today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        time_threshold = today - timedelta(days=int(days))
-        return queryset.filter(created__gte=time_threshold)
+        return queryset.filter(created__gte=get_start_of_day(days))
 
 
 class EvidenceFilter(FilterSet):
@@ -519,6 +515,8 @@ class PotentialDuplicateFilter(FilterSet):
 
 
 class ComponentFilter(FilterSet):
+    name = CharFilter(field_name="name", lookup_expr="icontains")
+    version = CharFilter(field_name="version", lookup_expr="icontains")
     name_version = CharFilter(field_name="name_version", lookup_expr="icontains")
     purl_namespace = CharFilter(field_name="purl_namespace", lookup_expr="icontains")
     # has_active_observations, has_inactive_observations and has_licenses are annotated in get_components()

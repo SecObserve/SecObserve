@@ -20,6 +20,7 @@ class CSAFFilter(FilterSet):
     vulnerability_names__name = CharFilter(
         field_name="vulnerability_names__name", lookup_expr="icontains", distinct=True
     )
+    branches__branch__name = CharFilter(field_name="branches__branch__name", lookup_expr="icontains", distinct=True)
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -46,6 +47,7 @@ class CSAFFilter(FilterSet):
         fields = [
             "product",
             "vulnerability_names__name",
+            "branches__branch__name",
             "document_id_prefix",
             "title",
             "publisher_name",
@@ -74,6 +76,7 @@ class OpenVEXFilter(FilterSet):
     vulnerability_names__name = CharFilter(
         field_name="vulnerability_names__name", lookup_expr="icontains", distinct=True
     )
+    branches__branch__name = CharFilter(field_name="branches__branch__name", lookup_expr="icontains", distinct=True)
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -96,6 +99,7 @@ class OpenVEXFilter(FilterSet):
         fields = [
             "product",
             "vulnerability_names__name",
+            "branches__branch__name",
             "document_id_prefix",
             "author",
         ]
@@ -123,6 +127,7 @@ class CycloneDXFilter(FilterSet):
     vulnerability_names__name = CharFilter(
         field_name="vulnerability_names__name", lookup_expr="icontains", distinct=True
     )
+    branches__branch__name = CharFilter(field_name="branches__branch__name", lookup_expr="icontains", distinct=True)
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -145,6 +150,7 @@ class CycloneDXFilter(FilterSet):
         fields = [
             "product",
             "vulnerability_names__name",
+            "branches__branch__name",
             "document_id_prefix",
             "author",
         ]

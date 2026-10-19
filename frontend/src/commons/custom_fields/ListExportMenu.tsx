@@ -12,10 +12,18 @@ import { useListContext, useNotify } from "react-admin";
 import { useNavigate } from "react-router-dom";
 
 import { fetch_get } from "../../access_control/auth_provider/fetch_instance";
-import { getIconAndFontColor } from "../../commons/functions";
-import { getOrderingQuery } from "../../commons/ra-data-django-rest-framework";
+import { getIconAndFontColor } from "../functions";
+import { getOrderingQuery } from "../ra-data-django-rest-framework";
+import { resolveDateFilters } from "./DateRangeFilter";
 
-const ExportMenu = () => {
+type ListExportMenuProps = {
+    resource: string;
+    title: string;
+    pivotTable?: boolean;
+};
+
+// Exports the list with its filters and sort order
+const ListExportMenu = ({ resource, title, pivotTable }: ListExportMenuProps) => {
     const notify = useNotify();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -74,16 +82,16 @@ const ExportMenu = () => {
         handleClose();
     };
 
-    const exportObservationsExcel = async () => {
-        exportDataExcel("/observations/export_excel/?" + queryParams(), "observations.xlsx", "Observations");
+    const exportExcel = async () => {
+        exportDataExcel(`/${resource}/export_excel/?` + queryParams(), `${resource}.xlsx`, title);
     };
 
-    const exportObservationsCsv = async () => {
-        exportDataCsv("/observations/export_csv/?" + queryParams(), "observations.csv", "Observations");
+    const exportCsv = async () => {
+        exportDataCsv(`/${resource}/export_csv/?` + queryParams(), `${resource}.csv`, title);
     };
 
     const queryParams = () => {
-        const query = { ...filterValues, ...getOrderingQuery({ sort }) };
+        const query = { ...resolveDateFilters(filterValues), ...getOrderingQuery({ sort }) };
         return queryString.stringify(query);
     };
 
@@ -112,33 +120,37 @@ const ExportMenu = () => {
                     },
                 }}
             >
-                <MenuItem onClick={exportObservationsExcel}>
+                <MenuItem onClick={exportExcel}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileExcel} color={getIconAndFontColor()} />
                     </ListItemIcon>
-                    Observations / Excel
+                    {title} / Excel
                 </MenuItem>
-                <MenuItem onClick={exportObservationsCsv}>
+                <MenuItem onClick={exportCsv}>
                     <ListItemIcon>
                         <FontAwesomeIcon icon={faFileCsv} color={getIconAndFontColor()} />
                     </ListItemIcon>
-                    Observations / CSV
+                    {title} / CSV
                 </MenuItem>
-                <Divider />
-                <MenuItem
-                    onClick={() => {
-                        navigate("/pivot_table?" + queryParams());
-                        handleClose();
-                    }}
-                >
-                    <ListItemIcon>
-                        <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
-                    </ListItemIcon>
-                    Observations / Pivot Table
-                </MenuItem>
+                {pivotTable && (
+                    <Fragment>
+                        <Divider />
+                        <MenuItem
+                            onClick={() => {
+                                navigate("/pivot_table?" + queryParams());
+                                handleClose();
+                            }}
+                        >
+                            <ListItemIcon>
+                                <PivotTableChartIcon sx={{ color: getIconAndFontColor() }} />
+                            </ListItemIcon>
+                            Observations / Pivot Table
+                        </MenuItem>
+                    </Fragment>
+                )}
             </Menu>
         </Fragment>
     );
 };
 
-export default ExportMenu;
+export default ListExportMenu;

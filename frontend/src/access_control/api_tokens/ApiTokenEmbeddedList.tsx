@@ -1,6 +1,5 @@
 import {
     Datagrid,
-    DateField,
     ListContextProvider,
     ResourceContextProvider,
     SelectField,
@@ -12,6 +11,7 @@ import {
 import { Fragment } from "react/jsx-runtime";
 
 import { PERMISSION_PRODUCT_API_TOKEN_REVOKE, ROLE_CHOICES } from "../../access_control/types";
+import { DateField } from "../../commons/custom_fields/DateField";
 import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";
 import ApiTokenRevoke from "./ApiTokenRevoke";
 

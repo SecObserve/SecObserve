@@ -8,7 +8,6 @@ import {
     BooleanInput,
     ChipField,
     Datagrid,
-    DateField,
     Labeled,
     ReferenceField,
     ReferenceInput,
@@ -19,6 +18,7 @@ import {
 import { useWatch } from "react-hook-form";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 
+import { DateField } from "../commons/custom_fields/DateField";
 // import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
 // import rego from "react-syntax-highlighter/dist/esm/languages/prism/rego";
 
