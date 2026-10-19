@@ -1,6 +1,8 @@
+import time
 from unittest.mock import patch
 
 import jwt
+from cryptography.hazmat.primitives.asymmetric import ec
 from django.core.management import call_command
 from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
@@ -137,7 +139,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_nbf": True,
             },
             key="test_key",
-            algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
+            algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
             leeway=9,
         )
@@ -176,7 +178,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_nbf": True,
             },
             key="test_key",
-            algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
+            algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
             leeway=0,
         )
@@ -231,7 +233,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_nbf": True,
             },
             key="test_key",
-            algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
+            algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
             leeway=7,
         )
@@ -286,13 +288,48 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_nbf": True,
             },
             key="test_key",
-            algorithms=["RS256", "RS384", "RS512", "ES256 ", "ES384", "ES512", "EdDSA"],
+            algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
             leeway=5,
         )
         check_user_change_mock.assert_called_once_with(
             self.user_internal, {"preferred_username": self.user_internal.username}
         )
+
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.get_user_by_username")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._check_user_change")
+    def test_validate_jwt_es256(
+        self,
+        check_user_change_mock,
+        get_user_mock,
+        get_signing_key_mock,
+        pyjwkclient_mock,
+        jwks_uri_mock,
+    ):
+        private_key = ec.generate_private_key(ec.SECP256R1())
+        token = jwt.encode(
+            {
+                "preferred_username": self.user_internal.username,
+                "aud": "client_id",
+                "exp": int(time.time()) + 300,
+            },
+            private_key,
+            algorithm="ES256",
+        )
+        jwks_uri_mock.return_value = "test_jwks_uri"
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK(private_key.public_key())
+        get_user_mock.return_value = self.user_internal
+        check_user_change_mock.return_value = self.user_internal
+
+        oidc_authentication = OIDCAuthentication()
+        user, payload = oidc_authentication._validate_jwt(token)
+
+        self.assertEqual(self.user_internal, user)
+        self.assertEqual(self.user_internal.username, payload["preferred_username"])
 
     @patch("requests.request")
     def test_get_jwks_uri(self, requests_mock):
