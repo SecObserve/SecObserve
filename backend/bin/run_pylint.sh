@@ -29,6 +29,8 @@ export OIDC_GROUPS=dummy
 # --- Huey ---
 export HUEY_IMMEDIATE=true
 export HUEY_SQLITE_URL=sqlite:///:memory:
+# --- Time zone ---
+export TIME_ZONE=Etc/UTC
 
 if [ -z "$GITHUB_WORKSPACE" ]; then 
     pylint application
