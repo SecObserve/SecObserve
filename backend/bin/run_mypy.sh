@@ -31,7 +31,7 @@ export HUEY_IMMEDIATE=true
 export HUEY_SQLITE_URL=sqlite:///:memory:
 
 if [ -z "$GITHUB_WORKSPACE" ]; then 
-    mypy application
+    mypy --show-traceback application
 else 
-    poetry run mypy application
+    poetry run mypy --show-traceback application
 fi
