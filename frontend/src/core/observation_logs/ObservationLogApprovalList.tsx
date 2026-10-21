@@ -8,6 +8,7 @@ import {
     ListContextProvider,
     ReferenceInput,
     ResourceContextProvider,
+    SelectField,
     TextField,
     TextInput,
     WithListContext,
@@ -29,7 +30,13 @@ import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWidth";
 import { feature_vex_enabled, getUserOptionText, has_attribute } from "../../commons/functions";
 import { originFilters } from "../observations/ObservationFilterBar";
-import { ASSESSMENT_STATUS_NEEDS_APPROVAL, OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES } from "../types";
+import {
+    ASSESSMENT_STATUS_NEEDS_APPROVAL,
+    OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES,
+    OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_CHOICES,
+    OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
+} from "../types";
 import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
 import { ObservationLogComponent } from "./ObservationLogShow";
@@ -233,9 +240,10 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                     <ObservationLogPriorityField source="priority" sortable={false} />
                                 )}
                                 {feature_vex_enabled() && has_attribute("vex_justification", data, sort) && (
-                                    <TextField
+                                    <SelectField
                                         label="VEX justification"
                                         source="vex_justification"
+                                        choices={OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES}
                                         emptyText="---"
                                         sx={{ wordBreak: "break-word" }}
                                     />
@@ -255,7 +263,12 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                             label="VEX remediations"
                                             render={(record) =>
                                                 record.vex_remediations
-                                                    ?.map((remediation: any) => remediation.category)
+                                                    ?.map(
+                                                        (remediation: any) =>
+                                                            OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES.find(
+                                                                (choice) => choice.id === remediation.category
+                                                            )?.name ?? remediation.category
+                                                    )
                                                     .join(", ") || "---"
                                             }
                                             sortable={false}

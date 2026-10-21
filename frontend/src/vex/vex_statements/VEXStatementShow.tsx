@@ -3,6 +3,7 @@ import {
     ChipField,
     PrevNextButtons,
     ReferenceField,
+    SelectField,
     Show,
     SimpleShowLayout,
     TextField,
@@ -13,6 +14,7 @@ import {
 
 import vex_statements from ".";
 import { useStyles } from "../../commons/layout/themes";
+import { OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES } from "../../core/types";
 
 const ShowActions = () => {
     const vex_statement = useRecordContext();
@@ -56,7 +58,9 @@ const VEXStatementShow = () => {
                             <TextField source="description" sx={{ whiteSpace: "pre-line" }} />
                         )}
                         <ChipField source="status" />
-                        {vex_statement.justification && <TextField source="justification" />}
+                        {vex_statement.justification && (
+                            <SelectField source="justification" choices={OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES} />
+                        )}
                         {vex_statement.impact && <TextField source="impact" />}
                         {vex_statement.remediation && <TextField source="remediation" />}
                         {vex_statement.product_purl && <TextField source="product_purl" label="Product PURL" />}

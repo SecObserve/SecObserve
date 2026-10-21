@@ -10,6 +10,7 @@ import {
     NumberField,
     PrevNextButtons,
     ReferenceField,
+    SelectField,
     Show,
     SortPayload,
     TextField,
@@ -23,7 +24,12 @@ import { DateField } from "../../commons/custom_fields/DateField";
 import MarkdownField from "../../commons/custom_fields/MarkdownField";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { is_superuser } from "../../commons/functions";
-import { ASSESSMENT_STATUS_NEEDS_APPROVAL, ASSESSMENT_STATUS_REJECTED } from "../types";
+import {
+    ASSESSMENT_STATUS_NEEDS_APPROVAL,
+    ASSESSMENT_STATUS_REJECTED,
+    OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES,
+    OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
+} from "../types";
 import AssessmentApproval from "./AssessmentApproval";
 import ObservationLogShowAside from "./ObservationLogShowAside";
 
@@ -127,7 +133,10 @@ export const ObservationLogComponent = () => {
                             )}
                             {observation_log.vex_justification && (
                                 <Labeled label="VEX justification">
-                                    <TextField source="vex_justification" />
+                                    <SelectField
+                                        source="vex_justification"
+                                        choices={OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES}
+                                    />
                                 </Labeled>
                             )}
                             {observation_log.vex_remediations && observation_log.vex_remediations.length > 0 && (
@@ -138,7 +147,10 @@ export const ObservationLogComponent = () => {
                                             header={VEXRemediationHeader}
                                             sx={{ paddingBottom: 2 }}
                                         >
-                                            <TextField source="category" />
+                                            <SelectField
+                                                source="category"
+                                                choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                                            />
                                             <TextField source="text" />
                                         </Datagrid>
                                     </ArrayField>
