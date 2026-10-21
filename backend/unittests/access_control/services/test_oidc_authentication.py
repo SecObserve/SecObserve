@@ -1,8 +1,10 @@
+import os
 import time
 from unittest.mock import patch
 
 import jwt
 from cryptography.hazmat.primitives.asymmetric import ec
+from django.core.cache import cache
 from django.core.management import call_command
 from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
@@ -104,11 +106,11 @@ class TestOIDCAuthentication(BaseTestCase):
     # --- _validate_jwt ---
 
     @patch("application.access_control.services.oidc_authentication.decode")
-    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
-    def test_validate_jwt_message(self, get_signing_key_mock, pyjwkclient_mock, jwks_uri_mock, jwt_mock):
-        jwks_uri_mock.return_value = "test_jwks_uri"
+    def test_validate_jwt_message(self, get_signing_key_mock, pyjwkclient_mock, openid_configuration_mock, jwt_mock):
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
         pyjwkclient_mock.return_value = None
         mock_py_jwk = MockPyJWK("test_key")
         get_signing_key_mock.return_value = mock_py_jwk
@@ -124,7 +126,7 @@ class TestOIDCAuthentication(BaseTestCase):
             oidc_authentication._validate_jwt("token")
 
         self.assertEqual("Signature expired", str(e.exception))
-        jwks_uri_mock.assert_called_once()
+        openid_configuration_mock.assert_called_once()
         pyjwkclient_mock.assert_called_once_with("test_jwks_uri")
         get_signing_key_mock.assert_called_once_with("token")
         jwt_mock.assert_called_with(
@@ -133,7 +135,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_signature": True,
                 "verify_aud": True,
                 "strict_aud": True,
-                "require": ["exp"],
+                "require": ["exp", "iss"],
                 "verify_iat": True,
                 "verify_exp": True,
                 "verify_nbf": True,
@@ -141,17 +143,18 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            issuer="https://authority",
             leeway=9,
         )
 
     @patch("application.access_control.services.oidc_authentication.decode")
-    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     def test_validate_jwt_strict_audience_disabled(
-        self, get_signing_key_mock, pyjwkclient_mock, jwks_uri_mock, jwt_mock
+        self, get_signing_key_mock, pyjwkclient_mock, openid_configuration_mock, jwt_mock
     ):
-        jwks_uri_mock.return_value = "test_jwks_uri"
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
         pyjwkclient_mock.return_value = None
         mock_py_jwk = MockPyJWK("test_key")
         get_signing_key_mock.return_value = mock_py_jwk
@@ -172,7 +175,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_signature": True,
                 "verify_aud": True,
                 "strict_aud": False,
-                "require": ["exp"],
+                "require": ["exp", "iss"],
                 "verify_iat": True,
                 "verify_exp": True,
                 "verify_nbf": True,
@@ -180,11 +183,12 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            issuer="https://authority",
             leeway=0,
         )
 
     @patch("application.access_control.services.oidc_authentication.decode")
-    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
@@ -195,10 +199,10 @@ class TestOIDCAuthentication(BaseTestCase):
         get_user_mock,
         get_signing_key_mock,
         pyjwkclient_mock,
-        jwks_uri_mock,
+        openid_configuration_mock,
         jwt_mock,
     ):
-        jwks_uri_mock.return_value = "test_jwks_uri"
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
         pyjwkclient_mock.return_value = None
         mock_py_jwk = MockPyJWK("test_key")
         get_signing_key_mock.return_value = mock_py_jwk
@@ -218,7 +222,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual(user, expected_user)
         self.assertEqual({"preferred_username": "test_username"}, payload)
         get_user_mock.assert_called_with("test_username")
-        jwks_uri_mock.assert_called_once()
+        openid_configuration_mock.assert_called_once()
         pyjwkclient_mock.assert_called_once_with("test_jwks_uri")
         get_signing_key_mock.assert_called_once_with("token")
         jwt_mock.assert_called_with(
@@ -227,7 +231,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_signature": True,
                 "verify_aud": True,
                 "strict_aud": True,
-                "require": ["exp"],
+                "require": ["exp", "iss"],
                 "verify_iat": True,
                 "verify_exp": True,
                 "verify_nbf": True,
@@ -235,12 +239,13 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            issuer="https://authority",
             leeway=7,
         )
         create_user_mock.assert_called_once_with("test_username", {"preferred_username": "test_username"})
 
     @patch("application.access_control.services.oidc_authentication.decode")
-    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
@@ -251,10 +256,10 @@ class TestOIDCAuthentication(BaseTestCase):
         get_user_mock,
         get_signing_key_mock,
         pyjwkclient_mock,
-        jwks_uri_mock,
+        openid_configuration_mock,
         jwt_mock,
     ):
-        jwks_uri_mock.return_value = "test_jwks_uri"
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
         pyjwkclient_mock.return_value = None
         mock_py_jwk = MockPyJWK("test_key")
         get_signing_key_mock.return_value = mock_py_jwk
@@ -273,7 +278,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual(self.user_internal, user)
         self.assertEqual({"preferred_username": self.user_internal.username}, payload)
         get_user_mock.assert_called_with(self.user_internal.username)
-        jwks_uri_mock.assert_called_once()
+        openid_configuration_mock.assert_called_once()
         pyjwkclient_mock.assert_called_once_with("test_jwks_uri")
         get_signing_key_mock.assert_called_once_with("token")
         jwt_mock.assert_called_with(
@@ -282,7 +287,7 @@ class TestOIDCAuthentication(BaseTestCase):
                 "verify_signature": True,
                 "verify_aud": True,
                 "strict_aud": True,
-                "require": ["exp"],
+                "require": ["exp", "iss"],
                 "verify_iat": True,
                 "verify_exp": True,
                 "verify_nbf": True,
@@ -290,13 +295,14 @@ class TestOIDCAuthentication(BaseTestCase):
             key="test_key",
             algorithms=["RS256", "RS384", "RS512", "ES256", "ES384", "ES512", "EdDSA"],
             audience="client_id",
+            issuer="https://authority",
             leeway=5,
         )
         check_user_change_mock.assert_called_once_with(
             self.user_internal, {"preferred_username": self.user_internal.username}
         )
 
-    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_jwks_uri")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
@@ -307,19 +313,20 @@ class TestOIDCAuthentication(BaseTestCase):
         get_user_mock,
         get_signing_key_mock,
         pyjwkclient_mock,
-        jwks_uri_mock,
+        openid_configuration_mock,
     ):
         private_key = ec.generate_private_key(ec.SECP256R1())
         token = jwt.encode(
             {
                 "preferred_username": self.user_internal.username,
                 "aud": "client_id",
+                "iss": "https://authority",
                 "exp": int(time.time()) + 300,
             },
             private_key,
             algorithm="ES256",
         )
-        jwks_uri_mock.return_value = "test_jwks_uri"
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
         pyjwkclient_mock.return_value = None
         get_signing_key_mock.return_value = MockPyJWK(private_key.public_key())
         get_user_mock.return_value = self.user_internal
@@ -331,17 +338,138 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual(self.user_internal, user)
         self.assertEqual(self.user_internal.username, payload["preferred_username"])
 
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    def test_validate_jwt_foreign_issuer(self, get_signing_key_mock, pyjwkclient_mock, openid_configuration_mock):
+        private_key = ec.generate_private_key(ec.SECP256R1())
+        token = self._create_es256_token(private_key, "https://other-authority")
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK(private_key.public_key())
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            oidc_authentication = OIDCAuthentication()
+            oidc_authentication._validate_jwt(token)
+
+        self.assertEqual("Invalid issuer", str(e.exception))
+
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    def test_validate_jwt_no_issuer(self, get_signing_key_mock, pyjwkclient_mock, openid_configuration_mock):
+        private_key = ec.generate_private_key(ec.SECP256R1())
+        token = self._create_es256_token(private_key, None)
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK(private_key.public_key())
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            oidc_authentication = OIDCAuthentication()
+            oidc_authentication._validate_jwt(token)
+
+        self.assertEqual('Token is missing the "iss" claim', str(e.exception))
+
+    @patch.dict(os.environ, {"OIDC_ISSUER": "https://issuer"})
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.get_user_by_username")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._check_user_change")
+    def test_validate_jwt_configured_issuer(
+        self,
+        check_user_change_mock,
+        get_user_mock,
+        get_signing_key_mock,
+        pyjwkclient_mock,
+        openid_configuration_mock,
+    ):
+        private_key = ec.generate_private_key(ec.SECP256R1())
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK(private_key.public_key())
+        get_user_mock.return_value = self.user_internal
+        check_user_change_mock.return_value = self.user_internal
+
+        oidc_authentication = OIDCAuthentication()
+        user, payload = oidc_authentication._validate_jwt(self._create_es256_token(private_key, "https://issuer"))
+
+        self.assertEqual(self.user_internal, user)
+        self.assertEqual("https://issuer", payload["iss"])
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            oidc_authentication._validate_jwt(self._create_es256_token(private_key, "https://authority"))
+
+        self.assertEqual("Invalid issuer", str(e.exception))
+
+    def _create_es256_token(self, private_key: ec.EllipticCurvePrivateKey, issuer: str | None) -> str:
+        claims = {
+            "preferred_username": self.user_internal.username,
+            "aud": "client_id",
+            "exp": int(time.time()) + 300,
+        }
+        if issuer:
+            claims["iss"] = issuer
+        return jwt.encode(claims, private_key, algorithm="ES256")
+
     @patch("requests.request")
-    def test_get_jwks_uri(self, requests_mock):
+    def test_get_openid_configuration(self, requests_mock):
+        cache.delete("oidc_configuration")
         requests_mock.return_value = MockResponse()
         oidc_authentication = OIDCAuthentication()
-        jwks_uri = oidc_authentication._get_jwks_uri()
+        jwks_uri, issuer = oidc_authentication._get_openid_configuration()
 
         self.assertEqual("https://authority/.well-known/jwks.json", jwks_uri)
+        self.assertEqual("https://authority", issuer)
         requests_mock.assert_called_once_with(
             method="GET",
             url="https://authority/.well-known/openid-configuration",
             timeout=60,
+        )
+        cache.delete("oidc_configuration")
+
+    @patch("requests.request")
+    def test_get_openid_configuration_no_jwks_uri(self, requests_mock):
+        cache.delete("oidc_configuration")
+        requests_mock.return_value = MockResponse({"issuer": "https://authority"})
+        oidc_authentication = OIDCAuthentication()
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            oidc_authentication._get_openid_configuration()
+
+        self.assertEqual("No jwks_uri found in OpenID configuration", str(e.exception))
+
+    @patch("requests.request")
+    def test_get_openid_configuration_no_issuer(self, requests_mock):
+        cache.delete("oidc_configuration")
+        requests_mock.return_value = MockResponse({"jwks_uri": "https://authority/.well-known/jwks.json"})
+        oidc_authentication = OIDCAuthentication()
+        jwks_uri, issuer = oidc_authentication._get_openid_configuration()
+
+        self.assertEqual("https://authority/.well-known/jwks.json", jwks_uri)
+        self.assertEqual("", issuer)
+        cache.delete("oidc_configuration")
+
+    # --- _get_issuer ---
+
+    def test_get_issuer_discovered(self):
+        oidc_authentication = OIDCAuthentication()
+        self.assertEqual("https://authority", oidc_authentication._get_issuer("https://authority"))
+
+    @patch.dict(os.environ, {"OIDC_ISSUER": "https://issuer"})
+    def test_get_issuer_from_environment(self):
+        oidc_authentication = OIDCAuthentication()
+        self.assertEqual("https://issuer", oidc_authentication._get_issuer("https://authority"))
+
+    def test_get_issuer_missing(self):
+        oidc_authentication = OIDCAuthentication()
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            oidc_authentication._get_issuer("")
+
+        self.assertEqual(
+            "No issuer found in OpenID configuration and OIDC_ISSUER is not set",
+            str(e.exception),
         )
 
     @patch("application.access_control.services.oidc_authentication.User.save")
@@ -624,8 +752,13 @@ class MockPyJWK:
 
 
 class MockResponse:
-    def __init__(self):
+    def __init__(self, json=None):
         self.raise_for_status_called = False
+        self._json = (
+            json
+            if json is not None
+            else {"jwks_uri": "https://authority/.well-known/jwks.json", "issuer": "https://authority"}
+        )
 
     def raise_for_status(self):
         self.raise_for_status_called = True
@@ -633,4 +766,4 @@ class MockResponse:
     def json(self):
         if not self.raise_for_status_called:
             raise Exception("raise_for_status not called")
-        return {"jwks_uri": "https://authority/.well-known/jwks.json"}
+        return self._json

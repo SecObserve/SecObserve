@@ -64,6 +64,17 @@ Frontend:
 | `OIDC_POST_LOGOUT_REDIRECT_URI` | `https://secobserve.example.com`                   |
 | `OIDC_PROMPT`                   | [no value]                                         |
 
+## Issuer validation
+
+The backend only accepts tokens whose issuer (`iss` claim) matches the `issuer` published in the OpenID configuration at `OIDC_AUTHORITY/.well-known/openid-configuration`.
+
+The backend environment variable `OIDC_ISSUER` needs to be set in these cases:
+
+* The backend reaches the OpenID Connect provider with another URL than the browser, e.g. an internal service name in Docker or Kubernetes. Many providers, like Keycloak without a configured hostname, issue the tokens for the URL used by the browser. `OIDC_ISSUER` has to be set to that URL, e.g. `https://keycloak.example.com/realms/NAME_OF_REALM`.
+* The provider publishes a templated issuer, like the multi-tenant endpoints of Microsoft Entra ID with `{tenantid}`. `OIDC_ISSUER` has to be set to the issuer of the tenant, e.g. `https://login.microsoftonline.com/TENANT_ID/v2.0`.
+
+If the issuer doesn't match, the backend rejects the token with the message `Invalid issuer`.
+
 ## Customize the login dialog
 
 If users should only be able to sign in with OpenID Connect, the login dialog can be customized to hide user and password fields. This can be done by setting the `Disable user login` option in the `Settings` dialog:
