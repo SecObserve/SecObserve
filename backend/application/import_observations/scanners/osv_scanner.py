@@ -10,6 +10,7 @@ from application.import_observations.parsers.osv.parser import (
     OSV_Component,
     OSV_Vulnerability,
     OSVParser,
+    create_osv_session,
 )
 from application.import_observations.scanners.base_scanner import (
     BaseScanner,
@@ -74,9 +75,10 @@ class OSVScanner(BaseScanner):
 
         page_tokens: dict[str, str] = {}
         pending = purls
-        while pending:
-            page_tokens = self._query_purl_page(pending, page_tokens, vulnerabilities)
-            pending = list(page_tokens)
+        with create_osv_session() as session:
+            while pending:
+                page_tokens = self._query_purl_page(session, pending, page_tokens, vulnerabilities)
+                pending = list(page_tokens)
 
         # Tuples, because CPython shares one empty tuple: most purls have no vulnerabilities at
         # all, and the cache holds every purl of the whole scan run.
@@ -84,6 +86,7 @@ class OSVScanner(BaseScanner):
 
     def _query_purl_page(
         self,
+        session: requests.Session,
         purls: list[str],
         page_tokens: dict[str, str],
         vulnerabilities: dict[str, set[OSV_Vulnerability]],
@@ -95,8 +98,7 @@ class OSVScanner(BaseScanner):
                 queries=[RequestPackage(RequestPURL(purl=purl), page_tokens.get(purl)) for purl in purls_batch]
             )
 
-            response = requests.post(  # nosec B113
-                # This is a false positive, there is a timeout of 5 minutes
+            response = session.post(
                 url=OSV_QUERYBATCH_URL,
                 data=jsonpickle.encode(queries, unpicklable=False),
                 timeout=OSV_QUERYBATCH_TIMEOUT,
