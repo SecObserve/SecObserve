@@ -1,10 +1,11 @@
 import hashlib
 import re
+from contextlib import suppress
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import urlparse
 
-from cvss import CVSS3, CVSS4
+from cvss import CVSS3, CVSS4, CVSSError
 from packageurl import PackageURL
 
 from application.core.models import Component, Observation
@@ -72,11 +73,14 @@ def _get_string_to_hash(observation: Observation) -> str:  # pylint: disable=too
 
 
 def get_current_severity(observation: Observation) -> str:
-    if observation.cvss3_vector:
-        observation.cvss3_score = CVSS3(observation.cvss3_vector).base_score
+    # Scanners deliver malformed vectors, e.g. of another CVSS version, which must not fail the whole import
+    with suppress(CVSSError):
+        if observation.cvss3_vector:
+            observation.cvss3_score = CVSS3(observation.cvss3_vector).base_score
 
-    if observation.cvss4_vector:
-        observation.cvss4_score = CVSS4(observation.cvss4_vector).base_score
+    with suppress(CVSSError):
+        if observation.cvss4_vector:
+            observation.cvss4_score = CVSS4(observation.cvss4_vector).base_score
 
     if observation.assessment_severity:
         return observation.assessment_severity

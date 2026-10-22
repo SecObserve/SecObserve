@@ -202,6 +202,15 @@ class TestObservation(BaseTestCase):
         )
         self.assertEqual(Severity.SEVERITY_NONE, get_current_severity(observation))
 
+    def test_get_current_severity_cvss4_vector_of_wrong_version(self):
+        observation = Observation(
+            title="parser_severity",
+            cvss3_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            cvss4_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        )
+        self.assertEqual(Severity.SEVERITY_CRITICAL, get_current_severity(observation))
+        self.assertIsNone(observation.cvss4_score)
+
     # --- get_current_status ---
 
     def test_get_current_status_open(self):
