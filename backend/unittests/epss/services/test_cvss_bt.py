@@ -238,6 +238,7 @@ class TestCVSS_BT(BaseTestCase):
             self.assertEqual("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", observation.cvss3_vector)
             self.assertEqual(7.5, observation.cvss3_score)
             self.assertEqual(Severity.SEVERITY_HIGH, observation.current_severity)
+            self.assertEqual(Severity.NUMERICAL_SEVERITIES[Severity.SEVERITY_HIGH], observation.numerical_severity)
 
 
 class MockResponse:

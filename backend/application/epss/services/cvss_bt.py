@@ -29,6 +29,7 @@ EXPLOIT_INFORMATION_FIELDS = (
     "cvss4_vector",
     "cve_found_in",
     "current_severity",
+    "numerical_severity",
     "parser_severity",
     "rule_severity",
     "rule_rego_severity",
@@ -171,6 +172,7 @@ def apply_exploit_information_observations(settings: Settings) -> int:
                 "cvss4_vector",
                 "cve_found_in",
                 "current_severity",
+                "numerical_severity",
             ],
         )
 
@@ -226,6 +228,8 @@ def apply_exploit_information(
             )
         ):
             observation.current_severity = get_current_severity(observation)
+            # bulk_update bypasses the pre_save signal, which would set it from the current severity
+            observation.numerical_severity = Severity.NUMERICAL_SEVERITIES[observation.current_severity]
             return True
 
         return False
