@@ -41,6 +41,7 @@ def _get_excludes() -> list[str]:
         "id",
         "pk",
         "objects",
+        "last_observation_change",
     ]
 
 

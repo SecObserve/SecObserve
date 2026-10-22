@@ -1,5 +1,7 @@
+from datetime import timedelta
 from unittest.mock import Mock, call, patch
 
+from django.utils import timezone
 from rest_framework.serializers import ValidationError
 
 from application.access_control.models import Authorization_Group
@@ -9,6 +11,7 @@ from application.core.api.serializers_observation import (
     ObservationLogApprovalBaseSerializer,
     ObservationLogApprovalSerializer,
     ObservationLogBulkApprovalSerializer,
+    ObservationUpdateSerializer,
     _get_origin_cloud_resource_url,
 )
 from application.core.api.serializers_product import (
@@ -21,11 +24,15 @@ from application.core.api.serializers_product import (
     ProductSerializer,
 )
 from application.core.models import (
+    Branch,
     Observation,
+    Observation_Log,
     Product,
     Product_Authorization_Group_Member,
 )
 from application.core.types import Assessment_Status, Severity, Status
+from application.import_observations.models import Parser
+from application.import_observations.types import Parser_Source, Parser_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -56,6 +63,27 @@ class TestProductSerializer(BaseTestCase):
 
         self.assertNotIn("issue_tracker_api_key", NestedProductSerializer(self.product_1).data)
         self.assertNotIn("issue_tracker_api_key", NestedProductListSerializer(self.product_1).data)
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    def test_update_keeps_change_timestamps(self, mock_permissions):
+        mock_permissions.return_value = True
+        self.product_1.repository_default_branch = None
+        self.product_1.save()
+        last_observation_change = self.product_1.last_observation_change
+        last_license_change = self.product_1.last_license_change
+
+        # The UI sends back the values it has loaded, which may be older than the current ones
+        serializer = ProductSerializer(
+            self.product_1,
+            data={"last_observation_change": "2020-01-01T00:00:00Z", "last_license_change": "2020-01-01T00:00:00Z"},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+
+        self.product_1.refresh_from_db()
+        self.assertEqual(last_observation_change, self.product_1.last_observation_change)
+        self.assertEqual(last_license_change, self.product_1.last_license_change)
 
 
 class TestBranchSerializerSecurityGate(BaseTestCase):
@@ -1156,3 +1184,37 @@ class TestValidatePropagateBranches(BaseTestCase):
                 with self.assertRaises(ValidationError) as e:
                     serializer.validate_propagate_branches([{"propagate_to": "["}])
                 self.assertIn("propagate_to is not a valid regular expression", str(e.exception))
+
+
+class TestObservationUpdateSerializer(BaseTestCase):
+    def test_changed_branch_marks_product_as_changed(self):
+        product = Product.objects.create(name="product")
+        branch_main = Branch.objects.create(product=product, name="main", is_default_branch=True)
+        branch_feature = Branch.objects.create(product=product, name="feature")
+        parser, _ = Parser.objects.get_or_create(
+            name="Manual", defaults={"type": Parser_Type.TYPE_MANUAL, "source": Parser_Source.SOURCE_MANUAL}
+        )
+        observation = Observation.objects.create(
+            title="observation",
+            product=product,
+            branch=branch_main,
+            parser=parser,
+            parser_severity=Severity.SEVERITY_HIGH,
+            parser_status=Status.STATUS_OPEN,
+            import_last_seen=timezone.now(),
+        )
+        last_change = timezone.now() - timedelta(days=1)
+        Product.objects.filter(pk=product.pk).update(last_observation_change=last_change)
+        observation = Observation.objects.get(pk=observation.pk)
+
+        serializer = ObservationUpdateSerializer(
+            observation,
+            data={"branch": branch_feature.pk, "parser_severity": Severity.SEVERITY_HIGH},
+            partial=True,
+        )
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+        serializer.save()
+
+        product.refresh_from_db()
+        self.assertEqual(0, Observation_Log.objects.filter(observation=observation).count())
+        self.assertGreater(product.last_observation_change, last_change)
