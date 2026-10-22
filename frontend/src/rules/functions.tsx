@@ -11,6 +11,7 @@ import {
     Labeled,
     ReferenceField,
     ReferenceInput,
+    SelectField,
     SimpleFormIterator,
     TextField,
     useRecordContext,
@@ -49,6 +50,7 @@ import {
 } from "../commons/layout/themes";
 import { VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX, VEX_JUSTIFICATION_TYPE_CYCLONEDX } from "../commons/types";
 import {
+    OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
     OBSERVATION_STATUS_CHOICES,
@@ -180,7 +182,10 @@ export const RuleShowComponent = ({ rule }: any) => {
                         )}
                         {feature_vex_enabled() && rule.new_vex_justification && (
                             <Labeled label="New VEX justification">
-                                <TextField source="new_vex_justification" />
+                                <SelectField
+                                    source="new_vex_justification"
+                                    choices={OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES}
+                                />
                             </Labeled>
                         )}
                         {feature_vex_enabled() && rule.new_vex_remediations && (
@@ -191,7 +196,10 @@ export const RuleShowComponent = ({ rule }: any) => {
                                         header={VEXRemediationHeader}
                                         sx={{ paddingBottom: 2 }}
                                     >
-                                        <TextField source="category" />
+                                        <SelectField
+                                            source="category"
+                                            choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                                        />
                                         <TextField source="text" />
                                     </Datagrid>
                                 </ArrayField>

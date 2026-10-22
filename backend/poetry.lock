@@ -302,14 +302,14 @@ testing = ["pytest (>=6,!=7.0.0)", "pytest-xdist (>=2)"]
 
 [[package]]
 name = "certifi"
-version = "2026.10.18"
+version = "2026.10.19"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "certifi-2026.10.18-py3-none-any.whl", hash = "sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62"},
-    {file = "certifi-2026.10.18.tar.gz", hash = "sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e"},
+    {file = "certifi-2026.10.19-py3-none-any.whl", hash = "sha256:42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"},
+    {file = "certifi-2026.10.19.tar.gz", hash = "sha256:035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae"},
 ]
 
 [[package]]
@@ -1506,18 +1506,18 @@ tornado = ["tornado (>=6.5.7)"]
 
 [[package]]
 name = "html-to-markdown"
-version = "3.17.2"
+version = "3.18.1"
 description = "High-performance HTML to Markdown converter"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "html_to_markdown-3.17.2-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:56f926847daa5ac64b09d68a5ebf9c3f9430eeeca8b58d21e144ca355bed502a"},
-    {file = "html_to_markdown-3.17.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:f8c89bb60e80bf198f28ebc87272144dc53a1b9d8ad921b3c8346b8cb6c47c4f"},
-    {file = "html_to_markdown-3.17.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:950825d77566d22419c439d478a6ad2c313df869cf65c3fe5c9a2b5e80b1c682"},
-    {file = "html_to_markdown-3.17.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:b7cd3878f8cad0061df479baad1a65ea1277db5b9921de7ba23e4acd2abe419c"},
-    {file = "html_to_markdown-3.17.2-cp310-abi3-win_amd64.whl", hash = "sha256:e1cf82a4aa0b853bebbfe33df1c1c66d1e95da8d6adf674b354269d66d235543"},
-    {file = "html_to_markdown-3.17.2.tar.gz", hash = "sha256:fbe859ee45c5ea8b444ce3dea0bc3bcf7641561e64a30ad485244f3e8d99c76f"},
+    {file = "html_to_markdown-3.18.1-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:f4342b0771e3d084a3100b202c6a3dec7a0725d96343d766eb0c05efa78658f2"},
+    {file = "html_to_markdown-3.18.1-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:63fe47c3b38fa7b4feb269d1d413d550476ae2c48280b5db7a904208997f4c8c"},
+    {file = "html_to_markdown-3.18.1-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:f7acb8a776573cdc71dc0fc60d2e3b2038665fbfa0776ff45b544bbbff2ea021"},
+    {file = "html_to_markdown-3.18.1-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:4831435f07ffc10c24f26dfdcd67bf52742e0223c97d17f18b875528b3d2cded"},
+    {file = "html_to_markdown-3.18.1-cp310-abi3-win_amd64.whl", hash = "sha256:ddf6dba0c7d8f47a8889ee4be6d286da9bf23ca430fd027fdab4c9adf06fa017"},
+    {file = "html_to_markdown-3.18.1.tar.gz", hash = "sha256:1ccd353ca779164f53b97b9235c63f9645b54bcc2ac69cfc6ea582900eaad726"},
 ]
 
 [[package]]
@@ -1781,14 +1781,14 @@ test = ["MarkupSafe (>=0.23)", "PyYAML (>=5.1)", "docutils (>=0.21.2)", "flaky",
 
 [[package]]
 name = "jsonpickle"
-version = "4.1.3"
+version = "4.1.4"
 description = "jsonpickle encodes/decodes any Python object to/from JSON"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "jsonpickle-4.1.3-py3-none-any.whl", hash = "sha256:99822e77b593462c1f67361b0571e54323db43f1285706a63da5b5759714c9df"},
-    {file = "jsonpickle-4.1.3.tar.gz", hash = "sha256:de234c1d1ed2c5313833e608e2a2467202f48ae24ea7a2afa2d238d8999aa4b5"},
+    {file = "jsonpickle-4.1.4-py3-none-any.whl", hash = "sha256:c46024ba4acd8adb9a8b8485d074e141cbfacafe334c2aa982e5b32efabc2f0e"},
+    {file = "jsonpickle-4.1.4.tar.gz", hash = "sha256:8adf24cca611809b55ff5ed2ace850e1a3e4370dad5d363df71569b8f46c9645"},
 ]
 
 [package.extras]
@@ -4026,4 +4026,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "2b669f63d00c2a383c4abbe6cac6cbf290dc3359fec1661ad7d5b897f7dd2ee6"
+content-hash = "ab5b31ac92ef08b663bf67997008aa9b277db03c45b70ec93adc64520a0732fe"

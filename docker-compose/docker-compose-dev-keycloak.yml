@@ -64,7 +64,7 @@ services:
       - "5432:5432"
 
   mailpit:
-    image: axllent/mailpit:v1.31.5
+    image: axllent/mailpit:v1.31.6
     tmpfs:
       - /tmp
     ports:
