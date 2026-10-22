@@ -1,4 +1,3 @@
-from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import requests
@@ -7,6 +6,7 @@ from application.import_observations.models import Api_Configuration
 from application.import_observations.parsers.dependency_track.parser import (
     DependencyTrack,
 )
+from unittests.base_test_case import BaseTestCase
 
 
 def _response(findings: list[dict], total_count: str | None) -> MagicMock:
@@ -20,7 +20,7 @@ def _findings(start: int, count: int) -> list[dict]:
     return [{"vulnerability": {"vulnId": f"CVE-2026-{i:04d}"}} for i in range(start, start + count)]
 
 
-class TestDependencyTrackParser(TestCase):
+class TestDependencyTrackParser(BaseTestCase):
     def setUp(self) -> None:
         self.api_configuration = Api_Configuration(
             base_url="https://dtrack.example.com",
@@ -28,6 +28,7 @@ class TestDependencyTrackParser(TestCase):
             project_key="project_uuid",
             verify_ssl=True,
         )
+        super().setUp()
 
     @patch("application.import_observations.parsers.dependency_track.parser.requests")
     def test_invalid_connection(self, mock_requests: MagicMock) -> None:
@@ -97,3 +98,27 @@ class TestDependencyTrackParser(TestCase):
         self.assertFalse(messages)
         self.assertEqual(page_1, data)
         self.assertEqual(2, mock_requests.get.call_count)
+
+    @patch("application.import_observations.parsers.dependency_track.parser.requests")
+    def test_dependency_track_4_all_findings_in_one_response(self, mock_requests: MagicMock) -> None:
+        findings = _findings(0, 150)
+        mock_requests.get.return_value = _response(findings, "150")
+
+        result, messages, data = DependencyTrack().check_connection(self.api_configuration)
+
+        self.assertTrue(result)
+        self.assertFalse(messages)
+        self.assertEqual(findings, data)
+        mock_requests.get.assert_called_once()
+
+    @patch("application.import_observations.parsers.dependency_track.parser.requests")
+    def test_error_on_second_page(self, mock_requests: MagicMock) -> None:
+        page_2 = MagicMock()
+        page_2.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
+        mock_requests.get.side_effect = [_response(_findings(0, 100), "150"), page_2]
+
+        result, messages, data = DependencyTrack().check_connection(self.api_configuration)
+
+        self.assertFalse(result)
+        self.assertEqual(["Cannot access Dependency Track API: 500 Server Error"], messages)
+        self.assertFalse(data)
