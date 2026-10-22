@@ -66,7 +66,7 @@ class TestOSVScanner(BaseTestCase):
         self.service_frontend = Service.objects.get(product=self.product, name="db_service_internal_frontend")
         self.service_backend = Service.objects.get(product=self.product, name="db_service_internal_backend")
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
     @patch("application.import_observations.scanners.base_scanner._process_data")
     @patch("application.import_observations.scanners.base_scanner.Vulnerability_Check.objects.update_or_create")
@@ -104,7 +104,7 @@ class TestOSVScanner(BaseTestCase):
         mock_process_data.assert_not_called()
         mock_vulnerability_check.assert_not_called()
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
     @patch("application.import_observations.scanners.base_scanner._process_data")
     @patch("application.import_observations.scanners.base_scanner.Vulnerability_Check.objects.update_or_create")
@@ -182,7 +182,7 @@ class TestOSVScanner(BaseTestCase):
         mock_process_data.assert_called_once()
         mock_vulnerability_check.assert_called_once()
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     @patch("application.import_observations.scanners.osv_scanner.OSVParser.get_observations")
     @patch("application.import_observations.scanners.base_scanner._process_data")
     @patch("application.import_observations.scanners.base_scanner.Vulnerability_Check.objects.update_or_create")
@@ -287,7 +287,7 @@ class TestOSVScannerPurlCache(BaseTestCase):
         response.json.return_value = {"results": [{"vulns": []} for _ in range(number_of_results)]}
         return response
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     def test_a_purl_is_queried_once_per_scanner(self, mock_requests_post):
         mock_requests_post.return_value = self._response(1)
         scanner = OSVScanner()
@@ -298,7 +298,7 @@ class TestOSVScannerPurlCache(BaseTestCase):
 
         mock_requests_post.assert_called_once()
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     def test_a_purl_is_queried_once_per_scan(self, mock_requests_post):
         mock_requests_post.return_value = self._response(2)
         scanner = OSVScanner()
@@ -319,7 +319,7 @@ class TestOSVScannerPurlCache(BaseTestCase):
             mock_requests_post.call_args.kwargs["data"],
         )
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     def test_components_do_not_share_the_cached_vulnerabilities(self, mock_requests_post):
         mock_requests_post.return_value = self._response(1)
         scanner = OSVScanner()
