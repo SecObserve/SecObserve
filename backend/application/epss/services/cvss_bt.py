@@ -65,8 +65,8 @@ def import_cvss_bt() -> str:
             first_row = False
             continue
 
-        if len(row) != 17:
-            logger.warning("Row doesn't have 17 elements: %s", row)
+        if len(row) < 17:
+            logger.warning("Row has less than 17 elements: %s", row)
             continue
 
         cve = row[0]
@@ -107,8 +107,8 @@ def import_cvss_bt() -> str:
 
 
 def _check_first_row(row: list[str]) -> bool:
-    if len(row) != 17:
-        logger.error("First row doesn't have 17 elements: %s", row)
+    if len(row) < 17:
+        logger.error("First row has less than 17 elements: %s", row)
         return False
 
     errors = []
