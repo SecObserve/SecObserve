@@ -1,6 +1,6 @@
 import hashlib
+import logging
 import re
-from contextlib import suppress
 from decimal import Decimal
 from typing import Optional
 from urllib.parse import urlparse
@@ -11,6 +11,8 @@ from packageurl import PackageURL
 from application.core.models import Component, Observation
 from application.core.services.components import get_or_create_component
 from application.core.types import Severity, Status
+
+logger = logging.getLogger("secobserve.core")
 
 VERSION_REGEX = r"(?:\s|^)+(?:\d+:)?v?(\d+[\.\d]*)"  # NOSONAR
 VERSION_REGEX_COMPILED = re.compile(VERSION_REGEX)
@@ -74,13 +76,21 @@ def _get_string_to_hash(observation: Observation) -> str:  # pylint: disable=too
 
 def get_current_severity(observation: Observation) -> str:
     # Scanners deliver malformed vectors, e.g. of another CVSS version, which must not fail the whole import
-    with suppress(CVSSError):
-        if observation.cvss3_vector:
+    if observation.cvss3_vector:
+        try:
             observation.cvss3_score = CVSS3(observation.cvss3_vector).base_score
+        except CVSSError as e:
+            logger.warning(
+                "Malformed CVSS3 vector %s for %s: %s", observation.cvss3_vector, observation.vulnerability_id, str(e)
+            )
 
-    with suppress(CVSSError):
-        if observation.cvss4_vector:
+    if observation.cvss4_vector:
+        try:
             observation.cvss4_score = CVSS4(observation.cvss4_vector).base_score
+        except CVSSError as e:
+            logger.warning(
+                "Malformed CVSS4 vector %s for %s: %s", observation.cvss4_vector, observation.vulnerability_id, str(e)
+            )
 
     if observation.assessment_severity:
         return observation.assessment_severity
