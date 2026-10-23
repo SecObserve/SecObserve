@@ -1,9 +1,9 @@
-# Docker Compose override for development of VulnerableCode integration.
-# Usage: docker compose -f docker-compose-dev.yml -f docker-compose-dev-scancodeio.yaml up --build
+# Docker Compose override for development of ScanCode.io integration.
+# Usage: docker compose -f docker-compose/docker-compose-dev.yml -f docker-compose/docker-compose-dev-scancodeio.yaml up --build
 
 services:
   redis:
-    image: docker.io/library/redis:8.10.1-alpine
+    image: docker.io/library/redis:8.10.2-alpine
     # Enable redis data persistence using the "Append Only File" with the
     # default policy of fsync every second. See https://redis.io/topics/persistence
     command: redis-server --appendonly yes --loglevel warning
@@ -17,18 +17,18 @@ services:
       retries: 5
 
   scancodeio:
-    image: ghcr.io/aboutcode-org/scancode.io:v38.0.0-full
+    image: ghcr.io/aboutcode-org/scancode.io:v38.2.0-full
     command: sh -c "
         ./manage.py migrate &&
         ./manage.py collectstatic --no-input --verbosity 0 --clear &&
         gunicorn scancodeio.wsgi:application --bind :8000 --timeout 600 \
           --workers ${GUNICORN_WORKERS:-8} --worker-tmp-dir /dev/shm"
     env_file:
-      - ./docker/scancodeio/docker.env
+      - ../docker/scancodeio/docker.env
     expose:
       - 8000
     volumes:
-      - ./docker/scancodeio/.env:/opt/scancodeio/.env
+      - ../docker/scancodeio/.env:/opt/scancodeio/.env
       - dev_scancodeio_etc:/etc/scancodeio/
       - dev_scancodeio_workspace:/var/scancodeio/workspace/
       - dev_scancodeio_static:/var/scancodeio/static/
@@ -41,16 +41,16 @@ services:
         condition: service_healthy
 
   worker:
-    image: ghcr.io/aboutcode-org/scancode.io:v38.0.0-full
+    image: ghcr.io/aboutcode-org/scancode.io:v38.2.0-full
     # Ensure that potential db migrations run first by waiting until "scancodeio" is up
     command: wait-for-it --strict --timeout=600 scancodeio:8000 -- sh -c "
         ./manage.py rqworker --worker-class scancodeio.worker.ScanCodeIOWorker
                              --queue-class scancodeio.worker.ScanCodeIOQueue
                              --verbosity 1"
     env_file:
-      - ./docker/scancodeio/docker.env
+      - ../docker/scancodeio/docker.env
     volumes:
-      - ./docker/scancodeio/.env:/opt/scancodeio/.env
+      - ../docker/scancodeio/.env:/opt/scancodeio/.env
       - dev_scancodeio_etc:/etc/scancodeio/
       - dev_scancodeio_workspace:/var/scancodeio/workspace/
       - dev_scancodeio_healthycode_venv:/opt/healthycode
@@ -64,11 +64,11 @@ services:
         condition: service_started
 
   nginx:
-    image: docker.io/library/nginx:1.31.4-alpine
+    image: docker.io/library/nginx:1.31.8-alpine
     ports:
       - 4100:80
     volumes:
-      - ./docker/scancodeio/nginx/conf.d/:/etc/nginx/conf.d/
+      - ../docker/scancodeio/nginx/conf.d/:/etc/nginx/conf.d/
       - dev_scancodeio_static:/var/scancodeio/static/
       - dev_scancodeio_webroot:/var/www/html/
     depends_on:
