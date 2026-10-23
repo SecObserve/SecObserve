@@ -41,6 +41,7 @@ from application.metrics.api.views import (
     ProductMetricsStatusView,
     ProductMetricsTimelineView,
 )
+from application.scancodeio.api.views import CreateScanCodeIOProjectView
 from application.vex.api.views import (
     CSAFDocumentCreateView,
     CSAFDocumentUpdateView,
@@ -102,6 +103,7 @@ urlpatterns += [
         "api/products/<int:product_id>/<int:branch_id>/scan_vulnerablecode/",
         ScanVulnerableCodeBranchView.as_view(),
     ),
+    path("api/products/<int:product_id>/create_scancodeio_project/", CreateScanCodeIOProjectView.as_view()),
     path(
         "api/import/api_import_observations_by_name/",
         ApiImportObservationsByName.as_view(),

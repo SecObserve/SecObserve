@@ -36,7 +36,7 @@ import {
     PERMISSION_PRODUCT_RULE_CREATE,
     PERMISSION_SERVICE_CREATE,
 } from "../../access_control/types";
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, feature_scancodeio_integration } from "../../commons/functions";
 import TabsWithSubMenu from "../../commons/layout/TabsWithSubMenu";
 import { useStyles } from "../../commons/layout/themes";
 import observations from "../../core/observations";
@@ -56,6 +56,7 @@ import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
 import ProductRuleEmbeddedList from "../../rules/product_rules/ProductRuleEmbeddedList";
+import ScanCodeIOMenu from "../../scancodeio/ScanCodeIOMenu";
 import BranchCreate from "../branches/BranchCreate";
 import BranchEmbeddedList from "../branches/BranchEmbeddedList";
 import ShowDefaultBranchObservationsButton from "../branches/ShowDefaultBranchObservationsButton";
@@ -98,6 +99,9 @@ const ShowActions = (props: ShowActionsProps) => {
                     <ImportMenu product={product} />
                 )}
                 <ExportMenu product={product} is_product_group={false} />
+                {feature_scancodeio_integration() && product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && (
+                    <ScanCodeIOMenu product={product} />
+                )}
                 {product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>

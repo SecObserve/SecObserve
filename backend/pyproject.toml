@@ -192,7 +192,7 @@ type = "layers"
 layers = [
     "application.background_tasks",
     "application.import_observations",
-    "application.vex | application.epss | application.metrics",
+    "application.vex | application.epss | application.metrics | application.scancodeio",
     "application.core : application.issue_tracker : application.licenses : application.notifications : application.rules",
     "application.access_control : application.authorization",
     "application.commons",
@@ -240,6 +240,7 @@ containers = [
     "application.metrics",
     "application.notifications",
     "application.rules",
+    "application.scancodeio",
     "application.vex",
 ]
 ignore_imports = [

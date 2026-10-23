@@ -260,6 +260,7 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["post"], "/api/products/1/observations_bulk_delete/")
         self._check_authentication(["post"], "/api/products/1/observations_bulk_mark_duplicates/")
         self._check_authentication(["post"], "/api/products/1/license_components_bulk_delete/")
+        self._check_authentication(["post"], "/api/products/1/create_scancodeio_project/")
 
         self._check_authentication(["get"], "/api/products/1/export_observations_csv/")
         self._check_authentication(["get"], "/api/products/1/export_observations_excel/")
