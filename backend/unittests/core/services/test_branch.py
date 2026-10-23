@@ -1,6 +1,8 @@
+from datetime import timedelta
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.utils import timezone
 
 from application.core.models import Branch, Product
 from application.core.services.branch import set_default_branch
@@ -121,3 +123,17 @@ class TestSetBranchService(TestCase):
         mock_branch_objects.filter().exclude.assert_not_called()
         mock_product_save.assert_not_called()
         mock_branch_save.assert_not_called()
+
+    def test_changed_default_branch_marks_product_as_changed(self):
+        last_change = timezone.now() - timedelta(days=1)
+        Product.objects.filter(pk=self.product.pk).update(
+            last_observation_change=last_change, last_license_change=last_change
+        )
+
+        self.branch_non_default.is_default_branch = True
+        self.branch_non_default.save()
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.branch_non_default, self.product.repository_default_branch)
+        self.assertGreater(self.product.last_observation_change, last_change)
+        self.assertGreater(self.product.last_license_change, last_change)

@@ -188,6 +188,22 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     def __str__(self) -> str:
         return self.name
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # An instance loaded before a concurrent change must not reset the change timestamps,
+        # the product metrics are only recalculated when they change.
+        if not self._state.adding and kwargs.get("update_fields") is None:
+            unchanged_fields = {"last_observation_change", "last_license_change"} - self.get_dirty_fields().keys()
+            if unchanged_fields:
+                deferred_fields = self.get_deferred_fields()
+                kwargs["update_fields"] = [
+                    field.name
+                    for field in self._meta.concrete_fields
+                    if not field.primary_key
+                    and field.name not in unchanged_fields
+                    and field.attname not in deferred_fields
+                ]
+        super().save(*args, **kwargs)
+
 
 class Branch(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE)

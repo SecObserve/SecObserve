@@ -604,6 +604,12 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
         return super().validate(attrs)
 
+    def update(self, instance: Product, validated_data: dict) -> Product:
+        # Clients send back the change timestamps they have loaded, which may be older than the current ones
+        validated_data.pop("last_observation_change", None)
+        validated_data.pop("last_license_change", None)
+        return super().update(instance, validated_data)
+
     def validate_product_group(self, product: Product) -> Product:
         if product and product.is_product_group is False:
             raise ValidationError("Product group must be a product group")
