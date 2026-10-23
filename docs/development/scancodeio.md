@@ -10,6 +10,15 @@ To have a close integration between SecObserve and [ScanCode.io](https://scancod
 
 starts both SecObserve and ScanCode.io in one Docker Compose environment. The ScanCode.io UI can then be accessed with [http://localhost:4100/](http://localhost:4100/).
 
+Because authentication is activated, a user needs to be created in a shell of the `secobserve-scancodeio-1` container with:
+
+```bash
+./manage.py create-user --generate-api-key --admin --super admin
+```
+
+The API key of this user must be stored in the SecObserve settings for ScanCode.io.
+
+
 ## Funding
 
 <img src="https://nlnet.nl/logo/banner.svg" width="20%" alt="NLNet">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="https://nlnet.nl/image/logos/NGI0CommonsFund_tag.svg" width="20%" alt="NLNet">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[https://nlnet.nl/project/SecObservePlus](https://nlnet.nl/project/SecObservePlus)

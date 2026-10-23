@@ -19,6 +19,8 @@ import { VEX_JUSTIFICATION_TYPE_CHOICES } from "../../types";
 export const transformFeatures = (data: any) => {
     data.vulnerablecode_base_url ??= "";
     data.vulnerablecode_api_key ??= "";
+    data.scancodeio_base_url ??= "";
+    data.scancodeio_api_key ??= "";
 };
 
 export const FeaturesInputs = () => (
@@ -59,10 +61,6 @@ export const FeaturesInputs = () => (
                     />
                     <BooleanInput source="feature_license_management" label="Enable license management" />
                     <BooleanInput source="feature_automatic_osv_scanning" label="Enable automatic OSV scanning" />
-                    <BooleanInput
-                        source="feature_automatic_vulnerablecode_scanning"
-                        label="Enable automatic VulnerableCode scanning"
-                    />
                 </Stack>
             </Grid>
             <Grid size={3}>
@@ -73,6 +71,20 @@ export const FeaturesInputs = () => (
                         source="observation_count_from_metrics"
                         label="Calculate observation count from metrics"
                     />
+                </Stack>
+            </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ width: "100%" }}>
+            <Grid size={3}>
+                <Stack spacing={2}>
+                    <BooleanInput
+                        source="feature_automatic_vulnerablecode_scanning"
+                        label="Enable automatic VulnerableCode scanning"
+                    />
+                </Stack>
+            </Grid>
+            <Grid size={3}>
+                <Stack spacing={2}>
                     <Stack spacing={1}>
                         <TextInputWide
                             source="vulnerablecode_base_url"
@@ -92,6 +104,38 @@ export const FeaturesInputs = () => (
                             validate={validate_0_999999}
                         />
                     </Stack>
+                </Stack>
+            </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ width: "100%" }}>
+            <Grid size={3}>
+                <Stack spacing={2}>
+                    <BooleanInput
+                        source="feature_scancodeio_integration"
+                        label="Enable ScanCode.io integration"
+                    />
+                </Stack>
+            </Grid>
+            <Grid size={3}>
+                <Stack spacing={2}>
+                    <FormDataConsumer>
+                        {({ formData }) =>
+                            formData.feature_scancodeio_integration && (
+                                <Stack spacing={1}>
+                                    <TextInputWide
+                                        source="scancodeio_base_url"
+                                        label="ScanCode.io base URL"
+                                        validate={validate_255}
+                                    />
+                                    <TextInputWide
+                                        source="scancodeio_api_key"
+                                        label="ScanCode.io API key"
+                                        validate={validate_255}
+                                    />
+                                </Stack>
+                            )
+                        }
+                    </FormDataConsumer>
                 </Stack>
             </Grid>
         </Grid>
@@ -184,9 +228,6 @@ export const FeaturesFields = () => {
                         <Labeled label="Enable automatic OSV scanning">
                             <BooleanField source="feature_automatic_osv_scanning" />
                         </Labeled>
-                        <Labeled label="Enable automatic VulnerableCode scanning">
-                            <BooleanField source="feature_automatic_vulnerablecode_scanning" />
-                        </Labeled>
                     </Stack>
                 </Grid>
                 <Grid size={3}>
@@ -200,15 +241,23 @@ export const FeaturesFields = () => {
                         <Labeled label="Calculate observation count from metrics">
                             <BooleanField source="observation_count_from_metrics" />
                         </Labeled>
+                    </Stack>
+                </Grid>
+            </Grid>
+            <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
+                <Grid size={3}>
+                    <Stack spacing={2}>
+                        <Labeled label="Enable automatic VulnerableCode scanning">
+                            <BooleanField source="feature_automatic_vulnerablecode_scanning" />
+                        </Labeled>
+                    </Stack>
+                </Grid>
+                <Grid size={3}>
+                    <Stack spacing={2}>
                         <Stack spacing={1}>
                             {settings.vulnerablecode_base_url && (
                                 <Labeled label="VulnerableCode base URL">
                                     <TextField source="vulnerablecode_base_url" />
-                                </Labeled>
-                            )}
-                            {settings.vulnerablecode_api_key && (
-                                <Labeled label="VulnerableCode API key">
-                                    <TextField source="vulnerablecode_api_key" />
                                 </Labeled>
                             )}
                             {settings.vulnerablecode_base_url && (
@@ -217,6 +266,28 @@ export const FeaturesFields = () => {
                                 </Labeled>
                             )}
                         </Stack>
+                    </Stack>
+                </Grid>
+            </Grid>
+            <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
+                <Grid size={3}>
+                    <Stack spacing={2}>
+                        <Labeled label="Enable ScanCode.io integration">
+                            <BooleanField source="feature_scancodeio_integration" />
+                        </Labeled>
+                    </Stack>
+                </Grid>
+                <Grid size={3}>
+                    <Stack spacing={2}>
+                        {settings.feature_scancodeio_integration && (
+                            <Stack spacing={1}>
+                                {settings.scancodeio_base_url && (
+                                    <Labeled label="ScanCode.io base URL">
+                                        <TextField source="scancodeio_base_url" />
+                                    </Labeled>
+                                )}
+                            </Stack>
+                        )}
                     </Stack>
                 </Grid>
             </Grid>
