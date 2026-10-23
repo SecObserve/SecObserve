@@ -1,4 +1,5 @@
 from copy import deepcopy
+from unittest.mock import patch
 
 from application.core.models import Component, Observation, Service
 from application.core.services.observation import (
@@ -201,6 +202,28 @@ class TestObservation(BaseTestCase):
             cvss4_score=0,
         )
         self.assertEqual(Severity.SEVERITY_NONE, get_current_severity(observation))
+
+    @patch("application.core.services.observation.logger")
+    def test_get_current_severity_cvss4_vector_of_wrong_version(self, mock_logger):
+        observation = Observation(
+            title="parser_severity",
+            cvss3_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            cvss4_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        )
+        self.assertEqual(Severity.SEVERITY_CRITICAL, get_current_severity(observation))
+        self.assertIsNone(observation.cvss4_score)
+        mock_logger.warning.assert_called_once()
+
+    @patch("application.core.services.observation.logger")
+    def test_get_current_severity_cvss3_vector_of_wrong_version(self, mock_logger):
+        observation = Observation(
+            title="parser_severity",
+            cvss3_vector="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+            cvss4_vector="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+        )
+        self.assertEqual(Severity.SEVERITY_MEDIUM, get_current_severity(observation))
+        self.assertIsNone(observation.cvss3_score)
+        mock_logger.warning.assert_called_once()
 
     # --- get_current_status ---
 
