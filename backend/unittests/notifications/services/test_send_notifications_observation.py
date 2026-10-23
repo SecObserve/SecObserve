@@ -24,10 +24,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_no_filters_no_existing_notified(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -36,13 +36,13 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_min_severity.return_value = None
         mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
-        mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+        mock_select_for_update.return_value.get.side_effect = Observation_Notified.DoesNotExist
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_not_called()
-        mock_observation_notified_get.assert_called_once_with(observation=self.observation_1)
+        mock_select_for_update.return_value.get.assert_called_once_with(observation=self.observation_1)
 
     @patch("application.notifications.services.send_notifications_observation._send_observation_notifications")
     @patch(
@@ -52,10 +52,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_no_priority_in_observation(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -64,7 +64,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_min_severity.return_value = None
         mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = 2
-        mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+        mock_select_for_update.return_value.get.side_effect = Observation_Notified.DoesNotExist
         self.observation_1.current_status = Status.STATUS_OPEN
         self.observation_1.current_priority = None
 
@@ -72,7 +72,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             send_observation_notification(self.observation_1)
 
         mock_send_notifications.assert_not_called()
-        mock_observation_notified_get.assert_called_once_with(observation=self.observation_1)
+        mock_select_for_update.return_value.get.assert_called_once_with(observation=self.observation_1)
 
     @patch("application.notifications.services.send_notifications_observation._send_observation_notifications")
     @patch(
@@ -82,10 +82,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_no_filters_existing_notified(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -95,7 +95,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         mock_notified = MagicMock()
-        mock_observation_notified_get.return_value = mock_notified
+        mock_select_for_update.return_value.get.return_value = mock_notified
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
@@ -114,12 +114,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.save")
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_new_notification(
         self,
-        mock_observation_notified_get,
-        mock_observation_notified_save,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -128,7 +126,8 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_min_severity.return_value = None
         mock_get_statuses.return_value = ["Open"]
         mock_get_min_priority.return_value = None
-        mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+        mock_notified = MagicMock(severity="", status="", priority=None)
+        mock_select_for_update.return_value.get_or_create.return_value = (mock_notified, True)
         self.observation_1.current_status = "Open"
         self.observation_1.current_severity = "Critical"
         self.observation_1.current_priority = None
@@ -140,7 +139,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             self.observation_1,
             f'New notification for observation "{self.observation_1.title}"',
         )
-        mock_observation_notified_save.assert_called_once()
+        mock_notified.save.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_observation._send_observation_notifications")
     @patch(
@@ -150,10 +149,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_existing_no_change(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -169,7 +168,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_notified.severity = self.observation_1.current_severity
         mock_notified.status = self.observation_1.current_status
         mock_notified.priority = self.observation_1.current_priority
-        mock_observation_notified_get.return_value = mock_notified
+        mock_select_for_update.return_value.get_or_create.return_value = (mock_notified, False)
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
@@ -184,10 +183,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_existing_changed(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -203,7 +202,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_notified.severity = "High"  # different from current_severity
         mock_notified.status = "Open"
         mock_notified.priority = None
-        mock_observation_notified_get.return_value = mock_notified
+        mock_select_for_update.return_value.get_or_create.return_value = (mock_notified, False)
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
@@ -223,10 +222,10 @@ class TestPushNotificationsObservation(BaseTestCase):
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
     @patch("application.notifications.services.send_notifications_observation.Severity")
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_severity_not_met_no_existing_notified(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_severity,
         mock_get_min_severity,
         mock_get_statuses,
@@ -238,7 +237,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         self.observation_1.numerical_severity = 4  # worse than "Medium" (3), does not meet threshold
-        mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+        mock_select_for_update.return_value.get.side_effect = Observation_Notified.DoesNotExist
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
@@ -254,10 +253,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_status_not_met_existing_notified(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -268,7 +267,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_min_priority.return_value = None
         self.observation_1.current_status = "Resolved"  # does not match "Open"
         mock_notified = MagicMock()
-        mock_observation_notified_get.return_value = mock_notified
+        mock_select_for_update.return_value.get.return_value = mock_notified
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
@@ -288,12 +287,10 @@ class TestPushNotificationsObservation(BaseTestCase):
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
     @patch("application.notifications.services.send_notifications_observation.Severity")
-    @patch("application.notifications.models.Observation_Notified.save")
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_severity_met_new_notification(
         self,
-        mock_observation_notified_get,
-        mock_observation_notified_save,
+        mock_select_for_update,
         mock_severity,
         mock_get_min_severity,
         mock_get_statuses,
@@ -308,7 +305,8 @@ class TestPushNotificationsObservation(BaseTestCase):
         self.observation_1.current_severity = "Critical"
         self.observation_1.current_status = "Open"
         self.observation_1.current_priority = None
-        mock_observation_notified_get.side_effect = Observation_Notified.DoesNotExist
+        mock_notified = MagicMock(severity="", status="", priority=None)
+        mock_select_for_update.return_value.get_or_create.return_value = (mock_notified, True)
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
@@ -317,7 +315,7 @@ class TestPushNotificationsObservation(BaseTestCase):
             self.observation_1,
             f'New notification for observation "{self.observation_1.title}"',
         )
-        mock_observation_notified_save.assert_called_once()
+        mock_notified.save.assert_called_once()
 
     @patch("application.notifications.services.send_notifications_observation._send_observation_notifications")
     @patch(
@@ -327,10 +325,10 @@ class TestPushNotificationsObservation(BaseTestCase):
     @patch(
         "application.notifications.services.send_notifications_observation._get_observation_notification_min_severity"
     )
-    @patch("application.notifications.models.Observation_Notified.objects.get")
+    @patch("application.notifications.models.Observation_Notified.objects.select_for_update")
     def test_send_observation_notification_is_deferred_until_commit(
         self,
-        mock_observation_notified_get,
+        mock_select_for_update,
         mock_get_min_severity,
         mock_get_statuses,
         mock_get_min_priority,
@@ -340,7 +338,7 @@ class TestPushNotificationsObservation(BaseTestCase):
         mock_get_statuses.return_value = []
         mock_get_min_priority.return_value = None
         mock_notified = MagicMock()
-        mock_observation_notified_get.return_value = mock_notified
+        mock_select_for_update.return_value.get.return_value = mock_notified
 
         with self.captureOnCommitCallbacks(execute=True):
             send_observation_notification(self.observation_1)
