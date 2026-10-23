@@ -1,0 +1,76 @@
+bandit_backend:
+  SCANNER: bandit
+  RUN_DIRECTORY: "."
+  TARGET: backend
+  REPORT_NAME: bandit_backend.sarif
+  SO_ORIGIN_SERVICE: backend
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+checkov:
+  SCANNER: checkov
+  RUN_DIRECTORY: "."
+  TARGET: "."
+  REPORT_NAME: checkov.sarif
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+eslint_frontend:
+  SCANNER: eslint
+  RUN_DIRECTORY: "frontend"
+  TARGET: "src"
+  REPORT_NAME: "eslint_frontend.sarif"
+  SO_ORIGIN_SERVICE: "frontend"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+gitleaks:
+  SCANNER: gitleaks
+  RUN_DIRECTORY: "."
+  REPORT_NAME: "gitleaks.sarif"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+kics:
+  SCANNER: kics
+  RUN_DIRECTORY: "."
+  TARGET: "."
+  REPORT_NAME: "kics.sarif"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+semgrep_backend:
+  SCANNER: semgrep
+  RUN_DIRECTORY: "."
+  CONFIGURATION: "r/python"
+  TARGET: "backend"
+  REPORT_NAME: "semgrep_backend.sarif"
+  SO_ORIGIN_SERVICE: "backend"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+semgrep_frontend:
+  SCANNER: semgrep
+  RUN_DIRECTORY: "."
+  CONFIGURATION: "r/typescript"
+  TARGET: "frontend/src"
+  REPORT_NAME: "semgrep_frontend.sarif"
+  SO_ORIGIN_SERVICE: "frontend"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+trivy_filesystem_backend:
+  SCANNER: trivy_filesystem
+  RUN_DIRECTORY: "."
+  TARGET: "backend/poetry.lock"
+  FURTHER_PARAMETERS: "--db-repository public.ecr.aws/aquasecurity/trivy-db:2"
+  REPORT_NAME: "trivy_backend_poetry.json"
+  SO_ORIGIN_SERVICE: "backend"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+trivy_filesystem_frontend:
+  SCANNER: trivy_filesystem
+  RUN_DIRECTORY: "."
+  TARGET: "frontend/package-lock.json"
+  FURTHER_PARAMETERS: "--db-repository public.ecr.aws/aquasecurity/trivy-db:2"
+  REPORT_NAME: "trivy_frontend_npm.json"
+  SO_ORIGIN_SERVICE: "frontend"
+  SO_BRANCH_NAME: $GITHUB_REF_NAME
+
+importer:
+  SO_UPLOAD: "true"
+  SO_API_BASE_URL: "https://secobserve.example.org/api"
+  SO_PRODUCT_NAME: "SecObserve"
