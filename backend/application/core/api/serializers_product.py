@@ -471,7 +471,7 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     class Meta:
         model = Product
-        read_only_fields = ["repository_default_branch", "last_observation_change", "last_license_change"]
+        read_only_fields = ["repository_default_branch"]
         exclude = ["is_product_group", "members", "authorization_group_members", "observation_notification_statuses"]
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
@@ -603,6 +603,12 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
             raise ValidationError("osv_linux_release cannot be set without osv_linux_distribution")
 
         return super().validate(attrs)
+
+    def update(self, instance: Product, validated_data: dict) -> Product:
+        # Clients send back the change timestamps they have loaded, which may be older than the current ones
+        validated_data.pop("last_observation_change", None)
+        validated_data.pop("last_license_change", None)
+        return super().update(instance, validated_data)
 
     def validate_product_group(self, product: Product) -> Product:
         if product and product.is_product_group is False:
