@@ -1,8 +1,10 @@
+from datetime import date
 from unittest.mock import MagicMock, call, patch
 
 import jsonpickle
 
 from application.core.models import Observation, Product
+from application.core.types import Status
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from application.rules.types import Rule_Type
@@ -159,6 +161,26 @@ class TestRuleEngine(BaseTestCase):
         self.assertEqual(jsonpickle_output_before, jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False))
 
     # --- apply_rules ---
+
+    @patch(
+        "application.core.services.risk_acceptance_expiry.calculate_risk_acceptance_expiry_date",
+        return_value=date(2030, 1, 1),
+    )
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_risk_accepted_sets_expiry_date(self, mock_rule, mock_rego_interpreter, _mock_dumps, _):
+        mock_rule.return_value = []
+        mock_rego_interpreter.return_value.query.return_value = {"status": Status.STATUS_RISK_ACCEPTED}
+        rule_engine = Rule_Engine(self.product_1)
+        rule = Rule(id=1, name="rego_rule", type=Rule_Type.RULE_TYPE_REGO, rego_module="package rule")
+        observation = Observation(title="observation", product=self.product_1, current_status=Status.STATUS_OPEN)
+        observation_before = Observation(current_status=Status.STATUS_OPEN)
+
+        self.assertTrue(rule_engine._check_rule_rego(rule, observation, observation_before))
+
+        self.assertEqual(Status.STATUS_RISK_ACCEPTED, observation.current_status)
+        self.assertEqual(date(2030, 1, 1), observation.risk_acceptance_expiry_date)
 
     # --- _check_regex ---
 
