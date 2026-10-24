@@ -1,7 +1,14 @@
+from datetime import date
 from unittest import TestCase
 from unittest.mock import MagicMock, call, patch
 
-from application.vex.services.vex_engine import VEX_Engine
+from application.core.models import Observation, Product
+from application.core.types import Status
+from application.vex.models import VEX_Statement
+from application.vex.services.vex_engine import (
+    VEX_Engine,
+    _apply_vex_statement_for_observation,
+)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -453,3 +460,31 @@ class TestApplyVEXStatementsForObservation(TestCase):
         mock_apply.assert_called_once_with(prod_stmt, obs, previous_stmt)
         # And so must the log helper
         mock_log.assert_called_once_with(obs, previous_stmt)
+
+
+class TestApplyVEXStatementExpiryDate(TestCase):
+    def _apply(self, not_affected_expiry_imported: bool):
+        observation = Observation(
+            product=Product(), vulnerability_id="CVE-2023-1234", current_status=Status.STATUS_OPEN
+        )
+        vex_statement = VEX_Statement(vulnerability_id="CVE-2023-1234", status="not_affected")
+        settings = MagicMock(not_affected_expiry_imported=not_affected_expiry_imported)
+        with (
+            patch(f"{MODULE}._match_purls", return_value=True),
+            patch(f"{MODULE}._write_observation_log"),
+            patch(f"{MODULE}.push_observation_to_issue_tracker"),
+            patch("application.core.services.risk_acceptance_expiry.Settings.load", return_value=settings),
+            patch(
+                "application.core.services.risk_acceptance_expiry.calculate_not_affected_expiry_date",
+                return_value=date(2030, 1, 1),
+            ),
+        ):
+            self.assertTrue(_apply_vex_statement_for_observation(vex_statement, observation, None))
+        self.assertEqual(Status.STATUS_NOT_AFFECTED, observation.current_status)
+        return observation.risk_acceptance_expiry_date
+
+    def test_not_affected_from_vex_has_no_expiry(self):
+        self.assertIsNone(self._apply(False))
+
+    def test_not_affected_from_vex_expires_when_configured(self):
+        self.assertEqual(date(2030, 1, 1), self._apply(True))

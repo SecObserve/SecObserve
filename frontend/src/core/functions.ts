@@ -34,6 +34,12 @@ export const transform_product_group_and_product = (data: any, description: stri
         data.risk_acceptance_expiry_days ||= null;
     }
 
+    if (data.not_affected_expiry_active) {
+        data.not_affected_expiry_days ||= 30;
+    } else {
+        data.not_affected_expiry_days ||= null;
+    }
+
     data.observation_notification_min_severity ??= "";
 
     return data;

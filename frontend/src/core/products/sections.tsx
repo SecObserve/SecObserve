@@ -121,7 +121,7 @@ export const PRODUCT_SECTIONS: ProductSection[] = [
         isVisible: isReviewVisible,
     },
     {
-        label: "Risk acceptance expiry",
+        label: "Assessment expiry",
         icon: <EventBusyIcon />,
         Inputs: RiskAcceptanceExpiryInputs,
         Fields: RiskAcceptanceExpiryFields,

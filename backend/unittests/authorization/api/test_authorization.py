@@ -60,11 +60,13 @@ class TestAuthorizationBase(BaseTestCase):
 
     @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
     @patch("application.core.api.serializers_product.calculate_risk_acceptance_expiry_date")
-    def _test_api(self, data: APITest, mock_product_expiry_date, mock_authentication):
+    @patch("application.core.api.serializers_product.calculate_not_affected_expiry_date")
+    def _test_api(self, data: APITest, mock_not_affected_expiry_date, mock_product_expiry_date, mock_authentication):
         user = User.objects.get(username=data.username)
         mock_authentication.return_value = user, None
 
         mock_product_expiry_date.return_value = date(2024, 7, 1)
+        mock_not_affected_expiry_date.return_value = date(2024, 7, 1)
 
         api_client = APIClient()
         if data.method.lower() == "delete":

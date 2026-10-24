@@ -156,6 +156,9 @@ const ProductShow = () => {
                                                 risk_acceptance_expiry_date_calculated={
                                                     product.risk_acceptance_expiry_date_calculated
                                                 }
+                                                not_affected_expiry_date_calculated={
+                                                    product.not_affected_expiry_date_calculated
+                                                }
                                             />
                                         )}
                                     </Stack>

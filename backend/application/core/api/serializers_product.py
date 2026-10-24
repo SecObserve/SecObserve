@@ -53,6 +53,7 @@ from application.core.services.assessment_approver import (
     is_user_designated_assessment_approver,
 )
 from application.core.services.risk_acceptance_expiry import (
+    calculate_not_affected_expiry_date,
     calculate_risk_acceptance_expiry_date,
 )
 from application.core.services.security_gate import (
@@ -337,6 +338,8 @@ class ProductGroupListSerializer(ProductCoreSerializer):
             "product_rules_need_approval",
             "risk_acceptance_expiry_active",
             "risk_acceptance_expiry_days",
+            "not_affected_expiry_active",
+            "not_affected_expiry_days",
             "new_observations_in_review",
             "product_rule_approvals",
             "license_policy",
@@ -460,6 +463,7 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     product_group_product_rules_need_approval = SerializerMethodField()
     product_rule_approvals = SerializerMethodField()
     risk_acceptance_expiry_date_calculated = SerializerMethodField()
+    not_affected_expiry_date_calculated = SerializerMethodField()
     product_group_new_observations_in_review = SerializerMethodField()
     has_branches = SerializerMethodField()
     has_licenses = SerializerMethodField()
@@ -531,6 +535,9 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
 
     def get_risk_acceptance_expiry_date_calculated(self, obj: Product) -> Optional[date]:
         return calculate_risk_acceptance_expiry_date(obj)
+
+    def get_not_affected_expiry_date_calculated(self, obj: Product) -> Optional[date]:
+        return calculate_not_affected_expiry_date(obj)
 
     def get_product_group_new_observations_in_review(self, obj: Product) -> bool:
         if not obj.product_group:
@@ -678,6 +685,7 @@ class NestedProductSerializer(ModelSerializer):
     product_group_assessments_need_approval = SerializerMethodField()
     product_group_product_rules_need_approval = SerializerMethodField()
     risk_acceptance_expiry_date_calculated = SerializerMethodField()
+    not_affected_expiry_date_calculated = SerializerMethodField()
 
     class Meta:
         model = Product
@@ -704,6 +712,9 @@ class NestedProductSerializer(ModelSerializer):
 
     def get_risk_acceptance_expiry_date_calculated(self, obj: Product) -> Optional[date]:
         return calculate_risk_acceptance_expiry_date(obj)
+
+    def get_not_affected_expiry_date_calculated(self, obj: Product) -> Optional[date]:
+        return calculate_not_affected_expiry_date(obj)
 
 
 class NestedProductSerializerSmall(ModelSerializer):

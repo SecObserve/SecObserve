@@ -131,6 +131,12 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Days before risk acceptance expires, 0 means no expiry",
     )
+    not_affected_expiry_active = BooleanField(null=True)
+    not_affected_expiry_days = IntegerField(
+        null=True,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
+        help_text="Days before a Not affected assessment expires, 0 means no expiry",
+    )
 
     license_policy = ForeignKey(
         "licenses.License_Policy",

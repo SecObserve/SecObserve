@@ -1,10 +1,8 @@
 import { Divider, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import {
-    DateInput,
     DeleteButton,
     Edit,
-    FormDataConsumer,
     NumberInput,
     SaveButton,
     SimpleForm,
@@ -25,7 +23,6 @@ import {
     validate_0_999999,
     validate_255,
     validate_2048,
-    validate_after_today,
     validate_required,
     validate_required_255,
 } from "../../commons/custom_validators";
@@ -36,9 +33,11 @@ import {
     OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
     OBSERVATION_STATUS_CHOICES,
+    OBSERVATION_STATUS_NOT_AFFECTED,
     OBSERVATION_STATUS_RISK_ACCEPTED,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
 } from "../../core/types";
+import ExpiryDateInput from "./ExpiryDateInput";
 
 const CustomToolbar = () => {
     const observation = useRecordContext();
@@ -95,20 +94,13 @@ const ObservationEditForm = ({ setDescription, setRecommendation }: ObservationE
                         validate={validate_required}
                         onChange={(e) => setStatus(e)}
                     />
-                    <FormDataConsumer>
-                        {({ formData }) =>
-                            formData.parser_status &&
-                            formData.parser_status == OBSERVATION_STATUS_RISK_ACCEPTED &&
-                            formData.product_data.risk_acceptance_expiry_date_calculated && (
-                                <DateInput
-                                    source="risk_acceptance_expiry_date"
-                                    label="Risk acceptance expiry date"
-                                    defaultValue={formData.product_data.risk_acceptance_expiry_date_calculated}
-                                    validate={validate_after_today()}
-                                />
-                            )
-                        }
-                    </FormDataConsumer>
+                    <ExpiryDateInput
+                        statusSource="parser_status"
+                        riskAcceptanceExpiryDate={observation?.product_data.risk_acceptance_expiry_date_calculated}
+                        notAffectedExpiryDate={observation?.product_data.not_affected_expiry_date_calculated}
+                        currentStatus={observation?.parser_status}
+                        currentExpiryDate={observation?.risk_acceptance_expiry_date}
+                    />
                     {justificationEnabled &&
                         settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
                             <AutocompleteInputWide
@@ -305,7 +297,7 @@ const ObservationEdit = () => {
         if (!justificationIsEnabledForStatus(data.parser_status) || !data.parser_vex_justification) {
             data.parser_vex_justification = "";
         }
-        if (data.parser_status != OBSERVATION_STATUS_RISK_ACCEPTED) {
+        if (![OBSERVATION_STATUS_RISK_ACCEPTED, OBSERVATION_STATUS_NOT_AFFECTED].includes(data.parser_status)) {
             data.risk_acceptance_expiry_date = null;
         }
         data.origin_component_name_version = "";

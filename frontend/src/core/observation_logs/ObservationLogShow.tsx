@@ -127,7 +127,7 @@ export const ObservationLogComponent = () => {
                                 </Labeled>
                             )}
                             {observation_log.risk_acceptance_expiry_date != null && (
-                                <Labeled label="Risk acceptance expiry">
+                                <Labeled label="Expiry date">
                                     <DateField source="risk_acceptance_expiry_date" />
                                 </Labeled>
                             )}
