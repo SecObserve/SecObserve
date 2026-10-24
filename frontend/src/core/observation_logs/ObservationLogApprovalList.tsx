@@ -6,6 +6,7 @@ import {
     Datagrid,
     FunctionField,
     ListContextProvider,
+    NullableBooleanInput,
     ReferenceInput,
     ResourceContextProvider,
     SelectField,
@@ -93,6 +94,7 @@ function approvalFilters(product: any, is_product_group: boolean) {
     const secondary: SecondaryFilter[] = [
         ...originFilters(scoped),
         { column: "Scan", input: <TextInput source="scanner" label="Scanner" /> },
+        { column: "Assessment", input: <NullableBooleanInput source="expiry_extension" label="Extensions only" /> },
     ];
 
     return { primary, secondary };

@@ -5,6 +5,7 @@ from django_filters import (
     BooleanFilter,
     CharFilter,
     ChoiceFilter,
+    DateFromToRangeFilter,
     DateTimeFromToRangeFilter,
     FilterSet,
     ModelChoiceFilter,
@@ -227,6 +228,7 @@ class ObservationFilter(FilterSet):
     )
     cve_known_exploited = BooleanFilter(field_name="cve_known_exploited", method="get_cve_known_exploited")
     default_branch = BooleanFilter(method="get_default_branch")
+    risk_acceptance_expiry_date = DateFromToRangeFilter(field_name="risk_acceptance_expiry_date")
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -262,6 +264,7 @@ class ObservationFilter(FilterSet):
             ("origin_component_purl_type", "origin_component_purl_type"),
             ("update_impact_score", "update_impact_score"),
             ("fix_available", "fix_available"),
+            ("risk_acceptance_expiry_date", "risk_acceptance_expiry_date"),
         ),
     )
 
@@ -369,6 +372,7 @@ class ObservationLogFilter(FilterSet):
     origin_component_purl_type = CharFilter(field_name="observation__origin_component_purl_type")
     scanner = CharFilter(field_name="observation__scanner", lookup_expr="icontains")
     created = DateTimeFromToRangeFilter(field_name="created")
+    expiry_extension = BooleanFilter(method="get_expiry_extension")
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -434,6 +438,20 @@ class ObservationLogFilter(FilterSet):
             return queryset
 
         return queryset.filter(created__gte=get_start_of_day(days))
+
+    def get_expiry_extension(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Optional[bool],
+    ) -> QuerySet:
+        # name is used as a positional argument
+        extension = Q(severity="", status="", risk_acceptance_expiry_date__isnull=False)
+        if value is True:
+            return queryset.filter(extension)
+        if value is False:
+            return queryset.exclude(extension)
+        return queryset
 
 
 class EvidenceFilter(FilterSet):

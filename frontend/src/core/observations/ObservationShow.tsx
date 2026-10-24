@@ -26,6 +26,7 @@ import AssessmentApproval from "../observation_logs/AssessmentApproval";
 import ObservationLogEmbeddedList from "../observation_logs/ObservationLogEmbeddedList";
 import { OBSERVATION_STATUS_ACTIVE, OBSERVATION_STATUS_IN_REVIEW } from "../types";
 import ObservationAssessment from "./ObservationAssessment";
+import ObservationExtendAssessment from "./ObservationExtendAssessment";
 import ObservationRemoveAssessment from "./ObservationRemoveAssessment";
 import ObservationsShowAside from "./ObservationShowAside";
 import ObservationShowHeader from "./ObservationShowHeader";
@@ -102,6 +103,8 @@ const ShowActions = () => {
                     (observation?.assessment_severity ||
                         observation?.assessment_status ||
                         observation?.assessment_priority) && <ObservationRemoveAssessment />}
+                {observation?.product_data?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) &&
+                    observation?.risk_acceptance_expiry_date && <ObservationExtendAssessment />}
                 {observation?.parser_data?.type == "Manual" &&
                     observation?.product_data?.permissions?.includes(PERMISSION_OBSERVATION_EDIT) && <EditButton />}
                 {observation?.assessment_needs_approval &&

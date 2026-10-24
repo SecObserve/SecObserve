@@ -1,4 +1,4 @@
-import { ReactElement } from "react";
+import { Fragment, ReactElement } from "react";
 import {
     BooleanField,
     ChipField,
@@ -21,10 +21,16 @@ import ListHeader from "../../commons/layout/ListHeader";
 import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
+import { ObservationBulkExtendAssessment } from "./ObservationExtendAssessment";
 import { ObservationFilterBar } from "./ObservationFilterBar";
 import { IDENTIFIER_OBSERVATION_LIST, setListIdentifier } from "./functions";
 
-const BulkActionButtons = () => <ObservationBulkAssessment product={null} storeKey="observations.list" />;
+const BulkActionButtons = () => (
+    <Fragment>
+        <ObservationBulkAssessment product={null} storeKey="observations.list" />
+        <ObservationBulkExtendAssessment storeKey="observations.list" />
+    </Fragment>
+);
 
 type ObservationDatagridProps = {
     bulkActionButtons: ReactElement;

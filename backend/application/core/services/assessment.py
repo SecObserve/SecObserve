@@ -20,6 +20,7 @@ from application.core.services.observation import (
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
     EXPIRY_STATUSES,
+    calculate_expiry_date,
     update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
@@ -93,6 +94,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             or log_priority_changed
             or (log_vex_justification and log_vex_justification != observation.current_vex_justification)
             or (log_vex_remediations and log_vex_remediations != observation.current_vex_remediations)
+            or log_risk_acceptance_expiry_date
         )
         else Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED
     )
@@ -273,6 +275,29 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
         return True
 
     return False
+
+
+def extend_assessment(observation: Observation, comment: str, expiry_date: Optional[date] = None) -> bool:
+    if not observation.risk_acceptance_expiry_date:
+        return False
+
+    expiry_date = expiry_date or calculate_expiry_date(observation.product, observation.current_status)
+    # Without a date, save_assessment() would remove the expiry instead of extending it
+    if not expiry_date:
+        return False
+
+    save_assessment(
+        observation=observation,
+        new_severity=None,
+        new_status=None,
+        new_priority=None,
+        new_priority_changed=False,
+        comment=comment,
+        new_vex_justification=None,
+        new_vex_remediations=None,
+        new_risk_acceptance_expiry_date=expiry_date,
+    )
+    return True
 
 
 def assessment_approval(  # pylint: disable=too-many-positional-arguments
