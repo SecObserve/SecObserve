@@ -77,7 +77,7 @@ services:
     restart: always
 
   clamav:
-    image: docker.io/clamav/clamav:1.5.4_base
+    image: docker.io/clamav/clamav:1.5.4
     volumes:
       - dev_scancodeio_clamav_data:/var/lib/clamav
       - dev_scancodeio_workspace:/var/scancodeio/workspace/
