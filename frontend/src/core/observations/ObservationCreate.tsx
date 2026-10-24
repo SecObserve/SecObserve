@@ -1,16 +1,6 @@
 import { Dialog, DialogContent, DialogTitle, Divider, Stack, Typography } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
-import {
-    CreateBase,
-    DateInput,
-    FormDataConsumer,
-    NumberInput,
-    SimpleForm,
-    TextInput,
-    useCreate,
-    useNotify,
-    useRefresh,
-} from "react-admin";
+import { CreateBase, NumberInput, SimpleForm, TextInput, useCreate, useNotify, useRefresh } from "react-admin";
 
 import AddButton from "../../commons/custom_fields/AddButton";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
@@ -24,7 +14,6 @@ import {
     validate_0_999999,
     validate_255,
     validate_2048,
-    validate_after_today,
     validate_required,
     validate_required_255,
 } from "../../commons/custom_validators";
@@ -35,17 +24,24 @@ import {
     OBSERVATION_CYCLONEDX_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
     OBSERVATION_STATUS_CHOICES,
+    OBSERVATION_STATUS_NOT_AFFECTED,
     OBSERVATION_STATUS_OPEN,
     OBSERVATION_STATUS_RISK_ACCEPTED,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
 } from "../../core/types";
+import ExpiryDateInput from "./ExpiryDateInput";
 
 export type ObservationCreateProps = {
     id: any;
     risk_acceptance_expiry_date_calculated: any;
+    not_affected_expiry_date_calculated: any;
 };
 
-const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: ObservationCreateProps) => {
+const ObservationCreate = ({
+    id,
+    risk_acceptance_expiry_date_calculated,
+    not_affected_expiry_date_calculated,
+}: ObservationCreateProps) => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [description, setDescription] = useState("");
     const [recommendation, setRecommendation] = useState("");
@@ -67,7 +63,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
         if (!justificationEnabled) {
             data.parser_vex_justification = "";
         }
-        if (data.parser_status != OBSERVATION_STATUS_RISK_ACCEPTED) {
+        if (![OBSERVATION_STATUS_RISK_ACCEPTED, OBSERVATION_STATUS_NOT_AFFECTED].includes(data.parser_status)) {
             data.risk_acceptance_expiry_date = null;
         }
         data.description = description;
@@ -119,20 +115,11 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                                         onChange={(e) => setStatus(e)}
                                         validate={validate_required}
                                     />
-                                    <FormDataConsumer>
-                                        {({ formData }) =>
-                                            formData.parser_status &&
-                                            formData.parser_status == OBSERVATION_STATUS_RISK_ACCEPTED &&
-                                            risk_acceptance_expiry_date_calculated && (
-                                                <DateInput
-                                                    source="risk_acceptance_expiry_date"
-                                                    label="Risk acceptance expiry date"
-                                                    defaultValue={risk_acceptance_expiry_date_calculated}
-                                                    validate={validate_after_today()}
-                                                />
-                                            )
-                                        }
-                                    </FormDataConsumer>
+                                    <ExpiryDateInput
+                                        statusSource="parser_status"
+                                        riskAcceptanceExpiryDate={risk_acceptance_expiry_date_calculated}
+                                        notAffectedExpiryDate={not_affected_expiry_date_calculated}
+                                    />
                                     {justificationEnabled &&
                                         settings_vex_justification_style() === VEX_JUSTIFICATION_TYPE_CSAF_OPENVEX && (
                                             <AutocompleteInputWide

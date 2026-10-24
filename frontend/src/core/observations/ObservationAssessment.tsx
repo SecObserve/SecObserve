@@ -1,20 +1,11 @@
 import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
-import {
-    ArrayInput,
-    DateInput,
-    FormDataConsumer,
-    SimpleForm,
-    SimpleFormIterator,
-    useNotify,
-    useRefresh,
-} from "react-admin";
+import { ArrayInput, SimpleForm, SimpleFormIterator, useNotify, useRecordContext, useRefresh } from "react-admin";
 
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
-import { validate_after_today } from "../../commons/custom_validators";
 import {
     justificationIsEnabledForStatus,
     remediationsAreEnabledForStatus,
@@ -28,13 +19,14 @@ import {
     OBSERVATION_SEVERITY_CHOICES,
     OBSERVATION_STATUS_CHOICES,
     OBSERVATION_STATUS_OPEN,
-    OBSERVATION_STATUS_RISK_ACCEPTED,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
 import AssessmentPriorityInput from "./AssessmentPriorityInput";
+import ExpiryDateInput from "./ExpiryDateInput";
 
 const ObservationAssessment = () => {
+    const observation = useRecordContext();
     const dialogRef = useRef<HTMLDivElement>(null);
     const [comment, setComment] = useState("");
     const [open, setOpen] = useState(false);
@@ -137,20 +129,13 @@ const ObservationAssessment = () => {
                                 </SimpleFormIterator>
                             </ArrayInput>
                         )}
-                        <FormDataConsumer>
-                            {({ formData }) =>
-                                formData.status &&
-                                formData.status == OBSERVATION_STATUS_RISK_ACCEPTED &&
-                                formData.product_data.risk_acceptance_expiry_date_calculated && (
-                                    <DateInput
-                                        source="risk_acceptance_expiry_date"
-                                        label="Risk acceptance expiry date"
-                                        defaultValue={formData.product_data.risk_acceptance_expiry_date_calculated}
-                                        validate={validate_after_today()}
-                                    />
-                                )
-                            }
-                        </FormDataConsumer>
+                        <ExpiryDateInput
+                            statusSource="status"
+                            riskAcceptanceExpiryDate={observation?.product_data.risk_acceptance_expiry_date_calculated}
+                            notAffectedExpiryDate={observation?.product_data.not_affected_expiry_date_calculated}
+                            currentStatus={observation?.current_status}
+                            currentExpiryDate={observation?.risk_acceptance_expiry_date}
+                        />
                         <MarkdownEdit
                             initialValue=""
                             setValue={setComment}

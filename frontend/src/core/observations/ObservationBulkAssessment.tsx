@@ -3,12 +3,11 @@ import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Fragment, useRef, useState } from "react";
 import {
     ArrayInput,
-    DateInput,
-    FormDataConsumer,
     SimpleForm,
     SimpleFormIterator,
     useListContext,
     useNotify,
+    useRecordContext,
     useRefresh,
     useUnselectAll,
 } from "react-admin";
@@ -17,10 +16,10 @@ import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
-import { validate_after_today } from "../../commons/custom_validators";
 import {
     justificationIsEnabledForStatus,
     remediationsAreEnabledForStatus,
+    settings_not_affected_expiry_date,
     settings_risk_acceptance_expiry_date,
     settings_vex_justification_style,
 } from "../../commons/functions";
@@ -32,11 +31,11 @@ import {
     OBSERVATION_SEVERITY_CHOICES,
     OBSERVATION_STATUS_CHOICES,
     OBSERVATION_STATUS_OPEN,
-    OBSERVATION_STATUS_RISK_ACCEPTED,
     OBSERVATION_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
 import AssessmentPriorityInput from "./AssessmentPriorityInput";
+import ExpiryDateInput from "./ExpiryDateInput";
 
 type ObservationBulkAssessmentButtonProps = {
     product: any;
@@ -54,6 +53,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
     const [loading, setLoading] = useState(false);
     const notify = useNotify();
     const { selectedIds } = useListContext();
+    const record = useRecordContext();
     const unselectAll = useUnselectAll("observations", storeKey);
 
     const observationUpdate = async (data: any) => {
@@ -165,25 +165,15 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
                                 </SimpleFormIterator>
                             </ArrayInput>
                         )}
-                        <FormDataConsumer>
-                            {({ formData }) =>
-                                formData.status &&
-                                formData.status == OBSERVATION_STATUS_RISK_ACCEPTED &&
-                                (formData.risk_acceptance_expiry_date_calculated ||
-                                    settings_risk_acceptance_expiry_date()) && (
-                                    <DateInput
-                                        source="risk_acceptance_expiry_date"
-                                        label="Risk acceptance expiry date"
-                                        defaultValue={
-                                            formData.risk_acceptance_expiry_date_calculated
-                                                ? formData.risk_acceptance_expiry_date_calculated
-                                                : settings_risk_acceptance_expiry_date()
-                                        }
-                                        validate={validate_after_today()}
-                                    />
-                                )
+                        <ExpiryDateInput
+                            statusSource="status"
+                            riskAcceptanceExpiryDate={
+                                record?.risk_acceptance_expiry_date_calculated ?? settings_risk_acceptance_expiry_date()
                             }
-                        </FormDataConsumer>
+                            notAffectedExpiryDate={
+                                record?.not_affected_expiry_date_calculated ?? settings_not_affected_expiry_date()
+                            }
+                        />
                         <MarkdownEdit
                             initialValue=""
                             setValue={setComment}

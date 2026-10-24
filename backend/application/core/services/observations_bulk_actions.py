@@ -40,6 +40,7 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
     new_vex_justification: str,
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
+    new_risk_acceptance_expiry_date_changed: bool,
 ) -> None:
     rule_engine = Rule_Engine(product) if product else None
 
@@ -55,6 +56,7 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
             new_vex_justification=new_vex_justification,
             new_vex_remediations=new_vex_remediations,
             new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
+            new_risk_acceptance_expiry_date_changed=new_risk_acceptance_expiry_date_changed,
             propagated_from=None,
             rule_engine=rule_engine,
         )

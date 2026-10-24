@@ -14,7 +14,7 @@
 | [Rule based assessment of severity and status](../usage/rule_engine.md) | :material-plus-circle-outline: |
 | [Security gates](../usage/security_gates.md) | :material-plus-circle-outline: |
 | [Actual and weekly metrics](../usage/metrics.md) | :material-plus-circle-outline: |
-| [Configurable expiry for accepted risks](../usage/risk_acceptance_expiry.md) | :material-plus-circle-outline: |
+| [Configurable expiry for accepted risks and Not affected assessments](../usage/risk_acceptance_expiry.md) | :material-plus-circle-outline: |
 
 ## License Management
 
