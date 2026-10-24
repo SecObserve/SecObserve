@@ -1,5 +1,6 @@
 from typing import Optional
 
+from django.db import transaction
 from huey.contrib.djhuey import on_commit_task
 
 from application.access_control.services.current_user import get_current_user
@@ -64,41 +65,42 @@ def send_observation_notification(observation: Observation) -> None:
                 )
             )
         ):
-            try:
-                observation_notified = Observation_Notified.objects.get(observation=observation)
-                new_notification = False
-            except Observation_Notified.DoesNotExist:
-                observation_notified = Observation_Notified(observation=observation)
-                new_notification = True
-
-            if (
-                observation.current_severity != observation_notified.severity
-                or observation.current_status != observation_notified.status
-                or observation.current_priority != observation_notified.priority
-            ):
-                first_line = (
-                    f'New notification for observation "{observation.title}"'
-                    if new_notification
-                    else f'Change in observation "{observation.title}"'
+            # Several tasks for one observation can run at the same time, e.g. an import enqueues one per log.
+            # The lock makes them wait for each other, so only the first one sends the notification.
+            with transaction.atomic():
+                observation_notified, new_notification = Observation_Notified.objects.select_for_update().get_or_create(
+                    observation=observation
                 )
+
+                if (
+                    observation.current_severity != observation_notified.severity
+                    or observation.current_status != observation_notified.status
+                    or observation.current_priority != observation_notified.priority
+                ):
+                    first_line = (
+                        f'New notification for observation "{observation.title}"'
+                        if new_notification
+                        else f'Change in observation "{observation.title}"'
+                    )
+
+                    _send_observation_notifications(observation, first_line)
+
+                    observation_notified.severity = observation.current_severity
+                    observation_notified.status = observation.current_status
+                    observation_notified.priority = observation.current_priority
+                    observation_notified.save()
+        else:
+            with transaction.atomic():
+                try:
+                    observation_notified = Observation_Notified.objects.select_for_update().get(observation=observation)
+                except Observation_Notified.DoesNotExist:
+                    return
+
+                first_line = f'Observation "{observation.title}" fell out of notifications'
 
                 _send_observation_notifications(observation, first_line)
 
-                observation_notified.severity = observation.current_severity
-                observation_notified.status = observation.current_status
-                observation_notified.priority = observation.current_priority
-                observation_notified.save()
-        else:
-            try:
-                observation_notified = Observation_Notified.objects.get(observation=observation)
-            except Observation_Notified.DoesNotExist:
-                return
-
-            first_line = f'Observation "{observation.title}" fell out of notifications'
-
-            _send_observation_notifications(observation, first_line)
-
-            observation_notified.delete()
+                observation_notified.delete()
     except Exception as e:
         handle_task_exception(e)
         raise
