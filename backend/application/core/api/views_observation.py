@@ -60,6 +60,7 @@ from application.core.queries.observation import (
 )
 from application.core.services.assessment import (
     assessment_approval,
+    propagate_assessment_removal,
     remove_assessment,
     save_assessment,
 )
@@ -185,7 +186,9 @@ class ObservationViewSet(ModelViewSet):
 
         comment = request_serializer.validated_data.get("comment")
 
-        remove_assessment(observation, comment)
+        observation_log = remove_assessment(observation, comment)
+        if observation_log:
+            propagate_assessment_removal(observation_log)
         set_potential_duplicate_both_ways(observation)
 
         return Response()

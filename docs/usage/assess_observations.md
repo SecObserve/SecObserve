@@ -94,11 +94,15 @@ When an assessment is saved (and auto-approved) or approved, it is copied to all
 
 Propagated assessments are marked with the id of the original assessment. They are auto-approved (the original assessment already went through approval if required) and are never propagated again themselves.
 
+Removing an assessment removes it from the similar findings on matching branches as well. Assessments removed because their risk acceptance has expired are not propagated, every finding expires with its own expiry date.
+
 ### Propagate assessments for new observations
 
 Activation of this direction is controlled with the parameter *"Propagate new assessments to new observations"*.
 
 When an import creates a new observation, the newest matching assessment from the other configured branches is applied to it automatically. Only manual assessments count as source: approved, not itself propagated, not created by rules, VEX statements or the parser, and changing severity or status.
+
+If the newest of these assessments has been removed, nothing is applied to the new observation.
 
 
 ## Reviews
