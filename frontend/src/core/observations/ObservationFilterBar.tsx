@@ -2,6 +2,7 @@ import { ReactElement } from "react";
 import {
     AutocompleteArrayInput,
     AutocompleteInput,
+    DateInput,
     NullableBooleanInput,
     NumberInput,
     ReferenceInput,
@@ -86,6 +87,10 @@ export function observationFilters(product?: Product, review = false, product_fi
             input: <NumberInput source="current_priority" label="Priority" step={1} min={1} max={99} />,
         });
     }
+    secondary.push({
+        column: TRIAGE,
+        input: <DateInput source="risk_acceptance_expiry_date_before" label="Expiry date until" />,
+    });
     if (!product || product.has_potential_duplicates) {
         secondary.push({
             column: TRIAGE,

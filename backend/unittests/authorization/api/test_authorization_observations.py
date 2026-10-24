@@ -145,6 +145,46 @@ class TestAuthorizationObservations(TestAuthorizationBase):
             )
         )
 
+        post_data = {"comment": "still valid"}
+        expected_data = "{'message': 'You do not have permission to perform this action.'}"
+        self._test_api(
+            APITest(
+                "db_internal_read", "patch", "/api/observations/1/extend_assessment/", post_data, 403, expected_data
+            )
+        )
+        expected_data = "{'message': 'Observation 99999 not found'}"
+        self._test_api(
+            APITest(
+                "db_internal_read", "patch", "/api/observations/99999/extend_assessment/", post_data, 404, expected_data
+            )
+        )
+        expected_data = "{'message': 'Observation has no expiry date or no new expiry date can be calculated'}"
+        self._test_api(
+            APITest(
+                "db_internal_write", "patch", "/api/observations/1/extend_assessment/", post_data, 400, expected_data
+            )
+        )
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/observations/bulk_extend_assessment/",
+                {"comment": "still valid", "observations": [1]},
+                204,
+                None,
+            )
+        )
+        self._test_api(
+            APITest(
+                "db_internal_read",
+                "post",
+                "/api/observations/bulk_extend_assessment/",
+                {"comment": "still valid", "observations": [1]},
+                400,
+                None,
+            )
+        )
+
         post_data = {"comment": "reason for assessment removal"}
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(

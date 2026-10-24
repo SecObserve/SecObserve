@@ -25,6 +25,7 @@ import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationBulkDeleteButton from "./ObservationBulkDeleteButton";
 import ObservationExpand from "./ObservationExpand";
+import { ObservationBulkExtendAssessment } from "./ObservationExtendAssessment";
 import { ObservationFilterBar } from "./ObservationFilterBar";
 import { IDENTIFIER_OBSERVATION_EMBEDDED_LIST, setListIdentifier } from "./functions";
 
@@ -40,6 +41,9 @@ const BulkActionButtons = (product: any) => (
     <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
         {product.product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) && (
             <ObservationBulkAssessment product={product.product} storeKey="observations.embedded" />
+        )}
+        {product.product?.permissions?.includes(PERMISSION_OBSERVATION_ASSESSMENT) && (
+            <ObservationBulkExtendAssessment storeKey="observations.embedded" />
         )}
         {product.product?.permissions?.includes(PERMISSION_OBSERVATION_DELETE) && (
             <ObservationBulkDeleteButton product={product.product} storeKey="observations.embedded" />
