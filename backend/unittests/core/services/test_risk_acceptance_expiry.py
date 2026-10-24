@@ -112,9 +112,9 @@ class TestExpiryDate(BaseTestCase):
             patcher.start()
             self.addCleanup(patcher.stop)
 
-    def _set_not_affected_expiry_vex(self, value: bool) -> None:
+    def _set_not_affected_expiry_imported(self, value: bool) -> None:
         settings = Settings.load()
-        settings.not_affected_expiry_vex = value
+        settings.not_affected_expiry_imported = value
         settings.save()
         self.addCleanup(settings.delete)
 
@@ -134,7 +134,21 @@ class TestExpiryDate(BaseTestCase):
     def test_has_expiry_not_affected_from_vex(self):
         observation = Observation(current_status=Status.STATUS_NOT_AFFECTED, vex_status=Status.STATUS_NOT_AFFECTED)
         self.assertFalse(has_expiry(observation))
-        self._set_not_affected_expiry_vex(True)
+        self._set_not_affected_expiry_imported(True)
+        self.assertTrue(has_expiry(observation))
+
+    def test_has_expiry_not_affected_from_parser(self):
+        observation = Observation(current_status=Status.STATUS_NOT_AFFECTED, parser_status=Status.STATUS_NOT_AFFECTED)
+        self.assertFalse(has_expiry(observation))
+        self._set_not_affected_expiry_imported(True)
+        self.assertTrue(has_expiry(observation))
+
+    def test_has_expiry_not_affected_from_rule_over_parser(self):
+        observation = Observation(
+            current_status=Status.STATUS_NOT_AFFECTED,
+            rule_status=Status.STATUS_NOT_AFFECTED,
+            parser_status=Status.STATUS_NOT_AFFECTED,
+        )
         self.assertTrue(has_expiry(observation))
 
     def test_has_expiry_not_affected_from_assessment_over_vex(self):

@@ -22,7 +22,7 @@ The number of days will be used to set a default for the expiry date when the st
 
 When an assessment is made via the API without the field `risk_acceptance_expiry_date`, the default expiry date is calculated on the server if the status changes, and the existing expiry date is kept if the status stays the same. Sending an empty value for `risk_acceptance_expiry_date` means that no expiry date is set.
 
-The status `Not affected` set by a [VEX statement](../integrations/vex.md) gets no expiry date, because it is the statement of the VEX issuer and is updated by importing a new VEX document. Administrators can enable the setting `Not affected from VEX expires` to let these expire as well.
+The status `Not affected` set by a [VEX statement](../integrations/vex.md) or by a scanner, e.g. Dependency-Track, gets no expiry date, because it is the statement of the VEX issuer or the scanner and is updated by the next import. Administrators can enable the setting `Not affected from VEX or scanners expires` to let these expire as well.
 
 Observations that got the status `Not affected` before the expiry was introduced keep it without an expiry date. An expiry date can be set for them with a new assessment.
 

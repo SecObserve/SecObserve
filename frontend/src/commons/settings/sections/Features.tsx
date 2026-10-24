@@ -150,9 +150,9 @@ export const FeaturesInputs = () => (
                         sx={{ marginBottom: 2 }}
                     />
                     <BooleanInput
-                        source="not_affected_expiry_vex"
-                        label="Not affected from VEX expires"
-                        helperText="Not affected status set by VEX statements expires as well"
+                        source="not_affected_expiry_imported"
+                        label="Not affected from VEX or scanners expires"
+                        helperText="Not affected status from VEX statements or scanners expires as well"
                     />
                 </Stack>
             </Grid>
@@ -271,8 +271,8 @@ export const FeaturesFields = () => {
                         <Labeled label="Not affected expiry (days)">
                             <NumberField source="not_affected_expiry_days" />
                         </Labeled>
-                        <Labeled label="Not affected from VEX expires">
-                            <BooleanField source="not_affected_expiry_vex" />
+                        <Labeled label="Not affected from VEX or scanners expires">
+                            <BooleanField source="not_affected_expiry_imported" />
                         </Labeled>
                     </Stack>
                 </Grid>

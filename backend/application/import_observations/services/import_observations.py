@@ -34,6 +34,7 @@ from application.core.services.observation_log import create_observation_log
 from application.core.services.potential_duplicates import find_potential_duplicates
 from application.core.services.risk_acceptance_expiry import (
     calculate_expiry_date,
+    has_expiry,
     update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
@@ -727,8 +728,10 @@ def _process_new_observation(
 
     imported_observation.current_status = get_current_status(imported_observation)
 
-    imported_observation.risk_acceptance_expiry_date = calculate_expiry_date(
-        imported_observation.product, imported_observation.current_status
+    imported_observation.risk_acceptance_expiry_date = (
+        calculate_expiry_date(imported_observation.product, imported_observation.current_status)
+        if has_expiry(imported_observation)
+        else None
     )
 
     # Observation has not been imported before, so it is a new one

@@ -25,9 +25,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="settings",
-            name="not_affected_expiry_vex",
+            name="not_affected_expiry_imported",
             field=models.BooleanField(
-                default=False, help_text="Not affected status set by VEX statements expires as well"
+                default=False, help_text="Not affected status from VEX statements or scanners expires as well"
             ),
         ),
     ]

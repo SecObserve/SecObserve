@@ -463,12 +463,12 @@ class TestApplyVEXStatementsForObservation(TestCase):
 
 
 class TestApplyVEXStatementExpiryDate(TestCase):
-    def _apply(self, not_affected_expiry_vex: bool):
+    def _apply(self, not_affected_expiry_imported: bool):
         observation = Observation(
             product=Product(), vulnerability_id="CVE-2023-1234", current_status=Status.STATUS_OPEN
         )
         vex_statement = VEX_Statement(vulnerability_id="CVE-2023-1234", status="not_affected")
-        settings = MagicMock(not_affected_expiry_vex=not_affected_expiry_vex)
+        settings = MagicMock(not_affected_expiry_imported=not_affected_expiry_imported)
         with (
             patch(f"{MODULE}._match_purls", return_value=True),
             patch(f"{MODULE}._write_observation_log"),

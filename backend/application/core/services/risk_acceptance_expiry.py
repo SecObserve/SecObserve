@@ -29,15 +29,14 @@ def update_expiry_date(observation: Observation, previous_status: str) -> None:
 def has_expiry(observation: Observation) -> bool:
     if observation.current_status not in EXPIRY_STATUSES:
         return False
-    if observation.current_status == Status.STATUS_NOT_AFFECTED and _status_is_from_vex(observation):
-        return Settings.load().not_affected_expiry_vex
+    if observation.current_status == Status.STATUS_NOT_AFFECTED and _status_is_imported(observation):
+        return Settings.load().not_affected_expiry_imported
     return True
 
 
-def _status_is_from_vex(observation: Observation) -> bool:
-    return bool(observation.vex_status) and not (
-        observation.assessment_status or observation.rule_rego_status or observation.rule_status
-    )
+def _status_is_imported(observation: Observation) -> bool:
+    # Neither assessment nor rule, so the status comes from a VEX statement or the scanner
+    return not (observation.assessment_status or observation.rule_rego_status or observation.rule_status)
 
 
 def calculate_risk_acceptance_expiry_date(product: Product) -> Optional[date]:
