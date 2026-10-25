@@ -11,7 +11,7 @@ import {
     useRecordContext,
 } from "react-admin";
 
-import { validate_0_999999, validate_255 } from "../../custom_validators";
+import { validate_0_999999, validate_255, validate_required_255 } from "../../custom_validators";
 import { TextInputWide } from "../../layout/themes";
 import { VEX_JUSTIFICATION_TYPE_CHOICES } from "../../types";
 
@@ -123,18 +123,18 @@ export const FeaturesInputs = () => (
                                     <TextInputWide
                                         source="scancodeio_base_url"
                                         label="ScanCode.io base URL"
-                                        validate={validate_255}
+                                        validate={validate_required_255}
                                     />
                                     <TextInputWide
                                         source="scancodeio_api_key"
                                         label="ScanCode.io API key"
-                                        validate={validate_255}
+                                        validate={validate_required_255}
                                     />
                                     <TextInputWide
                                         source="scancodeio_webhook_base_url"
                                         label="SecObserve URL for ScanCode.io webhooks"
                                         helperText="Base URL of SecObserve as reached by ScanCode.io"
-                                        validate={validate_255}
+                                        validate={validate_required_255}
                                     />
                                 </Stack>
                             )
