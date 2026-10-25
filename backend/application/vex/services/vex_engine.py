@@ -12,7 +12,7 @@ from application.core.services.observation import (
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
-    calculate_risk_acceptance_expiry_date,
+    update_expiry_date,
 )
 from application.core.types import Assessment_Status, Status
 from application.issue_tracker.services.issue_tracker import (
@@ -101,6 +101,7 @@ def _apply_vex_statement_for_observation(
         previous_vex_status = observation.vex_status
         observation.vex_status = _get_secobserve_status(vex_statement.status)
         observation.current_status = get_current_status(observation)
+        update_expiry_date(observation, previous_current_status)
 
         previous_current_vex_justification = observation.current_vex_justification
         previous_vex_vex_justification = observation.vex_vex_justification
@@ -243,9 +244,7 @@ def _write_observation_log(
     if vex_statement.impact:
         comment = f"{comment}\n\n{vex_statement.impact}"
 
-    risk_acceptance_expiry_date = (
-        calculate_risk_acceptance_expiry_date(observation.product) if status == Status.STATUS_RISK_ACCEPTED else None
-    )
+    risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date if status else None
 
     create_observation_log(
         observation=observation,
@@ -268,6 +267,7 @@ def write_observation_log_no_vex_statement(
     observation.vex_status = ""
     previous_status = observation.current_status
     observation.current_status = get_current_status(observation)
+    update_expiry_date(observation, previous_status)
     log_status = observation.current_status if previous_status != observation.current_status else ""
 
     observation.vex_vex_justification = ""
@@ -293,11 +293,7 @@ def write_observation_log_no_vex_statement(
     else:
         log_comment = "Removed unknown VEX statement"
 
-    risk_acceptance_expiry_date = (
-        calculate_risk_acceptance_expiry_date(observation.product)
-        if log_status == Status.STATUS_RISK_ACCEPTED
-        else None
-    )
+    risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date if log_status else None
 
     create_observation_log(
         observation=observation,

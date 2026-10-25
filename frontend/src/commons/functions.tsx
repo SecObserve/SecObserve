@@ -273,20 +273,25 @@ export const feature_vex_enabled = () => {
     }
 };
 
-export function settings_risk_acceptance_expiry_date(): string | null {
+function settings_expiry_date(get_days: (settings: any) => number | undefined): string | null {
     try {
-        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
-        const risk_acceptance_expiry_days = settings.risk_acceptance_expiry_days ?? null;
-        if (risk_acceptance_expiry_days === null) {
+        const days = get_days(JSON.parse(localStorage.getItem("settings") ?? "{}"));
+        if (!days) {
             return null;
         }
         const date = new Date();
-        date.setDate(date.getDate() + risk_acceptance_expiry_days);
+        date.setDate(date.getDate() + days);
         return date.toISOString().split("T")[0];
     } catch {
         return null;
     }
 }
+
+export const settings_risk_acceptance_expiry_date = () =>
+    settings_expiry_date((settings) => settings.risk_acceptance_expiry_days);
+
+export const settings_not_affected_expiry_date = () =>
+    settings_expiry_date((settings) => settings.not_affected_expiry_days);
 
 export function settings_background_tasks_time_zone(): string {
     try {

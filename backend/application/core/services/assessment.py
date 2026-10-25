@@ -19,7 +19,9 @@ from application.core.services.observation import (
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
-    calculate_risk_acceptance_expiry_date,
+    calculate_expiry_date,
+    has_expiry,
+    update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
 from application.core.types import (
@@ -46,7 +48,7 @@ from application.notifications.services.send_notifications_observation_title imp
 from application.rules.services.rule_engine import Rule_Engine
 
 
-def save_assessment(  # pylint: disable=too-many-arguments
+def save_assessment(  # pylint: disable=too-many-arguments,too-many-locals
     *,
     observation: Observation,
     new_severity: Optional[str],
@@ -57,9 +59,12 @@ def save_assessment(  # pylint: disable=too-many-arguments
     new_vex_justification: Optional[str],
     new_vex_remediations: Optional[str],
     new_risk_acceptance_expiry_date: Optional[date],
+    new_risk_acceptance_expiry_date_changed: bool = True,
     propagated_from: Optional[Observation_Log] = None,
     rule_engine: Optional[Rule_Engine] = None,
 ) -> None:
+    if not new_risk_acceptance_expiry_date_changed:
+        new_risk_acceptance_expiry_date = _get_default_expiry_date(observation, new_status)
 
     log_severity = new_severity if new_severity and new_severity != observation.current_severity else ""
     log_status = new_status if new_status and new_status != observation.current_status else ""
@@ -192,9 +197,7 @@ def _update_observation(  # pylint: disable=too-many-arguments
         observation.current_vex_remediations = get_current_vex_remediations(observation)
 
     previous_risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date
-    observation.risk_acceptance_expiry_date = (
-        new_risk_acceptance_expiry_date if observation.current_status == Status.STATUS_RISK_ACCEPTED else None
-    )
+    observation.risk_acceptance_expiry_date = new_risk_acceptance_expiry_date if has_expiry(observation) else None
 
     if (
         previous_current_severity != observation.current_severity  # pylint: disable=too-many-boolean-expressions
@@ -210,6 +213,12 @@ def _update_observation(  # pylint: disable=too-many-arguments
         or previous_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
     ):
         observation.save()
+
+
+def _get_default_expiry_date(observation: Observation, new_status: Optional[str]) -> Optional[date]:
+    if not new_status or new_status == observation.current_status:
+        return observation.risk_acceptance_expiry_date
+    return calculate_expiry_date(observation.product, new_status)
 
 
 def _priority_is_changed(observation: Observation, new_priority: Optional[int], new_priority_changed: bool) -> bool:
@@ -251,11 +260,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
         observation.current_vex_justification = get_current_vex_justification(observation)
         observation.current_vex_remediations = get_current_vex_remediations(observation)
 
-        if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-            if previous_status != Status.STATUS_RISK_ACCEPTED:
-                observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(observation.product)
-        else:
-            observation.risk_acceptance_expiry_date = None
+        update_expiry_date(observation, previous_status)
 
         create_observation_log(
             observation=observation,

@@ -15,7 +15,7 @@ type Schedule = {
 };
 
 const SCHEDULES: Schedule[] = [
-    { label: "Risk acceptance expiry", source: "risk_acceptance_expiry" },
+    { label: "Assessment expiry", source: "risk_acceptance_expiry" },
     {
         label: "License data import",
         source: "license_import",

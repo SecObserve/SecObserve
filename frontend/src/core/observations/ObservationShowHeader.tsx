@@ -147,7 +147,7 @@ const ObservationShowHeader = ({ observation }: ObservationShowHeaderProps) => {
                             </Labeled>
                         )}
                         {observation.risk_acceptance_expiry_date != null && (
-                            <Labeled label="Risk acceptance expiry">
+                            <Labeled label="Expiry date">
                                 <DateField source="risk_acceptance_expiry_date" />
                             </Labeled>
                         )}

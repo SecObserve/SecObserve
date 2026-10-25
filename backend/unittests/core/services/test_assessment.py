@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -19,7 +19,11 @@ from application.core.models import (
     Product_Authorization_Group_Member,
     Product_Member,
 )
-from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment import (
+    _get_default_expiry_date,
+    assessment_approval,
+    save_assessment,
+)
 from application.core.services.assessment_approver import (
     assessment_approvers_configured,
     get_effective_assessment_approvers,
@@ -540,3 +544,53 @@ class TestAssessmentApprovalMarksProductAsChanged(BaseTestCase):
         product = Product.objects.get(pk=self.log.observation.product.pk)
         self.assertEqual(Status.STATUS_FALSE_POSITIVE, self.log.observation.current_status)
         self.assertGreater(product.last_observation_change, self.last_change)
+
+
+class TestSaveAssessmentDefaultExpiryDate(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        self.observation = Observation.objects.get(pk=4)
+        patcher = patch("application.core.services.assessment.calculate_expiry_date", return_value=date(2030, 1, 1))
+        self.mock_calculate = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_default_without_status(self) -> None:
+        self.observation.risk_acceptance_expiry_date = date(2029, 1, 1)
+        self.assertEqual(date(2029, 1, 1), _get_default_expiry_date(self.observation, None))
+
+    def test_default_with_unchanged_status(self) -> None:
+        self.observation.risk_acceptance_expiry_date = date(2029, 1, 1)
+        self.assertEqual(date(2029, 1, 1), _get_default_expiry_date(self.observation, Status.STATUS_OPEN))
+
+    def test_default_with_changed_status(self) -> None:
+        self.assertEqual(date(2030, 1, 1), _get_default_expiry_date(self.observation, Status.STATUS_NOT_AFFECTED))
+        self.mock_calculate.assert_called_once_with(self.observation.product, Status.STATUS_NOT_AFFECTED)
+
+    def _save_assessment(self, new_risk_acceptance_expiry_date_changed: bool) -> None:
+        with (
+            patch("application.core.services.assessment.propagate_assessment"),
+            patch("application.core.services.assessment.push_observation_to_issue_tracker"),
+            patch("application.core.services.assessment.check_security_gate"),
+            patch("application.core.services.assessment.Rule_Engine"),
+        ):
+            save_assessment(
+                observation=self.observation,
+                new_severity=None,
+                new_status=Status.STATUS_NOT_AFFECTED,
+                new_priority=None,
+                new_priority_changed=False,
+                comment="comment",
+                new_vex_justification=None,
+                new_vex_remediations=None,
+                new_risk_acceptance_expiry_date=None,
+                new_risk_acceptance_expiry_date_changed=new_risk_acceptance_expiry_date_changed,
+            )
+
+    def test_omitted_date_is_calculated(self) -> None:
+        self._save_assessment(False)
+        self.assertEqual(date(2030, 1, 1), Observation.objects.get(pk=4).risk_acceptance_expiry_date)
+
+    def test_empty_date_means_no_expiry(self) -> None:
+        self._save_assessment(True)
+        self.assertIsNone(Observation.objects.get(pk=4).risk_acceptance_expiry_date)

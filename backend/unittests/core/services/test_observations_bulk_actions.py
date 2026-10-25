@@ -37,6 +37,7 @@ class TestObservationsBulkActions(BaseTestCase):
             new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
             new_vex_remediations="remediation",
             new_risk_acceptance_expiry_date=date(2024, 7, 1),
+            new_risk_acceptance_expiry_date_changed=True,
         )
 
         check_mock.assert_called_with(self.product_1, [1, 2])
@@ -53,6 +54,7 @@ class TestObservationsBulkActions(BaseTestCase):
                 new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
                 new_vex_remediations="remediation",
                 new_risk_acceptance_expiry_date=date(2024, 7, 1),
+                new_risk_acceptance_expiry_date_changed=True,
                 propagated_from=None,
                 rule_engine=rule_engine,
             ),
@@ -66,6 +68,7 @@ class TestObservationsBulkActions(BaseTestCase):
                 new_vex_justification=VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
                 new_vex_remediations="remediation",
                 new_risk_acceptance_expiry_date=date(2024, 7, 1),
+                new_risk_acceptance_expiry_date_changed=True,
                 propagated_from=None,
                 rule_engine=rule_engine,
             ),

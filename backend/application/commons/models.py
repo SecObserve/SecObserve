@@ -170,6 +170,15 @@ class Settings(Model, DirtyFieldsMixin):
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Days before risk acceptance expires, 0 means no expiry",
     )
+    not_affected_expiry_days = IntegerField(
+        default=30,
+        validators=[MinValueValidator(0), MaxValueValidator(999999)],
+        help_text="Days before a Not affected assessment expires, 0 means no expiry",
+    )
+    not_affected_expiry_imported = BooleanField(
+        default=False,
+        help_text="Not affected status from VEX statements or scanners expires as well",
+    )
     risk_acceptance_expiry_crontab_minute = IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(59)],

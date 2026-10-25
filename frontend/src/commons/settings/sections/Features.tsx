@@ -140,6 +140,20 @@ export const FeaturesInputs = () => (
                         helperText="Days before risk acceptance expires, 0 means no expiry"
                         sx={{ marginBottom: 2 }}
                     />
+                    <NumberInput
+                        source="not_affected_expiry_days"
+                        label="Not affected expiry (days)"
+                        min={0}
+                        step={1}
+                        validate={validate_0_999999}
+                        helperText="Days before a Not affected assessment expires, 0 means no expiry"
+                        sx={{ marginBottom: 2 }}
+                    />
+                    <BooleanInput
+                        source="not_affected_expiry_imported"
+                        label="Not affected from VEX or scanners expires"
+                        helperText="Not affected status from VEX statements or scanners expires as well"
+                    />
                 </Stack>
             </Grid>
         </Grid>
@@ -253,6 +267,12 @@ export const FeaturesFields = () => {
                     <Stack spacing={2}>
                         <Labeled label="Risk acceptance expiry (days)">
                             <NumberField source="risk_acceptance_expiry_days" />
+                        </Labeled>
+                        <Labeled label="Not affected expiry (days)">
+                            <NumberField source="not_affected_expiry_days" />
+                        </Labeled>
+                        <Labeled label="Not affected from VEX or scanners expires">
+                            <BooleanField source="not_affected_expiry_imported" />
                         </Labeled>
                     </Stack>
                 </Grid>

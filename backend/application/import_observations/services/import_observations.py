@@ -33,7 +33,9 @@ from application.core.services.observation import (
 from application.core.services.observation_log import create_observation_log
 from application.core.services.potential_duplicates import find_potential_duplicates
 from application.core.services.risk_acceptance_expiry import (
-    calculate_risk_acceptance_expiry_date,
+    calculate_expiry_date,
+    has_expiry,
+    update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
 from application.core.types import (
@@ -679,13 +681,7 @@ def _process_current_observation(
             observation_before.parser_status = _get_initial_status(observation_before.product)
     observation_before.current_status = get_current_status(observation_before)
 
-    if observation_before.current_status == Status.STATUS_RISK_ACCEPTED:
-        if previous_status != Status.STATUS_RISK_ACCEPTED:
-            observation_before.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(
-                observation_before.product
-            )
-    else:
-        observation_before.risk_acceptance_expiry_date = None
+    update_expiry_date(observation_before, previous_status)
 
     observation_before.fix_available = imported_observation.fix_available
     observation_before.update_impact_score = imported_observation.update_impact_score
@@ -733,8 +729,8 @@ def _process_new_observation(
     imported_observation.current_status = get_current_status(imported_observation)
 
     imported_observation.risk_acceptance_expiry_date = (
-        calculate_risk_acceptance_expiry_date(imported_observation.product)
-        if imported_observation.current_status == Status.STATUS_RISK_ACCEPTED
+        calculate_expiry_date(imported_observation.product, imported_observation.current_status)
+        if has_expiry(imported_observation)
         else None
     )
 
