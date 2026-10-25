@@ -766,6 +766,21 @@ class TestGetProductMetricsTimeline(BaseTestCase):
 
         self.assertEqual({self.today: {**_initialize_response_data(), "active_critical": 4, "open": 2}}, result)
 
+    @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
+    @patch("django.utils.timezone.now")
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_age_starts_at_local_date(self, mock_user, mock_now):
+        mock_user.return_value = self.superuser
+        product = Product.objects.create(name="time zone")
+        for day in (7, 8):
+            Product_Metrics.objects.create(product=product, date=date(2025, 6, day))
+        # Already 2025-06-15 in TIME_ZONE, but still 2025-06-14 in UTC
+        mock_now.return_value = datetime(2025, 6, 14, 20, 0, tzinfo=dt_timezone.utc)
+
+        result = get_product_metrics_timeline(product, "Past 7 days")
+
+        self.assertEqual({"2025-06-08"}, set(result))
+
 
 class TestGetProductMetricsCurrent(BaseTestCase):
     @patch("application.metrics.services.metrics.get_latest_product_metrics")
@@ -1145,24 +1160,13 @@ class ObservationStub:
 
 
 class QuerySetStub:
-    """A simple stub that supports filter() chaining and iteration."""
+    """A simple stub that supports iteration and len()."""
 
     def __init__(self, items=None):
         self._items = items or []
-        self._filter_calls = []
-
-    def filter(self, **kwargs):
-        self._filter_calls.append(kwargs)
-        return self
 
     def __iter__(self):
         return iter(self._items)
 
     def __len__(self):
         return len(self._items)
-
-    def assert_filtered_with(self, test_case, **expected_kwargs):
-        test_case.assertTrue(
-            any(kwargs == expected_kwargs for kwargs in self._filter_calls),
-            f"Expected filter call with {expected_kwargs}, got {self._filter_calls}",
-        )

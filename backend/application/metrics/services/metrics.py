@@ -223,7 +223,8 @@ def get_product_metrics_timeline(product: Optional[Product], age: str) -> dict:
 
     fields = list(_initialize_response_data())
     if not product or product.is_product_group:
-        # One row per product and day, summed up by the database; annotations can't reuse the names of the fields
+        # One row per product and day, summed up by the database; annotations can't reuse the names of the fields.
+        # order_by() removes the ordering by id of get_product_metrics(), which would otherwise be grouped by as well.
         sums = product_metrics.order_by().values("date").annotate(**{f"{field}_sum": Sum(field) for field in fields})
         return {
             row["date"].isoformat(): {field: row[f"{field}_sum"] for field in fields} for row in sums.order_by("date")
