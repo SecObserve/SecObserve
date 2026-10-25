@@ -194,6 +194,10 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["get"], "/api/vulnerability_checks/")
         self._check_authentication(["get"], "/api/vulnerability_checks/1/")
 
+        self._check_authentication(["get"], "/api/scancodeio_projects/")
+        self._check_authentication(["delete", "get"], "/api/scancodeio_projects/1/")
+        self._check_authentication(["get"], "/api/scancodeio_projects/1/details/")
+
         self._check_authentication(["get", "post"], "/api/general_rules/")
         self._check_authentication(["delete", "get", "put", "patch"], "/api/general_rules/1/")
         self._check_authentication(["post"], "/api/general_rules/1/simulate/")
@@ -261,6 +265,7 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["post"], "/api/products/1/observations_bulk_mark_duplicates/")
         self._check_authentication(["post"], "/api/products/1/license_components_bulk_delete/")
         self._check_authentication(["post"], "/api/products/1/create_scancodeio_project/")
+        self._check_authentication(["get"], "/api/scancodeio/pipelines/")
 
         self._check_authentication(["get"], "/api/products/1/export_observations_csv/")
         self._check_authentication(["get"], "/api/products/1/export_observations_excel/")

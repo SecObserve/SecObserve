@@ -21,6 +21,7 @@ export const transformFeatures = (data: any) => {
     data.vulnerablecode_api_key ??= "";
     data.scancodeio_base_url ??= "";
     data.scancodeio_api_key ??= "";
+    data.scancodeio_webhook_base_url ??= "";
 };
 
 export const FeaturesInputs = () => (
@@ -110,14 +111,11 @@ export const FeaturesInputs = () => (
         <Grid container spacing={2} sx={{ width: "100%" }}>
             <Grid size={3}>
                 <Stack spacing={2}>
-                    <BooleanInput
-                        source="feature_scancodeio_integration"
-                        label="Enable ScanCode.io integration"
-                    />
+                    <BooleanInput source="feature_scancodeio_integration" label="Enable ScanCode.io integration" />
                 </Stack>
             </Grid>
             <Grid size={3}>
-                <Stack spacing={2}>
+                <Stack spacing={2} sx={{ marginBottom: 3 }}>
                     <FormDataConsumer>
                         {({ formData }) =>
                             formData.feature_scancodeio_integration && (
@@ -130,6 +128,12 @@ export const FeaturesInputs = () => (
                                     <TextInputWide
                                         source="scancodeio_api_key"
                                         label="ScanCode.io API key"
+                                        validate={validate_255}
+                                    />
+                                    <TextInputWide
+                                        source="scancodeio_webhook_base_url"
+                                        label="SecObserve URL for ScanCode.io webhooks"
+                                        helperText="Base URL of SecObserve as reached by ScanCode.io"
                                         validate={validate_255}
                                     />
                                 </Stack>
@@ -284,6 +288,11 @@ export const FeaturesFields = () => {
                                 {settings.scancodeio_base_url && (
                                     <Labeled label="ScanCode.io base URL">
                                         <TextField source="scancodeio_base_url" />
+                                    </Labeled>
+                                )}
+                                {settings.scancodeio_webhook_base_url && (
+                                    <Labeled label="SecObserve URL for ScanCode.io webhooks">
+                                        <TextField source="scancodeio_webhook_base_url" />
                                     </Labeled>
                                 )}
                             </Stack>
