@@ -10,8 +10,12 @@ from application.import_observations.models import Parser
 from application.import_observations.parsers.osv.parser import (
     OSV_Component,
     OSV_Vulnerability,
+    create_osv_session,
 )
-from application.import_observations.scanners.osv_scanner import OSVScanner
+from application.import_observations.scanners.osv_scanner import (
+    OSV_QUERYBATCH_READ_RETRIES,
+    OSVScanner,
+)
 from application.import_observations.services.import_observations import (
     ImportParameters,
 )
@@ -297,6 +301,19 @@ class TestOSVScannerPurlCache(BaseTestCase):
         scanner._do_scan([self._component("pkg:pypi/django@5.1.8")])
 
         mock_requests_post.assert_called_once()
+
+    @patch("requests.Session.post")
+    @patch(
+        "application.import_observations.scanners.osv_scanner.create_osv_session",
+        wraps=create_osv_session,
+    )
+    def test_querybatch_limits_read_retries(self, mock_create_osv_session, mock_requests_post):
+        mock_requests_post.return_value = self._response(1)
+        scanner = OSVScanner()
+
+        scanner._do_scan([self._component("pkg:pypi/django@5.1.8")])
+
+        mock_create_osv_session.assert_called_once_with(read_retries=OSV_QUERYBATCH_READ_RETRIES)
 
     @patch("requests.Session.post")
     def test_a_purl_is_queried_once_per_scan(self, mock_requests_post):

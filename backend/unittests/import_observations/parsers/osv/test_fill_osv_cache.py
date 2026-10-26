@@ -137,6 +137,16 @@ class TestOSVSession(TestCase):
             self.assertIn("GET", retries.allowed_methods)
             self.assertIn("POST", retries.allowed_methods)
             self.assertIn(503, retries.status_forcelist)
+            self.assertIsNone(retries.read)
+        finally:
+            session.close()
+
+    def test_session_with_limited_read_retries(self):
+        session = create_osv_session(read_retries=1)
+        try:
+            retries = session.get_adapter("https://api.osv.dev/v1/querybatch").max_retries
+            self.assertEqual(retries.total, OSV_MAX_RETRIES)
+            self.assertEqual(retries.read, 1)
         finally:
             session.close()
 

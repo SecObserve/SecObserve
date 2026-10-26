@@ -38,6 +38,9 @@ class RequestQueries:
 OSV_QUERYBATCH_URL = "https://api.osv.dev/v1/querybatch"
 OSV_QUERYBATCH_SIZE = 500
 OSV_QUERYBATCH_TIMEOUT = 5 * 60
+# A connection dropped mid-response is retried once, but a heavy batch that timed out is not retried
+# again and again: a batch fails after about 10 minutes instead of about 30 minutes.
+OSV_QUERYBATCH_READ_RETRIES = 1
 
 
 class OSVScanner(BaseScanner):
@@ -75,7 +78,7 @@ class OSVScanner(BaseScanner):
 
         page_tokens: dict[str, str] = {}
         pending = purls
-        with create_osv_session() as session:
+        with create_osv_session(read_retries=OSV_QUERYBATCH_READ_RETRIES) as session:
             while pending:
                 page_tokens = self._query_purl_page(session, pending, page_tokens, vulnerabilities)
                 pending = list(page_tokens)
