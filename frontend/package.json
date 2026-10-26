@@ -26,7 +26,7 @@
         "packageurl-js": "2.0.1",
         "papaparse": "5.7.0",
         "prop-types": "15.8.1",
-        "query-string": "9.5.1",
+        "query-string": "10.0.0",
         "ra-core": "5.15.5",
         "ra-ui-materialui": "5.15.5",
         "react": "19.3.1",
