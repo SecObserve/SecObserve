@@ -4,7 +4,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
@@ -26,6 +26,7 @@ from application.core.api.filters import (
 )
 from application.core.api.permissions import UserHasObservationPermission
 from application.core.api.serializers_observation import (
+    ApprovalStatisticsSerializer,
     CountSerializer,
     EvidenceSerializer,
     ObservationAssessmentSerializer,
@@ -58,6 +59,8 @@ from application.core.queries.observation import (
     get_observations,
     get_potential_duplicates,
 )
+from application.core.queries.product import get_product_by_id
+from application.core.services.approval_statistics import get_approval_statistics
 from application.core.services.assessment import (
     assessment_approval,
     remove_assessment,
@@ -342,6 +345,28 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             request_serializer.validated_data.get("observation_logs"),
         )
         return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["GET"],
+        request=None,
+        responses={HTTP_200_OK: ApprovalStatisticsSerializer(many=True)},
+    )
+    @action(detail=False, methods=["get"])
+    def approval_statistics(self, request: Request) -> Response:
+        # The filters validate the parameters before the product is read from them
+        queryset = self.filter_queryset(self.get_queryset())
+        product_id = request.query_params.get("product") or request.query_params.get("product_group")
+        if product_id:
+            product = get_product_by_id(int(product_id))
+            if not product:
+                raise NotFound(f"Product {product_id} not found")
+            user_has_permission_or_403(product, Permissions.Product_Audit_View)
+        else:
+            user = get_current_user()
+            if not user or not user.is_superuser:
+                raise PermissionDenied()
+
+        return Response(status=HTTP_200_OK, data=get_approval_statistics(queryset))
 
     @extend_schema(
         methods=["GET"],

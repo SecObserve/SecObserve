@@ -15,7 +15,7 @@ import {
     useListController,
 } from "react-admin";
 
-import { PERMISSION_OBSERVATION_LOG_APPROVAL } from "../../access_control/types";
+import { PERMISSION_OBSERVATION_LOG_APPROVAL, PERMISSION_PRODUCT_AUDIT_VIEW } from "../../access_control/types";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { AutocompleteInputAutoWidth } from "../../commons/custom_fields/AutocompleteInputAutoWidth";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
@@ -28,7 +28,7 @@ import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductG
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWidth";
-import { feature_vex_enabled, getUserOptionText, has_attribute } from "../../commons/functions";
+import { feature_vex_enabled, getUserOptionText, has_attribute, is_superuser } from "../../commons/functions";
 import { originFilters } from "../observations/ObservationFilterBar";
 import {
     ASSESSMENT_STATUS_CHOICES,
@@ -38,6 +38,7 @@ import {
     OBSERVATION_STATUS_CHOICES,
     OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES,
 } from "../types";
+import ApprovalStatistics from "./ApprovalStatistics";
 import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
 import { ObservationLogComponent } from "./ObservationLogShow";
@@ -190,6 +191,10 @@ const ObservationLogApprovalList = ({
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterBar filters={primary} moreFilters={secondary} />
+                    {history &&
+                        (product ? product.permissions?.includes(PERMISSION_PRODUCT_AUDIT_VIEW) : is_superuser()) && (
+                            <ApprovalStatistics />
+                        )}
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid

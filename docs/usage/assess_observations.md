@@ -111,4 +111,6 @@ To make it easier to find observations with the status `In Review` or assessemen
 
 Approved, approved with edits and rejected assessments are listed in the tab **Approval history** on the **Reviews / Approvals** page and in the section **Approval history** of the **Reviews** tab of products and product groups.
 The list shows who decided when, can be filtered by approver, decision and decision date, and is read-only.
+**Statistics by approver** counts the decisions of each approver for the current filters and shows the average time from the assessment to the decision.
+It is shown to users with the role `Maintainer` or `Owner` of the product or product group, and on the **Reviews / Approvals** page to superusers only.
 The **Reviews** tab of a product or product group is also shown if there is an approval history, but nothing is pending.

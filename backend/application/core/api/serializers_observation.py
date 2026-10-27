@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     CharField,
     ChoiceField,
     DateField,
+    FloatField,
     IntegerField,
     JSONField,
     ListField,
@@ -725,3 +726,13 @@ class PotentialDuplicateSerializer(ModelSerializer):
 
 class CountSerializer(Serializer):
     count = IntegerField()
+
+
+class ApprovalStatisticsSerializer(Serializer):
+    approval_user = IntegerField()
+    approval_user_full_name = CharField()
+    approved = IntegerField()
+    approved_with_edits = IntegerField()
+    rejected = IntegerField()
+    total = IntegerField()
+    average_decision_hours = FloatField()
