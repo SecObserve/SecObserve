@@ -22,13 +22,13 @@ type ListExportMenuProps = {
     pivotTable?: boolean;
 };
 
-// Exports the list with its filters and sort order
+// Exports the list with its filters, including the permanent ones, and sort order
 const ListExportMenu = ({ resource, title, pivotTable }: ListExportMenuProps) => {
     const notify = useNotify();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
     const navigate = useNavigate();
-    const { filterValues, sort } = useListContext();
+    const { filter, filterValues, sort } = useListContext();
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -91,7 +91,7 @@ const ListExportMenu = ({ resource, title, pivotTable }: ListExportMenuProps) =>
     };
 
     const queryParams = () => {
-        const query = { ...resolveDateFilters(filterValues), ...getOrderingQuery({ sort }) };
+        const query = { ...resolveDateFilters({ ...filterValues, ...filter }), ...getOrderingQuery({ sort }) };
         return queryString.stringify(query);
     };
 

@@ -23,6 +23,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { DateField } from "../../commons/custom_fields/DateField";
 import { DateRangeFilter } from "../../commons/custom_fields/DateRangeFilter";
 import { FilterBar, SecondaryFilter } from "../../commons/custom_fields/FilterBar";
+import ListExportMenu from "../../commons/custom_fields/ListExportMenu";
 import { ObservationLogPriorityField } from "../../commons/custom_fields/ObservationLogPriorityField";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
@@ -190,6 +191,11 @@ const ObservationLogApprovalList = ({
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
                     <FilterBar filters={primary} moreFilters={secondary} />
+                    {history && (
+                        <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
+                            <ListExportMenu resource="observation_logs" title="Approval history" />
+                        </Stack>
+                    )}
                     <WithListContext
                         render={({ data, sort }) => (
                             <Datagrid
