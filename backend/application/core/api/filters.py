@@ -16,6 +16,7 @@ from application.commons.api.extended_ordering_filter import ExtendedOrderingFil
 from application.commons.services.functions import get_start_of_day
 from application.commons.types import Age_Choices
 from application.core.models import (
+    Audit_Log,
     Branch,
     Component,
     Evidence,
@@ -449,6 +450,26 @@ class ObservationLogFilter(FilterSet):
         if value is False:
             return queryset.exclude(assessment_status__in=Assessment_Status.ASSESSMENT_STATUS_DECISIONS)
         return queryset
+
+
+class AuditLogFilter(FilterSet):
+    target = CharFilter(field_name="target", lookup_expr="icontains")
+    created = DateTimeFromToRangeFilter(field_name="created")
+
+    ordering = OrderingFilter(
+        # tuple-mapping retains order
+        fields=(
+            ("created", "created"),
+            ("user_name", "user_name"),
+            ("product_name", "product_name"),
+            ("action", "action"),
+            ("target", "target"),
+        ),
+    )
+
+    class Meta:
+        model = Audit_Log
+        fields = ["action", "user"]
 
 
 class EvidenceFilter(FilterSet):

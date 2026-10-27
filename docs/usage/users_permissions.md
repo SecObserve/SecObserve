@@ -74,6 +74,7 @@ While superusers have permission to view and edit all data, internal and externa
 | Import Observations      | -      | X      | X          | X     | X      |
 | Edit Product             | -      | -      | X          | X     | -      |
 | Delete Product           | -      | -      | -          | X     | -      |
+| View audit log           | -      | -      | X          | X     | -      |
 |                          |        |        |            |       |        |
 | View Observation         | X      | X      | X          | X     | -      |
 | Create Observation       | -      | X      | X          | X     | -      |
@@ -112,6 +113,21 @@ While superusers have permission to view and edit all data, internal and externa
 **^2)^** Maintainers are not allowed to manipulate Owners of that product
 
 **^3)^** Only for VEX documents (CSAF or OpenVEX) linked to a product. For VEX documents without a product, the user who created the VEX document is the owner of the document and can perform all actions on it.
+
+
+## Audit log
+
+Changes that decide who can approve assessments are recorded with time, user, change, old and new value:
+
+* **Assessments need approval** switched on or off for a product or product group,
+* designated approvers and approver groups added to or removed from a product or product group, also when the user or authorization group is deleted.
+
+Maintainers and Owners see the audit log of a product in **Settings / Audit Log** and the one of a product group in its tab **Audit Log**.
+The audit log of a product shows the changes of its product group as well, since both decide about the effective approvers.
+Superusers see all entries in **Administration / Audit Log**.
+
+Entries are kept when the user, authorization group or product they refer to is deleted.
+The audit log starts with the upgrade to the version that introduced it, earlier changes are not recorded.
 
 
 ## Management of users and authorization groups

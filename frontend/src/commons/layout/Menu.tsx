@@ -7,6 +7,7 @@ import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "rea
 
 import administration from "../../access_control/access_control_administration";
 import background_tasks_administration from "../../background_tasks/background_tasks_administration";
+import audit_logs from "../../core/audit_logs";
 import components from "../../core/components";
 import observations from "../../core/observations";
 import product_groups from "../../core/product_groups";
@@ -187,6 +188,15 @@ const Menu = ({ dense = false }: MenuProps) => {
                         state={{ _scrollToTop: true }}
                         primaryText="Background Tasks"
                         leftIcon={<background_tasks_administration.icon />}
+                        dense={dense}
+                    />
+                )}
+                {is_superuser() && (
+                    <MenuItemLink
+                        to="/audit_logs"
+                        state={{ _scrollToTop: true }}
+                        primaryText="Audit Log"
+                        leftIcon={<audit_logs.icon />}
                         dense={dense}
                     />
                 )}

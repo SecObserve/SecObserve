@@ -52,6 +52,7 @@ from application.core.services.assessment_approver import (
     assessment_approvers_configured,
     is_user_designated_assessment_approver,
 )
+from application.core.services.audit_log import log_assessments_need_approval
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
@@ -249,6 +250,12 @@ class ProductCoreSerializer(ModelSerializer):
             raise ValidationError(f"Invalid statuses: {', '.join(invalid_statuses)}")
 
         return value
+
+    def update(self, instance: Product, validated_data: dict) -> Product:
+        assessments_need_approval = instance.assessments_need_approval
+        product = super().update(instance, validated_data)
+        log_assessments_need_approval(product, assessments_need_approval)
+        return product
 
     def to_representation(self, instance: Product) -> dict[str, Any]:
         data = super().to_representation(instance)

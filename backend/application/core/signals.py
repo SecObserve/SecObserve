@@ -3,15 +3,25 @@ from typing import Any
 
 from django.db import transaction
 from django.db.models import Q
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import (
+    m2m_changed,
+    post_delete,
+    post_save,
+    pre_delete,
+    pre_save,
+)
 from django.dispatch import receiver
 from huey.contrib.djhuey import lock_task, on_commit_task
 
-from application.access_control.models import User
+from application.access_control.models import Authorization_Group, User
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.roles_permissions import Roles
 from application.commons.models import Settings
 from application.core.models import Branch, Observation, Product, Product_Member
+from application.core.services.audit_log import (
+    log_assessment_approver,
+    log_assessment_approvers_changed,
+)
 from application.core.services.branch import set_default_branch
 from application.core.services.observation import (
     get_identity_hash,
@@ -77,6 +87,35 @@ def product_post_save(
         user = get_current_user()
         if user:
             Product_Member(product=instance, user=user, role=Roles.Owner).save()
+
+
+@receiver(m2m_changed, sender=Product.assessment_approvers.through)
+@receiver(m2m_changed, sender=Product.assessment_approver_authorization_groups.through)
+def assessment_approvers_changed(sender: Any, instance: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+    # sender is needed according to Django documentation
+    # Auto-created through models send no post_delete, so removals are taken from post_remove
+    if kwargs["action"] in ("post_add", "post_remove") and kwargs["pk_set"] and not kwargs.get("raw"):
+        log_assessment_approvers_changed(
+            instance, kwargs["action"] == "post_remove", kwargs["reverse"], kwargs["model"], kwargs["pk_set"]
+        )
+
+
+@receiver(pre_delete, sender=User)
+def user_pre_delete(sender: Any, instance: User, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+    # sender is needed according to Django documentation
+    # The cascade deletes the approver rows without any signal
+    for product in instance.assessment_approver_for_products.all():
+        log_assessment_approver(product, instance, removed=True, deleted=instance)
+
+
+@receiver(pre_delete, sender=Authorization_Group)
+def authorization_group_pre_delete(
+    sender: Any, instance: Authorization_Group, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    # The cascade deletes the approver rows without any signal
+    for product in instance.assessment_approver_group_for_products.all():
+        log_assessment_approver(product, instance, removed=True, deleted=instance)
 
 
 @receiver(post_save, sender=Branch)
