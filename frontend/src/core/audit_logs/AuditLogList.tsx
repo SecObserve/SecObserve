@@ -39,6 +39,12 @@ const AuditLogList = () => {
                 <Datagrid size={getSettingListSize()} rowClick={false} bulkActionButtons={false}>
                     <DateField source="created" showTime />
                     <TextField source="product_name" label="Product" emptyText="---" />
+                    <TextField
+                        source="authorization_group_name"
+                        label="Authorization group"
+                        emptyText="---"
+                        sortable={false}
+                    />
                     <TextField source="user_name" label="User" emptyText="---" />
                     <TextField source="action" />
                     <TextField source="target" sx={{ wordBreak: "break-word" }} />

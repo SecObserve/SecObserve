@@ -321,6 +321,15 @@ export const AUDIT_LOG_ACTION_CHOICES = [
     { id: "Approver removed", name: "Approver removed" },
     { id: "Approver group added", name: "Approver group added" },
     { id: "Approver group removed", name: "Approver group removed" },
+    { id: "User member added", name: "User member added" },
+    { id: "User member removed", name: "User member removed" },
+    { id: "User member role changed", name: "User member role changed" },
+    { id: "Authorization group member added", name: "Authorization group member added" },
+    { id: "Authorization group member removed", name: "Authorization group member removed" },
+    { id: "Authorization group member role changed", name: "Authorization group member role changed" },
+    { id: "User added to authorization group", name: "User added to authorization group" },
+    { id: "User removed from authorization group", name: "User removed from authorization group" },
+    { id: "Superuser", name: "Superuser" },
 ];
 
 export const PURL_TYPE_CHOICES = [

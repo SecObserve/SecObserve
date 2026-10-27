@@ -13,14 +13,29 @@ from django.db.models.signals import (
 from django.dispatch import receiver
 from huey.contrib.djhuey import lock_task, on_commit_task
 
-from application.access_control.models import Authorization_Group, User
+from application.access_control.models import (
+    Authorization_Group,
+    Authorization_Group_Member,
+    User,
+)
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.roles_permissions import Roles
 from application.commons.models import Settings
-from application.core.models import Branch, Observation, Product, Product_Member
+from application.core.models import (
+    Branch,
+    Observation,
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 from application.core.services.audit_log import (
     log_assessment_approver,
     log_assessment_approvers_changed,
+    log_authorization_group_user,
+    log_authorization_group_users_added,
+    log_product_member,
+    log_product_member_removed,
+    log_superuser,
 )
 from application.core.services.branch import set_default_branch
 from application.core.services.observation import (
@@ -116,6 +131,82 @@ def authorization_group_pre_delete(
     # The cascade deletes the approver rows without any signal
     for product in instance.assessment_approver_group_for_products.all():
         log_assessment_approver(product, instance, removed=True, deleted=instance)
+
+
+@receiver(pre_save, sender=Product_Member)
+@receiver(pre_save, sender=Product_Authorization_Group_Member)
+def product_member_pre_save(sender: Any, instance: Any, **kwargs: Any) -> None:
+    # The role before the save is needed to log a role change
+    old_role = None
+    if instance.pk and not kwargs.get("raw"):
+        old_role = sender.objects.filter(pk=instance.pk).values_list("role", flat=True).first()
+    setattr(instance, "audit_log_old_role", old_role)
+
+
+@receiver(post_save, sender=Product_Member)
+@receiver(post_save, sender=Product_Authorization_Group_Member)
+def product_member_post_save(
+    sender: Any, instance: Any, created: bool, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    if not kwargs.get("raw"):
+        log_product_member(instance, created, getattr(instance, "audit_log_old_role", None))
+
+
+@receiver(post_delete, sender=Product_Member)
+@receiver(post_delete, sender=Product_Authorization_Group_Member)
+def product_member_post_delete(sender: Any, instance: Any, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+    # sender is needed according to Django documentation
+    log_product_member_removed(instance, kwargs.get("origin"))
+
+
+@receiver(post_save, sender=Authorization_Group_Member)
+def authorization_group_member_post_save(
+    sender: Any, instance: Authorization_Group_Member, created: bool, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    if created and not kwargs.get("raw"):
+        log_authorization_group_user(instance.authorization_group, instance.user, removed=False)
+
+
+@receiver(m2m_changed, sender=Authorization_Group_Member)
+def authorization_group_users_changed(
+    sender: Any, instance: Any, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    # .add() bulk creates the members without post_save, removals send post_delete
+    if kwargs["action"] == "post_add" and kwargs["pk_set"] and not kwargs.get("raw"):
+        log_authorization_group_users_added(instance, kwargs["reverse"], kwargs["model"], kwargs["pk_set"])
+
+
+@receiver(post_delete, sender=Authorization_Group_Member)
+def authorization_group_member_post_delete(
+    sender: Any, instance: Authorization_Group_Member, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    log_authorization_group_user(
+        instance.authorization_group, instance.user, removed=True, deleted=kwargs.get("origin")
+    )
+
+
+@receiver(pre_save, sender=User)
+def user_pre_save(sender: Any, instance: User, **kwargs: Any) -> None:  # pylint: disable=unused-argument
+    # sender is needed according to Django documentation
+    old_is_superuser = None
+    update_fields = kwargs.get("update_fields")
+    # Saves of other fields only, e.g. last_login, need no query
+    if instance.pk and not kwargs.get("raw") and (update_fields is None or "is_superuser" in update_fields):
+        old_is_superuser = User.objects.filter(pk=instance.pk).values_list("is_superuser", flat=True).first()
+    setattr(instance, "audit_log_old_is_superuser", old_is_superuser)
+
+
+@receiver(post_save, sender=User)
+def user_post_save(
+    sender: Any, instance: User, created: bool, **kwargs: Any  # pylint: disable=unused-argument
+) -> None:
+    # sender is needed according to Django documentation
+    if not kwargs.get("raw"):
+        log_superuser(instance, created, getattr(instance, "audit_log_old_is_superuser", None))
 
 
 @receiver(post_save, sender=Branch)

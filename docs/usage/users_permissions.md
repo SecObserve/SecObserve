@@ -120,11 +120,18 @@ While superusers have permission to view and edit all data, internal and externa
 Changes that decide who can approve assessments are recorded with time, user, change, old and new value:
 
 * **Assessments need approval** switched on or off for a product or product group,
-* designated approvers and approver groups added to or removed from a product or product group, also when the user or authorization group is deleted.
+* designated approvers and approver groups added to or removed from a product or product group,
+* users and authorization groups added to or removed from a product or product group, or given another role,
+* users added to or removed from an authorization group, including the synchronization with OIDC groups,
+* the superuser flag of a user switched on or off.
+
+Removals are recorded as well when the user or authorization group is deleted.
+Changes made by the synchronization with OIDC groups have no user.
 
 Maintainers and Owners see the audit log of a product in **Settings / Audit Log** and the one of a product group in its tab **Audit Log**.
 The audit log of a product shows the changes of its product group as well, since both decide about the effective approvers.
 Superusers see all entries in **Administration / Audit Log**.
+Entries that belong to no product, like memberships in authorization groups and the superuser flag, are only shown there.
 
 Entries are kept when the user, authorization group or product they refer to is deleted.
 The audit log starts with the upgrade to the version that introduced it, earlier changes are not recorded.
