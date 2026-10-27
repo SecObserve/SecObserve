@@ -289,6 +289,7 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             .select_related("observation__parser")
             .select_related("observation__origin_service")
             .select_related("user")
+            .select_related("approval_user")
         )
 
     @extend_schema(

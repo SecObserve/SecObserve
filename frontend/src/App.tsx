@@ -96,6 +96,7 @@ const AdminApp = () => {
                 <Route path="/reviews" element={<Reviews />} />
                 <Route path="/reviews/observation_reviews" element={<Reviews />} />
                 <Route path="/reviews/observation_log_approvals" element={<Reviews />} />
+                <Route path="/reviews/observation_log_approval_history" element={<Reviews />} />
                 <Route path="/user_settings" element={<UserSettings />} />
             </CustomRoutes>
             <Resource

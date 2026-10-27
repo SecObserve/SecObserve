@@ -1,4 +1,5 @@
 import ChecklistIcon from "@mui/icons-material/Checklist";
+import HistoryIcon from "@mui/icons-material/History";
 import { Badge, Box, Divider, Paper, Tab, Tabs } from "@mui/material";
 import { Fragment, ReactNode, useEffect, useState } from "react";
 import { useNotify } from "react-admin";
@@ -81,7 +82,11 @@ export default function Reviews() {
         fetchObservationReviews();
         fetchObservationLogApprovals();
     });
-    const routeMatch = useRouteMatch(["/reviews/observation_reviews", "/reviews/observation_log_approvals"]);
+    const routeMatch = useRouteMatch([
+        "/reviews/observation_reviews",
+        "/reviews/observation_log_approvals",
+        "/reviews/observation_log_approval_history",
+    ]);
     function currentTab(): number {
         switch (routeMatch?.pattern?.path) {
             case "/reviews/observation_reviews": {
@@ -89,6 +94,9 @@ export default function Reviews() {
             }
             case "/reviews/observation_log_approvals": {
                 return 1;
+            }
+            case "/reviews/observation_log_approval_history": {
+                return 2;
             }
             default: {
                 return 0;
@@ -125,6 +133,14 @@ export default function Reviews() {
                         {...a11yProps(1)} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
                         // nosemgrep because the props are well defined in the import
                     />
+                    <Tab
+                        label="Approval history"
+                        icon={<HistoryIcon />}
+                        to="/reviews/observation_log_approval_history"
+                        component={Link}
+                        {...a11yProps(2)} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
+                        // nosemgrep because the props are well defined in the import
+                    />
                 </Tabs>
                 <Divider />
                 <CustomTabPanel value={currentTab()} index={0}>
@@ -132,6 +148,9 @@ export default function Reviews() {
                 </CustomTabPanel>
                 <CustomTabPanel value={currentTab()} index={1}>
                     <ObservationLogApprovalList />
+                </CustomTabPanel>
+                <CustomTabPanel value={currentTab()} index={2}>
+                    <ObservationLogApprovalList history />
                 </CustomTabPanel>
             </Paper>
         </Fragment>

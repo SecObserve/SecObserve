@@ -106,3 +106,9 @@ When an import creates a new observation, the newest matching assessment from th
 To make it easier to find observations with the status `In Review` or assessements needing an approval, a tab is shown for the product, if reviews or approvals are pending:
 
 ![Reviews tab](../assets/images/screenshot_reviews_tab.png)
+
+### Approval history
+
+Approved, approved with edits and rejected assessments are listed in the tab **Approval history** on the **Reviews / Approvals** page and in the section **Approval history** of the **Reviews** tab of products and product groups.
+The list shows who decided when, can be filtered by approver, decision and decision date, and is read-only.
+The **Reviews** tab of a product or product group is also shown if there is an approval history, but nothing is pending.

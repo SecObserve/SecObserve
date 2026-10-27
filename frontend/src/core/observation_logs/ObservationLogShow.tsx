@@ -39,33 +39,37 @@ const ShowActions = () => {
     let filter = null;
     let sort: SortPayload | null = null;
     let storeKey = null;
+    const history = localStorage.getItem("observationlogapprovalhistory");
+    const approval_filter = history ? { decided: true } : { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
+    const approval_sort: SortPayload = history
+        ? { field: "approval_date", order: "DESC" }
+        : { field: "created", order: "ASC" };
+    const approval_store_key = "observation_logs.approval" + (history ? "history" : "");
     if (observation_log && localStorage.getItem("observationlogembeddedlist")) {
         filter = { observation: observation_log.observation };
         sort = { field: "created", order: "DESC" };
         storeKey = "observation_logs.embedded";
     }
     if (observation_log && localStorage.getItem("observationlogapprovallist")) {
-        filter = {
-            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
-        };
-        sort = { field: "created", order: "ASC" };
-        storeKey = "observation_logs.approval";
+        filter = approval_filter;
+        sort = approval_sort;
+        storeKey = approval_store_key;
     }
     if (observation_log?.observation_data && localStorage.getItem("observationlogapprovallistproduct")) {
         filter = {
             product: observation_log.observation_data.product,
-            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
+            ...approval_filter,
         };
-        sort = { field: "created", order: "ASC" };
-        storeKey = "observation_logs.approvalproduct";
+        sort = approval_sort;
+        storeKey = approval_store_key + "product";
     }
     if (observation_log?.observation_data && localStorage.getItem("observationlogapprovallistproductgroup")) {
         filter = {
             product_group: observation_log.observation_data.product_data.product_group,
-            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
+            ...approval_filter,
         };
-        sort = { field: "created", order: "ASC" };
-        storeKey = "observation_logs.approvalproductgroup";
+        sort = approval_sort;
+        storeKey = approval_store_key + "productgroup";
     }
 
     return (

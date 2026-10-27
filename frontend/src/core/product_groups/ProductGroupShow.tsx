@@ -101,7 +101,8 @@ const ProductGroupShow = () => {
                                     <MetricsStatusCurrent product_id={product_group.id} />
                                 </Stack>
                             </Tab>
-                            {product_group.product_rule_approvals + product_group.observation_log_approvals > 0 && (
+                            {(product_group.product_rule_approvals + product_group.observation_log_approvals > 0 ||
+                                product_group.has_approval_history) && (
                                 <Tab
                                     label="Reviews"
                                     path="reviews"
