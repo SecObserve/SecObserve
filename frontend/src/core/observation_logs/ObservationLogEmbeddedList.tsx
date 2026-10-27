@@ -45,6 +45,12 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
         return "../../../../observation_logs/" + id + "/show";
     };
 
+    // Decisions stay visible when the product no longer requires approval
+    const show_approval = (data: any[] | undefined) =>
+        observation.product_data.assessments_need_approval ||
+        observation.product_data.product_group_assessments_need_approval ||
+        data?.some((element: any) => element.approval_date);
+
     localStorage.setItem("observationlogembeddedlist", "true");
     localStorage.removeItem("observationlogapprovallist");
     localStorage.removeItem("observationlogapprovallistproduct");
@@ -63,10 +69,7 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
                                 rowClick={ShowObservationLogs}
                                 resource="observation_logs"
                             >
-                                {(observation.product_data.assessments_need_approval ||
-                                    observation.product_data.product_group_assessments_need_approval) && (
-                                    <ChipField source="assessment_status" sortable={false} />
-                                )}
+                                {show_approval(data) && <ChipField source="assessment_status" sortable={false} />}
                                 <TextField source="user_full_name" label="User" sortable={false} />
                                 <TextField source="severity" emptyText="---" sortable={false} />
                                 <TextField source="status" emptyText="---" sortable={false} />
@@ -80,8 +83,7 @@ const ObservationLogEmbeddedList = ({ observation }: ObservationLogEmbeddedListP
                                     sx={{ wordBreak: "break-word" }}
                                 />
                                 <DateField source="created" showTime sortable={false} />
-                                {(observation.product_data.assessments_need_approval ||
-                                    observation.product_data.product_group_assessments_need_approval) && (
+                                {show_approval(data) && (
                                     <TextField
                                         source="approval_user_full_name"
                                         label="Approved/rejected by"
