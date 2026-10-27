@@ -3,6 +3,7 @@ from django.http import FileResponse, HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
@@ -15,17 +16,22 @@ from rest_framework.status import (
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
-from application.authorization.services.authorization import user_has_permission
+from application.authorization.services.authorization import (
+    user_has_permission,
+    user_has_permission_or_403,
+)
 from application.authorization.services.roles_permissions import Permissions
 from application.commons.services.export import excel_response
-from application.core.api.filters import ComponentFilter
+from application.core.api.filters import AuditLogFilter, ComponentFilter
 from application.core.api.serializers_others import (
+    AuditLogSerializer,
     ComponentNameSerializer,
     ComponentSerializer,
     PURLTypeElementSerializer,
     PURLTypeSerializer,
 )
-from application.core.models import Component
+from application.core.models import Audit_Log, Component
+from application.core.queries.audit_log import get_audit_logs
 from application.core.queries.component import get_components
 from application.core.queries.product import get_product_by_id
 from application.core.services.export_components import (
@@ -121,3 +127,25 @@ class ComponentNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     def get_queryset(self) -> QuerySet[Component]:
         return get_components()
+
+
+class AuditLogViewSet(GenericViewSet, ListModelMixin):
+    serializer_class = AuditLogSerializer
+    filterset_class = AuditLogFilter
+    permission_classes = (IsAuthenticated,)
+    queryset = Audit_Log.objects.none()
+    filter_backends = [DjangoFilterBackend]
+
+    def get_queryset(self) -> QuerySet[Audit_Log]:
+        product_id = self.request.query_params.get("product")
+        if not product_id:
+            return get_audit_logs()
+
+        if not product_id.isdigit():
+            raise ValidationError("Product id is not an integer")
+        product = get_product_by_id(int(product_id))
+        if not product:
+            raise NotFound()
+        user_has_permission_or_403(product, Permissions.Product_Audit_View)
+
+        return get_audit_logs(product)

@@ -315,6 +315,14 @@ export const ASSESSMENT_STATUS_CHOICES = [
     { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
 ];
 
+export const AUDIT_LOG_ACTION_CHOICES = [
+    { id: "Assessments need approval", name: "Assessments need approval" },
+    { id: "Approver added", name: "Approver added" },
+    { id: "Approver removed", name: "Approver removed" },
+    { id: "Approver group added", name: "Approver group added" },
+    { id: "Approver group removed", name: "Approver group removed" },
+];
+
 export const PURL_TYPE_CHOICES = [
     { id: "nuget", name: ".NET (nuget)" },
     { id: "apk", name: "Alpine Linux (apk)" },

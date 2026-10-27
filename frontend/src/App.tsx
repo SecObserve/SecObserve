@@ -20,6 +20,7 @@ import PivotTable from "./commons/pivot_table/PivotTable";
 import { queryClient } from "./commons/queryClient";
 import drfProvider from "./commons/ra-data-django-rest-framework";
 import settings from "./commons/settings";
+import audit_logs from "./core/audit_logs";
 import components from "./core/components";
 import evidences from "./core/evidences";
 import observation_logs from "./core/observation_logs";
@@ -275,6 +276,12 @@ const AdminApp = () => {
                 recordRepresentation={(record) =>
                     `${trim_string(record.product_name + " / " + record.component_name_version)}`
                 }
+            />
+            <Resource
+                name="audit_logs"
+                {...audit_logs} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
+                // nosemgrep because the props are well defined in the import
+                options={{ label: "Audit Log" }}
             />
             <Resource name="api_tokens" options={{ label: "API Tokens" }} />
             <Resource name="product_api_tokens" options={{ label: "API Tokens" }} />

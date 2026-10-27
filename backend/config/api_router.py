@@ -15,6 +15,7 @@ from application.core.api.views_observation import (
     PotentialDuplicateViewSet,
 )
 from application.core.api.views_others import (
+    AuditLogViewSet,
     ComponentNameViewSet,
     ComponentViewSet,
 )
@@ -101,6 +102,7 @@ router.register("observation_titles", ObservationTitleViewSet, basename="observa
 router.register("observation_logs", ObservationLogViewSet, basename="observation_logs")
 router.register("components", ComponentViewSet, basename="components")
 router.register("component_names", ComponentNameViewSet, basename="component_names")
+router.register("audit_logs", AuditLogViewSet, basename="audit_logs")
 router.register("general_rules", GeneralRuleViewSet, basename="general_rules")
 router.register("api_configurations", ApiConfigurationViewSet, basename="api_configurations")
 router.register("product_rules", ProductRuleViewSet, basename="product_rules")

@@ -28,6 +28,7 @@ import {
     PERMISSION_BRANCH_CREATE,
     PERMISSION_OBSERVATION_CREATE,
     PERMISSION_PRODUCT_API_TOKEN_CREATE,
+    PERMISSION_PRODUCT_AUDIT_VIEW,
     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE,
     PERMISSION_PRODUCT_EDIT,
     PERMISSION_PRODUCT_IMPORT_OBSERVATIONS,
@@ -56,6 +57,8 @@ import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
 import ProductRuleEmbeddedList from "../../rules/product_rules/ProductRuleEmbeddedList";
+import audit_logs from "../audit_logs";
+import AuditLogEmbeddedList from "../audit_logs/AuditLogEmbeddedList";
 import BranchCreate from "../branches/BranchCreate";
 import BranchEmbeddedList from "../branches/BranchEmbeddedList";
 import ShowDefaultBranchObservationsButton from "../branches/ShowDefaultBranchObservationsButton";
@@ -75,7 +78,15 @@ import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
 
-const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications"];
+const SETTINGS_PATHS = [
+    "settings",
+    "rules",
+    "api_configurations",
+    "members",
+    "api_token",
+    "notifications",
+    "audit_log",
+];
 
 type ShowActionsProps = {
     filter: any;
@@ -288,6 +299,11 @@ const ProductShow = () => {
                                 <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
                                     <ProductNotificationSettings product={product} />
                                 </Tab>
+                                {product?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_VIEW) && (
+                                    <Tab label="Audit Log" path="audit_log" icon={<audit_logs.icon />}>
+                                        <AuditLogEmbeddedList product={product} />
+                                    </Tab>
+                                )}
                             </TabbedShowLayout>
                         )}
                     />

@@ -7,7 +7,7 @@ from rest_framework.serializers import (
     Serializer,
 )
 
-from application.core.models import Component
+from application.core.models import Audit_Log, Component
 
 
 class ComponentSerializer(ModelSerializer):
@@ -18,6 +18,12 @@ class ComponentSerializer(ModelSerializer):
 
     class Meta:
         model = Component
+        fields = "__all__"
+
+
+class AuditLogSerializer(ModelSerializer):
+    class Meta:
+        model = Audit_Log
         fields = "__all__"
 
 

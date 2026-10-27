@@ -20,6 +20,7 @@ import ApiTokenCreate from "../../access_control/api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../../access_control/api_tokens/ApiTokenEmbeddedList";
 import {
     PERMISSION_PRODUCT_API_TOKEN_CREATE,
+    PERMISSION_PRODUCT_AUDIT_VIEW,
     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE,
     PERMISSION_PRODUCT_GROUP_EDIT,
     PERMISSION_PRODUCT_MEMBER_CREATE,
@@ -36,6 +37,8 @@ import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
 import ProductRuleEmbeddedList from "../../rules/product_rules/ProductRuleEmbeddedList";
+import audit_logs from "../audit_logs";
+import AuditLogEmbeddedList from "../audit_logs/AuditLogEmbeddedList";
 import observations from "../observations";
 import ObservationGroupEmbeddedList from "../observations/ObservationGroupEmbeddedList";
 import ProductAuthorizationGroupMemberAdd from "../product_authorization_group_members/ProductAuthorizationGroupMemberAdd";
@@ -168,6 +171,11 @@ const ProductGroupShow = () => {
                             <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
                                 <ProductNotificationSettings product={product_group} is_product_group={true} />
                             </Tab>
+                            {product_group?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_VIEW) && (
+                                <Tab label="Audit Log" path="audit_log" icon={<audit_logs.icon />}>
+                                    <AuditLogEmbeddedList product={product_group} is_product_group={true} />
+                                </Tab>
+                            )}
                         </TabbedShowLayout>
                     )}
                 />

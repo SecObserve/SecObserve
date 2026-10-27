@@ -27,6 +27,7 @@ from encrypted_model_fields.fields import EncryptedCharField
 from application.access_control.models import Authorization_Group, User
 from application.core.types import (
     Assessment_Status,
+    Audit_Log_Action,
     OSVLinuxDistribution,
     Severity,
     Status,
@@ -599,3 +600,24 @@ class Potential_Duplicate(Model):
             "observation",
             "potential_duplicate_observation",
         )
+
+
+class Audit_Log(Model):
+    created = DateTimeField(auto_now_add=True)
+    # The names are kept, so that the entries stay readable after a deletion
+    user = ForeignKey(User, related_name="audit_logs", on_delete=SET_NULL, null=True)
+    user_name = CharField(max_length=301, blank=True)
+    product = ForeignKey(Product, related_name="audit_logs", on_delete=SET_NULL, null=True)
+    product_name = CharField(max_length=255, blank=True)
+    authorization_group = ForeignKey(Authorization_Group, related_name="audit_logs", on_delete=SET_NULL, null=True)
+    authorization_group_name = CharField(max_length=255, blank=True)
+    action = CharField(max_length=64, choices=Audit_Log_Action.AUDIT_LOG_ACTION_CHOICES)
+    target = CharField(max_length=301, blank=True)
+    old_value = CharField(max_length=255, blank=True)
+    new_value = CharField(max_length=255, blank=True)
+
+    class Meta:
+        indexes = [
+            Index(fields=["product", "-created"]),
+            Index(fields=["-created"]),
+        ]
