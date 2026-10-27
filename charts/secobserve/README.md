@@ -256,6 +256,18 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
+  "name": "OIDC_FULL_NAME",
+  "value": "preferred_username"
+}
+</pre>
+</td>
+			<td>OIDC full name</td>
+		</tr>
+		<tr>
+			<td>backend.env[11]</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
   "name": "OIDC_EMAIL",
   "value": "email"
 }
@@ -264,7 +276,7 @@ true
 			<td>OIDC email address</td>
 		</tr>
 		<tr>
-			<td>backend.env[11]</td>
+			<td>backend.env[12]</td>
 			<td>object</td>
 			<td><pre lang="json">
 {
@@ -328,6 +340,18 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
+  "name": "OIDC_ISSUER",
+  "value": ""
+}
+</pre>
+</td>
+			<td>OIDC issuer, optional, default is the issuer of the OpenID configuration</td>
+		</tr>
+		<tr>
+			<td>backend.env[6]</td>
+			<td>object</td>
+			<td><pre lang="json">
+{
   "name": "OIDC_CLIENT_ID",
   "value": "secobserve"
 }
@@ -336,7 +360,7 @@ true
 			<td>OIDC client id</td>
 		</tr>
 		<tr>
-			<td>backend.env[6]</td>
+			<td>backend.env[7]</td>
 			<td>object</td>
 			<td><pre lang="json">
 {
@@ -348,7 +372,7 @@ true
 			<td>OIDC user name</td>
 		</tr>
 		<tr>
-			<td>backend.env[7]</td>
+			<td>backend.env[8]</td>
 			<td>object</td>
 			<td><pre lang="json">
 {
@@ -360,7 +384,7 @@ true
 			<td>OIDC first name</td>
 		</tr>
 		<tr>
-			<td>backend.env[8]</td>
+			<td>backend.env[9]</td>
 			<td>object</td>
 			<td><pre lang="json">
 {
@@ -370,18 +394,6 @@ true
 </pre>
 </td>
 			<td>OIDC last name</td>
-		</tr>
-		<tr>
-			<td>backend.env[9]</td>
-			<td>object</td>
-			<td><pre lang="json">
-{
-  "name": "OIDC_FULL_NAME",
-  "value": "preferred_username"
-}
-</pre>
-</td>
-			<td>OIDC full name</td>
 		</tr>
 		<tr>
 			<td>backend.existingSecret</td>
