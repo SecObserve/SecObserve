@@ -555,6 +555,8 @@ class Observation_Log(Model):
     risk_acceptance_expiry_date = DateField(null=True)
 
     propagated_from = ForeignKey("core.Observation_Log", blank=True, null=True, on_delete=SET_NULL)
+    # Values of the assessor that were changed with "Approved with edits"
+    assessor_values = JSONField(blank=True, null=True)
 
     class Meta:
         indexes = [
