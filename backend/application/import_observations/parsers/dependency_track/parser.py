@@ -3,7 +3,10 @@ from typing import Optional
 
 import requests
 
-from application.commons.services.connection_error import get_connection_error_message
+from application.commons.services.connection_error import (
+    get_connection_error_message,
+    raise_for_status,
+)
 from application.core.models import Branch, Observation, Product
 from application.core.types import Severity, Status
 from application.import_observations.models import Api_Configuration
@@ -65,7 +68,7 @@ class DependencyTrack(BaseParser, BaseAPIParser):
                     verify=dependency_track_verify_ssl,
                     allow_redirects=False,
                 )
-                response.raise_for_status()
+                raise_for_status(response)
 
                 page = response.json()
                 findings.extend(page)
@@ -173,7 +176,7 @@ class DependencyTrack(BaseParser, BaseAPIParser):
                 verify=dependency_track_verify_ssl,
                 allow_redirects=False,
             )
-            response.raise_for_status()
+            raise_for_status(response)
         except Exception:
             return "Dependency-Track", None
 

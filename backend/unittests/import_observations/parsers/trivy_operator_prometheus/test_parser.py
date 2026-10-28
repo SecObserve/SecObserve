@@ -46,6 +46,35 @@ class TestTrivyOperatorPrometheusParser(TestCase):
         self.assertFalse(data)
 
     @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
+    def test_redirect(self, mock_requests):
+        parser = TrivyOperatorPrometheus()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 302
+        mock_requests.get.return_value = mock_response
+
+        result, messages, data = parser.check_connection(Api_Configuration())
+        self.assertFalse(result)
+
+        self.assertEqual(["Cannot access Prometheus: HTTP status 302"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
+    def test_no_json(self, mock_requests):
+        parser = TrivyOperatorPrometheus()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.side_effect = requests.exceptions.JSONDecodeError("Expecting value", "<html>", 0)
+        mock_requests.get.return_value = mock_response
+
+        result, messages, data = parser.check_connection(Api_Configuration())
+        self.assertFalse(result)
+
+        self.assertEqual(["Cannot access Prometheus, see backend log for details"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
     def test_valid_connection(self, mock_requests):
         parser = TrivyOperatorPrometheus()
         with open(path.dirname(__file__) + "/files/trivy_vulnerability_id.json") as testfile:

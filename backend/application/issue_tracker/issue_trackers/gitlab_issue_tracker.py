@@ -3,6 +3,7 @@ from typing import Optional
 
 import requests
 
+from application.commons.services.connection_error import raise_for_status
 from application.core.models import Observation, Product
 from application.issue_tracker.issue_trackers.base_issue_tracker import (
     BaseIssueTracker,
@@ -26,7 +27,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             timeout=60,
             allow_redirects=False,
         )
-        response.raise_for_status()
+        raise_for_status(response)
         return response.json().get("iid")
 
     def get_issue(self, product: Product, issue_id: str) -> Optional[Issue]:
@@ -38,7 +39,7 @@ class GitLabIssueTracker(BaseIssueTracker):
         )
         if response.status_code == 404:
             return None
-        response.raise_for_status()
+        raise_for_status(response)
 
         issue = Issue(
             id=response.json().get("iid"),
@@ -68,7 +69,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             timeout=60,
             allow_redirects=False,
         )
-        response.raise_for_status()
+        raise_for_status(response)
 
     def close_issue(self, observation: Observation, issue: Issue) -> None:
         if not observation.issue_tracker_issue_id:
@@ -92,7 +93,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             timeout=60,
             allow_redirects=False,
         )
-        response.raise_for_status()
+        raise_for_status(response)
 
     def close_issue_for_deleted_observation(self, product: Product, issue: Issue) -> None:
         data = {
@@ -109,7 +110,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             timeout=60,
             allow_redirects=False,
         )
-        response.raise_for_status()
+        raise_for_status(response)
 
     def get_frontend_issue_url(self, product: Product, issue_id: str) -> str:
         base_url = self._normalize_base_url(product.issue_tracker_base_url)

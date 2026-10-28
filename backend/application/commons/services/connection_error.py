@@ -1,5 +1,7 @@
 import logging
 
+import requests
+
 from application.commons.services.log_message import format_log_message
 
 logger = logging.getLogger("secobserve.commons")
@@ -22,3 +24,12 @@ def get_connection_error_message(message: str, exception: Exception) -> str:
         return f"{message}: HTTP status {status_code}"
 
     return f"{message}, see backend log for details"
+
+
+def raise_for_status(response: requests.Response) -> None:
+    # Redirects are not followed for user defined URLs, so they are errors as well
+    if 300 <= response.status_code < 400:
+        raise requests.exceptions.HTTPError(
+            f"{response.status_code} Redirect for url: {response.url}", response=response
+        )
+    response.raise_for_status()

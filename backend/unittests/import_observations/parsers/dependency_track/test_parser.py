@@ -11,6 +11,7 @@ from unittests.base_test_case import BaseTestCase
 
 def _response(findings: list[dict], total_count: str | None) -> MagicMock:
     response = MagicMock()
+    response.status_code = 200
     response.json.return_value = findings
     response.headers = {"X-Total-Count": total_count} if total_count is not None else {}
     return response
@@ -123,4 +124,16 @@ class TestDependencyTrackParser(BaseTestCase):
 
         self.assertFalse(result)
         self.assertEqual(["Cannot access Dependency Track API: HTTP status 500"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.dependency_track.parser.requests")
+    def test_redirect(self, mock_requests: MagicMock) -> None:
+        response = _response([], None)
+        response.status_code = 302
+        mock_requests.get.return_value = response
+
+        result, messages, data = DependencyTrack().check_connection(self.api_configuration)
+
+        self.assertFalse(result)
+        self.assertEqual(["Cannot access Dependency Track API: HTTP status 302"], messages)
         self.assertFalse(data)

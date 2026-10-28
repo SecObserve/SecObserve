@@ -24,6 +24,8 @@ class TestGitHubIssueTracker(BaseTestCase):
     @patch("requests.post")
     def test_create_issue(self, post_mock):
         class MockResponse:
+            status_code = 200
+
             def raise_for_status(self):
                 pass
 
@@ -182,6 +184,24 @@ class TestGitHubIssueTracker(BaseTestCase):
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)", "state": "open", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
             allow_redirects=False,
+        )
+
+    @patch("requests.patch")
+    def test_update_issue_redirect(self, patch_mock):
+        response = Response()
+        response.status_code = 302
+        response.url = "https://api.github.com/repos/gh_project_1/issues/gh_1"
+        patch_mock.return_value = response
+        self.observation_1.issue_tracker_issue_id = "gh_1"
+        issue_tracker = GitHubIssueTracker()
+        issue = Issue(id="gh_1", title="title_1", description="description_1", labels="label_1,label_2")
+
+        with self.assertRaises(HTTPError) as e:
+            issue_tracker.update_issue(self.observation_1, issue)
+
+        self.assertEqual(
+            "302 Redirect for url: https://api.github.com/repos/gh_project_1/issues/gh_1",
+            str(e.exception),
         )
 
     @patch("requests.patch")
@@ -345,6 +365,7 @@ class TestGitHubIssueTracker(BaseTestCase):
     @patch("requests.post")
     def test_create_issue_github_enterprise(self, post_mock):
         self.observation_1.product.issue_tracker_base_url = "https://github.example.com/api/v3"
+        post_mock.return_value.status_code = 200
         post_mock.return_value.raise_for_status.return_value = None
         post_mock.return_value.json.return_value = {"number": "gh_1"}
 
