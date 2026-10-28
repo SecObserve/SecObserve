@@ -11,6 +11,7 @@ from unittests.base_test_case import BaseTestCase
 
 def _response(findings: list[dict], total_count: str | None) -> MagicMock:
     response = MagicMock()
+    response.status_code = 200
     response.json.return_value = findings
     response.headers = {"X-Total-Count": total_count} if total_count is not None else {}
     return response
@@ -32,12 +33,12 @@ class TestDependencyTrackParser(BaseTestCase):
 
     @patch("application.import_observations.parsers.dependency_track.parser.requests")
     def test_invalid_connection(self, mock_requests: MagicMock) -> None:
-        mock_requests.get.side_effect = requests.exceptions.ConnectionError()
+        mock_requests.get.side_effect = requests.exceptions.ConnectionError("[Errno 111] Connection refused")
 
         result, messages, data = DependencyTrack().check_connection(self.api_configuration)
 
         self.assertFalse(result)
-        self.assertIn("Cannot access Dependency Track API", messages[0])
+        self.assertEqual(["Cannot access Dependency Track API, see backend log for details"], messages)
         self.assertFalse(data)
 
     @patch("application.import_observations.parsers.dependency_track.parser.requests")
@@ -56,6 +57,7 @@ class TestDependencyTrackParser(BaseTestCase):
             params={"pageNumber": 1, "pageSize": 100},
             timeout=60,
             verify=True,
+            allow_redirects=False,
         )
 
     @patch("application.import_observations.parsers.dependency_track.parser.requests")
@@ -114,11 +116,24 @@ class TestDependencyTrackParser(BaseTestCase):
     @patch("application.import_observations.parsers.dependency_track.parser.requests")
     def test_error_on_second_page(self, mock_requests: MagicMock) -> None:
         page_2 = MagicMock()
-        page_2.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error")
+        page_2.status_code = 500
+        page_2.raise_for_status.side_effect = requests.exceptions.HTTPError("500 Server Error", response=page_2)
         mock_requests.get.side_effect = [_response(_findings(0, 100), "150"), page_2]
 
         result, messages, data = DependencyTrack().check_connection(self.api_configuration)
 
         self.assertFalse(result)
-        self.assertEqual(["Cannot access Dependency Track API: 500 Server Error"], messages)
+        self.assertEqual(["Cannot access Dependency Track API: HTTP status 500"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.dependency_track.parser.requests")
+    def test_redirect(self, mock_requests: MagicMock) -> None:
+        response = _response([], None)
+        response.status_code = 302
+        mock_requests.get.return_value = response
+
+        result, messages, data = DependencyTrack().check_connection(self.api_configuration)
+
+        self.assertFalse(result)
+        self.assertEqual(["Cannot access Dependency Track API: HTTP status 302"], messages)
         self.assertFalse(data)
