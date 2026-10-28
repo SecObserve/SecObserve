@@ -1,6 +1,6 @@
 # backend/unittests/core/test_signals.py
 import unittest
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import call, patch
 
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.test import TestCase
@@ -99,21 +99,22 @@ class TestCoreSignals(TestCase):
         # Verify that check_security_gate was called
         mock_check_security_gate.assert_called_once_with(product)
 
-    @patch("application.core.signals.check_security_gate")
-    def test_product_post_save_updated_product_group(self, mock_check_security_gate):
+    @patch("application.core.signals.check_security_gates")
+    def test_product_post_save_updated_product_group(self, mock_check_security_gates):
         # Create a product group
         product_group = Product.objects.create(name="Test Product Group", is_product_group=True)
 
         # Create 2 products in the group
-        Product.objects.create(name="Test Product 1", product_group=product_group)
-        Product.objects.create(name="Test Product 2", product_group=product_group)
+        product_1 = Product.objects.create(name="Test Product 1", product_group=product_group)
+        product_2 = Product.objects.create(name="Test Product 2", product_group=product_group)
 
         # Update the product group with changed security gate settings
         product_group.security_gate_active = True
         product_group.save()
 
-        # Verify that check_security_gate was called for both products
-        self.assertEqual(mock_check_security_gate.call_count, 2)
+        # Verify that the security gates of both products are checked together
+        mock_check_security_gates.assert_called_once()
+        self.assertEqual({product_1, product_2}, set(mock_check_security_gates.call_args.args[0]))
 
     @patch("application.core.signals.set_default_branch")
     def test_branch_post_save(self, mock_set_default_branch):
@@ -139,13 +140,18 @@ class TestCoreSignals(TestCase):
         mock_settings_post_save_task.assert_called_once()
 
     @patch("application.core.signals.logger")
-    @patch("application.core.signals.Product")
-    @patch("application.core.signals.check_security_gate")
-    def test_settings_post_save_task(self, mock_check_security_gate, mock_product_model, mock_logger):
-        # Mock Product objects
-        mock_product = MagicMock()
-        mock_product.is_product_group = False
-        mock_product_model.objects.filter.return_value = [mock_product]
+    @patch("application.core.signals.check_security_gates")
+    def test_settings_post_save_task(self, mock_check_security_gates, mock_logger):
+        product_group = Product.objects.create(name="Product Group", is_product_group=True)
+        product_group_with_gate = Product.objects.create(
+            name="Product Group with gate", is_product_group=True, security_gate_active=False
+        )
+        product = Product.objects.create(name="Product")
+        product_in_group = Product.objects.create(name="Product in group", product_group=product_group)
+        product_with_gate = Product.objects.create(name="Product with gate", security_gate_active=True)
+        product_in_group_with_gate = Product.objects.create(
+            name="Product in group with gate", product_group=product_group_with_gate
+        )
 
         # Call the task
         with self.captureOnCommitCallbacks(execute=True):
@@ -156,8 +162,11 @@ class TestCoreSignals(TestCase):
             [call("--- Settings post_save_task - start ---"), call("--- Settings post_save_task - finished ---")]
         )
 
-        # Verify that check_security_gate was called for each product
-        mock_check_security_gate.assert_called_once_with(mock_product)
+        # Verify that only the products using the security gate of the settings are checked
+        mock_check_security_gates.assert_called_once()
+        products = [product, product_in_group, product_with_gate, product_in_group_with_gate]
+        checked = mock_check_security_gates.call_args.args[0].filter(pk__in=[product.pk for product in products])
+        self.assertEqual({product, product_in_group}, set(checked))
 
     def test_settings_post_save_unit_tests_mode(self):
         # Create settings

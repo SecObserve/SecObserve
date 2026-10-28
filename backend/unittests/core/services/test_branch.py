@@ -129,11 +129,13 @@ class TestSetBranchService(TestCase):
         Product.objects.filter(pk=self.product.pk).update(
             last_observation_change=last_change, last_license_change=last_change
         )
+        # Fresh instances, the product in memory still has the timestamps from its creation
+        branch = Branch.objects.get(pk=self.branch_non_default.pk)
 
-        self.branch_non_default.is_default_branch = True
-        self.branch_non_default.save()
+        branch.is_default_branch = True
+        branch.save()
 
         self.product.refresh_from_db()
-        self.assertEqual(self.branch_non_default, self.product.repository_default_branch)
+        self.assertEqual(branch, self.product.repository_default_branch)
         self.assertGreater(self.product.last_observation_change, last_change)
         self.assertGreater(self.product.last_license_change, last_change)

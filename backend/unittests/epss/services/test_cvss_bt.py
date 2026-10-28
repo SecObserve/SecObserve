@@ -239,6 +239,36 @@ class TestCVSS_BT(BaseTestCase):
             self.assertEqual("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", observation.cvss3_vector)
             self.assertEqual(7.5, observation.cvss3_score)
             self.assertEqual(Severity.SEVERITY_HIGH, observation.current_severity)
+            self.assertEqual(Severity.NUMERICAL_SEVERITIES[Severity.SEVERITY_HIGH], observation.numerical_severity)
+
+    def test_apply_exploit_information_observations_marks_products_as_changed(self) -> None:
+        parser = Parser.objects.create(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)
+        product_changed = Product.objects.create(name="changed")
+        product_unchanged = Product.objects.create(name="unchanged")
+        for product, cve in ((product_changed, "CVE-2025-0001"), (product_unchanged, "CVE-2025-0002")):
+            Observation.objects.create(
+                title=cve,
+                vulnerability_id=cve,
+                parser_severity=Severity.SEVERITY_UNKNOWN,
+                product=product,
+                import_last_seen=timezone.now(),
+                parser=parser,
+            )
+        Exploit_Information.objects.create(
+            cve="CVE-2025-0001", base_cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+        )
+        last_change = timezone.now() - timedelta(days=1)
+        Product.objects.update(last_observation_change=last_change)
+        settings = Settings.load()
+        settings.feature_exploit_information = True
+
+        apply_exploit_information_observations(settings)
+
+        self.assertEqual(Severity.SEVERITY_CRITICAL, Observation.objects.get(title="CVE-2025-0001").current_severity)
+        product_changed.refresh_from_db()
+        self.assertGreater(product_changed.last_observation_change, last_change)
+        product_unchanged.refresh_from_db()
+        self.assertEqual(last_change, product_unchanged.last_observation_change)
 
     def test_apply_exploit_information_observations_marks_products_as_changed(self) -> None:
         parser = Parser.objects.create(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)

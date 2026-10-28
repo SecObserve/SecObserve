@@ -576,6 +576,7 @@ class Observation_Log(Model):
         indexes = [
             Index(fields=["observation", "-created"]),
             Index(fields=["-created"]),
+            Index(fields=["assessment_status"]),
         ]
         ordering = ["observation", "-created"]
 

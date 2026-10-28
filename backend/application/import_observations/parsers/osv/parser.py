@@ -204,7 +204,7 @@ class OSVParser(BaseParser):
             if osv_vulnerability.id not in valid_vulnerability_ids:
                 missing_osv_vulnerabilities.append(osv_vulnerability)
 
-        session = _create_osv_session()
+        session = create_osv_session()
 
         def _read_osv_vulnerability(osv_vulnerability: OSV_Vulnerability) -> OSV_Cache:
             response = session.get(
@@ -289,15 +289,30 @@ class OSVParser(BaseParser):
         return "\n\n".join(osv_description_parts)
 
     def _get_cvss(self, osv_vulnerability: dict) -> tuple[str, str]:
+        return self._get_cvss_from_severities(osv_vulnerability.get("severity", []))
+
+    def _get_cvss_from_severities(self, severities: list[dict]) -> tuple[str, str]:
         cvss3_vector = ""
         cvss4_vector = ""
 
-        severities = osv_vulnerability.get("severity", [])
         for severity in severities:
-            if severity.get("type") == "CVSS_V3":
-                cvss3_vector = severity.get("score")
-            if severity.get("type") == "CVSS_V4":
-                cvss4_vector = severity.get("score")
+            labelled_version = {"CVSS_V3": 3, "CVSS_V4": 4}.get(severity.get("type", ""))
+            vector = severity.get("score") or ""
+            if not labelled_version or not vector:
+                continue
+
+            # Advisories sometimes label a vector with the wrong CVSS version, then the prefix of the vector is decisive
+            version = labelled_version
+            if vector.startswith("CVSS:3"):
+                version = 3
+            elif vector.startswith("CVSS:4"):
+                version = 4
+
+            # A mislabelled vector must not overwrite a correctly labelled one
+            if version == 3 and (version == labelled_version or not cvss3_vector):
+                cvss3_vector = vector
+            if version == 4 and (version == labelled_version or not cvss4_vector):
+                cvss4_vector = vector
 
         return cvss3_vector, cvss4_vector
 
@@ -422,17 +437,12 @@ class OSVParser(BaseParser):
         return package_name
 
     def _get_affected_cvss(self, affected: dict) -> tuple[str, str]:
-        cvss3_vector = ""
-        cvss4_vector = ""
+        # The OSV schema defines a list of severities, but a single severity is accepted as well
+        severities = affected.get("severity") or []
+        if isinstance(severities, dict):
+            severities = [severities]
 
-        severity = affected.get("severity")
-        if severity:
-            if severity.get("type") == "CVSS_V3":
-                cvss3_vector = severity.get("score")
-            if severity.get("type") == "CVSS_V4":
-                cvss4_vector = severity.get("score")
-
-        return cvss3_vector, cvss4_vector
+        return self._get_cvss_from_severities(severities)
 
     def _is_version_in_affected(self, version: str, affected: dict) -> bool:
         if not version:
@@ -513,16 +523,19 @@ def _get_osv_max_threads() -> int:
     return env.int("OSV_MAX_THREADS", default=32)
 
 
-def _create_osv_session() -> requests.Session:
+def create_osv_session(read_retries: Optional[int] = None) -> requests.Session:
     # urllib3 decrements `total` on every retried error, so connection/SSL failures (the
     # SSL EOF seen under load) are retried too, even though they are neither "connect" nor
     # "read" errors in its taxonomy.
+    # Callers with a long timeout should limit `read_retries`, because every retried read
+    # timeout waits for the full timeout again. `None` leaves the read retries to `total`.
     retry = Retry(
         total=OSV_MAX_RETRIES,
+        read=read_retries,
         backoff_factor=OSV_BACKOFF_FACTOR,
         status_forcelist=(429, 500, 502, 503, 504),
-        # Only idempotent GETs are retried; verify idempotency before adding other methods.
-        allowed_methods=frozenset({"GET"}),
+        # /v1/querybatch is a POST, but it only reads, so retrying it is as safe as retrying the GETs.
+        allowed_methods=frozenset({"GET", "POST"}),
         # Let urllib3 retry the status_forcelist codes silently; the caller's
         # raise_for_status() surfaces a clear HTTPError once the retries are exhausted.
         raise_on_status=False,

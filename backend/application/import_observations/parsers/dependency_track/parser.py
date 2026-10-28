@@ -21,6 +21,8 @@ STATUS_MAPPING = {
     "NOT_AFFECTED": Status.STATUS_NOT_AFFECTED,
 }
 
+PAGE_SIZE = 100
+
 
 class DependencyTrack(BaseParser, BaseAPIParser):
     def __init__(self) -> None:
@@ -34,7 +36,7 @@ class DependencyTrack(BaseParser, BaseAPIParser):
     def get_type(cls) -> str:
         return Parser_Type.TYPE_SCA
 
-    def check_connection(self, api_configuration: Api_Configuration) -> tuple[bool, list[str], dict]:
+    def check_connection(self, api_configuration: Api_Configuration) -> tuple[bool, list[str], dict | list]:
         self.api_configuration = api_configuration
 
         dependency_track_base_url = api_configuration.base_url
@@ -50,18 +52,32 @@ class DependencyTrack(BaseParser, BaseAPIParser):
         headers = {
             "X-Api-Key": dependency_track_api_key,
         }
+        findings: list[dict] = []
+        page_number = 1
         try:
-            response = requests.get(
-                dependency_track_base_url,
-                headers=headers,
-                timeout=60,
-                verify=dependency_track_verify_ssl,
-            )
-            response.raise_for_status()
+            while True:
+                response = requests.get(
+                    dependency_track_base_url,
+                    headers=headers,
+                    params={"pageNumber": page_number, "pageSize": PAGE_SIZE},
+                    timeout=60,
+                    verify=dependency_track_verify_ssl,
+                )
+                response.raise_for_status()
+
+                page = response.json()
+                findings.extend(page)
+
+                # Dependency-Track 5 paginates the findings and returns their total number in the X-Total-Count
+                # header. Dependency-Track 4 returns all findings in one response.
+                total_count = response.headers.get("X-Total-Count")
+                if not page or not total_count or len(findings) >= int(total_count):
+                    break
+                page_number += 1
         except Exception as e:
             return False, [f"Cannot access Dependency Track API: {str(e)}"], {}
 
-        return True, [], response.json()
+        return True, [], findings
 
     def get_observations(  # pylint: disable=too-many-locals
         self, data: list[dict], product: Product, branch: Optional[Branch]
