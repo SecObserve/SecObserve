@@ -3,6 +3,7 @@ from typing import Optional
 
 import requests
 
+from application.commons.services.connection_error import get_connection_error_message
 from application.core.models import Branch, Observation, Product
 from application.core.types import Severity, Status
 from application.import_observations.models import Api_Configuration
@@ -62,6 +63,7 @@ class DependencyTrack(BaseParser, BaseAPIParser):
                     params={"pageNumber": page_number, "pageSize": PAGE_SIZE},
                     timeout=60,
                     verify=dependency_track_verify_ssl,
+                    allow_redirects=False,
                 )
                 response.raise_for_status()
 
@@ -75,7 +77,7 @@ class DependencyTrack(BaseParser, BaseAPIParser):
                     break
                 page_number += 1
         except Exception as e:
-            return False, [f"Cannot access Dependency Track API: {str(e)}"], {}
+            return False, [get_connection_error_message("Cannot access Dependency Track API", e)], {}
 
         return True, [], findings
 
@@ -169,6 +171,7 @@ class DependencyTrack(BaseParser, BaseAPIParser):
                 dependency_track_base_url,
                 timeout=60,
                 verify=dependency_track_verify_ssl,
+                allow_redirects=False,
             )
             response.raise_for_status()
         except Exception:

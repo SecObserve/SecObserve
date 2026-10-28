@@ -44,6 +44,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)", "labels": ["label_1", "label_2"]}',
             timeout=60,
+            allow_redirects=False,
         )
         self.assertEqual("gh_1", issue_id)
 
@@ -70,6 +71,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)", "labels": ["label_1", "label_2"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -94,6 +96,7 @@ class TestGitHubIssueTracker(BaseTestCase):
                 "Authorization": "Bearer api_key_1",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -109,6 +112,7 @@ class TestGitHubIssueTracker(BaseTestCase):
                 "Authorization": "Bearer api_key_1",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -136,6 +140,7 @@ class TestGitHubIssueTracker(BaseTestCase):
                 "Authorization": "Bearer api_key_1",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.patch")
@@ -176,6 +181,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)", "state": "open", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.patch")
@@ -201,6 +207,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)", "state": "open", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.patch")
@@ -242,6 +249,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)\\n\\n**Observation status:** Resolved", "state": "closed", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.patch")
@@ -268,6 +276,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"title": "Critical vulnerability: \\"observation_1\\"", "body": "description_1\\n\\n**Branch:** branch_1\\n\\n**SecObserve observation:** [/#/observations/1/show](/#/observations/1/show)\\n\\n**Observation status:** Resolved", "state": "closed", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.patch")
@@ -300,6 +309,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"body": "**--- Observation has been deleted ---**\\n\\ndescription_1", "state": "closed", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.patch")
@@ -324,6 +334,7 @@ class TestGitHubIssueTracker(BaseTestCase):
             },
             data='{"body": "**--- Observation has been deleted ---**\\n\\ndescription_1", "state": "closed", "labels": ["label_2", "label_3", "label_1"]}',
             timeout=60,
+            allow_redirects=False,
         )
 
     def test_get_frontend_issue_url(self):

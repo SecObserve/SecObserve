@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 import requests
 
+from application.commons.services.connection_error import get_connection_error_message
 from application.core.models import Branch, Observation, Product
 from application.core.types import Severity
 from application.import_observations.models import Api_Configuration
@@ -63,10 +64,11 @@ class TrivyOperatorPrometheus(BaseParser, BaseAPIParser):
                 timeout=60,
                 verify=trivy_operator_prometheus_verify_ssl,
                 auth=trivy_basic_auth_param,
+                allow_redirects=False,
             )
             response.raise_for_status()
         except Exception as e:
-            return False, [f"Cannot access Prometheus: {str(e)}"], {}
+            return False, [get_connection_error_message("Cannot access Prometheus", e)], {}
 
         return True, [], response.json()
 

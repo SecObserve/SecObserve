@@ -10,6 +10,13 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.63.0
+
+**Breaking changes**
+
+* Requests to the base URLs of [API imports](../integrations/api_import.md) (Dependency-Track, Trivy Operator Prometheus) and [issue trackers](../integrations/issue_trackers.md) (GitHub, GitLab, Jira) don't follow HTTP redirects anymore. A base URL that only worked because of a redirect, e.g. from `http` to `https` or to a moved host, has to be changed to the final URL. Otherwise the connection test, the import or the issue tracker synchronization fails.
+* Connection errors for API imports and issue trackers don't show the error text of the request anymore, only the HTTP status code if there is one. The full error can be found in the log of the backend.
+
 ## Release 1.62.0
 
 **Noteable changes**

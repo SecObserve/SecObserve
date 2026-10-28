@@ -47,6 +47,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "labels": "label_1, label_2",
             },
             timeout=60,
+            allow_redirects=False,
         )
         self.assertEqual("gl_1", issue_id)
 
@@ -75,6 +76,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "labels": "label_1, label_2",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -96,6 +98,7 @@ class TestGitLabIssueTracker(BaseTestCase):
             url="https://gitlab.example.com/api/v4/projects/gh_project_1/issues/gh_1",
             headers={"PRIVATE-TOKEN": "api_key_1"},
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -108,6 +111,7 @@ class TestGitLabIssueTracker(BaseTestCase):
             url="https://gitlab.example.com/api/v4/projects/gh_project_1/issues/gh_1",
             headers={"PRIVATE-TOKEN": "api_key_1"},
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -132,6 +136,7 @@ class TestGitLabIssueTracker(BaseTestCase):
             url="https://gitlab.example.com/api/v4/projects/gh_project_1/issues/gh_1",
             headers={"PRIVATE-TOKEN": "api_key_1"},
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -175,6 +180,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -203,6 +209,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -247,6 +254,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -276,6 +284,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -310,6 +319,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -336,6 +346,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     def test_get_frontend_issue_url(self):

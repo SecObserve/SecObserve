@@ -24,6 +24,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             headers=self._get_headers(observation.product),
             data=data,
             timeout=60,
+            allow_redirects=False,
         )
         response.raise_for_status()
         return response.json().get("iid")
@@ -33,6 +34,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             url=f"{self._get_issue_tracker_base_url(product)}/{issue_id}",
             headers=self._get_headers(product),
             timeout=60,
+            allow_redirects=False,
         )
         if response.status_code == 404:
             return None
@@ -64,6 +66,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             headers=self._get_headers(observation.product),
             data=data,
             timeout=60,
+            allow_redirects=False,
         )
         response.raise_for_status()
 
@@ -87,6 +90,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             headers=self._get_headers(observation.product),
             data=data,
             timeout=60,
+            allow_redirects=False,
         )
         response.raise_for_status()
 
@@ -103,6 +107,7 @@ class GitLabIssueTracker(BaseIssueTracker):
             headers=self._get_headers(product),
             data=data,
             timeout=60,
+            allow_redirects=False,
         )
         response.raise_for_status()
 
