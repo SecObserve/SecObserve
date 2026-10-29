@@ -347,131 +347,73 @@ class TestCalculateProductMetricsCounts(BaseTestCase):
 
 
 class TestGetProductMetricsTimeline(BaseTestCase):
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_no_product_no_age_filter(self, mock_get_metrics, mock_get_days):
-        metrics = [
-            ProductMetricsStub(date=date(2025, 6, 14), active_critical=2, open=1),
-            ProductMetricsStub(date=date(2025, 6, 15), active_critical=3, open=2),
-        ]
-        mock_get_metrics.return_value = metrics
-        mock_get_days.return_value = None
+    def setUp(self):
+        super().setUp()
+        self.product_group = Product.objects.create(name="group", is_product_group=True)
+        self.product_in_group = Product.objects.create(name="in group", product_group=self.product_group)
+        self.product_other = Product.objects.create(name="other")
+        self.today = timezone.localdate().isoformat()
+        self.month_ago = (timezone.localdate() - timedelta(days=30)).isoformat()
+        for product, critical in ((self.product_in_group, 2), (self.product_other, 3)):
+            Product_Metrics.objects.create(product=product, date=self.month_ago, active_critical=critical, open=1)
+            Product_Metrics.objects.create(product=product, date=self.today, active_critical=critical + 1, open=2)
+        self.superuser = User.objects.create(username="superuser", is_superuser=True)
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_all_products_summed_per_date(self, mock_user):
+        mock_user.return_value = self.superuser
+
+        with self.assertNumQueries(1):
+            result = get_product_metrics_timeline(None, "all")
+
+        dates = list(result)
+        self.assertLess(dates.index(self.month_ago), dates.index(self.today))
+        self.assertEqual(5, result[self.month_ago]["active_critical"])
+        self.assertEqual(7, result[self.today]["active_critical"])
+        self.assertEqual(4, result[self.today]["open"])
+        self.assertEqual(0, result[self.today]["risk_accepted"])
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_only_permitted_products_are_summed(self, mock_user):
+        user = User.objects.create(username="member")
+        Product_Member.objects.create(product=self.product_other, user=user, role=Roles.Reader)
+        mock_user.return_value = user
 
         result = get_product_metrics_timeline(None, "all")
 
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result["2025-06-14"]["active_critical"], 2)
-        self.assertEqual(result["2025-06-14"]["open"], 1)
-        self.assertEqual(result["2025-06-15"]["active_critical"], 3)
-        self.assertEqual(result["2025-06-15"]["open"], 2)
+        self.assertEqual(4, result[self.today]["active_critical"])
 
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_no_product_aggregates_multiple_products_same_date(self, mock_get_metrics, mock_get_days):
-        metrics = [
-            ProductMetricsStub(
-                date=date(2025, 6, 15),
-                active_critical=2,
-                active_high=1,
-                open=3,
-            ),
-            ProductMetricsStub(
-                date=date(2025, 6, 15),
-                active_critical=1,
-                active_high=4,
-                open=2,
-            ),
-        ]
-        mock_get_metrics.return_value = metrics
-        mock_get_days.return_value = None
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_product_group(self, mock_user):
+        mock_user.return_value = self.superuser
 
-        result = get_product_metrics_timeline(None, "all")
+        result = get_product_metrics_timeline(self.product_group, "all")
 
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result["2025-06-15"]["active_critical"], 3)
-        self.assertEqual(result["2025-06-15"]["active_high"], 5)
-        self.assertEqual(result["2025-06-15"]["open"], 5)
+        self.assertEqual({self.month_ago, self.today}, set(result))
+        self.assertEqual(3, result[self.today]["active_critical"])
 
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_single_product_no_aggregation(self, mock_get_metrics, mock_get_days):
-        self.product_1.is_product_group = False
-        metrics_qs = QuerySetStub(
-            [
-                ProductMetricsStub(
-                    date=date(2025, 6, 15),
-                    active_critical=5,
-                    active_high=3,
-                    open=2,
-                    resolved=1,
-                )
-            ]
-        )
-        mock_get_metrics.return_value = metrics_qs
-        mock_get_days.return_value = None
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_product_with_age(self, mock_user):
+        mock_user.return_value = self.superuser
 
-        result = get_product_metrics_timeline(self.product_1, "all")
+        result = get_product_metrics_timeline(self.product_other, "Past 7 days")
 
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result["2025-06-15"]["active_critical"], 5)
-        self.assertEqual(result["2025-06-15"]["active_high"], 3)
-        self.assertEqual(result["2025-06-15"]["open"], 2)
-        self.assertEqual(result["2025-06-15"]["resolved"], 1)
-        metrics_qs.assert_filtered_with(self, product=self.product_1)
-
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_product_group_filters_and_aggregates(self, mock_get_metrics, mock_get_days):
-        self.product_group_1.is_product_group = True
-        metrics_qs = QuerySetStub(
-            [
-                ProductMetricsStub(
-                    date=date(2025, 6, 15),
-                    active_critical=2,
-                    open=1,
-                ),
-                ProductMetricsStub(
-                    date=date(2025, 6, 15),
-                    active_critical=3,
-                    open=4,
-                ),
-            ]
-        )
-        mock_get_metrics.return_value = metrics_qs
-        mock_get_days.return_value = None
-
-        result = get_product_metrics_timeline(self.product_group_1, "all")
-
-        self.assertEqual(result["2025-06-15"]["active_critical"], 5)
-        self.assertEqual(result["2025-06-15"]["open"], 5)
-        metrics_qs.assert_filtered_with(self, product__product_group=self.product_group_1)
+        self.assertEqual({self.today: {**_initialize_response_data(), "active_critical": 4, "open": 2}}, result)
 
     @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
     @patch("django.utils.timezone.now")
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_age_filter_applied(self, mock_get_metrics, mock_get_days, mock_now):
-        mock_get_days.return_value = 7
-        # Already 2025-06-15 in TIME_ZONE
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_age_starts_at_local_date(self, mock_user, mock_now):
+        mock_user.return_value = self.superuser
+        product = Product.objects.create(name="time zone")
+        for day in (7, 8):
+            Product_Metrics.objects.create(product=product, date=date(2025, 6, day))
+        # Already 2025-06-15 in TIME_ZONE, but still 2025-06-14 in UTC
         mock_now.return_value = datetime(2025, 6, 14, 20, 0, tzinfo=dt_timezone.utc)
 
-        metrics_qs = QuerySetStub([])
-        mock_get_metrics.return_value = metrics_qs
+        result = get_product_metrics_timeline(product, "Past 7 days")
 
-        result = get_product_metrics_timeline(None, "Past 7 days")
-
-        self.assertEqual(result, {})
-        metrics_qs.assert_filtered_with(self, date__gte=date(2025, 6, 8))
-
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_empty_metrics(self, mock_get_metrics, mock_get_days):
-        mock_get_metrics.return_value = []
-        mock_get_days.return_value = None
-
-        result = get_product_metrics_timeline(None, "all")
-
-        self.assertEqual(result, {})
+        self.assertEqual({"2025-06-08"}, set(result))
 
 
 class TestGetProductMetricsCurrent(BaseTestCase):
@@ -815,24 +757,13 @@ class ObservationStub:
 
 
 class QuerySetStub:
-    """A simple stub that supports filter() chaining and iteration."""
+    """A simple stub that supports iteration and len()."""
 
     def __init__(self, items=None):
         self._items = items or []
-        self._filter_calls = []
-
-    def filter(self, **kwargs):
-        self._filter_calls.append(kwargs)
-        return self
 
     def __iter__(self):
         return iter(self._items)
 
     def __len__(self):
         return len(self._items)
-
-    def assert_filtered_with(self, test_case, **expected_kwargs):
-        test_case.assertTrue(
-            any(kwargs == expected_kwargs for kwargs in self._filter_calls),
-            f"Expected filter call with {expected_kwargs}, got {self._filter_calls}",
-        )

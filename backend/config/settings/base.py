@@ -455,6 +455,10 @@ huey_sqlite_url = env.str("HUEY_SQLITE_URL", "sqlite:////var/lib/huey/huey.db")
 huey_database = create_huey_database(db, huey_sqlite_url)
 huey_stats_database = create_huey_database(db, huey_sqlite_url)
 
+HUEY_WORKERS = env.int("HUEY_WORKERS", 3)
+if HUEY_WORKERS < 1:
+    raise ValueError("HUEY_WORKERS must be at least 1")
+
 # The deprecated variable still wins; without TIME_ZONE the schedules stay in UTC instead of moving to its CET default
 BACKGROUND_TASKS_TIME_ZONE = env_time_zone("BACKGROUND_TASKS_TIME_ZONE", env.str("TIME_ZONE", default="UTC"))
 
@@ -467,7 +471,7 @@ HUEY = {
     "immediate": HUEY_IMMEDIATE,  # Check the variable for documentation
     "utc": True,  # Use UTC for all times internally.
     "consumer": {
-        "workers": 3,  # Number of worker threads/processes.
+        "workers": HUEY_WORKERS,  # Number of worker threads/processes.
         "worker_type": "thread",
         "initial_delay": 0.1,  # Smallest polling interval, same as -d.
         "backoff": 1.15,  # Exponential backoff using this rate, -b.
