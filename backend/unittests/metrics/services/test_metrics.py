@@ -177,6 +177,40 @@ class TestCalculateProductMetricsForChangedProducts(BaseTestCase):
         self.assertEqual(5, self._active_high(self.product_unchanged))
         self.assertEqual(3, Product_Metrics.objects.filter(product=self.product_unchanged, active_high=5).count())
 
+    def test_products_with_different_latest_dates_are_backfilled_from_their_own_latest_metrics(self):
+        # Both products are unchanged since their latest metrics, which are from different days
+        today = timezone.localdate()
+        for product, active_high_per_days_ago in (
+            (self.product_unchanged, {2: 5}),
+            (self.product_changed, {2: 7, 1: 9}),
+        ):
+            for days_ago, active_high in active_high_per_days_ago.items():
+                Product_Metrics.objects.create(
+                    product=product,
+                    date=today - timedelta(days=days_ago),
+                    active_high=active_high,
+                    last_observation_change=product.last_observation_change,
+                )
+
+        calculate_product_metrics()
+
+        self.assertEqual(5, self._active_high(self.product_unchanged))
+        self.assertEqual(9, self._active_high(self.product_changed))
+
+    def test_license_metrics_without_todays_metrics_are_backfilled(self):
+        Product_License_Metrics.objects.create(
+            product=self.product_unchanged,
+            date=timezone.localdate() - timedelta(days=2),
+            forbidden=5,
+            last_license_change=self.product_unchanged.last_license_change,
+        )
+        self._create_license_component(self.product_unchanged)
+
+        calculate_product_metrics()
+
+        self.assertEqual(5, self._forbidden(self.product_unchanged))
+        self.assertEqual(3, Product_License_Metrics.objects.filter(product=self.product_unchanged, forbidden=5).count())
+
     def test_product_without_todays_metrics_changed_after_latest_metrics_is_recalculated(self):
         Product_Metrics.objects.create(
             product=self.product_changed,

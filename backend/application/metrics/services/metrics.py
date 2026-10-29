@@ -1,8 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from itertools import batched
 from typing import Optional, TypeVar
 
-from django.db.models import Count, F, Max, Q, Sum
+from django.db.models import Count, F, OuterRef, Q, Subquery, Sum
 from django.utils import timezone
 
 from application.commons.models import Settings
@@ -104,21 +104,15 @@ def _calculate_metrics(
 ) -> set[int]:
     # Metrics are up to date if they have been calculated for the current change of the product
     today = timezone.localdate()
-    todays_metrics = {
-        product_id: (pk, change)
-        for pk, product_id, change in metrics_model.objects.filter(date=today).values_list(
-            "pk", "product_id", change_field
-        )
-    }
+    todays_pks, todays_changes = _get_todays_metrics(metrics_model, change_field, today)
     changed_product_ids = [
-        product_id
-        for product_id, change in product_changes.items()
-        if todays_metrics.get(product_id, (None, None))[1] != change
+        product_id for product_id, change in product_changes.items() if todays_changes.get(product_id) != change
     ]
 
-    new_metrics: list[Metrics] = []
-    updated_metrics: list[Metrics] = []
+    products_calculated: set[int] = set()
     for product_ids in batched(changed_product_ids, BATCH_SIZE):
+        new_metrics: list[Metrics] = []
+        updated_metrics: list[Metrics] = []
         latest_metrics = _get_latest_metrics(metrics_model, product_ids)
         recalculated_product_ids = []
         for product_id in product_ids:
@@ -146,30 +140,38 @@ def _calculate_metrics(
                 **calculated_counts.get(product_id, dict.fromkeys(counts, 0)),
                 **{change_field: product_changes[product_id]},
             )
-            if product_id in todays_metrics:
-                metrics.pk = todays_metrics[product_id][0]
+            if product_id in todays_pks:
+                metrics.pk = todays_pks[product_id]
                 updated_metrics.append(metrics)
             else:
                 new_metrics.append(metrics)
 
-    metrics_model.objects.bulk_create(new_metrics, BATCH_SIZE)
-    metrics_model.objects.bulk_update(updated_metrics, [*counts, change_field], BATCH_SIZE)
+        # Written per batch, so that the memory doesn't grow with the number of products
+        metrics_model.objects.bulk_create(new_metrics, BATCH_SIZE)
+        metrics_model.objects.bulk_update(updated_metrics, [*counts, change_field], BATCH_SIZE)
+        products_calculated.update(metrics.product_id for metrics in new_metrics + updated_metrics)
 
-    return {metrics.product_id for metrics in new_metrics + updated_metrics}
+    return products_calculated
+
+
+def _get_todays_metrics(
+    metrics_model: type[Metrics], change_field: str, today: date
+) -> tuple[dict[int, int], dict[int, Optional[datetime]]]:
+    todays_pks = {}
+    todays_changes = {}
+    for pk, product_id, change in metrics_model.objects.filter(date=today).values_list(
+        "pk", "product_id", change_field
+    ):
+        todays_pks[product_id] = pk
+        todays_changes[product_id] = change
+    return todays_pks, todays_changes
 
 
 def _get_latest_metrics(metrics_model: type[Metrics], product_ids: tuple[int, ...]) -> dict[int, Metrics]:
-    latest_dates = dict(
-        metrics_model.objects.filter(product_id__in=product_ids)
-        .values("product_id")
-        .annotate(latest_date=Max("date"))
-        .values_list("product_id", "latest_date")
-    )
-    return {
-        metrics.product_id: metrics
-        for metrics in metrics_model.objects.filter(product_id__in=product_ids, date__in=set(latest_dates.values()))
-        if metrics.date == latest_dates[metrics.product_id]
-    }
+    # Starts from the products, so that the latest metrics are looked up once per product, not once per metrics row
+    latest_pk = metrics_model.objects.filter(product_id=OuterRef("pk")).order_by("-date").values("pk")[:1]
+    latest_pks = Product.objects.filter(pk__in=product_ids).annotate(latest_pk=Subquery(latest_pk)).values("latest_pk")
+    return {metrics.product_id: metrics for metrics in metrics_model.objects.filter(pk__in=latest_pks)}
 
 
 def _count(
