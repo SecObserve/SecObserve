@@ -2,7 +2,9 @@ from datetime import date, datetime, timedelta
 from datetime import timezone as dt_timezone
 from unittest.mock import patch
 
+from django.db import connection
 from django.test import override_settings
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from application.access_control.models import User
@@ -12,7 +14,11 @@ from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.licenses.models import License_Component
 from application.licenses.types import License_Policy_Evaluation_Result
-from application.metrics.models import Product_License_Metrics, Product_Metrics
+from application.metrics.models import (
+    Product_License_Metrics,
+    Product_Metrics,
+    Product_Metrics_Status,
+)
 from application.metrics.services.metrics import (
     _initialize_response_data,
     calculate_license_metrics_for_product,
@@ -110,6 +116,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
+        mock_timezone.localdate.return_value = now.date()
 
         status = ProductMetricsStatusStub()
         mock_status_load.return_value = status
@@ -141,6 +148,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
+        mock_timezone.localdate.return_value = now.date()
 
         status = ProductMetricsStatusStub()
         mock_status_load.return_value = status
@@ -172,6 +180,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
+        mock_timezone.localdate.return_value = now.date()
 
         status = ProductMetricsStatusStub()
         mock_status_load.return_value = status
@@ -196,6 +205,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
+        mock_timezone.localdate.return_value = now.date()
 
         status = ProductMetricsStatusStub()
         mock_status_load.return_value = status
@@ -222,6 +232,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
+        mock_timezone.localdate.return_value = now.date()
 
         status = ProductMetricsStatusStub()
         mock_status_load.return_value = status
@@ -248,6 +259,7 @@ class TestCalculateProductMetrics(BaseTestCase):
 
         now = datetime(2025, 6, 15, 12, 0, 0)
         mock_timezone.now.return_value = now
+        mock_timezone.localdate.return_value = now.date()
 
         status = ProductMetricsStatusStub()
         mock_status_load.return_value = status
@@ -257,6 +269,158 @@ class TestCalculateProductMetrics(BaseTestCase):
         self.assertEqual(result, "Calculated metrics for 1 product.")
         mock_calc.assert_called_once_with(self.product_1)
         mock_calc_license.assert_called_once_with(self.product_1)
+
+
+class TestCalculateProductMetricsForChangedProducts(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.parser = Parser.objects.create(name="metrics_parser")
+        self.product_changed = self._create_product("product_changed")
+        self.product_unchanged = self._create_product("product_unchanged")
+
+    def _create_product(self, name: str) -> Product:
+        product = Product.objects.create(name=name)
+        Branch.objects.create(product=product, name="main", is_default_branch=True)
+        product.refresh_from_db()
+        return product
+
+    def _create_observation(self, product: Product) -> None:
+        # Created without an observation log, which would mark the product as changed
+        Observation.objects.create(
+            title=f"observation_{Observation.objects.count()}",
+            product=product,
+            branch=product.repository_default_branch,
+            parser=self.parser,
+            parser_severity=Severity.SEVERITY_HIGH,
+            parser_status=Status.STATUS_OPEN,
+            import_last_seen=timezone.now(),
+        )
+
+    def _create_license_component(self, product: Product) -> None:
+        # bulk_create doesn't send the post_save signal, which would mark the product as changed
+        name = f"component_{License_Component.objects.count()}"
+        License_Component.objects.bulk_create(
+            [
+                License_Component(
+                    identity_hash=f"{name:_<64}",
+                    product=product,
+                    branch=product.repository_default_branch,
+                    component_name=name,
+                    component_name_version=name,
+                    evaluation_result=License_Policy_Evaluation_Result.RESULT_FORBIDDEN,
+                    numerical_evaluation_result=1,
+                )
+            ]
+        )
+
+    def _mark_as_changed(self, product: Product, last_change: datetime | None = None) -> None:
+        last_change = last_change or timezone.now()
+        Product.objects.filter(pk=product.pk).update(
+            last_observation_change=last_change, last_license_change=last_change
+        )
+
+    def _active_high(self, product: Product) -> int:
+        return Product_Metrics.objects.get(product=product, date=timezone.localdate()).active_high
+
+    def _forbidden(self, product: Product) -> int:
+        return Product_License_Metrics.objects.get(product=product, date=timezone.localdate()).forbidden
+
+    def test_unchanged_product_with_todays_metrics_is_skipped(self):
+        calculate_product_metrics()
+        self._create_observation(self.product_unchanged)
+        self._create_license_component(self.product_unchanged)
+
+        result = calculate_product_metrics()
+
+        self.assertEqual("Calculated metrics for 0 products.", result)
+        self.assertEqual(0, self._active_high(self.product_unchanged))
+        self.assertEqual(0, self._forbidden(self.product_unchanged))
+
+    def test_product_changed_after_last_run_is_recalculated(self):
+        calculate_product_metrics()
+        self._create_observation(self.product_changed)
+        self._create_license_component(self.product_changed)
+        self._create_observation(self.product_unchanged)
+        self._mark_as_changed(self.product_changed)
+
+        result = calculate_product_metrics()
+
+        self.assertEqual("Calculated metrics for 1 product.", result)
+        self.assertEqual(1, self._active_high(self.product_changed))
+        self.assertEqual(1, self._forbidden(self.product_changed))
+        self.assertEqual(0, self._active_high(self.product_unchanged))
+
+    def test_product_changed_during_run_is_recalculated_next_run(self):
+        load_status = Product_Metrics_Status.load
+
+        def change_after_metrics_of_product_have_been_calculated():
+            self._create_observation(self.product_changed)
+            self._mark_as_changed(self.product_changed)
+            return load_status()
+
+        with patch(
+            "application.metrics.services.metrics.Product_Metrics_Status.load",
+            side_effect=change_after_metrics_of_product_have_been_calculated,
+        ):
+            calculate_product_metrics()
+        self.assertEqual(0, self._active_high(self.product_changed))
+
+        calculate_product_metrics()
+
+        self.assertEqual(1, self._active_high(self.product_changed))
+
+    def test_change_committed_after_run_with_earlier_timestamp_is_recalculated(self):
+        # The transaction of an import can start before a run and commit after it
+        before_run = timezone.now() - timedelta(minutes=1)
+        calculate_product_metrics()
+        self._create_observation(self.product_changed)
+        self._mark_as_changed(self.product_changed, before_run)
+
+        calculate_product_metrics()
+
+        self.assertEqual(1, self._active_high(self.product_changed))
+
+    def test_product_without_todays_metrics_is_backfilled(self):
+        Product_Metrics.objects.create(
+            product=self.product_unchanged,
+            date=timezone.localdate() - timedelta(days=2),
+            active_high=5,
+            last_observation_change=self.product_unchanged.last_observation_change,
+        )
+        self._create_observation(self.product_unchanged)
+
+        calculate_product_metrics()
+
+        self.assertEqual(5, self._active_high(self.product_unchanged))
+        self.assertEqual(3, Product_Metrics.objects.filter(product=self.product_unchanged, active_high=5).count())
+
+    def test_product_without_todays_metrics_changed_after_latest_metrics_is_recalculated(self):
+        Product_Metrics.objects.create(
+            product=self.product_changed,
+            date=timezone.localdate() - timedelta(days=1),
+            active_high=5,
+            last_observation_change=self.product_changed.last_observation_change - timedelta(minutes=1),
+        )
+        self._create_observation(self.product_changed)
+
+        calculate_product_metrics()
+
+        self.assertEqual(1, self._active_high(self.product_changed))
+
+    def test_queries_do_not_depend_on_number_of_unchanged_products(self):
+        calculate_product_metrics()
+        self._mark_as_changed(self.product_changed)
+        with CaptureQueriesContext(connection) as queries_2_products:
+            calculate_product_metrics()
+
+        for i in range(10):
+            self._create_product(f"product_{i}")
+        calculate_product_metrics()
+        self._mark_as_changed(self.product_changed)
+        with CaptureQueriesContext(connection) as queries_12_products:
+            calculate_product_metrics()
+
+        self.assertEqual(len(queries_2_products), len(queries_12_products))
 
 
 class TestCalculateMetricsForProduct(BaseTestCase):
@@ -366,7 +530,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         mock_pm_objects.update_or_create.assert_called_once_with(
             product=self.product_1,
             date=today,
-            defaults=observation_metrics,
+            defaults=observation_metrics | {"last_observation_change": self.product_1.last_observation_change},
         )
 
     @patch("application.metrics.services.metrics.Observation.objects")
@@ -402,7 +566,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         mock_pm_objects.update_or_create.assert_called_once_with(
             product=self.product_1,
             date=today,
-            defaults=observation_metrics,
+            defaults=observation_metrics | {"last_observation_change": self.product_1.last_observation_change},
         )
 
     @patch("application.metrics.services.metrics.Observation.objects")
@@ -441,7 +605,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         mock_pm_objects.update_or_create.assert_called_once_with(
             product=self.product_1,
             date=today,
-            defaults=observation_metrics,
+            defaults=observation_metrics | {"last_observation_change": self.product_1.last_observation_change},
         )
 
     @patch("application.metrics.services.metrics.Product_Metrics.objects")
@@ -455,6 +619,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
 
         latest_metrics = ProductMetricsStub(
             date=yesterday,
+            last_observation_change=self.product_1.last_observation_change,
             active_critical=5,
             active_high=3,
             active_medium=2,
@@ -488,7 +653,12 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 12, 10, 0, 0)
 
-        latest_metrics = ProductMetricsStub(date=three_days_ago, active_critical=2, open=1)
+        latest_metrics = ProductMetricsStub(
+            date=three_days_ago,
+            last_observation_change=self.product_1.last_observation_change,
+            active_critical=2,
+            open=1,
+        )
         mock_get_latest.return_value = latest_metrics
 
         created_metrics = []
@@ -513,7 +683,7 @@ class TestCalculateMetricsForProduct(BaseTestCase):
         mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_observation_change = datetime(2025, 6, 14, 10, 0, 0)
 
-        latest_metrics = ProductMetricsStub(date=today)
+        latest_metrics = ProductMetricsStub(date=today, last_observation_change=self.product_1.last_observation_change)
         mock_get_latest.return_value = latest_metrics
 
         result = calculate_observation_metrics_for_product(self.product_1)
@@ -572,7 +742,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
         mock_plm_objects.update_or_create.assert_called_once_with(
             product=self.product_1,
             date=today,
-            defaults=license_metrics,
+            defaults=license_metrics | {"last_license_change": self.product_1.last_license_change},
         )
 
     @patch("application.metrics.services.metrics.License_Component.objects")
@@ -604,7 +774,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
         mock_plm_objects.update_or_create.assert_called_once_with(
             product=self.product_1,
             date=today,
-            defaults=license_metrics,
+            defaults=license_metrics | {"last_license_change": self.product_1.last_license_change},
         )
 
     @patch("application.metrics.services.metrics.Product_License_Metrics.objects")
@@ -618,6 +788,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
 
         latest_metrics = ProductLicenseMetricsStub(
             date=yesterday,
+            last_license_change=self.product_1.last_license_change,
             allowed=5,
             forbidden=3,
             ignored=2,
@@ -649,7 +820,12 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
         mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 12, 10, 0, 0)
 
-        latest_metrics = ProductLicenseMetricsStub(date=three_days_ago, allowed=2, forbidden=1)
+        latest_metrics = ProductLicenseMetricsStub(
+            date=three_days_ago,
+            last_license_change=self.product_1.last_license_change,
+            allowed=2,
+            forbidden=1,
+        )
         mock_get_latest.return_value = latest_metrics
 
         created_metrics = []
@@ -674,7 +850,7 @@ class TestCalculateLicenseMetricsForProduct(BaseTestCase):
         mock_timezone.localdate.side_effect = _localdate_side_effect(today)
         self.product_1.last_license_change = datetime(2025, 6, 14, 10, 0, 0)
 
-        latest_metrics = ProductLicenseMetricsStub(date=today)
+        latest_metrics = ProductLicenseMetricsStub(date=today, last_license_change=self.product_1.last_license_change)
         mock_get_latest.return_value = latest_metrics
 
         result = calculate_license_metrics_for_product(self.product_1)
@@ -713,131 +889,73 @@ class TestGetLatestProductLicenseMetrics(BaseTestCase):
 
 
 class TestGetProductMetricsTimeline(BaseTestCase):
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_no_product_no_age_filter(self, mock_get_metrics, mock_get_days):
-        metrics = [
-            ProductMetricsStub(date=date(2025, 6, 14), active_critical=2, open=1),
-            ProductMetricsStub(date=date(2025, 6, 15), active_critical=3, open=2),
-        ]
-        mock_get_metrics.return_value = metrics
-        mock_get_days.return_value = None
+    def setUp(self):
+        super().setUp()
+        self.product_group = Product.objects.create(name="group", is_product_group=True)
+        self.product_in_group = Product.objects.create(name="in group", product_group=self.product_group)
+        self.product_other = Product.objects.create(name="other")
+        self.today = timezone.localdate().isoformat()
+        self.month_ago = (timezone.localdate() - timedelta(days=30)).isoformat()
+        for product, critical in ((self.product_in_group, 2), (self.product_other, 3)):
+            Product_Metrics.objects.create(product=product, date=self.month_ago, active_critical=critical, open=1)
+            Product_Metrics.objects.create(product=product, date=self.today, active_critical=critical + 1, open=2)
+        self.superuser = User.objects.create(username="superuser", is_superuser=True)
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_all_products_summed_per_date(self, mock_user):
+        mock_user.return_value = self.superuser
+
+        with self.assertNumQueries(1):
+            result = get_product_metrics_timeline(None, "all")
+
+        dates = list(result)
+        self.assertLess(dates.index(self.month_ago), dates.index(self.today))
+        self.assertEqual(5, result[self.month_ago]["active_critical"])
+        self.assertEqual(7, result[self.today]["active_critical"])
+        self.assertEqual(4, result[self.today]["open"])
+        self.assertEqual(0, result[self.today]["risk_accepted"])
+
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_only_permitted_products_are_summed(self, mock_user):
+        user = User.objects.create(username="member")
+        Product_Member.objects.create(product=self.product_other, user=user, role=Roles.Reader)
+        mock_user.return_value = user
 
         result = get_product_metrics_timeline(None, "all")
 
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result["2025-06-14"]["active_critical"], 2)
-        self.assertEqual(result["2025-06-14"]["open"], 1)
-        self.assertEqual(result["2025-06-15"]["active_critical"], 3)
-        self.assertEqual(result["2025-06-15"]["open"], 2)
+        self.assertEqual(4, result[self.today]["active_critical"])
 
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_no_product_aggregates_multiple_products_same_date(self, mock_get_metrics, mock_get_days):
-        metrics = [
-            ProductMetricsStub(
-                date=date(2025, 6, 15),
-                active_critical=2,
-                active_high=1,
-                open=3,
-            ),
-            ProductMetricsStub(
-                date=date(2025, 6, 15),
-                active_critical=1,
-                active_high=4,
-                open=2,
-            ),
-        ]
-        mock_get_metrics.return_value = metrics
-        mock_get_days.return_value = None
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_product_group(self, mock_user):
+        mock_user.return_value = self.superuser
 
-        result = get_product_metrics_timeline(None, "all")
+        result = get_product_metrics_timeline(self.product_group, "all")
 
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result["2025-06-15"]["active_critical"], 3)
-        self.assertEqual(result["2025-06-15"]["active_high"], 5)
-        self.assertEqual(result["2025-06-15"]["open"], 5)
+        self.assertEqual({self.month_ago, self.today}, set(result))
+        self.assertEqual(3, result[self.today]["active_critical"])
 
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_single_product_no_aggregation(self, mock_get_metrics, mock_get_days):
-        self.product_1.is_product_group = False
-        metrics_qs = QuerySetStub(
-            [
-                ProductMetricsStub(
-                    date=date(2025, 6, 15),
-                    active_critical=5,
-                    active_high=3,
-                    open=2,
-                    resolved=1,
-                )
-            ]
-        )
-        mock_get_metrics.return_value = metrics_qs
-        mock_get_days.return_value = None
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_product_with_age(self, mock_user):
+        mock_user.return_value = self.superuser
 
-        result = get_product_metrics_timeline(self.product_1, "all")
+        result = get_product_metrics_timeline(self.product_other, "Past 7 days")
 
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result["2025-06-15"]["active_critical"], 5)
-        self.assertEqual(result["2025-06-15"]["active_high"], 3)
-        self.assertEqual(result["2025-06-15"]["open"], 2)
-        self.assertEqual(result["2025-06-15"]["resolved"], 1)
-        metrics_qs.assert_filtered_with(self, product=self.product_1)
-
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_product_group_filters_and_aggregates(self, mock_get_metrics, mock_get_days):
-        self.product_group_1.is_product_group = True
-        metrics_qs = QuerySetStub(
-            [
-                ProductMetricsStub(
-                    date=date(2025, 6, 15),
-                    active_critical=2,
-                    open=1,
-                ),
-                ProductMetricsStub(
-                    date=date(2025, 6, 15),
-                    active_critical=3,
-                    open=4,
-                ),
-            ]
-        )
-        mock_get_metrics.return_value = metrics_qs
-        mock_get_days.return_value = None
-
-        result = get_product_metrics_timeline(self.product_group_1, "all")
-
-        self.assertEqual(result["2025-06-15"]["active_critical"], 5)
-        self.assertEqual(result["2025-06-15"]["open"], 5)
-        metrics_qs.assert_filtered_with(self, product__product_group=self.product_group_1)
+        self.assertEqual({self.today: {**_initialize_response_data(), "active_critical": 4, "open": 2}}, result)
 
     @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
     @patch("django.utils.timezone.now")
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_age_filter_applied(self, mock_get_metrics, mock_get_days, mock_now):
-        mock_get_days.return_value = 7
-        # Already 2025-06-15 in TIME_ZONE
+    @patch("application.metrics.queries.product_metrics.get_current_user")
+    def test_age_starts_at_local_date(self, mock_user, mock_now):
+        mock_user.return_value = self.superuser
+        product = Product.objects.create(name="time zone")
+        for day in (7, 8):
+            Product_Metrics.objects.create(product=product, date=date(2025, 6, day))
+        # Already 2025-06-15 in TIME_ZONE, but still 2025-06-14 in UTC
         mock_now.return_value = datetime(2025, 6, 14, 20, 0, tzinfo=dt_timezone.utc)
 
-        metrics_qs = QuerySetStub([])
-        mock_get_metrics.return_value = metrics_qs
+        result = get_product_metrics_timeline(product, "Past 7 days")
 
-        result = get_product_metrics_timeline(None, "Past 7 days")
-
-        self.assertEqual(result, {})
-        metrics_qs.assert_filtered_with(self, date__gte=date(2025, 6, 8))
-
-    @patch("application.metrics.services.metrics.get_days")
-    @patch("application.metrics.services.metrics.get_product_metrics")
-    def test_empty_metrics(self, mock_get_metrics, mock_get_days):
-        mock_get_metrics.return_value = []
-        mock_get_days.return_value = None
-
-        result = get_product_metrics_timeline(None, "all")
-
-        self.assertEqual(result, {})
+        self.assertEqual({"2025-06-08"}, set(result))
 
 
 class TestGetProductMetricsCurrent(BaseTestCase):
@@ -1145,6 +1263,7 @@ class ProductMetricsStub:
     def __init__(
         self,
         date=None,
+        last_observation_change=None,
         active_critical=0,
         active_high=0,
         active_medium=0,
@@ -1162,6 +1281,7 @@ class ProductMetricsStub:
         risk_accepted=0,
     ):
         self.date = date
+        self.last_observation_change = last_observation_change
         self.active_critical = active_critical
         self.active_high = active_high
         self.active_medium = active_medium
@@ -1190,6 +1310,7 @@ class ProductLicenseMetricsStub:
     def __init__(
         self,
         date=None,
+        last_license_change=None,
         allowed=0,
         forbidden=0,
         ignored=0,
@@ -1197,6 +1318,7 @@ class ProductLicenseMetricsStub:
         unknown=0,
     ):
         self.date = date
+        self.last_license_change = last_license_change
         self.allowed = allowed
         self.forbidden = forbidden
         self.ignored = ignored
@@ -1218,24 +1340,13 @@ class ObservationStub:
 
 
 class QuerySetStub:
-    """A simple stub that supports filter() chaining and iteration."""
+    """A simple stub that supports iteration and len()."""
 
     def __init__(self, items=None):
         self._items = items or []
-        self._filter_calls = []
-
-    def filter(self, **kwargs):
-        self._filter_calls.append(kwargs)
-        return self
 
     def __iter__(self):
         return iter(self._items)
 
     def __len__(self):
         return len(self._items)
-
-    def assert_filtered_with(self, test_case, **expected_kwargs):
-        test_case.assertTrue(
-            any(kwargs == expected_kwargs for kwargs in self._filter_calls),
-            f"Expected filter call with {expected_kwargs}, got {self._filter_calls}",
-        )

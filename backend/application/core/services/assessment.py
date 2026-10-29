@@ -323,6 +323,9 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
             new_vex_remediations=observation_log.vex_remediations,
             new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
         )
+        # The approval applies the assessment without a new observation log, which would mark the product as changed
+        product.last_observation_change = timezone.now()
+        product.save()
 
         check_security_gate(observation_log.observation.product)
         push_observation_to_issue_tracker(observation_log.observation, get_current_user())

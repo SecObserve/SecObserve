@@ -20,12 +20,58 @@ class TestTrivyOperatorPrometheusParser(TestCase):
         mock_response = MagicMock()
         mock_response.status_code = 400
         mock_requests.get.return_value = mock_response
-        mock_requests.get.side_effect = requests.exceptions.ConnectionError()
+        mock_requests.get.side_effect = requests.exceptions.ConnectionError("[Errno 111] Connection refused")
 
         result, messages, data = parser.check_connection(Api_Configuration())
         self.assertFalse(result)
 
-        self.assertIn("Cannot access Prometheus", messages[0])
+        self.assertEqual(["Cannot access Prometheus, see backend log for details"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
+    def test_http_error(self, mock_requests):
+        parser = TrivyOperatorPrometheus()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 401
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            "401 Client Error", response=mock_response
+        )
+        mock_requests.get.return_value = mock_response
+
+        result, messages, data = parser.check_connection(Api_Configuration())
+        self.assertFalse(result)
+
+        self.assertEqual(["Cannot access Prometheus: HTTP status 401"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
+    def test_redirect(self, mock_requests):
+        parser = TrivyOperatorPrometheus()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 302
+        mock_requests.get.return_value = mock_response
+
+        result, messages, data = parser.check_connection(Api_Configuration())
+        self.assertFalse(result)
+
+        self.assertEqual(["Cannot access Prometheus: HTTP status 302"], messages)
+        self.assertFalse(data)
+
+    @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
+    def test_no_json(self, mock_requests):
+        parser = TrivyOperatorPrometheus()
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.side_effect = requests.exceptions.JSONDecodeError("Expecting value", "<html>", 0)
+        mock_requests.get.return_value = mock_response
+
+        result, messages, data = parser.check_connection(Api_Configuration())
+        self.assertFalse(result)
+
+        self.assertEqual(["Cannot access Prometheus, see backend log for details"], messages)
         self.assertFalse(data)
 
     @patch("application.import_observations.parsers.trivy_operator_prometheus.parser.requests")
@@ -44,6 +90,7 @@ class TestTrivyOperatorPrometheusParser(TestCase):
             self.assertEqual(result, True)
             self.assertFalse(messages)
             self.assertEqual(json_data, data)
+            self.assertFalse(mock_requests.get.call_args.kwargs["allow_redirects"])
 
     def test_invalid_format_json(self):
         with open(path.dirname(__file__) + "/files/invalid_format.json") as testfile:

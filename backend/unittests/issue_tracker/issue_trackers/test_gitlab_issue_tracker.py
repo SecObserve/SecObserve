@@ -25,6 +25,8 @@ class TestGitLabIssueTracker(BaseTestCase):
     @patch("requests.post")
     def test_create_issue(self, post_mock):
         class MockResponse:
+            status_code = 200
+
             def raise_for_status(self):
                 pass
 
@@ -47,6 +49,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "labels": "label_1, label_2",
             },
             timeout=60,
+            allow_redirects=False,
         )
         self.assertEqual("gl_1", issue_id)
 
@@ -75,6 +78,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "labels": "label_1, label_2",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -96,6 +100,7 @@ class TestGitLabIssueTracker(BaseTestCase):
             url="https://gitlab.example.com/api/v4/projects/gh_project_1/issues/gh_1",
             headers={"PRIVATE-TOKEN": "api_key_1"},
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -108,6 +113,7 @@ class TestGitLabIssueTracker(BaseTestCase):
             url="https://gitlab.example.com/api/v4/projects/gh_project_1/issues/gh_1",
             headers={"PRIVATE-TOKEN": "api_key_1"},
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.get")
@@ -132,6 +138,7 @@ class TestGitLabIssueTracker(BaseTestCase):
             url="https://gitlab.example.com/api/v4/projects/gh_project_1/issues/gh_1",
             headers={"PRIVATE-TOKEN": "api_key_1"},
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -175,6 +182,25 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
+        )
+
+    @patch("requests.put")
+    def test_update_issue_redirect(self, put_mock):
+        response = Response()
+        response.status_code = 302
+        response.url = "https://api.gitlab.com/repos/gh_project_1/issues/gh_1"
+        put_mock.return_value = response
+        self.observation_1.issue_tracker_issue_id = "gh_1"
+        issue_tracker = GitLabIssueTracker()
+        issue = Issue(id="gh_1", title="title_1", description="description_1", labels="label_1,label_2")
+
+        with self.assertRaises(HTTPError) as e:
+            issue_tracker.update_issue(self.observation_1, issue)
+
+        self.assertEqual(
+            "302 Redirect for url: https://api.gitlab.com/repos/gh_project_1/issues/gh_1",
+            str(e.exception),
         )
 
     @patch("requests.put")
@@ -203,6 +229,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -247,6 +274,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -276,6 +304,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -310,6 +339,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     @patch("requests.put")
@@ -336,6 +366,7 @@ class TestGitLabIssueTracker(BaseTestCase):
                 "add_labels": "label_2,label_3",
             },
             timeout=60,
+            allow_redirects=False,
         )
 
     def test_get_frontend_issue_url(self):

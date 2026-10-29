@@ -12,8 +12,8 @@ from application.import_observations.parsers.osv.parser import (
     OSV_MAX_RETRIES,
     OSV_Vulnerability,
     OSVParser,
-    _create_osv_session,
     _get_osv_max_threads,
+    create_osv_session,
 )
 
 
@@ -128,14 +128,25 @@ class TestOSVSession(TestCase):
     def test_session_is_configured_with_retries(self):
         # The retry/backoff itself lives in urllib3 (and is covered by urllib3's own tests);
         # here we verify our wiring: the adapter mounted for api.osv.dev carries the expected
-        # Retry policy for GET requests and transient status codes.
-        session = _create_osv_session()
+        # Retry policy for GET and querybatch POST requests and transient status codes.
+        session = create_osv_session()
         try:
             adapter = session.get_adapter("https://api.osv.dev/v1/vulns/CVE-2021-22924")
             retries = adapter.max_retries
             self.assertEqual(retries.total, OSV_MAX_RETRIES)
             self.assertIn("GET", retries.allowed_methods)
+            self.assertIn("POST", retries.allowed_methods)
             self.assertIn(503, retries.status_forcelist)
+            self.assertIsNone(retries.read)
+        finally:
+            session.close()
+
+    def test_session_with_limited_read_retries(self):
+        session = create_osv_session(read_retries=1)
+        try:
+            retries = session.get_adapter("https://api.osv.dev/v1/querybatch").max_retries
+            self.assertEqual(retries.total, OSV_MAX_RETRIES)
+            self.assertEqual(retries.read, 1)
         finally:
             session.close()
 

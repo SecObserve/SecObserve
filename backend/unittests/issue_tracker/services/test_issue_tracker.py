@@ -1,6 +1,8 @@
 from unittest.mock import call, patch
 
+import requests
 from django.core.management import call_command
+from jira.exceptions import JIRAError
 
 from application.access_control.models import User
 from application.core.models import Branch, Observation, Product
@@ -13,6 +15,7 @@ from application.issue_tracker.issue_trackers.gitlab_issue_tracker import (
     GitLabIssueTracker,
 )
 from application.issue_tracker.services.issue_tracker import (
+    IssueTrackerError,
     _push_deleted_observation_to_issue_tracker_background,
     _push_observation_to_issue_tracker_background,
     issue_tracker_factory,
@@ -161,6 +164,23 @@ class TestIssueTracker(BaseTestCase):
         self.assertEqual(exception, context.exception)
 
         exception_mock.assert_called_with(exception, self.user_internal)
+
+    @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
+    @patch("application.issue_tracker.services.issue_tracker.handle_task_exception")
+    def test_push_observation_to_issue_tracker_connection_error(self, exception_mock, factory_mock):
+        exception = requests.exceptions.ConnectionError("[Errno 111] Connection refused")
+        factory_mock.side_effect = exception
+
+        observation = Observation.objects.get(pk=1)
+        observation.product.issue_tracker_active = True
+        with self.assertRaises(Exception) as context:
+            _push_observation_to_issue_tracker_background.call_local(observation, self.user_internal)
+        self.assertEqual(exception, context.exception)
+
+        notification_exception = exception_mock.call_args.args[0]
+        self.assertIsInstance(notification_exception, IssueTrackerError)
+        self.assertEqual("Cannot access issue tracker, see backend log for details", str(notification_exception))
+        self.assertEqual(self.user_internal, exception_mock.call_args.args[1])
 
     # --- push_observation_to_issue_tracker / higher or same than minimum severity ---
 
@@ -357,6 +377,23 @@ class TestIssueTracker(BaseTestCase):
         self.assertEqual(exception, context.exception)
 
         exception_mock.assert_called_with(exception, self.user_internal)
+
+    @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
+    @patch("application.issue_tracker.services.issue_tracker.handle_task_exception")
+    def test_push_deleted_observation_jira_error(self, exception_mock, factory_mock):
+        exception = JIRAError(status_code=401, text="response text", url="https://jira.example.com")
+        factory_mock.side_effect = exception
+
+        product = Product.objects.get(pk=1)
+        product.issue_tracker_active = True
+        with self.assertRaises(Exception) as context:
+            _push_deleted_observation_to_issue_tracker_background.call_local(product, "123", self.user_internal)
+        self.assertEqual(exception, context.exception)
+
+        notification_exception = exception_mock.call_args.args[0]
+        self.assertIsInstance(notification_exception, IssueTrackerError)
+        self.assertEqual("Cannot access issue tracker: HTTP status 401", str(notification_exception))
+        self.assertEqual(self.user_internal, exception_mock.call_args.args[1])
 
     # --- issue_tracker_factory ---
 

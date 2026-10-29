@@ -327,6 +327,7 @@ class ObservationUpdateSerializer(ModelSerializer):
         return validate_cvss4_vector(cvss4_vector)
 
     def update(self, instance: Observation, validated_data: dict) -> Observation:
+        actual_branch = instance.branch
         actual_severity = instance.current_severity
         actual_status = instance.current_status
         actual_vex_justification = instance.current_vex_justification
@@ -373,6 +374,10 @@ class ObservationUpdateSerializer(ModelSerializer):
                 assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
                 risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
             )
+        elif actual_branch != observation.branch:
+            # The metrics count the observations of the default branch
+            observation.product.last_observation_change = timezone.now()
+            observation.product.save()
 
         check_security_gate_observation(observation)
         push_observation_to_issue_tracker(observation, get_current_user())

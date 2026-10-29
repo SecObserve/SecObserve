@@ -17,6 +17,8 @@
 * The backend validates the issuer (`iss` claim) of OpenID Connect tokens. By default, it must match the `issuer` published in the OpenID configuration at `OIDC_AUTHORITY/.well-known/openid-configuration`, otherwise the token is rejected with the message `Invalid issuer`. The new backend environment variable `OIDC_ISSUER` has to be set in these cases, see [Issuer validation](../integrations/oidc_authentication.md#issuer-validation):
     * The backend reaches the OpenID Connect provider with another URL than the browser, e.g. an internal service name in Docker or Kubernetes.
     * The provider publishes a templated issuer, like the multi-tenant endpoints of Microsoft Entra ID with `{tenantid}`.
+* Requests to the base URLs of [API imports](../integrations/api_import.md) (Dependency-Track, Trivy Operator Prometheus) and [issue trackers](../integrations/issue_trackers.md) (GitHub, GitLab, Jira) don't follow HTTP redirects anymore. A base URL that only worked because of a redirect, e.g. from `http` to `https` or to a moved host, has to be changed to the final URL. Otherwise the connection test, the import or the issue tracker synchronization fails.
+* Connection errors for API imports and issue trackers don't show the error text of the request anymore, only the HTTP status code if there is one. The full error can be found in the log of the backend.
 
 ## Release 1.62.0
 
