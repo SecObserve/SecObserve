@@ -10,6 +10,14 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.63.0
+
+**Breaking changes**
+
+* The backend validates the issuer (`iss` claim) of OpenID Connect tokens. By default, it must match the `issuer` published in the OpenID configuration at `OIDC_AUTHORITY/.well-known/openid-configuration`, otherwise the token is rejected with the message `Invalid issuer`. The new backend environment variable `OIDC_ISSUER` has to be set in these cases, see [Issuer validation](../integrations/oidc_authentication.md#issuer-validation):
+    * The backend reaches the OpenID Connect provider with another URL than the browser, e.g. an internal service name in Docker or Kubernetes.
+    * The provider publishes a templated issuer, like the multi-tenant endpoints of Microsoft Entra ID with `{tenantid}`.
+
 ## Release 1.62.0
 
 **Noteable changes**
