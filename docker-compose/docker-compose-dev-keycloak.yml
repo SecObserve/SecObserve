@@ -37,6 +37,8 @@ services:
     environment:
       # --- OpenID Connect ---
       OIDC_AUTHORITY: ${SO_OIDC_AUTHORITY:-http://keycloak:8080/realms/secobserve}
+      # Tokens are issued for the URL used by the browser, not for the internal URL of the backend
+      OIDC_ISSUER: ${SO_OIDC_ISSUER:-http://localhost:8080/realms/secobserve}
       OIDC_CLIENT_ID: ${SO_OIDC_CLIENT_ID:-secobserve}
       OIDC_USERNAME: ${SO_OIDC_USERNAME:-preferred_username}
       OIDC_FIRST_NAME: ${SO_OIDC_FIRST_NAME:-given_name}
