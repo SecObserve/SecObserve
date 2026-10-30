@@ -4,7 +4,7 @@ from django.db.models import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.mixins import (
     DestroyModelMixin,
     ListModelMixin,
@@ -54,8 +54,12 @@ from application.scancodeio.types import CreateProjectParameters
 
 
 def _check_feature_enabled() -> None:
-    if not Settings.load().feature_scancodeio_integration:
-        raise ValidationError("ScanCode.io integration is not enabled")
+    if not _feature_enabled():
+        raise PermissionDenied("ScanCode.io integration is not enabled")
+
+
+def _feature_enabled() -> bool:
+    return Settings.load().feature_scancodeio_integration
 
 
 class CreateScanCodeIOProjectView(APIView):
@@ -66,13 +70,13 @@ class CreateScanCodeIOProjectView(APIView):
         responses={HTTP_201_CREATED: ScanCodeIOProjectSerializer},
     )
     def post(self, request: Request, product_id: int) -> Response:
+        _check_feature_enabled()
+
         product = get_product_by_id(product_id)
         if not product:
             return Response(status=HTTP_404_NOT_FOUND)
 
         user_has_permission_or_403(product, Permissions.Product_Edit)
-
-        _check_feature_enabled()
 
         request_serializer = CreateScanCodeIOProjectSerializer(data=request.data)
         if not request_serializer.is_valid():
@@ -116,13 +120,15 @@ class ScanCodeIOProjectViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixi
             HTTP_400_BAD_REQUEST: OpenApiResponse(
                 description="Invalid or non-matching confirmation name, or ScanCode.io refused the deletion."
             ),
-            HTTP_403_FORBIDDEN: OpenApiResponse(description="Product edit permission is required."),
+            HTTP_403_FORBIDDEN: OpenApiResponse(
+                description="ScanCode.io integration is not enabled, or product edit permission is required."
+            ),
         },
     )
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        scancodeio_project = self.get_object()
-
         _check_feature_enabled()
+
+        scancodeio_project = self.get_object()
 
         confirmation_names = request.query_params.getlist("name")
         if confirmation_names != [scancodeio_project.project_name]:
@@ -138,9 +144,9 @@ class ScanCodeIOProjectViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixi
     )
     @action(detail=True, methods=["get"])
     def details(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
-        scancodeio_project = self.get_object()
-
         _check_feature_enabled()
+
+        scancodeio_project = self.get_object()
 
         details = get_scancodeio_project_details(scancodeio_project)
         return Response(ScanCodeIOProjectDetailsSerializer(details).data)
@@ -167,11 +173,13 @@ class ScanCodeIOWebhookView(APIView):
         responses={HTTP_200_OK: None, HTTP_400_BAD_REQUEST: None, HTTP_404_NOT_FOUND: None},
     )
     def post(self, request: Request, token: str) -> Response:
+        # Without the integration, the webhook behaves like an unknown URL and doesn't reveal valid tokens
+        if not _feature_enabled():
+            return Response(status=HTTP_404_NOT_FOUND)
+
         scancodeio_project = get_scancodeio_project_by_webhook_token_hash(hash_webhook_token(token))
         if not scancodeio_project:
             return Response(status=HTTP_404_NOT_FOUND)
-
-        _check_feature_enabled()
 
         payload = request.data if isinstance(request.data, dict) else {}
         project = payload.get("project")

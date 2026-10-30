@@ -98,7 +98,7 @@ class TestCreateScanCodeIOProjectView(ScanCodeIOViewTestCase):
 
         response = self._post("db_internal_write", 1, {"name": "project_name"})
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(str(response.data), "{'message': 'ScanCode.io integration is not enabled'}")
         self.mock_create.assert_not_called()
 
@@ -186,7 +186,8 @@ class TestScanCodeIOPipelinesView(ScanCodeIOViewTestCase):
 
         response = self._api_client("db_internal_read").get("/api/scancodeio/pipelines/")
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(str(response.data), "{'message': 'ScanCode.io integration is not enabled'}")
         self.mock_get_pipelines.assert_not_called()
 
     def test_pipelines(self):
@@ -210,8 +211,17 @@ class TestScanCodeIOProjectDetailsView(ScanCodeIOViewTestCase):
 
         response = self._api_client("db_internal_read").get("/api/scancodeio_projects/1/details/")
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(str(response.data), "{'message': 'ScanCode.io integration is not enabled'}")
         self.mock_get_details.assert_not_called()
+
+    def test_feature_disabled_before_object_lookup(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=False)
+
+        response = self._api_client("db_internal_read").get("/api/scancodeio_projects/99999/details/")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(str(response.data), "{'message': 'ScanCode.io integration is not enabled'}")
 
     def test_not_authorized(self):
         self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
@@ -333,7 +343,8 @@ class TestScanCodeIOProjectDeleteView(ScanCodeIOViewTestCase):
 
         response = self._delete("db_internal_write", 1, "?name=project_internal")
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(str(response.data), "{'message': 'ScanCode.io integration is not enabled'}")
         self.mock_delete.assert_not_called()
 
     def test_delete(self):
@@ -397,5 +408,7 @@ class TestScanCodeIOWebhookView(ScanCodeIOViewTestCase):
 
         response = self._post_webhook("webhook_token", self.payload)
 
-        self.assertEqual(response.status_code, 400)
+        # Same response as for an unknown token
+        self.assertEqual(response.status_code, 404)
+        self.assertIsNone(response.data)
         self.mock_process.assert_not_called()

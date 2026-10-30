@@ -184,8 +184,10 @@ class TestAuthentication(BaseTestCase):
         self._check_oidc_not_authenticated(methods, url)
         self._check_oidc_authenticated(methods, url)
 
+    # A disabled ScanCode.io integration would answer with 403
+    @patch("application.scancodeio.api.views._feature_enabled", return_value=True)
     @patch("application.access_control.services.current_user.get_current_user")
-    def test_authentication(self, mock_user):
+    def test_authentication(self, mock_user, mock_scancodeio_feature_enabled):  # pylint: disable=unused-argument
         mock_user.return_value = self.user_admin
 
         self._check_authentication(["get", "post"], "/api/api_configurations/")
