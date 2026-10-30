@@ -4,7 +4,9 @@ import secrets
 from typing import Any, Optional
 
 import requests
+from django.db import DatabaseError, IntegrityError
 from django.utils.text import slugify
+from huey.contrib.djhuey import on_commit_task
 from rest_framework.exceptions import ValidationError
 from rest_framework.status import HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND
 
@@ -177,15 +179,40 @@ def create_scancodeio_project(product: Product, parameters: CreateProjectParamet
         webhook_url = f"{webhook_base_url}/api/scancodeio/webhook/{webhook_token}/"
         webhook_token_hash = hash_webhook_token(webhook_token)
 
-    response = ScanCodeIOClient().create_project(parameters, webhook_url)
+    client = ScanCodeIOClient()
+    response = client.create_project(parameters, webhook_url)
 
-    scancodeio_project = ScanCodeIO_Project.objects.create(
-        product=product,
-        project_uuid=response["uuid"],
-        project_name=response["name"],
-        webhook_token_hash=webhook_token_hash,
-    )
+    try:
+        scancodeio_project = ScanCodeIO_Project.objects.create(
+            product=product,
+            project_uuid=response["uuid"],
+            project_name=response["name"],
+            webhook_token_hash=webhook_token_hash,
+        )
+    except DatabaseError as e:
+        # Without a reference in SecObserve, the project in ScanCode.io could neither be shown nor deleted
+        _delete_orphaned_project(client, response["uuid"])
+        if isinstance(e, IntegrityError):
+            # A concurrent request has created a project for the product in the meantime
+            raise ValidationError(f"Product {product.name} already has a ScanCode.io project") from e
+        raise
+
     return scancodeio_project
+
+
+@on_commit_task()
+def delete_orphaned_scancodeio_project(project_uuid: str) -> None:
+    _delete_orphaned_project(ScanCodeIOClient(), project_uuid)
+
+
+def _delete_orphaned_project(client: ScanCodeIOClient, project_uuid: str) -> None:
+    # There is no reference in SecObserve anymore, so a failure can only be logged
+    try:
+        client.delete_project(project_uuid)
+    except ValidationError as e:
+        logger.warning(
+            format_log_message(message=f"Orphaned ScanCode.io project {project_uuid} could not be deleted", exception=e)
+        )
 
 
 def hash_webhook_token(webhook_token: str) -> str:

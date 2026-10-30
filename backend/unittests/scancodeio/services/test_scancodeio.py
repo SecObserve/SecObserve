@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import requests
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
+from django.db import DatabaseError, IntegrityError
 from rest_framework.exceptions import ValidationError
 
 from application.commons.models import Settings
@@ -13,6 +14,7 @@ from application.scancodeio.models import ScanCodeIO_Project
 from application.scancodeio.services.scancodeio import (
     SCANCODEIO_REQUEST_TIMEOUT,
     create_scancodeio_project,
+    delete_orphaned_scancodeio_project,
     delete_scancodeio_project,
     get_scancodeio_pipelines,
     get_scancodeio_project_details,
@@ -403,6 +405,97 @@ class TestScanCodeIO(BaseTestCase):
 
         self.assertNotIn("webhook_url", self.mock_request.call_args.kwargs["data"])
         self.assertEqual(scancodeio_project.webhook_token_hash, "")
+
+    def _assert_project_deleted_in_scancodeio(self):
+        self.assertEqual(
+            self.mock_request.call_args_list[-1].args,
+            ("delete", "https://scancode.example.com/api/projects/6461408c-726c-4b70-aa7a-c9cc9d1c9685/"),
+        )
+
+    @patch("application.scancodeio.services.scancodeio.ScanCodeIO_Project.objects.create")
+    def test_create_project_database_error(self, mock_create):
+        mock_create.side_effect = DatabaseError("database error")
+        self.mock_settings_load.return_value = self.settings
+        self.mock_request.side_effect = [
+            _response(json_data={"name": "project_name", "uuid": "6461408c-726c-4b70-aa7a-c9cc9d1c9685"}),
+            _response(status_code=204),
+        ]
+
+        with self.assertRaises(DatabaseError):
+            create_scancodeio_project(
+                self.product,
+                CreateProjectParameters(
+                    name="project_name", pipeline="scan_codebase", input_urls=["https://example.com/a.zip"]
+                ),
+            )
+
+        self.assertEqual(self.mock_request.call_count, 2)
+        self._assert_project_deleted_in_scancodeio()
+
+    @patch("application.scancodeio.services.scancodeio.ScanCodeIO_Project.objects.create")
+    def test_create_project_concurrently_created(self, mock_create):
+        mock_create.side_effect = IntegrityError("duplicate key")
+        self.mock_settings_load.return_value = self.settings
+        self.mock_request.side_effect = [
+            _response(json_data={"name": "project_name", "uuid": "6461408c-726c-4b70-aa7a-c9cc9d1c9685"}),
+            _response(status_code=204),
+        ]
+
+        with self.assertRaises(ValidationError) as e:
+            create_scancodeio_project(
+                self.product,
+                CreateProjectParameters(
+                    name="project_name", pipeline="scan_codebase", input_urls=["https://example.com/a.zip"]
+                ),
+            )
+
+        self.assertEqual(str(e.exception.detail[0]), "Product db_product_internal already has a ScanCode.io project")
+        self._assert_project_deleted_in_scancodeio()
+
+    @patch("application.scancodeio.services.scancodeio.ScanCodeIO_Project.objects.create")
+    def test_create_project_database_error_and_delete_failed(self, mock_create):
+        mock_create.side_effect = DatabaseError("database error")
+        self.mock_settings_load.return_value = self.settings
+        self.mock_request.side_effect = [
+            _response(json_data={"name": "project_name", "uuid": "6461408c-726c-4b70-aa7a-c9cc9d1c9685"}),
+            requests.exceptions.ConnectionError("connection refused"),
+        ]
+
+        with self.assertLogs("secobserve.scancodeio", level="WARNING") as logs:
+            with self.assertRaises(DatabaseError):
+                create_scancodeio_project(
+                    self.product,
+                    CreateProjectParameters(
+                        name="project_name", pipeline="scan_codebase", input_urls=["https://example.com/a.zip"]
+                    ),
+                )
+
+        self.assertIn(
+            "Orphaned ScanCode.io project 6461408c-726c-4b70-aa7a-c9cc9d1c9685 could not be deleted", logs.output[-1]
+        )
+
+    def test_delete_orphaned_scancodeio_project(self):
+        self.mock_settings_load.return_value = self.settings
+        self.mock_request.return_value = _response(status_code=204)
+
+        # call_local calls the undecorated function, without enqueuing a Huey task
+        delete_orphaned_scancodeio_project.call_local("6461408c-726c-4b70-aa7a-c9cc9d1c9685")
+
+        self.mock_request.assert_called_once()
+        self._assert_project_deleted_in_scancodeio()
+
+    def test_delete_orphaned_scancodeio_project_error_response(self):
+        self.mock_settings_load.return_value = self.settings
+        self.mock_request.return_value = _response(
+            ok=False, status_code=400, json_data={"status": "Cannot delete project while a run is in progress."}
+        )
+
+        with self.assertLogs("secobserve.scancodeio", level="WARNING") as logs:
+            delete_orphaned_scancodeio_project.call_local("6461408c-726c-4b70-aa7a-c9cc9d1c9685")
+
+        self.assertIn(
+            "Orphaned ScanCode.io project 6461408c-726c-4b70-aa7a-c9cc9d1c9685 could not be deleted", logs.output[0]
+        )
 
     def test_process_scancodeio_webhook(self):
         scancodeio_project = ScanCodeIO_Project(
