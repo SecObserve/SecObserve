@@ -48,6 +48,8 @@ from application.scancodeio.services.scancodeio import (
     get_scancodeio_pipelines,
     get_scancodeio_project_details,
     hash_webhook_token,
+)
+from application.scancodeio.services.scancodeio_import import (
     process_scancodeio_webhook,
 )
 from application.scancodeio.types import CreateProjectParameters

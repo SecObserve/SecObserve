@@ -63,3 +63,10 @@ def get_scancodeio_projects() -> QuerySet[ScanCodeIO_Project]:
         )
 
     return scancodeio_projects
+
+
+def get_scancodeio_project_by_id(scancodeio_project_id: int) -> Optional[ScanCodeIO_Project]:
+    try:
+        return ScanCodeIO_Project.objects.select_related("product").get(pk=scancodeio_project_id)
+    except ScanCodeIO_Project.DoesNotExist:
+        return None

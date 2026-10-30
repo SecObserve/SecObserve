@@ -85,6 +85,12 @@ class ScanCodeIOClient:
     def get_project(self, project_uuid: str) -> dict[str, Any]:
         return self._request("get", f"/api/projects/{project_uuid}/")
 
+    def get_results(self, project_uuid: str) -> dict[str, Any]:
+        # Files and relations are not imported, leaving them out keeps the response small
+        return self._request(
+            "get", f"/api/projects/{project_uuid}/results/", params={"sections": ["packages", "dependencies"]}
+        )
+
     def delete_project(self, project_uuid: str) -> None:
         # A project that has already been deleted in ScanCode.io is no reason to keep it in SecObserve
         self._request("delete", f"/api/projects/{project_uuid}/", ignore_not_found=True)
@@ -143,6 +149,10 @@ def get_scancodeio_project_details(scancodeio_project: ScanCodeIO_Project) -> di
     details = ScanCodeIOClient().get_project(str(scancodeio_project.project_uuid))
     details["ui_url"] = get_scancodeio_project_ui_url(scancodeio_project)
     return details
+
+
+def get_scancodeio_results(scancodeio_project: ScanCodeIO_Project) -> dict[str, Any]:
+    return ScanCodeIOClient().get_results(str(scancodeio_project.project_uuid))
 
 
 def get_scancodeio_project_ui_url(scancodeio_project: ScanCodeIO_Project) -> str:
@@ -218,14 +228,3 @@ def _delete_orphaned_project(client: ScanCodeIOClient, project_uuid: str) -> Non
 def hash_webhook_token(webhook_token: str) -> str:
     # The token is random with 256 bits, so a fast hash is sufficient and allows to look it up
     return hashlib.sha256(webhook_token.encode("utf-8")).hexdigest()
-
-
-def process_scancodeio_webhook(scancodeio_project: ScanCodeIO_Project, payload: dict[str, Any]) -> None:
-    # Dummy implementation, the results will be imported into SecObserve later
-    run = payload.get("run", {})
-    logger.info(
-        format_log_message(
-            message=f"ScanCode.io webhook for project {scancodeio_project.project_name}: "
-            + f"pipeline {run.get('pipeline_name')} finished with status {run.get('status')}"
-        )
-    )
