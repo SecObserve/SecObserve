@@ -15,7 +15,11 @@ from application.core.models import (
     Product,
 )
 from application.core.queries.observation import get_current_observation_log
-from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment import (
+    assessment_approval,
+    extend_assessment,
+    save_assessment,
+)
 from application.core.services.assessment_approver import (
     user_is_allowed_assessment_approver,
 )
@@ -58,6 +62,13 @@ def observations_bulk_assessment(  # pylint: disable=too-many-arguments
             propagated_from=None,
             rule_engine=rule_engine,
         )
+
+
+def observations_bulk_extend_assessment(
+    *, observation_ids: list[int], comment: str, expiry_date: Optional[date]
+) -> None:
+    for observation in _check_observations(None, observation_ids):
+        extend_assessment(observation, comment, expiry_date)
 
 
 def observations_bulk_delete(product: Product, observation_ids: list[int]) -> None:

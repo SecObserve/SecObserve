@@ -30,7 +30,9 @@ from application.core.api.serializers_observation import (
     EvidenceSerializer,
     ObservationAssessmentSerializer,
     ObservationBulkAssessmentSerializer,
+    ObservationBulkExtendAssessmentSerializer,
     ObservationCreateSerializer,
+    ObservationExtendAssessmentSerializer,
     ObservationListSerializer,
     ObservationLogApprovalSerializer,
     ObservationLogBulkApprovalSerializer,
@@ -60,6 +62,7 @@ from application.core.queries.observation import (
 )
 from application.core.services.assessment import (
     assessment_approval,
+    extend_assessment,
     remove_assessment,
     save_assessment,
 )
@@ -70,6 +73,7 @@ from application.core.services.export_observations import (
 from application.core.services.observations_bulk_actions import (
     observation_logs_bulk_approval,
     observations_bulk_assessment,
+    observations_bulk_extend_assessment,
 )
 from application.core.services.potential_duplicates import (
     set_potential_duplicate_both_ways,
@@ -191,6 +195,39 @@ class ObservationViewSet(ModelViewSet):
         return Response()
 
     @extend_schema(
+        methods=["PATCH"],
+        request=ObservationExtendAssessmentSerializer,
+        responses={200: None},
+    )
+    @action(detail=True, methods=["patch"])
+    def extend_assessment(self, request: Request, pk: int) -> Response:
+        request_serializer = ObservationExtendAssessmentSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        observation = get_observation_by_id(pk)
+        if not observation:
+            raise NotFound(f"Observation {pk} not found")
+
+        user_has_permission_or_403(observation, Permissions.Observation_Assessment)
+
+        current_observation_log = get_current_observation_log(observation)
+        if (
+            current_observation_log
+            and current_observation_log.assessment_status == Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
+        ):
+            raise ValidationError("Cannot extend assessment while last assessment still needs approval")
+
+        if not extend_assessment(
+            observation,
+            request_serializer.validated_data.get("comment"),
+            request_serializer.validated_data.get("risk_acceptance_expiry_date"),
+        ):
+            raise ValidationError("Observation has no expiry date or no new expiry date can be calculated")
+
+        return Response()
+
+    @extend_schema(
         methods=["POST"],
         request=ObservationBulkAssessmentSerializer,
         responses={HTTP_204_NO_CONTENT: None},
@@ -212,6 +249,24 @@ class ObservationViewSet(ModelViewSet):
             new_vex_justification=request_serializer.validated_data.get("vex_justification"),
             new_vex_remediations=request_serializer.validated_data.get("vex_remediations"),
             new_risk_acceptance_expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
+        )
+        return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["POST"],
+        request=ObservationBulkExtendAssessmentSerializer,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=False, methods=["post"])
+    def bulk_extend_assessment(self, request: Request) -> Response:
+        request_serializer = ObservationBulkExtendAssessmentSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        observations_bulk_extend_assessment(
+            observation_ids=request_serializer.validated_data.get("observations"),
+            comment=request_serializer.validated_data.get("comment"),
+            expiry_date=request_serializer.validated_data.get("risk_acceptance_expiry_date"),
         )
         return Response(status=HTTP_204_NO_CONTENT)
 

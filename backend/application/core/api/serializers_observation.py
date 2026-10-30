@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Any, Optional
 from urllib.parse import urlparse
 
@@ -541,6 +542,20 @@ class ObservationAssessmentSerializer(Serializer):
 
 class ObservationRemoveAssessmentSerializer(Serializer):
     comment = CharField(max_length=4096, required=True)
+
+
+class ObservationExtendAssessmentSerializer(Serializer):
+    comment = CharField(max_length=4096, required=True)
+    risk_acceptance_expiry_date = DateField(required=False, allow_null=True)
+
+    def validate_risk_acceptance_expiry_date(self, value: Optional[date]) -> Optional[date]:
+        if value and value <= date.today():
+            raise ValidationError("Expiry date must be after today")
+        return value
+
+
+class ObservationBulkExtendAssessmentSerializer(ObservationExtendAssessmentSerializer):
+    observations = ListField(child=IntegerField(min_value=1), min_length=0, max_length=250, required=True)
 
 
 class ObservationBulkDeleteSerializer(Serializer):

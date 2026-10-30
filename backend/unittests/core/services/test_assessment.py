@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -19,7 +19,11 @@ from application.core.models import (
     Product_Authorization_Group_Member,
     Product_Member,
 )
-from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment import (
+    assessment_approval,
+    extend_assessment,
+    save_assessment,
+)
 from application.core.services.assessment_approver import (
     assessment_approvers_configured,
     get_effective_assessment_approvers,
@@ -28,6 +32,7 @@ from application.core.services.assessment_approver import (
 )
 from application.core.services.observations_bulk_actions import (
     observation_logs_bulk_approval,
+    observations_bulk_extend_assessment,
 )
 from application.core.types import (
     Assessment_Status,
@@ -540,3 +545,105 @@ class TestAssessmentApprovalMarksProductAsChanged(BaseTestCase):
         product = Product.objects.get(pk=self.log.observation.product.pk)
         self.assertEqual(Status.STATUS_FALSE_POSITIVE, self.log.observation.current_status)
         self.assertGreater(product.last_observation_change, self.last_change)
+
+
+class TestExtendAssessment(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        for target in (
+            "propagate_assessment",
+            "push_observation_to_issue_tracker",
+            "check_security_gate",
+            "Rule_Engine",
+        ):
+            patcher = patch(f"application.core.services.assessment.{target}")
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        self.product = Product.objects.get(pk=1)
+        self.observation = Observation.objects.get(pk=4)
+        self.observation.assessment_status = Status.STATUS_RISK_ACCEPTED
+        self.observation.current_status = Status.STATUS_RISK_ACCEPTED
+        self.observation.risk_acceptance_expiry_date = date(2030, 1, 1)
+        self.observation.save()
+
+    def _last_log(self) -> Observation_Log:
+        return Observation_Log.objects.filter(observation=self.observation).latest("id")
+
+    def test_extend_auto_approved(self) -> None:
+        self.assertTrue(extend_assessment(self.observation, "still valid", date(2031, 1, 1)))
+
+        self.observation.refresh_from_db()
+        self.assertEqual(date(2031, 1, 1), self.observation.risk_acceptance_expiry_date)
+        self.assertEqual(Status.STATUS_RISK_ACCEPTED, self.observation.current_status)
+        log = self._last_log()
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED, log.assessment_status)
+        self.assertEqual(
+            ("", "", False, "", "still valid", date(2031, 1, 1)),
+            (
+                log.severity,
+                log.status,
+                log.priority_changed,
+                log.vex_justification,
+                log.comment,
+                log.risk_acceptance_expiry_date,
+            ),
+        )
+
+    def test_extend_needs_approval(self) -> None:
+        self.product.assessments_need_approval = True
+        self.product.save()
+
+        self.assertTrue(extend_assessment(self.observation, "still valid", date(2031, 1, 1)))
+
+        self.observation.refresh_from_db()
+        self.assertEqual(date(2030, 1, 1), self.observation.risk_acceptance_expiry_date)
+        log = self._last_log()
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL, log.assessment_status)
+        self.assertEqual(date(2031, 1, 1), log.risk_acceptance_expiry_date)
+
+    @patch("application.core.services.assessment.get_current_user")
+    def test_approval_applies_extension(self, mock_user) -> None:
+        self.product.assessments_need_approval = True
+        self.product.save()
+        extend_assessment(self.observation, "still valid", date(2031, 1, 1))
+        mock_user.return_value = User.objects.get(pk=3)
+
+        assessment_approval(self._last_log(), Assessment_Status.ASSESSMENT_STATUS_APPROVED, None, None, None, None)
+
+        self.observation.refresh_from_db()
+        self.assertEqual(date(2031, 1, 1), self.observation.risk_acceptance_expiry_date)
+        self.assertEqual(Status.STATUS_RISK_ACCEPTED, self.observation.current_status)
+
+    @patch("application.core.services.assessment.calculate_expiry_date", return_value=date(2032, 1, 1))
+    def test_extend_calculated_date(self, mock_calculate) -> None:
+        self.assertTrue(extend_assessment(self.observation, "still valid"))
+
+        mock_calculate.assert_called_once_with(self.product, Status.STATUS_RISK_ACCEPTED)
+        self.observation.refresh_from_db()
+        self.assertEqual(date(2032, 1, 1), self.observation.risk_acceptance_expiry_date)
+
+    @patch("application.core.services.assessment.calculate_expiry_date", return_value=None)
+    def test_extend_no_calculated_date(self, _) -> None:
+        self.assertFalse(extend_assessment(self.observation, "still valid"))
+
+        self.observation.refresh_from_db()
+        self.assertEqual(date(2030, 1, 1), self.observation.risk_acceptance_expiry_date)
+
+    def test_extend_without_expiry_date(self) -> None:
+        observation = Observation.objects.get(pk=3)
+        log_count = Observation_Log.objects.count()
+
+        self.assertFalse(extend_assessment(observation, "still valid", date(2031, 1, 1)))
+
+        self.assertEqual(log_count, Observation_Log.objects.count())
+
+    @patch("application.core.services.observations_bulk_actions.user_has_permission", return_value=True)
+    def test_bulk_extend_skips_observations_without_expiry_date(self, _) -> None:
+        log_count = Observation_Log.objects.count()
+
+        observations_bulk_extend_assessment(observation_ids=[3, 4], comment="still valid", expiry_date=date(2031, 1, 1))
+
+        self.assertEqual(log_count + 1, Observation_Log.objects.count())
+        self.assertEqual(self.observation, self._last_log().observation)
+        self.assertIsNone(Observation.objects.get(pk=3).risk_acceptance_expiry_date)
