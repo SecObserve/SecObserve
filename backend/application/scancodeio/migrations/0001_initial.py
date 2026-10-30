@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                 ("project_uuid", models.UUIDField()),
                 ("project_name", models.CharField(max_length=255)),
                 ("created", models.DateTimeField(auto_now_add=True)),
-                ("webhook_token_hash", models.CharField(blank=True, max_length=64)),
+                ("webhook_token_hash", models.CharField(max_length=64, unique=True)),
                 (
                     "product",
                     models.OneToOneField(

@@ -20,9 +20,6 @@ def get_scancodeio_project_by_product(product: Product) -> Optional[ScanCodeIO_P
 
 
 def get_scancodeio_project_by_webhook_token_hash(webhook_token_hash: str) -> Optional[ScanCodeIO_Project]:
-    if not webhook_token_hash:
-        return None
-
     try:
         return ScanCodeIO_Project.objects.get(webhook_token_hash=webhook_token_hash)
     except ScanCodeIO_Project.DoesNotExist:

@@ -1,6 +1,6 @@
 import hashlib
 import re
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import requests
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -58,7 +58,11 @@ class TestScanCodeIO(BaseTestCase):
         self.mock_settings_load = self._start_patch("application.scancodeio.services.scancodeio.Settings.load")
         self.mock_request = self._start_patch("application.scancodeio.services.scancodeio.requests.request")
         self.product = Product.objects.get(pk=1)
-        self.settings = Settings(scancodeio_base_url="https://scancode.example.com/", scancodeio_api_key="api_key")
+        self.settings = Settings(
+            scancodeio_base_url="https://scancode.example.com/",
+            scancodeio_api_key="api_key",
+            scancodeio_webhook_base_url="http://backend:8000/",
+        )
 
     def _start_patch(self, target: str) -> MagicMock:
         patcher = patch(target)
@@ -93,6 +97,8 @@ class TestScanCodeIO(BaseTestCase):
                 "input_urls": ["https://example.com/a.zip", "https://example.com/b.zip"],
                 "pipeline": "scan_codebase",
                 "execute_now": "true",
+                # The webhook URL contains a random token, see test_create_project_webhook
+                "webhook_url": ANY,
             },
             files={"upload_file": ("archive.zip", upload_file)},
         )
@@ -101,8 +107,8 @@ class TestScanCodeIO(BaseTestCase):
         self.assertEqual(str(scancodeio_project.project_uuid), "6461408c-726c-4b70-aa7a-c9cc9d1c9685")
         self.assertEqual(ScanCodeIO_Project.objects.filter(product=self.product).count(), 1)
 
-    def test_create_project_without_file_and_api_key(self):
-        self.mock_settings_load.return_value = Settings(scancodeio_base_url="https://scancode.example.com")
+    def test_create_project_without_file(self):
+        self.mock_settings_load.return_value = self.settings
         self.mock_request.return_value = _response(
             json_data={"name": "project_name", "uuid": "6461408c-726c-4b70-aa7a-c9cc9d1c9685"}
         )
@@ -117,13 +123,14 @@ class TestScanCodeIO(BaseTestCase):
         self.mock_request.assert_called_once_with(
             "post",
             "https://scancode.example.com/api/projects/",
-            headers={"Accept": "application/json"},
+            headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
             data={
                 "name": "project_name",
                 "input_urls": ["https://example.com/a.zip"],
                 "pipeline": "scan_codebase",
                 "execute_now": "false",
+                "webhook_url": ANY,
             },
             files=None,
         )
@@ -168,8 +175,9 @@ class TestScanCodeIO(BaseTestCase):
         )
         self.mock_request.assert_not_called()
 
-    def test_create_project_no_base_url(self):
-        self.mock_settings_load.return_value = Settings()
+    def _assert_create_project_with_missing_setting(self, setting: str, message: str):
+        setattr(self.settings, setting, "")
+        self.mock_settings_load.return_value = self.settings
 
         with self.assertRaises(ValidationError) as e:
             create_scancodeio_project(
@@ -179,8 +187,20 @@ class TestScanCodeIO(BaseTestCase):
                 ),
             )
 
-        self.assertEqual(str(e.exception.detail[0]), "ScanCode.io base URL is not set")
+        self.assertEqual(str(e.exception.detail[0]), message)
         self.mock_request.assert_not_called()
+        self.assertFalse(ScanCodeIO_Project.objects.filter(product=self.product).exists())
+
+    def test_create_project_no_base_url(self):
+        self._assert_create_project_with_missing_setting("scancodeio_base_url", "ScanCode.io base URL is not set")
+
+    def test_create_project_no_api_key(self):
+        self._assert_create_project_with_missing_setting("scancodeio_api_key", "ScanCode.io API key is not set")
+
+    def test_create_project_no_webhook_base_url(self):
+        self._assert_create_project_with_missing_setting(
+            "scancodeio_webhook_base_url", "SecObserve URL for ScanCode.io webhooks is not set"
+        )
 
     def test_create_project_error_response(self):
         self.mock_settings_load.return_value = self.settings
@@ -368,10 +388,8 @@ class TestScanCodeIO(BaseTestCase):
         )
         self.assertTrue(ScanCodeIO_Project.objects.filter(product=self.product).exists())
 
-    def test_create_project_with_webhook(self):
-        self.mock_settings_load.return_value = Settings(
-            scancodeio_base_url="https://scancode.example.com", scancodeio_webhook_base_url="http://backend:8000/"
-        )
+    def test_create_project_webhook(self):
+        self.mock_settings_load.return_value = self.settings
         self.mock_request.return_value = _response(
             json_data={"name": "project_name", "uuid": "6461408c-726c-4b70-aa7a-c9cc9d1c9685"}
         )
@@ -389,22 +407,6 @@ class TestScanCodeIO(BaseTestCase):
         webhook_token = match.group(1)
         self.assertEqual(scancodeio_project.webhook_token_hash, hashlib.sha256(webhook_token.encode()).hexdigest())
         self.assertEqual(scancodeio_project.webhook_token_hash, hash_webhook_token(webhook_token))
-
-    def test_create_project_without_webhook(self):
-        self.mock_settings_load.return_value = self.settings
-        self.mock_request.return_value = _response(
-            json_data={"name": "project_name", "uuid": "6461408c-726c-4b70-aa7a-c9cc9d1c9685"}
-        )
-
-        scancodeio_project = create_scancodeio_project(
-            self.product,
-            CreateProjectParameters(
-                name="project_name", pipeline="scan_codebase", input_urls=["https://example.com/a.zip"]
-            ),
-        )
-
-        self.assertNotIn("webhook_url", self.mock_request.call_args.kwargs["data"])
-        self.assertEqual(scancodeio_project.webhook_token_hash, "")
 
     def _assert_project_deleted_in_scancodeio(self):
         self.assertEqual(

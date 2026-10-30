@@ -15,8 +15,8 @@ class ScanCodeIO_Project(Model):
     project_uuid = UUIDField()
     project_name = CharField(max_length=255)
     created = DateTimeField(auto_now_add=True)
-    # SHA-256 of the token in the webhook URL, empty if no webhook has been registered
-    webhook_token_hash = CharField(max_length=64, blank=True)
+    # SHA-256 of the token in the webhook URL
+    webhook_token_hash = CharField(max_length=64, unique=True)
 
     def __str__(self) -> str:
         return self.project_name

@@ -1,7 +1,7 @@
 import hashlib
 import logging
 import secrets
-from typing import Any, Optional
+from typing import Any
 
 import requests
 from django.db import DatabaseError, IntegrityError
@@ -57,9 +57,8 @@ class ScanCodeIOClient:
     def __init__(self) -> None:
         settings = Settings.load()
         self.base_url = settings.scancodeio_base_url.rstrip("/")
-        self.headers = {"Accept": "application/json"}
-        if settings.scancodeio_api_key:
-            self.headers["Authorization"] = f"Token {settings.scancodeio_api_key}"
+        self.api_key = settings.scancodeio_api_key
+        self.headers = {"Accept": "application/json", "Authorization": f"Token {self.api_key}"}
 
     def get_pipelines(self) -> list[dict[str, str]]:
         response = self._request("get", "/api/projects/pipelines/")
@@ -69,15 +68,14 @@ class ScanCodeIOClient:
             if pipeline.get("is_available", True) and pipeline.get("name") not in SCANCODEIO_ADDON_PIPELINES
         ]
 
-    def create_project(self, parameters: CreateProjectParameters, webhook_url: Optional[str] = None) -> dict[str, Any]:
+    def create_project(self, parameters: CreateProjectParameters, webhook_url: str) -> dict[str, Any]:
         data = {
             "name": parameters.name,
             "input_urls": parameters.input_urls,
             "pipeline": parameters.pipeline,
             "execute_now": "true" if parameters.execute_now else "false",
+            "webhook_url": webhook_url,
         }
-        if webhook_url:
-            data["webhook_url"] = webhook_url
         files = None
         if parameters.upload_file:
             files = {"upload_file": (parameters.upload_file.name, parameters.upload_file)}
@@ -94,6 +92,8 @@ class ScanCodeIOClient:
     def _request(self, method: str, path: str, ignore_not_found: bool = False, **kwargs: Any) -> Any:
         if not self.base_url:
             raise ValidationError("ScanCode.io base URL is not set")
+        if not self.api_key:
+            raise ValidationError("ScanCode.io API key is not set")
 
         try:
             response = requests.request(
@@ -170,14 +170,14 @@ def create_scancodeio_project(product: Product, parameters: CreateProjectParamet
     if parameters.pipeline in SCANCODEIO_ADDON_PIPELINES:
         raise ValidationError(f"Pipeline {parameters.pipeline} is an add-on and cannot be used to create a project")
 
-    webhook_url = None
-    webhook_token_hash = ""
     webhook_base_url = Settings.load().scancodeio_webhook_base_url.rstrip("/")
-    if webhook_base_url:
-        # ScanCode.io sends webhooks without authentication, so the URL contains a secret token
-        webhook_token = secrets.token_urlsafe(32)
-        webhook_url = f"{webhook_base_url}/api/scancodeio/webhook/{webhook_token}/"
-        webhook_token_hash = hash_webhook_token(webhook_token)
+    if not webhook_base_url:
+        raise ValidationError("SecObserve URL for ScanCode.io webhooks is not set")
+
+    # ScanCode.io sends webhooks without authentication, so the URL contains a secret token
+    webhook_token = secrets.token_urlsafe(32)
+    webhook_url = f"{webhook_base_url}/api/scancodeio/webhook/{webhook_token}/"
+    webhook_token_hash = hash_webhook_token(webhook_token)
 
     client = ScanCodeIOClient()
     response = client.create_project(parameters, webhook_url)

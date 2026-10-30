@@ -19,12 +19,14 @@ class TestAuthorizationScanCodeIOProjects(TestAuthorizationBase):
             product=Product.objects.get(pk=1),
             project_uuid="6461408c-726c-4b70-aa7a-c9cc9d1c9685",
             project_name="project_internal",
+            webhook_token_hash="webhook_token_hash_internal",
         )
         ScanCodeIO_Project.objects.create(
             pk=2,
             product=Product.objects.get(pk=2),
             project_uuid="7cbd4e4a-2a1c-4a50-9a4e-2d8f8a8c1f3b",
             project_name="project_external",
+            webhook_token_hash="webhook_token_hash_external",
         )
         ScanCodeIO_Project.objects.update(created=datetime(2026, 10, 23, 12, 0, 0, tzinfo=timezone.utc))
 

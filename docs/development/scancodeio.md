@@ -10,7 +10,7 @@ To have a close integration between SecObserve and [ScanCode.io](https://scancod
 
 starts both SecObserve and ScanCode.io in one Docker Compose environment. The ScanCode.io UI can then be accessed with [http://localhost:4100/](http://localhost:4100/).
 
-Because authentication is activated, a user needs to be created in a shell of the `secobserve-scancodeio-1` container with:
+SecObserve only supports ScanCode.io installations with activated authentication, so a user needs to be created in a shell of the `secobserve-scancodeio-1` container with:
 
 ```bash
 ./manage.py create-user --generate-api-key --admin --super admin
@@ -20,7 +20,7 @@ The API key of this user must be stored in the SecObserve settings for ScanCode.
 
 The base URL of ScanCode.io in the SecObserve settings is `http://nginx`. The SecObserve backend runs in its own container, so `localhost` would not reach ScanCode.io. The host name `nginx` is allowed for ScanCode.io in `docker/scancodeio/.env`.
 
-For ScanCode.io to notify SecObserve when a pipeline has finished, set the SecObserve URL for ScanCode.io webhooks in the SecObserve settings to `http://backend:8000`. The webhook is registered when a project is created, so projects created before setting the URL don't notify SecObserve.
+ScanCode.io notifies SecObserve with a webhook when a pipeline has finished. The SecObserve URL for ScanCode.io webhooks in the SecObserve settings is `http://backend:8000`. The webhook is registered when a project is created.
 
 
 ## Funding

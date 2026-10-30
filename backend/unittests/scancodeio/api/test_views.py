@@ -52,6 +52,22 @@ class ScanCodeIOViewTestCase(BaseTestCase):
         self.mock_authenticate.return_value = User.objects.get(username=username), None
         return APIClient()
 
+    def _create_projects(self) -> None:
+        ScanCodeIO_Project.objects.create(
+            pk=1,
+            product=Product.objects.get(pk=1),
+            project_uuid=PROJECT_UUID,
+            project_name="project_internal",
+            webhook_token_hash=hash_webhook_token("webhook_token_internal"),
+        )
+        ScanCodeIO_Project.objects.create(
+            pk=2,
+            product=Product.objects.get(pk=2),
+            project_uuid="7cbd4e4a-2a1c-4a50-9a4e-2d8f8a8c1f3b",
+            project_name="project_external",
+            webhook_token_hash=hash_webhook_token("webhook_token_external"),
+        )
+
 
 class TestCreateScanCodeIOProjectView(ScanCodeIOViewTestCase):
     def setUp(self):
@@ -187,15 +203,7 @@ class TestScanCodeIOProjectDetailsView(ScanCodeIOViewTestCase):
     def setUp(self):
         super().setUp()
         self.mock_get_details = self._start_patch("application.scancodeio.api.views.get_scancodeio_project_details")
-        ScanCodeIO_Project.objects.create(
-            pk=1, product=Product.objects.get(pk=1), project_uuid=PROJECT_UUID, project_name="project_internal"
-        )
-        ScanCodeIO_Project.objects.create(
-            pk=2,
-            product=Product.objects.get(pk=2),
-            project_uuid="7cbd4e4a-2a1c-4a50-9a4e-2d8f8a8c1f3b",
-            project_name="project_external",
-        )
+        self._create_projects()
 
     def test_feature_disabled(self):
         self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=False)
@@ -282,15 +290,7 @@ class TestScanCodeIOProjectDeleteView(ScanCodeIOViewTestCase):
     def setUp(self):
         super().setUp()
         self.mock_delete = self._start_patch("application.scancodeio.api.views.delete_scancodeio_project")
-        ScanCodeIO_Project.objects.create(
-            pk=1, product=Product.objects.get(pk=1), project_uuid=PROJECT_UUID, project_name="project_internal"
-        )
-        ScanCodeIO_Project.objects.create(
-            pk=2,
-            product=Product.objects.get(pk=2),
-            project_uuid="7cbd4e4a-2a1c-4a50-9a4e-2d8f8a8c1f3b",
-            project_name="project_external",
-        )
+        self._create_projects()
 
     def _delete(self, username: str, project_id: int, query: str = ""):
         return self._api_client(username).delete(f"/api/scancodeio_projects/{project_id}/{query}")
