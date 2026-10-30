@@ -190,9 +190,9 @@ id = "general_layers"
 name = "General layers"
 type = "layers"
 layers = [
-    "application.background_tasks",
+    "application.background_tasks : application.scancodeio",
     "application.import_observations",
-    "application.vex | application.epss | application.metrics | application.scancodeio",
+    "application.vex | application.epss | application.metrics",
     "application.core : application.issue_tracker : application.licenses : application.notifications : application.rules",
     "application.access_control : application.authorization",
     "application.commons",
