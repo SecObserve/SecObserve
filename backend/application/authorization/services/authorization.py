@@ -32,6 +32,7 @@ from application.import_observations.models import (
 )
 from application.licenses.models import Concluded_License, License_Component
 from application.rules.models import Rule
+from application.scancodeio.models import ScanCodeIO_Project
 from application.vex.models import VEX_Base
 
 
@@ -104,6 +105,9 @@ def user_has_permission(  # pylint: disable=too-many-return-statements,too-many-
         return False
 
     if isinstance(obj, Vulnerability_Check) and permission in Permissions.get_vulnerability_check_permissions():
+        return user_has_permission(obj.product, permission, user)
+
+    if isinstance(obj, ScanCodeIO_Project) and permission in Permissions.get_scancodeio_project_permissions():
         return user_has_permission(obj.product, permission, user)
 
     if isinstance(obj, License_Component) and permission in Permissions.get_component_license_permissions():

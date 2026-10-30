@@ -184,8 +184,10 @@ class TestAuthentication(BaseTestCase):
         self._check_oidc_not_authenticated(methods, url)
         self._check_oidc_authenticated(methods, url)
 
+    # A disabled ScanCode.io integration would answer with 403
+    @patch("application.scancodeio.api.views._feature_enabled", return_value=True)
     @patch("application.access_control.services.current_user.get_current_user")
-    def test_authentication(self, mock_user):
+    def test_authentication(self, mock_user, mock_scancodeio_feature_enabled):  # pylint: disable=unused-argument
         mock_user.return_value = self.user_admin
 
         self._check_authentication(["get", "post"], "/api/api_configurations/")
@@ -193,6 +195,10 @@ class TestAuthentication(BaseTestCase):
 
         self._check_authentication(["get"], "/api/vulnerability_checks/")
         self._check_authentication(["get"], "/api/vulnerability_checks/1/")
+
+        self._check_authentication(["get"], "/api/scancodeio_projects/")
+        self._check_authentication(["delete", "get"], "/api/scancodeio_projects/1/")
+        self._check_authentication(["get"], "/api/scancodeio_projects/1/details/")
 
         self._check_authentication(["get", "post"], "/api/general_rules/")
         self._check_authentication(["delete", "get", "put", "patch"], "/api/general_rules/1/")
@@ -260,6 +266,8 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["post"], "/api/products/1/observations_bulk_delete/")
         self._check_authentication(["post"], "/api/products/1/observations_bulk_mark_duplicates/")
         self._check_authentication(["post"], "/api/products/1/license_components_bulk_delete/")
+        self._check_authentication(["post"], "/api/products/1/create_scancodeio_project/")
+        self._check_authentication(["get"], "/api/scancodeio/pipelines/")
 
         self._check_authentication(["get"], "/api/products/1/export_observations_csv/")
         self._check_authentication(["get"], "/api/products/1/export_observations_excel/")
