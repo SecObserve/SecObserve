@@ -1,5 +1,5 @@
 import AddCircleIcon from "@mui/icons-material/AddCircle";
-import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { Fragment, useState } from "react";
 import {
     ArrayInput,
@@ -10,6 +10,7 @@ import {
     SimpleForm,
     SimpleFormIterator,
     useNotify,
+    useRecordContext,
 } from "react-admin";
 
 import MenuButton from "../commons/custom_fields/MenuButton";
@@ -30,6 +31,33 @@ interface Pipeline {
     name: string;
     summary: string;
 }
+
+const PipelineOption = () => {
+    const pipeline = useRecordContext<Pipeline>();
+    if (!pipeline) {
+        return null;
+    }
+    return (
+        <Stack>
+            <Typography variant="body2">{pipeline.name}</Typography>
+            <Typography variant="caption" color="text.secondary">
+                {pipeline.summary}
+            </Typography>
+        </Stack>
+    );
+};
+
+// Names like analyze_root_filesystem_or_vm_image are not self-explanatory, so the summary is searched as well
+const matchPipeline = (filter: string, pipeline: Pipeline, exact?: boolean) => {
+    if (exact) {
+        return pipeline.name === filter;
+    }
+    const lowerCaseFilter = filter.toLowerCase();
+    return (
+        pipeline.name.toLowerCase().includes(lowerCaseFilter) ||
+        pipeline.summary.toLowerCase().includes(lowerCaseFilter)
+    );
+};
 
 const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCodeIOProjectProps) => {
     const [open, setOpen] = useState(false);
@@ -140,7 +168,10 @@ const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCod
                         <AutocompleteInput
                             source="pipeline"
                             label="Pipeline"
-                            choices={pipelines.map((pipeline) => ({ id: pipeline.name, name: pipeline.name }))}
+                            choices={pipelines.map((pipeline) => ({ id: pipeline.name, ...pipeline }))}
+                            optionText={<PipelineOption />}
+                            inputText={(pipeline: Pipeline) => pipeline.name}
+                            matchSuggestion={matchPipeline}
                             validate={validate_required}
                             sx={{ width: "30em" }}
                         />
