@@ -49,6 +49,7 @@ These scanners have been tested with SecObserve:
 | [Trivy](https://aquasecurity.github.io/trivy) | SARIF | File |
 | **DAST** |
 | [CryptoLyzer](https://gitlab.com/coroner/cryptolyzer) ^2)^ | CryptoLyzer | File |
+| [Darkmoon](https://github.com/ASCIT31/Dark-Moon) | Darkmoon | File |
 | [DrHeader](https://github.com/Santandersecurityresearch/DrHeader) | DrHeader | File |
 | [ZAP](https://www.zaproxy.org) | ZAP | File |
 | **Cloud infrastructure** |
