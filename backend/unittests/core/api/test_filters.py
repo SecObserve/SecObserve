@@ -9,6 +9,7 @@ from application.core.api.filters import (
     ObservationLogFilter,
     ProductFilter,
 )
+from application.core.types import Assessment_Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -28,3 +29,14 @@ class TestAgeFilters(BaseTestCase):
                 queryset = MagicMock()
                 filter_class().get_age(queryset, "age", Age_Choices.AGE_DAY)
                 queryset.filter.assert_called_once_with(**{lookup: datetime(2026, 3, 10, 17, 0, tzinfo=timezone.utc)})
+
+
+class TestDecidedFilter(BaseTestCase):
+    def test_decided(self):
+        for value, method in [(True, "filter"), (False, "exclude")]:
+            with self.subTest(value=value):
+                queryset = MagicMock()
+                ObservationLogFilter().get_decided(queryset, "decided", value)
+                getattr(queryset, method).assert_called_once_with(
+                    assessment_status__in=Assessment_Status.ASSESSMENT_STATUS_DECISIONS
+                )

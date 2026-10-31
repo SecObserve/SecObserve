@@ -358,6 +358,7 @@ class ProductGroupListSerializer(ProductCoreSerializer):
 class ProductGroupSerializer(ProductGroupListSerializer):
     permissions = SerializerMethodField()
     observation_log_approvals = SerializerMethodField()
+    has_approval_history = SerializerMethodField()
 
     class Meta:
         model = Product
@@ -366,6 +367,7 @@ class ProductGroupSerializer(ProductGroupListSerializer):
             "assessment_approvers",
             "assessment_approver_authorization_groups",
             "observation_log_approvals",
+            "has_approval_history",
         ]
 
     def get_permissions(self, obj: Product) -> Optional[set[Permissions]]:
@@ -380,6 +382,12 @@ class ProductGroupSerializer(ProductGroupListSerializer):
             # Approvals can still be required by products that have enabled them individually
             observation_logs = observation_logs.filter(observation__product__assessments_need_approval=True)
         return observation_logs.count()
+
+    def get_has_approval_history(self, obj: Product) -> bool:
+        return Observation_Log.objects.filter(
+            observation__product__product_group=obj,
+            assessment_status__in=Assessment_Status.ASSESSMENT_STATUS_DECISIONS,
+        ).exists()
 
     def validate_propagate_branches(self, value: Any) -> Optional[list[dict]]:
         return _validate_propagate_branches(value)
@@ -456,6 +464,7 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     product_group_assessment_approver_authorization_groups = SerializerMethodField()
     observation_reviews = SerializerMethodField()
     observation_log_approvals = SerializerMethodField()
+    has_approval_history = SerializerMethodField()
     has_services = SerializerMethodField()
     product_group_product_rules_need_approval = SerializerMethodField()
     product_rule_approvals = SerializerMethodField()
@@ -510,6 +519,12 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
             observation__product=obj,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL,
         ).count()
+
+    def get_has_approval_history(self, obj: Product) -> bool:
+        return Observation_Log.objects.filter(
+            observation__product=obj,
+            assessment_status__in=Assessment_Status.ASSESSMENT_STATUS_DECISIONS,
+        ).exists()
 
     def get_has_services(self, obj: Product) -> bool:
         return Service.objects.filter(product=obj).exists()

@@ -31,6 +31,7 @@ import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWid
 import { feature_vex_enabled, getUserOptionText, has_attribute } from "../../commons/functions";
 import { originFilters } from "../observations/ObservationFilterBar";
 import {
+    ASSESSMENT_STATUS_CHOICES,
     ASSESSMENT_STATUS_NEEDS_APPROVAL,
     OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES,
     OBSERVATION_SEVERITY_CHOICES,
@@ -62,7 +63,7 @@ const BulkActionButtons = ({ product, storeKey }: BulkActionButtonsProps) => {
 };
 
 // The list of a product group offers the filters of the list without a product, its products are the ones of the group.
-function approvalFilters(product: any, is_product_group: boolean) {
+function approvalFilters(product: any, is_product_group: boolean, history: boolean) {
     const scoped = is_product_group ? undefined : product;
     const primary: ReactElement[] = [];
 
@@ -84,10 +85,34 @@ function approvalFilters(product: any, is_product_group: boolean) {
     primary.push(
         <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
             <AutocompleteInputAutoWidth optionText={getUserOptionText} />
-        </ReferenceInput>,
+        </ReferenceInput>
+    );
+    if (history) {
+        primary.push(
+            <ReferenceInput
+                source="approval_user"
+                reference="users"
+                sort={{ field: "full_name", order: "ASC" }}
+                alwaysOn
+            >
+                <AutocompleteInputAutoWidth label="Approver" optionText={getUserOptionText} />
+            </ReferenceInput>,
+            <AutocompleteInput
+                source="assessment_status"
+                label="Decision"
+                choices={ASSESSMENT_STATUS_CHOICES}
+                alwaysOn
+            />
+        );
+    }
+    const dateFields = [{ source: "created", label: "Created" }];
+    if (history) {
+        dateFields.unshift({ source: "approval_date", label: "Decision date" });
+    }
+    primary.push(
         <AutocompleteInput source="severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />,
         <AutocompleteInput source="status" label="Status" choices={OBSERVATION_STATUS_CHOICES} alwaysOn />,
-        <DateRangeFilter key="date" fields={[{ source: "created", label: "Created" }]} alwaysOn />
+        <DateRangeFilter key="date" fields={dateFields} alwaysOn />
     );
 
     const secondary: SecondaryFilter[] = [
@@ -101,25 +126,33 @@ function approvalFilters(product: any, is_product_group: boolean) {
 type ObservationLogApprovalListProps = {
     product?: any;
     is_product_group?: boolean;
+    // Approved, approved with edits and rejected assessments instead of the ones to be approved
+    history?: boolean;
 };
 
-const ObservationLogApprovalList = ({ product, is_product_group = false }: ObservationLogApprovalListProps) => {
-    let filter: Record<string, any> = { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
+const ObservationLogApprovalList = ({
+    product,
+    is_product_group = false,
+    history = false,
+}: ObservationLogApprovalListProps) => {
+    let filter: Record<string, any> = history
+        ? { decided: true }
+        : { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
     if (product) {
         filter = is_product_group
             ? { ...filter, product_group: Number(product.id) }
             : { ...filter, product: Number(product.id) };
     }
-    let storeKey = "observation_logs.approval";
+    let storeKey = "observation_logs.approval" + (history ? "history" : "");
     if (product) {
-        storeKey = is_product_group ? "observation_logs.approvalproductgroup" : "observation_logs.approvalproduct";
+        storeKey += is_product_group ? "productgroup" : "product";
     }
-    const { primary, secondary } = approvalFilters(product, is_product_group);
+    const { primary, secondary } = approvalFilters(product, is_product_group, history);
     const listContext = useListController({
         filter: filter,
         perPage: getSettingRowsPerPage(),
         resource: "observation_logs",
-        sort: { field: "created", order: "ASC" },
+        sort: history ? { field: "approval_date", order: "DESC" } : { field: "created", order: "ASC" },
         disableSyncWithLocation: true,
         storeKey: storeKey,
     });
@@ -146,6 +179,11 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
         localStorage.removeItem("observationlogapprovallistproductgroup");
     }
     localStorage.removeItem("observationlogembeddedlist");
+    if (history) {
+        localStorage.setItem("observationlogapprovalhistory", "true");
+    } else {
+        localStorage.removeItem("observationlogapprovalhistory");
+    }
 
     return (
         <ResourceContextProvider value="observation_logs">
@@ -158,7 +196,9 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                 size={getSettingListSize()}
                                 sx={{ width: "100%" }}
                                 bulkActionButtons={
-                                    !product || product?.permissions?.includes(PERMISSION_OBSERVATION_LOG_APPROVAL) ? (
+                                    !history &&
+                                    (!product ||
+                                        product?.permissions?.includes(PERMISSION_OBSERVATION_LOG_APPROVAL)) ? (
                                         <BulkActionButtons product={product} storeKey={storeKey} />
                                     ) : (
                                         false
@@ -280,7 +320,11 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                     sortable={false}
                                     sx={{ wordBreak: "break-word" }}
                                 />
-                                <DateField source="created" showTime />
+                                {/* Creation date and rejection remark of the history are in the expanded row */}
+                                {!history && <DateField source="created" showTime />}
+                                {history && <ChipField source="assessment_status" label="Decision" />}
+                                {history && <TextField source="approval_user_full_name" label="Approver" />}
+                                {history && <DateField source="approval_date" label="Decision date" showTime />}
                             </Datagrid>
                         )}
                     />

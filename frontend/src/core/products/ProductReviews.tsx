@@ -65,6 +65,16 @@ const ProductReviews = ({ product }: ProductReviewsProps) => {
                     </AccordionDetails>
                 </Accordion>
             )}
+            {product.has_approval_history && (
+                <Accordion elevation={getElevation()} sx={{ marginTop: 2 }} disableGutters>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6">Approval history</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <ObservationLogApprovalList product={product} history />
+                    </AccordionDetails>
+                </Accordion>
+            )}
             {(product.product_rules_need_approval || product.product_group_product_rules_need_approval) && (
                 <Accordion
                     elevation={getElevation()}

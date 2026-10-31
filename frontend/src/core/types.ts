@@ -56,6 +56,7 @@ export interface ProductGroup extends RaRecord {
     products_count: number;
     product_rule_approvals: number;
     observation_log_approvals: number;
+    has_approval_history: boolean;
     repository_branch_housekeeping_active: boolean;
     repository_branch_housekeeping_keep_inactive_days: number;
     repository_branch_housekeeping_exempt_branches: string;

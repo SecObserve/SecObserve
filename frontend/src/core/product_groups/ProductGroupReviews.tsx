@@ -64,6 +64,16 @@ const ProductGroupReviews = ({ product_group: product_group }: ProductGroupRevie
                     </AccordionDetails>
                 </Accordion>
             )}
+            {product_group.has_approval_history && (
+                <Accordion elevation={getElevation()} sx={{ marginTop: 2 }} disableGutters>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6">Approval history</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <ObservationLogApprovalList product={product_group} is_product_group={true} history />
+                    </AccordionDetails>
+                </Accordion>
+            )}
             {(product_group.product_rules_need_approval || product_group.product_group_product_rules_need_approval) && (
                 <Accordion
                     elevation={getElevation()}
