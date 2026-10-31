@@ -275,6 +275,44 @@ export const ObservationLogComponent = () => {
                                         <TextField source="rejection_remark" />
                                     </Labeled>
                                 )}
+                                {observation_log.assessor_values?.comment !== undefined && (
+                                    <Labeled>
+                                        <MarkdownField
+                                            content={observation_log.assessor_values.comment}
+                                            label="Comment of the assessor"
+                                        />
+                                    </Labeled>
+                                )}
+                                {observation_log.assessor_values?.vex_justification !== undefined && (
+                                    <Labeled label="VEX justification of the assessor">
+                                        <SelectField
+                                            source="assessor_values.vex_justification"
+                                            choices={OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES}
+                                            emptyText="---"
+                                        />
+                                    </Labeled>
+                                )}
+                                {observation_log.assessor_values?.vex_remediations !== undefined && (
+                                    <Labeled label="VEX remediations of the assessor">
+                                        {observation_log.assessor_values.vex_remediations?.length > 0 ? (
+                                            <ArrayField source="assessor_values.vex_remediations">
+                                                <Datagrid
+                                                    bulkActionButtons={false}
+                                                    header={VEXRemediationHeader}
+                                                    sx={{ paddingBottom: 2 }}
+                                                >
+                                                    <SelectField
+                                                        source="category"
+                                                        choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                                                    />
+                                                    <TextField source="text" />
+                                                </Datagrid>
+                                            </ArrayField>
+                                        ) : (
+                                            <Typography variant="body2">---</Typography>
+                                        )}
+                                    </Labeled>
+                                )}
                             </Stack>
                         </Paper>
                     )}

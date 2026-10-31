@@ -1,6 +1,6 @@
 import re
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -298,12 +298,17 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
         raise ValidationError("User is not an allowed approver for this product")
 
     if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS:
-        if observation_log_comment:
-            observation_log.comment = observation_log_comment
-        if observation_log_vex_justification:
-            observation_log.vex_justification = observation_log_vex_justification
-        if observation_log_vex_remediations:
-            observation_log.vex_remediations = observation_log_vex_remediations
+        assessor_values: dict[str, Any] = {}
+        for field, value in (
+            ("comment", observation_log_comment),
+            ("vex_justification", observation_log_vex_justification),
+            ("vex_remediations", observation_log_vex_remediations),
+        ):
+            if value and value != getattr(observation_log, field):
+                assessor_values[field] = getattr(observation_log, field)
+                setattr(observation_log, field, value)
+        if assessor_values:
+            observation_log.assessor_values = assessor_values
         observation_log.save()
 
     if assessment_status in (
