@@ -41,7 +41,16 @@ import AssessmentBulkApproval from "./AssessmentBulkApproval";
 import AssessmentDeleteApproval from "./AssessmentDeleteApproval";
 import { ObservationLogComponent } from "./ObservationLogShow";
 import ObservationLogShowAside from "./ObservationLogShowAside";
-import { commentShortened } from "./functions";
+
+// A long text neither stretches the row nor squeezes the other columns, the full text is in the expanded row
+const CLAMPED_TEXT = {
+    maxWidth: "25em",
+    wordBreak: "break-word",
+    display: "-webkit-box",
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+} as const;
 
 type BulkActionButtonsProps = {
     product: any;
@@ -174,7 +183,7 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                     </Stack>
                                 }
                             >
-                                <TextField source="observation_data.title" label="Observation" />
+                                <TextField source="observation_data.title" label="Observation" sx={CLAMPED_TEXT} />
                                 {(!product || is_product_group) && (
                                     <TextField source="observation_data.product_data.name" label="Product" />
                                 )}
@@ -274,12 +283,7 @@ const ObservationLogApprovalList = ({ product, is_product_group = false }: Obser
                                             sortable={false}
                                         />
                                     )}
-                                <FunctionField
-                                    label="Comment"
-                                    render={(record) => commentShortened(record.comment)}
-                                    sortable={false}
-                                    sx={{ wordBreak: "break-word" }}
-                                />
+                                <TextField source="comment" label="Comment" sortable={false} sx={CLAMPED_TEXT} />
                                 <DateField source="created" showTime />
                             </Datagrid>
                         )}
