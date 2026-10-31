@@ -319,8 +319,7 @@ def _process_data(  # pylint: disable=too-many-statements
         observation_before_for_dict.product = import_parameters.product
         observations_before[observation_before_for_dict.identity_hash] = observation_before_for_dict
 
-    # Inside a transaction nobody sees the changes before the commit, so the change timestamp is written once at the
-    # end. Without one, every observation log writes it, so that a crash cannot hide committed changes from metrics.
+    # Only in a transaction, without one a crash could leave committed changes without a new change timestamp
     import_parameters.product.defer_observation_change = not transaction.get_autocommit()
 
     observations_this_run: set[str] = set()
