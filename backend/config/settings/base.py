@@ -489,6 +489,14 @@ HUEY_TASK_MAX_RUNTIME_HOURS = env.float("HUEY_TASK_MAX_RUNTIME_HOURS", 12)
 if HUEY_TASK_MAX_RUNTIME_HOURS <= 0:
     raise ValueError("HUEY_TASK_MAX_RUNTIME_HOURS must be greater than 0")
 
+# Retries of the OSV scan of a product after a transient error, e.g. an outage of OSV or a lost database connection
+OSV_SCAN_RETRIES = env.int("OSV_SCAN_RETRIES", 2)
+if OSV_SCAN_RETRIES < 0:
+    raise ValueError("OSV_SCAN_RETRIES must not be negative")
+OSV_SCAN_RETRY_DELAY = env.int("OSV_SCAN_RETRY_DELAY", 300)
+if OSV_SCAN_RETRY_DELAY < 0:
+    raise ValueError("OSV_SCAN_RETRY_DELAY must not be negative")
+
 HUEY_STATS = {
     "database": huey_stats_database,
     # The statistics keep the newest max_events rows per queue, and every task writes one row per

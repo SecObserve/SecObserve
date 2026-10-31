@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import batched
@@ -43,13 +44,33 @@ OSV_QUERYBATCH_TIMEOUT = 5 * 60
 OSV_QUERYBATCH_READ_RETRIES = 1
 
 
+_run_caches_lock = threading.Lock()
+_run_caches: dict[str, dict[str, tuple[OSV_Vulnerability, ...]]] = {}
+
+
+def _get_run_cache(run_id: str) -> dict[str, tuple[OSV_Vulnerability, ...]]:
+    with _run_caches_lock:
+        if run_id not in _run_caches:
+            # Only the latest run is kept, a new run asks OSV again for the vulnerabilities published since
+            _run_caches.clear()
+            _run_caches[run_id] = {}
+        return _run_caches[run_id]
+
+
+def release_run_cache(run_id: str) -> None:
+    with _run_caches_lock:
+        _run_caches.pop(run_id, None)
+
+
 class OSVScanner(BaseScanner):
-    def __init__(self) -> None:
+    def __init__(self, run_id: Optional[str] = None) -> None:
         super().__init__()
         self.parser = OSVParser()
-        # The same purl is used by many products, and the nightly import keeps one scanner for
-        # the whole run, so OSV is asked for a purl once instead of once per product.
-        self.vulnerabilities_by_purl: dict[str, tuple[OSV_Vulnerability, ...]] = {}
+        # The same purl is used by many products. The scans of a nightly run share the cache of their run
+        # within the process, so OSV is asked for a purl once per run instead of once per product.
+        self.vulnerabilities_by_purl: dict[str, tuple[OSV_Vulnerability, ...]] = (
+            _get_run_cache(run_id) if run_id else {}
+        )
 
     def _do_scan(self, license_components: list[License_Component]) -> Any:
         # dict.fromkeys deduplicates the purls and keeps the order of the components

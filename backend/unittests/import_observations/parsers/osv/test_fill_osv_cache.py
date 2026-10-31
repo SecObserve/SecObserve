@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -15,6 +17,7 @@ from application.import_observations.parsers.osv.parser import (
     _get_osv_max_threads,
     create_osv_session,
 )
+from unittests.base_test_case import BaseTestCase
 
 
 class TestOSVParserCache(TestCase):
@@ -122,6 +125,65 @@ class TestOSVParserCache(TestCase):
             self.parser._fill_osv_cache([vuln])
 
         mock_objects.bulk_create.assert_not_called()
+
+
+class TestOSVParserCacheConcurrentScan(BaseTestCase):
+    @patch("application.import_observations.parsers.osv.parser.create_osv_session")
+    def test_fill_osv_cache_advisory_stored_by_other_scan(self, mock_create_osv_session):
+        """
+        Scenario: another product is scanned at the same time and stores the same missing
+        advisory between the cache lookup and the insert of this scan.
+        """
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        def _create_session_while_other_scan_stores_advisory():
+            OSV_Cache.objects.create(osv_id="GHSA-1", modified=now, data='{"id": "GHSA-1", "other": true}')
+            session = MagicMock()
+            session.get.return_value.text = '{"id": "GHSA-1"}'
+            return session
+
+        mock_create_osv_session.side_effect = _create_session_while_other_scan_stores_advisory
+
+        result = OSVParser()._fill_osv_cache([OSV_Vulnerability(id="GHSA-1", modified=now)])
+
+        self.assertEqual('{"id": "GHSA-1"}', result["GHSA-1"].data)
+        self.assertEqual(1, OSV_Cache.objects.filter(osv_id="GHSA-1").count())
+
+
+class TestOSVRequestLimit(TestCase):
+    @patch("application.import_observations.parsers.osv.parser._OSV_REQUEST_SLOTS", threading.BoundedSemaphore(3))
+    @patch("application.import_observations.parsers.osv.parser.create_osv_session")
+    @patch("application.import_observations.models.OSV_Cache.objects")
+    def test_concurrent_scans_share_the_limit(self, mock_objects, mock_create_osv_session):
+        mock_objects.filter.return_value = []
+        lock = threading.Lock()
+        in_flight = 0
+        max_in_flight = 0
+
+        def _get(url, timeout):  # pylint: disable=unused-argument
+            nonlocal in_flight, max_in_flight
+            with lock:
+                in_flight += 1
+                max_in_flight = max(max_in_flight, in_flight)
+            time.sleep(0.02)
+            with lock:
+                in_flight -= 1
+            return MagicMock(text="{}")
+
+        mock_create_osv_session.return_value.get.side_effect = _get
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        def _scan(prefix: str) -> None:
+            OSVParser()._fill_osv_cache([OSV_Vulnerability(id=f"{prefix}-{i}", modified=now) for i in range(40)])
+
+        scans = [threading.Thread(target=_scan, args=(prefix,)) for prefix in ("A", "B")]
+        for scan in scans:
+            scan.start()
+        for scan in scans:
+            scan.join()
+
+        # Each scan has its own pool of OSV_MAX_THREADS (32 by default) threads
+        self.assertEqual(3, max_in_flight)
 
 
 class TestOSVSession(TestCase):

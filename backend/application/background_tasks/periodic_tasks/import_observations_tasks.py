@@ -1,16 +1,31 @@
 import logging
+from datetime import datetime, timedelta
+from typing import Any, NamedTuple, Optional
+from uuid import uuid4
 
-from huey.contrib.djhuey import db_periodic_task
+import requests
+from django.conf import settings as django_settings
+from django.db import InterfaceError, OperationalError
+from django.utils import timezone
+from huey import chord
+from huey.api import Task
+from huey.contrib.djhuey import HUEY, db_periodic_task, db_task
 
+from application.background_tasks.models import Periodic_Task
 from application.background_tasks.services.crontab import crontab_in_time_zone
 from application.background_tasks.services.task_base import (
     PeriodicTaskError,
+    delete_older_task_entries,
     so_periodic_task,
 )
+from application.background_tasks.types import Status
 from application.commons import settings_static
 from application.commons.models import Settings
 from application.import_observations.models import Api_Configuration, Product
-from application.import_observations.scanners.osv_scanner import OSVScanner
+from application.import_observations.scanners.osv_scanner import (
+    OSVScanner,
+    release_run_cache,
+)
 from application.import_observations.scanners.vulnerablecode_scanner import (
     VulnerableCodeScanner,
 )
@@ -18,9 +33,27 @@ from application.import_observations.services.import_observations import (
     ApiImportParameters,
     api_import_observations,
 )
+from application.notifications.services.send_notifications_exception import (
+    send_task_exception_notification,
+)
 from application.notifications.services.tasks import handle_task_exception
 
 logger = logging.getLogger("secobserve.import_observations")
+
+# Below the default priority 0 of all other tasks, so that they are not queued behind the scans of all products
+OSV_SCAN_PRIORITY = -1
+# Scans still queued by then are dropped, so that the scans of two nightly runs don't pile up
+OSV_SCAN_EXPIRES = timedelta(hours=20)
+OSV_SCAN_TASK_NAME = "Scan products with OSV"
+# Key of the run whose summary is still missing, in the key-value store of Huey
+OSV_SCAN_RUN_KEY = "osv_scan_run"
+OSV_SCAN_MAX_LISTED_FAILURES = 20
+
+
+class OSVScanRun(NamedTuple):
+    run_id: str
+    start_time: datetime
+    product_count: int
 
 
 @db_periodic_task(
@@ -32,10 +65,11 @@ logger = logging.getLogger("secobserve.import_observations")
 @so_periodic_task("Import observations from API configurations, OSV and VulnerableCode")
 def task_api_import() -> str:
     message, api_imports_failed = _import_api()
-    message, osv_imports_failed = _import_osv(message)
+    # Before the OSV scans are enqueued, so that both scanners don't import into the same product at the same time
     message, vulnerablecode_imports_failed = _import_vulnerablecode(message)
+    message = _enqueue_osv_scans(message)
 
-    if api_imports_failed + osv_imports_failed + vulnerablecode_imports_failed > 0:
+    if api_imports_failed + vulnerablecode_imports_failed > 0:
         # The imports of the other products have been executed, but the task has to be
         # marked as failed, so that the failures are not overlooked.
         raise PeriodicTaskError(message)
@@ -98,39 +132,139 @@ def _import_api() -> tuple[str, int]:
     return message, api_imports_failed
 
 
-def _import_osv(message: str) -> tuple[str, int]:
+def _enqueue_osv_scans(message: str) -> str:
     settings = Settings.load()
     if not settings.feature_automatic_osv_scanning:
         logger.info("OSV scanning is disabled in settings")
-        return message + "\nOSV scanning is disabled in settings.", 0
+        return message + "\nOSV scanning is disabled in settings."
 
-    osv_imports_failed = 0
-    osv_scanner = OSVScanner()
-    products = Product.objects.filter(osv_enabled=True, automatic_osv_scanning_enabled=True)
-    for product in products:
-        try:
-            (
-                observations_new,
-                observations_updated,
-                observations_resolved,
-            ) = osv_scanner.scan_product(product)
-            logger.info(
-                "OSV scanning - %s: %s new, %s updated, %s resolved",
-                product,
-                observations_new,
-                observations_updated,
-                observations_resolved,
-            )
-        except Exception as e:
-            osv_imports_failed += 1
-            logger.exception("OSV scanning - %s: failed with exception", product)
-            handle_task_exception(e, product=product)
+    previous_run: Optional[OSVScanRun] = HUEY.get(OSV_SCAN_RUN_KEY, peek=True)
+    if previous_run:
+        # Its scans may still be queued, e.g. when the import has been started manually. A second run would
+        # scan the same products at the same time.
+        if timezone.now() - previous_run.start_time < OSV_SCAN_EXPIRES:
+            logger.info("OSV scanning of the previous run is still in progress")
+            return message + "\nOSV scanning of the previous run is still in progress."
+        _report_unfinished_osv_scan_run(previous_run)
 
-    message += f"\nImported observations for {len(products)} products from OSV scanning."
-    if osv_imports_failed > 0:
-        message += f"\nOSV scanning failed for {osv_imports_failed} products."
+    product_ids = list(
+        Product.objects.filter(osv_enabled=True, automatic_osv_scanning_enabled=True).values_list("pk", flat=True)
+    )
+    run_id = uuid4().hex
+    start_time = timezone.now()
+    HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun(run_id, start_time, len(product_ids)))
+    # Huey runs the summary when every scan has returned or expired
+    HUEY.enqueue(
+        chord(
+            [task_osv_scan_product.s(product_id, run_id) for product_id in product_ids],
+            task_osv_scan_summary.s(run_id, start_time),
+        )
+    )
 
-    return message, osv_imports_failed
+    return message + f"\nEnqueued OSV scanning for {len(product_ids)} products."
+
+
+def _report_unfinished_osv_scan_run(run: OSVScanRun) -> None:
+    message = (
+        f"Did not finish, some scans of the {run.product_count} products were lost when the background tasks stopped."
+    )
+    _save_osv_scan_run(run.start_time, Status.STATUS_FAILURE, message, finished=False)
+    # The failures of its finished scans are not known, the summary of the run has never been executed
+    send_task_exception_notification(
+        function="task_osv_scan_product",
+        arguments=None,
+        user=None,
+        exception=PeriodicTaskError(f"OSV scanning: {message}"),
+    )
+    HUEY.delete(OSV_SCAN_RUN_KEY)
+
+
+@db_task(
+    priority=OSV_SCAN_PRIORITY,
+    retries=django_settings.OSV_SCAN_RETRIES,
+    retry_delay=django_settings.OSV_SCAN_RETRY_DELAY,
+    retry_backoff=2,
+    expires=OSV_SCAN_EXPIRES,
+    context=True,
+)
+def task_osv_scan_product(product_id: int, run_id: str, task: Optional[Task] = None) -> Optional[str]:
+    """Returns the failure of the last attempt, which the summary of the run reports"""
+    product = None
+    try:
+        # The product may have been deleted or its scanning disabled since the task has been enqueued
+        product = Product.objects.filter(pk=product_id, osv_enabled=True, automatic_osv_scanning_enabled=True).first()
+        if not product or not Settings.load().feature_automatic_osv_scanning:
+            logger.info("OSV scanning - product %s: not found or not enabled anymore", product_id)
+            return None
+
+        observations_new, observations_updated, observations_resolved = OSVScanner(run_id).scan_product(product)
+        logger.info(
+            "OSV scanning - %s: %s new, %s updated, %s resolved",
+            product,
+            observations_new,
+            observations_updated,
+            observations_resolved,
+        )
+    except Exception as e:
+        if task and task.retries and _is_transient(e):
+            raise
+        logger.exception("OSV scanning - %s: failed with exception", product or product_id)
+        return f"{product or product_id}: {e}"
+
+    return None
+
+
+@db_task()
+def task_osv_scan_summary(run_id: str, start_time: datetime, results: list[Any]) -> None:
+    scanned = results.count(None)
+    failures = [result for result in results if isinstance(result, str)]
+    # Expired or revoked
+    not_scanned = len(results) - scanned - len(failures)
+
+    message = f"Scanned {scanned} of {len(results)} products"
+    if failures:
+        message += f", {len(failures)} failed"
+    if not_scanned:
+        message += f", {not_scanned} not scanned"
+    _save_osv_scan_run(
+        start_time, Status.STATUS_FAILURE if failures or not_scanned else Status.STATUS_SUCCESS, message + "."
+    )
+
+    if failures:
+        failure_list = "\n".join(failures[:OSV_SCAN_MAX_LISTED_FAILURES])
+        if len(failures) > OSV_SCAN_MAX_LISTED_FAILURES:
+            failure_list += f"\n... and {len(failures) - OSV_SCAN_MAX_LISTED_FAILURES} more"
+        send_task_exception_notification(
+            function="task_osv_scan_product",
+            arguments=None,
+            user=None,
+            exception=PeriodicTaskError(
+                f"OSV scanning failed for {len(failures)} of {len(results)} products:\n{failure_list}"
+            ),
+        )
+
+    run: Optional[OSVScanRun] = HUEY.get(OSV_SCAN_RUN_KEY, peek=True)
+    if run and run.run_id == run_id:
+        HUEY.delete(OSV_SCAN_RUN_KEY)
+
+    release_run_cache(run_id)
+
+
+def _save_osv_scan_run(start_time: datetime, status: str, message: str, finished: bool = True) -> None:
+    Periodic_Task.objects.create(
+        task=OSV_SCAN_TASK_NAME,
+        start_time=start_time,
+        duration=(timezone.now() - start_time) / timedelta(milliseconds=1) if finished else None,
+        status=status,
+        message=message,
+    )
+    delete_older_task_entries(OSV_SCAN_TASK_NAME)
+
+
+def _is_transient(e: Exception) -> bool:
+    if isinstance(e, requests.HTTPError):
+        return e.response is not None and (e.response.status_code == 429 or e.response.status_code >= 500)
+    return isinstance(e, (requests.RequestException, OperationalError, InterfaceError))
 
 
 def _import_vulnerablecode(message: str) -> tuple[str, int]:

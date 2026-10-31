@@ -1,4 +1,5 @@
 import logging
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
@@ -207,10 +208,11 @@ class OSVParser(BaseParser):
         session = create_osv_session()
 
         def _read_osv_vulnerability(osv_vulnerability: OSV_Vulnerability) -> OSV_Cache:
-            response = session.get(
-                url=f"{OSV_VULNERABILITY_URL}{osv_vulnerability.id}",
-                timeout=OSV_REQUEST_TIMEOUT,
-            )
+            with _OSV_REQUEST_SLOTS:
+                response = session.get(
+                    url=f"{OSV_VULNERABILITY_URL}{osv_vulnerability.id}",
+                    timeout=OSV_REQUEST_TIMEOUT,
+                )
             response.raise_for_status()
             return OSV_Cache(osv_id=osv_vulnerability.id, modified=osv_vulnerability.modified, data=response.text)
 
@@ -218,7 +220,10 @@ class OSVParser(BaseParser):
             osv_cache_items_from_osv = list(executor.map(_read_osv_vulnerability, missing_osv_vulnerabilities))
 
         if osv_cache_items_from_osv:
-            OSV_Cache.objects.bulk_create(osv_cache_items_from_osv, batch_size=OSV_CACHE_BATCH_SIZE)
+            # Several products are scanned at the same time, another scan may have stored the same advisory
+            OSV_Cache.objects.bulk_create(
+                osv_cache_items_from_osv, batch_size=OSV_CACHE_BATCH_SIZE, ignore_conflicts=True
+            )
 
         valid_osv_cache_items = [
             vulnerability
@@ -521,6 +526,10 @@ class OSVParser(BaseParser):
 
 def _get_osv_max_threads() -> int:
     return env.int("OSV_MAX_THREADS", default=32)
+
+
+# Shared by all scans of the process, the background tasks scan several products at the same time
+_OSV_REQUEST_SLOTS = threading.BoundedSemaphore(_get_osv_max_threads())
 
 
 def create_osv_session(read_retries: Optional[int] = None) -> requests.Session:
