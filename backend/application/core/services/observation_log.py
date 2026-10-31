@@ -60,7 +60,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     observation.save()
 
     observation.product.last_observation_change = observation_log.created
-    observation.product.save()
+    observation.product.save(update_fields=["last_observation_change"])
 
     if assessment_status in (
         Assessment_Status.ASSESSMENT_STATUS_APPROVED,
