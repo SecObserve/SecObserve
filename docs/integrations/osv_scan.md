@@ -68,3 +68,9 @@ The hour (in UTC, unless [`TIME_ZONE`](../getting_started/configuration.md#time-
 Only products that have `Automatic OSV scanning enabled` turned on will be imported automatically.
 
 ![OSV scanning settings](../assets/images/screenshot_osv_scanning_settings_2.png)
+
+#### Execution
+
+The automatic scan enqueues a separate background task for each product. These tasks have a lower priority than all other background tasks, so that for example notifications don't wait until all products have been scanned. If the background process is restarted during the scans, only the scans running at that moment are lost, the remaining products are still scanned. Scans that are still queued 20 hours after they have been enqueued are dropped, so that they don't pile up with the scans of the next night.
+
+A scan that fails with a transient error, like an outage of `api.osv.dev` or a lost database connection, is retried, see `OSV_SCAN_RETRIES` and `OSV_SCAN_RETRY_DELAY` in the [configuration](../getting_started/configuration.md#backend). When the last attempt fails as well, an [exception notification](./notifications.md#notifications-for-exceptions) is sent.
