@@ -235,8 +235,10 @@ export const ObservationLogComponent = () => {
                         </Paper>
                     )}
 
+                    {/* A decision stays visible when the product no longer requires approval */}
                     {(observation_log?.observation_data?.product_data?.assessments_need_approval ||
-                        observation_log?.observation_data?.product_data?.product_group_assessments_need_approval) && (
+                        observation_log?.observation_data?.product_data?.product_group_assessments_need_approval ||
+                        observation_log?.approval_date) && (
                         <Paper sx={{ marginBottom: 1, padding: 2, width: "100%" }}>
                             <Stack spacing={1}>
                                 <Typography variant="h6">Approval</Typography>
