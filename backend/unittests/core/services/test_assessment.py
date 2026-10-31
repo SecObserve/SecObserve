@@ -540,3 +540,52 @@ class TestAssessmentApprovalMarksProductAsChanged(BaseTestCase):
         product = Product.objects.get(pk=self.log.observation.product.pk)
         self.assertEqual(Status.STATUS_FALSE_POSITIVE, self.log.observation.current_status)
         self.assertGreater(product.last_observation_change, self.last_change)
+
+
+class TestAssessmentApprovalWithEditsKeepsAssessorValues(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        # Observation log 1 belongs to observation 1 / product 1, authored by user 2.
+        self.log = Observation_Log.objects.get(pk=1)
+        self.log.assessment_status = Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
+        self.log.comment = "assessor comment"
+        self.log.vex_justification = ""
+        self.log.save()
+        self.approver = User.objects.get(pk=3)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_changed_values_are_kept(self, mock_user, *_mocks) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(
+            self.log,
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            None,
+            "approver comment",
+            VEX_Justification.JUSTIFICATION_COMPONENT_NOT_PRESENT,
+            None,
+        )
+
+        self.log.refresh_from_db()
+        self.assertEqual("approver comment", self.log.comment)
+        self.assertEqual({"comment": "assessor comment", "vex_justification": ""}, self.log.assessor_values)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_unchanged_values_are_not_kept(self, mock_user, *_mocks) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(
+            self.log, Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS, None, "assessor comment", None, None
+        )
+
+        self.log.refresh_from_db()
+        self.assertIsNone(self.log.assessor_values)

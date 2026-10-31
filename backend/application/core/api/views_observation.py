@@ -63,6 +63,10 @@ from application.core.services.assessment import (
     remove_assessment,
     save_assessment,
 )
+from application.core.services.export_observation_logs import (
+    export_observation_logs_csv,
+    export_observation_logs_excel,
+)
 from application.core.services.export_observations import (
     export_observations_csv,
     export_observations_excel,
@@ -289,6 +293,7 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             .select_related("observation__parser")
             .select_related("observation__origin_service")
             .select_related("user")
+            .select_related("approval_user")
         )
 
     @extend_schema(
@@ -341,6 +346,28 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             request_serializer.validated_data.get("observation_logs"),
         )
         return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["GET"],
+        responses={200: None},
+    )
+    @action(detail=False, methods=["get"])
+    def export_excel(self, request: Request) -> FileResponse:
+        queryset = self.filter_queryset(self.get_queryset())
+        return excel_response(export_observation_logs_excel(queryset), "observation_logs.xlsx")
+
+    @extend_schema(
+        methods=["GET"],
+        responses={200: None},
+        parameters=[],
+    )
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request: Request) -> HttpResponse:
+        queryset = self.filter_queryset(self.get_queryset())
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename=observation_logs.csv"
+        export_observation_logs_csv(response, queryset)
+        return response
 
     @extend_schema(
         methods=["GET"],

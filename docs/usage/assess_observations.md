@@ -49,6 +49,7 @@ Be aware, that the user who has created the assessment is not allowed to approve
 ![Assessment approval](../assets/images/screenshot_assessment_approval.png){ width="60%" style="display: block; margin: 0 auto" }
 
 With **Approved with edits**, the approver can change the comment, the VEX justification and the VEX remediations before the assessment gets active. Several assessments can be approved at once from the list of approvals. With **Approved with edits**, a field that has the same value in all selected assessments is prefilled. A field with different values keeps the value of each assessment, unless **Change for all** is switched on for it: then the new value replaces it in all selected assessments, after a confirmation. The VEX justification and remediations are offered when all selected assessments have a status they apply to.
+The values of the assessor that were changed by the approver are kept and shown in the section **Approval** of the assessment.
 
 ### Restricting who may approve
 
@@ -106,3 +107,10 @@ When an import creates a new observation, the newest matching assessment from th
 To make it easier to find observations with the status `In Review` or assessements needing an approval, a tab is shown for the product, if reviews or approvals are pending:
 
 ![Reviews tab](../assets/images/screenshot_reviews_tab.png)
+
+### Approval history
+
+Approved, approved with edits and rejected assessments are listed in the tab **Approval history** on the **Reviews / Approvals** page and in the section **Approval history** of the **Reviews** tab of products and product groups.
+The list shows who decided when, can be filtered by approver, decision and decision date, and is read-only.
+**Export** downloads the list with its filters as Excel or CSV file, including the values of the assessor that were changed by the approver.
+The **Reviews** tab of a product or product group is also shown if there is an approval history, but nothing is pending.

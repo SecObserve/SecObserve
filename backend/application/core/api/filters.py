@@ -28,7 +28,7 @@ from application.core.models import (
     Service,
 )
 from application.core.queries.product import get_default_branch_filter
-from application.core.types import Severity, Status
+from application.core.types import Assessment_Status, Severity, Status
 from application.licenses.models import License_Component
 
 
@@ -369,6 +369,8 @@ class ObservationLogFilter(FilterSet):
     origin_component_purl_type = CharFilter(field_name="observation__origin_component_purl_type")
     scanner = CharFilter(field_name="observation__scanner", lookup_expr="icontains")
     created = DateTimeFromToRangeFilter(field_name="created")
+    approval_date = DateTimeFromToRangeFilter(field_name="approval_date")
+    decided = BooleanFilter(method="get_decided")
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -418,7 +420,7 @@ class ObservationLogFilter(FilterSet):
 
     class Meta:
         model = Observation_Log
-        fields = ["observation", "user", "assessment_status", "status", "severity"]
+        fields = ["observation", "user", "assessment_status", "status", "severity", "approval_user"]
 
     def get_age(
         self,
@@ -434,6 +436,19 @@ class ObservationLogFilter(FilterSet):
             return queryset
 
         return queryset.filter(created__gte=get_start_of_day(days))
+
+    def get_decided(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Optional[bool],
+    ) -> QuerySet:
+        # name is used as a positional argument
+        if value is True:
+            return queryset.filter(assessment_status__in=Assessment_Status.ASSESSMENT_STATUS_DECISIONS)
+        if value is False:
+            return queryset.exclude(assessment_status__in=Assessment_Status.ASSESSMENT_STATUS_DECISIONS)
+        return queryset
 
 
 class EvidenceFilter(FilterSet):

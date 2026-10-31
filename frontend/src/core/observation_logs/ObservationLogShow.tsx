@@ -39,33 +39,37 @@ const ShowActions = () => {
     let filter = null;
     let sort: SortPayload | null = null;
     let storeKey = null;
+    const history = localStorage.getItem("observationlogapprovalhistory");
+    const approval_filter = history ? { decided: true } : { assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL };
+    const approval_sort: SortPayload = history
+        ? { field: "approval_date", order: "DESC" }
+        : { field: "created", order: "ASC" };
+    const approval_store_key = "observation_logs.approval" + (history ? "history" : "");
     if (observation_log && localStorage.getItem("observationlogembeddedlist")) {
         filter = { observation: observation_log.observation };
         sort = { field: "created", order: "DESC" };
         storeKey = "observation_logs.embedded";
     }
     if (observation_log && localStorage.getItem("observationlogapprovallist")) {
-        filter = {
-            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
-        };
-        sort = { field: "created", order: "ASC" };
-        storeKey = "observation_logs.approval";
+        filter = approval_filter;
+        sort = approval_sort;
+        storeKey = approval_store_key;
     }
     if (observation_log?.observation_data && localStorage.getItem("observationlogapprovallistproduct")) {
         filter = {
             product: observation_log.observation_data.product,
-            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
+            ...approval_filter,
         };
-        sort = { field: "created", order: "ASC" };
-        storeKey = "observation_logs.approvalproduct";
+        sort = approval_sort;
+        storeKey = approval_store_key + "product";
     }
     if (observation_log?.observation_data && localStorage.getItem("observationlogapprovallistproductgroup")) {
         filter = {
             product_group: observation_log.observation_data.product_data.product_group,
-            assessment_status: ASSESSMENT_STATUS_NEEDS_APPROVAL,
+            ...approval_filter,
         };
-        sort = { field: "created", order: "ASC" };
-        storeKey = "observation_logs.approvalproductgroup";
+        sort = approval_sort;
+        storeKey = approval_store_key + "productgroup";
     }
 
     return (
@@ -273,6 +277,44 @@ export const ObservationLogComponent = () => {
                                 {observation_log.rejection_remark && (
                                     <Labeled label="Rejection remark">
                                         <TextField source="rejection_remark" />
+                                    </Labeled>
+                                )}
+                                {observation_log.assessor_values?.comment !== undefined && (
+                                    <Labeled>
+                                        <MarkdownField
+                                            content={observation_log.assessor_values.comment}
+                                            label="Comment of the assessor"
+                                        />
+                                    </Labeled>
+                                )}
+                                {observation_log.assessor_values?.vex_justification !== undefined && (
+                                    <Labeled label="VEX justification of the assessor">
+                                        <SelectField
+                                            source="assessor_values.vex_justification"
+                                            choices={OBSERVATION_ALL_VEX_JUSTIFICATION_CHOICES}
+                                            emptyText="---"
+                                        />
+                                    </Labeled>
+                                )}
+                                {observation_log.assessor_values?.vex_remediations !== undefined && (
+                                    <Labeled label="VEX remediations of the assessor">
+                                        {observation_log.assessor_values.vex_remediations?.length > 0 ? (
+                                            <ArrayField source="assessor_values.vex_remediations">
+                                                <Datagrid
+                                                    bulkActionButtons={false}
+                                                    header={VEXRemediationHeader}
+                                                    sx={{ paddingBottom: 2 }}
+                                                >
+                                                    <SelectField
+                                                        source="category"
+                                                        choices={OBSERVATION_VEX_REMEDIATION_CATEGORY_CHOICES}
+                                                    />
+                                                    <TextField source="text" />
+                                                </Datagrid>
+                                            </ArrayField>
+                                        ) : (
+                                            <Typography variant="body2">---</Typography>
+                                        )}
                                     </Labeled>
                                 )}
                             </Stack>
