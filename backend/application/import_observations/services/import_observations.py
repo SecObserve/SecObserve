@@ -290,7 +290,9 @@ def api_check_connection(
     return format_valid, errors
 
 
-def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tuple[int, int, int]:
+def _process_data(  # pylint: disable=too-many-statements
+    import_parameters: ImportParameters, settings: Settings
+) -> Tuple[int, int, int]:
     observations_before_query = get_observations_for_vulnerability_check(
         import_parameters.product,
         import_parameters.branch,
@@ -708,7 +710,10 @@ def _process_current_observation(
     _set_evidences(observation_before, imported_observation.unsaved_evidences)
 
     # Write observation log if status or severity has been changed, it saves the observation as well
-    if previous_status == observation_before.current_status and previous_severity == observation_before.current_severity:
+    if (
+        previous_status == observation_before.current_status
+        and previous_severity == observation_before.current_severity
+    ):
         observation_before.save()
     else:
         status = observation_before.current_status if previous_status != observation_before.current_status else ""
