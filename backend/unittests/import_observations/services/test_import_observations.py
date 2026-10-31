@@ -2,6 +2,8 @@ from unittest.mock import call, patch
 
 from django.core.files.base import File
 from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from rest_framework.exceptions import ValidationError
 
 from application.access_control.models import User
@@ -28,6 +30,7 @@ from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
     _deduplicate_cross_scanner,
+    _resolve_unimported_observations,
     api_import_observations,
     file_upload_observations,
 )
@@ -204,6 +207,106 @@ class TestFileUploadObservations(BaseTestCase):
         self.assertEqual(mock_find_potential_duplicates.call_count, 2)
         self.assertEqual(mock_deduplicate_cross_scanner.call_count, 3)
         self.assertEqual(mock_apply_vex_statements_for_observation.call_count, 4)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_skip_resolved(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        statuses_first_import = dict(Observation.objects.filter(product=product).values_list("id", "current_status"))
+        self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+        resolved_before = list(
+            Observation.objects.filter(product=product, current_status=Status.STATUS_RESOLVED)
+            .order_by("id")
+            .values_list("id", "modified")
+        )
+        self.assertEqual(len(resolved_before), 2)
+
+        self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        self.assertEqual(Observation_Log.objects.filter(observation__product=product).count(), 7)
+        resolved_after = list(
+            Observation.objects.filter(pk__in=[pk for pk, _ in resolved_before])
+            .order_by("id")
+            .values_list("id", "modified")
+        )
+        self.assertEqual(resolved_before, resolved_after)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for observation in Observation.objects.filter(pk__in=[pk for pk, _ in resolved_before]):
+            self.assertEqual(observation.current_status, statuses_first_import[observation.pk])
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_one_save_per_observation(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        # One for the observation with the changed severity and one for each of the two resolved observations
+        self.assertEqual(len(observation_updates), 3)
+
+    def _import_file(self, product, file_name):
+        with open(file_name, "r") as file:
+            return file_upload_observations(
+                FileUploadParameters(
+                    product=product,
+                    branch=Branch.objects.get(id=1),
+                    file=File(file),
+                    service_name="test_service",
+                    docker_image_name_tag="test_docker_image_name_tag",
+                    endpoint_url="test_endpoint_url",
+                    kubernetes_cluster="test_kubernetes_cluster",
+                    kubernetes_namespace="test_kubernetes_namespace",
+                    kubernetes_resource_type="test_kubernetes_resource_type",
+                    kubernetes_resource_name="test_kubernetes_resource_name",
+                    suppress_licenses=False,
+                    sbom=False,
+                )
+            )
 
     def _file_upload_observations(
         self,
@@ -1379,6 +1482,47 @@ class TestDeduplicateCrossScanner(BaseTestCase):
         self.assertFalse(result)
         mock_filter.assert_called_once()
         mock_filter_instance.exclude.assert_called_once()
+
+
+class TestResolveUnimportedObservations(BaseTestCase):
+    @patch("application.core.models.Observation.save")
+    @patch("application.import_observations.services.import_observations.create_observation_log")
+    def test_already_resolved(self, mock_create_observation_log, mock_save):
+        observation = Observation(pk=1, parser_status=Status.STATUS_RESOLVED, current_status=Status.STATUS_RESOLVED)
+
+        self.assertEqual(set(), _resolve_unimported_observations({"hash": observation}))
+
+        mock_save.assert_not_called()
+        mock_create_observation_log.assert_not_called()
+
+    @patch("application.core.models.Observation.save")
+    @patch("application.import_observations.services.import_observations.create_observation_log")
+    def test_resolved_with_log(self, mock_create_observation_log, mock_save):
+        observation = Observation(pk=1, parser_status=Status.STATUS_OPEN, current_status=Status.STATUS_OPEN)
+
+        self.assertEqual({observation}, _resolve_unimported_observations({"hash": observation}))
+
+        self.assertEqual(Status.STATUS_RESOLVED, observation.current_status)
+        mock_create_observation_log.assert_called_once()
+        self.assertEqual(Status.STATUS_RESOLVED, mock_create_observation_log.call_args.kwargs["status"])
+        # create_observation_log saves the observation
+        mock_save.assert_not_called()
+
+    @patch("application.core.models.Observation.save")
+    @patch("application.import_observations.services.import_observations.create_observation_log")
+    def test_resolved_by_assessment_without_log(self, mock_create_observation_log, mock_save):
+        observation = Observation(
+            pk=1,
+            parser_status=Status.STATUS_OPEN,
+            assessment_status=Status.STATUS_RESOLVED,
+            current_status=Status.STATUS_RESOLVED,
+        )
+
+        self.assertEqual(set(), _resolve_unimported_observations({"hash": observation}))
+
+        self.assertEqual(Status.STATUS_RESOLVED, observation.parser_status)
+        mock_save.assert_called_once()
+        mock_create_observation_log.assert_not_called()
 
 
 class RequestMock:

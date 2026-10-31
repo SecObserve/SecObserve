@@ -693,13 +693,14 @@ def _process_current_observation(
     apply_epss(observation_before, epss_scores)
     apply_exploit_information(observation_before, settings, exploit_informations)
     observation_before.import_last_seen = timezone.now()
-    observation_before.save()
 
     _set_references(observation_before, imported_observation.unsaved_references)
     _set_evidences(observation_before, imported_observation.unsaved_evidences)
 
-    # Write observation log if status or severity has been changed
-    if previous_status != observation_before.current_status or previous_severity != observation_before.current_severity:
+    # Write observation log if status or severity has been changed, it saves the observation as well
+    if previous_status == observation_before.current_status and previous_severity == observation_before.current_severity:
+        observation_before.save()
+    else:
         status = observation_before.current_status if previous_status != observation_before.current_status else ""
         severity = (
             observation_before.current_severity if previous_severity != observation_before.current_severity else ""
@@ -833,17 +834,22 @@ def _resolve_unimported_observations(
     # and seem to have been resolved.
     observations_resolved: set[Observation] = set()
     for observation in observations_before.values():
+        # Resolved by an earlier import, there is nothing to change
+        if observation.parser_status == Status.STATUS_RESOLVED:
+            continue
+
         old_status = get_current_status(observation)
-
         observation.parser_status = Status.STATUS_RESOLVED
-        observation.save()
-
         new_status = get_current_status(observation)
-        if old_status != new_status:
+
+        if old_status == new_status:
+            observation.save()
+        else:
             if old_status in Status.STATUS_ACTIVE:
                 observations_resolved.add(observation)
 
             observation.current_status = new_status
+            # Saves the observation as well
             create_observation_log(
                 observation=observation,
                 severity="",
