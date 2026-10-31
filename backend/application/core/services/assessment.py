@@ -239,9 +239,14 @@ def _get_assessments_need_approval(product: Product) -> bool:
 
 
 def remove_assessment(
-    observation: Observation, comment: str, propagated_from: Optional[Observation_Log] = None
+    observation: Observation,
+    comment: str,
+    propagated_from: Optional[Observation_Log] = None,
+    propagate: bool = True,
 ) -> Optional[Observation_Log]:
     if observation.assessment_severity or observation.assessment_status or observation.assessment_priority:
+        assessment_origin_id = _get_assessment_origin_id(observation) if propagate and not propagated_from else None
+
         observation.assessment_severity = ""
         observation.assessment_status = ""
         observation.assessment_priority = None
@@ -277,6 +282,9 @@ def remove_assessment(
 
         check_security_gate(observation.product)
         push_observation_to_issue_tracker(observation, get_current_user())
+
+        if assessment_origin_id:
+            propagate_assessment_removal(observation_log, assessment_origin_id)
 
         return observation_log
 
@@ -372,9 +380,39 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
         )
 
 
-def propagate_assessment_removal(observation_log: Observation_Log) -> None:
+def propagate_assessment_removal(observation_log: Observation_Log, assessment_origin_id: int) -> None:
     for target_observation in _get_propagation_targets(observation_log.observation):
-        remove_assessment(target_observation, observation_log.comment, propagated_from=observation_log)
+        # targets that have been assessed independently keep their assessment
+        if _get_assessment_origin_id(target_observation) == assessment_origin_id:
+            remove_assessment(target_observation, observation_log.comment, propagated_from=observation_log)
+
+
+def _get_assessment_origin_id(observation: Observation) -> Optional[int]:
+    observation_log = _get_manual_assessment_logs().filter(observation=observation).order_by("-created").first()
+    if not observation_log or observation_log.assessment_status == Assessment_Status.ASSESSMENT_STATUS_REMOVED:
+        return None
+    return observation_log.propagated_from_id or observation_log.pk
+
+
+def _get_manual_assessment_logs() -> QuerySet[Observation_Log]:
+    # a removal changes neither severity nor status, but it ends the assessment it removes
+    return (
+        Observation_Log.objects.filter(
+            general_rule__isnull=True,
+            general_rule_rego__isnull=True,
+            product_rule__isnull=True,
+            product_rule_rego__isnull=True,
+            vex_statement__isnull=True,
+            assessment_status__in=(
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+                Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+                Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+            ),
+        )
+        .exclude(~Q(assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED), severity="", status="")
+        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
+    )
 
 
 def _get_propagation_targets(observation: Observation) -> QuerySet[Observation]:
@@ -427,27 +465,14 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
     compiled_branches = _get_compiled_branches(observation, propagate_branches)
 
     observation_logs = (
-        Observation_Log.objects.filter(
+        _get_manual_assessment_logs()
+        .filter(
             observation__product=observation.product,
             observation__branch__isnull=False,
             propagated_from__isnull=True,
-            general_rule__isnull=True,
-            general_rule_rego__isnull=True,
-            product_rule__isnull=True,
-            product_rule_rego__isnull=True,
-            vex_statement__isnull=True,
-            assessment_status__in=(
-                Assessment_Status.ASSESSMENT_STATUS_APPROVED,
-                Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
-                Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
-                Assessment_Status.ASSESSMENT_STATUS_REMOVED,
-            ),
             **_get_propagation_filters(observation, prefix="observation__"),
         )
         .exclude(observation__branch=observation.branch)
-        # a removal changes neither severity nor status, but it ends the assessment it removes
-        .exclude(~Q(assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED), severity="", status="")
-        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
         .select_related("observation__branch")
         .order_by("observation__branch", "-created")
     )
