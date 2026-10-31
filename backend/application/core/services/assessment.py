@@ -381,7 +381,7 @@ def propagate_assessment(observation_log: Observation_Log) -> None:
 
 
 def propagate_assessment_removal(observation_log: Observation_Log, assessment_origin_id: int) -> None:
-    for target_observation in _get_propagation_targets(observation_log.observation):
+    for target_observation in _get_propagation_targets(observation_log.observation, removal=True):
         # targets that have been assessed independently keep their assessment
         if _get_assessment_origin_id(target_observation) == assessment_origin_id:
             remove_assessment(target_observation, observation_log.comment, propagated_from=observation_log)
@@ -415,17 +415,17 @@ def _get_manual_assessment_logs() -> QuerySet[Observation_Log]:
     )
 
 
-def _get_propagation_targets(observation: Observation) -> QuerySet[Observation]:
+def _get_propagation_targets(observation: Observation, removal: bool = False) -> QuerySet[Observation]:
     if not observation.branch or not _has_propagation_identity(observation):
         return Observation.objects.none()
 
     propagate_branches_product_group = (
         _get_product_group_propagate_branches(observation)
-        if observation.product.product_group and observation.product.product_group.propagate_branches_new_assessment
+        if observation.product.product_group and _propagation_active(observation.product.product_group, removal)
         else []
     )
     propagate_branches_product = (
-        _get_product_propagate_branches(observation) if observation.product.propagate_branches_new_assessment else []
+        _get_product_propagate_branches(observation) if _propagation_active(observation.product, removal) else []
     )
     propagate_branches = propagate_branches_product_group + propagate_branches_product
     if not propagate_branches:
@@ -533,6 +533,11 @@ def _get_product_group_propagate_branches(observation: Observation) -> list:
 
 def _get_product_propagate_branches(observation: Observation) -> list:
     return list(observation.product.propagate_branches) if observation.product.propagate_branches else []
+
+
+def _propagation_active(product: Product, removal: bool) -> bool:
+    # copies can come from both directions, so a removal has to reach both
+    return product.propagate_branches_new_assessment or (removal and product.propagate_branches_new_observation)
 
 
 def _get_compiled_branches(observation: Observation, propagate_branches: list) -> set[re.Pattern]:
