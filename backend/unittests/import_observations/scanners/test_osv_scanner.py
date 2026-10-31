@@ -15,6 +15,7 @@ from application.import_observations.parsers.osv.parser import (
 from application.import_observations.scanners.osv_scanner import (
     OSV_QUERYBATCH_READ_RETRIES,
     OSVScanner,
+    release_run_cache,
 )
 from application.import_observations.services.import_observations import (
     ImportParameters,
@@ -282,6 +283,12 @@ class TestOSVScanner(BaseTestCase):
 class TestOSVScannerPurlCache(BaseTestCase):
     """The scanner asks OSV for a purl once, however many components and products use it."""
 
+    def setUp(self):
+        super().setUp()
+        # The caches of the runs are kept by the module, a run of another test must not answer the queries
+        for run_id in ("run_1", "run_2"):
+            release_run_cache(run_id)
+
     def _component(self, purl):
         return License_Component(component_name="component", component_purl=purl)
 
@@ -368,3 +375,13 @@ class TestOSVScannerPurlCache(BaseTestCase):
         OSVScanner()._do_scan([self._component("pkg:pypi/django@5.1.8")])
 
         self.assertEqual(3, mock_requests_post.call_count)
+
+    @patch("requests.Session.post")
+    def test_a_released_run_queries_again(self, mock_requests_post):
+        mock_requests_post.return_value = self._response(1)
+
+        OSVScanner("run_1")._do_scan([self._component("pkg:pypi/django@5.1.8")])
+        release_run_cache("run_1")
+        OSVScanner("run_1")._do_scan([self._component("pkg:pypi/django@5.1.8")])
+
+        self.assertEqual(2, mock_requests_post.call_count)

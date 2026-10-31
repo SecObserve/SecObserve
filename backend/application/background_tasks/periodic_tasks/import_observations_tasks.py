@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any, NamedTuple, Optional
 from uuid import uuid4
 
 import requests
@@ -22,7 +22,10 @@ from application.background_tasks.types import Status
 from application.commons import settings_static
 from application.commons.models import Settings
 from application.import_observations.models import Api_Configuration, Product
-from application.import_observations.scanners.osv_scanner import OSVScanner
+from application.import_observations.scanners.osv_scanner import (
+    OSVScanner,
+    release_run_cache,
+)
 from application.import_observations.scanners.vulnerablecode_scanner import (
     VulnerableCodeScanner,
 )
@@ -45,6 +48,12 @@ OSV_SCAN_TASK_NAME = "Scan products with OSV"
 # Key of the run whose summary is still missing, in the key-value store of Huey
 OSV_SCAN_RUN_KEY = "osv_scan_run"
 OSV_SCAN_MAX_LISTED_FAILURES = 20
+
+
+class OSVScanRun(NamedTuple):
+    run_id: str
+    start_time: datetime
+    product_count: int
 
 
 @db_periodic_task(
@@ -129,14 +138,21 @@ def _enqueue_osv_scans(message: str) -> str:
         logger.info("OSV scanning is disabled in settings")
         return message + "\nOSV scanning is disabled in settings."
 
-    _report_unfinished_osv_scan_run()
+    previous_run: Optional[OSVScanRun] = HUEY.get(OSV_SCAN_RUN_KEY, peek=True)
+    if previous_run:
+        # Its scans may still be queued, e.g. when the import has been started manually. A second run would
+        # scan the same products at the same time.
+        if timezone.now() - previous_run.start_time < OSV_SCAN_EXPIRES:
+            logger.info("OSV scanning of the previous run is still in progress")
+            return message + "\nOSV scanning of the previous run is still in progress."
+        _report_unfinished_osv_scan_run(previous_run)
 
     product_ids = list(
         Product.objects.filter(osv_enabled=True, automatic_osv_scanning_enabled=True).values_list("pk", flat=True)
     )
     run_id = uuid4().hex
     start_time = timezone.now()
-    HUEY.put(OSV_SCAN_RUN_KEY, (run_id, start_time, len(product_ids)))
+    HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun(run_id, start_time, len(product_ids)))
     # Huey runs the summary when every scan has returned or expired
     HUEY.enqueue(
         chord(
@@ -148,17 +164,17 @@ def _enqueue_osv_scans(message: str) -> str:
     return message + f"\nEnqueued OSV scanning for {len(product_ids)} products."
 
 
-def _report_unfinished_osv_scan_run() -> None:
-    run = HUEY.get(OSV_SCAN_RUN_KEY, peek=True)
-    # The scans of a younger run may still be queued, e.g. when the import has been started manually
-    if not run or timezone.now() - run[1] < OSV_SCAN_EXPIRES:
-        return
-
-    _save_osv_scan_run(
-        run[1],
-        Status.STATUS_FAILURE,
-        f"Did not finish, some scans of the {run[2]} products were lost when the background tasks stopped.",
-        finished=False,
+def _report_unfinished_osv_scan_run(run: OSVScanRun) -> None:
+    message = (
+        f"Did not finish, some scans of the {run.product_count} products were lost when the background tasks stopped."
+    )
+    _save_osv_scan_run(run.start_time, Status.STATUS_FAILURE, message, finished=False)
+    # The failures of its finished scans are not known, the summary of the run has never been executed
+    send_task_exception_notification(
+        function="task_osv_scan_product",
+        arguments=None,
+        user=None,
+        exception=PeriodicTaskError(f"OSV scanning: {message}"),
     )
     HUEY.delete(OSV_SCAN_RUN_KEY)
 
@@ -227,9 +243,11 @@ def task_osv_scan_summary(run_id: str, start_time: datetime, results: list[Any])
             ),
         )
 
-    run = HUEY.get(OSV_SCAN_RUN_KEY, peek=True)
-    if run and run[0] == run_id:
+    run: Optional[OSVScanRun] = HUEY.get(OSV_SCAN_RUN_KEY, peek=True)
+    if run and run.run_id == run_id:
         HUEY.delete(OSV_SCAN_RUN_KEY)
+
+    release_run_cache(run_id)
 
 
 def _save_osv_scan_run(start_time: datetime, status: str, message: str, finished: bool = True) -> None:

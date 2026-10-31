@@ -11,6 +11,7 @@ from application.background_tasks.models import Periodic_Task
 from application.background_tasks.periodic_tasks.import_observations_tasks import (
     OSV_SCAN_RUN_KEY,
     OSV_SCAN_TASK_NAME,
+    OSVScanRun,
     task_api_import,
     task_osv_scan_product,
     task_osv_scan_summary,
@@ -611,9 +612,15 @@ class TestTaskOSVScanSummary(BaseTestCase):
         HUEY.delete(OSV_SCAN_RUN_KEY)
         self.start_time = timezone.now() - timedelta(hours=1)
 
+    def tearDown(self):
+        # A run left in the store would stop the OSV scans of the following tests
+        HUEY.delete(OSV_SCAN_RUN_KEY)
+        super().tearDown()
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.release_run_cache")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
-    def test_success(self, mock_send_task_exception_notification):
-        HUEY.put(OSV_SCAN_RUN_KEY, ("run", self.start_time, 2))
+    def test_success(self, mock_send_task_exception_notification, mock_release_run_cache):
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("run", self.start_time, 2))
 
         task_osv_scan_summary.call_local("run", self.start_time, [None, None])
 
@@ -624,6 +631,7 @@ class TestTaskOSVScanSummary(BaseTestCase):
         self.assertGreaterEqual(osv_scan_run.duration, 3600000)
         mock_send_task_exception_notification.assert_not_called()
         self.assertIsNone(HUEY.get(OSV_SCAN_RUN_KEY, peek=True))
+        mock_release_run_cache.assert_called_once_with("run")
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
     def test_failures(self, mock_send_task_exception_notification):
@@ -640,15 +648,16 @@ class TestTaskOSVScanSummary(BaseTestCase):
         self.assertTrue(message.endswith("\nproduct_19: 503 Error\n... and 2 more"))
 
     def test_keeps_the_key_of_another_run(self):
-        HUEY.put(OSV_SCAN_RUN_KEY, ("other_run", self.start_time, 2))
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("other_run", self.start_time, 2))
 
         task_osv_scan_summary.call_local("run", self.start_time, [None])
 
-        self.assertEqual("other_run", HUEY.get(OSV_SCAN_RUN_KEY, peek=True)[0])
+        self.assertEqual("other_run", HUEY.get(OSV_SCAN_RUN_KEY, peek=True).run_id)
 
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
-    def test_unfinished_run(self, mock_settings_load, mock_scan_product):
+    def test_unfinished_run(self, mock_settings_load, mock_scan_product, mock_send_task_exception_notification):
         settings = Settings()
         settings.feature_automatic_api_import = False
         settings.feature_automatic_osv_scanning = True
@@ -657,7 +666,7 @@ class TestTaskOSVScanSummary(BaseTestCase):
         mock_scan_product.return_value = (0, 0, 0)
         _create_product("product_osv")
         start_time = timezone.now() - timedelta(hours=21)
-        HUEY.put(OSV_SCAN_RUN_KEY, ("lost_run", start_time, 5))
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("lost_run", start_time, 5))
 
         task_api_import()
 
@@ -667,20 +676,31 @@ class TestTaskOSVScanSummary(BaseTestCase):
             "Did not finish, some scans of the 5 products were lost when the background tasks stopped.",
             unfinished_run.message,
         )
+        mock_send_task_exception_notification.assert_called_once()
+        self.assertEqual(
+            "OSV scanning: Did not finish, some scans of the 5 products were lost when the background tasks stopped.",
+            str(mock_send_task_exception_notification.call_args.kwargs["exception"]),
+        )
         self.assertEqual("Scanned 1 of 1 products.", _get_osv_scan_run().message)
         self.assertIsNone(HUEY.get(OSV_SCAN_RUN_KEY, peek=True))
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
-    def test_younger_run_is_not_reported(self, mock_settings_load, mock_scan_product):
+    def test_younger_run_is_not_enqueued_again(self, mock_settings_load, mock_scan_product):
         settings = Settings()
         settings.feature_automatic_api_import = False
         settings.feature_automatic_osv_scanning = True
         settings.feature_automatic_vulnerablecode_scanning = False
         mock_settings_load.return_value = settings
-        mock_scan_product.return_value = (0, 0, 0)
-        HUEY.put(OSV_SCAN_RUN_KEY, ("running_run", self.start_time, 5))
+        _create_product("product_osv")
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("running_run", self.start_time, 5))
 
         task_api_import()
 
-        self.assertFalse(Periodic_Task.objects.filter(task=OSV_SCAN_TASK_NAME, start_time=self.start_time).exists())
+        mock_scan_product.assert_not_called()
+        self.assertFalse(Periodic_Task.objects.filter(task=OSV_SCAN_TASK_NAME).exists())
+        self.assertEqual("running_run", HUEY.get(OSV_SCAN_RUN_KEY, peek=True).run_id)
+        self.assertIn(
+            "OSV scanning of the previous run is still in progress.",
+            Periodic_Task.objects.filter(task=TASK_NAME).latest("start_time").message,
+        )

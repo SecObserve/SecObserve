@@ -57,6 +57,11 @@ def _get_run_cache(run_id: str) -> dict[str, tuple[OSV_Vulnerability, ...]]:
         return _run_caches[run_id]
 
 
+def release_run_cache(run_id: str) -> None:
+    with _run_caches_lock:
+        _run_caches.pop(run_id, None)
+
+
 class OSVScanner(BaseScanner):
     def __init__(self, run_id: Optional[str] = None) -> None:
         super().__init__()

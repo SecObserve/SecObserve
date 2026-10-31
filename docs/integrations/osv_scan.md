@@ -75,4 +75,6 @@ The automatic scan enqueues a separate background task for each product. These t
 
 A scan that fails with a transient error, like an outage of `api.osv.dev` or a lost database connection, is retried, see `OSV_SCAN_RETRIES` and `OSV_SCAN_RETRY_DELAY` in the [configuration](../getting_started/configuration.md#backend).
 
-When all scans of a run have finished, the entry `Scan products with OSV` in the `Background tasks` administration shows the result, e.g. `Scanned 998 of 1000 products, 2 failed.`, and one [exception notification](./notifications.md#notifications-for-exceptions) lists the products whose last attempt has failed. If scans were lost because the background process stopped, the next run adds an entry that the previous run did not finish.
+When all scans of a run have finished, the entry `Scan products with OSV` in the `Background tasks` administration shows the result, e.g. `Scanned 998 of 1000 products, 2 failed.`, and one [exception notification](./notifications.md#notifications-for-exceptions) lists the products whose last attempt has failed. If scans were lost because the background process stopped, the next run adds an entry that the previous run did not finish and sends an exception notification.
+
+As long as the scans of a run are not finished, at most 20 hours, a manually started import doesn't enqueue the products again, so that no product is scanned twice at the same time.
