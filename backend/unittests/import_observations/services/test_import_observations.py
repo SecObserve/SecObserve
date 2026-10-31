@@ -326,6 +326,86 @@ class TestFileUploadObservations(BaseTestCase):
             )
         self.assertNotIn("last_observation_change", product.get_dirty_fields())
 
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_product_written_once(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        self.assertEqual(len(self._product_updates(context)), 1)
+        product.refresh_from_db()
+        self.assertEqual(
+            product.last_observation_change,
+            Observation_Log.objects.filter(observation__product=product).latest("created").created,
+        )
+
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        self.assertEqual(len(self._product_updates(context)), 0)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    @patch("application.import_observations.services.import_observations.transaction")
+    def test_file_upload_observations_product_written_per_log_without_transaction(
+        self,
+        mock_transaction,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_transaction.get_autocommit.return_value = True
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        # One for the observation with the changed severity and one for each of the two resolved observations
+        product_updates = self._product_updates(context)
+        self.assertEqual(len(product_updates), 3)
+        for product_update in product_updates:
+            self.assertTrue(
+                product_update.startswith('UPDATE "core_product" SET "last_observation_change" = '), product_update
+            )
+
+    def _product_updates(self, context):
+        return [query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_product"')]
+
     def _import_file(self, product, file_name):
         with open(file_name, "r") as file:
             return file_upload_observations(

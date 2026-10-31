@@ -183,6 +183,9 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
         self.allowed_licenses_count: int | None = None
         self.ignored_licenses_count: int | None = None
 
+        # Set while an import in a transaction runs, which writes last_observation_change once at its end
+        self.defer_observation_change = False
+
         super().__init__(*args, **kwargs)
 
     def __str__(self) -> str:

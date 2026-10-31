@@ -70,9 +70,9 @@ def get_observations_for_vulnerability_check(
     filename: str,
     api_configuration_name: str,
 ) -> QuerySet[Observation]:
-    # The import reads product, product group and service of every observation it processes, so
-    # they are joined in instead of being loaded one query per observation.
-    observations = Observation.objects.select_related("product", "product__product_group", "origin_service")
+    # The import reads the service of every observation it processes, so it is joined in instead of being
+    # loaded one query per observation. The import sets the product of the observations itself.
+    observations = Observation.objects.select_related("origin_service")
 
     if filename or api_configuration_name:
         return observations.filter(

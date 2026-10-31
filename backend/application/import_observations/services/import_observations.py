@@ -299,7 +299,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
         import_parameters.api_configuration_name,
     )
     if not transaction.get_autocommit():
-        # The import locks the product (with its first observation log) and all these observations anyway. Lock them
+        # The import locks the product (with its change timestamp) and all these observations anyway. Lock them
         # first, the product before the observations by id, in the order of find_potential_duplicates and EPSS.
         Product.objects.select_for_update().filter(pk=import_parameters.product.pk).first()
         list(observations_before_query.select_for_update().order_by("pk").values_list("pk", flat=True))
@@ -313,7 +313,13 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     # Read current observations for the same vulnerability check, to find updated and resolved observations
     observations_before: dict[str, Observation] = {}
     for observation_before_for_dict in observations_before_query:
+        # One product instance for all observations, it collects the change timestamp of all their logs
+        observation_before_for_dict.product = import_parameters.product
         observations_before[observation_before_for_dict.identity_hash] = observation_before_for_dict
+
+    # Inside a transaction nobody sees the changes before the commit, so the change timestamp is written once at the
+    # end. Without one, every observation log writes it, so that a crash cannot hide committed changes from metrics.
+    import_parameters.product.defer_observation_change = not transaction.get_autocommit()
 
     observations_this_run: set[str] = set()
     vulnerability_check_observations: set[Observation] = set()
@@ -376,6 +382,10 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
 
     observations_resolved = _resolve_unimported_observations(observations_before)
     vulnerability_check_observations.update(observations_resolved)
+
+    import_parameters.product.defer_observation_change = False
+    if "last_observation_change" in import_parameters.product.get_dirty_fields():
+        import_parameters.product.save(update_fields=["last_observation_change"])
 
     if (not import_parameters.branch and not import_parameters.product.repository_default_branch) or (
         import_parameters.branch and import_parameters.branch.is_default_branch
