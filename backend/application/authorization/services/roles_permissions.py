@@ -190,6 +190,13 @@ class Permissions(IntEnum):
         }
 
     @classmethod
+    def get_scancodeio_project_permissions(cls) -> set["Permissions"]:
+        return {
+            Permissions.Product_View,
+            Permissions.Product_Edit,
+        }
+
+    @classmethod
     def get_component_license_permissions(cls) -> set["Permissions"]:
         return {
             Permissions.License_Component_Edit,

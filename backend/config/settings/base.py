@@ -146,6 +146,7 @@ LOCAL_APPS = [
     "application.metrics",
     "application.notifications",
     "application.rules",
+    "application.scancodeio",
     "application.vex",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps

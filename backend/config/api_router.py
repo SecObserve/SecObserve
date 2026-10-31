@@ -55,6 +55,7 @@ from application.notifications.api.views import (
     ProductNotificationViewSet,
 )
 from application.rules.api.views import GeneralRuleViewSet, ProductRuleViewSet
+from application.scancodeio.api.views import ScanCodeIOProjectViewSet
 from application.vex.api.views import (
     CSAFBranchViewSet,
     CSAFViewSet,
@@ -109,6 +110,7 @@ router.register("notifications", NotificationViewSet, basename="notifications")
 router.register("product_notifications", ProductNotificationViewSet, basename="product_notifications")
 router.register("vulnerability_checks", VulnerabilityCheckViewSet, basename="vulnerability_checks")
 router.register("potential_duplicates", PotentialDuplicateViewSet, basename="potential_duplicates")
+router.register("scancodeio_projects", ScanCodeIOProjectViewSet, basename="scancodeio_projects")
 router.register("vex/csaf", CSAFViewSet, basename="csaf")
 router.register(
     "vex/csaf_vulnerabilities",

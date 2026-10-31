@@ -92,6 +92,9 @@ services:
     restart: "no"
 
   backend:
+    environment:
+      # ScanCode.io calls the webhook of SecObserve with the service name as host
+      ALLOWED_HOSTS: ${SO_ALLOWED_HOSTS:-localhost,backend}
     depends_on:
       - postgres
       - scancodeio
