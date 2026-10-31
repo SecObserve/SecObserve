@@ -350,6 +350,13 @@ class TestFileUploadObservations(BaseTestCase):
         product = Product.objects.get(id=1)
 
         self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        # The newest log of the first import comes from a product rule, which must not bypass the deferred timestamp
+        latest_observation_log = Observation_Log.objects.filter(observation__product=product).latest("created")
+        self.assertIsNotNone(latest_observation_log.product_rule)
+        product.refresh_from_db()
+        self.assertEqual(product.last_observation_change, latest_observation_log.created)
+
         with CaptureQueriesContext(connection) as context:
             self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
 
