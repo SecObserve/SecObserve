@@ -100,6 +100,14 @@ Activation of this direction is controlled with the parameter *"Propagate new as
 
 When an import creates a new observation, the newest matching assessment from the other configured branches is applied to it automatically. Only manual assessments count as source: approved, not itself propagated, not created by rules, VEX statements or the parser, and changing severity or status.
 
+Removals count as well: if the newest matching assessment has been removed, nothing is applied to the new observation. This includes removals because of an expired risk acceptance.
+
+### Propagation of removed assessments
+
+Removals are propagated if *"Propagate new assessments to other branches"* or *"Propagate new assessments to new observations"* is active, because propagated copies can come from both directions.
+
+Removing an assessment removes it from similar findings on matching branches as well, if they still have the same assessment: the original one or a propagated copy of it. Findings with an assessment made on their own branch keep it. Assessments removed because their risk acceptance has expired are not propagated, because every finding expires with its own expiry date.
+
 
 ## Reviews
 
