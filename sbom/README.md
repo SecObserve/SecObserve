@@ -36,6 +36,30 @@ cosign verify-attestation --type cyclonedx \
 For the frontend image, replace `secobserve-backend` with `secobserve-frontend`.
 
 
+## Verify the signature and build provenance of an image
+
+Starting with release 1.64.0, the images are signed with [cosign](https://github.com/sigstore/cosign) and have a signed [SLSA build provenance](https://slsa.dev/spec/v1.0/provenance) attestation, which states the repository, commit, workflow and run that built the image. Both are created keyless with the identity of the GitHub workflow.
+
+Verify the signature of the backend image:
+
+```bash
+cosign verify \
+  --certificate-identity-regexp '^https://github.com/SecObserve/SecObserve/\.github/workflows/build_push_release\.yml@' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  ghcr.io/secobserve/secobserve-backend:RELEASE
+```
+
+Verify the build provenance of the backend image with the [GitHub CLI](https://cli.github.com/manual/gh_attestation_verify):
+
+```bash
+gh attestation verify oci://ghcr.io/secobserve/secobserve-backend:RELEASE \
+  --repo SecObserve/SecObserve \
+  --signer-workflow SecObserve/SecObserve/.github/workflows/build_push_release.yml
+```
+
+For the frontend image, replace `secobserve-backend` with `secobserve-frontend`.
+
+
 ## Minimum requirements for content
 
 * `metadata/component` 
@@ -67,6 +91,9 @@ For the frontend image, replace `secobserve-backend` with `secobserve-frontend`.
 * **Signed attestation on the multi-platform image**
     * The SBOM is attached to the image index, which is what the release tag points to
     * The operating system components are taken from the `linux/amd64` image, the `linux/arm64` image contains the same packages for a different architecture
+* **Signature and build provenance on the multi-platform image**
+    * Like the SBOM, both are attached to the image index
+    * The build provenance is created with [actions/attest](https://github.com/actions/attest) and stored in the container registry and in the GitHub attestations of the repository
 * **Merge into combined SBOM**
     * For a complete overview of the applications and containers
 * **Automated generation by GitHub workflow [build_push_release.yml](../.github/workflows/build_push_release.yml)**
