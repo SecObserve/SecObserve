@@ -245,8 +245,8 @@ jobs:
       -
         name: Install programs
         env:
-          CDXGEN_VERSION: 13.1.0
-          TRIVY_VERSION: 0.74.0
+          CDXGEN_VERSION: 13.6.0
+          TRIVY_VERSION: 0.76.1
           SBOM_UTILITY_VERSION: 0.19.2
           CYCLONE_DX_CLI_VERSION: 0.33.1
         run: |
