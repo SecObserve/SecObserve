@@ -21,7 +21,7 @@ RUN ASSET_HASH=$(sha256sum ./build/assets/* | sha256sum | cut -d ' ' -f 1) && \
         sed -i 's/hash_unknown/'"${ASSET_HASH}"'/g' ./build/index.html
 
 # production environment
-FROM nginx:stable-alpine-slim@sha256:3028fc1419f99b95c1c69f844bbaf49dc1b881750c51b497fc721ac4f02a14e6
+FROM nginx:stable-alpine-slim@sha256:dede8895648b461178c3bc604f7eed4423efe5220b2c4d839f5eb3d34ac3f8f7
 
 USER root
 
