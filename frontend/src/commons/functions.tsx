@@ -432,6 +432,17 @@ export const vulnerablecode_base_url_is_set = () => {
     }
 };
 
+export const feature_scancodeio_integration = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_scancodeio_integration = features.indexOf("feature_scancodeio_integration");
+        return feature_scancodeio_integration !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const feature_exploit_information = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");

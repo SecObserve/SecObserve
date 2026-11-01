@@ -1,9 +1,12 @@
 from typing import Optional
 
 from huey.contrib.djhuey import on_commit_task
+from jira.exceptions import JIRAError
+from requests.exceptions import RequestException
 
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
+from application.commons.services.connection_error import get_connection_error_message
 from application.core.models import Observation, Product
 from application.core.types import Severity, Status
 from application.issue_tracker.issue_trackers.base_issue_tracker import (
@@ -69,7 +72,7 @@ def _push_observation_to_issue_tracker_background(observation: Observation, user
                 observation.issue_tracker_issue_closed = True
                 observation.save()
     except Exception as e:
-        handle_task_exception(e, user)
+        handle_task_exception(_get_notification_exception(e), user)
         raise
 
 
@@ -88,8 +91,22 @@ def _push_deleted_observation_to_issue_tracker_background(
         if issue:
             issue_tracker.close_issue_for_deleted_observation(product, issue)
     except Exception as e:
-        handle_task_exception(e, user)
+        handle_task_exception(_get_notification_exception(e), user)
         raise
+
+
+class IssueTrackerError(Exception):
+    pass
+
+
+def _get_notification_exception(exception: Exception) -> Exception:
+    # The notification for the exception can be seen by the members of the product. The text of a connection error
+    # is replaced, it would tell them about the network of the backend otherwise. Huey still logs the original one.
+    if isinstance(exception, (RequestException, JIRAError)):
+        message = get_connection_error_message("Cannot access issue tracker", exception)
+        return IssueTrackerError(message).with_traceback(exception.__traceback__)
+
+    return exception
 
 
 def issue_tracker_factory(product: Product, with_communication: bool = True) -> BaseIssueTracker:

@@ -2,6 +2,8 @@ import re
 from datetime import date
 from typing import Optional
 
+from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -236,8 +238,15 @@ def _get_assessments_need_approval(product: Product) -> bool:
     return product.assessments_need_approval
 
 
-def remove_assessment(observation: Observation, comment: str) -> bool:
+def remove_assessment(
+    observation: Observation,
+    comment: str,
+    propagated_from: Optional[Observation_Log] = None,
+    propagate: bool = True,
+) -> Optional[Observation_Log]:
     if observation.assessment_severity or observation.assessment_status or observation.assessment_priority:
+        assessment_origin_id = _get_assessment_origin_id(observation) if propagate and not propagated_from else None
+
         observation.assessment_severity = ""
         observation.assessment_status = ""
         observation.assessment_priority = None
@@ -257,7 +266,7 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
         else:
             observation.risk_acceptance_expiry_date = None
 
-        create_observation_log(
+        observation_log = create_observation_log(
             observation=observation,
             severity="",
             status="",
@@ -268,14 +277,18 @@ def remove_assessment(observation: Observation, comment: str) -> bool:
             vex_remediations=None,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
             risk_acceptance_expiry_date=observation.risk_acceptance_expiry_date,
+            propagated_from=propagated_from,
         )
 
         check_security_gate(observation.product)
         push_observation_to_issue_tracker(observation, get_current_user())
 
-        return True
+        if assessment_origin_id:
+            propagate_assessment_removal(observation_log, assessment_origin_id)
 
-    return False
+        return observation_log
+
+    return None
 
 
 def assessment_approval(  # pylint: disable=too-many-positional-arguments
@@ -352,48 +365,84 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:
-    observation = observation_log.observation
+    for target_observation in _get_propagation_targets(observation_log.observation):
+        save_assessment(
+            observation=target_observation,
+            new_severity=observation_log.severity,
+            new_status=observation_log.status,
+            new_priority=observation_log.priority,
+            new_priority_changed=observation_log.priority_changed,
+            comment=observation_log.comment,
+            new_vex_justification=observation_log.vex_justification,
+            new_vex_remediations=observation_log.vex_remediations,
+            new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
+            propagated_from=observation_log,
+        )
 
+
+def propagate_assessment_removal(observation_log: Observation_Log, assessment_origin_id: int) -> None:
+    for target_observation in _get_propagation_targets(observation_log.observation, removal=True):
+        # targets that have been assessed independently keep their assessment
+        if _get_assessment_origin_id(target_observation) == assessment_origin_id:
+            remove_assessment(target_observation, observation_log.comment, propagated_from=observation_log)
+
+
+def _get_assessment_origin_id(observation: Observation) -> Optional[int]:
+    observation_log = _get_manual_assessment_logs().filter(observation=observation).order_by("-created").first()
+    if not observation_log or observation_log.assessment_status == Assessment_Status.ASSESSMENT_STATUS_REMOVED:
+        return None
+    return observation_log.propagated_from_id or observation_log.pk
+
+
+def _get_manual_assessment_logs() -> QuerySet[Observation_Log]:
+    # a removal changes neither severity nor status, but it ends the assessment it removes
+    return (
+        Observation_Log.objects.filter(
+            general_rule__isnull=True,
+            general_rule_rego__isnull=True,
+            product_rule__isnull=True,
+            product_rule_rego__isnull=True,
+            vex_statement__isnull=True,
+            assessment_status__in=(
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED,
+                Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+                Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+                Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+            ),
+        )
+        .exclude(~Q(assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED), severity="", status="")
+        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
+    )
+
+
+def _get_propagation_targets(observation: Observation, removal: bool = False) -> QuerySet[Observation]:
     if not observation.branch or not _has_propagation_identity(observation):
-        return
+        return Observation.objects.none()
 
-    propagate_branches = []
     propagate_branches_product_group = (
         _get_product_group_propagate_branches(observation)
-        if observation.product.product_group and observation.product.product_group.propagate_branches_new_assessment
+        if observation.product.product_group and _propagation_active(observation.product.product_group, removal)
         else []
     )
     propagate_branches_product = (
-        _get_product_propagate_branches(observation) if observation.product.propagate_branches_new_assessment else []
+        _get_product_propagate_branches(observation) if _propagation_active(observation.product, removal) else []
     )
     propagate_branches = propagate_branches_product_group + propagate_branches_product
     if not propagate_branches:
-        return
+        return Observation.objects.none()
 
     compiled_branches = _get_compiled_branches(observation, propagate_branches)
+    branches = [
+        branch
+        for branch in Branch.objects.filter(product=observation.product).exclude(id=observation.branch.pk)
+        if any(compiled_branch.match(branch.name) for compiled_branch in compiled_branches)
+    ]
 
-    branches = Branch.objects.filter(product=observation.product).exclude(id=observation.branch.pk)
-    for branch in branches:
-        for compiled_branch in compiled_branches:
-            if compiled_branch.match(branch.name):
-                observations = Observation.objects.filter(
-                    product=observation.product,
-                    branch=branch,
-                    **_get_propagation_filters(observation),
-                )
-                for target_observation in observations:
-                    save_assessment(
-                        observation=target_observation,
-                        new_severity=observation_log.severity,
-                        new_status=observation_log.status,
-                        new_priority=observation_log.priority,
-                        new_priority_changed=observation_log.priority_changed,
-                        comment=observation_log.comment,
-                        new_vex_justification=observation_log.vex_justification,
-                        new_vex_remediations=observation_log.vex_remediations,
-                        new_risk_acceptance_expiry_date=observation_log.risk_acceptance_expiry_date,
-                        propagated_from=observation_log,
-                    )
+    return Observation.objects.filter(
+        product=observation.product,
+        branch__in=branches,
+        **_get_propagation_filters(observation),
+    )
 
 
 def set_propagated_assessment_for_new_observation(observation: Observation) -> None:
@@ -416,25 +465,14 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
     compiled_branches = _get_compiled_branches(observation, propagate_branches)
 
     observation_logs = (
-        Observation_Log.objects.filter(
+        _get_manual_assessment_logs()
+        .filter(
             observation__product=observation.product,
             observation__branch__isnull=False,
             propagated_from__isnull=True,
-            general_rule__isnull=True,
-            general_rule_rego__isnull=True,
-            product_rule__isnull=True,
-            product_rule_rego__isnull=True,
-            vex_statement__isnull=True,
-            assessment_status__in=(
-                Assessment_Status.ASSESSMENT_STATUS_APPROVED,
-                Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
-                Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
-            ),
             **_get_propagation_filters(observation, prefix="observation__"),
         )
         .exclude(observation__branch=observation.branch)
-        .exclude(severity="", status="")
-        .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
         .select_related("observation__branch")
         .order_by("observation__branch", "-created")
     )
@@ -453,7 +491,10 @@ def set_propagated_assessment_for_new_observation(observation: Observation) -> N
         ):
             newest_observation_log = observation_log
 
-    if newest_observation_log:
+    if (
+        newest_observation_log
+        and newest_observation_log.assessment_status != Assessment_Status.ASSESSMENT_STATUS_REMOVED
+    ):
         save_assessment(
             observation=observation,
             new_severity=newest_observation_log.severity,
@@ -492,6 +533,11 @@ def _get_product_group_propagate_branches(observation: Observation) -> list:
 
 def _get_product_propagate_branches(observation: Observation) -> list:
     return list(observation.product.propagate_branches) if observation.product.propagate_branches else []
+
+
+def _propagation_active(product: Product, removal: bool) -> bool:
+    # copies can come from both directions, so a removal has to reach both
+    return product.propagate_branches_new_assessment or (removal and product.propagate_branches_new_observation)
 
 
 def _get_compiled_branches(observation: Observation, propagate_branches: list) -> set[re.Pattern]:

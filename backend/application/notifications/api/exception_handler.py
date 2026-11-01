@@ -104,11 +104,10 @@ class ExceptionNotificationMiddleware:
 
 
 def format_exception_message(exc: Exception) -> str:
-    if hasattr(exc, "detail") and exc.detail and type(exc.detail).__name__ == "ReturnDict":
+    if hasattr(exc, "detail") and exc.detail and isinstance(exc.detail, dict):
         message_list = []
         for key in exc.detail:
-            for message in exc.detail.get(key):
-                message_list.append(f'{key.replace("_", " ").capitalize()}: {str(message)}')
+            message_list.extend(_format_validation_messages(_format_field_name(key), exc.detail.get(key)))
         return "\n".join(message_list)
 
     if hasattr(exc, "detail") and exc.detail and isinstance(exc.detail, list) and len(exc.detail) > 0:
@@ -123,6 +122,27 @@ def format_exception_message(exc: Exception) -> str:
         return _format_referenced_foreign_keys(exc.args[0])
 
     return str(exc)
+
+
+def _format_field_name(field_name: str) -> str:
+    return field_name.replace("_", " ").capitalize()
+
+
+def _format_validation_messages(label: str, detail: Any) -> list[str]:
+    if isinstance(detail, dict):
+        messages = []
+        for key, value in detail.items():
+            if isinstance(key, int):
+                # Errors of list items are reported per index
+                messages.extend(_format_validation_messages(f"{label} (entry {key + 1})", value))
+            else:
+                messages.extend(_format_validation_messages(f"{label} / {_format_field_name(key)}", value))
+        return messages
+
+    if isinstance(detail, list):
+        return [message for item in detail for message in _format_validation_messages(label, item)]
+
+    return [f"{label}: {detail}"]
 
 
 def _format_referenced_foreign_keys(message: str) -> str:

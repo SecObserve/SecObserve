@@ -70,6 +70,7 @@ class TestJiraIssueTracker(BaseTestCase):
         save_mock.assert_called_once()
         self.assertEqual("jira_issue_1", issue_id)
         self.assertEqual("Open", self.observation_1.issue_tracker_jira_initial_status)
+        self.assertEqual(0, issue_tracker.jira._session.max_redirects)
 
     @patch("application.issue_tracker.issue_trackers.jira_issue_tracker.JIRA.server_info")
     @patch("application.issue_tracker.issue_trackers.jira_issue_tracker.JIRA.issue")

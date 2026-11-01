@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from django.db import transaction
+from django.db.models import Q
 from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from huey.contrib.djhuey import lock_task, on_commit_task
@@ -17,7 +18,10 @@ from application.core.services.observation import (
     normalize_observation_fields,
     set_product_flags,
 )
-from application.core.services.security_gate import check_security_gate
+from application.core.services.security_gate import (
+    check_security_gate,
+    check_security_gates,
+)
 from application.issue_tracker.services.issue_tracker import (
     push_deleted_observation_to_issue_tracker,
 )
@@ -66,8 +70,7 @@ def product_post_save(
             or "security_gate_threshold_unknown" in instance.get_dirty_fields().keys()
         ):
             if instance.is_product_group:
-                for product in instance.products.all():
-                    check_security_gate(product)
+                check_security_gates(instance.products.all())
             else:
                 check_security_gate(instance)
     else:
@@ -107,7 +110,11 @@ def settings_post_save_task() -> None:
 
     logger.info("--- Settings post_save_task - start ---")
 
-    for product in Product.objects.filter(is_product_group=False):
-        check_security_gate(product)
+    # Products with a security gate of their own or of their product group don't use the settings
+    check_security_gates(
+        Product.objects.filter(is_product_group=False, security_gate_active__isnull=True).filter(
+            Q(product_group__isnull=True) | Q(product_group__security_gate_active__isnull=True)
+        )
+    )
 
     logger.info("--- Settings post_save_task - finished ---")

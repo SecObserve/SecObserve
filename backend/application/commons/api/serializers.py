@@ -26,6 +26,13 @@ class StatusSettingsSerializer(Serializer):
     date_format = CharField()
 
 
+SCANCODEIO_REQUIRED_SETTINGS = {
+    "scancodeio_base_url": "ScanCode.io base URL",
+    "scancodeio_api_key": "ScanCode.io API key",
+    "scancodeio_webhook_base_url": "SecObserve URL for ScanCode.io webhooks",
+}
+
+
 class SettingsSerializer(ModelSerializer):
     id = SerializerMethodField()
     observation_title_notification_status_list = ListField(
@@ -42,6 +49,26 @@ class SettingsSerializer(ModelSerializer):
         # obj is needed for the signature but we don't need it
         # The id is hardcoded to 1 because there is only one instance of the Settings model
         return 1
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+
+        if self._current_value(attrs, "feature_scancodeio_integration"):
+            errors = {
+                field: f"{label} is required when the ScanCode.io integration is enabled."
+                for field, label in SCANCODEIO_REQUIRED_SETTINGS.items()
+                if not self._current_value(attrs, field)
+            }
+            if errors:
+                raise ValidationError(errors)
+
+        return attrs
+
+    def _current_value(self, attrs: dict, field: str) -> Any:
+        # A partial update doesn't contain all fields, then the stored value is relevant
+        if field in attrs:
+            return attrs[field]
+        return getattr(self.instance, field, None)
 
     def validate_observation_title_notification_status_list(self, value: list[str]) -> list[str]:
         if not isinstance(value, list):

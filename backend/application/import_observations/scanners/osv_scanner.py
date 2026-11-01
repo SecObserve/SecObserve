@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import batched
@@ -10,6 +11,7 @@ from application.import_observations.parsers.osv.parser import (
     OSV_Component,
     OSV_Vulnerability,
     OSVParser,
+    create_osv_session,
 )
 from application.import_observations.scanners.base_scanner import (
     BaseScanner,
@@ -37,15 +39,38 @@ class RequestQueries:
 OSV_QUERYBATCH_URL = "https://api.osv.dev/v1/querybatch"
 OSV_QUERYBATCH_SIZE = 500
 OSV_QUERYBATCH_TIMEOUT = 5 * 60
+# A connection dropped mid-response is retried once, but a heavy batch that timed out is not retried
+# again and again: a batch fails after about 10 minutes instead of about 30 minutes.
+OSV_QUERYBATCH_READ_RETRIES = 1
+
+
+_run_caches_lock = threading.Lock()
+_run_caches: dict[str, dict[str, tuple[OSV_Vulnerability, ...]]] = {}
+
+
+def _get_run_cache(run_id: str) -> dict[str, tuple[OSV_Vulnerability, ...]]:
+    with _run_caches_lock:
+        if run_id not in _run_caches:
+            # Only the latest run is kept, a new run asks OSV again for the vulnerabilities published since
+            _run_caches.clear()
+            _run_caches[run_id] = {}
+        return _run_caches[run_id]
+
+
+def release_run_cache(run_id: str) -> None:
+    with _run_caches_lock:
+        _run_caches.pop(run_id, None)
 
 
 class OSVScanner(BaseScanner):
-    def __init__(self) -> None:
+    def __init__(self, run_id: Optional[str] = None) -> None:
         super().__init__()
         self.parser = OSVParser()
-        # The same purl is used by many products, and the nightly import keeps one scanner for
-        # the whole run, so OSV is asked for a purl once instead of once per product.
-        self.vulnerabilities_by_purl: dict[str, tuple[OSV_Vulnerability, ...]] = {}
+        # The same purl is used by many products. The scans of a nightly run share the cache of their run
+        # within the process, so OSV is asked for a purl once per run instead of once per product.
+        self.vulnerabilities_by_purl: dict[str, tuple[OSV_Vulnerability, ...]] = (
+            _get_run_cache(run_id) if run_id else {}
+        )
 
     def _do_scan(self, license_components: list[License_Component]) -> Any:
         # dict.fromkeys deduplicates the purls and keeps the order of the components
@@ -74,9 +99,10 @@ class OSVScanner(BaseScanner):
 
         page_tokens: dict[str, str] = {}
         pending = purls
-        while pending:
-            page_tokens = self._query_purl_page(pending, page_tokens, vulnerabilities)
-            pending = list(page_tokens)
+        with create_osv_session(read_retries=OSV_QUERYBATCH_READ_RETRIES) as session:
+            while pending:
+                page_tokens = self._query_purl_page(session, pending, page_tokens, vulnerabilities)
+                pending = list(page_tokens)
 
         # Tuples, because CPython shares one empty tuple: most purls have no vulnerabilities at
         # all, and the cache holds every purl of the whole scan run.
@@ -84,6 +110,7 @@ class OSVScanner(BaseScanner):
 
     def _query_purl_page(
         self,
+        session: requests.Session,
         purls: list[str],
         page_tokens: dict[str, str],
         vulnerabilities: dict[str, set[OSV_Vulnerability]],
@@ -95,8 +122,7 @@ class OSVScanner(BaseScanner):
                 queries=[RequestPackage(RequestPURL(purl=purl), page_tokens.get(purl)) for purl in purls_batch]
             )
 
-            response = requests.post(  # nosec B113
-                # This is a false positive, there is a timeout of 5 minutes
+            response = session.post(
                 url=OSV_QUERYBATCH_URL,
                 data=jsonpickle.encode(queries, unpicklable=False),
                 timeout=OSV_QUERYBATCH_TIMEOUT,
