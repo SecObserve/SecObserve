@@ -1,0 +1,14 @@
+cryptolyzer:
+  SCANNER: cryptolyzer
+  TARGET: "www.example.org"
+  REPORT_NAME: "cryptolyzer.json"
+
+drheader:
+  SCANNER: drheader
+  TARGET: "https://www.example.org"
+  REPORT_NAME: "drheader.json"
+  SO_ORIGIN_ENDPOINT_URL: "https://www.example.org"
+
+importer:
+  SO_UPLOAD: "true"
+  SO_PRODUCT_NAME: "Example website"
