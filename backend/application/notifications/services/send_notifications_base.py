@@ -1,7 +1,7 @@
 import ipaddress
 import logging
 import socket
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any, Optional
 from urllib.parse import urlsplit
 
@@ -177,9 +177,11 @@ def send_slack_notification_test(webhook: str) -> None:
         response.raise_for_status()
 
 
-def _validate_webhook_url(webhook: str) -> bool:
+def _validate_webhook_url(
+    webhook: str, allowed_networks: Sequence[ipaddress.IPv4Network | ipaddress.IPv6Network] = ()
+) -> bool:
     split_url = urlsplit(webhook)
-    if split_url.scheme != "https" or not split_url.hostname:
+    if split_url.scheme not in ("http", "https") or not split_url.hostname:
         logger.error(
             format_log_message(
                 message=f"Webhook URL must use https and a valid host: {webhook}",
@@ -188,7 +190,9 @@ def _validate_webhook_url(webhook: str) -> bool:
         return False
 
     try:
-        address_infos = socket.getaddrinfo(split_url.hostname, split_url.port or 443, proto=socket.IPPROTO_TCP)
+        address_infos = socket.getaddrinfo(
+            split_url.hostname, split_url.port or (443 if split_url.scheme == "https" else 80), proto=socket.IPPROTO_TCP
+        )
     except socket.gaierror as e:
         logger.error(
             format_log_message(
@@ -200,6 +204,15 @@ def _validate_webhook_url(webhook: str) -> bool:
 
     for address_info in address_infos:
         ip_addr = ipaddress.ip_address(address_info[4][0])
+        if any(ip_addr in network for network in allowed_networks if network.version == ip_addr.version):
+            continue
+        if split_url.scheme != "https":
+            logger.error(
+                format_log_message(
+                    message=f"Webhook URL must use https unless the host is in an allowed network: {webhook}",
+                )
+            )
+            return False
         if (
             ip_addr.is_private  # pylint: disable=too-many-boolean-expressions
             or ip_addr.is_loopback

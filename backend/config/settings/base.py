@@ -2,6 +2,7 @@
 Base settings to build other settings files upon.
 """
 
+import ipaddress
 from pathlib import Path
 from socket import gethostbyname, gethostname
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -496,6 +497,25 @@ if OSV_SCAN_RETRIES < 0:
 OSV_SCAN_RETRY_DELAY = env.int("OSV_SCAN_RETRY_DELAY", 300)
 if OSV_SCAN_RETRY_DELAY < 0:
     raise ValueError("OSV_SCAN_RETRY_DELAY must not be negative")
+
+# Outbound webhooks
+WEBHOOK_RETRY_DELAYS = env.list("WEBHOOK_RETRY_DELAYS", cast=int, default=[60, 300, 1800, 7200, 21600])
+if not WEBHOOK_RETRY_DELAYS or any(delay < 1 for delay in WEBHOOK_RETRY_DELAYS):
+    raise ValueError("WEBHOOK_RETRY_DELAYS must be a non-empty list of positive integers")
+WEBHOOK_TIMEOUT = env.int("WEBHOOK_TIMEOUT", 10)
+if WEBHOOK_TIMEOUT < 1:
+    raise ValueError("WEBHOOK_TIMEOUT must be at least 1")
+WEBHOOK_FAILURE_ALERT_THRESHOLD = env.int("WEBHOOK_FAILURE_ALERT_THRESHOLD", 5)
+if WEBHOOK_FAILURE_ALERT_THRESHOLD < 1:
+    raise ValueError("WEBHOOK_FAILURE_ALERT_THRESHOLD must be at least 1")
+WEBHOOK_DELIVERY_RETENTION_DAYS = env.int("WEBHOOK_DELIVERY_RETENTION_DAYS", 30)
+if WEBHOOK_DELIVERY_RETENTION_DAYS < 1:
+    raise ValueError("WEBHOOK_DELIVERY_RETENTION_DAYS must be at least 1")
+WEBHOOK_ALLOWED_NETWORKS = [
+    ipaddress.ip_network(network.strip(), strict=False)
+    for network in env.list("WEBHOOK_ALLOWED_NETWORKS", default=[])
+    if network.strip()
+]
 
 HUEY_STATS = {
     "database": huey_stats_database,
