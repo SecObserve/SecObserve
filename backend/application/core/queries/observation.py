@@ -271,6 +271,12 @@ OBSERVATION_FULL_TEXT_SEARCH_FIELDS = [
     "recommendation",
     "vulnerability_id",
     "vulnerability_id_aliases",
+    "origin_component_name_version",
+    "origin_docker_image_name_tag",
+    "origin_endpoint_url",
+    "origin_source_file",
+    "origin_cloud_qualified_resource",
+    "origin_kubernetes_qualified_resource",
 ]
 OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = ["comment"]
 

@@ -10,6 +10,12 @@ OBSERVATION_FULL_TEXT_SEARCH_FIELDS = {
     "recommendation": "core_obs_recommend_trgm_idx",
     "vulnerability_id": "core_obs_vuln_id_trgm_idx",
     "vulnerability_id_aliases": "core_obs_vuln_alias_trgm_idx",
+    "origin_component_name_version": "core_obs_component_trgm_idx",
+    "origin_docker_image_name_tag": "core_obs_docker_image_trgm_idx",
+    "origin_endpoint_url": "core_obs_endpoint_url_trgm_idx",
+    "origin_source_file": "core_obs_source_file_trgm_idx",
+    "origin_cloud_qualified_resource": "core_obs_cloud_res_trgm_idx",
+    "origin_kubernetes_qualified_resource": "core_obs_k8s_res_trgm_idx",
 }
 
 OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = {

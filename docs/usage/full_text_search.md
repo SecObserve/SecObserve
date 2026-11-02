@@ -26,6 +26,7 @@ The search looks into these texts of an observation:
 * Recommendation
 * Vulnerability id
 * Vulnerability id aliases
+* Origins: Component name and version, Docker image name and tag, endpoint URL, source file, cloud resource and Kubernetes resource
 * Comments of all entries in the observation log, e.g. the comments of assessments
 
 ## Matching rules
