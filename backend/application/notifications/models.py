@@ -110,7 +110,8 @@ class Webhook(Model):
 
 
 class Webhook_Delivery(Model):
-    webhook = ForeignKey(Webhook, on_delete=CASCADE, related_name="deliveries")
+    # No DB constraint: on MySQL the insert would share-lock the webhook row until the producer commits
+    webhook = ForeignKey(Webhook, on_delete=CASCADE, related_name="deliveries", db_constraint=False)
     event_id = UUIDField()
     event_type = CharField(max_length=64)
     payload = TextField()
