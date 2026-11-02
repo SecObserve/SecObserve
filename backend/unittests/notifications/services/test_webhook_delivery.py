@@ -33,6 +33,9 @@ class TestWebhookDelivery(BaseTestCase):
         self.mock_send = self._patch("send_webhook_request", _result(200))
         self.mock_schedule = self._patch("deliver_webhook.schedule")
         self.mock_alert = self._patch("send_task_exception_notification")
+        patcher = patch.dict("application.notifications.services.webhook_delivery._kicked_at", clear=True)
+        self.addCleanup(patcher.stop)
+        patcher.start()
         self.webhook = self._webhook()
 
     def _patch(self, name, return_value=None):
@@ -277,6 +280,22 @@ class TestWebhookDelivery(BaseTestCase):
         self.webhook.refresh_from_db()
         self.assertEqual(NOW + timedelta(seconds=2), self.webhook.next_attempt_at)
         self.mock_schedule.assert_called_once_with(args=(self.webhook.pk,), delay=2)
+
+    def test_kick_throttled_within_process(self):
+        patcher = patch("time.monotonic", return_value=100.0)
+        self.addCleanup(patcher.stop)
+        mock_monotonic = patcher.start()
+
+        with self.assertNumQueries(1):
+            kick_webhooks([self.webhook.pk])
+            kick_webhooks([self.webhook.pk])
+
+        self._set_webhook(next_attempt_at=None)
+        mock_monotonic.return_value = 102.0
+        with self.assertNumQueries(1):
+            kick_webhooks([self.webhook.pk])
+
+        self.assertEqual(2, self.mock_schedule.call_count)
 
     def test_kick_after_expired_value(self):
         self._set_webhook(next_attempt_at=NOW - timedelta(seconds=1))

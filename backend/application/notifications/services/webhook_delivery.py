@@ -1,3 +1,4 @@
+import time
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 from typing import Optional
@@ -21,6 +22,8 @@ from application.notifications.types import Webhook_Delivery_Status
 KICK_DELAY = timedelta(seconds=2)
 BATCH_SIZE = 100
 
+_kicked_at: dict[int, float] = {}
+
 
 class WebhookDeliveryError(Exception):
     """Reported once when a webhook has failed WEBHOOK_FAILURE_ALERT_THRESHOLD times in a row."""
@@ -28,7 +31,12 @@ class WebhookDeliveryError(Exception):
 
 def kick_webhooks(webhook_ids: Iterable[int]) -> None:
     """Claiming next_attempt_at first coalesces an import's events and never touches a lease or a backoff."""
+    now = time.monotonic()
     for webhook_id in webhook_ids:
+        # An import's events kick in a burst after commit; per process only, a race costs one extra kick
+        if now - _kicked_at.get(webhook_id, float("-inf")) < KICK_DELAY.total_seconds():
+            continue
+        _kicked_at[webhook_id] = now
         if _claim(webhook_id, KICK_DELAY):
             deliver_webhook.schedule(args=(webhook_id,), delay=KICK_DELAY.seconds)
 

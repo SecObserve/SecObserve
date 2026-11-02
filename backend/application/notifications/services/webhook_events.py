@@ -36,7 +36,10 @@ def emit_observation_event(event_type: str, observation: Observation) -> None:
     _emit(
         event_type,
         observation.product,
-        lambda: {"product": _product(observation.product), "observation": _observation(observation)},
+        lambda base_url: {
+            "product": _product(observation.product, base_url),
+            "observation": _observation(observation, base_url),
+        },
         observation,
     )
 
@@ -46,17 +49,21 @@ def emit_assessment_event(event_type: str, observation_log: Observation_Log) -> 
     _emit(
         event_type,
         observation.product,
-        lambda: {
-            "product": _product(observation.product),
-            "observation": _observation(observation),
-            "assessment": _assessment(observation_log),
+        lambda base_url: {
+            "product": _product(observation.product, base_url),
+            "observation": _observation(observation, base_url),
+            "assessment": _assessment(observation_log, base_url),
         },
         observation,
     )
 
 
 def emit_rule_event(event_type: str, rule: Rule) -> None:
-    _emit(event_type, rule.product, lambda: {"product": _product(rule.product), "rule": _rule(rule)})
+    _emit(
+        event_type,
+        rule.product,
+        lambda base_url: {"product": _product(rule.product, base_url), "rule": _rule(rule, base_url)},
+    )
 
 
 def emit_import_event(  # pylint: disable=too-many-arguments
@@ -72,8 +79,8 @@ def emit_import_event(  # pylint: disable=too-many-arguments
     _emit(
         Webhook_Event_Type.IMPORT_COMPLETED,
         product,
-        lambda: {
-            "product": _product(product),
+        lambda base_url: {
+            "product": _product(product, base_url),
             "import": {
                 "parser": parser_name,
                 "branch": branch.name if branch else None,
@@ -89,13 +96,13 @@ def emit_import_event(  # pylint: disable=too-many-arguments
 
 
 def emit_security_gate_event(product: Product) -> None:
-    _emit(Webhook_Event_Type.SECURITY_GATE_CHANGED, product, lambda: {"product": _product(product)})
+    _emit(Webhook_Event_Type.SECURITY_GATE_CHANGED, product, lambda base_url: {"product": _product(product, base_url)})
 
 
 def _emit(
     event_type: str,
     product: Optional[Product],
-    build_data: Callable[[], dict[str, Any]],
+    build_data: Callable[[str], dict[str, Any]],
     observation: Optional[Observation] = None,
 ) -> None:
     """Rows join the producer's transaction; the kick runs after commit and cannot fail the request."""
@@ -110,7 +117,7 @@ def _emit(
     if not webhooks:
         return
 
-    payload = build_webhook_payload(event_type, build_data())
+    payload = build_webhook_payload(event_type, build_data(get_base_url_frontend()))
     event_id = uuid.uuid4()
     Webhook_Delivery.objects.bulk_create(
         Webhook_Delivery(webhook=webhook, event_id=event_id, event_type=event_type, payload=payload)
@@ -125,11 +132,11 @@ def _matches_severity(webhook: Webhook, observation: Optional[Observation]) -> b
     return observation.numerical_severity <= Severity.NUMERICAL_SEVERITIES[webhook.min_severity]
 
 
-def _url(path: str) -> str:
-    return f"{get_base_url_frontend()}#/{path}/show"
+def _url(base_url: str, path: str) -> str:
+    return f"{base_url}#/{path}/show"
 
 
-def _product(product: Optional[Product]) -> Optional[dict[str, Any]]:
+def _product(product: Optional[Product], base_url: str) -> Optional[dict[str, Any]]:
     if product is None:
         return None
     return {
@@ -139,11 +146,11 @@ def _product(product: Optional[Product]) -> Optional[dict[str, Any]]:
             {"id": product.product_group.pk, "name": product.product_group.name} if product.product_group else None
         ),
         "security_gate_passed": product.security_gate_passed,
-        "url": _url(f"products/{product.pk}"),
+        "url": _url(base_url, f"products/{product.pk}"),
     }
 
 
-def _observation(observation: Observation) -> dict[str, Any]:
+def _observation(observation: Observation, base_url: str) -> dict[str, Any]:
     return {
         "id": observation.pk,
         "title": observation.title,
@@ -155,11 +162,11 @@ def _observation(observation: Observation) -> dict[str, Any]:
         "branch": observation.branch.name if observation.branch else None,
         "service": observation.origin_service.name if observation.origin_service else None,
         "scanner": observation.scanner,
-        "url": _url(f"observations/{observation.pk}"),
+        "url": _url(base_url, f"observations/{observation.pk}"),
     }
 
 
-def _assessment(observation_log: Observation_Log) -> dict[str, Any]:
+def _assessment(observation_log: Observation_Log, base_url: str) -> dict[str, Any]:
     approval_user = observation_log.approval_user
     return {
         "id": observation_log.pk,
@@ -171,11 +178,11 @@ def _assessment(observation_log: Observation_Log) -> dict[str, Any]:
         "assessment_status": observation_log.assessment_status,
         "approval_user": approval_user.username if approval_user else None,
         "rejection_remark": observation_log.rejection_remark,
-        "url": _url(f"observation_logs/{observation_log.pk}"),
+        "url": _url(base_url, f"observation_logs/{observation_log.pk}"),
     }
 
 
-def _rule(rule: Rule) -> dict[str, Any]:
+def _rule(rule: Rule, base_url: str) -> dict[str, Any]:
     scope, path = ("product", "product_rules") if rule.product else ("general", "general_rules")
     return {
         "id": rule.pk,
@@ -185,5 +192,5 @@ def _rule(rule: Rule) -> dict[str, Any]:
         "approval_status": rule.approval_status,
         "approval_user": rule.approval_user.username if rule.approval_user else None,
         "rejection_remark": rule.rejection_remark,
-        "url": _url(f"{path}/{rule.pk}"),
+        "url": _url(base_url, f"{path}/{rule.pk}"),
     }

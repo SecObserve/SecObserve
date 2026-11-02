@@ -248,6 +248,14 @@ class TestWebhookEvents(BaseTestCase):
             data["assessment"],
         )
 
+    def test_base_url_loaded_once_per_event(self):
+        self._webhook(event_types=Webhook_Event_Type.ASSESSMENT_APPROVAL_REQUESTED)
+        with patch(
+            "application.notifications.services.webhook_events.get_base_url_frontend", return_value=BASE
+        ) as mock_base_url:
+            emit_assessment_event(Webhook_Event_Type.ASSESSMENT_APPROVAL_REQUESTED, self.observation_log_1)
+        mock_base_url.assert_called_once_with()
+
     def _import(self):
         emit_import_event(
             product=self.product_1,
