@@ -5,15 +5,18 @@ from unittest.mock import call, patch
 
 from django.test import override_settings
 
+from application.core.models import Product
 from application.notifications.models import Webhook, Webhook_Delivery
 from application.notifications.services.webhook_delivery import (
+    KICK_DELAY,
     WebhookDeliveryError,
     deliver_webhook,
     dispatch_webhooks,
     kick_webhooks,
 )
+from application.notifications.services.webhook_events import emit_security_gate_event
 from application.notifications.services.webhook_send import Webhook_Send_Result
-from application.notifications.types import Webhook_Delivery_Status
+from application.notifications.types import Webhook_Delivery_Status, Webhook_Event_Type
 from unittests.base_test_case import BaseTestCase
 
 NOW = datetime(2026, 11, 2, 12, 0, tzinfo=dt_timezone.utc)
@@ -29,7 +32,7 @@ def _result(status_code: int) -> Webhook_Send_Result:
 class TestWebhookDelivery(BaseTestCase):
     def setUp(self):
         super().setUp()
-        self._patch("timezone.now", NOW)
+        self.mock_now = self._patch("timezone.now", NOW)
         self.mock_send = self._patch("send_webhook_request", _result(200))
         self.mock_schedule = self._patch("deliver_webhook.schedule")
         self.mock_alert = self._patch("send_task_exception_notification")
@@ -191,16 +194,15 @@ class TestWebhookDelivery(BaseTestCase):
         self.mock_send.assert_not_called()
         self.assertIsNone(self.webhook.next_attempt_at)
 
-    def test_lost_lease_stops_the_drain(self):
+    def _change_webhook_in_flight(self, **fields):
         first = self._delivery()
         second = self._delivery()
 
-        def send_and_lose_lease(*args):
-            # A reset of the webhook while the request is in flight
-            self._set_webhook(next_attempt_at=None)
+        def send_and_change_webhook(*args):
+            self._set_webhook(**fields)
             return _result(200)
 
-        self.mock_send.side_effect = send_and_lose_lease
+        self.mock_send.side_effect = send_and_change_webhook
 
         self._deliver()
 
@@ -209,6 +211,13 @@ class TestWebhookDelivery(BaseTestCase):
         self.assertEqual(Webhook_Delivery_Status.SUCCEEDED, first.status)
         self.assertEqual(Webhook_Delivery_Status.PENDING, second.status)
         self.mock_send.assert_called_once()
+
+    def test_lost_lease_stops_the_drain(self):
+        # A reset of the webhook while the request is in flight
+        self._change_webhook_in_flight(next_attempt_at=None)
+
+    def test_deactivation_stops_the_drain(self):
+        self._change_webhook_in_flight(active=False)
 
     def test_lease_follows_timeout(self):
         leases = []
@@ -313,6 +322,22 @@ class TestWebhookDelivery(BaseTestCase):
         self.mock_schedule.assert_not_called()
         inactive.refresh_from_db()
         self.assertIsNone(inactive.next_attempt_at)
+
+    def test_emit_to_delivery(self):
+        self._set_webhook(event_types=Webhook_Event_Type.SECURITY_GATE_CHANGED)
+
+        with self.captureOnCommitCallbacks(execute=True):
+            emit_security_gate_event(Product.objects.create(name="product"))
+
+        self.mock_schedule.assert_called_once_with(args=(self.webhook.pk,), delay=2)
+        self.mock_now.return_value = NOW + KICK_DELAY + timedelta(seconds=1)
+        self._deliver()
+
+        delivery = Webhook_Delivery.objects.get()
+        self.mock_send.assert_called_once_with(
+            "https://example.com/hook", "whsec_c2VjcmV0", str(delivery.event_id), delivery.payload
+        )
+        self.assertEqual(Webhook_Delivery_Status.SUCCEEDED, delivery.status)
 
     def test_dispatch_schedules_due_only(self):
         self._delivery()
