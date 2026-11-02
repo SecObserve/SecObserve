@@ -78,6 +78,10 @@ from application.licenses.services.license_policy import apply_license_policy_pr
 from application.licenses.services.licenselynx import apply_licenselynx
 from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
+from application.notifications.services.webhook_events import (
+    emit_observation_event,
+)
+from application.notifications.types import Webhook_Event_Type
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
 
@@ -369,6 +373,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
 
                     if imported_observation.current_status in Status.STATUS_ACTIVE:
                         observations_new += 1
+                        emit_observation_event(Webhook_Event_Type.OBSERVATION_CREATED, imported_observation)
 
                     # Add identity_hash to set of observations in this run to detect duplicates in this run
                     observations_this_run.add(imported_observation.identity_hash)

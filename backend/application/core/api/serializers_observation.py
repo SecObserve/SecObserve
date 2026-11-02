@@ -60,6 +60,10 @@ from application.issue_tracker.services.issue_tracker import (
     issue_tracker_factory,
     push_observation_to_issue_tracker,
 )
+from application.notifications.services.webhook_events import (
+    emit_observation_event,
+)
+from application.notifications.types import Webhook_Event_Type
 
 
 class NestedReferenceSerializer(ModelSerializer):
@@ -469,6 +473,9 @@ class ObservationCreateSerializer(ModelSerializer):
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation.risk_acceptance_expiry_date,
         )
+
+        if observation.current_status in Status.STATUS_ACTIVE:
+            emit_observation_event(Webhook_Event_Type.OBSERVATION_CREATED, observation)
 
         check_security_gate_observation(observation)
         push_observation_to_issue_tracker(observation, get_current_user())

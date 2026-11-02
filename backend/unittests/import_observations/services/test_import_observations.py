@@ -38,6 +38,7 @@ from application.licenses.models import (
     License_Policy_Item,
 )
 from application.licenses.types import License_Policy_Evaluation_Result
+from application.notifications.types import Webhook_Event_Type
 from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
 
@@ -50,6 +51,38 @@ class TestFileUploadObservations(BaseTestCase):
         Vulnerability_Check.objects.all().delete()
         call_command("loaddata", "unittests/fixtures/import_observations_fixtures.json")
         super().setUp()
+
+    @patch("application.import_observations.services.import_observations.emit_observation_event")
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_emits_created_for_new_active_observations_only(
+        self,
+        _mock_vex,
+        mock_deduplicate_cross_scanner,
+        _mock_duplicates,
+        _mock_exploit,
+        _mock_epss,
+        _mock_issue_tracker,
+        _mock_security_gate,
+        mock_get_current_request,
+        mock_emit,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+
+        # First import: 2 new open observations and 1 set to Not affected by a rule, the re-import adds none
+        self._file_upload_observations(Branch.objects.get(id=1), "test_service", "", "", "", "", "", "", False)
+
+        self.assertEqual(2, mock_emit.call_count)
+        for emit_call in mock_emit.call_args_list:
+            self.assertEqual(Webhook_Event_Type.OBSERVATION_CREATED, emit_call.args[0])
+            self.assertEqual(Status.STATUS_OPEN, emit_call.args[1].current_status)
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")

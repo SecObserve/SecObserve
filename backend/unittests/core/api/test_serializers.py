@@ -4,10 +4,11 @@ from unittest.mock import Mock, call, patch
 from django.utils import timezone
 from rest_framework.serializers import ValidationError
 
-from application.access_control.models import Authorization_Group
+from application.access_control.models import Authorization_Group, User
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
 from application.core.api.serializers_observation import (
+    ObservationCreateSerializer,
     ObservationLogApprovalBaseSerializer,
     ObservationLogApprovalSerializer,
     ObservationLogBulkApprovalSerializer,
@@ -33,6 +34,7 @@ from application.core.models import (
 from application.core.types import Assessment_Status, Severity, Status
 from application.import_observations.models import Parser
 from application.import_observations.types import Parser_Source, Parser_Type
+from application.notifications.types import Webhook_Event_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -1218,3 +1220,42 @@ class TestObservationUpdateSerializer(BaseTestCase):
         product.refresh_from_db()
         self.assertEqual(0, Observation_Log.objects.filter(observation=observation).count())
         self.assertGreater(product.last_observation_change, last_change)
+
+
+class TestObservationCreateSerializerWebhook(BaseTestCase):
+    def _create(self, parser_status: str) -> Observation:
+        product = Product.objects.create(name="product")
+        parser, _ = Parser.objects.get_or_create(
+            name="Manual", defaults={"type": Parser_Type.TYPE_MANUAL, "source": Parser_Source.SOURCE_MANUAL}
+        )
+        return ObservationCreateSerializer().create(
+            {
+                "product": product,
+                "title": "observation",
+                "parser": parser,
+                "parser_severity": Severity.SEVERITY_HIGH,
+                "parser_status": parser_status,
+                "import_last_seen": timezone.now(),
+            }
+        )
+
+    @patch("application.core.services.observation_log.get_current_user")
+    @patch("application.core.api.serializers_observation.push_observation_to_issue_tracker")
+    @patch("application.core.api.serializers_observation.check_security_gate_observation")
+    @patch("application.core.api.serializers_observation.emit_observation_event")
+    def test_active_observation_emits_created(self, mock_emit, _gate, _tracker, mock_user):
+        mock_user.return_value = User.objects.create(username="author")
+        observation = self._create(Status.STATUS_OPEN)
+
+        mock_emit.assert_called_once_with(Webhook_Event_Type.OBSERVATION_CREATED, observation)
+        self.assertEqual(Severity.NUMERICAL_SEVERITIES[Severity.SEVERITY_HIGH], observation.numerical_severity)
+
+    @patch("application.core.services.observation_log.get_current_user")
+    @patch("application.core.api.serializers_observation.push_observation_to_issue_tracker")
+    @patch("application.core.api.serializers_observation.check_security_gate_observation")
+    @patch("application.core.api.serializers_observation.emit_observation_event")
+    def test_not_affected_observation_does_not_emit(self, mock_emit, _gate, _tracker, mock_user):
+        mock_user.return_value = User.objects.create(username="author")
+        self._create(Status.STATUS_NOT_AFFECTED)
+
+        mock_emit.assert_not_called()
