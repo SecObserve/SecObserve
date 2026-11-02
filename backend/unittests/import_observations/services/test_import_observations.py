@@ -76,13 +76,41 @@ class TestFileUploadObservations(BaseTestCase):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
         mock_deduplicate_cross_scanner.return_value = False
 
-        # First import: 2 new open observations and 1 set to Not affected by a rule, the re-import adds none
-        self._file_upload_observations(Branch.objects.get(id=1), "test_service", "", "", "", "", "", "", False)
+        def import_data_1() -> None:
+            file_upload_observations(
+                FileUploadParameters(
+                    product=Product.objects.get(id=1),
+                    branch=Branch.objects.get(id=1),
+                    file=File(open("unittests/fixtures/data_1/bandit.sarif", "r")),
+                    service_name="test_service",
+                    docker_image_name_tag="",
+                    endpoint_url="",
+                    kubernetes_cluster="",
+                    kubernetes_namespace="",
+                    kubernetes_resource_type="",
+                    kubernetes_resource_name="",
+                    suppress_licenses=False,
+                    sbom=False,
+                )
+            )
 
+        # 3 new observations, a product rule sets one of them to Not affected
+        import_data_1()
+
+        observations = Observation.objects.filter(product=1)
+        self.assertEqual(3, observations.count())
+        active = {o.pk for o in observations if o.current_status == Status.STATUS_OPEN}
+        self.assertEqual(2, len(active))
         self.assertEqual(2, mock_emit.call_count)
         for emit_call in mock_emit.call_args_list:
             self.assertEqual(Webhook_Event_Type.OBSERVATION_CREATED, emit_call.args[0])
-            self.assertEqual(Status.STATUS_OPEN, emit_call.args[1].current_status)
+        self.assertEqual(active, {emit_call.args[1].pk for emit_call in mock_emit.call_args_list})
+
+        # Importing the same file again finds no new observation
+        mock_emit.reset_mock()
+        import_data_1()
+
+        mock_emit.assert_not_called()
 
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
