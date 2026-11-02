@@ -172,6 +172,15 @@ class TestWebhookEvents(BaseTestCase):
             sorted(Webhook_Delivery.objects.values_list("webhook_id", flat=True)),
         )
 
+    def test_out_of_scope_webhooks_not_loaded(self):
+        self._webhook(self.product_other)
+        self._webhook(self.group_other)
+        with patch("application.notifications.services.webhook_events.get_comma_separated_as_list") as mock_event_types:
+            with self.assertNumQueries(1):
+                self._emit()
+        mock_event_types.assert_not_called()
+        self.assertEqual(0, Webhook_Delivery.objects.count())
+
     def test_general_rule_only_global(self):
         self._webhook(event_types=Webhook_Event_Type.RULE_APPROVAL_REQUESTED)
         self._webhook(self.product_1, event_types=Webhook_Event_Type.RULE_APPROVAL_REQUESTED)

@@ -5,6 +5,7 @@ from typing import Any, Callable, Optional
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from application.commons.services.functions import (
@@ -98,12 +99,13 @@ def _emit(
     observation: Optional[Observation] = None,
 ) -> None:
     """Rows join the producer's transaction; the kick runs after commit and cannot fail the request."""
+    scope = Q(product__isnull=True)
+    if product is not None:
+        scope |= Q(product_id__in=[pk for pk in (product.pk, product.product_group_id) if pk is not None])
     webhooks = [
         webhook
-        for webhook in Webhook.objects.filter(active=True).only("pk", "product_id", "event_types", "min_severity")
-        if event_type in get_comma_separated_as_list(webhook.event_types)
-        and _matches_scope(webhook, product)
-        and _matches_severity(webhook, observation)
+        for webhook in Webhook.objects.filter(scope, active=True).only("pk", "event_types", "min_severity")
+        if event_type in get_comma_separated_as_list(webhook.event_types) and _matches_severity(webhook, observation)
     ]
     if not webhooks:
         return
@@ -115,12 +117,6 @@ def _emit(
         for webhook in webhooks
     )
     transaction.on_commit(partial(kick_webhooks, [webhook.pk for webhook in webhooks]), robust=True)
-
-
-def _matches_scope(webhook: Webhook, product: Optional[Product]) -> bool:
-    if webhook.product_id is None:
-        return True
-    return product is not None and webhook.product_id in (product.pk, product.product_group_id)
 
 
 def _matches_severity(webhook: Webhook, observation: Optional[Observation]) -> bool:
