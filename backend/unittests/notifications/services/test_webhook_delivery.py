@@ -23,7 +23,9 @@ def _result(status_code: int) -> Webhook_Send_Result:
     return Webhook_Send_Result(status_code, "" if 200 <= status_code < 300 else f"HTTP {status_code}")
 
 
-@override_settings(WEBHOOK_RETRY_DELAYS=[60, 300, 1800, 7200, 21600], WEBHOOK_FAILURE_ALERT_THRESHOLD=5)
+@override_settings(
+    WEBHOOK_RETRY_DELAYS=[60, 300, 1800, 7200, 21600], WEBHOOK_FAILURE_ALERT_THRESHOLD=5, WEBHOOK_TIMEOUT=10
+)
 class TestWebhookDelivery(BaseTestCase):
     def setUp(self):
         super().setUp()
@@ -204,6 +206,38 @@ class TestWebhookDelivery(BaseTestCase):
         self.assertEqual(Webhook_Delivery_Status.SUCCEEDED, first.status)
         self.assertEqual(Webhook_Delivery_Status.PENDING, second.status)
         self.mock_send.assert_called_once()
+
+    def test_lease_follows_timeout(self):
+        leases = []
+
+        def send_and_capture_lease(*args):
+            leases.append(Webhook.objects.get(pk=self.webhook.pk).next_attempt_at)
+            return _result(200)
+
+        self.mock_send.side_effect = send_and_capture_lease
+        self._delivery()
+
+        self._deliver()
+        with override_settings(WEBHOOK_TIMEOUT=40):
+            self._delivery()
+            self._delivery()
+            self._deliver()
+
+        # The claim with the default timeout, then the claim and the renewal with 40 s
+        self.assertEqual(
+            [NOW + timedelta(seconds=60), NOW + timedelta(seconds=120), NOW + timedelta(seconds=120)], leases
+        )
+
+    def test_unexpected_exception_is_reported_and_reraised(self):
+        mock_handle_task_exception = self._patch("handle_task_exception")
+        error = RuntimeError("boom")
+        self.mock_send.side_effect = error
+        self._delivery()
+
+        with self.assertRaises(RuntimeError):
+            deliver_webhook.call_local(self.webhook.pk)
+
+        mock_handle_task_exception.assert_called_once_with(error)
 
     def test_alert_once_at_threshold(self):
         self.mock_send.return_value = _result(503)

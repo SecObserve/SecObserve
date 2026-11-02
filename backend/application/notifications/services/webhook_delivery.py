@@ -11,13 +11,13 @@ from application.notifications.models import Webhook, Webhook_Delivery
 from application.notifications.services.send_notifications_exception import (
     send_task_exception_notification,
 )
+from application.notifications.services.tasks import handle_task_exception
 from application.notifications.services.webhook_send import (
     Webhook_Send_Result,
     send_webhook_request,
 )
 from application.notifications.types import Webhook_Delivery_Status
 
-LEASE = timedelta(seconds=60)
 KICK_DELAY = timedelta(seconds=2)
 BATCH_SIZE = 100
 
@@ -46,7 +46,16 @@ def dispatch_webhooks() -> None:
 @db_task(priority=1)
 def deliver_webhook(webhook_id: int) -> None:
     """No transaction spans a request; when the worker dies, its lease expires and the sweep resumes."""
-    lease = _claim(webhook_id, LEASE)
+    try:
+        _drain(webhook_id)
+    except Exception as e:
+        handle_task_exception(e)
+        raise
+
+
+def _drain(webhook_id: int) -> None:
+    lease_duration = _lease()
+    lease = _claim(webhook_id, lease_duration)
     if not lease:
         return
 
@@ -56,7 +65,7 @@ def deliver_webhook(webhook_id: int) -> None:
     for delivery in pending.order_by("pk")[:BATCH_SIZE]:
         result = send_webhook_request(webhook.url, webhook.secret, str(delivery.event_id), delivery.payload)
         backoff = _save_result(webhook, delivery, result)
-        next_attempt_at = timezone.now() + (backoff or LEASE)
+        next_attempt_at = timezone.now() + (backoff or lease_duration)
         if not _move_lease(webhook, lease, next_attempt_at):
             return
         if webhook.consecutive_failures == django_settings.WEBHOOK_FAILURE_ALERT_THRESHOLD:
@@ -68,6 +77,11 @@ def deliver_webhook(webhook_id: int) -> None:
     # Events emitted during the drain found the lease taken, so their kick did not schedule anything
     if _move_lease(webhook, lease, None) and pending.exists():
         deliver_webhook.schedule(args=(webhook_id,), delay=0)
+
+
+def _lease() -> timedelta:
+    # Outlives one request, connect and read timeout included
+    return timedelta(seconds=max(60, 3 * django_settings.WEBHOOK_TIMEOUT))
 
 
 def _due(now: datetime) -> Q:
