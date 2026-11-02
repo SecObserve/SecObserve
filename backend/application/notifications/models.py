@@ -5,15 +5,19 @@ from django.db.models import (
     CharField,
     DateTimeField,
     ForeignKey,
+    Index,
     IntegerField,
     Model,
     OneToOneField,
     TextField,
+    UUIDField,
 )
+from encrypted_model_fields.fields import EncryptedCharField
 
 from application.access_control.models import User
 from application.core.models import Observation, Product
 from application.core.types import Severity, Status
+from application.notifications.types import Webhook_Delivery_Status
 
 
 class Notification(Model):
@@ -88,3 +92,34 @@ class Observation_Title_Notified(Model):
     severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
     status = CharField(max_length=16, choices=Status.STATUS_CHOICES, blank=True)
     priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
+
+
+class Webhook(Model):
+    product = ForeignKey(Product, on_delete=CASCADE, null=True)
+    name = CharField(max_length=255)
+    url = TextField(max_length=2048)
+    secret = EncryptedCharField(max_length=255)  # nosemgrep
+    # We treat EncryptedCharField as a regular CharField
+    event_types = CharField(max_length=512)
+    min_severity = CharField(max_length=12, choices=Severity.SEVERITY_CHOICES, blank=True)
+    active = BooleanField(default=True)
+    consecutive_failures = IntegerField(default=0)
+    # Lease of the running drain, kick delay or endpoint backoff; null when idle
+    next_attempt_at = DateTimeField(null=True)
+    created = DateTimeField(auto_now_add=True)
+
+
+class Webhook_Delivery(Model):
+    webhook = ForeignKey(Webhook, on_delete=CASCADE, related_name="deliveries")
+    event_id = UUIDField()
+    event_type = CharField(max_length=64)
+    payload = TextField()
+    status = CharField(max_length=16, choices=Webhook_Delivery_Status.CHOICES, default=Webhook_Delivery_Status.PENDING)
+    attempts = IntegerField(default=0)
+    created = DateTimeField(auto_now_add=True)
+    last_attempt_at = DateTimeField(null=True)
+    response_status_code = IntegerField(null=True)
+    error = CharField(max_length=1024, blank=True)
+
+    class Meta:
+        indexes = [Index(fields=["webhook", "status"])]
