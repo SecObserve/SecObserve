@@ -18,6 +18,7 @@ import {
     get_notification_count,
     update_notification_count,
 } from "../../notifications/notifications/notification_count";
+import webhooks from "../../notifications/webhooks";
 import general_rules from "../../rules/general_rules";
 import csaf from "../../vex/csaf";
 import cyclonedx from "../../vex/cyclonedx";
@@ -204,6 +205,15 @@ const Menu = ({ dense = false }: MenuProps) => {
                     leftIcon={<general_rules.icon />}
                     dense={dense}
                 />
+                {is_superuser() && (
+                    <MenuItemLink
+                        to="/webhooks"
+                        state={{ _scrollToTop: true }}
+                        primaryText="Webhooks"
+                        leftIcon={<webhooks.icon />}
+                        dense={dense}
+                    />
+                )}
                 {feature_vex_enabled() && (
                     <MenuItemLink
                         to="/vex/vex_counters"

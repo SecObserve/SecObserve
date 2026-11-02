@@ -3,6 +3,7 @@ import ChecklistIcon from "@mui/icons-material/Checklist";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TokenIcon from "@mui/icons-material/Token";
+import WebhookIcon from "@mui/icons-material/Webhook";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
 import {
     EditButton,
@@ -25,6 +26,7 @@ import {
     PERMISSION_PRODUCT_MEMBER_CREATE,
     PERMISSION_PRODUCT_RULE_APPLY,
     PERMISSION_PRODUCT_RULE_CREATE,
+    PERMISSION_WEBHOOK_CREATE,
 } from "../../access_control/types";
 import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
@@ -32,6 +34,8 @@ import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
 import MetricsStatusCurrent from "../../metrics/MetricsStatusCurrent";
 import notifications from "../../notifications/notifications";
 import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
+import WebhookCreate from "../../notifications/webhooks/WebhookCreate";
+import WebhookEmbeddedList from "../../notifications/webhooks/WebhookEmbeddedList";
 import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
@@ -140,6 +144,12 @@ const ProductGroupShow = () => {
                                     )}
                                 </Stack>
                                 <ProductRuleEmbeddedList product={product_group} />
+                            </Tab>
+                            <Tab label="Webhooks" path="webhooks" icon={<WebhookIcon />}>
+                                {product_group?.permissions?.includes(PERMISSION_WEBHOOK_CREATE) && (
+                                    <WebhookCreate product={product_group} />
+                                )}
+                                <WebhookEmbeddedList product={product_group} />
                             </Tab>
                             <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
                                 <Typography variant="h6" sx={{ marginBottom: 1 }}>
