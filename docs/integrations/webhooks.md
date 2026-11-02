@@ -260,6 +260,38 @@ HTTPServer(("", 8080), Handler).serve_forever()
 * Of an error response only the first 1024 bytes are kept in the delivery log. The log is kept for `WEBHOOK_DELIVERY_RETENTION_DAYS` days.
 * Delivery needs the [background (huey) consumer](../getting_started/installation.md) to run. Without it, deliveries stay pending.
 
+## REST API
+
+Webhooks and their delivery log can be managed with the [REST API](rest_api.md).
+
+| Endpoint | Function | Permission |
+|---|---|---|
+| `GET /api/webhooks/` | List webhooks, filters `product` and `active`. | Webhook View |
+| `POST /api/webhooks/` | Create a webhook. The response contains the generated `secret`. | Webhook Create on the product, superuser for a global webhook |
+| `GET`, `PUT`, `PATCH`, `DELETE /api/webhooks/{id}/` | Show, change or delete a webhook. | Webhook View, Edit or Delete |
+| `POST /api/webhooks/{id}/send_test/` | Send a `webhook.test` event right away and return `succeeded`, `status_code` and `error`. | Webhook Edit |
+| `POST /api/webhooks/{id}/rotate_secret/` | Generate a new secret and return it as `secret`. | Webhook Edit |
+| `GET /api/webhook_deliveries/` | List deliveries, newest first, filters `webhook`, `status` and `event_type`. | Webhook View |
+| `GET /api/webhook_deliveries/{id}/` | Show a delivery with its payload. | Webhook View |
+| `POST /api/webhook_deliveries/{id}/redeliver/` | Queue a delivery again with the same `webhook-id` and body and a fresh count of attempts. | Webhook Edit |
+
+```json
+{
+  "product": 7,
+  "name": "SIEM",
+  "url": "https://siem.example.com/hooks/secobserve",
+  "event_types": ["observation.created", "security_gate.changed"],
+  "min_severity": "High",
+  "active": true
+}
+```
+
+* `product` is empty for a global webhook and cannot be changed after the webhook is created.
+* `event_types` is a list with at least one of the event types above.
+* The `url` must start with `http://` or `https://`. The [URL policy](#url-policy) is checked when a request is sent, not when the webhook is saved.
+* The `secret` is never returned by other endpoints. `consecutive_failures` and `next_attempt_at` are read-only, `next_attempt_at` is set while a delivery runs or the endpoint backs off.
+* Changing a webhook or rotating its secret ends a running backoff. A successful test also resets `consecutive_failures`, a failed test changes nothing.
+
 ## Configuration
 
 The behavior is set with the five `WEBHOOK_*` [environment variables](../getting_started/configuration.md#backend). Invalid values stop the backend at startup.
