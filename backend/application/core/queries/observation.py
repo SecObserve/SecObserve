@@ -267,7 +267,7 @@ def get_current_modifying_observation_log(observation: Observation) -> Optional[
 
 
 # The search vectors must be the same as the ones of the indexes in
-# migration 0100_observation_full_text_search, otherwise the indexes are not used.
+# migration 0101_observation_full_text_search, otherwise the indexes are not used.
 def get_observation_search_vector() -> SearchVector:
     return SearchVector(
         "title",

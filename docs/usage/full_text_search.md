@@ -11,7 +11,9 @@ The field **Full text search** is shown in the filter bar of
 
 * the list of all observations,
 * the observations tab of a product,
-* the observations tab of a product group.
+* the observations tab of a product group,
+* the lists of observations to be reviewed, in the menu **Reviews** and in the reviews tab of a product,
+* the observations of a component.
 
 It can be combined with all other filters, e.g. to search only in observations with a specific severity or status.
 

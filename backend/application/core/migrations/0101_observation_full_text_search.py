@@ -53,7 +53,7 @@ def remove_indexes(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0099_initialize_observation_components"),
+        ("core", "0100_observation_log_assessment_status_index"),
     ]
 
     operations = [
