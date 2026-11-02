@@ -34,8 +34,8 @@ Every request body is a JSON object with the event `type`, the `timestamp` of th
 | `assessment.approval_decided` | An assessment is approved or rejected. |
 | `rule.approval_requested` | A rule is created or changed and needs approval. |
 | `rule.approval_decided` | A rule is approved or rejected. |
-| `import.completed` | Every import finished: file upload, API import, OSV scan and VulnerableCode scan. |
-| `security_gate.changed` | The security gate of a product switched between passed and failed. |
+| `import.completed` | An import of observations finished: file upload, API import, OSV scan and VulnerableCode scan. An [SBOM upload](../usage/upload_sbom.md) sends no event. |
+| `security_gate.changed` | The security gate of a product switched between passed, failed and not evaluated. |
 
 The type `webhook.test` is only sent by the test function of a webhook and cannot be subscribed to.
 
@@ -177,7 +177,7 @@ The `product` object is part of every event. `product_group` is `null` when the 
 }
 ```
 
-`filename` is empty for API imports and scans, `api_configuration` is empty for file uploads. The numbers are the same as in the result of the import in the REST API.
+`filename` is empty for API imports and scans, `api_configuration` is empty for file uploads. The numbers are the same as in the result of the import in the REST API. They count observations only, license components are not included.
 
 ### security_gate.changed
 
@@ -197,7 +197,7 @@ The `product` object is part of every event. `product_group` is `null` when the 
 }
 ```
 
-The new state is `product.security_gate_passed`.
+The new state is `product.security_gate_passed`: `true`, `false`, or `null` when the security gate is not evaluated anymore, for example because it has been switched off.
 
 ## Requests and signature
 
@@ -251,14 +251,18 @@ HTTPServer(("", 8080), Handler).serve_forever()
 
 ## Delivery
 
-* Events are written to an outbox in the transaction that causes them, so no event is lost or sent for a rolled back change. The webhook is normally called about 2 seconds after the commit, at worst about 60 seconds later, when the per-minute sweeper picks it up.
+* Events are written to an outbox in the transaction that causes them, so every committed change gets its deliveries and a rolled back change gets none. The webhook is normally called about 2 seconds after the commit, at worst about 60 seconds later, when the per-minute sweeper picks it up.
 * Delivery is at least once. A receiver can see the same `webhook-id` more than once.
 * There is no ordering guarantee between events. The deliveries of one webhook are sent oldest first.
-* A failed attempt is retried after the delays in `WEBHOOK_RETRY_DELAYS`. The delay applies to the whole endpoint: no other delivery of this webhook is sent until it has passed.
-* A delivery is marked `Failed` after `len(WEBHOOK_RETRY_DELAYS) + 1` attempts when the errors are retryable (no response, `408`, `429` or `5xx`), and immediately on any other response. Other deliveries of the webhook continue until `WEBHOOK_FAILURE_ALERT_THRESHOLD` consecutive failures, then the endpoint backs off too.
+* A failed attempt is retried after the delays in `WEBHOOK_RETRY_DELAYS`. The delay applies to the whole webhook: no other delivery of this webhook is sent until it has passed. After n consecutive failures the webhook waits for the n-th delay, or the last one when there are fewer delays.
+* A delivery is marked `Failed` after `len(WEBHOOK_RETRY_DELAYS) + 1` attempts when the errors are retryable (no response, `408`, `429` or `5xx`), and immediately on any other response. Other deliveries of the webhook continue until `WEBHOOK_FAILURE_ALERT_THRESHOLD` consecutive failures, then the webhook backs off too. With the defaults this backoff is the delay for 5 consecutive failures, so it starts directly with the last delay of 6 hours.
+* Backoff is per webhook, not per receiver. Webhooks that point to the same receiver send and back off independently, so prefer one global or product group webhook per receiver over many product webhooks with the same URL.
 * When the consecutive failures of a webhook reach `WEBHOOK_FAILURE_ALERT_THRESHOLD`, one alert is sent to the exception notification channels.
-* Of an error response only the first 1024 bytes are kept in the delivery log. The log is kept for `WEBHOOK_DELIVERY_RETENTION_DAYS` days.
+* A delivery whose processing raises an unexpected error, for example because of corrupt data, stays pending and blocks the other deliveries of its webhook. It is tried again each time the lease of the delivery task expires, after `max(60, 3 * WEBHOOK_TIMEOUT)` seconds, and the error is reported to the exception notification channels.
+* Of a failed response only the status line, for example `HTTP 503 Service Unavailable`, is kept in the delivery log. The body is not read.
+* Housekeeping deletes deliveries older than `WEBHOOK_DELIVERY_RETENTION_DAYS` days, whatever their status. Pending deliveries of a webhook that is deactivated or whose receiver is down for longer than that are deleted without being sent.
 * Delivery needs the [background (huey) consumer](../getting_started/installation.md) to run. Without it, deliveries stay pending.
+* On a busy instance the background task statistics contain many runs of `deliver_webhook`. Raise [`HUEY_STATS_MAX_EVENTS`](../getting_started/configuration.md#backend) when they push the other tasks out of the statistics.
 
 ## REST API
 
@@ -266,14 +270,18 @@ Webhooks and their delivery log can be managed with the [REST API](rest_api.md).
 
 | Endpoint | Function | Permission |
 |---|---|---|
-| `GET /api/webhooks/` | List webhooks, filters `product` and `active`. | Webhook View |
+| `GET /api/webhooks/` | List webhooks, filters `product` and `active`. | Member of the product or product group |
 | `POST /api/webhooks/` | Create a webhook. The response contains the generated `secret`. | Webhook Create on the product, superuser for a global webhook |
 | `GET`, `PUT`, `PATCH`, `DELETE /api/webhooks/{id}/` | Show, change or delete a webhook. | Webhook View, Edit or Delete |
 | `POST /api/webhooks/{id}/send_test/` | Send a `webhook.test` event right away and return `succeeded`, `status_code` and `error`. | Webhook Edit |
 | `POST /api/webhooks/{id}/rotate_secret/` | Generate a new secret and return it as `secret`. | Webhook Edit |
-| `GET /api/webhook_deliveries/` | List deliveries, newest first, filters `webhook`, `status` and `event_type`. | Webhook View |
+| `GET /api/webhook_deliveries/` | List deliveries with their payloads, newest first, filters `webhook`, `status` and `event_type`. | Member of the product or product group |
 | `GET /api/webhook_deliveries/{id}/` | Show a delivery with its payload. | Webhook View |
 | `POST /api/webhook_deliveries/{id}/redeliver/` | Queue a delivery again with the same `webhook-id` and body and a fresh count of attempts. | Webhook Edit |
+
+> **Lists are visible to all members**
+>
+> The two lists are filtered by product membership only. Every member of the product or product group, with any role including Upload, and every product API token can list the webhooks with their URLs and the deliveries with their payloads. Showing a single webhook or delivery and all other functions need the Webhook permissions. Do not put credentials into webhook URLs, the signature authenticates the requests.
 
 ```json
 {
