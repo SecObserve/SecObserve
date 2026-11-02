@@ -123,4 +123,4 @@ class Webhook_Delivery(Model):
     error = CharField(max_length=1024, blank=True)
 
     class Meta:
-        indexes = [Index(fields=["webhook", "status"])]
+        indexes = [Index(fields=["webhook", "status"]), Index(fields=["created"])]
