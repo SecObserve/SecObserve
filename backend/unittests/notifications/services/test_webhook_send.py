@@ -1,10 +1,12 @@
 import base64
+import io
 from ipaddress import ip_network
 from unittest.mock import patch
 
 from django.test import SimpleTestCase, override_settings
 from requests import ConnectionError as RequestsConnectionError
 from requests import Response
+from requests.exceptions import ChunkedEncodingError
 
 from application.notifications.services.send_notifications_base import (
     _validate_webhook_url,
@@ -38,7 +40,7 @@ class TestSignWebhookPayload(SimpleTestCase):
 def _response(status_code: int, text: str = "") -> Response:
     response = Response()
     response.status_code = status_code
-    response._content = text.encode()  # pylint: disable=protected-access
+    response.raw = io.BytesIO(text.encode())
     return response
 
 
@@ -76,6 +78,7 @@ class TestSendWebhookRequest(SimpleTestCase):
         self.assertEqual(headers["User-Agent"], "SecObserve-Webhooks")
         self.assertFalse(kwargs["allow_redirects"])
         self.assertEqual(kwargs["timeout"], (7, 7))
+        self.assertTrue(kwargs["stream"])
         self.assertTrue(result.succeeded)
         self.assertFalse(result.retryable)
 
@@ -87,6 +90,40 @@ class TestSendWebhookRequest(SimpleTestCase):
         self.assertEqual(result.status_code, 503)
         self.assertTrue(result.error.startswith("HTTP 503"))
         self.assertLessEqual(len(result.error), 1024)
+
+    def test_error_body_read_is_bounded(self):
+        response = _response(503)
+        chunks = iter([b"x" * 600] * 100)
+        response.iter_content = lambda chunk_size: chunks
+        self.mock_post.return_value = response
+
+        result = self._send()
+
+        self.assertEqual(result.error, "HTTP 503: " + "x" * (1024 - len("HTTP 503: ")))
+        # Two chunks reach the limit, the rest of the body is never read
+        self.assertEqual(98, len(list(chunks)))
+
+    def test_error_body_read_failure_keeps_the_status_code(self):
+        response = _response(503)
+        response.iter_content = lambda chunk_size: (_ for _ in ()).throw(ChunkedEncodingError("broken"))
+        self.mock_post.return_value = response
+
+        result = self._send()
+
+        self.assertEqual(result.status_code, 503)
+        self.assertTrue(result.retryable)
+        self.assertEqual(result.error, "HTTP 503: ChunkedEncodingError while reading the body")
+
+    def test_response_is_closed(self):
+        for status_code in (204, 503):
+            with self.subTest(status_code=status_code):
+                response = _response(status_code, "body")
+                self.mock_post.return_value = response
+
+                with patch.object(response, "close", wraps=response.close) as mock_close:
+                    self._send()
+
+                mock_close.assert_called_once()
 
     def test_429_is_retryable(self):
         self.mock_post.return_value = _response(429)

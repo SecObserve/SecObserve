@@ -43,7 +43,7 @@ def dispatch_webhooks() -> None:
         deliver_webhook.schedule(args=(webhook_id,), delay=0)
 
 
-@db_task(priority=1)
+@db_task()
 def deliver_webhook(webhook_id: int) -> None:
     """No transaction spans a request; when the worker dies, its lease expires and the sweep resumes."""
     try:
@@ -80,7 +80,7 @@ def _drain(webhook_id: int) -> None:
 
 
 def _lease() -> timedelta:
-    # Outlives one request, connect and read timeout included
+    # Covers connect, headers and the bounded error read; a receiver dripping bytes can still outlast it
     return timedelta(seconds=max(60, 3 * django_settings.WEBHOOK_TIMEOUT))
 
 

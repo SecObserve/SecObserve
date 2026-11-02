@@ -62,10 +62,27 @@ def send_webhook_request(url: str, secret: str, message_id: str, body: str) -> W
             headers=headers,
             allow_redirects=False,
             timeout=(settings.WEBHOOK_TIMEOUT, settings.WEBHOOK_TIMEOUT),
+            stream=True,
         )
     except requests.RequestException as e:
         return Webhook_Send_Result(None, f"{type(e).__name__}: {e}"[:MAX_ERROR_LENGTH])
 
-    if 200 <= response.status_code < 300:
-        return Webhook_Send_Result(response.status_code, "")
-    return Webhook_Send_Result(response.status_code, f"HTTP {response.status_code}: {response.text}"[:MAX_ERROR_LENGTH])
+    with response:
+        if 200 <= response.status_code < 300:
+            return Webhook_Send_Result(response.status_code, "")
+        return Webhook_Send_Result(
+            response.status_code, f"HTTP {response.status_code}: {_read_body_start(response)}"[:MAX_ERROR_LENGTH]
+        )
+
+
+def _read_body_start(response: requests.Response) -> str:
+    # The body is untrusted: read only what the error field keeps, never the whole (decompressed) body
+    content = b""
+    try:
+        for chunk in response.iter_content(chunk_size=MAX_ERROR_LENGTH):
+            content += chunk
+            if len(content) >= MAX_ERROR_LENGTH:
+                break
+    except requests.RequestException as e:
+        return f"{type(e).__name__} while reading the body"
+    return content[:MAX_ERROR_LENGTH].decode(response.encoding or "utf-8", errors="replace")
