@@ -44,7 +44,6 @@ const WebhookCreate = ({ product }: WebhookCreateProps) => {
             .then((response) => {
                 setSecret(response.json.secret);
                 setOpen(false);
-                refresh();
                 notify("Webhook added", { type: "success" });
             })
             .catch((error) => {
@@ -65,7 +64,13 @@ const WebhookCreate = ({ product }: WebhookCreateProps) => {
                     </CreateBase>
                 </DialogContent>
             </Dialog>
-            <WebhookSecretDialog secret={secret} onClose={() => setSecret(null)} />
+            <WebhookSecretDialog
+                secret={secret}
+                onClose={() => {
+                    setSecret(null);
+                    refresh();
+                }}
+            />
         </Fragment>
     );
 };

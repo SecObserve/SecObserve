@@ -1,6 +1,6 @@
 import { Stack } from "@mui/material";
 import { Fragment } from "react";
-import { BooleanField, Datagrid, List, SelectInput, TextField, TextInput, TopToolbar, WithRecord } from "react-admin";
+import { BooleanField, Datagrid, List, SelectInput, TextField, TopToolbar, WithRecord } from "react-admin";
 
 import webhooks from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
@@ -15,7 +15,6 @@ import WebhookEdit from "./WebhookEdit";
 import { canDeleteWebhook, canEditWebhook } from "./functions";
 
 const listFilters = [
-    <TextInput source="name" alwaysOn />,
     <SelectInput
         source="active"
         choices={[

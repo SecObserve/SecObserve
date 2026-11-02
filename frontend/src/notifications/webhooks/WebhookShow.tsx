@@ -55,6 +55,7 @@ const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
     const [open, setOpen] = useState(false);
     const [secret, setSecret] = useState<string | null>(null);
     const notify = useNotify();
+    const refresh = useRefresh();
 
     const handleConfirm = () => {
         httpClient(API() + `${webhook.id}/rotate_secret/`, { method: "POST" })
@@ -80,7 +81,13 @@ const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
                 onConfirm={handleConfirm}
                 onClose={() => setOpen(false)}
             />
-            <WebhookSecretDialog secret={secret} onClose={() => setSecret(null)} />
+            <WebhookSecretDialog
+                secret={secret}
+                onClose={() => {
+                    setSecret(null);
+                    refresh();
+                }}
+            />
         </>
     );
 };

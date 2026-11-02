@@ -1,4 +1,5 @@
 import { Button } from "@mui/material";
+import { MouseEvent } from "react";
 import {
     Datagrid,
     ListContextProvider,
@@ -38,7 +39,8 @@ const Redeliver = ({ delivery }: { delivery: WebhookDelivery }) => {
     const refresh = useRefresh();
     const notify = useNotify();
 
-    const handleClick = () => {
+    const handleClick = (event: MouseEvent<HTMLElement>) => {
+        event.stopPropagation();
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + `/webhook_deliveries/${delivery.id}/redeliver/`, {
             method: "POST",
         })

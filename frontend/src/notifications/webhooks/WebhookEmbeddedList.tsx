@@ -7,7 +7,6 @@ import {
     ResourceContextProvider,
     SelectInput,
     TextField,
-    TextInput,
     WithRecord,
     useListController,
 } from "react-admin";
@@ -21,7 +20,6 @@ import WebhookEdit from "./WebhookEdit";
 import { canDeleteWebhook, canEditWebhook } from "./functions";
 
 const listFilters = [
-    <TextInput source="name" alwaysOn />,
     <SelectInput
         source="active"
         choices={[
