@@ -206,11 +206,12 @@ class OIDCAuthentication(BaseAuthentication):
         return ""
 
     def _synchronize_groups(self, user: User, payload: dict) -> None:
-        groups = Authorization_Group.objects.exclude(oidc_group="")
+        oidc_groups = self._get_groups_from_token(payload)
+        # Memberships that stay are kept, removing and adding them again would reset is_manager
+        groups = Authorization_Group.objects.exclude(oidc_group="").exclude(oidc_group__in=oidc_groups)
         for group in groups:
             group.users.remove(user)
 
-        oidc_groups = self._get_groups_from_token(payload)
         authorization_groups = Authorization_Group.objects.filter(oidc_group__in=oidc_groups)
         for authorization_group in authorization_groups:
             user.authorization_groups.add(authorization_group)

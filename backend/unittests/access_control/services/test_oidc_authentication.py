@@ -9,7 +9,7 @@ from django.core.management import call_command
 from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
-from application.access_control.models import User
+from application.access_control.models import Authorization_Group_Member, User
 from application.access_control.services.oidc_authentication import OIDCAuthentication
 from application.commons.models import Settings
 from unittests.base_test_case import BaseTestCase
@@ -744,6 +744,26 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual(2, len(groups))
         self.assertEqual("non_oidc_group", groups[0].name)
         self.assertEqual("oidc_group_2", groups[1].name)
+
+    def test_synchronize_groups_keeps_manager(self):
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+
+        oidc_authentication = OIDCAuthentication()
+        user = User.objects.get(username="db_internal_write")
+        oidc_authentication._synchronize_groups(user, {"groups": ["oidc_1"]})
+        Authorization_Group_Member.objects.filter(user=user, authorization_group__name="oidc_group_1").update(
+            is_manager=True
+        )
+
+        oidc_authentication._synchronize_groups(user, {"groups": ["oidc_1", "oidc_2"]})
+
+        members = Authorization_Group_Member.objects.filter(
+            user=user, authorization_group__name__startswith="oidc_group"
+        ).order_by("authorization_group__name")
+        self.assertEqual(
+            [("oidc_group_1", True), ("oidc_group_2", False)],
+            [(member.authorization_group.name, member.is_manager) for member in members],
+        )
 
 
 class MockPyJWK:
