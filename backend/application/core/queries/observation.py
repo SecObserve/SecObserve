@@ -1,6 +1,6 @@
+import re
 from typing import Optional
 
-from django.contrib.postgres.search import SearchQuery, SearchVector
 from django.db.models import Exists, OuterRef, Q
 from django.db.models.query import QuerySet
 
@@ -16,9 +16,6 @@ from application.core.models import (
     Product_Member,
     Service,
 )
-
-# Without stemming and stop words, to be independent of the language of the texts
-FULL_TEXT_SEARCH_CONFIG = "simple"
 
 
 def get_observation_by_id(observation_id: int) -> Optional[Observation]:
@@ -266,46 +263,58 @@ def get_current_modifying_observation_log(observation: Observation) -> Optional[
         return None
 
 
-# The search vectors must be the same as the ones of the indexes in
-# migration 0101_observation_full_text_search, otherwise the indexes are not used.
-def get_observation_search_vector() -> SearchVector:
-    return SearchVector(
-        "title",
-        "description",
-        "recommendation",
-        "vulnerability_id",
-        "vulnerability_id_aliases",
-        config=FULL_TEXT_SEARCH_CONFIG,
-    )
+# The fields must be the same as the ones of the trigram indexes in
+# migration 0101_observation_full_text_search, otherwise not all searched fields are indexed.
+OBSERVATION_FULL_TEXT_SEARCH_FIELDS = [
+    "title",
+    "description",
+    "recommendation",
+    "vulnerability_id",
+    "vulnerability_id_aliases",
+]
+OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = ["comment"]
+
+# A term in double quotes is matched as a whole word, all other characters except whitespace as part of a word.
+# Unbalanced double quotes are ignored.
+FULL_TEXT_SEARCH_TERM_PATTERN = re.compile(r'"([^"]*)"|([^\s"]+)')
 
 
-def get_observation_log_search_vector() -> SearchVector:
-    return SearchVector("comment", config=FULL_TEXT_SEARCH_CONFIG)
+def _get_full_text_search_terms(value: str) -> list[tuple[str, bool]]:
+    terms = []
+    for quoted_term, term in FULL_TEXT_SEARCH_TERM_PATTERN.findall(value):
+        if term:
+            terms.append((term, False))
+        elif quoted_term.strip():
+            terms.append((quoted_term.strip(), True))
+    return terms
 
 
-class PrefixSearchQuery(SearchQuery):
-    # websearch_to_tsquery only matches complete words. All its lexemes are turned into prefixes,
-    # e.g. 'inject' & !'sql' into 'inject':* & !'sql':*, so that "inject" finds "injection" as well.
-    # Pattern and replacement are dollar-quoted, to need no escaping of quotes and backslashes.
-    template = r"regexp_replace((%(function)s(%(expressions)s))::text, $$'((?:[^']|'')*)'$$, $$'\1':*$$, 'g')::tsquery"
+def _get_full_text_search_filter(fields: list[str], term: str, whole_word: bool) -> Q:
+    # Not preceded or followed by a letter, digit or underscore, works for PostgreSQL and Python (SQLite)
+    whole_word_regex = rf"(?<!\w){re.escape(term)}(?!\w)"
 
-    def __init__(self, value: str) -> None:
-        super().__init__(value, search_type="websearch", config=FULL_TEXT_SEARCH_CONFIG)
+    full_text_search_filter = Q()
+    for field in fields:
+        # icontains is needed for whole words as well, because only icontains can use the trigram indexes.
+        # The regular expression is then only checked for the rows found with the indexes.
+        field_filter = Q(**{f"{field}__icontains": term})
+        if whole_word:
+            field_filter &= Q(**{f"{field}__iregex": whole_word_regex})
+        full_text_search_filter |= field_filter
+    return full_text_search_filter
 
 
 def filter_observations_full_text(queryset: QuerySet[Observation], value: str) -> QuerySet[Observation]:
-    query = PrefixSearchQuery(value)
+    # All terms must be found, each of them either in the texts of the observation or in a comment of its log
+    for term, whole_word in _get_full_text_search_terms(value):
+        matching_observations = Observation.objects.filter(
+            _get_full_text_search_filter(OBSERVATION_FULL_TEXT_SEARCH_FIELDS, term, whole_word)
+        ).values("id")
+        matching_observation_logs = Observation_Log.objects.filter(
+            _get_full_text_search_filter(OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS, term, whole_word)
+        ).values("observation_id")
 
-    matching_observations = (
-        Observation.objects.alias(full_text_search=get_observation_search_vector())
-        .filter(full_text_search=query)
-        .values("id")
-    )
-    matching_observation_logs = (
-        Observation_Log.objects.alias(full_text_search=get_observation_log_search_vector())
-        .filter(full_text_search=query)
-        .values("observation_id")
-    )
+        # A union instead of an OR condition, because PostgreSQL can use the indexes of both tables only this way
+        queryset = queryset.filter(id__in=matching_observations.union(matching_observation_logs))
 
-    # A union instead of an OR condition, because PostgreSQL can use both indexes only this way
-    return queryset.filter(id__in=matching_observations.union(matching_observation_logs))
+    return queryset

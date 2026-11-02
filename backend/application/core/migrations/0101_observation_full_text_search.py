@@ -1,37 +1,32 @@
-from django.contrib.postgres.indexes import GinIndex
-from django.contrib.postgres.search import SearchVector
+from django.contrib.postgres.operations import TrigramExtension
 from django.db import migrations
 
-# The search vectors must be the same as the ones in application.core.queries.observation,
-# otherwise the indexes are not used. They are defined here again to freeze the migration.
+# The fields must be the same as the ones in application.core.queries.observation,
+# otherwise not all searched fields are indexed. They are defined here again to freeze the migration.
 
+OBSERVATION_FULL_TEXT_SEARCH_FIELDS = {
+    "title": "core_obs_title_trgm_idx",
+    "description": "core_obs_description_trgm_idx",
+    "recommendation": "core_obs_recommend_trgm_idx",
+    "vulnerability_id": "core_obs_vuln_id_trgm_idx",
+    "vulnerability_id_aliases": "core_obs_vuln_alias_trgm_idx",
+}
 
-def get_observation_search_vector():
-    return SearchVector(
-        "title",
-        "description",
-        "recommendation",
-        "vulnerability_id",
-        "vulnerability_id_aliases",
-        config="simple",
-    )
-
-
-def get_observation_log_search_vector():
-    return SearchVector("comment", config="simple")
+OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = {
+    "comment": "core_obs_log_comment_trgm_idx",
+}
 
 
 def _get_indexes(apps):
-    return [
-        (
-            apps.get_model("core", "Observation"),
-            GinIndex(get_observation_search_vector(), name="core_observation_fts_idx"),
-        ),
-        (
-            apps.get_model("core", "Observation_Log"),
-            GinIndex(get_observation_log_search_vector(), name="core_observation_log_fts_idx"),
-        ),
-    ]
+    indexes = []
+    for model_name, fields in (
+        ("Observation", OBSERVATION_FULL_TEXT_SEARCH_FIELDS),
+        ("Observation_Log", OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS),
+    ):
+        table = apps.get_model("core", model_name)._meta.db_table
+        for field, index_name in fields.items():
+            indexes.append((table, field, index_name))
+    return indexes
 
 
 def create_indexes(apps, schema_editor):
@@ -39,16 +34,23 @@ def create_indexes(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
         return
 
-    for model, index in _get_indexes(apps):
-        schema_editor.add_index(model, index)
+    # The indexes are built on UPPER(field), because Django filters with UPPER(field) LIKE UPPER(value) for icontains.
+    # Raw SQL, because Django can only create an index with an operator class on an expression,
+    # if django.contrib.postgres is installed.
+    quote_name = schema_editor.quote_name
+    for table, field, index_name in _get_indexes(apps):
+        schema_editor.execute(
+            f"CREATE INDEX {quote_name(index_name)} ON {quote_name(table)} "
+            f"USING gin (UPPER({quote_name(field)}) gin_trgm_ops)"
+        )
 
 
 def remove_indexes(apps, schema_editor):
     if schema_editor.connection.vendor != "postgresql":
         return
 
-    for model, index in _get_indexes(apps):
-        schema_editor.remove_index(model, index)
+    for _, _, index_name in _get_indexes(apps):
+        schema_editor.execute(f"DROP INDEX IF EXISTS {schema_editor.quote_name(index_name)}")
 
 
 class Migration(migrations.Migration):
@@ -57,5 +59,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Only executed with PostgreSQL
+        TrigramExtension(),
         migrations.RunPython(create_indexes, remove_indexes),
     ]
