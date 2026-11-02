@@ -85,4 +85,5 @@ def _read_body_start(response: requests.Response) -> str:
                 break
     except requests.RequestException as e:
         return f"{type(e).__name__} while reading the body"
-    return content[:MAX_ERROR_LENGTH].decode(response.encoding or "utf-8", errors="replace")
+    # The receiver's charset is untrusted and may not exist, the text is only diagnostic
+    return content[:MAX_ERROR_LENGTH].decode("utf-8", errors="replace")

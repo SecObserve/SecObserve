@@ -114,6 +114,18 @@ class TestSendWebhookRequest(SimpleTestCase):
         self.assertTrue(result.retryable)
         self.assertEqual(result.error, "HTTP 503: ChunkedEncodingError while reading the body")
 
+    def test_error_body_ignores_the_receivers_charset(self):
+        response = _response(503)
+        response.raw = io.BytesIO(b"bad \xff byte")
+        response.encoding = "bogus"
+        self.mock_post.return_value = response
+
+        result = self._send()
+
+        self.assertEqual(result.status_code, 503)
+        self.assertTrue(result.retryable)
+        self.assertEqual(result.error, "HTTP 503: bad \ufffd byte")
+
     def test_response_is_closed(self):
         for status_code in (204, 503):
             with self.subTest(status_code=status_code):
