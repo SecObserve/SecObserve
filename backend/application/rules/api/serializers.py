@@ -18,8 +18,15 @@ from application.core.models import Product
 from application.notifications.services.send_notifications_product_rule_approval import (
     send_product_rule_approval_notification,
 )
+from application.notifications.services.webhook_events import emit_rule_event
+from application.notifications.types import Webhook_Event_Type
 from application.rules.models import Rule
 from application.rules.types import Rule_Status, Rule_Type
+
+
+def _emit_approval_requested(rule: Rule) -> None:
+    if rule.approval_status == Rule_Status.RULE_STATUS_NEEDS_APPROVAL:
+        emit_rule_event(Webhook_Event_Type.RULE_APPROVAL_REQUESTED, rule)
 
 
 class GeneralRuleSerializer(ModelSerializer):
@@ -62,9 +69,16 @@ class GeneralRuleSerializer(ModelSerializer):
 
         return super().validate(attrs)
 
+    def create(self, validated_data: dict) -> Rule:
+        rule: Rule = super().create(validated_data)
+        _emit_approval_requested(rule)
+        return rule
+
     def update(self, instance: Rule, validated_data: dict) -> Rule:
         instance.approval_status = ""
-        return super().update(instance, validated_data)
+        rule: Rule = super().update(instance, validated_data)
+        _emit_approval_requested(rule)
+        return rule
 
 
 class ProductRuleSerializer(ModelSerializer):
@@ -115,12 +129,14 @@ class ProductRuleSerializer(ModelSerializer):
     def create(self, validated_data: dict) -> Rule:
         rule: Rule = super().create(validated_data)
         send_product_rule_approval_notification(rule)
+        _emit_approval_requested(rule)
         return rule
 
     def update(self, instance: Rule, validated_data: dict) -> Rule:
         instance.approval_status = ""
         rule: Rule = super().update(instance, validated_data)
         send_product_rule_approval_notification(rule)
+        _emit_approval_requested(rule)
         return rule
 
 

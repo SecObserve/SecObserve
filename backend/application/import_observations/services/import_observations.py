@@ -79,6 +79,7 @@ from application.licenses.services.licenselynx import apply_licenselynx
 from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import NO_LICENSE_INFORMATION
 from application.notifications.services.webhook_events import (
+    emit_import_event,
     emit_observation_event,
 )
 from application.notifications.types import Webhook_Event_Type
@@ -294,7 +295,9 @@ def api_check_connection(
     return format_valid, errors
 
 
-def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tuple[int, int, int]:
+def _process_data(  # pylint: disable=too-many-statements
+    import_parameters: ImportParameters, settings: Settings
+) -> Tuple[int, int, int]:
     observations_before_query = get_observations_for_vulnerability_check(
         import_parameters.product,
         import_parameters.branch,
@@ -394,7 +397,18 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     push_observations_to_issue_tracker(import_parameters.product, vulnerability_check_observations)
     find_potential_duplicates(import_parameters.product, import_parameters.branch, import_parameters.service)
 
-    return observations_new, observations_updated, len(observations_resolved)
+    numbers = (observations_new, observations_updated, len(observations_resolved))
+    emit_import_event(
+        product=import_parameters.product,
+        branch=import_parameters.branch,
+        service=import_parameters.service,
+        parser_name=import_parameters.parser.name,
+        filename=import_parameters.filename,
+        api_configuration_name=import_parameters.api_configuration_name,
+        numbers=numbers,
+    )
+
+    return numbers
 
 
 def process_license_components(  # pylint: disable=too-many-statements disable=too-many-locals disable=too-many-branches

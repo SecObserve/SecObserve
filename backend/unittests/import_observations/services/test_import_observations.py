@@ -112,6 +112,57 @@ class TestFileUploadObservations(BaseTestCase):
 
         mock_emit.assert_not_called()
 
+    @patch("application.import_observations.services.import_observations.emit_import_event")
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_emits_import_completed_once(
+        self,
+        _mock_vex,
+        mock_deduplicate_cross_scanner,
+        _mock_duplicates,
+        _mock_exploit,
+        _mock_epss,
+        _mock_issue_tracker,
+        _mock_security_gate,
+        mock_get_current_request,
+        mock_emit_import,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+
+        numbers = file_upload_observations(
+            FileUploadParameters(
+                product=Product.objects.get(id=1),
+                branch=Branch.objects.get(id=1),
+                file=File(open("unittests/fixtures/data_1/bandit.sarif", "r")),
+                service_name="test_service",
+                docker_image_name_tag="",
+                endpoint_url="",
+                kubernetes_cluster="",
+                kubernetes_namespace="",
+                kubernetes_resource_type="",
+                kubernetes_resource_name="",
+                suppress_licenses=False,
+                sbom=False,
+            )
+        )
+
+        mock_emit_import.assert_called_once()
+        kwargs = mock_emit_import.call_args.kwargs
+        self.assertEqual(Product.objects.get(id=1), kwargs["product"])
+        self.assertEqual(Branch.objects.get(id=1), kwargs["branch"])
+        self.assertEqual("test_service", kwargs["service"].name)
+        self.assertEqual("bandit.sarif", kwargs["filename"])
+        self.assertEqual("", kwargs["api_configuration_name"])
+        self.assertEqual(tuple(numbers[:3]), kwargs["numbers"])
+        self.assertTrue(kwargs["parser_name"])
+
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
     @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")

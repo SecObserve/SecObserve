@@ -7,6 +7,8 @@ from application.access_control.services.current_user import get_current_user
 from application.notifications.services.send_notifications_product_rule_approval import (
     send_product_rule_approval_receipt_notification,
 )
+from application.notifications.services.webhook_events import emit_rule_event
+from application.notifications.types import Webhook_Event_Type
 from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
@@ -26,3 +28,4 @@ def rule_approval(rule: Rule, approval_status: str, rejection_remark: Optional[s
     rule.save()
 
     send_product_rule_approval_receipt_notification(rule)
+    emit_rule_event(Webhook_Event_Type.RULE_APPROVAL_DECIDED, rule)
