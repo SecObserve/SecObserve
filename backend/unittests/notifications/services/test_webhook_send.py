@@ -1,12 +1,11 @@
 import base64
 import io
 from ipaddress import ip_network
-from unittest.mock import patch
+from unittest.mock import Mock, call, patch
 
 from django.test import SimpleTestCase, override_settings
 from requests import ConnectionError as RequestsConnectionError
 from requests import Response
-from requests.exceptions import ChunkedEncodingError
 
 from application.notifications.services.send_notifications_base import (
     _validate_webhook_url,
@@ -91,40 +90,29 @@ class TestSendWebhookRequest(SimpleTestCase):
         self.assertTrue(result.error.startswith("HTTP 503"))
         self.assertLessEqual(len(result.error), 1024)
 
-    def test_error_body_read_is_bounded(self):
+    def test_error_keeps_only_the_status_line(self):
         response = _response(503)
-        chunks = iter([b"x" * 600] * 100)
-        response.iter_content = lambda chunk_size: chunks
-        self.mock_post.return_value = response
-
-        result = self._send()
-
-        self.assertEqual(result.error, "HTTP 503: " + "x" * (1024 - len("HTTP 503: ")))
-        # Two chunks reach the limit, the rest of the body is never read
-        self.assertEqual(98, len(list(chunks)))
-
-    def test_error_body_read_failure_keeps_the_status_code(self):
-        response = _response(503)
-        response.iter_content = lambda chunk_size: (_ for _ in ()).throw(ChunkedEncodingError("broken"))
+        response.raw = Mock()
+        response.reason = " Service Unavailable "
         self.mock_post.return_value = response
 
         result = self._send()
 
         self.assertEqual(result.status_code, 503)
         self.assertTrue(result.retryable)
-        self.assertEqual(result.error, "HTTP 503: ChunkedEncodingError while reading the body")
+        self.assertEqual(result.error, "HTTP 503 Service Unavailable")
+        # Closed without a read or stream of the body
+        self.assertEqual([call.close(), call.release_conn()], response.raw.method_calls)
 
-    def test_error_body_ignores_the_receivers_charset(self):
+    def test_error_without_reason(self):
+        self.mock_post.return_value = _response(400)
+        self.assertEqual(self._send().error, "HTTP 400")
+
+    def test_error_reason_is_bounded(self):
         response = _response(503)
-        response.raw = io.BytesIO(b"bad \xff byte")
-        response.encoding = "bogus"
+        response.reason = "x" * 5000
         self.mock_post.return_value = response
-
-        result = self._send()
-
-        self.assertEqual(result.status_code, 503)
-        self.assertTrue(result.retryable)
-        self.assertEqual(result.error, "HTTP 503: bad \ufffd byte")
+        self.assertEqual(self._send().error, "HTTP 503 " + "x" * (1024 - len("HTTP 503 ")))
 
     def test_response_is_closed(self):
         for status_code in (204, 503):

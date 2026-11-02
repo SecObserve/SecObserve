@@ -88,7 +88,7 @@ def _drain(webhook_id: int) -> None:
 
 
 def _lease() -> timedelta:
-    # Covers connect, headers and the bounded error read; a receiver dripping bytes can still outlast it
+    # Covers connect and the response headers; a receiver dripping header bytes can still outlast it
     return timedelta(seconds=max(60, 3 * django_settings.WEBHOOK_TIMEOUT))
 
 
