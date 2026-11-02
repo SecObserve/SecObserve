@@ -158,3 +158,19 @@ class TestValidateWebhookUrlAllowedNetworks(SimpleTestCase):
     def test_ftp(self):
         self.mock_dns.return_value = _addrinfo("10.1.2.3")
         self.assertFalse(_validate_webhook_url("ftp://h.example/x", self.allowed))
+
+
+class TestValidateWebhookUrlMalformed(SimpleTestCase):
+    def test_invalid_port(self):
+        self.assertFalse(_validate_webhook_url("https://host:abc/"))
+
+    def test_invalid_idna_label(self):
+        self.assertFalse(_validate_webhook_url(f"https://{'a' * 64}.example/"))
+
+    @override_settings(WEBHOOK_ALLOWED_NETWORKS=[])
+    @patch("application.notifications.services.webhook_send.requests.post")
+    def test_send_malformed_url_is_not_sent(self, mock_post):
+        result = send_webhook_request("https://host:abc/", generate_webhook_secret(), "msg_1", "{}")
+        mock_post.assert_not_called()
+        self.assertTrue(result.retryable)
+        self.assertEqual(result.error, "URL rejected, see the backend log")

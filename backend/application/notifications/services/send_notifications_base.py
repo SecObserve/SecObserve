@@ -180,7 +180,12 @@ def send_slack_notification_test(webhook: str) -> None:
 def _validate_webhook_url(
     webhook: str, allowed_networks: Sequence[ipaddress.IPv4Network | ipaddress.IPv6Network] = ()
 ) -> bool:
-    split_url = urlsplit(webhook)
+    try:
+        split_url = urlsplit(webhook)
+        port = split_url.port
+    except ValueError as e:
+        logger.error(format_log_message(message=f"Webhook URL is malformed: {webhook}", exception=e))
+        return False
     if split_url.scheme not in ("http", "https") or not split_url.hostname:
         logger.error(
             format_log_message(
@@ -191,9 +196,9 @@ def _validate_webhook_url(
 
     try:
         address_infos = socket.getaddrinfo(
-            split_url.hostname, split_url.port or (443 if split_url.scheme == "https" else 80), proto=socket.IPPROTO_TCP
+            split_url.hostname, port or (443 if split_url.scheme == "https" else 80), proto=socket.IPPROTO_TCP
         )
-    except socket.gaierror as e:
+    except (socket.gaierror, UnicodeError) as e:
         logger.error(
             format_log_message(
                 message=f"Could not resolve webhook host: {webhook}",
