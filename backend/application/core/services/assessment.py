@@ -21,7 +21,8 @@ from application.core.services.observation import (
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
-    calculate_risk_acceptance_expiry_date,
+    EXPIRY_STATUSES,
+    update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
 from application.core.types import (
@@ -195,7 +196,7 @@ def _update_observation(  # pylint: disable=too-many-arguments
 
     previous_risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date
     observation.risk_acceptance_expiry_date = (
-        new_risk_acceptance_expiry_date if observation.current_status == Status.STATUS_RISK_ACCEPTED else None
+        new_risk_acceptance_expiry_date if observation.current_status in EXPIRY_STATUSES else None
     )
 
     if (
@@ -260,11 +261,7 @@ def remove_assessment(
         observation.current_vex_justification = get_current_vex_justification(observation)
         observation.current_vex_remediations = get_current_vex_remediations(observation)
 
-        if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-            if previous_status != Status.STATUS_RISK_ACCEPTED:
-                observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(observation.product)
-        else:
-            observation.risk_acceptance_expiry_date = None
+        update_expiry_date(observation, previous_status)
 
         observation_log = create_observation_log(
             observation=observation,

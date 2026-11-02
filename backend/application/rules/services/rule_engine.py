@@ -18,10 +18,10 @@ from application.core.services.observation import (
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
-    calculate_risk_acceptance_expiry_date,
+    update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
-from application.core.types import Assessment_Status, Status
+from application.core.types import Assessment_Status
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
@@ -283,11 +283,8 @@ class Rule_Engine:
                 observation.rule_vex_remediations = rule.new_vex_remediations
                 observation.current_vex_remediations = get_current_vex_remediations(observation)
 
-            if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-                if observation_before and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
-                    observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(observation.product)
-            else:
-                observation.risk_acceptance_expiry_date = None
+            if observation_before:
+                update_expiry_date(observation, observation_before.current_status)
 
             if rule.product:
                 observation.product_rule = rule
@@ -352,13 +349,8 @@ class Rule_Engine:
                 observation.rule_rego_status = new_status
                 observation.current_status = get_current_status(observation)
 
-                if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-                    if simulation and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
-                        observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(
-                            observation.product
-                        )
-                else:
-                    observation.risk_acceptance_expiry_date = None
+                if observation_before:
+                    update_expiry_date(observation, observation_before.current_status)
 
             if new_vex_justification:
                 observation.rule_rego_vex_justification = new_vex_justification
@@ -480,11 +472,7 @@ def _write_observation_log_no_rule(
     observation.current_vex_remediations = get_current_vex_remediations(observation)
 
     previous_risk_acceptance_expiry_date = observation.risk_acceptance_expiry_date
-    if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-        if previous_status != Status.STATUS_RISK_ACCEPTED:
-            observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(observation.product)
-    else:
-        observation.risk_acceptance_expiry_date = None
+    update_expiry_date(observation, previous_status)
 
     log_status = observation.current_status if previous_status != observation.current_status else ""
 
