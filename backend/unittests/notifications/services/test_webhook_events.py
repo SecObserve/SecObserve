@@ -62,7 +62,7 @@ class TestWebhookEvents(BaseTestCase):
         self.product = {
             "id": self.product_1.pk,
             "name": "product_1",
-            "product_group": "product_group_1",
+            "product_group": {"id": self.product_group_1.pk, "name": "product_group_1"},
             "security_gate_passed": None,
             "url": f"{BASE}#/products/{self.product_1.pk}/show",
         }

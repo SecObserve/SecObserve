@@ -139,7 +139,9 @@ def _product(product: Optional[Product]) -> Optional[dict[str, Any]]:
     return {
         "id": product.pk,
         "name": product.name,
-        "product_group": product.product_group.name if product.product_group else None,
+        "product_group": (
+            {"id": product.product_group.pk, "name": product.product_group.name} if product.product_group else None
+        ),
         "security_gate_passed": product.security_gate_passed,
         "url": _url(f"products/{product.pk}"),
     }
