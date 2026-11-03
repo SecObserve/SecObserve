@@ -208,6 +208,7 @@ ignore_imports = [
     "application.authorization.services.authorization -> application.core.services.assessment_approver",
     "application.commons.api.serializers -> application.core.types",
     "application.commons.models -> application.*.types",
+    "application.commons.services.security_gate_conditions -> application.core.types",
     "application.core.api.serializers_observation -> application.import_observations.types",
     "application.core.api.serializers_observation -> application.import_observations.api.serializers",
     "application.core.api.serializers_observation -> application.import_observations.models",

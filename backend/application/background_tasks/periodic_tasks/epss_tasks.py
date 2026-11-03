@@ -3,6 +3,9 @@ from huey.contrib.djhuey import db_periodic_task
 from application.background_tasks.services.crontab import crontab_in_time_zone
 from application.background_tasks.services.task_base import so_periodic_task
 from application.commons import settings_static
+from application.core.services.security_gate import (
+    check_security_gates_with_conditions,
+)
 from application.epss.services.cvss_bt import import_cvss_bt
 from application.epss.services.epss import epss_apply_observations, import_epss
 
@@ -17,6 +20,8 @@ from application.epss.services.epss import epss_apply_observations, import_epss
 def task_import_epss() -> str:
     message = import_epss() + "\n"
     message += epss_apply_observations() + "\n"
-    message += import_cvss_bt()
+    message += import_cvss_bt() + "\n"
+    # EPSS scores and exploit flags are inputs of the gates with rules and change without an import
+    message += f"Checked {check_security_gates_with_conditions()} security gates with conditions."
 
     return message

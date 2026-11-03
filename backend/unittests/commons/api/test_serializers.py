@@ -1,3 +1,5 @@
+from rest_framework.exceptions import ValidationError
+
 from application.commons.api.serializers import SettingsSerializer
 from application.commons.models import Settings
 from unittests.base_test_case import BaseTestCase
@@ -92,3 +94,35 @@ class TestSettingsSerializer(BaseTestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertEqual(list(serializer.errors.keys()), ["scancodeio_base_url"])
+
+
+class TestSettingsSerializerSecurityGate(BaseTestCase):
+    def test_advanced_requires_a_rule(self):
+        serializer = SettingsSerializer(Settings.load())
+
+        with self.assertRaisesRegex(ValidationError, "At least one rule is needed"):
+            serializer.validate({"security_gate_advanced": True, "security_gate_conditions": {}})
+
+    def test_advanced_rule_from_instance(self):
+        settings = Settings.load()
+        settings.security_gate_conditions = {"default": [{"known_exploited": True}]}
+        settings.save()
+
+        data = SettingsSerializer(settings).validate({"security_gate_advanced": True})
+
+        self.assertTrue(data["security_gate_advanced"])
+
+    def test_normalises_conditions(self):
+        data = SettingsSerializer(Settings.load()).validate(
+            {"security_gate_conditions": {"default": [{"known_exploited": True}]}}
+        )
+
+        rule = data["security_gate_conditions"]["default"][0]
+        self.assertEqual(rule["operator"], "any")
+        self.assertFalse(rule["fix_available"])
+
+    def test_rejects_bad_conditions(self):
+        with self.assertRaisesRegex(ValidationError, "Unknown condition 'reachable'"):
+            SettingsSerializer(Settings.load()).validate(
+                {"security_gate_conditions": {"default": [{"reachable": True}]}}
+            )

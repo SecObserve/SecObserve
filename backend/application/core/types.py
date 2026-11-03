@@ -273,3 +273,13 @@ class OSVLinuxDistribution:
         (DISTRIBUTION_UBUNTU, DISTRIBUTION_UBUNTU),
         (DISTRIBUTION_WOLFI, DISTRIBUTION_WOLFI),
     ]
+
+
+class Security_Gate_Operator:
+    OPERATOR_ANY = "any"
+    OPERATOR_ALL = "all"
+
+    OPERATOR_CHOICES = [
+        (OPERATOR_ANY, "Any"),
+        (OPERATOR_ALL, "All"),
+    ]

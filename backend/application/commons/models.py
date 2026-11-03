@@ -6,6 +6,7 @@ from django.db.models import (
     BooleanField,
     CharField,
     IntegerField,
+    JSONField,
     Model,
     TextField,
 )
@@ -48,6 +49,16 @@ class Settings(Model, DirtyFieldsMixin):
         default=99999,
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Number of unknown observations that must not be exceeded",
+    )
+    security_gate_advanced = BooleanField(
+        default=False,
+        help_text="Count only observations with a CVE that match the conditions of their severity, "
+        + "other observations always count",
+    )
+    security_gate_conditions = JSONField(
+        default=dict,
+        blank=True,
+        help_text="Rules per severity for the advanced security gate",
     )
 
     jwt_validity_duration_user = IntegerField(

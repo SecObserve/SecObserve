@@ -70,6 +70,14 @@ from application.core.api.serializers_product import (
     ServiceNameSerializer,
     ServiceSerializer,
 )
+from application.core.api.serializers_security_gate import (
+    SecurityGatePreviewRequestSerializer,
+    SecurityGatePreviewRowSerializer,
+)
+from application.core.api.views_security_gate import (
+    preview_configured_security_gate,
+    preview_security_gate_from_request,
+)
 from application.core.models import (
     Branch,
     Observation,
@@ -366,6 +374,27 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
         rule_engine.apply_all_rules_for_product()
 
         return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["GET"],
+        responses={HTTP_200_OK: SecurityGatePreviewRowSerializer(many=True)},
+    )
+    @extend_schema(
+        methods=["POST"],
+        request=SecurityGatePreviewRequestSerializer,
+        responses={HTTP_200_OK: SecurityGatePreviewRowSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get", "post"])
+    def security_gate_preview(self, request: Request, pk: int) -> Response:
+        product = self.__get_product(pk)
+
+        # GET explains the configured gate to everybody who can see the product, POST previews a draft
+        if request.method == "GET":
+            rows = preview_configured_security_gate(product)
+        else:
+            rows = preview_security_gate_from_request(product, request.data)
+
+        return Response(SecurityGatePreviewRowSerializer(rows, many=True).data, status=HTTP_200_OK)
 
     @extend_schema(
         methods=["POST"],

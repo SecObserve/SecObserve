@@ -72,6 +72,8 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     security_gate_threshold_unknown = IntegerField(
         null=True, validators=[MinValueValidator(0), MaxValueValidator(999999)]
     )
+    security_gate_advanced = BooleanField(null=True)
+    security_gate_conditions = JSONField(null=True, blank=True)
 
     members: ManyToManyField = ManyToManyField(
         User, through="Product_Member", related_name="product_members", blank=True

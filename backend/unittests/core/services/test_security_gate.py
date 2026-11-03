@@ -1,21 +1,33 @@
-from unittest.mock import patch
+from decimal import Decimal
+from unittest.mock import ANY, patch
 
 from django.utils import timezone
 
 from application.commons.models import Settings
-from application.core.models import Observation, Product
+from application.core.models import Branch, Observation, Product
 from application.core.services.security_gate import (
     SEVERITIES,
+    Security_Gate_Rule,
     check_security_gate,
     check_security_gate_observation,
     check_security_gates,
+    check_security_gates_with_conditions,
     evaluate_security_gate,
+    get_security_gate_observation_counts,
+    get_security_gate_rules,
     get_security_gate_thresholds,
+    preview_security_gate,
+    resolve_security_gate_rules,
 )
 from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.import_observations.types import Parser_Source, Parser_Type
 from unittests.base_test_case import BaseTestCase
+
+KEV_RULE = {"known_exploited": True}
+CRIT = {"default": [KEV_RULE]}
+ZERO = {"Critical": 0, "High": 0, "Medium": 0, "Low": 0, "None": 0, "Unknown": 0}
+THRESHOLDS = {"critical": 0, "high": 99999, "medium": 99999, "low": 99999, "none": 99999, "unknown": 99999}
 
 
 class TestSecurityGate(BaseTestCase):
@@ -775,6 +787,7 @@ class TestEvaluateSecurityGate(BaseTestCase):
         super().setUp()
 
         self.thresholds = {severity: 1 for severity in SEVERITIES}
+        self.counts = {severity: 1 for severity in SEVERITIES}
         for severity in SEVERITIES:
             setattr(self.branch_1, f"active_{severity}_observation_count", 1)
 
@@ -789,6 +802,13 @@ class TestEvaluateSecurityGate(BaseTestCase):
     def test_evaluate_without_counts(self):
         with self.assertRaises(ValueError):
             evaluate_security_gate(self.branch_2, self.thresholds)
+
+    def test_counts_from_annotations(self):
+        self.assertEqual(get_security_gate_observation_counts(self.branch_1, None), self.counts)
+
+    def test_counts_without_annotations(self):
+        with self.assertRaises(ValueError):
+            get_security_gate_observation_counts(self.branch_2, None)
 
 
 class TestCheckSecurityGates(BaseTestCase):
@@ -821,3 +841,141 @@ class TestCheckSecurityGates(BaseTestCase):
         self.assertTrue(Product.objects.get(pk=product_passed.pk).security_gate_passed)
         self.assertIsNone(Product.objects.get(pk=product_without_gate.pk).security_gate_passed)
         self.assertEqual(2, notification_mock.call_count)
+
+
+class TestSecurityGateRules(BaseTestCase):
+    def test_rules_none_when_advanced_null(self):
+        product = Product(security_gate_active=True, security_gate_conditions=CRIT)
+
+        self.assertIsNone(get_security_gate_rules(product))
+
+    def test_rules_none_when_no_rule(self):
+        product = Product(
+            security_gate_active=True,
+            security_gate_advanced=True,
+            security_gate_conditions={"severities": {"Medium": []}},
+        )
+
+        self.assertIsNone(get_security_gate_rules(product))
+
+    def test_rules_of_product(self):
+        product = Product(
+            security_gate_active=True,
+            security_gate_advanced=True,
+            security_gate_conditions={"default": [{"known_exploited": True, "epss_min": 10}]},
+        )
+
+        rules = get_security_gate_rules(product)
+
+        self.assertEqual(
+            rules["Critical"], [Security_Gate_Rule("any", True, False, False, Decimal("10"), False, False)]
+        )
+        self.assertEqual(rules["High"], rules["Critical"])
+
+    def test_resolve_inherit_and_override(self):
+        rules = resolve_security_gate_rules(
+            {"default": [KEV_RULE], "severities": {"Medium": [], "High": [{"exploit_tooling": True}]}}
+        )
+
+        self.assertEqual(rules["Medium"], [])
+        self.assertTrue(rules["High"][0].exploit_tooling)
+        self.assertTrue(rules["Low"][0].known_exploited)
+
+    def test_rules_of_product_group_win(self):
+        group = Product(
+            is_product_group=True,
+            security_gate_active=True,
+            security_gate_advanced=True,
+            security_gate_conditions={"default": [{"operator": "all", "exploit_tooling": True}]},
+        )
+        product = Product(product_group=group, security_gate_active=True, security_gate_advanced=False)
+
+        self.assertEqual(get_security_gate_rules(product)["Critical"][0].operator, "all")
+
+    @patch("application.core.services.security_gate.Settings.load")
+    def test_rules_of_settings(self, mock_settings_load):
+        mock_settings_load.return_value = Settings(
+            security_gate_active=True, security_gate_advanced=True, security_gate_conditions=CRIT
+        )
+
+        self.assertTrue(get_security_gate_rules(Product())["Critical"][0].known_exploited)
+
+    def test_rules_none_when_gate_disabled(self):
+        product = Product(security_gate_active=False, security_gate_advanced=True, security_gate_conditions=CRIT)
+
+        self.assertIsNone(get_security_gate_rules(product))
+
+    @patch("application.core.services.security_gate.count_active_observations_by_severity")
+    def test_counts_with_rules_query_default_branch(self, count_mock):
+        count_mock.return_value = {**ZERO, "Critical": 1}
+        product = Product(id=5)
+
+        counts = get_security_gate_observation_counts(product, resolve_security_gate_rules(CRIT))
+
+        self.assertEqual(counts["critical"], 1)
+        self.assertEqual(counts["high"], 0)
+        count_mock.assert_called_once_with(product, None, ANY)
+
+    @patch("application.core.services.security_gate.count_active_observations_by_severity")
+    def test_counts_with_rules_query_branch(self, count_mock):
+        count_mock.return_value = ZERO
+        product = Product(id=5)
+        branch = Branch(product=product)
+
+        get_security_gate_observation_counts(branch, resolve_security_gate_rules(CRIT))
+
+        count_mock.assert_called_once_with(product, branch, ANY)
+
+    @patch("application.core.services.security_gate.get_product_by_id")
+    @patch(
+        "application.core.services.security_gate.count_active_observations_by_severity",
+        return_value={**ZERO, "Critical": 1},
+    )
+    @patch("application.core.models.Product.save")
+    @patch("application.core.services.security_gate.send_product_security_gate_notification")
+    def test_check_security_gate_with_rules_failed(self, _notification, _save, _count, get_product_mock):
+        product = Product(
+            id=9,
+            security_gate_passed=True,
+            security_gate_active=True,
+            security_gate_threshold_critical=0,
+            security_gate_advanced=True,
+            security_gate_conditions=CRIT,
+        )
+
+        check_security_gate(product)
+
+        self.assertFalse(product.security_gate_passed)
+        get_product_mock.assert_not_called()
+
+    @patch("application.core.services.security_gate.check_security_gate")
+    @patch("application.core.models.Product.objects.filter")
+    def test_check_security_gates_with_conditions_skips_plain_gates(self, filter_mock, check_mock):
+        plain = Product(security_gate_active=True)
+        advanced = Product(security_gate_active=True, security_gate_advanced=True, security_gate_conditions=CRIT)
+        filter_mock.return_value.select_related.return_value = [plain, advanced]
+
+        self.assertEqual(check_security_gates_with_conditions(), 1)
+        check_mock.assert_called_once_with(advanced)
+
+    @patch("application.core.services.security_gate.count_active_observations_by_severity")
+    def test_preview_rows(self, count_mock):
+        count_mock.side_effect = [{**ZERO, "Critical": 4}, {**ZERO, "Critical": 2}]
+
+        rows = preview_security_gate(Product(id=5), THRESHOLDS, resolve_security_gate_rules(CRIT))
+
+        critical = next(row for row in rows if row["severity"] == "Critical")
+        self.assertEqual((critical["active"], critical["counted"], critical["threshold"]), (4, 2, 0))
+        self.assertFalse(critical["passed"])
+        high = next(row for row in rows if row["severity"] == "High")
+        self.assertTrue(high["passed"])
+
+    @patch("application.core.services.security_gate.count_active_observations_by_severity")
+    def test_preview_without_rules_counts_everything(self, count_mock):
+        count_mock.return_value = {**ZERO, "Critical": 4}
+
+        rows = preview_security_gate(None, THRESHOLDS, None)
+
+        critical = next(row for row in rows if row["severity"] == "Critical")
+        self.assertEqual((critical["active"], critical["counted"]), (4, 4))
+        count_mock.assert_called_once_with(None)

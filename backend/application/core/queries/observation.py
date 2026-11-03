@@ -1,6 +1,6 @@
 from typing import Optional
 
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.query import QuerySet
 
 from application.access_control.services.current_user import get_current_user
@@ -15,6 +15,34 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.product import get_default_branch_filter
+from application.core.types import Severity, Status
+
+
+def count_active_observations_by_severity(
+    product: Optional[Product],
+    branch: Optional[Branch] = None,
+    extra_filter: Optional[Q] = None,
+) -> dict[str, int]:
+    """
+    Active observations per severity in one query: of a branch, of the default branch of a product,
+    or of the default branches of all products when no product is given. Every severity is a key.
+    """
+    observations = Observation.objects.filter(current_status__in=Status.STATUS_ACTIVE)
+    if product:
+        observations = observations.filter(product=product)
+    if branch:
+        observations = observations.filter(branch=branch)
+    else:
+        observations = observations.filter(get_default_branch_filter())
+    if extra_filter is not None:
+        observations = observations.filter(extra_filter)
+
+    counts = {severity: 0 for severity, _ in Severity.SEVERITY_CHOICES}
+    for row in observations.values("current_severity").annotate(count=Count("pk")):
+        if row["current_severity"] in counts:
+            counts[row["current_severity"]] = row["count"]
+    return counts
 
 
 def get_observation_by_id(observation_id: int) -> Optional[Observation]:

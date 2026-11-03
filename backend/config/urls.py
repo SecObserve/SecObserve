@@ -21,6 +21,9 @@ from application.commons.api.views import (
 )
 from application.commons.views import empty_view
 from application.core.api.views_others import PURLTypeManyView, PURLTypeOneView
+from application.core.api.views_security_gate import (
+    SettingsSecurityGatePreviewView,
+)
 from application.import_observations.api.views import (
     ApiImportObservationsById,
     ApiImportObservationsByName,
@@ -79,6 +82,11 @@ urlpatterns += [
     path("api/status/settings/", StatusSettingsView.as_view()),
     path("api/status/background_task_statistics/", BackgroundTaskView.as_view()),
     path("api/settings/<int:pk>/", SettingsView.as_view(), name="settings"),
+    path(
+        "api/settings/<int:pk>/security_gate_preview/",
+        SettingsSecurityGatePreviewView.as_view(),
+        name="settings_security_gate_preview",
+    ),
     path("api/jwt_secret/reset/", JWTSecretResetView.as_view()),
     path(
         "api/authentication/authenticate/",

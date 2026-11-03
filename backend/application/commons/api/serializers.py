@@ -11,6 +11,10 @@ from rest_framework.serializers import (
 )
 
 from application.commons.models import Settings
+from application.commons.services.security_gate_conditions import (
+    conditions_have_a_rule,
+    normalize_security_gate_conditions,
+)
 from application.core.types import Status
 
 
@@ -62,7 +66,22 @@ class SettingsSerializer(ModelSerializer):
             if errors:
                 raise ValidationError(errors)
 
+        self._validate_security_gate_conditions(attrs)
+
         return attrs
+
+    def _validate_security_gate_conditions(self, attrs: dict) -> None:
+        try:
+            conditions = normalize_security_gate_conditions(
+                self._current_value(attrs, "security_gate_conditions") or {}
+            )
+        except ValueError as error:
+            raise ValidationError(str(error)) from error
+        if "security_gate_conditions" in attrs:
+            attrs["security_gate_conditions"] = conditions
+
+        if self._current_value(attrs, "security_gate_advanced") is True and not conditions_have_a_rule(conditions):
+            raise ValidationError("At least one rule is needed when the advanced security gate is active")
 
     def _current_value(self, attrs: dict, field: str) -> Any:
         # A partial update doesn't contain all fields, then the stored value is relevant

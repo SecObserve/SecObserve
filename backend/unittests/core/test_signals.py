@@ -99,6 +99,24 @@ class TestCoreSignals(TestCase):
         # Verify that check_security_gate was called
         mock_check_security_gate.assert_called_once_with(product)
 
+    @patch("application.core.signals.check_security_gate")
+    def test_product_post_save_updated_conditions_changed(self, mock_check_security_gate):
+        product = Product.objects.create(name="Test Product", security_gate_active=True)
+
+        product.security_gate_conditions = {"default": [{"known_exploited": True}]}
+        product.save()
+
+        mock_check_security_gate.assert_called_once_with(product)
+
+    @patch("application.core.signals.settings_post_save_task")
+    def test_settings_post_save_conditions_changed(self, mock_task):
+        settings = Settings.load()
+
+        settings.security_gate_advanced = True
+        settings.save()
+
+        mock_task.assert_called_once()
+
     @patch("application.core.signals.check_security_gates")
     def test_product_post_save_updated_product_group(self, mock_check_security_gates):
         # Create a product group

@@ -85,6 +85,26 @@ class TestProductSerializer(BaseTestCase):
         self.assertEqual(last_observation_change, self.product_1.last_observation_change)
         self.assertEqual(last_license_change, self.product_1.last_license_change)
 
+    @patch("application.core.api.serializers_product.user_has_permission")
+    def test_security_gate_advanced_fields_are_exposed(self, mock_permissions):
+        mock_permissions.return_value = True
+        conditions = {"default": [{"operator": "any", "known_exploited": True}], "severities": {}}
+        self.product_group_1.security_gate_advanced = True
+        self.product_group_1.security_gate_conditions = conditions
+        self.product_group_1.save()
+        self.product_1.repository_default_branch = None
+        self.product_1.security_gate_advanced = True
+        self.product_1.security_gate_conditions = conditions
+        self.product_1.save()
+
+        product_data = ProductSerializer(self.product_1).data
+        product_group_data = ProductGroupSerializer(self.product_group_1).data
+
+        self.assertTrue(product_data["security_gate_advanced"])
+        self.assertEqual(conditions, product_data["security_gate_conditions"])
+        self.assertTrue(product_group_data["security_gate_advanced"])
+        self.assertEqual(conditions, product_group_data["security_gate_conditions"])
+
 
 class TestBranchSerializerSecurityGate(BaseTestCase):
     def _annotate(self, branch, critical=0):
@@ -119,6 +139,20 @@ class TestBranchSerializerSecurityGate(BaseTestCase):
         self.product_1.security_gate_active = True
 
         self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
+
+    @patch("application.core.services.security_gate.count_active_observations_by_severity")
+    def test_security_gate_conditions_use_branch(self, count_mock):
+        count_mock.return_value = {"Critical": 1, "High": 0, "Medium": 0, "Low": 0, "None": 0, "Unknown": 0}
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_threshold_critical = 0
+        self.product_1.security_gate_advanced = True
+        self.product_1.security_gate_conditions = {"default": [{"known_exploited": True}]}
+        self._annotate(self.branch_1, critical=0)
+
+        # The annotations say 0, the rules count 1 on the branch itself
+        self.assertFalse(BranchSerializer().get_security_gate_passed(self.branch_1))
+        self.assertIs(count_mock.call_args[0][0], self.product_1)
+        self.assertIs(count_mock.call_args[0][1], self.branch_1)
 
 
 class TestBranchSerializer(BaseTestCase):
@@ -307,6 +341,76 @@ class TestBranchSerializer(BaseTestCase):
         self.assertEqual(0, data["security_gate_threshold_low"])
         self.assertEqual(0, data["security_gate_threshold_none"])
         self.assertEqual(0, data["security_gate_threshold_unknown"])
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_security_gate_active_copies_conditions(self, mock_product_member):
+        settings = Settings.load()
+        settings.security_gate_advanced = True
+        settings.security_gate_conditions = {"default": [{"known_exploited": True}]}
+        settings.save()
+        product = Product(security_gate_active=None)
+        product.save()
+
+        product_serializer = ProductSerializer(product)
+        data = product_serializer.validate({**product_serializer.data, "security_gate_active": True})
+
+        self.assertTrue(data["security_gate_advanced"])
+        self.assertTrue(data["security_gate_conditions"]["default"][0]["known_exploited"])
+        self.assertFalse(data["security_gate_conditions"]["default"][0]["exploit_tooling"])
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_existing_gate_keeps_advanced_off(self, mock_product_member):
+        """A product specific gate from before the advanced gate must not take over the rules of the settings."""
+        settings = Settings.load()
+        settings.security_gate_advanced = True
+        settings.security_gate_conditions = {"default": [{"known_exploited": True}]}
+        settings.save()
+        product = Product(security_gate_active=True, security_gate_threshold_critical=0)
+        product.save()
+
+        product_serializer = ProductSerializer(product)
+        data = product_serializer.validate({**product_serializer.data, "description": "unrelated change"})
+
+        self.assertIsNone(data["security_gate_advanced"])
+        self.assertIsNone(data["security_gate_conditions"])
+        self.assertEqual(0, data["security_gate_threshold_critical"])
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_advanced_requires_a_rule(self, mock_product_member):
+        product = Product(security_gate_active=True, security_gate_advanced=True, security_gate_conditions={})
+        product.save()
+
+        product_serializer = ProductSerializer(product)
+        with self.assertRaisesRegex(ValidationError, "At least one rule is needed"):
+            product_serializer.validate(product_serializer.data)
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_rejects_bad_conditions(self, mock_product_member):
+        product = Product(
+            security_gate_active=True,
+            security_gate_advanced=True,
+            security_gate_conditions={"default": [{"operator": "nor", "known_exploited": True}]},
+        )
+        product.save()
+
+        product_serializer = ProductSerializer(product)
+        with self.assertRaisesRegex(ValidationError, "Operator"):
+            product_serializer.validate(product_serializer.data)
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_security_gate_inactive_clears_conditions(self, mock_product_member):
+        product = Product(
+            security_gate_active=False,
+            security_gate_advanced=True,
+            security_gate_conditions={"default": [{"known_exploited": True}]},
+        )
+        product.save()
+
+        product_serializer = ProductSerializer(product)
+        data = product_serializer.validate(product_serializer.data)
+
+        self.assertIsNone(data["security_gate_advanced"])
+        self.assertIsNone(data["security_gate_conditions"])
 
     def test_validate_repository_prefix_empty(self):
         product = Product()
