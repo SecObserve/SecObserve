@@ -51,6 +51,7 @@ const WebhookList = () => (
                 <WithRecord label="Event types" render={(webhook: Webhook) => webhook.event_types.join(", ")} />
                 <BooleanField source="active" textAlign="center" />
                 <TextField source="consecutive_failures" label="Consecutive failures" />
+                <TextField source="user_full_name" label="Changed by" />
                 <WithRecord
                     render={(webhook: Webhook) => (
                         <Stack direction="row" spacing={4}>

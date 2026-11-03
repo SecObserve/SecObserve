@@ -15,7 +15,7 @@ Global webhooks, which get the events of all products, are in **Administration â
 2. Copy the secret from the dialog that follows. It is shown only once, **Rotate secret** creates a new one.
 3. Store the secret in your receiver, open the webhook by clicking its name and click **Send test**.
 
-The page of a webhook, opened by clicking its name, lists its deliveries with status, attempts and HTTP code. Click a delivery to see its payload, **Redeliver** sends it again.
+The page of a webhook, opened by clicking its name, shows who changed it last and lists its deliveries with status, attempts and HTTP code. Click a delivery to see its payload, **Redeliver** sends it again.
 
 ![Webhook with its deliveries](../assets/images/screenshot_webhook_deliveries.png)
 

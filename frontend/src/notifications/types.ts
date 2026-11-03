@@ -89,6 +89,7 @@ export interface Webhook extends RaRecord {
     consecutive_failures: number;
     next_attempt_at: string | null;
     created: string;
+    user_full_name: string | null;
 }
 
 export interface WebhookDelivery extends RaRecord {

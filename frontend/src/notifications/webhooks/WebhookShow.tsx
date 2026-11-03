@@ -152,6 +152,9 @@ const WebhookComponent = () => (
                             <Labeled label="Created">
                                 <DateField source="created" showTime />
                             </Labeled>
+                            <Labeled label="Changed by">
+                                <TextField source="user_full_name" emptyText="-" />
+                            </Labeled>
                         </Stack>
                     </Stack>
                 </Paper>
