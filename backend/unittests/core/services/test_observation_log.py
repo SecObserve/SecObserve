@@ -57,7 +57,7 @@ class TestObservationLog(BaseTestCase):
         observation_log.save.assert_called_once()
         self.observation_1.save.assert_called_once()
         mock_user.assert_called_once()
-        self.observation_1.product.save.assert_called_once()
+        self.observation_1.product.save.assert_called_once_with(update_fields=["last_observation_change"])
         mock_send_observation_notification.assert_called_once()
         mock_send_observation_title_notification.assert_called_with(self.observation_1)
 
