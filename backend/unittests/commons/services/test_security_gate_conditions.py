@@ -57,8 +57,9 @@ class TestNormalizeSecurityGateConditions(unittest.TestCase):
             normalize_security_gate_conditions({"default": [{"operator": "nor", **KEV}]})
 
     def test_rejects_epss_out_of_range(self):
-        with self.assertRaisesRegex(ValueError, "EPSS"):
-            normalize_security_gate_conditions({"default": [{"epss_min": 101}]})
+        for epss_min in (101, -1):
+            with self.assertRaisesRegex(ValueError, "EPSS"):
+                normalize_security_gate_conditions({"default": [{"epss_min": epss_min}]})
 
     def test_rejects_rules_not_a_list(self):
         with self.assertRaisesRegex(ValueError, "Rules must be a list"):

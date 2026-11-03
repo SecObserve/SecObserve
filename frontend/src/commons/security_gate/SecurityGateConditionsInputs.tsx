@@ -93,7 +93,7 @@ const RuleEditor = ({ rules, onChange }: RuleEditorProps) => {
                                         onChange={(event) =>
                                             replaceRule(index, {
                                                 ...rule,
-                                                epss_min: event.target.value === "" ? 0 : Number(event.target.value),
+                                                epss_min: event.target.value === "" ? null : Number(event.target.value),
                                             })
                                         }
                                         slotProps={{
