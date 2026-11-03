@@ -21,7 +21,7 @@ from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
-from application.core.types import Assessment_Status, Status
+from application.core.types import Assessment_Status, Observation_Log_Comment, Status
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
@@ -512,11 +512,17 @@ def _write_observation_log_no_rule(
     )
 
     if previous_product_rule:
-        comment = f"Removed product {previous_product_rule.type.lower()} rule {previous_product_rule.name}"
+        comment = (
+            f"{Observation_Log_Comment.COMMENT_PREFIX_REMOVED_PRODUCT_RULE}"
+            f"{previous_product_rule.type.lower()} rule {previous_product_rule.name}"
+        )
     elif previous_general_rule:
-        comment = f"Removed general {previous_general_rule.type.lower()} rule {previous_general_rule.name}"
+        comment = (
+            f"{Observation_Log_Comment.COMMENT_PREFIX_REMOVED_GENERAL_RULE}"
+            f"{previous_general_rule.type.lower()} rule {previous_general_rule.name}"
+        )
     else:
-        comment = "Removed unknown rule"
+        comment = Observation_Log_Comment.COMMENT_REMOVED_UNKNOWN_RULE
 
     create_observation_log(
         observation=observation,

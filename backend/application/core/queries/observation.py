@@ -16,6 +16,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.types import Observation_Log_Comment
 
 
 def get_observation_by_id(observation_id: int) -> Optional[Observation]:
@@ -268,7 +269,6 @@ def get_current_modifying_observation_log(observation: Observation) -> Optional[
 OBSERVATION_FULL_TEXT_SEARCH_FIELDS = [
     "title",
     "description",
-    "recommendation",
     "vulnerability_id",
     "vulnerability_id_aliases",
     "origin_component_name_version",
@@ -284,15 +284,34 @@ OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = ["comment"]
 # Unbalanced double quotes are ignored.
 FULL_TEXT_SEARCH_TERM_PATTERN = re.compile(r'"([^"]*)"|([^\s"]+)')
 
+# Shorter terms have no trigrams, PostgreSQL would have to scan the whole tables for them
+FULL_TEXT_SEARCH_MIN_TERM_LENGTH = 3
+# Each term adds two subqueries to the query
+FULL_TEXT_SEARCH_MAX_TERMS = 10
+
 
 def _get_full_text_search_terms(value: str) -> list[tuple[str, bool]]:
     terms = []
     for quoted_term, term in FULL_TEXT_SEARCH_TERM_PATTERN.findall(value):
         if term:
             terms.append((term, False))
-        elif quoted_term.strip():
+        else:
             terms.append((quoted_term.strip(), True))
-    return terms
+    return [term for term in terms if len(term[0]) >= FULL_TEXT_SEARCH_MIN_TERM_LENGTH][:FULL_TEXT_SEARCH_MAX_TERMS]
+
+
+def _get_searchable_observation_logs() -> QuerySet[Observation_Log]:
+    # Comments written by the system would match nearly every observation
+    observation_logs = Observation_Log.objects.filter(
+        general_rule__isnull=True,
+        general_rule_rego__isnull=True,
+        product_rule__isnull=True,
+        product_rule_rego__isnull=True,
+        vex_statement__isnull=True,
+    ).exclude(comment__in=Observation_Log_Comment.FULL_TEXT_SEARCH_EXCLUDED_COMMENTS)
+    for prefix in Observation_Log_Comment.FULL_TEXT_SEARCH_EXCLUDED_COMMENT_PREFIXES:
+        observation_logs = observation_logs.exclude(comment__startswith=prefix)
+    return observation_logs
 
 
 def _get_full_text_search_filter(fields: list[str], term: str, whole_word: bool) -> Q:
@@ -316,11 +335,14 @@ def filter_observations_full_text(queryset: QuerySet[Observation], value: str) -
         matching_observations = Observation.objects.filter(
             _get_full_text_search_filter(OBSERVATION_FULL_TEXT_SEARCH_FIELDS, term, whole_word)
         ).values("id")
-        matching_observation_logs = Observation_Log.objects.filter(
-            _get_full_text_search_filter(OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS, term, whole_word)
-        ).values("observation_id")
+        matching_observation_logs = (
+            _get_searchable_observation_logs()
+            .filter(_get_full_text_search_filter(OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS, term, whole_word))
+            .values("observation_id")
+        )
 
-        # A union instead of an OR condition, because PostgreSQL can use the indexes of both tables only this way
-        queryset = queryset.filter(id__in=matching_observations.union(matching_observation_logs))
+        # A union instead of an OR condition, because PostgreSQL can use the indexes of both tables only this way.
+        # Duplicates don't matter for IN, so UNION ALL saves the deduplication.
+        queryset = queryset.filter(id__in=matching_observations.union(matching_observation_logs, all=True))
 
     return queryset

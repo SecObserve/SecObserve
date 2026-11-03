@@ -109,6 +109,32 @@ class Observation_Log_Comment:
         COMMENT_NOT_FOUND_IN_LATEST_SCAN,
     ]
 
+    COMMENT_CREATED_MANUALLY = "Observation created manually"
+    COMMENT_CHANGED_MANUALLY = "Observation changed manually"
+    COMMENT_RISK_ACCEPTANCE_EXPIRED = "Risk acceptance has expired."
+
+    COMMENT_PREFIX_REMOVED_PRODUCT_RULE = "Removed product "
+    COMMENT_PREFIX_REMOVED_GENERAL_RULE = "Removed general "
+    COMMENT_REMOVED_UNKNOWN_RULE = "Removed unknown rule"
+    COMMENT_PREFIX_REMOVED_VEX_STATEMENT = "Removed VEX statement from "
+    COMMENT_REMOVED_UNKNOWN_VEX_STATEMENT = "Removed unknown VEX statement"
+
+    # Comments written by the system, which are not searched by the full text search.
+    # Logs written by rules and VEX statements are excluded via their foreign keys,
+    # but the logs of their removal have no foreign key and are excluded via the prefixes.
+    FULL_TEXT_SEARCH_EXCLUDED_COMMENTS = AUTOMATED_COMMENTS + [
+        COMMENT_CREATED_MANUALLY,
+        COMMENT_CHANGED_MANUALLY,
+        COMMENT_RISK_ACCEPTANCE_EXPIRED,
+    ]
+    FULL_TEXT_SEARCH_EXCLUDED_COMMENT_PREFIXES = [
+        COMMENT_PREFIX_REMOVED_PRODUCT_RULE,
+        COMMENT_PREFIX_REMOVED_GENERAL_RULE,
+        COMMENT_REMOVED_UNKNOWN_RULE,
+        COMMENT_PREFIX_REMOVED_VEX_STATEMENT,
+        COMMENT_REMOVED_UNKNOWN_VEX_STATEMENT,
+    ]
+
 
 class VEX_Justification:
     JUSTIFICATION_COMPONENT_NOT_PRESENT = "component_not_present"

@@ -49,6 +49,7 @@ from application.core.services.observation_log import create_observation_log
 from application.core.services.security_gate import check_security_gate_observation
 from application.core.types import (
     Assessment_Status,
+    Observation_Log_Comment,
     Severity,
     Status,
     VEX_Justification,
@@ -368,7 +369,7 @@ class ObservationUpdateSerializer(ModelSerializer):
                 status=log_status,
                 priority=None,
                 priority_changed=False,
-                comment="Observation changed manually",
+                comment=Observation_Log_Comment.COMMENT_CHANGED_MANUALLY,
                 vex_justification=log_vex_justification,
                 vex_remediations=log_vex_remediations,
                 assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
@@ -461,7 +462,7 @@ class ObservationCreateSerializer(ModelSerializer):
             status=observation.current_status,
             priority=None,
             priority_changed=False,
-            comment="Observation created manually",
+            comment=Observation_Log_Comment.COMMENT_CREATED_MANUALLY,
             vex_justification=observation.current_vex_justification,
             vex_remediations=(
                 str(observation.current_vex_remediations) if observation.current_vex_remediations is not None else None

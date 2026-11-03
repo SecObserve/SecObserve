@@ -7,7 +7,6 @@ from django.db import migrations
 OBSERVATION_FULL_TEXT_SEARCH_FIELDS = {
     "title": "core_obs_title_trgm_idx",
     "description": "core_obs_description_trgm_idx",
-    "recommendation": "core_obs_recommend_trgm_idx",
     "vulnerability_id": "core_obs_vuln_id_trgm_idx",
     "vulnerability_id_aliases": "core_obs_vuln_alias_trgm_idx",
     "origin_component_name_version": "core_obs_component_trgm_idx",

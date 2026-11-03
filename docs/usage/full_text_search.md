@@ -23,11 +23,12 @@ The search looks into these texts of an observation:
 
 * Title
 * Description
-* Recommendation
 * Vulnerability id
 * Vulnerability id aliases
 * Origins: Component name and version, Docker image name and tag, endpoint URL, source file, cloud resource and Kubernetes resource
-* Comments of all entries in the observation log, e.g. the comments of assessments
+* Comments of the entries in the observation log, e.g. the comments of assessments
+
+Comments written automatically by SecObserve are not searched, because they would match nearly every observation. These are the comments written by parsers during imports, by rules and VEX statements and when they are removed, when an observation has been created or changed manually and when a risk acceptance has expired.
 
 ## Matching rules
 
@@ -37,7 +38,8 @@ The search looks into these texts of an observation:
 * Several words in double quotes are searched as a phrase: `"sql injection"` finds `SQL injection` with exactly one space between the words, but not `injection in SQL`.
 * The search is case-insensitive: `STORED "xss"` finds `Stored XSS`.
 * There are no other operators: `or` and `-` are searched like all other characters. A double quote without a closing one is ignored.
-* Words with fewer than 3 characters work as well, but the search can be slower with many observations.
+* Words with fewer than 3 characters are ignored, also in double quotes, because they cannot be searched efficiently. If all words are shorter, the full text search doesn't filter at all.
+* At most 10 words are searched, all further words are ignored.
 
 ## REST API
 

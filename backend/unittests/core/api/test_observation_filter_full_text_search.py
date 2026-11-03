@@ -7,12 +7,14 @@ from rest_framework.test import APIClient
 
 from application.access_control.models import User
 from application.core.api.filters import ObservationFilter
-from application.core.models import Observation
+from application.core.models import Observation, Observation_Log
 from application.core.queries.observation import (
     OBSERVATION_FULL_TEXT_SEARCH_FIELDS,
     OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS,
     _get_full_text_search_terms,
 )
+from application.core.types import Observation_Log_Comment
+from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
 
 migration = import_module("application.core.migrations.0101_observation_full_text_search")
@@ -56,8 +58,17 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
         sql = str(queryset.query)
         for field in OBSERVATION_FULL_TEXT_SEARCH_FIELDS:
             self.assertIn(f'"U0"."{field}" LIKE %jection%', sql)
-        self.assertIn(" UNION ", sql)
-        self.assertIn('FROM "core_observation_log" "U0" WHERE "U0"."comment" LIKE %jection%', sql)
+        self.assertIn(" UNION ALL ", sql)
+        self.assertIn('FROM "core_observation_log" "U0" WHERE', sql)
+        for field in ["general_rule_id", "general_rule_rego_id", "product_rule_id", "product_rule_rego_id"]:
+            self.assertIn(f'"U0"."{field}" IS NULL', sql)
+        self.assertIn('"U0"."vex_statement_id" IS NULL', sql)
+        self.assertIn(
+            f'NOT ("U0"."comment" IN ({", ".join(Observation_Log_Comment.FULL_TEXT_SEARCH_EXCLUDED_COMMENTS)}))', sql
+        )
+        for prefix in Observation_Log_Comment.FULL_TEXT_SEARCH_EXCLUDED_COMMENT_PREFIXES:
+            self.assertIn(f'NOT ("U0"."comment" LIKE {prefix}%', sql)
+        self.assertIn('"U0"."comment" LIKE %jection%', sql)
 
     @patch("application.commons.services.functions.connection")
     def test_postgresql_whole_word(self, mock_connection):
@@ -72,7 +83,7 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
             self.assertIn(f'"U0"."{field}" LIKE %sql%', sql)
             self.assertIn(f'"U0"."{field}" REGEXP \'(?i)\' || (?<!\\w)sql(?!\\w)', sql)
             self.assertIn(f'"U0"."{field}" LIKE %jection%', sql)
-        self.assertEqual(2, sql.count(" UNION "))
+        self.assertEqual(2, sql.count(" UNION ALL "))
 
     def _search(self, value):
         with patch("application.commons.services.functions.connection") as mock_connection:
@@ -94,6 +105,44 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
     def test_postgresql_result_no_terms(self):
         self.assertEqual(Observation.objects.count(), len(self._search(' "" ')))
 
+    def test_postgresql_result_short_terms(self):
+        self.assertEqual(Observation.objects.count(), len(self._search('cv "ab" x')))
+        self.assertEqual(["db_observation_external_active"], self._search("ab external"))
+
+    def _create_observation_log(self, comment, general_rule=None, product_rule=None):
+        Observation_Log.objects.create(
+            observation=Observation.objects.get(title="db_observation_external_active"),
+            user=User.objects.get(username="db_admin"),
+            severity="",
+            status="",
+            comment=comment,
+            general_rule=general_rule,
+            product_rule=product_rule,
+        )
+
+    def test_postgresql_result_observation_log(self):
+        self._create_observation_log("Accepted by the zebra team")
+
+        self.assertEqual(["db_observation_external_active"], self._search("zebra"))
+        self.assertEqual(["db_observation_external_active"], self._search('external "zebra team"'))
+
+    def test_postgresql_result_observation_log_excluded(self):
+        self._create_observation_log(Observation_Log_Comment.COMMENT_RISK_ACCEPTANCE_EXPIRED)
+        self._create_observation_log(Observation_Log_Comment.COMMENT_CREATED_MANUALLY)
+        self._create_observation_log(Observation_Log_Comment.COMMENT_CHANGED_MANUALLY)
+        self._create_observation_log("Removed product fields rule giraffe_1")
+        self._create_observation_log("Removed general rego rule giraffe_2")
+        self._create_observation_log("Removed VEX statement from giraffe_3")
+        self._create_observation_log("giraffe_4", product_rule=Rule.objects.get(name="db_product_rule_external"))
+        self._create_observation_log("giraffe_5", general_rule=Rule.objects.get(name="db_general_rule"))
+
+        # The fixtures contain the comment "Set by parser" for other observations
+        self.assertEqual([], self._search("parser"))
+        self.assertEqual([], self._search("expired"))
+        self.assertEqual([], self._search("manually"))
+        for i in range(1, 6):
+            self.assertEqual([], self._search(f"giraffe_{i}"))
+
     def test_get_full_text_search_terms(self):
         self.assertEqual([("sql", False), ("injection", False)], _get_full_text_search_terms(" sql  injection "))
         self.assertEqual([("sql", True)], _get_full_text_search_terms('"sql"'))
@@ -106,6 +155,13 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
         self.assertEqual([("CVE-2021-44228", False)], _get_full_text_search_terms("CVE-2021-44228"))
         self.assertEqual([], _get_full_text_search_terms('"" "  "'))
         self.assertEqual([], _get_full_text_search_terms(""))
+
+    def test_get_full_text_search_terms_short(self):
+        self.assertEqual([("xss", False), ("a b", True)], _get_full_text_search_terms('ab xss "cd" x "a b"'))
+
+    def test_get_full_text_search_terms_max(self):
+        terms = [f"term_{i}" for i in range(12)]
+        self.assertEqual([(term, False) for term in terms[:10]], _get_full_text_search_terms(" ".join(terms)))
 
     def test_fields_match_indexes(self):
         self.assertEqual(list(migration.OBSERVATION_FULL_TEXT_SEARCH_FIELDS), OBSERVATION_FULL_TEXT_SEARCH_FIELDS)
