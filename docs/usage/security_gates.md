@@ -45,6 +45,7 @@ A rule needs at least one condition, and Advanced needs at least one rule.
 
 Exploit data and EPSS scores come from the [exploit information](../integrations/exploit_information.md) and [EPSS](../integrations/epss.md) imports, which run once a day, and the security gates with rules are recalculated right after that import.
 The preview shows, per severity, how many active observations on the default branch would count with the rules in the form, and the observation list can be filtered by **Counted by security gate**.
+The filter is offered in the observations of a product; in the API it needs the `product` parameter and is ignored without it, because the rules are the product's.
 The settings are inherited the same way as the thresholds: instance settings, product group, product.
 
 ![Advanced Security Gate Settings](../assets/images/screenshot_security_gate_advanced_3.png)
