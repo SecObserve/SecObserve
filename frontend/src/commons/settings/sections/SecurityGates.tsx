@@ -10,6 +10,13 @@ import {
 } from "react-admin";
 
 import { validate_0_999999 } from "../../custom_validators";
+import { SecurityGateConditionsFields } from "../../security_gate/SecurityGateConditionsFields";
+import { SecurityGateConditionsInputs } from "../../security_gate/SecurityGateConditionsInputs";
+import { cleanSecurityGateConditions } from "../../security_gate/conditions";
+
+export const transformSecurityGates = (data: any) => {
+    cleanSecurityGateConditions(data);
+};
 
 export const SecurityGatesInputs = () => (
     <>
@@ -85,6 +92,9 @@ export const SecurityGatesInputs = () => (
                                 />
                             </Stack>
                         </Grid>
+                        <Grid size={12}>
+                            <SecurityGateConditionsInputs />
+                        </Grid>
                     </Grid>
                 )
             }
@@ -130,6 +140,9 @@ export const SecurityGatesFields = () => {
                                 <NumberField source="security_gate_threshold_unknown" />
                             </Labeled>
                         </Stack>
+                    </Grid>
+                    <Grid size={12}>
+                        <SecurityGateConditionsFields />
                     </Grid>
                 </Grid>
             )}

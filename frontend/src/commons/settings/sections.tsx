@@ -19,7 +19,7 @@ import { FeaturesFields, FeaturesInputs, transformFeatures } from "./sections/Fe
 import { FormatsFields, FormatsInputs } from "./sections/Formats";
 import { NotificationsFields, NotificationsInputs, transformNotifications } from "./sections/Notifications";
 import { PasswordValidationFields, PasswordValidationInputs } from "./sections/PasswordValidation";
-import { SecurityGatesFields, SecurityGatesInputs } from "./sections/SecurityGates";
+import { SecurityGatesFields, SecurityGatesInputs, transformSecurityGates } from "./sections/SecurityGates";
 
 export type SettingsSection = {
     label: string;
@@ -75,6 +75,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
         icon: <SecurityIcon />,
         Inputs: SecurityGatesInputs,
         Fields: SecurityGatesFields,
+        transform: transformSecurityGates,
     },
     {
         label: "Password validation",

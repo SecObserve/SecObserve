@@ -1,5 +1,6 @@
 import { Identifier, RaRecord } from "react-admin";
 
+import { SecurityGateConditions } from "../commons/security_gate/conditions";
 import { Parser } from "../import_observations/types";
 
 export interface Product extends RaRecord {
@@ -19,6 +20,8 @@ export interface Product extends RaRecord {
     security_gate_threshold_low: number;
     security_gate_threshold_none: number;
     security_gate_threshold_unknown: number;
+    security_gate_advanced: boolean | null;
+    security_gate_conditions: SecurityGateConditions | null;
     apply_general_rules: boolean;
     notification_ms_teams_webhook: string;
     notification_slack_webhook: string;

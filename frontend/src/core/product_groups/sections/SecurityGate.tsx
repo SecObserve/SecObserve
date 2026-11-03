@@ -10,6 +10,8 @@ import {
 } from "react-admin";
 
 import { validate_0_999999 } from "../../../commons/custom_validators";
+import { SecurityGateConditionsFields } from "../../../commons/security_gate/SecurityGateConditionsFields";
+import { SecurityGateConditionsInputs } from "../../../commons/security_gate/SecurityGateConditionsInputs";
 
 export const SecurityGateInputs = () => (
     <>
@@ -68,6 +70,7 @@ export const SecurityGateInputs = () => (
                             max={999999}
                             validate={validate_0_999999}
                         />
+                        <SecurityGateConditionsInputs />
                     </Stack>
                 )
             }
@@ -112,6 +115,7 @@ export const SecurityGateFields = () => {
                     <Labeled>
                         <NumberField source="security_gate_threshold_unknown" />
                     </Labeled>
+                    <SecurityGateConditionsFields />
                 </Stack>
             )}
         </>

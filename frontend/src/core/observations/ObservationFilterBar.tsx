@@ -104,6 +104,10 @@ export function observationFilters(product?: Product, review = false, product_fi
             input: <NullableBooleanInput source="fix_available" label="Fix available" />,
         });
     }
+    secondary.push({
+        column: TRIAGE,
+        input: <NullableBooleanInput source="counted_by_security_gate" label="Counted by security gate" />,
+    });
 
     return { primary, secondary };
 }
