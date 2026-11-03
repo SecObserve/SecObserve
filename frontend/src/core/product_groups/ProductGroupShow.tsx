@@ -145,12 +145,6 @@ const ProductGroupShow = () => {
                                 </Stack>
                                 <ProductRuleEmbeddedList product={product_group} />
                             </Tab>
-                            <Tab label="Webhooks" path="webhooks" icon={<WebhookIcon />}>
-                                {product_group?.permissions?.includes(PERMISSION_WEBHOOK_CREATE) && (
-                                    <WebhookCreate product={product_group} />
-                                )}
-                                <WebhookEmbeddedList product={product_group} />
-                            </Tab>
                             <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
                                 <Typography variant="h6" sx={{ marginBottom: 1 }}>
                                     User members
@@ -177,6 +171,12 @@ const ProductGroupShow = () => {
                             </Tab>
                             <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
                                 <ProductNotificationSettings product={product_group} is_product_group={true} />
+                            </Tab>
+                            <Tab label="Webhooks" path="webhooks" icon={<WebhookIcon />}>
+                                {product_group?.permissions?.includes(PERMISSION_WEBHOOK_CREATE) && (
+                                    <WebhookCreate product={product_group} />
+                                )}
+                                <WebhookEmbeddedList product={product_group} />
                             </Tab>
                         </TabbedShowLayout>
                     )}

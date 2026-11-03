@@ -1,12 +1,13 @@
 import SendIcon from "@mui/icons-material/Send";
-import { Button, Divider, Stack, Typography } from "@mui/material";
-import { useState } from "react";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Fragment, useState } from "react";
 import {
     BooleanField,
     Confirm,
+    FunctionField,
+    Labeled,
     PrevNextButtons,
     Show,
-    SimpleShowLayout,
     TextField,
     TopToolbar,
     WithRecord,
@@ -110,32 +111,64 @@ const ShowActions = () => {
     );
 };
 
-const WebhookShow = () => (
-    <Show actions={<ShowActions />}>
-        <WithRecord
-            render={(webhook: Webhook) => (
-                <>
-                    <SimpleShowLayout>
-                        <TextField source="name" />
-                        <WithRecord label="Scope" render={(w: Webhook) => w.product_data?.name ?? "Global"} />
-                        <TextField source="url" label="URL" />
-                        <WithRecord label="Event types" render={(w: Webhook) => w.event_types.join(", ")} />
-                        <WithRecord label="Minimum severity" render={(w: Webhook) => w.min_severity || "All"} />
-                        <BooleanField source="active" />
-                        <TextField source="consecutive_failures" label="Consecutive failures" />
-                        {webhook.consecutive_failures > 0 && webhook.next_attempt_at && (
-                            <DateField source="next_attempt_at" label="Paused until" showTime />
-                        )}
-                        <DateField source="created" showTime />
-                    </SimpleShowLayout>
-                    <Divider sx={{ marginBottom: 2 }} />
+const WebhookComponent = () => (
+    <WithRecord
+        render={(webhook: Webhook) => (
+            <Box sx={{ width: "100%" }}>
+                <Paper sx={{ marginBottom: 2, padding: 2 }}>
+                    <Typography variant="h6" sx={{ marginBottom: 1 }}>
+                        Webhook
+                    </Typography>
+                    <Stack spacing={1}>
+                        <Stack direction="row" spacing={4} useFlexGap sx={{ flexWrap: "wrap" }}>
+                            <Labeled label="Name">
+                                <TextField source="name" />
+                            </Labeled>
+                            <Labeled label="Scope">
+                                <FunctionField render={(w: Webhook) => w.product_data?.name ?? "Global"} />
+                            </Labeled>
+                            <Labeled label="URL">
+                                <TextField source="url" />
+                            </Labeled>
+                        </Stack>
+                        <Stack direction="row" spacing={4} useFlexGap sx={{ flexWrap: "wrap" }}>
+                            <Labeled label="Event types">
+                                <FunctionField render={(w: Webhook) => w.event_types.join(", ")} />
+                            </Labeled>
+                            <Labeled label="Minimum severity">
+                                <FunctionField render={(w: Webhook) => w.min_severity || "All"} />
+                            </Labeled>
+                            <Labeled label="Active">
+                                <BooleanField source="active" />
+                            </Labeled>
+                            <Labeled label="Consecutive failures">
+                                <TextField source="consecutive_failures" />
+                            </Labeled>
+                            {webhook.consecutive_failures > 0 && webhook.next_attempt_at && (
+                                <Labeled label="Paused until">
+                                    <DateField source="next_attempt_at" showTime />
+                                </Labeled>
+                            )}
+                            <Labeled label="Created">
+                                <DateField source="created" showTime />
+                            </Labeled>
+                        </Stack>
+                    </Stack>
+                </Paper>
+                <Paper sx={{ marginBottom: 2, padding: 2 }}>
                     <Typography variant="h6" sx={{ marginBottom: 1 }}>
                         Deliveries
                     </Typography>
                     <WebhookDeliveryEmbeddedList webhook={webhook} canRedeliver={canEditWebhook(webhook)} />
-                </>
-            )}
-        />
+                </Paper>
+            </Box>
+        )}
+    />
+);
+
+const WebhookShow = () => (
+    <Show actions={<ShowActions />} component={WebhookComponent}>
+        <Fragment />
     </Show>
 );
 

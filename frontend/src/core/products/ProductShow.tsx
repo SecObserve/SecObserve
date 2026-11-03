@@ -80,7 +80,7 @@ import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
 
-const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications"];
+const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications", "webhooks"];
 
 type ShowActionsProps = {
     filter: any;
@@ -273,12 +273,6 @@ const ProductShow = () => {
                                     )}
                                     <ApiConfigurationEmbeddedList product={product} />
                                 </Tab>
-                                <Tab label="Webhooks" path="webhooks" icon={<WebhookIcon />}>
-                                    {product?.permissions?.includes(PERMISSION_WEBHOOK_CREATE) && (
-                                        <WebhookCreate product={product} />
-                                    )}
-                                    <WebhookEmbeddedList product={product} />
-                                </Tab>
                                 <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
                                     <Typography variant="h6">User members</Typography>
                                     {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (
@@ -301,6 +295,12 @@ const ProductShow = () => {
                                 </Tab>
                                 <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
                                     <ProductNotificationSettings product={product} />
+                                </Tab>
+                                <Tab label="Webhooks" path="webhooks" icon={<WebhookIcon />}>
+                                    {product?.permissions?.includes(PERMISSION_WEBHOOK_CREATE) && (
+                                        <WebhookCreate product={product} />
+                                    )}
+                                    <WebhookEmbeddedList product={product} />
                                 </Tab>
                             </TabbedShowLayout>
                         )}

@@ -6,7 +6,7 @@ Messages for MS Teams, Slack and email are described in [Notification channels](
 
 ## Set up a webhook
 
-The webhooks of a product or product group are in its **Webhooks** tab.
+The webhooks of a product are in **Settings → Webhooks** of the product, those of a product group in its **Webhooks** tab.
 Global webhooks, which get the events of all products, are in **Administration → Webhooks**.
 
 ![Webhooks of a product](../assets/images/screenshot_webhooks_product.png)

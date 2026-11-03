@@ -1,3 +1,4 @@
+import ReplayIcon from "@mui/icons-material/Replay";
 import { Button } from "@mui/material";
 import { MouseEvent } from "react";
 import {
@@ -54,7 +55,7 @@ const Redeliver = ({ delivery }: { delivery: WebhookDelivery }) => {
     };
 
     return (
-        <Button size="small" variant="contained" onClick={handleClick} sx={{ fontSize: "0.8125rem" }}>
+        <Button size="small" onClick={handleClick} startIcon={<ReplayIcon />}>
             Redeliver
         </Button>
     );
