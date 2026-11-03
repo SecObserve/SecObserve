@@ -6,9 +6,20 @@ Messages for MS Teams, Slack and email are described in [Notification channels](
 
 ## Set up a webhook
 
-Webhooks are managed with the [REST API](rest_api.md), see `/api/webhooks/` and `/api/webhook_deliveries/` in its OpenAPI documentation.
-Creating a webhook and rotating its secret return the secret once, store it in your receiver.
-Then call `send_test` to check that the receiver accepts the requests.
+The webhooks of a product or product group are in its **Webhooks** tab.
+Global webhooks, which get the events of all products, are in **Administration → Webhooks**.
+
+![Webhooks of a product](../assets/images/screenshot_webhooks_product.png)
+
+1. Click **Add webhook**, enter a name and the URL of your receiver, and choose the event types. A minimum severity limits the observation and assessment events.
+2. Copy the secret from the dialog that follows. It is shown only once, **Rotate secret** creates a new one.
+3. Store the secret in your receiver, open the webhook by clicking its name and click **Send test**.
+
+The page of a webhook, opened by clicking its name, lists its deliveries with status, attempts and HTTP code. Click a delivery to see its payload, **Redeliver** sends it again.
+
+![Webhook with its deliveries](../assets/images/screenshot_webhook_deliveries.png)
+
+Who can manage a webhook depends on its scope:
 
 | Scope | Receives the events of | Managed by |
 |---|---|---|
@@ -21,6 +32,8 @@ Readers and Writers can view the webhooks of their products.
 > **Webhook URLs are visible to all members**
 >
 > Every member of a product can list its webhooks with their URLs, even with the role Upload. Do not put credentials into webhook URLs, the signature authenticates the requests.
+
+Webhooks and deliveries can also be managed with the [REST API](rest_api.md), see `/api/webhooks/` and `/api/webhook_deliveries/` in its OpenAPI documentation.
 
 ## Events
 
