@@ -29,6 +29,8 @@ export type SecurityGatePreviewRow = {
     active: number;
     counted: number;
     passed: boolean;
+    /** Settings preview only: the products using the instance-wide gate that exceed the threshold. */
+    products_failed?: number;
 };
 
 export type ConditionKey = Exclude<keyof SecurityGateRule, "operator">;

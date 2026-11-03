@@ -8,7 +8,7 @@ from application.commons.models import Settings
 from application.commons.services.security_gate_conditions import (
     normalize_security_gate_conditions,
 )
-from application.core.models import Product_Member
+from application.core.models import Branch, Product, Product_Member
 from unittests.base_test_case import BaseTestCase
 from unittests.core.observation_fixtures import ObservationFixtureMixin
 
@@ -52,6 +52,7 @@ class TestSecurityGatePreview(ObservationFixtureMixin, BaseTestCase):
         critical = _row(response.data, "Critical")
         self.assertEqual((critical["active"], critical["counted"], critical["threshold"]), (2, 1, 0))
         self.assertFalse(critical["passed"])
+        self.assertNotIn("products_failed", critical)
         self.assertTrue(_row(response.data, "High")["passed"])
 
     def test_product_preview_without_advanced_counts_everything(self):
@@ -133,7 +134,18 @@ class TestSecurityGatePreview(ObservationFixtureMixin, BaseTestCase):
         self.assertEqual(HTTP_200_OK, response.status_code)
         self.assertEqual(_row(response.data, "Critical")["counted"], 2)
 
-    def test_settings_preview_counts_all_products(self):
+    def _product_with_default_branch(self, name, **fields):
+        product = Product.objects.create(name=name, **fields)
+        branch = Branch.objects.create(name="main", product=product, is_default_branch=True)
+        return product, branch
+
+    def test_settings_preview_reports_the_products_that_would_fail(self):
+        # A product with its own gate doesn't use the instance-wide one, its observations stay out of the preview
+        own_gate, own_branch = self._product_with_default_branch("own_gate", security_gate_active=True)
+        self._observation("own kev", product=own_gate, branch=own_branch, cve_found_in="CISA KEV")
+        clean, clean_branch = self._product_with_default_branch("clean")
+        self._observation("clean plain", product=clean, branch=clean_branch)
+
         response = APIClient().post(
             "/api/settings/1/security_gate_preview/",
             {"security_gate_advanced": True, "security_gate_conditions": KEV, **THRESHOLDS},
@@ -142,7 +154,11 @@ class TestSecurityGatePreview(ObservationFixtureMixin, BaseTestCase):
 
         self.assertEqual(HTTP_200_OK, response.status_code)
         critical = _row(response.data, "Critical")
-        self.assertEqual((critical["active"], critical["counted"]), (2, 1))
+        self.assertEqual((critical["active"], critical["counted"], critical["products_failed"]), (3, 1, 1))
+        self.assertFalse(critical["passed"])
+        high = _row(response.data, "High")
+        self.assertEqual(high["products_failed"], 0)
+        self.assertTrue(high["passed"])
 
     def test_settings_preview_needs_superuser(self):
         self.mock_authentication.return_value = self.user_internal, None

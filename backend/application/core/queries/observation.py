@@ -19,15 +19,9 @@ from application.core.queries.product import get_default_branch_filter
 from application.core.types import Severity, Status
 
 
-def count_active_observations_by_severity(
-    product: Optional[Product],
-    branch: Optional[Branch] = None,
-    extra_filter: Optional[Q] = None,
-) -> dict[str, int]:
-    """
-    Active observations per severity in one query: of a branch, of the default branch of a product,
-    or of the default branches of all products when no product is given. Every severity is a key.
-    """
+def _get_active_observations(
+    product: Optional[Product], branch: Optional[Branch], extra_filter: Optional[Q]
+) -> QuerySet[Observation]:
     observations = Observation.objects.filter(current_status__in=Status.STATUS_ACTIVE)
     if product:
         observations = observations.filter(product=product)
@@ -37,11 +31,37 @@ def count_active_observations_by_severity(
         observations = observations.filter(get_default_branch_filter())
     if extra_filter is not None:
         observations = observations.filter(extra_filter)
+    return observations
+
+
+def count_active_observations_by_severity(
+    product: Optional[Product],
+    branch: Optional[Branch] = None,
+    extra_filter: Optional[Q] = None,
+) -> dict[str, int]:
+    """
+    Active observations per severity in one query: of a branch, of the default branch of a product,
+    or of the default branches of all products when no product is given. Every severity is a key.
+    """
+    observations = _get_active_observations(product, branch, extra_filter)
 
     counts = {severity: 0 for severity, _ in Severity.SEVERITY_CHOICES}
     for row in observations.values("current_severity").annotate(count=Count("pk")):
         if row["current_severity"] in counts:
             counts[row["current_severity"]] = row["count"]
+    return counts
+
+
+def count_active_observations_by_product_and_severity(extra_filter: Optional[Q] = None) -> dict[int, dict[str, int]]:
+    """
+    Active observations of the default branches per product and severity in one query, keyed by the
+    product id; products without active observations are absent.
+    """
+    observations = _get_active_observations(None, None, extra_filter)
+
+    counts: dict[int, dict[str, int]] = {}
+    for row in observations.values("product_id", "current_severity").annotate(count=Count("pk")):
+        counts.setdefault(row["product_id"], {})[row["current_severity"]] = row["count"]
     return counts
 
 

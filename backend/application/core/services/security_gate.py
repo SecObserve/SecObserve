@@ -16,6 +16,7 @@ from application.commons.services.security_gate_conditions import (
 )
 from application.core.models import Branch, Observation, Product
 from application.core.queries.observation import (
+    count_active_observations_by_product_and_severity,
     count_active_observations_by_severity,
 )
 from application.core.queries.product import (
@@ -26,10 +27,10 @@ from application.core.types import Security_Gate_Operator, Severity
 from application.notifications.services.send_notifications_security_gate import (
     send_product_security_gate_notification,
 )
-
 from application.notifications.services.tasks import handle_task_exception
 
 logger = logging.getLogger("secobserve.core")
+
 SEVERITIES = ("critical", "high", "medium", "low", "none", "unknown")
 SECURITY_GATES_BATCH_SIZE = 1000
 # Thresholds are keyed by the lower case severity, observations carry the title case one.
@@ -45,6 +46,10 @@ SECURITY_GATE_FIELDS = (
     ("security_gate_active",)
     + tuple(f"security_gate_threshold_{severity}" for severity in SEVERITIES)
     + SECURITY_GATE_ADVANCED_FIELDS
+)
+# The observations of the products that use the instance-wide gate, neither their own nor their group's
+SETTINGS_GATE_OBSERVATIONS = Q(product__security_gate_active__isnull=True) & (
+    Q(product__product_group__isnull=True) | Q(product__product_group__security_gate_active__isnull=True)
 )
 
 
@@ -114,6 +119,7 @@ def check_security_gates_with_conditions() -> tuple[int, int]:
     """
     settings = Settings.load()
     checked = 0
+    failed = 0
     for product in Product.objects.filter(is_product_group=False).select_related("product_group"):
         if get_security_gate_rules(product, settings) is None:
             continue
@@ -125,7 +131,6 @@ def check_security_gates_with_conditions() -> tuple[int, int]:
             logger.exception("Security gate recheck - %s: failed with exception", product)
             handle_task_exception(e, product=product)
     return checked, failed
-    failed = 0
 
 
 def _update_security_gate(product: Product, new_security_gate_passed: Optional[bool]) -> None:
@@ -304,23 +309,39 @@ def evaluate_security_gate(
 def preview_security_gate(
     product: Optional[Product], thresholds: dict[str, int], rules: Optional[RulesBySeverity]
 ) -> list[dict[str, Any]]:
-    """Per severity: active observations, how many count under the rules, and whether the threshold holds."""
-    active = count_active_observations_by_severity(product)
-    counted = (
-        count_active_observations_by_severity(product, None, get_security_gate_condition_filter(rules))
-        if rules
-        else active
-    )
+    """
+    Per severity: active observations, how many count under the rules, and whether the threshold holds.
+    Without a product the instance-wide gate is previewed over the products that use it, and a severity
+    passes when none of them exceeds its threshold.
+    """
+    scope = Q() if product else SETTINGS_GATE_OBSERVATIONS
+    counted_filter = scope & get_security_gate_condition_filter(rules) if rules else scope
+    active = count_active_observations_by_severity(product, None, scope)
+    counted = count_active_observations_by_severity(product, None, counted_filter) if rules else active
+    products_failed = None if product else _count_products_failing(thresholds, counted_filter)
 
     rows = []
     for severity, title in SEVERITY_TITLES.items():
-        rows.append(
-            {
-                "severity": title,
-                "threshold": thresholds[severity],
-                "active": active[title],
-                "counted": counted[title],
-                "passed": counted[title] <= thresholds[severity],
-            }
-        )
+        row: dict[str, Any] = {
+            "severity": title,
+            "threshold": thresholds[severity],
+            "active": active[title],
+            "counted": counted[title],
+        }
+        if products_failed is None:
+            row["passed"] = counted[title] <= thresholds[severity]
+        else:
+            row["products_failed"] = products_failed[title]
+            row["passed"] = products_failed[title] == 0
+        rows.append(row)
     return rows
+
+
+def _count_products_failing(thresholds: dict[str, int], counted_filter: Q) -> dict[str, int]:
+    """Per title case severity, how many products have more counted observations than the threshold."""
+    failing = {title: 0 for title in SEVERITY_TITLES.values()}
+    for counts in count_active_observations_by_product_and_severity(counted_filter).values():
+        for severity, title in SEVERITY_TITLES.items():
+            if counts.get(title, 0) > thresholds[severity]:
+                failing[title] += 1
+    return failing

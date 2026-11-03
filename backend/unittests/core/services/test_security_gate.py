@@ -6,6 +6,7 @@ from django.utils import timezone
 from application.commons.models import Settings
 from application.core.models import Branch, Observation, Product
 from application.core.services.security_gate import (
+    SETTINGS_GATE_OBSERVATIONS,
     SEVERITIES,
     Security_Gate_Rule,
     check_security_gate,
@@ -1002,4 +1003,4 @@ class TestSecurityGateRules(BaseTestCase):
 
         critical = next(row for row in rows if row["severity"] == "Critical")
         self.assertEqual((critical["active"], critical["counted"]), (4, 4))
-        count_mock.assert_called_once_with(None)
+        count_mock.assert_called_once_with(None, None, SETTINGS_GATE_OBSERVATIONS)

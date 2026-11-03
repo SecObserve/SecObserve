@@ -47,6 +47,7 @@ Exploit data and EPSS scores come from the [exploit information](../integrations
 The preview shows, per severity, how many active observations on the default branch would count with the rules in the form, and the observation list can be filtered by **Counted by security gate**.
 The filter is offered in the observations of a product; in the API it needs the `product` parameter and is ignored without it, because the rules are the product's.
 The settings are inherited the same way as the thresholds: instance settings, product group, product.
+In the settings, the preview covers the products that use the instance-wide gate, and a severity fails when one of them would exceed its threshold; the result shows for how many products.
 
 ![Advanced Security Gate Settings](../assets/images/screenshot_security_gate_advanced_3.png)
 

@@ -27,7 +27,7 @@ from application.core.services.security_gate import (
 
 
 def preview_security_gate_from_request(product: Optional[Product], data: Any) -> list[dict[str, Any]]:
-    """Validates a gate draft and previews it for one product, or for all products when none is given."""
+    """Validates a gate draft and previews it for one product, or for the instance-wide gate when none is given."""
     serializer = SecurityGatePreviewRequestSerializer(data=data)
     serializer.is_valid(raise_exception=True)
     draft = serializer.validated_data

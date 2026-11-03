@@ -31,6 +31,16 @@ const fetchPreview = (resource: string, id: Identifier, draft?: object): Promise
         body: draft ? JSON.stringify(draft) : undefined,
     }).then((response) => response.json);
 
+const resultLabel = (row: SecurityGatePreviewRow): string => {
+    if (row.passed) {
+        return "Passed";
+    }
+    if (row.products_failed == null) {
+        return "Failed";
+    }
+    return `Failed for ${row.products_failed} ${row.products_failed === 1 ? "product" : "products"}`;
+};
+
 const PreviewTable = ({ rows }: { rows: SecurityGatePreviewRow[] }) => (
     <Table size="small">
         <TableHead>
@@ -56,7 +66,7 @@ const PreviewTable = ({ rows }: { rows: SecurityGatePreviewRow[] }) => (
                     <TableCell>
                         <Chip
                             size="small"
-                            label={row.passed ? "Passed" : "Failed"}
+                            label={resultLabel(row)}
                             sx={{ backgroundColor: row.passed ? "#00aa00" : "#d4333f", color: "white" }}
                         />
                     </TableCell>
@@ -68,17 +78,18 @@ const PreviewTable = ({ rows }: { rows: SecurityGatePreviewRow[] }) => (
 
 type PreviewPanelProps = {
     title: string;
+    subtitle?: string;
     rows: SecurityGatePreviewRow[] | null;
     onRefresh?: () => void;
 };
 
-const PreviewPanel = ({ title, rows, onRefresh }: PreviewPanelProps) => (
+const PreviewPanel = ({ title, subtitle, rows, onRefresh }: PreviewPanelProps) => (
     <Paper variant="outlined" sx={{ padding: 2 }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between" }}>
             <Stack>
                 <Typography variant="subtitle2">{title}</Typography>
                 <Typography variant="caption" color="text.secondary">
-                    Active observations of the default branches
+                    {subtitle ?? "Active observations of the default branches"}
                 </Typography>
             </Stack>
             {onRefresh && (
@@ -133,7 +144,13 @@ export const SecurityGateDraftPreview = () => {
             .catch((error) => notify(error?.message ?? "Preview failed", { type: "warning" }));
     };
 
-    return <PreviewPanel title="Preview" rows={rows} onRefresh={refresh} />;
+    // The instance-wide gate applies to the products without a gate of their own or of their group
+    const subtitle =
+        resource === "settings"
+            ? "Active observations of the default branches of the products using the instance-wide gate"
+            : undefined;
+
+    return <PreviewPanel title="Preview" subtitle={subtitle} rows={rows} onRefresh={refresh} />;
 };
 
 /** Shows why the configured gate of a product passes or fails. */

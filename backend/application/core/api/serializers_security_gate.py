@@ -39,3 +39,5 @@ class SecurityGatePreviewRowSerializer(Serializer):
     active = IntegerField()
     counted = IntegerField()
     passed = BooleanField()
+    # Settings preview only: the products using the instance-wide gate that exceed the threshold
+    products_failed = IntegerField(required=False)
