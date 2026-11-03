@@ -1,6 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
+    SET_NULL,
     BooleanField,
     CharField,
     DateTimeField,
@@ -107,6 +108,8 @@ class Webhook(Model):
     # Lease of the running drain, kick delay or endpoint backoff; null when idle
     next_attempt_at = DateTimeField(null=True)
     created = DateTimeField(auto_now_add=True)
+    # Who created or last changed the webhook, so that operators know whom to ask about its URL
+    user = ForeignKey(User, on_delete=SET_NULL, null=True, related_name="+")
 
 
 class Webhook_Delivery(Model):

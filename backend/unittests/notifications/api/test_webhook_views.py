@@ -201,6 +201,54 @@ class TestWebhookViews(BaseTestCase):
         self.assertEqual({"webhook": {"id": self.webhook.pk, "name": "hook"}}, payload["data"])
         self.assertFalse(Webhook_Delivery.objects.exists())
 
+    def test_changed_by_follows_create_update_and_rotate(self):
+        admin = User.objects.get(username="db_admin")
+        response = self._create()
+        self.assertEqual(201, response.status_code)
+        webhook = Webhook.objects.get(pk=response.data["id"])
+        self.assertEqual(admin, webhook.user)
+        self.assertEqual(admin.full_name, response.data["user_full_name"])
+
+        other = User.objects.create(username="other_admin", first_name="Other", last_name="Admin", is_superuser=True)
+        self._login("other_admin")
+        response = self.api_client.patch(f"/api/webhooks/{webhook.pk}/", {"name": "renamed"}, format="json")
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("Other Admin", response.data["user_full_name"])
+        webhook.refresh_from_db()
+        self.assertEqual(other, webhook.user)
+
+        Webhook.objects.filter(pk=webhook.pk).update(user=admin)
+        response = self.api_client.post(f"/api/webhooks/{webhook.pk}/rotate_secret/")
+        self.assertEqual(200, response.status_code)
+        webhook.refresh_from_db()
+        self.assertEqual(other, webhook.user)
+
+    def test_send_test_keeps_changed_by(self):
+        admin = User.objects.get(username="db_admin")
+        Webhook.objects.filter(pk=self.webhook.pk).update(user=admin)
+        User.objects.create(username="other_admin", is_superuser=True)
+        self._login("other_admin")
+
+        with patch(
+            "application.notifications.api.views.send_webhook_request", return_value=Webhook_Send_Result(204, "")
+        ):
+            response = self.api_client.post(f"/api/webhooks/{self.webhook.pk}/send_test/")
+
+        self.assertEqual(200, response.status_code)
+        self.webhook.refresh_from_db()
+        self.assertEqual(admin, self.webhook.user)
+
+    def test_deleting_the_user_keeps_the_webhook(self):
+        user = User.objects.create(username="leaving")
+        Webhook.objects.filter(pk=self.webhook.pk).update(user=user)
+
+        user.delete()
+
+        self.webhook.refresh_from_db()
+        self.assertIsNone(self.webhook.user)
+        response = self.api_client.get(f"/api/webhooks/{self.webhook.pk}/")
+        self.assertIsNone(response.data["user_full_name"])
+
     def test_send_test_failure_changes_nothing(self):
         backoff = timezone.now() + timedelta(hours=1)
         Webhook.objects.filter(pk=self.webhook.pk).update(consecutive_failures=4, next_attempt_at=backoff)

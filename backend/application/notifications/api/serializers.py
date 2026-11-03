@@ -117,11 +117,15 @@ class WebhookEventTypesField(ListField):
 class WebhookSerializer(ModelSerializer):
     product_data = NestedProductSerializer(source="product", read_only=True)
     event_types = WebhookEventTypesField(allow_empty=False)
+    user_full_name = SerializerMethodField()
 
     class Meta:
         model = Webhook
         exclude = ["secret"]
-        read_only_fields = ["consecutive_failures", "next_attempt_at"]
+        read_only_fields = ["consecutive_failures", "next_attempt_at", "user"]
+
+    def get_user_full_name(self, obj: Webhook) -> Optional[str]:
+        return obj.user.full_name if obj.user else None
 
     def validate_url(self, url: str) -> str:
         # The network policy needs DNS and is enforced when sending
@@ -144,7 +148,8 @@ class WebhookSerializer(ModelSerializer):
             setattr(instance, field, value)
         # Breaks a running drain's lease and clears a backoff, without overwriting the columns the drain writes
         instance.next_attempt_at = None
-        instance.save(update_fields=[*validated_data, "next_attempt_at"])
+        instance.user = get_current_user()
+        instance.save(update_fields=[*validated_data, "next_attempt_at", "user"])
         return instance
 
 

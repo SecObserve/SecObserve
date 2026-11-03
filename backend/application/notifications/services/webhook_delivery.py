@@ -142,13 +142,14 @@ def _save_result(webhook: Webhook, delivery: Webhook_Delivery, result: Webhook_S
 
 
 def _send_alert(webhook: Webhook, result: Webhook_Send_Result) -> None:
+    changed_by = f", last changed by {webhook.user.full_name}" if webhook.user else ""
     send_task_exception_notification(
         function="deliver_webhook",
         arguments={"webhook_id": webhook.pk},
         user=None,
         exception=WebhookDeliveryError(
             f'Webhook "{webhook.name}" has failed {webhook.consecutive_failures} times in a row, '
-            f"last error: {result.error}"
+            f"last error: {result.error}{changed_by}"
         ),
         product=webhook.product,
     )

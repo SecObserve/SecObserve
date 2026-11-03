@@ -22,6 +22,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from application.access_control.models import User
+from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Product
@@ -254,7 +255,7 @@ class WebhookViewSet(ModelViewSet):
         return get_webhooks().select_related("product").select_related("product__product_group")
 
     def perform_create(self, serializer: BaseSerializer) -> None:
-        serializer.save(secret=generate_webhook_secret())
+        serializer.save(secret=generate_webhook_secret(), user=get_current_user())
 
     @extend_schema(
         methods=["POST"],
@@ -285,7 +286,8 @@ class WebhookViewSet(ModelViewSet):
         webhook.secret = generate_webhook_secret()
         # A running drain has loaded the old secret, breaking its lease stops it after the current request
         webhook.next_attempt_at = None
-        webhook.save(update_fields=["secret", "next_attempt_at"])
+        webhook.user = get_current_user()
+        webhook.save(update_fields=["secret", "next_attempt_at", "user"])
         return Response(status=HTTP_200_OK, data=WebhookSecretSerializer(webhook).data)
 
 

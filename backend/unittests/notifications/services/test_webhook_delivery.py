@@ -5,6 +5,7 @@ from unittest.mock import call, patch
 
 from django.test import override_settings
 
+from application.access_control.models import User
 from application.core.models import Product
 from application.notifications.models import Webhook, Webhook_Delivery
 from application.notifications.services.webhook_delivery import (
@@ -266,6 +267,16 @@ class TestWebhookDelivery(BaseTestCase):
                 if alerts:
                     self.assertIsInstance(self.mock_alert.call_args.kwargs["exception"], WebhookDeliveryError)
                     self.assertEqual("deliver_webhook", self.mock_alert.call_args.kwargs["function"])
+
+    def test_alert_names_who_changed_the_webhook(self):
+        self.mock_send.return_value = _result(503)
+        self._delivery()
+        user = User.objects.create(username="changer", first_name="Chan", last_name="Ger")
+        self._set_webhook(consecutive_failures=4, next_attempt_at=None, user=user)
+
+        self._deliver()
+
+        self.assertIn(", last changed by Chan Ger", str(self.mock_alert.call_args.kwargs["exception"]))
 
     def test_batch_then_reschedule(self):
         Webhook_Delivery.objects.bulk_create(
