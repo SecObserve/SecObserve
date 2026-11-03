@@ -158,16 +158,24 @@ class ProductCoreSerializer(ModelSerializer):
         return super().validate(attrs)
 
     def _validate_security_gate_conditions(self, attrs: dict) -> None:
-        conditions = attrs.get("security_gate_conditions")
+        conditions = self._current_value(attrs, "security_gate_conditions")
         if conditions is not None:
             try:
                 conditions = normalize_security_gate_conditions(conditions)
             except ValueError as error:
                 raise ValidationError(str(error)) from error
-            attrs["security_gate_conditions"] = conditions
+            if "security_gate_conditions" in attrs:
+                attrs["security_gate_conditions"] = conditions
 
-        if attrs.get("security_gate_advanced") is True and not conditions_have_a_rule(conditions or {}):
+        advanced = self._current_value(attrs, "security_gate_advanced")
+        if advanced is True and not conditions_have_a_rule(conditions or {}):
             raise ValidationError("At least one rule is needed when the advanced security gate is active")
+
+    def _current_value(self, attrs: dict, field: str) -> Any:
+        # A partial update doesn't contain all fields, then the stored value is relevant
+        if field in attrs:
+            return attrs[field]
+        return getattr(self.instance, field, None) if self.instance else None
 
     def _validate_assessment_approver_authorization_groups(self, attrs: dict) -> None:
         authorization_groups = attrs.get("assessment_approver_authorization_groups")

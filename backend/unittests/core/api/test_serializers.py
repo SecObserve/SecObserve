@@ -385,6 +385,28 @@ class TestBranchSerializer(BaseTestCase):
             product_serializer.validate(product_serializer.data)
 
     @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_partial_advanced_uses_stored_conditions(self, mock_product_member):
+        product = Product(security_gate_active=True, security_gate_conditions={"default": [{"known_exploited": True}]})
+        product.save()
+
+        data = ProductSerializer(product).validate({"security_gate_advanced": True})
+
+        self.assertTrue(data["security_gate_advanced"])
+        self.assertNotIn("security_gate_conditions", data)
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_partial_conditions_need_a_rule_for_stored_advanced(self, mock_product_member):
+        product = Product(
+            security_gate_active=True,
+            security_gate_advanced=True,
+            security_gate_conditions={"default": [{"known_exploited": True}]},
+        )
+        product.save()
+
+        with self.assertRaisesRegex(ValidationError, "At least one rule is needed"):
+            ProductSerializer(product).validate({"security_gate_conditions": {"default": []}})
+
+    @patch("application.core.api.serializers_product.get_product_member")
     def test_validate_rejects_bad_conditions(self, mock_product_member):
         product = Product(
             security_gate_active=True,
