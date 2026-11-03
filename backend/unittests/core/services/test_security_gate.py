@@ -955,8 +955,32 @@ class TestSecurityGateRules(BaseTestCase):
         advanced = Product(security_gate_active=True, security_gate_advanced=True, security_gate_conditions=CRIT)
         filter_mock.return_value.select_related.return_value = [plain, advanced]
 
-        self.assertEqual(check_security_gates_with_conditions(), 1)
-        check_mock.assert_called_once_with(advanced)
+        self.assertEqual(check_security_gates_with_conditions(), (1, 0))
+        check_mock.assert_called_once()
+        self.assertIs(check_mock.call_args.args[0], advanced)
+        # The settings are loaded once for all products
+        self.assertIsInstance(check_mock.call_args.args[1], Settings)
+
+    @patch("application.core.services.security_gate.handle_task_exception")
+    @patch("application.core.services.security_gate.check_security_gate")
+    @patch("application.core.models.Product.objects.filter")
+    def test_check_security_gates_with_conditions_continues_after_a_failure(self, filter_mock, check_mock, handle_mock):
+        first = Product(
+            name="first", security_gate_active=True, security_gate_advanced=True, security_gate_conditions=CRIT
+        )
+        second = Product(
+            name="second", security_gate_active=True, security_gate_advanced=True, security_gate_conditions=CRIT
+        )
+        filter_mock.return_value.select_related.return_value = [first, second]
+        error = ValueError("boom")
+        check_mock.side_effect = [error, None]
+
+        with self.assertLogs("secobserve.core", level="ERROR") as logs:
+            self.assertEqual(check_security_gates_with_conditions(), (1, 1))
+
+        self.assertEqual(check_mock.call_count, 2)
+        handle_mock.assert_called_once_with(error, product=first)
+        self.assertIn("Security gate recheck - first: failed with exception", logs.output[0])
 
     @patch("application.core.services.security_gate.count_active_observations_by_severity")
     def test_preview_rows(self, count_mock):

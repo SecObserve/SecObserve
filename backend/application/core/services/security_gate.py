@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from decimal import Decimal
 from functools import reduce
@@ -26,6 +27,9 @@ from application.notifications.services.send_notifications_security_gate import 
     send_product_security_gate_notification,
 )
 
+from application.notifications.services.tasks import handle_task_exception
+
+logger = logging.getLogger("secobserve.core")
 SEVERITIES = ("critical", "high", "medium", "low", "none", "unknown")
 SECURITY_GATES_BATCH_SIZE = 1000
 # Thresholds are keyed by the lower case severity, observations carry the title case one.
@@ -59,15 +63,15 @@ class Security_Gate_Rule:
 RulesBySeverity = dict[str, list[Security_Gate_Rule]]
 
 
-def check_security_gate(product: Product) -> None:
+def check_security_gate(product: Product, settings: Optional[Settings] = None) -> None:
     if product.is_product_group:
         raise ValueError(f"{product.name} is a product group")
 
     new_security_gate_passed = None
 
-    thresholds = get_security_gate_thresholds(product)
+    thresholds = get_security_gate_thresholds(product, settings)
     if thresholds is not None:
-        rules = get_security_gate_rules(product)
+        rules = get_security_gate_rules(product, settings)
         if rules is None:
             annotated_product = get_product_by_id(
                 product_id=product.pk, is_product_group=False, with_observation_annotations=True
@@ -103,15 +107,25 @@ def check_security_gates(products: QuerySet[Product]) -> None:
             _update_security_gate(product, security_gate_passed)
 
 
-def check_security_gates_with_conditions() -> int:
-    """Rechecks every product whose gate uses rules, because EPSS scores and exploit flags change without an import."""
+def check_security_gates_with_conditions() -> tuple[int, int]:
+    """
+    Rechecks every product whose gate uses rules, because EPSS scores and exploit flags change without an import.
+    Returns how many gates were checked and for how many products the check failed.
+    """
     settings = Settings.load()
     checked = 0
     for product in Product.objects.filter(is_product_group=False).select_related("product_group"):
-        if get_security_gate_rules(product, settings) is not None:
-            check_security_gate(product)
+        if get_security_gate_rules(product, settings) is None:
+            continue
+        try:
+            check_security_gate(product, settings)
             checked += 1
-    return checked
+        except Exception as e:
+            failed += 1
+            logger.exception("Security gate recheck - %s: failed with exception", product)
+            handle_task_exception(e, product=product)
+    return checked, failed
+    failed = 0
 
 
 def _update_security_gate(product: Product, new_security_gate_passed: Optional[bool]) -> None:

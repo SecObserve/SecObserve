@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from application.background_tasks.models import Periodic_Task
 from application.background_tasks.periodic_tasks.epss_tasks import task_import_epss
+from application.background_tasks.types import Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -50,7 +51,7 @@ class TestEpssTasks(BaseTestCase):
     ):
         calls = []
         mock_import_cvss_bt.side_effect = lambda: calls.append("cvss_bt") or "cvss-bt done"
-        mock_check_gates.side_effect = lambda: calls.append("gates") or 3
+        mock_check_gates.side_effect = lambda: calls.append("gates") or (3, 0)
         mock_import_epss.return_value = "epss done"
         mock_epss_apply_observations.return_value = "applied"
 
@@ -60,3 +61,27 @@ class TestEpssTasks(BaseTestCase):
         # The periodic task wrapper stores the message instead of returning it
         message = Periodic_Task.objects.filter(task="Import EPSS and cvss-bt").latest("start_time").message
         self.assertTrue(message.endswith("Checked 3 security gates with conditions."))
+
+    @patch("application.background_tasks.periodic_tasks.epss_tasks.check_security_gates_with_conditions")
+    @patch("application.background_tasks.periodic_tasks.epss_tasks.import_cvss_bt")
+    @patch("application.background_tasks.periodic_tasks.epss_tasks.epss_apply_observations")
+    @patch("application.background_tasks.periodic_tasks.epss_tasks.import_epss")
+    def test_task_import_epss_fails_when_a_security_gate_check_failed(
+        self, mock_import_epss, mock_epss_apply_observations, mock_import_cvss_bt, mock_check_gates
+    ):
+        mock_import_epss.return_value = "epss done"
+        mock_epss_apply_observations.return_value = "applied"
+        mock_import_cvss_bt.return_value = "cvss-bt done"
+        mock_check_gates.return_value = (2, 1)
+
+        # Huey's immediate mode logs the exception of a task instead of raising it
+        with self.assertLogs("huey", level="ERROR"):
+            task_import_epss()
+
+        periodic_task = Periodic_Task.objects.filter(task="Import EPSS and cvss-bt").latest("start_time")
+        self.assertEqual(periodic_task.status, Status.STATUS_FAILURE)
+        self.assertTrue(
+            periodic_task.message.endswith(
+                "Checked 2 security gates with conditions.\nSecurity gate check failed for 1 products."
+            )
+        )
