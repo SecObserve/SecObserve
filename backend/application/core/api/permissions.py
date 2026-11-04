@@ -134,7 +134,7 @@ class UserHasServicePermission(BasePermission):
 
 class UserHasObservationPermission(BasePermission):
     def has_permission(self, request: Request, view: APIView) -> bool:
-        if request.path.endswith("/bulk_assessment/"):
+        if request.path.endswith(("/bulk_assessment/", "/bulk_extend_assessment/")):
             return True
 
         return check_post_permission(request, Product, "product", Permissions.Observation_Create)

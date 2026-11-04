@@ -27,6 +27,12 @@ In the assessment dialog the user can change either the severity and/or the stat
 
 A new entry with the changed values is stored in the `Observation Log` after the assessment has been saved.
 
+## Extend assessments
+
+An assessment with an expiry date, see [Risk acceptance expiry](risk_acceptance_expiry.md), can be extended before it expires. The **Extend** button is shown for an observation with an expiry date, the observation lists offer **Extend** as a bulk action for the selected observations. The filter **Expiry date until** in the observation lists shows the observations that expire up to a given date.
+
+The extension keeps severity, status, priority and VEX information of the observation and only sets a new expiry date. A comment is mandatory, it explains why the assessment is still valid. Without an entered date, the new expiry date is calculated from the settings of the product. Observations without an expiry date are skipped in a bulk extension.
+
 ## Approvals
 
 With the default settings of the product, the assessment is activated right away. If more control is needed, the product can be configured to require an approval before the assessment is activated. This can be done while creating or editing a product:
@@ -45,6 +51,8 @@ If the approval is required, the dialog showing the observation or and the dialo
 ![Show observation log](../assets/images/screenshot_observation_log_show.png)
 
 Be aware, that the user who has created the assessment is not allowed to approve or reject it. The approval must be done by another user.
+
+A change of the expiry date needs an approval as well, so an extension of an assessment is only active after it has been approved. The list of approvals can be filtered with **Extensions only** for assessments that just change the expiry date.
 
 ![Assessment approval](../assets/images/screenshot_assessment_approval.png){ width="60%" style="display: block; margin: 0 auto" }
 

@@ -12,7 +12,7 @@ from application.core.services.observation import (
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
-    calculate_risk_acceptance_expiry_date,
+    calculate_expiry_date,
 )
 from application.core.types import Assessment_Status, Status
 from application.issue_tracker.services.issue_tracker import (
@@ -243,9 +243,7 @@ def _write_observation_log(
     if vex_statement.impact:
         comment = f"{comment}\n\n{vex_statement.impact}"
 
-    risk_acceptance_expiry_date = (
-        calculate_risk_acceptance_expiry_date(observation.product) if status == Status.STATUS_RISK_ACCEPTED else None
-    )
+    risk_acceptance_expiry_date = calculate_expiry_date(observation.product, status)
 
     create_observation_log(
         observation=observation,
@@ -293,11 +291,7 @@ def write_observation_log_no_vex_statement(
     else:
         log_comment = "Removed unknown VEX statement"
 
-    risk_acceptance_expiry_date = (
-        calculate_risk_acceptance_expiry_date(observation.product)
-        if log_status == Status.STATUS_RISK_ACCEPTED
-        else None
-    )
+    risk_acceptance_expiry_date = calculate_expiry_date(observation.product, log_status)
 
     create_observation_log(
         observation=observation,
