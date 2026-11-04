@@ -65,3 +65,43 @@ export interface ProductNotificationPair {
     // null for a product group, its settings are not an override
     template_notification: ProductNotification | null;
 }
+
+export const WEBHOOK_EVENT_TYPE_CHOICES = [
+    { id: "observation.created", name: "Observation created" },
+    { id: "observation.review_requested", name: "Observation review requested" },
+    { id: "assessment.approval_requested", name: "Assessment approval requested" },
+    { id: "assessment.approval_decided", name: "Assessment approval decided" },
+    { id: "rule.approval_requested", name: "Rule approval requested" },
+    { id: "rule.approval_decided", name: "Rule approval decided" },
+    { id: "import.completed", name: "Import completed" },
+    { id: "security_gate.changed", name: "Security gate changed" },
+];
+
+export interface Webhook extends RaRecord {
+    id: Identifier;
+    product: Identifier | null;
+    product_data: { name: string; permissions: number[] } | null;
+    name: string;
+    url: string;
+    event_types: string[];
+    min_severity: string;
+    active: boolean;
+    consecutive_failures: number;
+    next_attempt_at: string | null;
+    created: string;
+    user_full_name: string | null;
+}
+
+export interface WebhookDelivery extends RaRecord {
+    id: Identifier;
+    webhook: Identifier;
+    event_id: string;
+    event_type: string;
+    payload: string;
+    status: "Pending" | "Succeeded" | "Failed";
+    attempts: number;
+    created: string;
+    last_attempt_at: string | null;
+    response_status_code: number | null;
+    error: string;
+}

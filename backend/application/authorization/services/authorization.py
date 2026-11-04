@@ -31,6 +31,7 @@ from application.import_observations.models import (
     Vulnerability_Check,
 )
 from application.licenses.models import Concluded_License, License_Component
+from application.notifications.models import Webhook
 from application.rules.models import Rule
 from application.scancodeio.models import ScanCodeIO_Project
 from application.vex.models import VEX_Base
@@ -95,6 +96,12 @@ def user_has_permission(  # pylint: disable=too-many-return-statements,too-many-
         return user_has_permission(obj.observation.product, permission, user)
 
     if isinstance(obj, Api_Configuration) and permission in Permissions.get_api_configuration_permissions():
+        return user_has_permission(obj.product, permission, user)
+
+    if isinstance(obj, Webhook) and permission in Permissions.get_webhook_permissions():
+        # Global webhooks are for superusers only, they have been handled above
+        if obj.product is None:
+            return False
         return user_has_permission(obj.product, permission, user)
 
     if isinstance(obj, VEX_Base) and permission in Permissions.get_vex_permissions():

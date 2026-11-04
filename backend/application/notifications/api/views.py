@@ -1,3 +1,7 @@
+import uuid
+from functools import partial
+
+from django.db import transaction
 from django.db.models.query import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -13,10 +17,12 @@ from rest_framework.mixins import (
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
 from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from application.access_control.models import User
+from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
 from application.core.models import Product
@@ -24,26 +30,40 @@ from application.core.queries.product import get_product_by_id
 from application.notifications.api.filters import (
     NotificationFilter,
     ProductNotificationFilter,
+    WebhookDeliveryFilter,
+    WebhookFilter,
 )
 from application.notifications.api.permissions import (
     UserHasNotificationPermission,
     UserHasProductNotificationPermission,
+    UserHasWebhookPermission,
 )
 from application.notifications.api.serializers import (
     NotificationBulkSerializer,
     NotificationSerializer,
     ProductNotificationPairSerializer,
     ProductNotificationSerializer,
+    WebhookCreateSerializer,
+    WebhookDeliverySerializer,
+    WebhookSecretSerializer,
+    WebhookSendTestResultSerializer,
+    WebhookSerializer,
     WebhookTestSerializer,
 )
 from application.notifications.models import (
     Notification,
     Notification_Viewed,
     Product_Notification,
+    Webhook,
+    Webhook_Delivery,
 )
 from application.notifications.queries.notification import get_notifications
 from application.notifications.queries.product_notification import (
     get_product_notifications,
+)
+from application.notifications.queries.webhook import (
+    get_webhook_deliveries,
+    get_webhooks,
 )
 from application.notifications.services.notification import bulk_mark_as_viewed
 from application.notifications.services.product_notification import (
@@ -56,6 +76,16 @@ from application.notifications.services.product_notification import (
 from application.notifications.services.send_notifications_base import (
     send_msteams_notification_test,
     send_slack_notification_test,
+)
+from application.notifications.services.webhook_delivery import kick_webhooks
+from application.notifications.services.webhook_events import build_webhook_payload
+from application.notifications.services.webhook_send import (
+    generate_webhook_secret,
+    send_webhook_request,
+)
+from application.notifications.types import (
+    Webhook_Delivery_Status,
+    Webhook_Event_Type,
 )
 
 
@@ -209,6 +239,82 @@ class ProductNotificationViewSet(GenericViewSet, ListModelMixin, UpdateModelMixi
         product_notification = create_product_notification_override(product, user)
 
         return Response(status=HTTP_200_OK, data=ProductNotificationSerializer(product_notification).data)
+
+
+class WebhookViewSet(ModelViewSet):
+    filterset_class = WebhookFilter
+    permission_classes = (IsAuthenticated, UserHasWebhookPermission)
+    queryset = Webhook.objects.none()
+    filter_backends = [DjangoFilterBackend]
+
+    def get_serializer_class(self) -> type[BaseSerializer]:
+        # The secret is only shown once, when it is generated
+        return WebhookCreateSerializer if self.action == "create" else WebhookSerializer
+
+    def get_queryset(self) -> QuerySet[Webhook]:
+        return get_webhooks().select_related("product").select_related("product__product_group")
+
+    def perform_create(self, serializer: BaseSerializer) -> None:
+        serializer.save(secret=generate_webhook_secret(), user=get_current_user())
+
+    @extend_schema(
+        methods=["POST"],
+        request=None,
+        responses={HTTP_200_OK: WebhookSendTestResultSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def send_test(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        # pk is needed in the signature
+        webhook = self.get_object()
+        body = build_webhook_payload(
+            Webhook_Event_Type.WEBHOOK_TEST, {"webhook": {"id": webhook.pk, "name": webhook.name}}
+        )
+        result = send_webhook_request(webhook.url, webhook.secret, str(uuid.uuid4()), body)
+        if result.succeeded:
+            Webhook.objects.filter(pk=webhook.pk).update(consecutive_failures=0, next_attempt_at=None)
+        return Response(status=HTTP_200_OK, data=WebhookSendTestResultSerializer(result).data)
+
+    @extend_schema(
+        methods=["POST"],
+        request=None,
+        responses={HTTP_200_OK: WebhookSecretSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def rotate_secret(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        # pk is needed in the signature
+        webhook = self.get_object()
+        webhook.secret = generate_webhook_secret()
+        # A running drain has loaded the old secret, breaking its lease stops it after the current request
+        webhook.next_attempt_at = None
+        webhook.user = get_current_user()
+        webhook.save(update_fields=["secret", "next_attempt_at", "user"])
+        return Response(status=HTTP_200_OK, data=WebhookSecretSerializer(webhook).data)
+
+
+class WebhookDeliveryViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
+    serializer_class = WebhookDeliverySerializer
+    filterset_class = WebhookDeliveryFilter
+    permission_classes = (IsAuthenticated, UserHasWebhookPermission)
+    queryset = Webhook_Delivery.objects.none()
+    filter_backends = [DjangoFilterBackend]
+
+    def get_queryset(self) -> QuerySet[Webhook_Delivery]:
+        return get_webhook_deliveries().select_related("webhook__product")
+
+    @extend_schema(
+        methods=["POST"],
+        request=None,
+        responses={HTTP_204_NO_CONTENT: None},
+    )
+    @action(detail=True, methods=["post"])
+    def redeliver(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        # pk is needed in the signature
+        delivery = self.get_object()
+        Webhook_Delivery.objects.filter(pk=delivery.pk).update(
+            status=Webhook_Delivery_Status.PENDING, attempts=0, error="", response_status_code=None
+        )
+        transaction.on_commit(partial(kick_webhooks, [delivery.webhook_id]), robust=True)
+        return Response(status=HTTP_204_NO_CONTENT)
 
 
 def _get_notification_user_and_product(request: Request) -> tuple[User, Product]:
