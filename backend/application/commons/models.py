@@ -281,6 +281,8 @@ class Settings(Model, DirtyFieldsMixin):
 
     feature_cross_scanner_deduplication = BooleanField(default=False)
     feature_show_product_header_chips = BooleanField(default=False)
+    # Only set by the management command full_text_search, which creates and drops the indexes as well
+    feature_full_text_search = BooleanField(default=False)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """

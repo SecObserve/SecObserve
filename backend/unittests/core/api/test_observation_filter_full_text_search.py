@@ -1,4 +1,3 @@
-from importlib import import_module
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -6,18 +5,16 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from application.access_control.models import User
+from application.commons.models import Settings
 from application.core.api.filters import ObservationFilter
 from application.core.models import Observation, Observation_Log
 from application.core.queries.observation import (
     OBSERVATION_FULL_TEXT_SEARCH_FIELDS,
-    OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS,
     _get_full_text_search_terms,
 )
 from application.core.types import Observation_Log_Comment
 from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
-
-migration = import_module("application.core.migrations.0101_observation_full_text_search")
 
 
 class TestObservationFilterFullTextSearch(BaseTestCase):
@@ -34,11 +31,25 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
         )
         super().setUpClass()
 
+    def setUp(self):
+        super().setUp()
+        Settings(feature_full_text_search=True).save()
+
     def test_not_postgresql(self):
         with self.assertRaises(ValidationError) as e:
             ObservationFilter().get_full_text_search(Observation.objects.all(), "full_text_search", "injection")
 
-        self.assertEqual(["Full text search is only available with PostgreSQL"], e.exception.detail)
+        self.assertEqual(["Full text search is not activated"], e.exception.detail)
+
+    @patch("application.commons.services.functions.connection")
+    def test_postgresql_not_activated(self, mock_connection):
+        mock_connection.vendor = "postgresql"
+        Settings(feature_full_text_search=False).save()
+
+        with self.assertRaises(ValidationError) as e:
+            ObservationFilter().get_full_text_search(Observation.objects.all(), "full_text_search", "injection")
+
+        self.assertEqual(["Full text search is not activated"], e.exception.detail)
 
     def test_not_postgresql_api(self):
         auth_path = "application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate"
@@ -47,7 +58,7 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
             response = APIClient().get("/api/observations/?full_text_search=injection")
 
         self.assertEqual(400, response.status_code)
-        self.assertEqual({"message": "Full text search is only available with PostgreSQL"}, response.data)
+        self.assertEqual({"message": "Full text search is not activated"}, response.data)
 
     @patch("application.commons.services.functions.connection")
     def test_postgresql(self, mock_connection):
@@ -162,9 +173,3 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
     def test_get_full_text_search_terms_max(self):
         terms = [f"term_{i}" for i in range(12)]
         self.assertEqual([(term, False) for term in terms[:10]], _get_full_text_search_terms(" ".join(terms)))
-
-    def test_fields_match_indexes(self):
-        self.assertEqual(list(migration.OBSERVATION_FULL_TEXT_SEARCH_FIELDS), OBSERVATION_FULL_TEXT_SEARCH_FIELDS)
-        self.assertEqual(
-            list(migration.OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS), OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS
-        )

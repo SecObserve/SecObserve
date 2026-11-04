@@ -264,21 +264,25 @@ def get_current_modifying_observation_log(observation: Observation) -> Optional[
         return None
 
 
-# The fields must be the same as the ones of the trigram indexes in
-# migration 0101_observation_full_text_search, otherwise not all searched fields are indexed.
-OBSERVATION_FULL_TEXT_SEARCH_FIELDS = [
-    "title",
-    "description",
-    "vulnerability_id",
-    "vulnerability_id_aliases",
-    "origin_component_name_version",
-    "origin_docker_image_name_tag",
-    "origin_endpoint_url",
-    "origin_source_file",
-    "origin_cloud_qualified_resource",
-    "origin_kubernetes_qualified_resource",
-]
-OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = ["comment"]
+# Searched fields and the names of their trigram indexes,
+# which are created and dropped by the management command full_text_search
+OBSERVATION_FULL_TEXT_SEARCH_INDEXES = {
+    "title": "core_obs_title_trgm_idx",
+    "description": "core_obs_description_trgm_idx",
+    "vulnerability_id": "core_obs_vuln_id_trgm_idx",
+    "vulnerability_id_aliases": "core_obs_vuln_alias_trgm_idx",
+    "origin_component_name_version": "core_obs_component_trgm_idx",
+    "origin_docker_image_name_tag": "core_obs_docker_image_trgm_idx",
+    "origin_endpoint_url": "core_obs_endpoint_url_trgm_idx",
+    "origin_source_file": "core_obs_source_file_trgm_idx",
+    "origin_cloud_qualified_resource": "core_obs_cloud_res_trgm_idx",
+    "origin_kubernetes_qualified_resource": "core_obs_k8s_res_trgm_idx",
+}
+OBSERVATION_LOG_FULL_TEXT_SEARCH_INDEXES = {
+    "comment": "core_obs_log_comment_trgm_idx",
+}
+OBSERVATION_FULL_TEXT_SEARCH_FIELDS = list(OBSERVATION_FULL_TEXT_SEARCH_INDEXES)
+OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = list(OBSERVATION_LOG_FULL_TEXT_SEARCH_INDEXES)
 
 # A term in double quotes is matched as a whole word, all other characters except whitespace as part of a word.
 # Unbalanced double quotes are ignored.

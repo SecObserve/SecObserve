@@ -344,7 +344,7 @@ class ObservationFilter(FilterSet):
     ) -> QuerySet:
         # name is used as a positional argument
         if not is_full_text_search_available():
-            raise ValidationError("Full text search is only available with PostgreSQL")
+            raise ValidationError("Full text search is not activated")
         return filter_observations_full_text(queryset, value)
 
 

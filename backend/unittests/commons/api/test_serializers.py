@@ -92,3 +92,12 @@ class TestSettingsSerializer(BaseTestCase):
 
         self.assertFalse(serializer.is_valid())
         self.assertEqual(list(serializer.errors.keys()), ["scancodeio_base_url"])
+
+    def test_feature_full_text_search_serialized(self):
+        self.assertTrue(SettingsSerializer(Settings(feature_full_text_search=True)).data["feature_full_text_search"])
+
+    def test_feature_full_text_search_not_writable(self):
+        serializer = SettingsSerializer(Settings(), data={"feature_full_text_search": True}, partial=True)
+
+        self.assertTrue(serializer.is_valid())
+        self.assertNotIn("feature_full_text_search", serializer.validated_data)

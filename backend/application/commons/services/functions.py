@@ -96,4 +96,5 @@ def get_start_of_day(days_ago: int) -> datetime:
 
 
 def is_full_text_search_available() -> bool:
-    return connection.vendor == "postgresql"
+    # Activated with the management command full_text_search, only possible with PostgreSQL
+    return connection.vendor == "postgresql" and Settings.load().feature_full_text_search
