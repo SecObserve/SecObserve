@@ -60,32 +60,29 @@ const createMermaidGraph = (dependencies_str: string) => {
         "---\n" +
         "flowchart LR\n";
 
-    const components = new Set<string>();
+    // Map each component to its node id while parsing, a string replacement afterwards
+    // would also match components whose name is a suffix of another component's name
+    const component_ids = new Map<string, string>();
+    const getNode = (component: string) => {
+        let id = component_ids.get(component);
+        if (id === undefined) {
+            id = "id" + (component_ids.size + 1).toString();
+            component_ids.set(component, id);
+        }
+        return id + '("' + component + '")';
+    };
+
     for (const dependency of dependencies) {
         const components_list = dependency.split(" --> ");
         if (components_list.length != 2) {
             console.warn("Invalid dependency: " + dependency);
             continue;
         }
-        if (dependency.split(" --> ")[0].trim() == "" || dependency.split(" --> ")[1].trim() == "") {
+        if (components_list[0].trim() == "" || components_list[1].trim() == "") {
             console.warn("Invalid dependency: " + dependency);
             continue;
         }
-        components.add(dependency.split(" --> ")[0]);
-        components.add(dependency.split(" --> ")[1]);
-        mermaid_content += "    " + dependency + "\n";
-    }
-
-    // Sort components in descending order to make replaceAll more robust
-    const arrayFromSet = Array.from(components);
-    const sortedArray = arrayFromSet.toSorted((a, b) => b.localeCompare(a));
-    const sortedComponents = new Set(sortedArray);
-
-    let i = 1;
-    for (const component of sortedComponents) {
-        mermaid_content = mermaid_content.replaceAll(component + " ", "id" + i.toString() + '("' + component + '") ');
-        mermaid_content = mermaid_content.replaceAll(" " + component, " id" + i.toString() + '("' + component + '")');
-        i++;
+        mermaid_content += "    " + getNode(components_list[0]) + " --> " + getNode(components_list[1]) + "\n";
     }
 
     return mermaid_content;
