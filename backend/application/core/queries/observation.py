@@ -16,6 +16,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.product import get_products
 from application.core.types import Observation_Log_Comment
 
 
@@ -206,36 +207,11 @@ def get_observation_logs() -> QuerySet[Observation_Log]:
     observation_logs = Observation_Log.objects.all().order_by("id")
 
     if not user.is_superuser:
-        product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)
-        product_group_members = Product_Member.objects.filter(
-            product=OuterRef("observation__product__product_group"), user=user
-        )
-
-        product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("observation__product_id"),
-            authorization_group__users=user,
-        )
-
-        product_group_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("observation__product__product_group"),
-            authorization_group__users=user,
-        )
-
-        observation_logs = observation_logs.annotate(
-            observation__product__member=Exists(product_members),
-            observation__product__product_group__member=Exists(product_group_members),
-            observation__product__authorization_group_member=Exists(product_authorization_group_members),
-            observation__product__product_group_authorization_group_member=Exists(
-                product_group_authorization_group_members
-            ),
-        )
-
-        observation_logs = observation_logs.filter(
-            Q(observation__product__member=True)
-            | Q(observation__product__product_group__member=True)
-            | Q(observation__product__authorization_group_member=True)
-            | Q(observation__product__product_group_authorization_group_member=True)
-        )
+        # Checking the authorization once per product instead of once per observation log is much faster,
+        # because there are typically far more observation logs than products. Passing the product ids as
+        # values instead of a subquery lets the database estimate how many observation logs will match.
+        product_ids = list(get_products().values_list("id", flat=True))
+        observation_logs = observation_logs.filter(observation__product_id__in=product_ids)
 
     return observation_logs
 
