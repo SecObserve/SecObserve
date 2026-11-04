@@ -54,7 +54,7 @@ The search looks into these texts of an observation:
 * Origins: Component name and version, Docker image name and tag, endpoint URL, source file, cloud resource and Kubernetes resource
 * Comments of the entries in the observation log, e.g. the comments of assessments
 
-Comments written automatically by SecObserve are not searched, because they would match nearly every observation. These are the comments written by parsers during imports, by rules and VEX statements and when they are removed, when an observation has been created or changed manually and when a risk acceptance has expired.
+Comments written automatically by SecObserve are not searched, because they would match nearly every observation. These are the comments written by parsers during imports, by rules and VEX statements and when they are removed, when an observation has been created or changed manually and when a risk acceptance has expired. One exception: If a rule has a description, it is used as the comment of the observation log. This comment is searched after the rule has been deleted, because it cannot be distinguished from a comment written by a user anymore.
 
 ## Matching rules
 

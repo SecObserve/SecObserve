@@ -238,7 +238,7 @@ def _write_observation_log(
     else:
         vex_justification = ""
 
-    comment = f"Updated by VEX statement from {vex_statement.document.document_id}"
+    comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_VEX_STATEMENT}{vex_statement.document.document_id}"
 
     if vex_statement.impact:
         comment = f"{comment}\n\n{vex_statement.impact}"

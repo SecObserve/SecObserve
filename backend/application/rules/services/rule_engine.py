@@ -431,9 +431,9 @@ def _write_observation_log(
         comment = rule.description
     else:
         if rule.product:
-            comment = f"Updated by product rule {rule.name}"
+            comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE}{rule.name}"
         else:
-            comment = f"Updated by general rule {rule.name}"
+            comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE}{rule.name}"
 
     general_rule = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
     general_rule_rego = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_REGO else None

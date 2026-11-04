@@ -14,6 +14,7 @@ from application.core.queries.observation import (
 )
 from application.core.types import Observation_Log_Comment
 from application.rules.models import Rule
+from application.rules.types import Rule_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -153,6 +154,61 @@ class TestObservationFilterFullTextSearch(BaseTestCase):
         self.assertEqual([], self._search("manually"))
         for i in range(1, 6):
             self.assertEqual([], self._search(f"giraffe_{i}"))
+
+    def test_postgresql_result_observation_log_written_by_user(self):
+        # Similar to comments written by the system, but written by a user
+        comments = [
+            "Removed product zebra_1 from scope",
+            "Removed general zebra_2 access to the endpoint",
+            "Removed unknown rule zebra_3 from the WAF",
+            "Removed unknown VEX statement zebra_4 from the file",
+            "Updated by product owner zebra_5",
+        ]
+        for i, comment in enumerate(comments, start=1):
+            self._create_observation_log(comment)
+            self.assertEqual(["db_observation_external_active"], self._search(f"zebra_{i}"))
+
+    def test_postgresql_result_observation_log_removed_rule(self):
+        comments = ["Removed product rule giraffe_legacy", "Removed general rule giraffe_legacy"]
+        for rule_type, _ in Rule_Type.RULE_TYPE_CHOICES:
+            comments.append(f"Removed product {rule_type.lower()} rule giraffe_{rule_type}")
+            comments.append(f"Removed general {rule_type.lower()} rule giraffe_{rule_type}")
+
+        for comment in comments:
+            self._create_observation_log(comment)
+
+        self.assertEqual([], self._search("giraffe"))
+
+    def test_postgresql_result_observation_log_exact_comments(self):
+        self._create_observation_log(Observation_Log_Comment.COMMENT_REMOVED_UNKNOWN_RULE)
+        self._create_observation_log(Observation_Log_Comment.COMMENT_REMOVED_UNKNOWN_VEX_STATEMENT)
+
+        self.assertEqual([], self._search('"Removed unknown"'))
+
+    def test_postgresql_result_observation_log_deleted_rule(self):
+        # A rule can only be deleted when it is not set in an observation anymore, but the logs still refer to it
+        observation = Observation.objects.get(title="db_observation_external_active")
+        rule = Rule.objects.create(
+            name="giraffe_1", product=observation.product, parser=observation.parser, type=Rule_Type.RULE_TYPE_FIELDS
+        )
+        self._create_observation_log(
+            f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE}giraffe_1", product_rule=rule
+        )
+
+        rule.delete()
+
+        observation_log = Observation_Log.objects.get(comment__endswith="giraffe_1")
+        self.assertIsNone(observation_log.product_rule)
+        self.assertEqual([], self._search("giraffe_1"))
+
+    def test_postgresql_result_observation_log_foreign_key_set_to_null(self):
+        self._create_observation_log(f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE}giraffe_1")
+        self._create_observation_log(
+            f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_VEX_STATEMENT}giraffe_2\n\nimpact"
+        )
+
+        self.assertEqual([], self._search("giraffe_1"))
+        self.assertEqual([], self._search("giraffe_2"))
 
     def test_get_full_text_search_terms(self):
         self.assertEqual([("sql", False), ("injection", False)], _get_full_text_search_terms(" sql  injection "))
