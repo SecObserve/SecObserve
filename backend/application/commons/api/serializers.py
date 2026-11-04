@@ -44,6 +44,8 @@ class SettingsSerializer(ModelSerializer):
     class Meta:
         model = Settings
         exclude = ["observation_title_notification_statuses"]
+        # Only set by the management command full_text_search, which creates and drops the indexes as well
+        read_only_fields = ["feature_full_text_search"]
 
     def get_id(self, obj: Settings) -> int:  # pylint: disable=unused-argument
         # obj is needed for the signature but we don't need it

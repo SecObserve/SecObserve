@@ -14,7 +14,7 @@ from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
-from application.core.types import Assessment_Status, Status
+from application.core.types import Assessment_Status, Observation_Log_Comment, Status
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
@@ -238,7 +238,7 @@ def _write_observation_log(
     else:
         vex_justification = ""
 
-    comment = f"Updated by VEX statement from {vex_statement.document.document_id}"
+    comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_VEX_STATEMENT}{vex_statement.document.document_id}"
 
     if vex_statement.impact:
         comment = f"{comment}\n\n{vex_statement.impact}"
@@ -289,9 +289,11 @@ def write_observation_log_no_vex_statement(
     )
 
     if previous_vex_statement:
-        log_comment = f"Removed VEX statement from {previous_vex_statement.document.document_id}"
+        log_comment = (
+            Observation_Log_Comment.COMMENT_PREFIX_REMOVED_VEX_STATEMENT + previous_vex_statement.document.document_id
+        )
     else:
-        log_comment = "Removed unknown VEX statement"
+        log_comment = Observation_Log_Comment.COMMENT_REMOVED_UNKNOWN_VEX_STATEMENT
 
     risk_acceptance_expiry_date = (
         calculate_risk_acceptance_expiry_date(observation.product)

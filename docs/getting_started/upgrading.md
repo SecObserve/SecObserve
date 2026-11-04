@@ -10,6 +10,12 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.64.0
+
+**Notable changes**
+
+* There is a new [full text search](../usage/full_text_search.md) for observations, which searches in their texts, origins and the comments of their observation log. It is only available with PostgreSQL and deactivated by default, because it needs additional indexes in the database. Administrators activate it with the management command `python manage.py full_text_search activate` in the backend container, see [Activation](../usage/full_text_search.md#activation).
+
 ## Release 1.63.0
 
 **Security notice**

@@ -15,7 +15,7 @@ import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductG
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceReferenceInput";
 import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWidth";
-import { feature_exploit_information } from "../../commons/functions";
+import { feature_exploit_information, feature_full_text_search } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES, PURL_TYPE_CHOICES, Product } from "../types";
 
@@ -31,6 +31,9 @@ export function observationFilters(product?: Product, review = false, product_fi
 
     if (product?.has_branches) {
         primary.push(<BranchReferenceInput source="branch" product={product.id} alwaysOn autoWidth />);
+    }
+    if (feature_full_text_search()) {
+        primary.push(<TextInputAutoWidth source="full_text_search" label="Full text search" alwaysOn />);
     }
     primary.push(
         <TextInputAutoWidth source="title" alwaysOn />,
