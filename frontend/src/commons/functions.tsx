@@ -1,5 +1,6 @@
 import { PackageURL } from "packageurl-js";
 import { RaRecord, SortPayload } from "ra-core";
+import { useSyncExternalStore } from "react";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { getResolvedSettingTheme, getSettingPackageInfoPreference } from "../access_control/users/functions";
@@ -245,10 +246,31 @@ export const humanReadableDate = (date: string | undefined) => {
     return rtf.format(Math.trunc(diffInDays), "day").replace(" ago", "");
 };
 
+const settings_subscribers = new Set<() => void>();
+
 export function set_settings_in_local_storage(): Promise<void> {
     return httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/status/settings/").then((response) => {
-        localStorage.setItem("settings", JSON.stringify(response.json));
+        const settings = JSON.stringify(response.json);
+        if (settings !== localStorage.getItem("settings")) {
+            localStorage.setItem("settings", settings);
+            settings_subscribers.forEach((subscriber) => subscriber());
+        }
     });
+}
+
+function subscribe_to_settings(subscriber: () => void): () => void {
+    settings_subscribers.add(subscriber);
+    // The storage event is only fired for changes made by other browser tabs
+    window.addEventListener("storage", subscriber);
+    return () => {
+        settings_subscribers.delete(subscriber);
+        window.removeEventListener("storage", subscriber);
+    };
+}
+
+/** Re-renders a component that stays mounted when the settings change, other components read them when mounting. */
+export function useSettingsSnapshot(): string | null {
+    return useSyncExternalStore(subscribe_to_settings, () => localStorage.getItem("settings"));
 }
 
 export const feature_email = () => {

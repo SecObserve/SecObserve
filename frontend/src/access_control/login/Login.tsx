@@ -12,11 +12,21 @@ import { oidc_signed_in } from "../../access_control/auth_provider/oidc";
 import { OIDCSignInButton } from "../auth_provider/OIDCSignInButton";
 import { getTheme } from "../users/functions";
 
+function stored_feature_disable_user_login(): boolean {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        return features.indexOf("feature_disable_user_login") !== -1;
+    } catch {
+        return false;
+    }
+}
+
 const Login = () => {
     const [loading, setLoading] = useState(false);
     const [, setTheme] = useTheme();
     const auth = useAuth();
-    const [featureDisableUserLogin, setFeatureDisableUserLogin] = useState(false);
+    const [featureDisableUserLogin, setFeatureDisableUserLogin] = useState(stored_feature_disable_user_login);
     const notify = useNotify();
     const login = useLogin();
     const location = useLocation();
@@ -26,14 +36,7 @@ const Login = () => {
 
     useEffect(() => {
         if (window.__RUNTIME_CONFIG__.OIDC_ENABLE == "true") {
-            const settingsStorage = localStorage.getItem("settings");
-            if (settingsStorage) {
-                const settings = JSON.parse(settingsStorage);
-                const features = settings.features || [];
-                setFeatureDisableUserLogin(features.indexOf("feature_disable_user_login") !== -1);
-            } else {
-                get_disable_login_feature();
-            }
+            get_disable_login_feature();
         }
     }, []);
 
@@ -52,10 +55,13 @@ const Login = () => {
                 return response.json();
             })
             .then((data) => {
-                localStorage.setItem("settings", JSON.stringify(data));
+                // Not stored, because the response without authentication doesn't contain the other settings
                 const features = data.features || [];
                 const feature_disable_user_login_position = features.indexOf("feature_disable_user_login");
                 setFeatureDisableUserLogin(feature_disable_user_login_position !== -1);
+            })
+            .catch((error: Error) => {
+                console.warn("Cannot get settings: ", error.message);
             });
     }
 
