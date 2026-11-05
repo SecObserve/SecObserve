@@ -181,7 +181,11 @@ class TestCVSS_BT(BaseTestCase):
         self.assertEqual("", observation.cve_found_in)
 
         self.assertEqual(
-            set(Observation.objects.exclude(title__in=["too old", "no change"]).values_list("pk", flat=True)),
+            set(
+                Observation.objects.filter(product=product)
+                .exclude(title__in=["too old", "no change"])
+                .values_list("pk", flat=True)
+            ),
             set(changed),
         )
 
