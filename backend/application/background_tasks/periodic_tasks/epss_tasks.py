@@ -19,8 +19,11 @@ def task_import_epss() -> str:
     message = import_epss() + "\n"
     changed = epss_apply_observations()
     message += f"Applied EPSS scores to {len(changed)} observations.\n"
-    cvss_bt_message, changed_exploit = import_cvss_bt()
-    message += cvss_bt_message + "\n"
-    result = apply_rules_to_enriched_observations(set(changed) | set(changed_exploit))
+    changed_exploit: list[int] = []
+    try:
+        cvss_bt_message, changed_exploit = import_cvss_bt()
+        message += cvss_bt_message + "\n"
+    finally:
+        result = apply_rules_to_enriched_observations(set(changed) | set(changed_exploit))
     message += f"Rules applied to {result.observations_processed} observations, {result.observations_changed} changed."
     return message
