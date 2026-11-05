@@ -19,6 +19,7 @@ export const transform_product_group_and_product = (data: any, description: stri
         data.security_gate_threshold_low ||= 0;
         data.security_gate_threshold_none ||= 0;
         data.security_gate_threshold_unknown ||= 0;
+        data.security_gate_priority_thresholds ??= [];
     } else {
         data.security_gate_threshold_critical ||= null;
         data.security_gate_threshold_high ||= null;
@@ -26,6 +27,7 @@ export const transform_product_group_and_product = (data: any, description: stri
         data.security_gate_threshold_low ||= null;
         data.security_gate_threshold_none ||= null;
         data.security_gate_threshold_unknown ||= null;
+        data.security_gate_priority_thresholds = null;
     }
 
     if (data.risk_acceptance_expiry_active) {

@@ -10,6 +10,7 @@ import {
 } from "react-admin";
 
 import { validate_0_999999 } from "../../../commons/custom_validators";
+import { PriorityThresholdsField, PriorityThresholdsInput } from "../../../commons/security_gate/PriorityThresholds";
 
 export const SecurityGateInputs = () => (
     <>
@@ -68,6 +69,7 @@ export const SecurityGateInputs = () => (
                             max={999999}
                             validate={validate_0_999999}
                         />
+                        <PriorityThresholdsInput />
                     </Stack>
                 )
             }
@@ -112,6 +114,7 @@ export const SecurityGateFields = () => {
                     <Labeled>
                         <NumberField source="security_gate_threshold_unknown" />
                     </Labeled>
+                    <PriorityThresholdsField />
                 </Stack>
             )}
         </>
