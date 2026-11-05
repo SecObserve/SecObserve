@@ -162,21 +162,19 @@ def explain_security_gate(product: Product) -> list[dict[str, Any]]:
     if product.is_product_group:
         return []
 
-    thresholds = get_security_gate_thresholds(product)
-    priority_thresholds = get_security_gate_priority_thresholds(product)
+    settings = Settings.load()
+    thresholds = get_security_gate_thresholds(product, settings)
+    priority_thresholds = get_security_gate_priority_thresholds(product, settings)
     if thresholds is None or priority_thresholds is None:
         return []
 
-    annotated_product = get_product_by_id(product.pk, is_product_group=False, with_observation_annotations=True)
-    if not annotated_product:
-        raise ValueError(f"Product {product.pk} not found while explaining security gate.")
-
+    populate_product_count_annotations([product], is_product_group=False)
     priority_counts = get_priority_counts(product) if priority_thresholds else {}
     rows: list[dict[str, Any]] = [
         {
             "severity": SEVERITY_TITLES[severity],
             "priority": None,
-            "count": getattr(annotated_product, f"active_{severity}_observation_count"),
+            "count": getattr(product, f"active_{severity}_observation_count"),
             "threshold": threshold,
         }
         for severity, threshold in thresholds.items()
