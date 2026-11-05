@@ -4,18 +4,23 @@ from django.utils import timezone
 
 from application.commons.models import Settings
 from application.core.models import Observation, Product
+from application.core.queries.observation import (
+    count_active_observations_by_product_and_priority,
+)
 from application.core.services.security_gate import (
     SEVERITIES,
     check_security_gate,
     check_security_gate_observation,
     check_security_gates,
     evaluate_security_gate,
+    get_security_gate_priority_thresholds,
     get_security_gate_thresholds,
 )
 from application.core.types import Severity, Status
 from application.import_observations.models import Parser
 from application.import_observations.types import Parser_Source, Parser_Type
 from unittests.base_test_case import BaseTestCase
+from unittests.core.observation_fixtures import ObservationFixtureMixin
 
 
 class TestSecurityGate(BaseTestCase):
@@ -821,3 +826,67 @@ class TestCheckSecurityGates(BaseTestCase):
         self.assertTrue(Product.objects.get(pk=product_passed.pk).security_gate_passed)
         self.assertIsNone(Product.objects.get(pk=product_without_gate.pk).security_gate_passed)
         self.assertEqual(2, notification_mock.call_count)
+
+
+class TestSecurityGatePriorityThresholds(ObservationFixtureMixin, BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        # BaseTestCase does not put product_1 into product_group_1
+        self.product_group_1.is_product_group = True
+        self.product_group_1.save()
+        self.product_1.product_group = self.product_group_1
+
+    def test_priority_thresholds_from_product_group(self):
+        self.product_group_1.security_gate_active = True
+        self.product_group_1.security_gate_priority_thresholds = [{"priority": 1, "threshold": 0}]
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_priority_thresholds = [{"priority": 2, "threshold": 9}]
+
+        self.assertEqual(get_security_gate_priority_thresholds(self.product_1), {1: 0})
+
+    def test_priority_thresholds_from_product_when_group_is_null(self):
+        self.product_group_1.security_gate_active = None
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_priority_thresholds = [{"priority": 2, "threshold": 9}]
+
+        self.assertEqual(get_security_gate_priority_thresholds(self.product_1), {2: 9})
+
+    def test_priority_thresholds_from_settings_and_none_without_gate(self):
+        settings = Settings.load()
+        settings.security_gate_priority_thresholds = [{"priority": 1, "threshold": 3}]
+        self.product_group_1.security_gate_active = None
+        self.product_1.security_gate_active = None
+        self.assertEqual(get_security_gate_priority_thresholds(self.product_1, settings), {1: 3})
+
+        self.product_1.security_gate_active = False
+        self.assertIsNone(get_security_gate_priority_thresholds(self.product_1, settings))
+
+    def test_evaluate_fails_on_priority_threshold(self):
+        for severity in SEVERITIES:
+            setattr(self.product_1, f"active_{severity}_observation_count", 0)
+        self._observation("p1", priority=1)
+        thresholds = {severity: 99999 for severity in SEVERITIES}
+
+        self.assertTrue(evaluate_security_gate(self.product_1, thresholds, {}))
+        self.assertFalse(evaluate_security_gate(self.product_1, thresholds, {1: 0}))
+        self.assertTrue(evaluate_security_gate(self.product_1, thresholds, {2: 0}))
+
+    @patch("application.core.services.security_gate.send_product_security_gate_notification")
+    @patch(
+        "application.core.services.security_gate.count_active_observations_by_product_and_priority",
+        wraps=count_active_observations_by_product_and_priority,
+    )
+    def test_check_security_gates_counts_priorities_once_per_batch(self, count_mock, notification_mock):
+        self.product_1.security_gate_active = True
+        for severity in SEVERITIES:
+            setattr(self.product_1, f"security_gate_threshold_{severity}", 99999)
+        self.product_1.security_gate_priority_thresholds = [{"priority": 1, "threshold": 0}]
+        self.product_1.save()
+        self._observation("p1", priority=1)
+
+        check_security_gates(Product.objects.filter(pk=self.product_1.pk))
+
+        count_mock.assert_called_once()
+        self.assertEqual([product.pk for product in count_mock.call_args[0][0]], [self.product_1.pk])
+        self.product_1.refresh_from_db()
+        self.assertFalse(self.product_1.security_gate_passed)

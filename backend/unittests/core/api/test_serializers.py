@@ -120,6 +120,15 @@ class TestBranchSerializerSecurityGate(BaseTestCase):
 
         self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
 
+    @patch("application.core.services.security_gate.get_priority_counts", return_value={1: 1})
+    def test_security_gate_failed_on_priority(self, get_priority_counts_mock):
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_priority_thresholds = [{"priority": 1, "threshold": 0}]
+        self._annotate(self.branch_1)
+
+        self.assertFalse(BranchSerializer().get_security_gate_passed(self.branch_1))
+        get_priority_counts_mock.assert_called_once_with(self.branch_1)
+
 
 class TestBranchSerializer(BaseTestCase):
     @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")

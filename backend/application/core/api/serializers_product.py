@@ -57,6 +57,7 @@ from application.core.services.risk_acceptance_expiry import (
 )
 from application.core.services.security_gate import (
     evaluate_security_gate,
+    get_security_gate_priority_thresholds,
     get_security_gate_thresholds,
 )
 from application.core.types import Assessment_Status, Status
@@ -879,7 +880,7 @@ class BranchSerializer(ModelSerializer):
         if thresholds is None:
             return None
 
-        return evaluate_security_gate(obj, thresholds)
+        return evaluate_security_gate(obj, thresholds, get_security_gate_priority_thresholds(obj.product))
 
     class Meta:
         model = Branch
