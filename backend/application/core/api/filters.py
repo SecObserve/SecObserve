@@ -360,7 +360,7 @@ class ObservationFilter(FilterSet):
     ) -> QuerySet:
         # name is used as a positional argument
         product_id = self.data.get("product")
-        if not value or not product_id:
+        if value is None or not product_id:
             return queryset
 
         product = get_product_by_id(product_id)
@@ -370,7 +370,9 @@ class ObservationFilter(FilterSet):
         failing_filter = get_security_gate_failing_filter(product)
         if failing_filter is None:
             return queryset
-        return queryset.filter(failing_filter)
+        if value:
+            return queryset.filter(failing_filter)
+        return queryset.exclude(failing_filter)
 
 
 class ObservationLogFilter(FilterSet):

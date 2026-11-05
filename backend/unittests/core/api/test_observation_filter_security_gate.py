@@ -39,6 +39,11 @@ class TestObservationFailsSecurityGateFilter(ObservationFixtureMixin, BaseTestCa
 
         self.assertEqual(self._titles(response), ["crit", "p1"])
 
+    def test_fails_filter_false_returns_the_rest(self):
+        response = APIClient().get(f"/api/observations/?product={self.product_1.pk}&fails_security_gate=false")
+
+        self.assertEqual(self._titles(response), ["low"])
+
     def test_fails_filter_when_gate_passes(self):
         self.product_1.security_gate_threshold_critical = 99999
         self.product_1.security_gate_priority_thresholds = []
