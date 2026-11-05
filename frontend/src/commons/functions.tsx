@@ -273,6 +273,16 @@ export function useSettingsSnapshot(): string | null {
     return useSyncExternalStore(subscribe_to_settings, () => localStorage.getItem("settings"));
 }
 
+export const feature_disable_user_login = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        return features.indexOf("feature_disable_user_login") !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const feature_email = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");

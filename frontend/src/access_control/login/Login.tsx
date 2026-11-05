@@ -9,24 +9,15 @@ import { Navigate, useLocation } from "react-router-dom";
 
 import { jwt_signed_in } from "../../access_control/auth_provider/authProvider";
 import { oidc_signed_in } from "../../access_control/auth_provider/oidc";
+import { feature_disable_user_login } from "../../commons/functions";
 import { OIDCSignInButton } from "../auth_provider/OIDCSignInButton";
 import { getTheme } from "../users/functions";
-
-function stored_feature_disable_user_login(): boolean {
-    try {
-        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
-        const features = settings.features ?? [];
-        return features.indexOf("feature_disable_user_login") !== -1;
-    } catch {
-        return false;
-    }
-}
 
 const Login = () => {
     const [loading, setLoading] = useState(false);
     const [, setTheme] = useTheme();
     const auth = useAuth();
-    const [featureDisableUserLogin, setFeatureDisableUserLogin] = useState(stored_feature_disable_user_login);
+    const [featureDisableUserLogin, setFeatureDisableUserLogin] = useState(feature_disable_user_login);
     const notify = useNotify();
     const login = useLogin();
     const location = useLocation();
