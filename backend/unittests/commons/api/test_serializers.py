@@ -1,3 +1,5 @@
+from rest_framework.exceptions import ValidationError
+
 from application.commons.api.serializers import SettingsSerializer
 from application.commons.models import Settings
 from unittests.base_test_case import BaseTestCase
@@ -101,3 +103,22 @@ class TestSettingsSerializer(BaseTestCase):
 
         self.assertTrue(serializer.is_valid())
         self.assertNotIn("feature_full_text_search", serializer.validated_data)
+
+    def test_security_gate_priority_thresholds_invalid(self):
+        with self.assertRaisesRegex(ValidationError, "between 1 and 99"):
+            SettingsSerializer().validate({"security_gate_priority_thresholds": [{"priority": 0, "threshold": 0}]})
+
+    def test_security_gate_priority_thresholds_sorted(self):
+        data = SettingsSerializer().validate(
+            {
+                "security_gate_priority_thresholds": [
+                    {"priority": 2, "threshold": 1},
+                    {"priority": 1, "threshold": 0},
+                ]
+            }
+        )
+
+        self.assertEqual(
+            [{"priority": 1, "threshold": 0}, {"priority": 2, "threshold": 1}],
+            data["security_gate_priority_thresholds"],
+        )

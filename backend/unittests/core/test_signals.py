@@ -116,6 +116,35 @@ class TestCoreSignals(TestCase):
         mock_check_security_gates.assert_called_once()
         self.assertEqual({product_1, product_2}, set(mock_check_security_gates.call_args.args[0]))
 
+    @patch("application.core.signals.check_security_gate")
+    def test_product_post_save_updated_priority_thresholds_changed(self, mock_check_security_gate):
+        product = Product.objects.create(
+            name="Test Product",
+            security_gate_active=True,
+            security_gate_priority_thresholds=[{"priority": 1, "threshold": 0}],
+        )
+
+        product.security_gate_priority_thresholds = [{"priority": 1, "threshold": 1}]
+        product.save()
+
+        mock_check_security_gate.assert_called_once_with(product)
+
+    @patch("application.core.signals.check_security_gates")
+    def test_product_post_save_updated_product_group_priority_thresholds_changed(self, mock_check_security_gates):
+        product_group = Product.objects.create(
+            name="Test Product Group",
+            is_product_group=True,
+            security_gate_active=True,
+            security_gate_priority_thresholds=[{"priority": 1, "threshold": 0}],
+        )
+        product = Product.objects.create(name="Test Product", product_group=product_group)
+
+        product_group.security_gate_priority_thresholds = [{"priority": 1, "threshold": 1}]
+        product_group.save()
+
+        mock_check_security_gates.assert_called_once()
+        self.assertEqual({product}, set(mock_check_security_gates.call_args.args[0]))
+
     @patch("application.core.signals.set_default_branch")
     def test_branch_post_save(self, mock_set_default_branch):
         # Create a branch
@@ -137,6 +166,15 @@ class TestCoreSignals(TestCase):
         settings.save()
 
         # Verify that settings_post_save_task was called
+        mock_settings_post_save_task.assert_called_once()
+
+    @patch("application.core.signals.settings_post_save_task")
+    def test_settings_post_save_priority_thresholds_changed(self, mock_settings_post_save_task):
+        settings = Settings.objects.create(security_gate_priority_thresholds=[{"priority": 1, "threshold": 0}])
+
+        settings.security_gate_priority_thresholds = [{"priority": 1, "threshold": 1}]
+        settings.save()
+
         mock_settings_post_save_task.assert_called_once()
 
     @patch("application.core.signals.logger")

@@ -1,3 +1,4 @@
+import copy
 import re
 from datetime import date
 from typing import Any, Optional
@@ -30,6 +31,9 @@ from application.authorization.services.roles_permissions import (
     get_permissions_for_role,
 )
 from application.commons.models import Settings
+from application.commons.services.security_gate_priority_thresholds import (
+    normalize_security_gate_priority_thresholds,
+)
 from application.core.api.serializers_helpers import (
     validate_cpe23,
     validate_purl,
@@ -56,6 +60,7 @@ from application.core.services.risk_acceptance_expiry import (
     calculate_risk_acceptance_expiry_date,
 )
 from application.core.services.security_gate import (
+    SECURITY_GATE_FIELDS,
     evaluate_security_gate,
     get_security_gate_priority_thresholds,
     get_security_gate_thresholds,
@@ -66,6 +71,8 @@ from application.issue_tracker.types import Issue_Tracker
 from application.licenses.models import License_Component
 from application.rules.models import Rule
 from application.rules.types import Rule_Status
+
+SECURITY_GATE_SETTINGS_FIELDS: list[str] = [field for field in SECURITY_GATE_FIELDS if field != "security_gate_active"]
 
 
 def get_product_permissions_for_user(product: Product) -> Optional[set[Permissions]]:
@@ -125,31 +132,35 @@ class ProductCoreSerializer(ModelSerializer):
             attrs["repository_branch_housekeeping_exempt_branches"] = ""
 
         if attrs.get("security_gate_active") is True:
-            if attrs.get("security_gate_threshold_critical") is None:
-                attrs["security_gate_threshold_critical"] = settings.security_gate_threshold_critical
-            if attrs.get("security_gate_threshold_high") is None:
-                attrs["security_gate_threshold_high"] = settings.security_gate_threshold_high
-            if attrs.get("security_gate_threshold_medium") is None:
-                attrs["security_gate_threshold_medium"] = settings.security_gate_threshold_medium
-            if attrs.get("security_gate_threshold_low") is None:
-                attrs["security_gate_threshold_low"] = settings.security_gate_threshold_low
-            if attrs.get("security_gate_threshold_none") is None:
-                attrs["security_gate_threshold_none"] = settings.security_gate_threshold_none
-            if attrs.get("security_gate_threshold_unknown") is None:
-                attrs["security_gate_threshold_unknown"] = settings.security_gate_threshold_unknown
+            for field in SECURITY_GATE_SETTINGS_FIELDS:
+                if attrs.get(field) is None:
+                    attrs[field] = copy.deepcopy(getattr(settings, field))
 
         if attrs.get("security_gate_active") is False:
-            attrs["security_gate_threshold_critical"] = None
-            attrs["security_gate_threshold_high"] = None
-            attrs["security_gate_threshold_medium"] = None
-            attrs["security_gate_threshold_low"] = None
-            attrs["security_gate_threshold_none"] = None
-            attrs["security_gate_threshold_unknown"] = None
+            for field in SECURITY_GATE_SETTINGS_FIELDS:
+                attrs[field] = None
 
+        self._validate_security_gate_priority_thresholds(attrs)
         self._validate_assessment_approver_authorization_groups(attrs)
         self._validate_assessments_need_approval(attrs)
 
         return super().validate(attrs)
+
+    def _current_value(self, attrs: dict, field: str) -> Any:
+        if field in attrs:
+            return attrs[field]
+        return getattr(self.instance, field, None)
+
+    def _validate_security_gate_priority_thresholds(self, attrs: dict) -> None:
+        try:
+            priority_thresholds = normalize_security_gate_priority_thresholds(
+                self._current_value(attrs, "security_gate_priority_thresholds")
+            )
+        except ValueError as error:
+            raise ValidationError(str(error)) from error
+        # None means the product has no gate of its own, it must not become an empty list
+        if attrs.get("security_gate_priority_thresholds") is not None:
+            attrs["security_gate_priority_thresholds"] = priority_thresholds
 
     def _validate_assessment_approver_authorization_groups(self, attrs: dict) -> None:
         authorization_groups = attrs.get("assessment_approver_authorization_groups")
@@ -334,6 +345,7 @@ class ProductGroupListSerializer(ProductCoreSerializer):
             "security_gate_threshold_low",
             "security_gate_threshold_none",
             "security_gate_threshold_unknown",
+            "security_gate_priority_thresholds",
             "assessments_need_approval",
             "product_rules_need_approval",
             "risk_acceptance_expiry_active",
