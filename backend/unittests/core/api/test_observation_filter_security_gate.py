@@ -3,7 +3,8 @@ from unittest.mock import patch
 from rest_framework.status import HTTP_200_OK
 from rest_framework.test import APIClient
 
-from application.core.types import Severity
+from application.core.models import Branch
+from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
 from unittests.core.observation_fixtures import ObservationFixtureMixin
 
@@ -23,6 +24,8 @@ class TestObservationFailsSecurityGateFilter(ObservationFixtureMixin, BaseTestCa
         self._observation("crit")
         self._observation("p1", severity=Severity.SEVERITY_MEDIUM, priority=1)
         self._observation("low", severity=Severity.SEVERITY_LOW)
+        self._observation("crit resolved", status=Status.STATUS_RESOLVED)
+        self._observation("crit other branch", branch=Branch.objects.create(product=self.product_1, name="other"))
         # A class level patch breaks setUpClass when the whole suite runs
         patcher = patch(
             "application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate"
@@ -42,7 +45,7 @@ class TestObservationFailsSecurityGateFilter(ObservationFixtureMixin, BaseTestCa
     def test_fails_filter_false_returns_the_rest(self):
         response = APIClient().get(f"/api/observations/?product={self.product_1.pk}&fails_security_gate=false")
 
-        self.assertEqual(self._titles(response), ["low"])
+        self.assertEqual(self._titles(response), ["crit other branch", "crit resolved", "low"])
 
     def test_fails_filter_when_gate_passes(self):
         self.product_1.security_gate_threshold_critical = 99999
