@@ -110,6 +110,40 @@ class TestAuthorizationProducts(TestAuthorizationBase):
             )
         )
 
+        expected_data = "[{'severity': 'Critical', 'priority': None, 'count': 0, 'threshold': 0, 'passed': True}, {'severity': 'High', 'priority': None, 'count': 0, 'threshold': 0, 'passed': True}, {'severity': 'Medium', 'priority': None, 'count': 0, 'threshold': 99999, 'passed': True}, {'severity': 'Low', 'priority': None, 'count': 0, 'threshold': 99999, 'passed': True}, {'severity': 'None', 'priority': None, 'count': 0, 'threshold': 99999, 'passed': True}, {'severity': 'Unknown', 'priority': None, 'count': 0, 'threshold': 99999, 'passed': True}]"
+        self._test_api(
+            APITest(
+                "db_internal_read",
+                "get",
+                "/api/products/1/security_gate_counts/",
+                None,
+                200,
+                expected_data,
+            )
+        )
+        expected_data = "{'message': 'You do not have permission to perform this action.'}"
+        self._test_api(
+            APITest(
+                "db_external",
+                "get",
+                "/api/products/1/security_gate_counts/",
+                None,
+                403,
+                expected_data,
+            )
+        )
+        expected_data = "{'message': 'Not found.'}"
+        self._test_api(
+            APITest(
+                "db_internal_read",
+                "get",
+                "/api/products/99999/security_gate_counts/",
+                None,
+                404,
+                expected_data,
+            )
+        )
+
         post_data = {
             "severity": "Critical",
             "status": "Open",

@@ -6,6 +6,7 @@ from typing import Any, Optional
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Q
 from rest_framework.serializers import (
+    BooleanField,
     CharField,
     DateField,
     IntegerField,
@@ -857,6 +858,14 @@ class ProductApiTokenSerializer(Serializer):
     role = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     name = CharField(max_length=32)
     expiration_date = DateField(required=False, allow_null=True)
+
+
+class SecurityGateCountSerializer(Serializer):
+    severity = CharField(allow_null=True)
+    priority = IntegerField(allow_null=True)
+    count = IntegerField()
+    threshold = IntegerField()
+    passed = BooleanField()
 
 
 class BranchSerializer(ModelSerializer):

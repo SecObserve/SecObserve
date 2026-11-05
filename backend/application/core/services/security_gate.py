@@ -1,7 +1,7 @@
 from itertools import batched
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
 from application.commons.models import Settings
 from application.core.models import Branch, Observation, Product
@@ -10,14 +10,24 @@ from application.core.queries.observation import (
     count_active_observations_by_product_and_priority,
 )
 from application.core.queries.product import (
+    get_default_branch_filter,
     get_product_by_id,
     populate_product_count_annotations,
 )
+from application.core.types import Severity, Status
 from application.notifications.services.send_notifications_security_gate import (
     send_product_security_gate_notification,
 )
 
 SEVERITIES = ("critical", "high", "medium", "low", "none", "unknown")
+SEVERITY_TITLES: dict[str, str] = {
+    "critical": Severity.SEVERITY_CRITICAL,
+    "high": Severity.SEVERITY_HIGH,
+    "medium": Severity.SEVERITY_MEDIUM,
+    "low": Severity.SEVERITY_LOW,
+    "none": Severity.SEVERITY_NONE,
+    "unknown": Severity.SEVERITY_UNKNOWN,
+}
 SECURITY_GATE_FIELDS: tuple[str, ...] = (
     "security_gate_active",
     *[f"security_gate_threshold_{severity}" for severity in SEVERITIES],
@@ -146,3 +156,54 @@ def evaluate_security_gate(
     if priority_counts is None:
         priority_counts = get_priority_counts(counted)
     return all(priority_counts.get(priority, 0) <= threshold for priority, threshold in priority_thresholds.items())
+
+
+def explain_security_gate(product: Product) -> list[dict[str, Any]]:
+    if product.is_product_group:
+        return []
+
+    thresholds = get_security_gate_thresholds(product)
+    priority_thresholds = get_security_gate_priority_thresholds(product)
+    if thresholds is None or priority_thresholds is None:
+        return []
+
+    annotated_product = get_product_by_id(product.pk, is_product_group=False, with_observation_annotations=True)
+    if not annotated_product:
+        raise ValueError(f"Product {product.pk} not found while explaining security gate.")
+
+    priority_counts = get_priority_counts(product) if priority_thresholds else {}
+    rows: list[dict[str, Any]] = [
+        {
+            "severity": SEVERITY_TITLES[severity],
+            "priority": None,
+            "count": getattr(annotated_product, f"active_{severity}_observation_count"),
+            "threshold": threshold,
+        }
+        for severity, threshold in thresholds.items()
+    ] + [
+        {"severity": None, "priority": priority, "count": priority_counts.get(priority, 0), "threshold": threshold}
+        for priority, threshold in sorted(priority_thresholds.items())
+    ]
+    for row in rows:
+        row["passed"] = row["count"] <= row["threshold"]
+    return rows
+
+
+def get_security_gate_failing_filter(product: Product) -> Optional[Q]:
+    rows = explain_security_gate(product)
+    if not rows:
+        return None
+
+    failed = [row for row in rows if not row["passed"]]
+    if not failed:
+        return Q(pk__in=[])
+
+    return (
+        Q(product=product)
+        & Q(current_status__in=Status.STATUS_ACTIVE)
+        & get_default_branch_filter()
+        & (
+            Q(current_severity__in=[row["severity"] for row in failed if row["severity"]])
+            | Q(current_priority__in=[row["priority"] for row in failed if row["priority"] is not None])
+        )
+    )
