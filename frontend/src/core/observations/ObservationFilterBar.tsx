@@ -107,6 +107,12 @@ export function observationFilters(product?: Product, review = false, product_fi
             input: <NullableBooleanInput source="fix_available" label="Fix available" />,
         });
     }
+    if (product?.security_gate_passed != null) {
+        secondary.push({
+            column: TRIAGE,
+            input: <NullableBooleanInput source="fails_security_gate" label="Fails security gate" />,
+        });
+    }
 
     return { primary, secondary };
 }
