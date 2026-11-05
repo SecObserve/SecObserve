@@ -1,6 +1,6 @@
 # Security gates
 
-A security gate shows, that a product does not exceed a defined amount of vulnerabilities per severity. It can be `Passed` if the product is under or at the defined thresholds or `Failed` if the product has more observations for at least one severity.
+A security gate shows, that a product does not exceed a defined amount of vulnerabilities per severity and, if configured, per priority. It can be `Passed` if the product is under or at the defined thresholds or `Failed` if the product has more observations for at least one severity or priority.
 
 ![Security Gate Show](../assets/images/screenshot_security_gate_1.png)
 
@@ -28,7 +28,9 @@ A product can decide how to deal with security gates by setting the `Security ga
 Next to the thresholds per severity, the settings, a product group and a product have a list of thresholds per priority.
 Each entry is a pair of a priority (1 to 99, unique in the list) and a threshold (0 to 999999).
 The list is inherited like the severity thresholds: product group, then product, then the instance-wide settings.
-When a product switches to `Product specific`, the list is copied from the settings, when it switches away the list is cleared.
+In the UI, the list starts empty when a product switches to `Product specific` and is entered per product.
+When an API client sets `security_gate_active` to `true` without sending the list, the list is copied from the settings.
+When a product switches away, the list is cleared.
 
 The security gate counts the active observations (`Open`, `In review`, `Affected`) of the default branch per severity and per priority.
 An observation counts only for the entry whose priority equals its current priority, there is no cumulative counting.
@@ -75,7 +77,8 @@ The rules are applied again after the EPSS and exploit data have been imported, 
 The security gate in the product header has a `Why?` dialog.
 It shows a row per severity and per configured priority with the count, the threshold and whether it passed (API: `GET /api/products/{id}/security_gate_counts/`).
 The button `Show failing observations` opens the list of observations with the filter `Fails security gate`.
-In the API this is the parameter `fails_security_gate=true`, it requires the parameter `product=<id>` and is ignored without it.
+In the API this is the parameter `fails_security_gate=true`, and `fails_security_gate=false` returns the other observations.
+The parameter requires the parameter `product=<id>` and is ignored without it.
 
 ## Branches / versions
 
