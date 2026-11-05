@@ -1,19 +1,24 @@
 import unittest
+from decimal import Decimal
 from unittest.mock import MagicMock, call, patch
 
 from django.db.models import Q
 
-from application.core.models import Observation, Product
+from application.core.models import Branch, Observation, Product
+from application.core.types import Status
 from application.import_observations.models import Parser
 from application.rules.models import Rule
 from application.rules.services.evaluator import (
     EvaluationResult,
     _get_affected_observation_pks,
+    apply_rules_to_enriched_observations,
     evaluate_general_rule,
     general_rule_evaluation_requested,
     request_general_rule_evaluation,
 )
-from application.rules.types import Rule_Type
+from application.rules.types import Rule_Status, Rule_Type
+from unittests.base_test_case import BaseTestCase
+from unittests.core.observation_fixtures import ObservationFixtureMixin
 
 
 class TestGetAffectedObservationPks(unittest.TestCase):
@@ -163,6 +168,60 @@ class TestEvaluateGeneralRule(unittest.TestCase):
 
         self.assertEqual(result.observations_processed, 3)
         self.mock_objects.filter.assert_has_calls([call(pk__in=(1, 2)), call(pk__in=(3,))])
+
+
+class TestApplyRulesToEnrichedObservations(ObservationFixtureMixin, BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.product_1.apply_general_rules = True
+        self.product_1.save()
+        # Observation logs written without a request belong to the first superuser
+        self.user_admin.save()
+        self.rule = Rule.objects.create(
+            name="epss",
+            product=None,
+            type=Rule_Type.RULE_TYPE_REGO,
+            enabled=True,
+            approval_status=Rule_Status.RULE_STATUS_AUTO_APPROVED,
+            rego_module="package rule\n\npriority := 1 if input.epss_score >= 10\n",
+        )
+
+    def _hot_observation(self, title: str, **kwargs) -> Observation:
+        observation = self._observation(title, **kwargs)
+        observation.epss_score = Decimal("12.5")
+        observation.save()
+        return observation
+
+    def test_apply_rules_to_enriched_observations_sets_priority(self):
+        observation = self._hot_observation("hot")
+
+        result = apply_rules_to_enriched_observations([observation.pk])
+
+        observation.refresh_from_db()
+        self.assertEqual((result.observations_processed, result.observations_changed), (1, 1))
+        self.assertEqual(observation.current_priority, 1)
+
+    def test_apply_rules_to_enriched_observations_skips_inactive_and_products_without_rego(self):
+        product_2 = Product.objects.create(name="product_2", apply_general_rules=False)
+        branch_2 = Branch.objects.create(product=product_2, name="main")
+        resolved = self._hot_observation("resolved", status=Status.STATUS_RESOLVED)
+        without_rego = self._hot_observation("without rego", product=product_2, branch=branch_2)
+
+        result = apply_rules_to_enriched_observations([resolved.pk, without_rego.pk])
+
+        self.assertEqual(result, EvaluationResult(observations_processed=0, observations_changed=0))
+
+    @patch("application.rules.services.evaluator.Rule_Engine")
+    def test_apply_rules_to_enriched_observations_without_rego_rule_does_nothing(self, mock_rule_engine):
+        observation = self._hot_observation("hot")
+        self.rule.delete()
+
+        # Only the query for the Rego rules, no observations
+        with self.assertNumQueries(1):
+            result = apply_rules_to_enriched_observations([observation.pk])
+
+        self.assertEqual(result, EvaluationResult(observations_processed=0, observations_changed=0))
+        mock_rule_engine.assert_not_called()
 
 
 class TestRequestGeneralRuleEvaluation(unittest.TestCase):

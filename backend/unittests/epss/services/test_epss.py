@@ -47,6 +47,25 @@ class TestEPSS(BaseTestCase):
         mock_filter.assert_called_with(vulnerability_id__startswith="CVE-")
         mock_bulk_update.assert_has_calls([call([observation_1], ["epss_score", "epss_percentile"])])
 
+    @patch("application.core.models.Observation.objects.filter")
+    @patch("application.core.models.Observation.objects.bulk_update")
+    def test_epss_apply_observations_returns_changed_pks(self, mock_bulk_update, mock_filter):
+        observation_1 = Observation.objects.get(id=1)
+        observation_1.vulnerability_id = "CVE-1"
+        observation_1.save()
+        observation_2 = Observation.objects.get(id=2)
+        observation_2.vulnerability_id = "CVE-2"
+        observation_2.save()
+
+        EPSS_Score.objects.create(cve="CVE-1", epss_score=0.00383, epss_percentile=0.72606)
+
+        mock_filter.return_value = Observation.objects.all()
+
+        changed = epss_apply_observations()
+
+        mock_bulk_update.assert_has_calls([call([observation_1], ["epss_score", "epss_percentile"])])
+        self.assertEqual([1], changed)
+
     @patch("application.epss.models.EPSS_Score.objects.filter")
     def test_apply_epss_not_cve(self, mock_epss_score):
         apply_epss(Observation.objects.all()[0])
@@ -139,9 +158,9 @@ class TestBatchedCveObservations(BaseTestCase):
         # Observations, their scores, the update and the empty next batch.
         # A field missing in EPSS_FIELDS would add one query per observation.
         with self.assertNumQueries(4):
-            message = epss_apply_observations()
+            changed = epss_apply_observations()
 
-        self.assertEqual("Applied EPSS scores to 3 observations.", message)
+        self.assertEqual(sorted(observation.pk for observation in observations), changed)
         for observation in observations:
             observation.refresh_from_db()
             self.assertEqual(Decimal("50.000"), observation.epss_score)

@@ -92,17 +92,17 @@ def import_epss() -> str:
     return f"Imported {num_epss_scores} EPSS scores."
 
 
-def epss_apply_observations() -> str:
-    num_observations = 0
+def epss_apply_observations() -> list[int]:
+    changed: list[int] = []
 
     for observations in batched_cve_observations(EPSS_FIELDS):
         epss_scores = get_epss_scores_by_cves(observation.vulnerability_id for observation in observations)
         updates = [observation for observation in observations if apply_epss(observation, epss_scores)]
 
         Observation.objects.bulk_update(updates, ["epss_score", "epss_percentile"])
-        num_observations += len(updates)
+        changed += [observation.pk for observation in updates]
 
-    return f"Applied EPSS scores to {num_observations} observations."
+    return changed
 
 
 def apply_epss(observation: Observation, epss_scores: Optional[dict[str, EPSS_Score]] = None) -> bool:
