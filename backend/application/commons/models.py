@@ -6,6 +6,7 @@ from django.db.models import (
     BooleanField,
     CharField,
     IntegerField,
+    JSONField,
     Model,
     TextField,
 )
@@ -48,6 +49,12 @@ class Settings(Model, DirtyFieldsMixin):
         default=99999,
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Number of unknown observations that must not be exceeded",
+    )
+    security_gate_priority_thresholds = JSONField(
+        default=list,
+        blank=True,
+        help_text="Thresholds per priority as a list of {priority, threshold}, "
+        "applied in addition to the thresholds per severity",
     )
 
     jwt_validity_duration_user = IntegerField(
