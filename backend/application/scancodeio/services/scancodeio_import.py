@@ -12,6 +12,7 @@ from application.background_tasks.services.task_base import delete_older_task_en
 from application.background_tasks.types import Status
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
+from application.core.models import Product
 from application.import_observations.models import Vulnerability_Check
 from application.import_observations.services.import_observations import (
     process_license_components,
@@ -107,12 +108,16 @@ def import_scancodeio_results(scancodeio_project: ScanCodeIO_Project) -> Tuple[i
     if not Settings.load().feature_license_management:
         return 0, 0, 0
 
-    # The request can take a while, so it is done before the transaction is started
+    # The request can take a while, so it is done before the product is locked
     results = get_scancodeio_results(scancodeio_project)
     license_components, scanner = get_license_components(results)
-    product = scancodeio_project.product
 
     with transaction.atomic():
+        # The webhook and a manual import can run at the same time. Without the lock, both could create the
+        # vulnerability check and the components, because the unique constraint doesn't apply to the empty
+        # branch and service. It also gets the current product, changes made during the request are kept.
+        product = Product.objects.select_for_update().get(pk=scancodeio_project.product_id)
+
         apply_osv_linux_distribution(product, results)
 
         vulnerability_check, _ = Vulnerability_Check.objects.update_or_create(

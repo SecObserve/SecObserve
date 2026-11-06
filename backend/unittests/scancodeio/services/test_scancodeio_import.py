@@ -131,6 +131,51 @@ class TestImportScanCodeIOResults(BaseTestCase):
             Vulnerability_Check.objects.filter(product=self.product, filename=SCANCODEIO_FILENAME).count(), 1
         )
 
+    def test_product_change_during_request_is_kept(self):
+        def get_results(_):
+            Product.objects.filter(pk=self.product.pk).update(description="changed during the request")
+            return _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+
+        self.mock_get_results.side_effect = get_results
+
+        import_scancodeio_results(self.scancodeio_project)
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.description, "changed during the request")
+        self.assertEqual(self.product.osv_linux_distribution, OSVLinuxDistribution.DISTRIBUTION_ALPINE)
+
+    @patch("application.scancodeio.services.scancodeio_import.process_license_components")
+    @patch("application.scancodeio.services.scancodeio_import.Vulnerability_Check.objects")
+    @patch("application.scancodeio.services.scancodeio_import.apply_osv_linux_distribution")
+    @patch("application.scancodeio.services.scancodeio_import.Product.objects")
+    def test_locks_product_before_changing_anything(self, mock_products, mock_apply, mock_checks, mock_process):
+        # SQLite ignores select_for_update(), so concurrent imports cannot be exercised here;
+        # assert the lock is requested after the request to ScanCode.io and before any change instead.
+        self.mock_get_results.return_value = _results([])
+        mock_lock = mock_products.select_for_update.return_value.get
+        vulnerability_check = MagicMock()
+        mock_checks.update_or_create.return_value = (vulnerability_check, False)
+        mock_process.return_value = (1, 2, 3)
+
+        calls = MagicMock()
+        calls.attach_mock(self.mock_get_results, "request")
+        calls.attach_mock(mock_lock, "lock")
+        calls.attach_mock(mock_apply, "apply")
+        calls.attach_mock(mock_checks.update_or_create, "update_or_create")
+        calls.attach_mock(mock_process, "process")
+
+        numbers = import_scancodeio_results(self.scancodeio_project)
+
+        self.assertEqual(numbers, (1, 2, 3))
+        self.assertEqual(
+            [call[0] for call in calls.mock_calls],
+            ["request", "lock", "apply", "update_or_create", "process"],
+        )
+        mock_products.select_for_update.assert_called_once_with()
+        mock_lock.assert_called_once_with(pk=self.product.pk)
+        mock_apply.assert_called_once_with(mock_lock.return_value, ANY)
+        self.assertEqual(mock_checks.update_or_create.call_args.kwargs["product"], mock_lock.return_value)
+
     def test_import_wolfi(self):
         results = _results([_package("busybox", "1.36.0-r0", "GPL-2.0-only")])
         results["headers"][0]["extra_data"]["images"] = [{"distro": {"identifier": "wolfi", "version_id": "20230201"}}]
