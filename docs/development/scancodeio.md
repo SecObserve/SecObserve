@@ -31,6 +31,8 @@ When a pipeline has finished successfully, SecObserve reads the packages and dep
 
 Vulnerabilities are not imported from ScanCode.io, they are found by the OSV and VulnerableCode scans of the license components.
 
+The results can also be imported manually with `Re-import results` in the ScanCode.io menu of the product, e.g. after additional pipelines have been run in ScanCode.io. This import runs in the foreground and shows the numbers of new, updated and deleted license components when it has finished. Components that are no longer part of the results in ScanCode.io are deleted. If a pipeline is still running, its partial results are imported, and the import after its successful completion replaces them.
+
 
 ## Funding
 

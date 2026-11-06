@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import ANY, MagicMock, patch
 
 from django.core.management import call_command
+from rest_framework.exceptions import ValidationError
 
 from application.background_tasks.types import Status
 from application.commons.models import Settings
@@ -16,6 +17,7 @@ from application.scancodeio.services.scancodeio_import import (
     _process_scancodeio_import,
     import_scancodeio_results,
     process_scancodeio_webhook,
+    reimport_scancodeio_results,
 )
 from unittests.base_test_case import BaseTestCase
 
@@ -188,6 +190,36 @@ class TestProcessScanCodeIOWebhook(unittest.TestCase):
 
         self.assertIn("pipeline None finished with status None", logs.output[0])
         mock_task.assert_not_called()
+
+
+class TestReimportScanCodeIOResults(unittest.TestCase):
+    def setUp(self):
+        self.scancodeio_project = ScanCodeIO_Project(pk=5, product=Product(name="product"), project_name="project_name")
+
+    @patch("application.scancodeio.services.scancodeio_import.import_scancodeio_results")
+    @patch("application.scancodeio.services.scancodeio_import.Settings.load")
+    def test_import(self, mock_settings_load, mock_import):
+        mock_settings_load.return_value = Settings(feature_license_management=True)
+        mock_import.return_value = (3, 2, 1)
+
+        numbers = reimport_scancodeio_results(self.scancodeio_project)
+
+        self.assertEqual(numbers, (3, 2, 1))
+        mock_import.assert_called_once_with(self.scancodeio_project)
+
+    @patch("application.scancodeio.services.scancodeio_import.import_scancodeio_results")
+    @patch("application.scancodeio.services.scancodeio_import.Settings.load")
+    def test_license_management_disabled(self, mock_settings_load, mock_import):
+        mock_settings_load.return_value = Settings(feature_license_management=False)
+
+        with self.assertRaises(ValidationError) as context:
+            reimport_scancodeio_results(self.scancodeio_project)
+
+        self.assertEqual(
+            context.exception.detail,
+            ["ScanCode.io results cannot be imported, because license management is not enabled"],
+        )
+        mock_import.assert_not_called()
 
 
 class TestProcessScanCodeIOImport(unittest.TestCase):

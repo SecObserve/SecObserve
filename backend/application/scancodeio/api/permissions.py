@@ -16,4 +16,5 @@ class UserHasScanCodeIOProjectPermission(BasePermission):
             get_permission=Permissions.Product_View,
             put_permission=None,
             delete_permission=Permissions.Product_Edit,
+            post_permission=Permissions.Product_Edit,
         )

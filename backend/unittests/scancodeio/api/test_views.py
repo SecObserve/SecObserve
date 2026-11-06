@@ -2,13 +2,16 @@ from unittest.mock import MagicMock, patch
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APIClient
 
 from application.access_control.models import User
 from application.commons.models import Settings
 from application.core.models import Product
+from application.licenses.models import License_Component
 from application.scancodeio.models import ScanCodeIO_Project
 from application.scancodeio.services.scancodeio import hash_webhook_token
+from application.scancodeio.services.scancodeio_import import SCANCODEIO_FILENAME
 from application.scancodeio.types import CreateProjectParameters
 from unittests.base_test_case import BaseTestCase
 
@@ -354,6 +357,100 @@ class TestScanCodeIOProjectDeleteView(ScanCodeIOViewTestCase):
 
         self.assertEqual(response.status_code, 204)
         self.mock_delete.assert_called_once_with(ScanCodeIO_Project.objects.get(pk=1))
+
+
+class TestScanCodeIOProjectImportResultsView(ScanCodeIOViewTestCase):
+    def setUp(self):
+        super().setUp()
+        # The import itself runs in the request, only the call to ScanCode.io is mocked
+        self.mock_get_results = self._start_patch(
+            "application.scancodeio.services.scancodeio_import.get_scancodeio_results"
+        )
+        self._create_projects()
+
+    def _post(self, username: str, project_id: int):
+        return self._api_client(username).post(f"/api/scancodeio_projects/{project_id}/import_results/")
+
+    def test_no_permission(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+
+        response = self._post("db_internal_read", 1)
+
+        self.assertEqual(response.status_code, 403)
+        self.mock_get_results.assert_not_called()
+
+    def test_not_authorized(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+
+        response = self._post("db_internal_write", 2)
+
+        self.assertEqual(response.status_code, 404)
+        self.mock_get_results.assert_not_called()
+
+    def test_feature_disabled(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=False)
+
+        response = self._post("db_internal_write", 1)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(str(response.data), "{'message': 'ScanCode.io integration is not enabled'}")
+        self.mock_get_results.assert_not_called()
+
+    def test_license_management_disabled(self):
+        self.mock_settings_load.return_value = Settings(
+            feature_scancodeio_integration=True, feature_license_management=False
+        )
+
+        response = self._post("db_internal_write", 1)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data,
+            {"message": "ScanCode.io results cannot be imported, because license management is not enabled"},
+        )
+        self.mock_get_results.assert_not_called()
+
+    def test_scancodeio_error(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+        self.mock_get_results.side_effect = ValidationError("ScanCode.io is not reachable")
+
+        response = self._post("db_internal_write", 1)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {"message": "ScanCode.io is not reachable"})
+
+    def test_import_results(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+        self.mock_get_results.return_value = {
+            "packages": [
+                {"name": "busybox", "version": "1.34.1-r5", "purl": "pkg:alpine/busybox@1.34.1-r5"},
+                {"name": "alpine-keys", "version": "2.4-r1", "purl": "pkg:alpine/alpine-keys@2.4-r1"},
+            ],
+            "dependencies": [],
+        }
+
+        response = self._post("db_internal_write", 1)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {"license_components_new": 2, "license_components_updated": 0, "license_components_deleted": 0},
+        )
+        self.mock_get_results.assert_called_once_with(ScanCodeIO_Project.objects.get(pk=1))
+        self.assertEqual(
+            License_Component.objects.filter(product_id=1, upload_filename=SCANCODEIO_FILENAME).count(),
+            2,
+        )
+
+        self.mock_get_results.return_value["packages"].pop()
+
+        response = self._post("db_internal_write", 1)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {"license_components_new": 0, "license_components_updated": 1, "license_components_deleted": 1},
+        )
 
 
 class TestScanCodeIOWebhookView(ScanCodeIOViewTestCase):

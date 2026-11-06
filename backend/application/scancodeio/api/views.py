@@ -33,6 +33,7 @@ from application.scancodeio.api.filters import ScanCodeIOProjectFilter
 from application.scancodeio.api.permissions import UserHasScanCodeIOProjectPermission
 from application.scancodeio.api.serializers import (
     CreateScanCodeIOProjectSerializer,
+    ScanCodeIOImportResultsResponseSerializer,
     ScanCodeIOPipelineSerializer,
     ScanCodeIOProjectDetailsSerializer,
     ScanCodeIOProjectSerializer,
@@ -51,6 +52,7 @@ from application.scancodeio.services.scancodeio import (
 )
 from application.scancodeio.services.scancodeio_import import (
     process_scancodeio_webhook,
+    reimport_scancodeio_results,
 )
 from application.scancodeio.types import CreateProjectParameters
 
@@ -152,6 +154,28 @@ class ScanCodeIOProjectViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixi
 
         details = get_scancodeio_project_details(scancodeio_project)
         return Response(ScanCodeIOProjectDetailsSerializer(details).data)
+
+    @extend_schema(
+        methods=["POST"],
+        request=None,
+        responses={HTTP_200_OK: ScanCodeIOImportResultsResponseSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def import_results(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        _check_feature_enabled()
+
+        scancodeio_project = self.get_object()
+
+        new, updated, deleted = reimport_scancodeio_results(scancodeio_project)
+        return Response(
+            ScanCodeIOImportResultsResponseSerializer(
+                {
+                    "license_components_new": new,
+                    "license_components_updated": updated,
+                    "license_components_deleted": deleted,
+                }
+            ).data
+        )
 
 
 class ScanCodeIOPipelinesView(APIView):

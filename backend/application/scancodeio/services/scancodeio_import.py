@@ -5,6 +5,7 @@ from typing import Any, Tuple
 from django.db import transaction
 from django.utils import timezone
 from huey.contrib.djhuey import on_commit_task
+from rest_framework.exceptions import ValidationError
 
 from application.background_tasks.models import Periodic_Task
 from application.background_tasks.services.task_base import delete_older_task_entries
@@ -91,6 +92,14 @@ def _process_scancodeio_import(scancodeio_project_id: int) -> None:
 
         handle_task_exception(e, product=scancodeio_project.product if scancodeio_project else None)
         raise
+
+
+def reimport_scancodeio_results(scancodeio_project: ScanCodeIO_Project) -> Tuple[int, int, int]:
+    # The import would silently do nothing, but the user expects to get its results
+    if not Settings.load().feature_license_management:
+        raise ValidationError("ScanCode.io results cannot be imported, because license management is not enabled")
+
+    return import_scancodeio_results(scancodeio_project)
 
 
 def import_scancodeio_results(scancodeio_project: ScanCodeIO_Project) -> Tuple[int, int, int]:

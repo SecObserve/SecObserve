@@ -63,6 +63,12 @@ class ScanCodeIOProjectSerializer(ModelSerializer):
         fields = ["id", "product", "project_uuid", "project_name", "created"]
 
 
+class ScanCodeIOImportResultsResponseSerializer(Serializer):
+    license_components_new = IntegerField()
+    license_components_updated = IntegerField()
+    license_components_deleted = IntegerField()
+
+
 class ScanCodeIOPipelineSerializer(Serializer):
     name = CharField()
     summary = CharField()
