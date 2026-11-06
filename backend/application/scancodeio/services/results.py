@@ -8,6 +8,9 @@ from application.licenses.models import License_Component
 SCANCODEIO_ALPINE_PURL_PREFIX = "pkg:alpine/"
 ALPINE_PURL_PREFIX = "pkg:apk/alpine/"
 
+# The namespace of these package types is the Linux distribution, it is not part of the package's name
+OPERATING_SYSTEM_PACKAGE_TYPES = frozenset({"alpine", "alpm", "apk", "deb", "rpm"})
+
 
 def get_license_components(results: dict[str, Any]) -> tuple[list[License_Component], str]:
     packages: dict[str, dict[str, Any]] = {}
@@ -20,7 +23,7 @@ def get_license_components(results: dict[str, Any]) -> tuple[list[License_Compon
     license_components = []
     for package_uid, package in packages.items():
         license_component = License_Component(
-            component_name=package["name"],
+            component_name=_get_component_name(package),
             component_version=package.get("version") or "",
             component_purl=_get_component_purl(package.get("purl") or ""),
             component_dependencies=_get_component_dependencies(package_uid, packages, dependencies),
@@ -123,6 +126,18 @@ def _purl_without_qualifiers(purl: str) -> str:
     return purl.split("#", 1)[0].split("?", 1)[0]
 
 
+def _get_component_name(package: dict[str, Any]) -> str:
+    # ScanCode.io stores the namespace separately, e.g. the scope of an npm package or the group of a Maven
+    # artifact. Without it, different packages like @aws-sdk/types and @smithy/types would have the same name.
+    namespace = package.get("namespace")
+    package_type = package.get("type")
+    if not namespace or package_type in OPERATING_SYSTEM_PACKAGE_TYPES:
+        return package["name"]
+
+    separator = ":" if package_type == "maven" else "/"
+    return f"{namespace}{separator}{package['name']}"
+
+
 def _get_component_purl(purl: str) -> str:
     # ScanCode.io uses the type alpine, which doesn't exist in the purl specification. The correct
     # type is apk with the namespace alpine, which is also what SBOM generators use.
@@ -158,9 +173,10 @@ def _get_dependencies_recursive(
 
 def _translate_package_uid(package_uid: str, packages: dict[str, dict[str, Any]]) -> str:
     package = packages[package_uid]
+    name = _get_component_name(package)
     if package.get("version"):
-        return f"{package['name']}:{package['version']}"
-    return package["name"]
+        return f"{name}:{package['version']}"
+    return name
 
 
 def _get_osv_linux_distribution(distro: dict[str, Any]) -> tuple[str, str]:

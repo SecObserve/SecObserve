@@ -113,6 +113,53 @@ class TestGetLicenseComponents(BaseTestCase):
         self.assertEqual(license_components[2].component_name, "library")
         self.assertEqual(license_components[2].unsaved_declared_licenses, ["mit"])
 
+    def test_component_names_with_namespace(self):
+        for package_type, namespace, name, expected_name in [
+            ("npm", "@babel", "core", "@babel/core"),
+            ("golang", "github.com/pkg", "errors", "github.com/pkg/errors"),
+            ("composer", "symfony", "console", "symfony/console"),
+            ("maven", "org.apache.commons", "commons-lang3", "org.apache.commons:commons-lang3"),
+            # The namespace of operating system packages is the Linux distribution
+            ("deb", "debian", "libc6", "libc6"),
+            ("rpm", "fedora", "glibc", "glibc"),
+            ("alpm", "arch", "glibc", "glibc"),
+            ("apk", "alpine", "musl", "musl"),
+            ("alpine", "alpine", "musl", "musl"),
+            ("npm", "", "app", "app"),
+            ("npm", None, "app", "app"),
+        ]:
+            with self.subTest(package_type=package_type, namespace=namespace):
+                package = {"type": package_type, "namespace": namespace, "name": name, "version": "1.0.0"}
+
+                license_components, _ = get_license_components(_results(packages=[package]))
+
+                self.assertEqual(license_components[0].component_name, expected_name)
+                self.assertEqual(license_components[0].component_version, "1.0.0")
+
+    def test_dependencies_with_namespace(self):
+        scoped_package = {
+            "purl": "pkg:npm/%40babel/core@7.0.0",
+            "type": "npm",
+            "namespace": "@babel",
+            "name": "core",
+            "version": "7.0.0",
+            "package_uid": "pkg:npm/%40babel/core@7.0.0?uuid=6",
+        }
+        license_components, _ = get_license_components(
+            _results(
+                packages=[APP_PACKAGE, scoped_package],
+                dependencies=[
+                    {
+                        "purl": "pkg:npm/%40babel/core@7.0.0",
+                        "for_package_uid": APP_PACKAGE["package_uid"],
+                        "resolved_to_package_uid": scoped_package["package_uid"],
+                    },
+                ],
+            )
+        )
+
+        self.assertEqual(license_components[1].component_dependencies, "app:1.0.0 --> @babel/core:7.0.0")
+
     def test_dependencies(self):
         license_components, _ = get_license_components(
             _results(

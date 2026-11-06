@@ -131,6 +131,33 @@ class TestImportScanCodeIOResults(BaseTestCase):
             Vulnerability_Check.objects.filter(product=self.product, filename=SCANCODEIO_FILENAME).count(), 1
         )
 
+    def test_import_same_name_in_different_namespaces(self):
+        self.mock_get_results.return_value = _results(
+            [
+                {
+                    "purl": f"pkg:npm/{namespace.replace('@', '%40')}/types@3.0.0",
+                    "type": "npm",
+                    "namespace": namespace,
+                    "name": "types",
+                    "version": "3.0.0",
+                    "package_uid": f"pkg:npm/{namespace.replace('@', '%40')}/types@3.0.0?uuid=1",
+                }
+                for namespace in ["@aws-sdk", "@smithy"]
+            ]
+        )
+
+        numbers = import_scancodeio_results(self.scancodeio_project)
+
+        self.assertEqual(numbers, (2, 0, 0))
+        self.assertEqual(
+            list(
+                License_Component.objects.filter(product=self.product, upload_filename=SCANCODEIO_FILENAME)
+                .order_by("component_name")
+                .values_list("component_name_version", flat=True)
+            ),
+            ["@aws-sdk/types:3.0.0", "@smithy/types:3.0.0"],
+        )
+
     def test_license_management_disabled(self):
         settings = Settings.load()
         settings.feature_license_management = False
