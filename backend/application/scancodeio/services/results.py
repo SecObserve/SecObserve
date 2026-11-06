@@ -6,7 +6,11 @@ from application.core.types import OSVLinuxDistribution
 from application.licenses.models import License_Component
 
 SCANCODEIO_ALPINE_PURL_PREFIX = "pkg:alpine/"
-ALPINE_PURL_PREFIX = "pkg:apk/alpine/"
+DEFAULT_APK_PURL_NAMESPACE = "alpine"
+APK_PURL_NAMESPACES = {
+    OSVLinuxDistribution.DISTRIBUTION_CHAINGUARD: "chainguard",
+    OSVLinuxDistribution.DISTRIBUTION_WOLFI: "wolfi",
+}
 
 # The namespace of these package types is the Linux distribution, it is not part of the package's name
 OPERATING_SYSTEM_PACKAGE_TYPES = frozenset({"alpine", "alpm", "apk", "deb", "rpm"})
@@ -19,13 +23,14 @@ def get_license_components(results: dict[str, Any]) -> tuple[list[License_Compon
             packages[package.get("package_uid") or package.get("purl") or package["name"]] = package
 
     dependencies = _get_dependencies(results, packages)
+    apk_purl_namespace = _get_apk_purl_namespace(results)
 
     license_components = []
     for package_uid, package in packages.items():
         license_component = License_Component(
             component_name=_get_component_name(package),
             component_version=package.get("version") or "",
-            component_purl=_get_component_purl(package.get("purl") or ""),
+            component_purl=_get_component_purl(package.get("purl") or "", apk_purl_namespace),
             component_dependencies=_get_component_dependencies(package_uid, packages, dependencies),
         )
 
@@ -45,13 +50,7 @@ def apply_osv_linux_distribution(product: Product, results: dict[str, Any]) -> N
     OSV scan to find vulnerabilities of the operating system packages. The purls of ScanCode.io
     don't contain a distro qualifier, so the OSV scan can't get them from the components.
     """
-    distributions = {_get_osv_linux_distribution(image.get("distro") or {}) for image in _get_images(results)}
-
-    # With several images of different distributions, none of them is valid for the whole product
-    if len(distributions) != 1:
-        return
-
-    osv_linux_distribution, osv_linux_release = distributions.pop()
+    osv_linux_distribution, osv_linux_release = _get_images_distribution(results)
     if not osv_linux_distribution:
         return
 
@@ -81,6 +80,21 @@ def _get_images(results: dict[str, Any]) -> list[dict[str, Any]]:
     if not isinstance(images, list):
         return []
     return [image for image in images if isinstance(image, dict)]
+
+
+def _get_images_distribution(results: dict[str, Any]) -> tuple[str, str]:
+    distributions = {_get_osv_linux_distribution(image.get("distro") or {}) for image in _get_images(results)}
+
+    # With several images of different distributions, none of them is valid for the whole product
+    if len(distributions) != 1:
+        return "", ""
+
+    return distributions.pop()
+
+
+def _get_apk_purl_namespace(results: dict[str, Any]) -> str:
+    osv_linux_distribution, _ = _get_images_distribution(results)
+    return APK_PURL_NAMESPACES.get(osv_linux_distribution, DEFAULT_APK_PURL_NAMESPACE)
 
 
 def _get_dependencies(results: dict[str, Any], packages: dict[str, dict[str, Any]]) -> dict[str, list[str]]:
@@ -138,11 +152,12 @@ def _get_component_name(package: dict[str, Any]) -> str:
     return f"{namespace}{separator}{package['name']}"
 
 
-def _get_component_purl(purl: str) -> str:
-    # ScanCode.io uses the type alpine, which doesn't exist in the purl specification. The correct
-    # type is apk with the namespace alpine, which is also what SBOM generators use.
+def _get_component_purl(purl: str, apk_purl_namespace: str) -> str:
+    # ScanCode.io uses the type alpine for the packages of all apk based distributions, but that type doesn't
+    # exist in the purl specification. The correct type is apk with the distribution as namespace, which is
+    # also what SBOM generators use. OSV only finds the vulnerabilities of a package with the right namespace.
     if purl.startswith(SCANCODEIO_ALPINE_PURL_PREFIX):
-        return ALPINE_PURL_PREFIX + purl.removeprefix(SCANCODEIO_ALPINE_PURL_PREFIX)
+        return f"pkg:apk/{apk_purl_namespace}/{purl.removeprefix(SCANCODEIO_ALPINE_PURL_PREFIX)}"
     return purl
 
 

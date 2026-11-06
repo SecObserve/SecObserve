@@ -113,6 +113,29 @@ class TestGetLicenseComponents(BaseTestCase):
         self.assertEqual(license_components[2].component_name, "library")
         self.assertEqual(license_components[2].unsaved_declared_licenses, ["mit"])
 
+    def test_apk_purl_namespace(self):
+        for images, expected_purl in [
+            ([_image("alpine", "3.15.4")], "pkg:apk/alpine/busybox@1.34.1-r5?arch=x86_64"),
+            ([_image("wolfi", "20230201")], "pkg:apk/wolfi/busybox@1.34.1-r5?arch=x86_64"),
+            ([_image("chainguard", "20230214")], "pkg:apk/chainguard/busybox@1.34.1-r5?arch=x86_64"),
+            ([_image("wolfi", "20230201"), _image("wolfi", "20230201")], "pkg:apk/wolfi/busybox@1.34.1-r5?arch=x86_64"),
+            # Without a single distribution of the images, the packages are assumed to be from Alpine
+            ([], "pkg:apk/alpine/busybox@1.34.1-r5?arch=x86_64"),
+            ([_image("unknown", "1.0")], "pkg:apk/alpine/busybox@1.34.1-r5?arch=x86_64"),
+            ([_image("wolfi", "20230201"), _image("alpine", "3.15.4")], "pkg:apk/alpine/busybox@1.34.1-r5?arch=x86_64"),
+        ]:
+            with self.subTest(images=images):
+                license_components, _ = get_license_components(_results(packages=[ALPINE_PACKAGE], images=images))
+
+                self.assertEqual(license_components[0].component_purl, expected_purl)
+
+    def test_apk_purl_namespace_other_purl_types_unchanged(self):
+        license_components, _ = get_license_components(
+            _results(packages=[APP_PACKAGE], images=[_image("wolfi", "20230201")])
+        )
+
+        self.assertEqual(license_components[0].component_purl, "pkg:npm/app@1.0.0")
+
     def test_component_names_with_namespace(self):
         for package_type, namespace, name, expected_name in [
             ("npm", "@babel", "core", "@babel/core"),

@@ -131,6 +131,21 @@ class TestImportScanCodeIOResults(BaseTestCase):
             Vulnerability_Check.objects.filter(product=self.product, filename=SCANCODEIO_FILENAME).count(), 1
         )
 
+    def test_import_wolfi(self):
+        results = _results([_package("busybox", "1.36.0-r0", "GPL-2.0-only")])
+        results["headers"][0]["extra_data"]["images"] = [{"distro": {"identifier": "wolfi", "version_id": "20230201"}}]
+        self.mock_get_results.return_value = results
+
+        import_scancodeio_results(self.scancodeio_project)
+
+        license_component = License_Component.objects.get(product=self.product, upload_filename=SCANCODEIO_FILENAME)
+        self.assertEqual(license_component.component_purl, "pkg:apk/wolfi/busybox@1.36.0-r0?arch=x86_64")
+        self.assertEqual(license_component.component_purl_type, "apk")
+
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.osv_linux_distribution, OSVLinuxDistribution.DISTRIBUTION_WOLFI)
+        self.assertEqual(self.product.osv_linux_release, "")
+
     def test_import_same_name_in_different_namespaces(self):
         self.mock_get_results.return_value = _results(
             [
