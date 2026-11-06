@@ -18,6 +18,7 @@ from rest_framework.serializers import (
 )
 
 from application.scancodeio.models import ScanCodeIO_Project
+from application.scancodeio.types import SCANCODEIO_PROJECT_NAME_MAX_LENGTH
 
 # Same pattern as ScanCode.io uses to validate Docker references
 DOCKER_REFERENCE_PATTERN = re.compile(r"^docker://[a-zA-Z0-9_.:/@-]+$")
@@ -49,7 +50,7 @@ def validate_input_url(value: str) -> None:
 
 
 class CreateScanCodeIOProjectSerializer(Serializer):
-    name = CharField(max_length=255, required=False, allow_blank=True, default="")
+    name = CharField(max_length=SCANCODEIO_PROJECT_NAME_MAX_LENGTH, required=False, allow_blank=True, default="")
     branch = IntegerField(validators=[MinValueValidator(0)], required=False)
     service = IntegerField(validators=[MinValueValidator(0)], required=False)
     input_urls = ListField(

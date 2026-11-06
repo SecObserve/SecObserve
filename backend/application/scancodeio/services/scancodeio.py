@@ -15,7 +15,10 @@ from application.commons.services.log_message import format_log_message
 from application.core.models import Branch, Product, Service
 from application.scancodeio.models import ScanCodeIO_Project
 from application.scancodeio.queries.scancodeio_project import get_scancodeio_project
-from application.scancodeio.types import CreateProjectParameters
+from application.scancodeio.types import (
+    SCANCODEIO_PROJECT_NAME_MAX_LENGTH,
+    CreateProjectParameters,
+)
 
 logger = logging.getLogger("secobserve.scancodeio")
 
@@ -232,7 +235,7 @@ def _get_default_project_name(product: Product, branch: Optional[Branch], servic
         parts.append(branch.name)
     if service:
         parts.append(service.name)
-    return " - ".join(parts)[:255]
+    return " - ".join(parts)[:SCANCODEIO_PROJECT_NAME_MAX_LENGTH]
 
 
 def _project_exists_message(product: Product, branch: Optional[Branch], service: Optional[Service]) -> str:

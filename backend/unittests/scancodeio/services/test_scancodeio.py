@@ -281,7 +281,7 @@ class TestScanCodeIO(BaseTestCase):
 
         create_scancodeio_project(product, branch, None, self._parameters(name=""))
 
-        self.assertEqual(self.mock_request.call_args.kwargs["data"]["name"], "p" * 255)
+        self.assertEqual(self.mock_request.call_args.kwargs["data"]["name"], "p" * 100)
 
     def test_create_project_given_name_is_kept(self):
         self.mock_settings_load.return_value = self.settings

@@ -121,6 +121,17 @@ class TestCreateScanCodeIOProjectView(ScanCodeIOViewTestCase):
         )
         self.mock_create.assert_not_called()
 
+    def test_name_too_long(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+
+        response = self._post(
+            "db_internal_write", 1, {"name": "n" * 101, "input_urls": INPUT_URLS, "pipeline": "scan_codebase"}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {"message": "Name: Ensure this field has no more than 100 characters."})
+        self.mock_create.assert_not_called()
+
     def test_branch_and_service(self):
         self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
         branch = Branch.objects.get(pk=1)

@@ -24,7 +24,7 @@ ScanCode.io notifies SecObserve with a webhook when a pipeline has finished. The
 
 ## Managing projects
 
-ScanCode.io projects are managed in the `ScanCode.io` tab of a product. A product can have one project per combination of branch and service, both are optional. The name of a project must be unique in ScanCode.io. If no name is entered when creating a project, it is built from the names of the product, the branch and the service.
+ScanCode.io projects are managed in the `ScanCode.io` tab of a product. A product can have one project per combination of branch and service, both are optional. The name of a project must be unique in ScanCode.io and can have up to 100 characters. If no name is entered when creating a project, it is built from the names of the product, the branch and the service, and clipped to 100 characters. If the clipped name already exists, ScanCode.io rejects it and a name has to be entered.
 
 A project is deleted together with its branch or service, also when the branch is deleted by the housekeeping. It is then deleted in ScanCode.io as well. A service cannot be deleted as long as it has license components.
 

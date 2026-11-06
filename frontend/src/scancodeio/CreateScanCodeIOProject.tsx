@@ -19,7 +19,7 @@ import { BranchReferenceInput } from "../commons/custom_fields/BranchReferenceIn
 import { ServiceReferenceInput } from "../commons/custom_fields/ServiceReferenceInput";
 import { Spinner } from "../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../commons/custom_fields/ToolbarCancelSave";
-import { validate_255, validate_2048, validate_required } from "../commons/custom_validators";
+import { validate_100, validate_2048, validate_required } from "../commons/custom_validators";
 import { TextInputWide } from "../commons/layout/themes";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 
@@ -159,7 +159,7 @@ const CreateScanCodeIOProject = ({ product }: CreateScanCodeIOProjectProps) => {
                         <TextInputWide
                             source="name"
                             label="Project name"
-                            validate={validate_255}
+                            validate={validate_100}
                             helperText="Must be unique in ScanCode.io. If empty: product - branch - service"
                         />
                         <ArrayInput source="input_urls" defaultValue={[{ url: "" }]} label="Input URLs">
