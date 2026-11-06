@@ -22,6 +22,17 @@ The base URL of ScanCode.io in the SecObserve settings is `http://nginx`. The Se
 
 ScanCode.io notifies SecObserve with a webhook when a pipeline has finished. The SecObserve URL for ScanCode.io webhooks in the SecObserve settings is `http://backend:8000`. The webhook is registered when a project is created.
 
+## Importing the results
+
+When a pipeline has finished successfully, SecObserve reads the packages and dependencies of the project from ScanCode.io in the background task `Import ScanCode.io results`, if license management is enabled:
+
+* Every package becomes a license component of the product, with its name, version, purl, declared license and dependencies. The name includes the namespace (e.g. `@babel/core` or `org.apache.commons:commons-lang3`), except for operating system packages, whose namespace is the Linux distribution. ScanCode.io uses `pkg:alpine/...` for the purls of all apk packages. They are stored in their correct form with the distribution of the images as namespace (`pkg:apk/alpine/...`, `pkg:apk/wolfi/...` or `pkg:apk/chainguard/...`). If the images don't have one common distribution, `alpine` is used. The complete package data of ScanCode.io is stored as evidence, unchanged. The components belong to neither a branch nor a service, and their filename is `ScanCode.io`.
+* If all analyzed Docker images have the same Linux distribution, it is stored with its release in the OSV settings of the product. ScanCode.io's purls for operating system packages have no distro qualifier, so the OSV scan needs this setting to find their vulnerabilities.
+
+Vulnerabilities are not imported from ScanCode.io, they are found by the OSV and VulnerableCode scans of the license components.
+
+The results can also be imported manually with `Re-import results` in the ScanCode.io menu of the product, e.g. after additional pipelines have been run in ScanCode.io. This import runs in the foreground and shows the numbers of new, updated and deleted license components when it has finished. Components that are no longer part of the results in ScanCode.io are deleted. If a pipeline is still running, its partial results are imported, and the import after its successful completion replaces them.
+
 
 ## Funding
 

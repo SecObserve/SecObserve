@@ -5,8 +5,10 @@ import MenuItem from "@mui/material/MenuItem";
 import { Fragment, MouseEvent, useState } from "react";
 import { useGetList } from "react-admin";
 
+import { feature_license_management } from "../commons/functions";
 import CreateScanCodeIOProject from "./CreateScanCodeIOProject";
 import DeleteScanCodeIOProject from "./DeleteScanCodeIOProject";
+import ImportScanCodeIOResults from "./ImportScanCodeIOResults";
 import ShowScanCodeIOProject from "./ShowScanCodeIOProject";
 
 interface ScanCodeIOMenuProps {
@@ -21,6 +23,7 @@ const ScanCodeIOMenu = ({ product }: ScanCodeIOMenuProps) => {
     });
     const scancodeio_project = data?.[0];
     const hasProject = scancodeio_project !== undefined;
+    const canImportResults = hasProject && feature_license_management();
     const open = Boolean(anchorEl);
     const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
@@ -49,6 +52,9 @@ const ScanCodeIOMenu = ({ product }: ScanCodeIOMenuProps) => {
                 </MenuItem>
                 <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()} disabled={!hasProject}>
                     <ShowScanCodeIOProject scancodeio_project={scancodeio_project} />
+                </MenuItem>
+                <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()} disabled={!canImportResults}>
+                    <ImportScanCodeIOResults scancodeio_project={scancodeio_project} disabled={!canImportResults} />
                 </MenuItem>
                 <MenuItem onClick={handleClose} onKeyDown={(e) => e.stopPropagation()} disabled={!hasProject}>
                     <DeleteScanCodeIOProject scancodeio_project={scancodeio_project} onDeleted={() => refetch()} />

@@ -19,8 +19,8 @@ from application.scancodeio.services.scancodeio import (
     get_scancodeio_pipelines,
     get_scancodeio_project_details,
     get_scancodeio_project_ui_url,
+    get_scancodeio_results,
     hash_webhook_token,
-    process_scancodeio_webhook,
 )
 from application.scancodeio.types import CreateProjectParameters
 from unittests.base_test_case import BaseTestCase
@@ -499,17 +499,20 @@ class TestScanCodeIO(BaseTestCase):
             "Orphaned ScanCode.io project 6461408c-726c-4b70-aa7a-c9cc9d1c9685 could not be deleted", logs.output[0]
         )
 
-    def test_process_scancodeio_webhook(self):
+    def test_get_results(self):
+        self.mock_settings_load.return_value = self.settings
+        self.mock_request.return_value = _response(json_data={"headers": [], "packages": [], "dependencies": []})
         scancodeio_project = ScanCodeIO_Project(
             product=self.product, project_uuid="6461408c-726c-4b70-aa7a-c9cc9d1c9685", project_name="project_name"
         )
 
-        with self.assertLogs("secobserve.scancodeio", level="INFO") as logs:
-            process_scancodeio_webhook(
-                scancodeio_project, {"run": {"pipeline_name": "scan_codebase", "status": "success"}}
-            )
+        results = get_scancodeio_results(scancodeio_project)
 
-        self.assertIn(
-            "ScanCode.io webhook for project project_name: pipeline scan_codebase finished with status success",
-            logs.output[0],
+        self.assertEqual(results, {"headers": [], "packages": [], "dependencies": []})
+        self.mock_request.assert_called_once_with(
+            "get",
+            "https://scancode.example.com/api/projects/6461408c-726c-4b70-aa7a-c9cc9d1c9685/results/",
+            headers={"Accept": "application/json", "Authorization": "Token api_key"},
+            timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            params={"sections": ["packages", "dependencies"]},
         )
