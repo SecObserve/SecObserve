@@ -164,25 +164,24 @@ def _get_component_purl(purl: str, apk_purl_namespace: str) -> str:
 def _get_component_dependencies(
     package_uid: str, packages: dict[str, dict[str, Any]], dependency_dict: dict[str, list[str]]
 ) -> str:
-    dependencies: list[str] = []
+    dependencies: set[str] = set()
     _get_dependencies_recursive(package_uid, packages, dependency_dict, dependencies)
 
-    dependencies.sort()
-    return "\n".join(dependencies)
+    return "\n".join(sorted(dependencies))
 
 
 def _get_dependencies_recursive(
     package_uid: str,
     packages: dict[str, dict[str, Any]],
     dependency_dict: dict[str, list[str]],
-    dependencies: list[str],
+    dependencies: set[str],
 ) -> None:
     for parent_uid in dependency_dict.get(package_uid, []):
         dependency = (
             f"{_translate_package_uid(parent_uid, packages)} --> {_translate_package_uid(package_uid, packages)}"
         )
         if dependency not in dependencies:
-            dependencies.append(dependency)
+            dependencies.add(dependency)
             _get_dependencies_recursive(parent_uid, packages, dependency_dict, dependencies)
 
 

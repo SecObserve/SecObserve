@@ -226,6 +226,29 @@ class TestGetLicenseComponents(BaseTestCase):
             "app:1.0.0 --> library:2.0.0\nlibrary:2.0.0 --> transitive",
         )
 
+    def test_dependencies_with_cycle(self):
+        license_components, _ = get_license_components(
+            _results(
+                packages=[APP_PACKAGE, LIBRARY_PACKAGE],
+                dependencies=[
+                    {
+                        "purl": "pkg:npm/library@2.0.0",
+                        "for_package_uid": APP_PACKAGE["package_uid"],
+                        "resolved_to_package_uid": LIBRARY_PACKAGE["package_uid"],
+                    },
+                    {
+                        "purl": "pkg:npm/app@1.0.0",
+                        "for_package_uid": LIBRARY_PACKAGE["package_uid"],
+                        "resolved_to_package_uid": APP_PACKAGE["package_uid"],
+                    },
+                ],
+            )
+        )
+
+        expected_dependencies = "app:1.0.0 --> library:2.0.0\nlibrary:2.0.0 --> app:1.0.0"
+        self.assertEqual(license_components[0].component_dependencies, expected_dependencies)
+        self.assertEqual(license_components[1].component_dependencies, expected_dependencies)
+
     def test_dependencies_resolved_by_purl(self):
         library_package_copy = LIBRARY_PACKAGE | {"package_uid": "pkg:npm/library@2.0.0?uuid=5"}
         license_components, _ = get_license_components(

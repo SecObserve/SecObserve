@@ -99,9 +99,9 @@ const ShowActions = (props: ShowActionsProps) => {
                     <ImportMenu product={product} />
                 )}
                 <ExportMenu product={product} is_product_group={false} />
-                {feature_scancodeio_integration() && product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && (
-                    <ScanCodeIOMenu product={product} />
-                )}
+                {feature_scancodeio_integration() &&
+                    feature_license_management() &&
+                    product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && <ScanCodeIOMenu product={product} />}
                 {product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && <EditButton />}
             </Stack>
         </TopToolbar>
