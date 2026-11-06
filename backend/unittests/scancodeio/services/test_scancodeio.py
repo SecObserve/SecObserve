@@ -31,6 +31,7 @@ def _response(ok: bool = True, json_data=None, status_code: int = 200, reason: s
     response.ok = ok
     response.status_code = status_code
     response.reason = reason
+    response.is_redirect = False
     if isinstance(json_data, Exception):
         response.json.side_effect = json_data
     else:
@@ -94,6 +95,7 @@ class TestScanCodeIO(BaseTestCase):
             "https://scancode.example.com/api/projects/",
             headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            allow_redirects=False,
             data={
                 "name": "project_name",
                 "input_urls": ["https://example.com/a.zip", "https://example.com/b.zip"],
@@ -129,6 +131,7 @@ class TestScanCodeIO(BaseTestCase):
             "https://scancode.example.com/api/projects/",
             headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            allow_redirects=False,
             data={
                 "name": "project_name",
                 "input_urls": ["https://example.com/a.zip"],
@@ -407,7 +410,22 @@ class TestScanCodeIO(BaseTestCase):
                 ),
             )
 
-        self.assertEqual(str(e.exception.detail[0]), "ScanCode.io is not reachable: connection refused")
+        # The details of the exception contain internal host names and are only logged
+        self.assertEqual(str(e.exception.detail[0]), "ScanCode.io is not reachable")
+
+    def test_redirect_is_not_followed(self):
+        self.mock_settings_load.return_value = self.settings
+        response = _response(status_code=302, reason="Found")
+        response.is_redirect = True
+        self.mock_request.return_value = response
+
+        with self.assertRaises(ValidationError) as e:
+            get_scancodeio_pipelines()
+
+        self.assertEqual(
+            str(e.exception.detail[0]), "ScanCode.io redirected the request, the base URL has to be corrected"
+        )
+        self.assertFalse(self.mock_request.call_args.kwargs["allow_redirects"])
 
     def test_get_pipelines(self):
         self.mock_settings_load.return_value = self.settings
@@ -434,6 +452,7 @@ class TestScanCodeIO(BaseTestCase):
             "https://scancode.example.com/api/projects/pipelines/",
             headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            allow_redirects=False,
         )
 
     def test_get_project_details(self):
@@ -458,6 +477,7 @@ class TestScanCodeIO(BaseTestCase):
             "https://scancode.example.com/api/projects/6461408c-726c-4b70-aa7a-c9cc9d1c9685/",
             headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            allow_redirects=False,
         )
 
     def test_get_project_ui_url_slugified(self):
@@ -511,6 +531,7 @@ class TestScanCodeIO(BaseTestCase):
             "https://scancode.example.com/api/projects/6461408c-726c-4b70-aa7a-c9cc9d1c9685/",
             headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            allow_redirects=False,
         )
         self.mock_request.return_value.json.assert_not_called()
         self.assertFalse(ScanCodeIO_Project.objects.filter(product=self.product).exists())
@@ -674,5 +695,6 @@ class TestScanCodeIO(BaseTestCase):
             "https://scancode.example.com/api/projects/6461408c-726c-4b70-aa7a-c9cc9d1c9685/results/",
             headers={"Accept": "application/json", "Authorization": "Token api_key"},
             timeout=SCANCODEIO_REQUEST_TIMEOUT,
+            allow_redirects=False,
             params={"sections": ["packages", "dependencies"]},
         )

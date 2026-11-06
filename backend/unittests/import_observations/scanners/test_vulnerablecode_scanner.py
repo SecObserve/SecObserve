@@ -118,8 +118,9 @@ class MockRetryAfterResponse:
 
 
 class MockResponse:
-    def __init__(self, payload):
+    def __init__(self, payload, is_redirect=False):
         self.payload = payload
+        self.is_redirect = is_redirect
 
     def raise_for_status(self):
         pass
@@ -266,7 +267,15 @@ class TestVulnerableCodeScanner(BaseTestCase):
 
         # No advisories are requested when no package is affected
         self.assertEqual(
-            [{"url": PACKAGES_URL, "headers": EXPECTED_HEADERS, "data": PACKAGES_REQUEST_BODY, "timeout": 300}],
+            [
+                {
+                    "url": PACKAGES_URL,
+                    "headers": EXPECTED_HEADERS,
+                    "data": PACKAGES_REQUEST_BODY,
+                    "timeout": 300,
+                    "allow_redirects": False,
+                }
+            ],
             self._post_calls(mock_post, PACKAGES_URL),
         )
         self.assertEqual([], self._post_calls(mock_post, ADVISORIES_URL))
@@ -297,11 +306,27 @@ class TestVulnerableCodeScanner(BaseTestCase):
         self.assertEqual(["pkg:pypi/django@5.1.4"], advisory["fixed_by_packages"])
 
         self.assertEqual(
-            [{"url": PACKAGES_URL, "headers": EXPECTED_HEADERS, "data": PACKAGES_REQUEST_BODY, "timeout": 300}],
+            [
+                {
+                    "url": PACKAGES_URL,
+                    "headers": EXPECTED_HEADERS,
+                    "data": PACKAGES_REQUEST_BODY,
+                    "timeout": 300,
+                    "allow_redirects": False,
+                }
+            ],
             self._post_calls(mock_post, PACKAGES_URL),
         )
         self.assertEqual(
-            [{"url": ADVISORIES_URL, "headers": EXPECTED_HEADERS, "data": ADVISORIES_REQUEST_BODY, "timeout": 300}],
+            [
+                {
+                    "url": ADVISORIES_URL,
+                    "headers": EXPECTED_HEADERS,
+                    "data": ADVISORIES_REQUEST_BODY,
+                    "timeout": 300,
+                    "allow_redirects": False,
+                }
+            ],
             self._post_calls(mock_post, ADVISORIES_URL),
         )
         mock_get.assert_not_called()
@@ -592,7 +617,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
         self.assertEqual(
             [VulnerableCodeComponent(component=self.license_component, advisory=FALLBACK_ADVISORY)], components
         )
-        mock_get.assert_called_once_with(url=FALLBACK_URL, headers=EXPECTED_HEADERS, timeout=300)
+        mock_get.assert_called_once_with(url=FALLBACK_URL, headers=EXPECTED_HEADERS, timeout=300, allow_redirects=False)
         # Those advisories are already complete, so no details are requested
         self.assertEqual([], self._post_calls(mock_post, ADVISORIES_URL))
 
@@ -650,6 +675,121 @@ class TestVulnerableCodeScanner(BaseTestCase):
     # ---------------------------------------------------------------
     # _rebuild_url
     # ---------------------------------------------------------------
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    def test_rebuild_url_keeps_configured_host(self, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        scanner = VulnerableCodeScanner()
+
+        for url in [
+            "https://evil.test/api/v3/packages/?page=2",
+            "//evil.test/api/v3/packages/?page=2",
+            "/api/v3/packages/?page=2",
+        ]:
+            self.assertEqual(f"{PACKAGES_URL}?page=2", scanner._rebuild_url(url))
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    def test_rebuild_url_rejects_path_without_leading_slash(self, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        scanner = VulnerableCodeScanner()
+
+        for url in ["@evil.test/x", ".evil.test/x", ":secret@evil.test/x", "x", "?page=2"]:
+            with self.assertRaises(ScanException):
+                scanner._rebuild_url(url)
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_next_url_changing_the_host_is_not_requested(self, mock_post, mock_get, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[MockResponse({"next": "@evil.test/x", "results": [self._packages_result()]})],
+        )
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component])
+
+        self.assertEqual(1, mock_post.call_count)
+        mock_get.assert_not_called()
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_affected_by_vulnerabilities_url_changing_the_host_is_not_requested(
+        self, mock_post, mock_get, mock_settings_load
+    ):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[
+                MockResponse(
+                    {
+                        "next": None,
+                        "results": [{"purl": PURL_DJANGO, "affected_by_vulnerabilities_url": ".evil.test/x"}],
+                    }
+                )
+            ],
+        )
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component])
+
+        mock_get.assert_not_called()
+
+    # ---------------------------------------------------------------
+    # Redirects
+    # ---------------------------------------------------------------
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.post")
+    def test_redirects_are_not_followed(self, mock_post, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(mock_post, packages=[MockResponse({}, is_redirect=True)])
+
+        with self.assertRaises(ScanException) as e:
+            VulnerableCodeScanner()._do_scan([self.license_component])
+
+        self.assertEqual("VulnerableCode redirected the request, the base URL has to be corrected", e.exception.message)
+        self.assertFalse(mock_post.call_args.kwargs["allow_redirects"])
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.post")
+    def test_redirect_of_advisories_is_not_followed(self, mock_post, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[MockResponse({"next": None, "results": [self._packages_result()]})],
+            advisories=[MockResponse({}, is_redirect=True)],
+        )
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component])
+
+        self.assertFalse(mock_post.call_args.kwargs["allow_redirects"])
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_redirect_of_affected_by_vulnerabilities_url_is_not_followed(self, mock_post, mock_get, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[
+                MockResponse(
+                    {
+                        "next": None,
+                        "results": [{"purl": PURL_DJANGO, "affected_by_vulnerabilities_url": FALLBACK_URL}],
+                    }
+                )
+            ],
+        )
+        mock_get.return_value = MockResponse({}, is_redirect=True)
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component])
+
+        self.assertFalse(mock_get.call_args.kwargs["allow_redirects"])
 
     @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
     @patch("requests.Session.get")
