@@ -16,9 +16,9 @@ import {
 import { Fragment, ReactNode, useState } from "react";
 import { Labeled, useNotify } from "react-admin";
 
-import MenuButton from "../commons/custom_fields/MenuButton";
+import EditButton from "../commons/custom_fields/EditButton";
 import { Spinner } from "../commons/custom_fields/Spinner";
-import { format_date_time, getIconAndFontColor } from "../commons/functions";
+import { format_date_time } from "../commons/functions";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 
 interface ShowScanCodeIOProjectProps {
@@ -162,12 +162,7 @@ const ShowScanCodeIOProject = ({ scancodeio_project }: ShowScanCodeIOProjectProp
 
     return (
         <Fragment>
-            <MenuButton
-                title="Show ScanCode.io project"
-                onClick={handleOpen}
-                icon={<VisibilityIcon sx={{ color: getIconAndFontColor() }} />}
-                disabled={!scancodeio_project}
-            />
+            <EditButton title="Show" onClick={handleOpen} icon={<VisibilityIcon />} />
             <Dialog open={open && details !== null} onClose={handleClose} maxWidth="md">
                 <DialogTitle>ScanCode.io project</DialogTitle>
                 <DialogContent>

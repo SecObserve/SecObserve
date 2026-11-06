@@ -1,4 +1,3 @@
-import DeleteIcon from "@mui/icons-material/Delete";
 import {
     Dialog,
     DialogActions,
@@ -10,21 +9,20 @@ import {
     Typography,
 } from "@mui/material";
 import { Fragment, useState } from "react";
-import { useNotify } from "react-admin";
+import { useNotify, useRefresh } from "react-admin";
 
-import MenuButton from "../commons/custom_fields/MenuButton";
-import { getIconAndFontColor } from "../commons/functions";
+import RemoveButton from "../commons/custom_fields/RemoveButton";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 
 interface DeleteScanCodeIOProjectProps {
     scancodeio_project: any;
-    onDeleted: () => void;
 }
 
-const DeleteScanCodeIOProject = ({ scancodeio_project, onDeleted }: DeleteScanCodeIOProjectProps) => {
+const DeleteScanCodeIOProject = ({ scancodeio_project }: DeleteScanCodeIOProjectProps) => {
     const [open, setOpen] = useState(false);
     const [confirmationName, setConfirmationName] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
+    const refresh = useRefresh();
     const notify = useNotify();
 
     const closeDialog = () => {
@@ -47,7 +45,7 @@ const DeleteScanCodeIOProject = ({ scancodeio_project, onDeleted }: DeleteScanCo
             setIsDeleting(false);
             setOpen(false);
             setConfirmationName("");
-            onDeleted();
+            refresh();
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : String(error);
             notify(`Delete failed: ${message}`, { type: "error" });
@@ -57,50 +55,42 @@ const DeleteScanCodeIOProject = ({ scancodeio_project, onDeleted }: DeleteScanCo
 
     return (
         <Fragment>
-            <MenuButton
-                title="Delete ScanCode.io project"
-                onClick={() => setOpen(true)}
-                icon={<DeleteIcon sx={{ color: getIconAndFontColor() }} />}
-                disabled={!scancodeio_project}
-            />
-            {scancodeio_project && (
-                <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="sm">
-                    <DialogTitle>Delete ScanCode.io project</DialogTitle>
-                    <DialogContent>
-                        <Stack spacing={2} sx={{ marginTop: 1 }}>
-                            <Typography>
-                                This permanently deletes the project in ScanCode.io, including its inputs and results.
-                                This action cannot be undone.
-                            </Typography>
-                            <Typography>
-                                Type <strong>{scancodeio_project.project_name}</strong> to confirm permanent deletion.
-                            </Typography>
-                            <TextField
-                                label="Confirmation name"
-                                value={confirmationName}
-                                onChange={(event) => setConfirmationName(event.target.value)}
-                                onKeyDown={(event) => event.stopPropagation()}
-                                disabled={isDeleting}
-                                autoFocus
-                                fullWidth
-                            />
-                        </Stack>
-                    </DialogContent>
-                    <DialogActions>
-                        <MuiButton onClick={closeDialog} color="inherit" disabled={isDeleting}>
-                            Cancel
-                        </MuiButton>
-                        <MuiButton
-                            onClick={deleteProject}
-                            color="error"
-                            variant="contained"
-                            disabled={isDeleting || confirmationName !== scancodeio_project.project_name}
-                        >
-                            {isDeleting ? "Deleting..." : "Delete permanently"}
-                        </MuiButton>
-                    </DialogActions>
-                </Dialog>
-            )}
+            <RemoveButton title="Delete" onClick={() => setOpen(true)} />
+            <Dialog open={open} onClose={closeDialog} fullWidth maxWidth="sm">
+                <DialogTitle>Delete ScanCode.io project</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ marginTop: 1 }}>
+                        <Typography>
+                            This permanently deletes the project in ScanCode.io, including its inputs and results. This
+                            action cannot be undone.
+                        </Typography>
+                        <Typography>
+                            Type <strong>{scancodeio_project.project_name}</strong> to confirm permanent deletion.
+                        </Typography>
+                        <TextField
+                            label="Confirmation name"
+                            value={confirmationName}
+                            onChange={(event) => setConfirmationName(event.target.value)}
+                            disabled={isDeleting}
+                            autoFocus
+                            fullWidth
+                        />
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <MuiButton onClick={closeDialog} color="inherit" disabled={isDeleting}>
+                        Cancel
+                    </MuiButton>
+                    <MuiButton
+                        onClick={deleteProject}
+                        color="error"
+                        variant="contained"
+                        disabled={isDeleting || confirmationName !== scancodeio_project.project_name}
+                    >
+                        {isDeleting ? "Deleting..." : "Delete permanently"}
+                    </MuiButton>
+                </DialogActions>
+            </Dialog>
         </Fragment>
     );
 };

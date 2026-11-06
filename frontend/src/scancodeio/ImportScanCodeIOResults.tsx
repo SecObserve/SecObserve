@@ -2,17 +2,15 @@ import SyncIcon from "@mui/icons-material/Sync";
 import { Fragment, useState } from "react";
 import { useNotify, useRefresh } from "react-admin";
 
-import MenuButton from "../commons/custom_fields/MenuButton";
+import EditButton from "../commons/custom_fields/EditButton";
 import { Spinner } from "../commons/custom_fields/Spinner";
-import { getIconAndFontColor } from "../commons/functions";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 
 interface ImportScanCodeIOResultsProps {
     scancodeio_project: any;
-    disabled: boolean;
 }
 
-const ImportScanCodeIOResults = ({ scancodeio_project, disabled }: ImportScanCodeIOResultsProps) => {
+const ImportScanCodeIOResults = ({ scancodeio_project }: ImportScanCodeIOResultsProps) => {
     const [loading, setLoading] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
@@ -51,12 +49,7 @@ const ImportScanCodeIOResults = ({ scancodeio_project, disabled }: ImportScanCod
 
     return (
         <Fragment>
-            <MenuButton
-                title="Re-import results"
-                onClick={importResults}
-                icon={<SyncIcon sx={{ color: getIconAndFontColor() }} />}
-                disabled={disabled}
-            />
+            <EditButton title="Re-import results" onClick={importResults} icon={<SyncIcon />} />
             <Spinner open={loading} />
         </Fragment>
     );

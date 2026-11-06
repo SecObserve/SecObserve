@@ -6,7 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from application.background_tasks.types import Status
 from application.commons.models import Settings
-from application.core.models import Product
+from application.core.models import Branch, Product, Service
 from application.core.types import OSVLinuxDistribution
 from application.import_observations.models import Vulnerability_Check
 from application.licenses.models import License, License_Component
@@ -106,6 +106,111 @@ class TestImportScanCodeIOResults(BaseTestCase):
         self.product.refresh_from_db()
         self.assertEqual(self.product.osv_linux_distribution, OSVLinuxDistribution.DISTRIBUTION_ALPINE)
         self.assertEqual(self.product.osv_linux_release, "v3.15")
+
+    def _project(self, branch=None, service=None) -> ScanCodeIO_Project:
+        return ScanCodeIO_Project(
+            product=self.product,
+            branch=branch,
+            service=service,
+            project_uuid="6461408c-726c-4b70-aa7a-c9cc9d1c9685",
+            project_name="project_name",
+        )
+
+    def test_import_branch_and_service(self):
+        branch = Branch.objects.get(pk=1)
+        service = Service.objects.get(pk=1)
+        self.mock_get_results.return_value = _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+
+        numbers = import_scancodeio_results(self._project(branch, service))
+
+        self.assertEqual(numbers, (1, 0, 0))
+        license_component = License_Component.objects.get(product=self.product, upload_filename=SCANCODEIO_FILENAME)
+        self.assertEqual(license_component.branch, branch)
+        self.assertEqual(license_component.origin_service, service)
+        vulnerability_check = Vulnerability_Check.objects.get(product=self.product, filename=SCANCODEIO_FILENAME)
+        self.assertEqual(vulnerability_check.branch, branch)
+        self.assertEqual(vulnerability_check.service, service)
+
+    def test_import_services_of_same_branch_are_independent(self):
+        branch = Branch.objects.get(pk=1)
+        project_1 = self._project(branch, Service.objects.get(pk=1))
+        project_2 = self._project(branch, Service.objects.get(pk=2))
+
+        self.mock_get_results.return_value = _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+        self.assertEqual(import_scancodeio_results(project_1), (1, 0, 0))
+
+        # The same component in another service is new, and the component of the first service is not deleted
+        self.mock_get_results.return_value = _results(
+            [_package("busybox", "1.34.1-r5", "GPL-2.0-only"), _package("alpine-keys", "2.4-r1", "MIT")]
+        )
+        self.assertEqual(import_scancodeio_results(project_2), (2, 0, 0))
+        self.assertEqual(License_Component.objects.filter(product=self.product, origin_service=1).count(), 1)
+        self.assertEqual(License_Component.objects.filter(product=self.product, origin_service=2).count(), 2)
+
+        # The next import of the first service only changes its own components
+        self.mock_get_results.return_value = _results([_package("alpine-keys", "2.4-r1", "MIT")])
+        self.assertEqual(import_scancodeio_results(project_1), (1, 0, 1))
+        self.assertEqual(
+            list(
+                License_Component.objects.filter(product=self.product, origin_service=1).values_list(
+                    "component_name", flat=True
+                )
+            ),
+            ["alpine-keys"],
+        )
+        self.assertEqual(License_Component.objects.filter(product=self.product, origin_service=2).count(), 2)
+
+    def test_import_branches_are_independent(self):
+        project_1 = self._project(Branch.objects.get(pk=1))
+        project_2 = self._project(Branch.objects.get(pk=2))
+
+        self.mock_get_results.return_value = _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+        self.assertEqual(import_scancodeio_results(project_1), (1, 0, 0))
+        self.assertEqual(import_scancodeio_results(project_2), (1, 0, 0))
+
+        self.mock_get_results.return_value = _results([])
+        self.assertEqual(import_scancodeio_results(project_1), (0, 0, 1))
+        self.assertEqual(License_Component.objects.filter(product=self.product, branch=1).count(), 0)
+        self.assertEqual(License_Component.objects.filter(product=self.product, branch=2).count(), 1)
+
+    def test_import_osv_distribution_and_last_import_for_branch(self):
+        branch = Branch.objects.get(pk=1)
+        Branch.objects.filter(pk=1).update(last_import=None)
+        self.mock_get_results.return_value = _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+
+        import_scancodeio_results(self._project(branch))
+
+        branch.refresh_from_db()
+        self.assertEqual(branch.osv_linux_distribution, OSVLinuxDistribution.DISTRIBUTION_ALPINE)
+        self.assertEqual(branch.osv_linux_release, "v3.15")
+        self.assertIsNotNone(branch.last_import)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.osv_linux_distribution, "")
+        self.assertEqual(self.product.osv_linux_release, "")
+
+    def test_import_osv_distribution_latest_import_of_service_wins(self):
+        branch = Branch.objects.get(pk=1)
+        results = _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+        self.mock_get_results.return_value = results
+        import_scancodeio_results(self._project(branch, Service.objects.get(pk=1)))
+
+        results["headers"][0]["extra_data"]["images"] = [{"distro": {"identifier": "debian", "version_id": "12"}}]
+        import_scancodeio_results(self._project(branch, Service.objects.get(pk=2)))
+
+        branch.refresh_from_db()
+        self.assertEqual(branch.osv_linux_distribution, OSVLinuxDistribution.DISTRIBUTION_DEBIAN)
+        self.assertEqual(branch.osv_linux_release, "12")
+
+    def test_branch_change_during_request_is_kept(self):
+        branch = Branch.objects.get(pk=1)
+        Branch.objects.filter(pk=1).update(purl="pkg:generic/changed")
+        self.mock_get_results.return_value = _results([_package("busybox", "1.34.1-r5", "GPL-2.0-only")])
+
+        import_scancodeio_results(self._project(branch))
+
+        branch.refresh_from_db()
+        self.assertEqual(branch.purl, "pkg:generic/changed")
+        self.assertEqual(branch.osv_linux_distribution, OSVLinuxDistribution.DISTRIBUTION_ALPINE)
 
     def test_import_again(self):
         self.mock_get_results.return_value = _results(
@@ -343,7 +448,11 @@ class TestProcessScanCodeIOImport(unittest.TestCase):
         self.mock_get_scancodeio_project.assert_called_once_with(1)
         self.mock_import.assert_called_once_with(self.scancodeio_project)
         self.assertEqual(self.task_record.status, Status.STATUS_SUCCESS)
-        self.assertEqual(self.task_record.message, "Product 'product': 3 license components new, 2 updated, 1 deleted")
+        self.assertEqual(
+            self.task_record.message,
+            f"Product 'product', project '{self.scancodeio_project.project_name}': "
+            + "3 license components new, 2 updated, 1 deleted",
+        )
         self.assertEqual(self.task_record.save.call_count, 2)
         self.mock_handle_task_exception.assert_not_called()
 
