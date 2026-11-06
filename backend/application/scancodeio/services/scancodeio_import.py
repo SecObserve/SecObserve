@@ -12,7 +12,7 @@ from application.background_tasks.services.task_base import delete_older_task_en
 from application.background_tasks.types import Status
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
-from application.core.models import Product
+from application.core.models import Branch, Product
 from application.import_observations.models import Vulnerability_Check
 from application.import_observations.services.import_observations import (
     process_license_components,
@@ -34,7 +34,7 @@ SCANCODEIO_RUN_STATUS_SUCCESS = "success"
 
 TASK_NAME = "Import ScanCode.io results"
 
-# A product has only one ScanCode.io project, so its components are identified by a fixed name
+# There is only one ScanCode.io project per branch and service, so its components are identified by a fixed name
 SCANCODEIO_FILENAME = "ScanCode.io"
 
 
@@ -75,8 +75,8 @@ def _process_scancodeio_import(scancodeio_project_id: int) -> None:
         if scancodeio_project:
             new, updated, deleted = import_scancodeio_results(scancodeio_project)
             message = (
-                f"Product '{scancodeio_project.product.name}': {new} license components new, "
-                f"{updated} updated, {deleted} deleted"
+                f"Product '{scancodeio_project.product.name}', project '{scancodeio_project.project_name}': "
+                f"{new} license components new, {updated} updated, {deleted} deleted"
             )
         else:
             message = f"ScanCode.io project {scancodeio_project_id} not found, nothing to import"
@@ -118,12 +118,21 @@ def import_scancodeio_results(scancodeio_project: ScanCodeIO_Project) -> Tuple[i
         # branch and service. It also gets the current product, changes made during the request are kept.
         product = Product.objects.select_for_update().get(pk=scancodeio_project.product_id)
 
-        apply_osv_linux_distribution(product, results)
+        branch = None
+        if scancodeio_project.branch_id:
+            branch = Branch.objects.select_for_update().get(pk=scancodeio_project.branch_id)
+            # Otherwise the housekeeping would delete the branch with its project, while they are still in use
+            branch.last_import = timezone.now()
+
+        apply_osv_linux_distribution(branch if branch else product, results)
+
+        if branch:
+            branch.save()
 
         vulnerability_check, _ = Vulnerability_Check.objects.update_or_create(
             product=product,
-            branch=None,
-            service=None,
+            branch=branch,
+            service=scancodeio_project.service,
             filename=SCANCODEIO_FILENAME,
             api_configuration_name="",
             defaults={

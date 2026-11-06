@@ -1,7 +1,7 @@
 import re
 
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.core.validators import URLValidator
+from django.core.validators import MinValueValidator, URLValidator
 from packageurl import PackageURL
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
@@ -13,6 +13,7 @@ from rest_framework.serializers import (
     ListField,
     ModelSerializer,
     Serializer,
+    SerializerMethodField,
     UUIDField,
 )
 
@@ -48,7 +49,9 @@ def validate_input_url(value: str) -> None:
 
 
 class CreateScanCodeIOProjectSerializer(Serializer):
-    name = CharField(max_length=255)
+    name = CharField(max_length=255, required=False, allow_blank=True, default="")
+    branch = IntegerField(validators=[MinValueValidator(0)], required=False)
+    service = IntegerField(validators=[MinValueValidator(0)], required=False)
     input_urls = ListField(
         child=CharField(max_length=2048, validators=[validate_input_url]), required=False, default=list
     )
@@ -58,9 +61,28 @@ class CreateScanCodeIOProjectSerializer(Serializer):
 
 
 class ScanCodeIOProjectSerializer(ModelSerializer):
+    branch_name = SerializerMethodField()
+    service_name = SerializerMethodField()
+
     class Meta:
         model = ScanCodeIO_Project
-        fields = ["id", "product", "project_uuid", "project_name", "created"]
+        fields = [
+            "id",
+            "product",
+            "branch",
+            "branch_name",
+            "service",
+            "service_name",
+            "project_uuid",
+            "project_name",
+            "created",
+        ]
+
+    def get_branch_name(self, obj: ScanCodeIO_Project) -> str:
+        return obj.branch.name if obj.branch else ""
+
+    def get_service_name(self, obj: ScanCodeIO_Project) -> str:
+        return obj.service.name if obj.service else ""
 
 
 class ScanCodeIOImportResultsResponseSerializer(Serializer):

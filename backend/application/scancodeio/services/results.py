@@ -1,7 +1,7 @@
 from json import dumps
 from typing import Any, Callable, Optional
 
-from application.core.models import Product
+from application.core.models import Branch, Product
 from application.core.types import OSVLinuxDistribution
 from application.licenses.models import License_Component
 
@@ -44,20 +44,20 @@ def get_license_components(results: dict[str, Any]) -> tuple[list[License_Compon
     return license_components, _get_scanner(results)
 
 
-def apply_osv_linux_distribution(product: Product, results: dict[str, Any]) -> None:
+def apply_osv_linux_distribution(target: Product | Branch, results: dict[str, Any]) -> None:
     """
-    Sets the Linux distribution and release of the analyzed Docker image, which are needed by the
-    OSV scan to find vulnerabilities of the operating system packages. The purls of ScanCode.io
-    don't contain a distro qualifier, so the OSV scan can't get them from the components.
+    Sets the Linux distribution and release of the analyzed Docker image for a product or branch, which
+    are needed by the OSV scan to find vulnerabilities of the operating system packages. The purls of
+    ScanCode.io don't contain a distro qualifier, so the OSV scan can't get them from the components.
     """
     osv_linux_distribution, osv_linux_release = _get_images_distribution(results)
     if not osv_linux_distribution:
         return
 
-    if product.osv_linux_distribution != osv_linux_distribution or product.osv_linux_release != osv_linux_release:
-        product.osv_linux_distribution = osv_linux_distribution
-        product.osv_linux_release = osv_linux_release
-        product.save()
+    if target.osv_linux_distribution != osv_linux_distribution or target.osv_linux_release != osv_linux_release:
+        target.osv_linux_distribution = osv_linux_distribution
+        target.osv_linux_release = osv_linux_release
+        target.save()
 
 
 def _get_headers(results: dict[str, Any]) -> dict[str, Any]:

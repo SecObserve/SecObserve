@@ -7,7 +7,7 @@ from rest_framework.test import APIClient
 
 from application.access_control.models import User
 from application.commons.models import Settings
-from application.core.models import Product
+from application.core.models import Branch, Product, Service
 from application.licenses.models import License_Component
 from application.scancodeio.models import ScanCodeIO_Project
 from application.scancodeio.services.scancodeio import hash_webhook_token
@@ -114,12 +114,61 @@ class TestCreateScanCodeIOProjectView(ScanCodeIOViewTestCase):
         self.assertEqual(
             response.data,
             {
-                "message": "Name: This field is required.\n"
-                + "Input urls (entry 1): Enter an http(s) URL, a Docker reference (docker://), "
+                "message": "Input urls (entry 1): Enter an http(s) URL, a Docker reference (docker://), "
                 + "a Git repository (.git) or a package URL (pkg:).\n"
                 + "Pipeline: This field is required."
             },
         )
+        self.mock_create.assert_not_called()
+
+    def test_branch_and_service(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+        branch = Branch.objects.get(pk=1)
+        service = Service.objects.get(pk=2)
+        self.mock_create.return_value = ScanCodeIO_Project(
+            pk=1,
+            product=Product.objects.get(pk=1),
+            branch=branch,
+            service=service,
+            project_uuid=PROJECT_UUID,
+            project_name="project_name",
+        )
+
+        response = self._post(
+            "db_internal_write",
+            1,
+            {"branch": 1, "service": 2, "input_urls": INPUT_URLS, "pipeline": "scan_codebase"},
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["branch"], 1)
+        self.assertEqual(response.data["branch_name"], "db_branch_internal_dev")
+        self.assertEqual(response.data["service"], 2)
+        self.assertEqual(response.data["service_name"], "db_service_internal_frontend")
+        self.assertEqual(self.mock_create.call_args.args[1], branch)
+        self.assertEqual(self.mock_create.call_args.args[2], service)
+        self.assertEqual(self.mock_create.call_args.args[3].name, "")
+
+    def test_branch_of_other_product(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+
+        response = self._post(
+            "db_internal_write", 1, {"branch": 3, "input_urls": INPUT_URLS, "pipeline": "scan_codebase"}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {"message": "Branch 3 does not exist for product db_product_internal"})
+        self.mock_create.assert_not_called()
+
+    def test_service_of_other_product(self):
+        self.mock_settings_load.return_value = Settings(feature_scancodeio_integration=True)
+
+        response = self._post(
+            "db_internal_write", 1, {"service": 3, "input_urls": INPUT_URLS, "pipeline": "scan_codebase"}
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data, {"message": "Service 3 does not exist for product db_product_internal"})
         self.mock_create.assert_not_called()
 
     def test_invalid_input_urls(self):
@@ -171,12 +220,51 @@ class TestCreateScanCodeIOProjectView(ScanCodeIOViewTestCase):
         self.assertEqual(response.data["project_name"], "project_name")
         self.mock_create.assert_called_once()
         self.assertEqual(self.mock_create.call_args.args[0], product)
-        parameters: CreateProjectParameters = self.mock_create.call_args.args[1]
+        self.assertIsNone(self.mock_create.call_args.args[1])
+        self.assertIsNone(self.mock_create.call_args.args[2])
+        parameters: CreateProjectParameters = self.mock_create.call_args.args[3]
         self.assertEqual(parameters.name, "project_name")
         self.assertEqual(parameters.input_urls, INPUT_URLS)
         self.assertEqual(parameters.upload_file.name, "archive.zip")
         self.assertEqual(parameters.pipeline, "scan_codebase")
         self.assertTrue(parameters.execute_now)
+
+
+class TestScanCodeIOProjectList(ScanCodeIOViewTestCase):
+    def setUp(self):
+        super().setUp()
+        for pk, branch, service in [(1, None, None), (2, 1, None), (3, 1, 1), (4, 2, 2)]:
+            ScanCodeIO_Project.objects.create(
+                pk=pk,
+                product=Product.objects.get(pk=1),
+                branch_id=branch,
+                service_id=service,
+                project_uuid=PROJECT_UUID,
+                project_name=f"project_{pk}",
+                webhook_token_hash=f"hash_{pk}",
+            )
+
+    def _list_ids(self, query: str) -> list[int]:
+        response = self._api_client("db_internal_write").get(f"/api/scancodeio_projects/?{query}")
+        self.assertEqual(response.status_code, 200)
+        return [project["id"] for project in response.data["results"]]
+
+    def test_filter(self):
+        self.assertEqual(self._list_ids("product=1"), [1, 2, 3, 4])
+        self.assertEqual(self._list_ids("branch=1"), [2, 3])
+        self.assertEqual(self._list_ids("service=2"), [4])
+        self.assertEqual(self._list_ids("branch=1&service=1"), [3])
+
+    def test_names(self):
+        response = self._api_client("db_internal_write").get("/api/scancodeio_projects/3/")
+
+        self.assertEqual(response.data["branch_name"], "db_branch_internal_dev")
+        self.assertEqual(response.data["service_name"], "db_service_internal_backend")
+
+        response = self._api_client("db_internal_write").get("/api/scancodeio_projects/1/")
+
+        self.assertEqual(response.data["branch_name"], "")
+        self.assertEqual(response.data["service_name"], "")
 
 
 class TestScanCodeIOPipelinesView(ScanCodeIOViewTestCase):
