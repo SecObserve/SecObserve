@@ -108,11 +108,17 @@ class ScanCodeIOClient:
                 self.base_url + path,
                 headers=self.headers,
                 timeout=SCANCODEIO_REQUEST_TIMEOUT,
+                allow_redirects=False,
                 **kwargs,
             )
         except requests.exceptions.RequestException as e:
             logger.warning(format_log_message(message="ScanCode.io request failed", exception=e))
-            raise ValidationError(f"ScanCode.io is not reachable: {e}") from e
+            # The details contain internal host names and are only for the logs
+            raise ValidationError("ScanCode.io is not reachable") from e
+
+        # A redirect counts as ok for requests
+        if response.is_redirect:
+            raise ValidationError("ScanCode.io redirected the request, the base URL has to be corrected")
 
         if ignore_not_found and response.status_code == HTTP_404_NOT_FOUND:
             return None
