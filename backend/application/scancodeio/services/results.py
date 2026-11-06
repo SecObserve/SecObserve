@@ -5,6 +5,9 @@ from application.core.models import Product
 from application.core.types import OSVLinuxDistribution
 from application.licenses.models import License_Component
 
+SCANCODEIO_ALPINE_PURL_PREFIX = "pkg:alpine/"
+ALPINE_PURL_PREFIX = "pkg:apk/alpine/"
+
 
 def get_license_components(results: dict[str, Any]) -> tuple[list[License_Component], str]:
     packages: dict[str, dict[str, Any]] = {}
@@ -19,7 +22,7 @@ def get_license_components(results: dict[str, Any]) -> tuple[list[License_Compon
         license_component = License_Component(
             component_name=package["name"],
             component_version=package.get("version") or "",
-            component_purl=package.get("purl") or "",
+            component_purl=_get_component_purl(package.get("purl") or ""),
             component_dependencies=_get_component_dependencies(package_uid, packages, dependencies),
         )
 
@@ -118,6 +121,14 @@ def _resolve_dependency(
 
 def _purl_without_qualifiers(purl: str) -> str:
     return purl.split("#", 1)[0].split("?", 1)[0]
+
+
+def _get_component_purl(purl: str) -> str:
+    # ScanCode.io uses the type alpine, which doesn't exist in the purl specification. The correct
+    # type is apk with the namespace alpine, which is also what SBOM generators use.
+    if purl.startswith(SCANCODEIO_ALPINE_PURL_PREFIX):
+        return ALPINE_PURL_PREFIX + purl.removeprefix(SCANCODEIO_ALPINE_PURL_PREFIX)
+    return purl
 
 
 def _get_component_dependencies(

@@ -99,13 +99,14 @@ class TestGetLicenseComponents(BaseTestCase):
         alpine_component = license_components[0]
         self.assertEqual(alpine_component.component_name, "busybox")
         self.assertEqual(alpine_component.component_version, "1.34.1-r5")
-        self.assertEqual(alpine_component.component_purl, "pkg:alpine/busybox@1.34.1-r5?arch=x86_64")
+        self.assertEqual(alpine_component.component_purl, "pkg:apk/alpine/busybox@1.34.1-r5?arch=x86_64")
         self.assertEqual(alpine_component.component_dependencies, "")
         self.assertEqual(alpine_component.unsaved_declared_licenses, ["GPL-2.0-only"])
         self.assertEqual(alpine_component.unsaved_concluded_licenses, [])
         self.assertEqual(alpine_component.unsaved_evidences, [["Package", dumps(ALPINE_PACKAGE)]])
 
         self.assertEqual(license_components[1].component_name, "app")
+        self.assertEqual(license_components[1].component_purl, "pkg:npm/app@1.0.0")
         self.assertEqual(license_components[1].unsaved_declared_licenses, [])
 
         # Without a SPDX expression, the license expression of ScanCode is used

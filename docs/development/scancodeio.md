@@ -26,7 +26,7 @@ ScanCode.io notifies SecObserve with a webhook when a pipeline has finished. The
 
 When a pipeline has finished successfully, SecObserve reads the packages and dependencies of the project from ScanCode.io in the background task `Import ScanCode.io results`, if license management is enabled:
 
-* Every package becomes a license component of the product, with its name, version, purl, declared license and dependencies. The complete package data of ScanCode.io is stored as evidence. The components belong to neither a branch nor a service, and their filename is `ScanCode.io`.
+* Every package becomes a license component of the product, with its name, version, purl, declared license and dependencies. ScanCode.io's purls of Alpine packages (`pkg:alpine/...`) are stored in their correct form (`pkg:apk/alpine/...`). The complete package data of ScanCode.io is stored as evidence, unchanged. The components belong to neither a branch nor a service, and their filename is `ScanCode.io`.
 * If all analyzed Docker images have the same Linux distribution, it is stored with its release in the OSV settings of the product. ScanCode.io's purls for operating system packages have no distro qualifier, so the OSV scan needs this setting to find their vulnerabilities.
 
 Vulnerabilities are not imported from ScanCode.io, they are found by the OSV and VulnerableCode scans of the license components.
