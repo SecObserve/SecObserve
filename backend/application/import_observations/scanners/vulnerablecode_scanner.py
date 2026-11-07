@@ -164,9 +164,10 @@ class VulnerableCodeScanner(BaseScanner):
                 headers=self.headers,
                 data=jsonpickle.encode(packages_request_data, unpicklable=False),
                 timeout=VULNERABLECODE_REQUEST_TIMEOUT,
+                allow_redirects=False,
             )
 
-            response.raise_for_status()
+            self._check_response(response)
 
             packages_url = self._rebuild_url(response.json().get("next"))
             results = response.json().get("results", [])
@@ -179,6 +180,13 @@ class VulnerableCodeScanner(BaseScanner):
 
         return packages_advisories, fallback_urls
 
+    def _check_response(self, response: requests.Response) -> None:
+        # raise_for_status() doesn't raise an exception for a redirect
+        if response.is_redirect:
+            raise ScanException("VulnerableCode redirected the request, the base URL has to be corrected")
+
+        response.raise_for_status()
+
     def _rebuild_url(self, url: Optional[str]) -> str:
         # VulnerableCode builds URLs from the scheme and host it sees, which behind a proxy
         # can be http or a host that is not reachable from SecObserve. requests turns a POST
@@ -188,6 +196,11 @@ class VulnerableCodeScanner(BaseScanner):
             return ""
 
         parsed_url = urlparse(url)
+        # Without a leading slash, the path would become part of the host when it is
+        # appended to the base URL. "@example.com/" would even replace the host completely.
+        if not parsed_url.path.startswith("/"):
+            raise ScanException(f"VulnerableCode returned an invalid URL: {url}")
+
         rebuilt_url = f"{self.base_url}{parsed_url.path}"
         return f"{rebuilt_url}?{parsed_url.query}" if parsed_url.query else rebuilt_url
 
@@ -227,9 +240,10 @@ class VulnerableCodeScanner(BaseScanner):
                 headers=self.headers,
                 data=jsonpickle.encode(advisories_request_data, unpicklable=False),
                 timeout=VULNERABLECODE_REQUEST_TIMEOUT,
+                allow_redirects=False,
             )
 
-            response.raise_for_status()
+            self._check_response(response)
 
             advisories_url = self._rebuild_url(response.json().get("next"))
             results = response.json().get("results", [])
@@ -269,9 +283,10 @@ class VulnerableCodeScanner(BaseScanner):
                 url=advisories_url,
                 headers=self.headers,
                 timeout=VULNERABLECODE_REQUEST_TIMEOUT,
+                allow_redirects=False,
             )
 
-            response.raise_for_status()
+            self._check_response(response)
 
             advisories_url = self._rebuild_url(response.json().get("next"))
             advisories += response.json().get("results", [])

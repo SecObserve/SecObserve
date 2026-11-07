@@ -18,7 +18,7 @@ The VulnerableCode parameters are configured in the `Features` section of the [S
 ![Settings VulnerableCode instance](../assets/images/screenshot_settings_vulnerablecode_scanning.png){ width="100%" style="display: block; margin: 0 auto" }
 
 - **Enable [automatic VulnerableCode scanning](#automatic-scan)**
-- **VulnerableCode base URL:** The URL of the VulnerableCode instance without a trailing path, see [VulnerableCode instances](#vulnerablecode-instances).
+- **VulnerableCode base URL:** The URL of the VulnerableCode instance without a trailing path, see [VulnerableCode instances](#vulnerablecode-instances). SecObserve doesn't follow redirects from VulnerableCode, so this has to be the final URL, e.g. with `https` if the instance redirects `http` to `https`.
 - **VulnerableCode API key:** Optional, it is only needed if the VulnerableCode instance requires authentication for its API.
 
 ## VulnerableCode instances

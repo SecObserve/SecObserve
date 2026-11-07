@@ -33,6 +33,7 @@ from application.import_observations.services.import_observations import (
     _resolve_unimported_observations,
     api_import_observations,
     file_upload_observations,
+    process_license_components,
 )
 from application.licenses.models import (
     License,
@@ -1448,6 +1449,56 @@ argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
 
             license_components = License_Component.objects.filter(product=1)
             self.assertEqual(len(license_components), 0)
+
+
+class TestProcessLicenseComponentsServices(BaseTestCase):
+    def setUp(self):
+        call_command(
+            "loaddata",
+            ["unittests/fixtures/initial_license_data.json", "unittests/fixtures/unittests_fixtures.json"],
+        )
+        super().setUp()
+        self.product = Product.objects.get(id=1)
+        self.branch = Branch.objects.get(id=1)
+
+    def _import(self, service, component_names):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=self.branch, service=service, filename="sbom.json"
+        )
+        components = [License_Component(component_name=name, component_version="1.0") for name in component_names]
+        return process_license_components(components, "scanner", vulnerability_check)
+
+    def _component_names(self, service):
+        return sorted(
+            License_Component.objects.filter(
+                product=self.product, origin_service=service, upload_filename="sbom.json"
+            ).values_list("component_name", flat=True)
+        )
+
+    def test_same_filename_with_different_services(self):
+        service_1 = Service.objects.get(id=1)
+        service_2 = Service.objects.get(id=2)
+
+        self.assertEqual(self._import(service_1, ["a", "b"]), (2, 0, 0))
+        self.assertEqual(self._import(service_2, ["b", "c"]), (2, 0, 0))
+
+        self.assertEqual(self._component_names(service_1), ["a", "b"])
+        self.assertEqual(self._component_names(service_2), ["b", "c"])
+
+        # A repeated import updates and deletes only the components of the same service
+        self.assertEqual(self._import(service_1, ["b"]), (0, 1, 1))
+
+        self.assertEqual(self._component_names(service_1), ["b"])
+        self.assertEqual(self._component_names(service_2), ["b", "c"])
+
+    def test_without_service_does_not_touch_components_of_services(self):
+        service_1 = Service.objects.get(id=1)
+
+        self.assertEqual(self._import(service_1, ["a"]), (1, 0, 0))
+        self.assertEqual(self._import(None, ["b"]), (1, 0, 0))
+
+        self.assertEqual(self._component_names(service_1), ["a"])
+        self.assertEqual(self._component_names(None), ["b"])
 
 
 class APIImportObservation(BaseTestCase):
