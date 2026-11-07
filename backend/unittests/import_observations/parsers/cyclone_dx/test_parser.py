@@ -264,3 +264,21 @@ example/example-frontend:dev --> alpine:3.17.3"""
             self.assertEqual("ca-certificates-bundle", license_component.component_name)
             self.assertEqual("20220614-r4", license_component.component_version)
             self.assertEqual(["MPL-2.0", "MIT"], license_component.unsaved_concluded_licenses)
+
+    def test_dependency_cycle(self):
+        with open(path.dirname(__file__) + "/files/dependency_cycle.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            license_components, scanner = parser_instance.get_license_components(data)
+
+            self.assertEqual("trivy / 0.58.0", scanner)
+            self.assertEqual(2, len(license_components))
+
+            dependencies = """a:1.0.0 --> b:1.0.0
+b:1.0.0 --> a:1.0.0"""
+            self.assertEqual("a", license_components[0].component_name)
+            self.assertEqual(dependencies, license_components[0].component_dependencies)
+            self.assertEqual("b", license_components[1].component_name)
+            self.assertEqual(dependencies, license_components[1].component_dependencies)
