@@ -12,6 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from application.commons.models import Settings
+from application.core.models import Branch, Product
 from application.import_observations.models import VulnerableCode_Cache
 from application.import_observations.parsers.vulnerablecode.parser import (
     VulnerableCodeComponent,
@@ -91,7 +92,13 @@ class VulnerableCodeScanner(BaseScanner):
         session.mount("http://", adapter)
         return session
 
-    def _do_scan(self, license_components: list[License_Component]) -> Any:
+    def _do_scan(
+        self,
+        license_components: list[License_Component],
+        product: Product,  # pylint: disable=unused-argument
+        branch: Optional[Branch],  # pylint: disable=unused-argument
+    ) -> Any:
+        # product and branch are used in the OSV scanner
         if not license_components:
             return []
 
