@@ -32,3 +32,6 @@ charts/secobserve/my_values.yaml
 openspec/
 .claude/
 .mcp.json
+kind/
+docker-compose/docker-compose-dev-kind.yaml
+bin/kind_dev.sh
