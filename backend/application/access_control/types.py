@@ -42,3 +42,17 @@ class MetricsTimespan:
         (METRICS_TIMESPAN_90_DAYS, METRICS_TIMESPAN_90_DAYS),
         (METRICS_TIMESPAN_365_DAYS, METRICS_TIMESPAN_365_DAYS),
     ]
+
+
+class ObservationColumn:
+    SCANNER_NAME = "scanner_name"
+    LAST_OBSERVATION_LOG = "last_observation_log"
+    HAS_POTENTIAL_DUPLICATES = "has_potential_duplicates"
+    UPDATE_IMPACT_SCORE = "update_impact_score"
+
+    OPTIONAL_COLUMNS = [
+        SCANNER_NAME,
+        LAST_OBSERVATION_LOG,
+        HAS_POTENTIAL_DUPLICATES,
+        UPDATE_IMPACT_SCORE,
+    ]
