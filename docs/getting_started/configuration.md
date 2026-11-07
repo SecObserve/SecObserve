@@ -51,6 +51,11 @@ A part of the configuration is done with environment variables, which need to be
 | `OSV_MAX_THREADS`      | optional    | Maximum number of concurrent connections per process used when fetching vulnerability data from `api.osv.dev`, shared by all OSV scans running at the same time. Default is `32`. Lower it if the OSV API returns connection resets or SSL errors under load. |
 | `OSV_SCAN_RETRIES`     | optional    | Number of retries of the automatic OSV scan of a product after a transient error, like a connection error, an HTTP status 429 or 5xx from `api.osv.dev` or a lost database connection. Default is `2`. |
 | `OSV_SCAN_RETRY_DELAY` | optional    | Seconds before the first retry of the automatic OSV scan of a product, each further retry waits twice as long. Default is `300`. |
+| `WEBHOOK_RETRY_DELAYS` | optional    | Seconds between delivery attempts of an outbound webhook and the steps of the endpoint backoff, separated by commas. The number of attempts is the count plus one. Default is `60,300,1800,7200,21600`. |
+| `WEBHOOK_TIMEOUT` | optional    | Connect and read timeout of an outbound webhook request in seconds. Default is `10`. |
+| `WEBHOOK_FAILURE_ALERT_THRESHOLD` | optional    | Consecutive failures of an outbound webhook before the alert is sent and before permanent failures pause the endpoint. Default is `5`. |
+| `WEBHOOK_DELIVERY_RETENTION_DAYS` | optional    | Housekeeping deletes webhook deliveries older than this number of days. Default is `30`. |
+| `WEBHOOK_ALLOWED_NETWORKS` | optional    | Comma separated CIDRs that outbound webhooks may reach although they are private. Webhooks to a host that resolves only into these networks may use http. Default is empty. |
 | `TIME_ZONE`            | optional    | [IANA time zone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) of the server, e.g. `Asia/Ho_Chi_Minh`. Default is `CET`. Dates that the server calculates, like the day of the metrics or the expiry date of a risk acceptance, are in this time zone, as are the times in the exports to Excel and CSV and the hours of the background tasks, see [Time zone of the background tasks](#time-zone-of-the-background-tasks). The backend does not start if the value is not a valid time zone. |
 
 

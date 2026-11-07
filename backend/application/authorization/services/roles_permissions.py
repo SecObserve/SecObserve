@@ -71,6 +71,11 @@ class Permissions(IntEnum):
     Api_Configuration_Delete = 3003
     Api_Configuration_Create = 3004
 
+    Webhook_View = 3101
+    Webhook_Edit = 3102
+    Webhook_Delete = 3103
+    Webhook_Create = 3104
+
     Product_Api_Token_Revoke = 4003
     Product_Api_Token_Create = 4004
 
@@ -175,6 +180,15 @@ class Permissions(IntEnum):
         }
 
     @classmethod
+    def get_webhook_permissions(cls) -> set["Permissions"]:
+        return {
+            Permissions.Webhook_View,
+            Permissions.Webhook_Edit,
+            Permissions.Webhook_Delete,
+            Permissions.Webhook_Create,
+        }
+
+    @classmethod
     def get_vex_permissions(cls) -> set["Permissions"]:
         return {
             Permissions.VEX_View,
@@ -225,6 +239,7 @@ def get_roles_with_permissions() -> dict[Roles, set[Permissions]]:
             Permissions.Service_View,
             Permissions.Observation_View,
             Permissions.Api_Configuration_View,
+            Permissions.Webhook_View,
             Permissions.VEX_View,
             Permissions.Concluded_License_View,
         },
@@ -247,6 +262,7 @@ def get_roles_with_permissions() -> dict[Roles, set[Permissions]]:
             Permissions.Observation_Log_Approval,
             Permissions.Observation_Assessment,
             Permissions.Api_Configuration_View,
+            Permissions.Webhook_View,
             Permissions.VEX_View,
             Permissions.License_Component_Edit,
             Permissions.Concluded_License_View,
@@ -291,6 +307,10 @@ def get_roles_with_permissions() -> dict[Roles, set[Permissions]]:
             Permissions.Api_Configuration_Edit,
             Permissions.Api_Configuration_Delete,
             Permissions.Api_Configuration_Create,
+            Permissions.Webhook_View,
+            Permissions.Webhook_Edit,
+            Permissions.Webhook_Delete,
+            Permissions.Webhook_Create,
             Permissions.VEX_View,
             Permissions.VEX_Edit,
             Permissions.VEX_Create,
@@ -343,6 +363,10 @@ def get_roles_with_permissions() -> dict[Roles, set[Permissions]]:
             Permissions.Api_Configuration_Edit,
             Permissions.Api_Configuration_Delete,
             Permissions.Api_Configuration_Create,
+            Permissions.Webhook_View,
+            Permissions.Webhook_Edit,
+            Permissions.Webhook_Delete,
+            Permissions.Webhook_Create,
             Permissions.Product_Api_Token_Revoke,
             Permissions.Product_Api_Token_Create,
             Permissions.VEX_View,
