@@ -41,6 +41,10 @@ To correctly identify other Linux packages, the Linux distribution and version h
 | Red Hat            | rhel_aus:8.4::appstream |
 | Ubuntu             | Pro:24.04:LTS |
 
+If the Linux distribution is set, or for Alpine and Debian packages if it can be determined from the PURL, OSV is queried with the name, ecosystem and version of the package instead of the PURL.
+
+For Red Hat, SUSE and openSUSE only the beginning of the version needs to be set, e.g. `enterprise_linux:9` for all ecosystems of Red Hat Enterprise Linux 9. For all other Linux distributions the complete version has to be set. Alpine packages are only found if a version is set, e.g. `v3.18`, or if it can be determined from the PURL.
+
 
 ## Manual scan
 
