@@ -1307,15 +1307,15 @@ pyflakes = ">=4.1.0,<4.2.0"
 
 [[package]]
 name = "flake8-isort"
-version = "7.0.0"
+version = "7.1.0"
 description = "flake8 plugin that integrates isort"
 optional = true
-python-versions = ">=3.10"
+python-versions = ">=3.11"
 groups = ["main"]
 markers = "extra == \"code-quality\""
 files = [
-    {file = "flake8_isort-7.0.0-py3-none-any.whl", hash = "sha256:c301a0e55fc77582348e636194b84b1a0baf0dfdaa6eddf3b0eeea75f8be7f36"},
-    {file = "flake8_isort-7.0.0.tar.gz", hash = "sha256:a677199d1197f826eb69084e7ac272f208f4583363285f43111c34272abe7e5d"},
+    {file = "flake8_isort-7.1.0-py3-none-any.whl", hash = "sha256:7450f0450fed9e5e805108f129cbc244b4a17c4c0dc04cb331f45397173a9e04"},
+    {file = "flake8_isort-7.1.0.tar.gz", hash = "sha256:ee28333c6deb834908cda1899c3da7d59ab0429482bb200fb7b3cc4182d2bcab"},
 ]
 
 [package.dependencies]
@@ -4085,4 +4085,4 @@ unittests = ["coverage", "django-coverage-plugin", "django-extensions"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.15"
-content-hash = "5feef67edf7c711115de2e1750fe388f79645b56e76a0b839b5b2e0407cc7306"
+content-hash = "f583efda85c85795c0c031462b65af4cc82be009cbe5defefb4305df8e62a926"

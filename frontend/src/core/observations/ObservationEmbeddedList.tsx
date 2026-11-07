@@ -15,7 +15,11 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT, PERMISSION_OBSERVATION_DELETE } from "../../access_control/types";
-import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
+import {
+    getSettingListSize,
+    getSettingRowsPerPage,
+    useObservationColumnVisibility,
+} from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
@@ -75,6 +79,7 @@ const ObservationsEmbeddedList = ({ product }: ObservationsEmbeddedListProps) =>
 };
 
 const ObservationsListContent = ({ product }: ObservationsEmbeddedListProps) => {
+    const isColumnVisible = useObservationColumnVisibility();
     const listContext = useListController({
         filter: { product: Number(product.id) },
         perPage: getSettingRowsPerPage(),
@@ -191,10 +196,23 @@ const ObservationsListContent = ({ product }: ObservationsEmbeddedListProps) => 
                                 )}
                                 {product?.has_potential_duplicates && (
                                     <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
+                                {isColumnVisible("scanner_name") && <TextField source="scanner_name" label="Scanner" />}
+                                {isColumnVisible("last_observation_log") && (
+                                    <FunctionField<Observation>
+                                        label="Age"
+                                        sortBy="last_observation_log"
+                                        render={(record) =>
+                                            record ? humanReadableDate(record.last_observation_log) : ""
+                                        }
+                                    />
                                 )}
-                                {has_attribute("update_impact_score", data, sort) && (
-                                    <TextField source="update_impact_score" label="Update impact score" />
+                                {isColumnVisible("has_potential_duplicates") && product?.has_potential_duplicates && (
+                                    <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
                                 )}
+                                {isColumnVisible("update_impact_score") &&
+                                    has_attribute("update_impact_score", data, sort) && (
+                                        <TextField source="update_impact_score" label="Update impact score" />
+                                    )}
                             </Datagrid>
                         )}
                     />

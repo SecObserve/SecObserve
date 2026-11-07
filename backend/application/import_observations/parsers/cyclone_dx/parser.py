@@ -420,18 +420,17 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         component_dict: dict[str, Component],
         dependency_dict: dict[str, list[str]],
     ) -> str:
-        dependencies: list[str] = []
+        dependencies: set[str] = set()
         self._get_dependencies_recursive(component_bom_ref, component_dict, dependency_dict, dependencies)
 
-        dependencies.sort()
-        return "\n".join(dependencies)
+        return "\n".join(sorted(dependencies))
 
     def _get_dependencies_recursive(
         self,
         component_bom_ref: str,
         component_dict: dict[str, Component],
         dependency_dict: dict[str, list[str]],
-        dependencies: list[str],
+        dependencies: set[str],
     ) -> None:
         if component_bom_ref in dependency_dict.keys():
             for dependency_id in dependency_dict[component_bom_ref]:
@@ -439,7 +438,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
                 translated_package_id = self._translate_package_id(component_bom_ref, component_dict)
                 dependency = f"{translated_dependency_id} --> {translated_package_id}"
                 if dependency not in dependencies:
-                    dependencies.append(dependency)
+                    dependencies.add(dependency)
                     self._get_dependencies_recursive(dependency_id, component_dict, dependency_dict, dependencies)
 
     def _translate_package_id(self, component_bom_ref: str, component_dict: dict[str, Component]) -> str:

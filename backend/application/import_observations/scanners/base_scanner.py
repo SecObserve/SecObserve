@@ -126,7 +126,7 @@ class BaseScanner:
 
         jsonpickle.set_encoder_options("json", ensure_ascii=False)
 
-        scan_result = self._do_scan(license_components)
+        scan_result = self._do_scan(license_components, product, branch)
 
         observations, scanner = self.parser.get_observations(data=scan_result, product=product, branch=branch)
 
@@ -167,5 +167,5 @@ class BaseScanner:
 
         return numbers[0], numbers[1], numbers[2]
 
-    def _do_scan(self, license_components: list[License_Component]) -> Any:
+    def _do_scan(self, license_components: list[License_Component], product: Product, branch: Optional[Branch]) -> Any:
         raise NotImplementedError("scan_license_components() must be overridden")
