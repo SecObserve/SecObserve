@@ -83,6 +83,7 @@ export function observationFilters(product?: Product, review = false, product_fi
         { column: SCAN, input: <TextInput source="api_configuration_name" label="API configuration" /> }
     );
 
+    secondary.push({ column: TRIAGE, input: <NullableBooleanInput source="assessed" label="Assessed" /> });
     if (!product || product.has_priorities) {
         secondary.push({
             column: TRIAGE,

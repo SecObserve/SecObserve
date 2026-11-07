@@ -409,6 +409,7 @@ class Observation(Model):
     created = DateTimeField(auto_now_add=True)
     modified = DateTimeField(auto_now=True)
     last_observation_log = DateTimeField(default=timezone.now)
+    last_assessment = DateTimeField(null=True)
     identity_hash = CharField(max_length=64)
 
     general_rule = ForeignKey(

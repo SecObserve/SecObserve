@@ -27,6 +27,11 @@ In the assessment dialog the user can change either the severity and/or the stat
 
 A new entry with the changed values is stored in the `Observation Log` after the assessment has been saved.
 
+The lists of observations show in the column `Assessed` when an observation has been assessed last, and the filter `Assessed` finds the observations that have or have not been assessed.
+Every saved assessment counts, also one with only a comment, one that needs approval or has been rejected, and one propagated from another branch.
+Removing the assessment and the expiry of a risk acceptance mark the observation as not assessed again.
+Changes by parsers, rules and VEX statements are no assessments.
+
 ## Approvals
 
 With the default settings of the product, the assessment is activated right away. If more control is needed, the product can be configured to require an approval before the assessment is activated. This can be done while creating or editing a product:
