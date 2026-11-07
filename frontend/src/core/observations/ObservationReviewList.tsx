@@ -165,22 +165,6 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                <TextField source="scanner_name" label="Scanner" />
-                                <FunctionField<Observation>
-                                    label="Age"
-                                    sortBy="last_observation_log"
-                                    render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                                />
-                                {has_attribute("last_assessment", data, sort) && (
-                                    <FunctionField<Observation>
-                                        label="Assessed"
-                                        sortBy="last_assessment"
-                                        render={(record) =>
-                                            record?.last_assessment ? humanReadableDate(record.last_assessment) : ""
-                                        }
-                                    />
-                                )}
-                                {product?.has_potential_duplicates && (
                                 {isColumnVisible("scanner_name") && <TextField source="scanner_name" label="Scanner" />}
                                 {isColumnVisible("last_observation_log") && (
                                     <FunctionField<Observation>
@@ -188,6 +172,15 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                         sortBy="last_observation_log"
                                         render={(record) =>
                                             record ? humanReadableDate(record.last_observation_log) : ""
+                                        }
+                                    />
+                                )}
+                                {isColumnVisible("last_assessment") && has_attribute("last_assessment", data, sort) && (
+                                    <FunctionField<Observation>
+                                        label="Assessed"
+                                        sortBy="last_assessment"
+                                        render={(record) =>
+                                            record?.last_assessment ? humanReadableDate(record.last_assessment) : ""
                                         }
                                     />
                                 )}

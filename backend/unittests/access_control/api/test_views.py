@@ -807,7 +807,9 @@ class TestMySettings(BaseTestCase):
     def test_my_settings_hidden_observation_columns_all(self, save_mock, authentication_mock):
         authentication_mock.return_value = self.user_internal, None
 
-        hidden_columns = "scanner_name,last_observation_log,has_potential_duplicates,update_impact_score"
+        hidden_columns = (
+            "scanner_name,last_observation_log,last_assessment,has_potential_duplicates,update_impact_score"
+        )
         api_client = APIClient()
         response = api_client.patch(
             "/api/users/my_settings/", {"setting_hidden_observation_columns": hidden_columns}, "json"

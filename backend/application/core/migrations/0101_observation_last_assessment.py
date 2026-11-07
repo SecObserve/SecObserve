@@ -15,4 +15,8 @@ class Migration(migrations.Migration):
             name="last_assessment",
             field=models.DateTimeField(null=True),
         ),
+        migrations.AddIndex(
+            model_name="observation",
+            index=models.Index(fields=["last_assessment"], name="core_observ_last_as_dc328f_idx"),
+        ),
     ]
