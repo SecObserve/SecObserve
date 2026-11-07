@@ -48,6 +48,7 @@ class User(AbstractUser):
         max_length=8, choices=MetricsTimespan.METRICS_TIMESPAN_CHOICES, default=MetricsTimespan.METRICS_TIMESPAN_7_DAYS
     )
     setting_rows_per_page = IntegerField(choices=RowsPerPageChoices, default=25)
+    setting_hidden_observation_columns = CharField(max_length=1024, blank=True)
 
     oidc_groups_hash = CharField(max_length=64, blank=True)
     is_oidc_user = BooleanField(default=False)
