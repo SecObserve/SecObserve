@@ -12,9 +12,13 @@
 
 ## Release 1.64.0
 
+**Security notice**
+
+This releases fixes a security advisory: [SSRF protection of webhook notifications can be bypassed with a backslash URL or DNS rebinding](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-w76r-72pp-52j7)
+
 **Notable changes**
 
-* There is a new [full text search](../usage/full_text_search.md) for observations, which searches in their texts, origins and the comments of their observation log. It is only available with PostgreSQL and deactivated by default, because it needs additional indexes in the database. Administrators activate it with the management command `python manage.py full_text_search activate` in the backend container, see [Activation](../usage/full_text_search.md#activation).
+There is a new [full text search](../usage/full_text_search.md) for observations, which searches in their texts, origins and the comments of their observation log. It is only available with PostgreSQL and deactivated by default, because it needs additional indexes in the database. Administrators activate it with the management command `python manage.py full_text_search activate` in the backend container, see [Activation](../usage/full_text_search.md#activation).
 
 ## Release 1.63.0
 
