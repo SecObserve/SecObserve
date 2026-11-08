@@ -3,7 +3,7 @@ import time
 from unittest.mock import patch
 
 import jwt
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from django.core.cache import cache
 from django.core.management import call_command
 from django.http import HttpRequest
@@ -337,6 +337,19 @@ class TestOIDCAuthentication(BaseTestCase):
 
         self.assertEqual(self.user_internal, user)
         self.assertEqual(self.user_internal.username, payload["preferred_username"])
+
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    def test_validate_jwt_key_type_mismatch(self, get_signing_key_mock, pyjwkclient_mock, openid_configuration_mock):
+        token = self._create_es256_token(ec.generate_private_key(ec.SECP256R1()), "https://authority")
+        rsa_public_key = rsa.generate_private_key(public_exponent=65537, key_size=2048).public_key()
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK(rsa_public_key)
+
+        with self.assertRaises(AuthenticationFailed):
+            OIDCAuthentication()._validate_jwt(token)
 
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")

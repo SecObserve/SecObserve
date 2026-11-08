@@ -473,6 +473,25 @@ class TestAuthenticate(BaseTestCase):
         user_mock.assert_called_with(request_data)
         jwt_mock.assert_called_with(self.user_internal)
 
+    def test_authenticate_view_invalid_body(self):
+        api_client = APIClient()
+        for request_data in (
+            {"username": "user@example.com", "password": ["not-so-secret"]},
+            {"username": "user@example.com", "password": {"a": "b"}},
+            {"username": "user@example.com"},
+        ):
+            with self.subTest(request_data=request_data):
+                response = api_client.post(reverse("authenticate"), request_data, "json")
+                self.assertEqual(400, response.status_code)
+
+    def test_authenticate_view_wrong_credentials(self):
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "not-so-secret"}
+        response = api_client.post(reverse("authenticate"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+
 
 class TestGetAuthenticatedUser(BaseTestCase):
     @patch("application.access_control.api.views.django_authenticate")
