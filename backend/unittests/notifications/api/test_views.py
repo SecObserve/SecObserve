@@ -83,6 +83,24 @@ class TestViews(BaseTestCase):
         notification_viewed = Notification_Viewed.objects.get(notification_id=3, user=user)
         self.assertIsNotNone(notification_viewed)
 
+    @patch("application.notifications.api.views.logger.warning")
+    @patch("application.notifications.api.views.send_slack_notification_test")
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_test_webhook_does_not_return_the_error(self, mock_authentication, mock_send, mock_logging):
+        mock_authentication.return_value = self.user_internal, None
+        mock_send.side_effect = ConnectionError("Connection refused")
+
+        api_client = APIClient()
+        response = api_client.post(
+            "/api/notifications/test_webhook/",
+            data={"webhook_url": "https://hooks.example.org/", "webhook_type": "slack"},
+            format="json",
+        )
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual({"message": "Failed to send test notification, see the server log for details"}, response.data)
+        self.assertIn("Connection refused", mock_logging.call_args.args[0])
+
 
 class TestProductNotificationViews(BaseTestCase):
     """

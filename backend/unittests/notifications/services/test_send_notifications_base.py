@@ -5,7 +5,14 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 
-from requests import HTTPError, Response
+from requests import ConnectionError as RequestsConnectionError
+from requests import ConnectTimeout, HTTPError, Request, Response
+from urllib3.exceptions import (
+    ConnectTimeoutError,
+    MaxRetryError,
+    NewConnectionError,
+    ProtocolError,
+)
 
 import config.settings.base as settings_module
 from application.access_control.models import User
@@ -19,7 +26,10 @@ from application.notifications.services.send_notifications_base import (
     _get_notification_email_to,
     _get_notification_ms_teams_webhook,
     _get_notification_slack_webhook,
+    _get_webhook_addresses,
     _is_msteams_v2,
+    _PinnedHostAdapter,
+    _post_webhook,
     send_email_notification,
     send_msteams_notification,
     send_slack_notification,
@@ -108,7 +118,7 @@ class TestPushNotifications(BaseTestCase):
     # --- send_msteams_notification ---
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_internal_host_blocked(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("127.0.0.1", 443))]
@@ -119,7 +129,7 @@ class TestPushNotifications(BaseTestCase):
         mock_request.assert_not_called()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_empty_message(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -131,7 +141,7 @@ class TestPushNotifications(BaseTestCase):
         mock_request.assert_not_called()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_exception(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -148,15 +158,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://tenant.webhook.office.com/webhookb2/test",
+            url="https://1.2.3.4/webhookb2/test",
             data="test_message",
             allow_redirects=False,
-            headers={},
+            headers={"Host": "tenant.webhook.office.com"},
             timeout=60,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_not_ok(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -171,15 +181,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://tenant.webhook.office.com/webhookb2/test",
+            url="https://1.2.3.4/webhookb2/test",
             data="test_message",
-            headers={},
+            headers={"Host": "tenant.webhook.office.com"},
             allow_redirects=False,
             timeout=60,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_success(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -193,15 +203,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://tenant.webhook.office.com/webhookb2/test",
+            url="https://1.2.3.4/webhookb2/test",
             data="test_message",
             allow_redirects=False,
-            headers={},
+            headers={"Host": "tenant.webhook.office.com"},
             timeout=60,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_v2_format_exception(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -216,15 +226,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://1.2.3.4/webhook",
             data="test_message",
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_msteams_notification_v2_format_success(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -238,9 +248,9 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://1.2.3.4/webhook",
             data="test_message",
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json", "Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
         )
@@ -248,7 +258,7 @@ class TestPushNotifications(BaseTestCase):
     # --- send_slack_notification ---
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_slack_notification_empty_message(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -260,7 +270,7 @@ class TestPushNotifications(BaseTestCase):
         mock_request.assert_not_called()
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_slack_notification_exception(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -277,14 +287,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://1.2.3.4/webhook",
             data="test_message",
+            headers={"Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_slack_notification_not_ok(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -299,14 +310,15 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://1.2.3.4/webhook",
             data="test_message",
+            headers={"Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
-    @patch("application.notifications.services.send_notifications_base.requests.request")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
     @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
     def test_send_slack_notification_success(self, mock_getaddrinfo, mock_request, mock_create_message):
         mock_getaddrinfo.return_value = [(2, 1, 6, "", ("1.2.3.4", 443))]
@@ -320,11 +332,155 @@ class TestPushNotifications(BaseTestCase):
         mock_create_message.assert_called_with("test_template")
         mock_request.assert_called_with(
             method="POST",
-            url="https://hooks.example.org/webhook",
+            url="https://1.2.3.4/webhook",
             data="test_message",
+            headers={"Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
         )
+
+    @patch("application.notifications.services.send_notifications_base._create_notification_message")
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_send_slack_notification_dns_rebinding(self, mock_getaddrinfo, mock_request, mock_create_message):
+        # A rebinding name answers the check with a public address and a later lookup with an internal one
+        mock_getaddrinfo.side_effect = [
+            [(2, 1, 6, "", ("1.2.3.4", 443))],
+            [(2, 1, 6, "", ("127.0.0.1", 443))],
+        ]
+        mock_create_message.return_value = "test_message"
+        response = Response()
+        response.status_code = 200
+        mock_request.return_value = response
+
+        send_slack_notification("https://rebind.example.org/webhook", "test_template")
+
+        mock_getaddrinfo.assert_called_once()
+        self.assertEqual("https://1.2.3.4/webhook", mock_request.call_args.kwargs["url"])
+        self.assertEqual({"Host": "rebind.example.org"}, mock_request.call_args.kwargs["headers"])
+
+    # --- _get_webhook_addresses ---
+
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_get_webhook_addresses_checks_the_host_requests_connects_to(self, mock_getaddrinfo):
+        addresses = {"hooks.example.org": "1.2.3.4", "127.0.0.1": "127.0.0.1", "internal.example.org": "10.0.0.5"}
+        mock_getaddrinfo.side_effect = lambda host, port, **kwargs: [(2, 1, 6, "", (addresses[host], port))]
+
+        # urllib3 ends the host at the backslash, urlsplit() takes the host after the @
+        for webhook, host in [
+            ("https://127.0.0.1:8080\\@hooks.example.org/", "127.0.0.1"),
+            ("https://127.0.0.1:8080\\@hooks.example.org:8443/", "127.0.0.1"),
+            ("https://internal.example.org\\@hooks.example.org/../../admin", "internal.example.org"),
+        ]:
+            with self.subTest(webhook=webhook):
+                self.assertEqual([], _get_webhook_addresses(webhook))
+                self.assertEqual(host, mock_getaddrinfo.call_args.args[0])
+
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_get_webhook_addresses_rejects_user_info(self, mock_getaddrinfo):
+        self.assertEqual([], _get_webhook_addresses("https://user:password@hooks.example.org/webhook"))
+        mock_getaddrinfo.assert_not_called()
+
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_get_webhook_addresses_rejects_non_public_addresses(self, mock_getaddrinfo):
+        for address in [
+            "100.64.0.1",
+            "127.0.0.1",
+            "10.0.0.1",
+            "169.254.169.254",
+            "0.0.0.0",
+            "224.0.0.1",
+            "::1",
+            "::ffff:127.0.0.1",
+            "::ffff:10.0.0.1",
+            "fd00::1",
+            "64:ff9b::7f00:1",
+        ]:
+            with self.subTest(address=address):
+                mock_getaddrinfo.return_value = [
+                    (2, 1, 6, "", ("1.2.3.4", 443)),
+                    (2, 1, 6, "", (address, 443)),
+                ]
+                self.assertEqual([], _get_webhook_addresses("https://hooks.example.org/webhook"))
+
+    @patch("application.notifications.services.send_notifications_base.socket.getaddrinfo")
+    def test_get_webhook_addresses_returns_all_public_addresses(self, mock_getaddrinfo):
+        mock_getaddrinfo.return_value = [
+            (10, 1, 6, "", ("2606:4700:4700::1111", 443, 0, 0)),
+            (2, 1, 6, "", ("1.2.3.4", 443)),
+        ]
+
+        self.assertEqual(
+            ["2606:4700:4700::1111", "1.2.3.4"], _get_webhook_addresses("https://hooks.example.org:443/webhook")
+        )
+        mock_getaddrinfo.assert_called_with("hooks.example.org", 443, proto=6)
+
+    # --- _post_webhook ---
+
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
+    def test_post_webhook_keeps_port_path_query_and_brackets_ipv6(self, mock_request):
+        _post_webhook(
+            "https://hooks.example.org:8443/path?x=1", ["2001:db8::1"], "data", {"Content-Type": "text/plain"}
+        )
+
+        mock_request.assert_called_with(
+            method="POST",
+            url="https://[2001:db8::1]:8443/path?x=1",
+            data="data",
+            headers={"Content-Type": "text/plain", "Host": "hooks.example.org:8443"},
+            allow_redirects=False,
+            timeout=60,
+        )
+
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
+    def test_post_webhook_tries_the_next_address_if_the_connection_fails(self, mock_request):
+        response = Response()
+        response.status_code = 200
+        mock_request.side_effect = [
+            RequestsConnectionError(MaxRetryError(None, "/", NewConnectionError(None, "refused"))),
+            ConnectTimeout(MaxRetryError(None, "/", ConnectTimeoutError("timeout"))),
+            response,
+        ]
+
+        self.assertEqual(
+            response, _post_webhook("https://hooks.example.org/webhook", ["1.2.3.4", "1.2.3.5", "1.2.3.6"], "data", {})
+        )
+        self.assertEqual(
+            ["https://1.2.3.4/webhook", "https://1.2.3.5/webhook", "https://1.2.3.6/webhook"],
+            [call.kwargs["url"] for call in mock_request.call_args_list],
+        )
+
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
+    def test_post_webhook_does_not_send_twice(self, mock_request):
+        mock_request.side_effect = RequestsConnectionError(ProtocolError("Connection aborted."))
+
+        with self.assertRaises(RequestsConnectionError):
+            _post_webhook("https://hooks.example.org/webhook", ["1.2.3.4", "1.2.3.5"], "data", {})
+        mock_request.assert_called_once()
+
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
+    def test_post_webhook_raises_the_last_connection_error(self, mock_request):
+        mock_request.side_effect = RequestsConnectionError(
+            MaxRetryError(None, "/", NewConnectionError(None, "refused"))
+        )
+
+        with self.assertRaises(RequestsConnectionError):
+            _post_webhook("https://hooks.example.org/webhook", ["1.2.3.4", "1.2.3.5"], "data", {})
+        self.assertEqual(2, mock_request.call_count)
+
+    def test_pinned_host_adapter_verifies_the_host_name(self):
+        adapter = _PinnedHostAdapter("hooks.example.org")
+
+        request = Request("POST", "https://1.2.3.4/webhook").prepare()
+        host_params, pool_kwargs = adapter.build_connection_pool_key_attributes(request, True)
+        self.assertEqual("1.2.3.4", host_params["host"])
+        self.assertEqual("hooks.example.org", pool_kwargs["server_hostname"])
+        self.assertEqual("hooks.example.org", pool_kwargs["assert_hostname"])
+
+        request = Request("POST", "http://1.2.3.4/webhook").prepare()
+        _, pool_kwargs = adapter.build_connection_pool_key_attributes(request, True)
+        self.assertNotIn("server_hostname", pool_kwargs)
+        self.assertNotIn("assert_hostname", pool_kwargs)
 
     # --- _create_notification_message ---
 
