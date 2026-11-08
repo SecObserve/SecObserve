@@ -62,6 +62,11 @@ class TestHasOIDCBearerHeader(BaseTestCase):
         request.META["HTTP_AUTHORIZATION"] = b"Bearer"
         self.assertFalse(has_oidc_bearer_header(request))
 
+    def test_header_not_utf8(self):
+        request = HttpRequest()
+        request.META["HTTP_AUTHORIZATION"] = b"Bearer\xff token"
+        self.assertFalse(has_oidc_bearer_header(request))
+
 
 class TestGetFreshlyAuthenticatedOIDCUser(BaseTestCase):
     def _set_max_authentication_age(self, max_authentication_age_minutes: int, clock_skew: int = 0) -> None:

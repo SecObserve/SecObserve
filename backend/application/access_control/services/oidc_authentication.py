@@ -35,8 +35,13 @@ class OIDCAuthentication(BaseAuthentication):
         if len(auth) > 2:
             raise AuthenticationFailed("Invalid token header: Token string should not contain spaces.")
 
-        auth_prefix = auth[0].decode("UTF-8")
-        auth_token = auth[1].decode("UTF-8")
+        try:
+            auth_prefix = auth[0].decode("UTF-8")
+            auth_token = auth[1].decode("UTF-8")
+        except UnicodeDecodeError as e:
+            raise AuthenticationFailed(
+                "Invalid token header: Token string should not contain invalid characters."
+            ) from e
 
         if auth_prefix.lower() != OIDC_PREFIX.lower():
             # Authorization header is possibly for another backend
