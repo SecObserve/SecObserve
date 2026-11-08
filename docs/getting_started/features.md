@@ -40,6 +40,7 @@
 | [Import/export vulnerabilities from/to VEX documents (CSAF, OpenVEX)](../integrations/vex.md) | :material-plus-circle-outline: |
 | [Vulnerability scanning from OSV](../integrations/osv_scan.md) | :material-plus-circle-outline: |
 | [Vulnerability scanning from VulnerableCode](../integrations/vulnerablecode_scan.md) | :material-plus-circle-outline: |
+| [Import of components from ScanCode.io](../integrations/scancodeio.md) | :material-plus-circle-outline: |
 | [Export of data to Microsoft Excel and CSV](../integrations/observations_export.md) | :material-plus-circle-outline: |
 | [Export metrics to CodeCharta](../integrations/codecharta.md) | :material-plus-circle-outline: |
 | [Notifications to Microsoft Teams, Slack and email](../usage/notifications.md) | :material-plus-circle-outline: |
