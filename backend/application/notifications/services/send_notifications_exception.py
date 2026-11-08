@@ -3,6 +3,7 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
+from django.db import DatabaseError
 from django.utils import timezone
 from huey.contrib.djhuey import on_commit_task
 
@@ -209,12 +210,16 @@ def _ratelimit_exception(
     if settings.exception_rate_limit == 0:
         return True
 
-    # ponytail: two processes checking in the same instant can both notify, a lock would be needed to prevent that
-    return not Notification.objects.filter(
-        type=Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION,
-        created__gte=timezone.now() - timedelta(seconds=settings.exception_rate_limit),
-        **_get_notification_values(exception, is_task, function, arguments),
-    ).exists()
+    # Two processes checking in the same instant can both notify, a lock would be needed to prevent that
+    try:
+        return not Notification.objects.filter(
+            type=Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION,
+            created__gte=timezone.now() - timedelta(seconds=settings.exception_rate_limit),
+            **_get_notification_values(exception, is_task, function, arguments),
+        ).exists()
+    except DatabaseError:
+        # The database itself may be the failing part, which must not suppress the notification
+        return True
 
 
 def _get_stack_trace(exc: Exception, format_as_code: bool) -> str:

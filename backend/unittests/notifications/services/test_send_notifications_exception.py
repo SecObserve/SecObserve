@@ -1,6 +1,7 @@
 from datetime import timedelta
 from unittest.mock import ANY, call, patch
 
+from django.db import OperationalError
 from django.utils import timezone
 
 from application.commons.models import Settings
@@ -429,6 +430,12 @@ class TestPushNotifications(BaseTestCase):
         self._create_notification(1)
 
         self.assertTrue(_ratelimit_exception(Exception("test_exception"), None, None, is_task=True))
+
+    def test_ratelimit_exception_database_error_notifies(self):
+        self._set_rate_limit(10)
+
+        with patch.object(Notification.objects, "filter", side_effect=OperationalError("connection lost")):
+            self.assertTrue(_ratelimit_exception(Exception("test_exception")))
 
     # --- _get_stack_trace ---
 
