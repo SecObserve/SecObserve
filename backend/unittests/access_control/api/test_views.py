@@ -484,6 +484,28 @@ class TestAuthenticate(BaseTestCase):
                 response = api_client.post(reverse("authenticate"), request_data, "json")
                 self.assertEqual(400, response.status_code)
 
+    @patch("application.access_control.api.views.django_authenticate")
+    def test_authenticate_view_password_not_trimmed(self, mock):
+        mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "  not-so-secret  "}
+        response = api_client.post(reverse("authenticate"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        mock.assert_called_once_with(username="user@example.com", password="  not-so-secret  ")
+
+    @patch("application.access_control.api.views.django_authenticate")
+    def test_authenticate_view_long_password(self, mock):
+        mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "a" * 200}
+        response = api_client.post(reverse("authenticate"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        mock.assert_called_once_with(username="user@example.com", password="a" * 200)
+
     def test_authenticate_view_wrong_credentials(self):
         api_client = APIClient()
         request_data = {"username": "user@example.com", "password": "not-so-secret"}

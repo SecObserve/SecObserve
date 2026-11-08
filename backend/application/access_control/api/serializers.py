@@ -347,7 +347,7 @@ class UserSettingsSerializer(ModelSerializer):
 
 class AuthenticationRequestSerializer(Serializer):
     username = CharField(max_length=150, required=True)
-    password = CharField(max_length=128, required=True)
+    password = CharField(max_length=255, required=True, trim_whitespace=False)
 
 
 class AuthenticationResponseSerializer(Serializer):
