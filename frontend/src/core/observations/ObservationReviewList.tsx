@@ -175,6 +175,15 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                         }
                                     />
                                 )}
+                                {isColumnVisible("last_assessment") && has_attribute("last_assessment", data, sort) && (
+                                    <FunctionField<Observation>
+                                        label="Assessed"
+                                        sortBy="last_assessment"
+                                        render={(record) =>
+                                            record?.last_assessment ? humanReadableDate(record.last_assessment) : ""
+                                        }
+                                    />
+                                )}
                                 {isColumnVisible("has_potential_duplicates") && product?.has_potential_duplicates && (
                                     <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
                                 )}

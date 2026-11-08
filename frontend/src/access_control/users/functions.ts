@@ -172,6 +172,7 @@ export function getSettingRowsPerPage(): number {
 export const OBSERVATION_OPTIONAL_COLUMNS = [
     { name: "scanner_name", label: "Scanner" },
     { name: "last_observation_log", label: "Age" },
+    { name: "last_assessment", label: "Assessed" },
     { name: "has_potential_duplicates", label: "Duplicates" },
     { name: "update_impact_score", label: "Update impact score" },
 ] as const;

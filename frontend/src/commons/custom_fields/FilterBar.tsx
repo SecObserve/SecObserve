@@ -50,7 +50,7 @@ interface FilterBarProps {
     actions?: ReactNode;
 }
 
-// One wrapping row: the primary filters, MORE FILTERS, optional actions and a chip for each active secondary filter.
+// One wrapping row: the primary filters, MORE FILTERS, a chip for each active secondary filter and optional actions.
 export const FilterBar = ({ filters, moreFilters, saveQuery = false, actions }: FilterBarProps) => {
     const { filterValues, displayedFilters, setFilters, sort, perPage, resource } = useListContext();
     const navigate = useNavigate();
@@ -100,7 +100,6 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false, actions }: 
             >
                 More filters
             </Button>
-            {actions}
             {active.map((filter) => (
                 <Chip
                     key={sourceOf(filter)}
@@ -115,6 +114,7 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false, actions }: 
                     sx={{ marginBottom: 1.75, marginTop: 1.75, marginLeft: 1 }}
                 />
             ))}
+            {actions}
             <Popover
                 open={Boolean(position)}
                 anchorReference="anchorPosition"

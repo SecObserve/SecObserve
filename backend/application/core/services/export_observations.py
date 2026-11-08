@@ -63,6 +63,7 @@ COLUMNS = [
     ExportColumn("Created", "created", 20),
     ExportColumn("Last seen", "import_last_seen", 20),
     ExportColumn("Last change", "last_observation_log", 20),
+    ExportColumn("Last assessment", "last_assessment", 20),
     ExportColumn("Modified", "modified", 20),
     ExportColumn("Description", "description", 60),
     ExportColumn("Recommendation", "recommendation", 60),
