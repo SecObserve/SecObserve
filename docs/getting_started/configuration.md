@@ -29,6 +29,7 @@ A part of the configuration is done with environment variables, which need to be
 | `GUNICORN_WORKERS`     | optional   | Number of worker processes for the Gunicorn web server, see [Gunicorn documentation](https://docs.gunicorn.org/en/stable/design.html#how-many-workers). Default is 3. |
 | `GUNICORN_THREADS`     | optional   | Number of worker threads for the Gunicorn web server, default is 10. |
 | `GUNICORN_LIMIT_REQUEST_FIELD_SIZE` | optional | Limits the allowed size of an HTTP request header field, default is 16380. |
+| `LOGIN_THROTTLE_RATE`  | optional    | Maximum rate of password authentication requests per username, in the format `<number>/<second\|minute\|hour\|day>`. Default is `10/minute`. The rate is counted per backend process, because the cache is local to the process. |
 | `OIDC_AUTHORITY`       | mandatory   | The authority is a URL that hosts the OpenID configuration well-known endpoint.  |
 | `OIDC_ISSUER`          | optional    | The expected issuer (`iss` claim) of the tokens. Default is the `issuer` of the OpenID configuration. Needs to be set if the backend reaches the OpenID Connect provider with another URL than the browser, see [OpenID Connect authentication](../integrations/oidc_authentication.md#issuer-validation). |
 | `OIDC_CLIENT_ID`       | mandatory   | The client ID is the unique *Application (client) ID* assigned to your app by the OpenID Connect provider when the app was registered. |

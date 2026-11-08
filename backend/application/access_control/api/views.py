@@ -18,13 +18,14 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
@@ -88,6 +89,21 @@ from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
 
 logger = logging.getLogger("secobserve.access_control")
+
+
+# ponytail: counted per backend process (LocMemCache), use a shared cache backend to count across processes
+class LoginRateThrottle(SimpleRateThrottle):
+    scope = "login"
+
+    def get_cache_key(self, request: Request, view: APIView) -> str | None:
+        try:
+            data = request.data
+        except ParseError:
+            return None
+        username = data.get("username") if isinstance(data, dict) else None
+        if not isinstance(username, str) or not username:
+            return None
+        return self.cache_format % {"scope": self.scope, "ident": username.lower()}
 
 
 class UserViewSet(ModelViewSet):
@@ -288,6 +304,7 @@ class ApiTokenViewSet(ListModelMixin, GenericViewSet):
 
 class UserAPITokenCreateView(APIView):
     authentication_classes = []
+    throttle_classes = [*APIView.throttle_classes, LoginRateThrottle]
     permission_classes = []
 
     @extend_schema(
@@ -324,6 +341,7 @@ class UserAPITokenCreateView(APIView):
 
 class UserAPITokenRevokeView(APIView):
     authentication_classes = []
+    throttle_classes = [*APIView.throttle_classes, LoginRateThrottle]
     permission_classes = []
 
     @extend_schema(
@@ -354,6 +372,7 @@ class UserAPITokenRevokeView(APIView):
 
 class AuthenticateView(APIView):
     authentication_classes = []
+    throttle_classes = [*APIView.throttle_classes, LoginRateThrottle]
     permission_classes = []
 
     @extend_schema(

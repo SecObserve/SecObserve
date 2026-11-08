@@ -408,7 +408,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
-    "DEFAULT_THROTTLE_RATES": {"anon": "10/second", "user": "100/second"},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "10/second",
+        "user": "100/second",
+        "login": env.str("LOGIN_THROTTLE_RATE", "10/minute"),
+    },
     "EXCEPTION_HANDLER": "notifications.api.exception_handler.custom_exception_handler",
 }
 
