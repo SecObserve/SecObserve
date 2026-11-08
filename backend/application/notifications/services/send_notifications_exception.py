@@ -3,6 +3,7 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
+from django.utils import timezone
 from huey.contrib.djhuey import on_commit_task
 
 from application.access_control.models import User
@@ -22,9 +23,6 @@ from application.notifications.services.send_notifications_base import (
 )
 
 logger = logging.getLogger("secobserve.notifications")
-
-
-LAST_EXCEPTIONS: dict[str, datetime] = {}
 
 
 @on_commit_task()
@@ -107,8 +105,7 @@ def send_exception_notification(exception: Exception) -> None:
             )
 
         Notification.objects.create(
-            name=f'Exception "{get_classname(exception)}" has occured',
-            message=str(exception),
+            **_get_notification_values(exception),
             user=get_current_user(),
             type=Notification.TYPE_EXCEPTION,
         )
@@ -180,10 +177,7 @@ def send_task_exception_notification(
                 product = observation.product
 
         Notification.objects.create(
-            name=f'Exception "{get_classname(exception)}" has occured',
-            message=str(exception),
-            function=str(function),
-            arguments=_get_arguments_string(arguments),
+            **_get_notification_values(exception, function, arguments),
             product=product,
             observation=observation,
             user=user,
@@ -191,23 +185,34 @@ def send_task_exception_notification(
         )
 
 
-def _ratelimit_exception(exception: Exception, function: str = None, arguments: dict = None) -> bool:
+def _get_notification_values(
+    exception: Exception, function: Optional[str] = None, arguments: Optional[dict] = None
+) -> dict:
+    values = {
+        "name": f'Exception "{get_classname(exception)}" has occured',
+        "message": str(exception),
+    }
+    if function is not None or arguments is not None:
+        values["function"] = str(function)
+        values["arguments"] = _get_arguments_string(arguments)
+    return values
+
+
+def _ratelimit_exception(
+    exception: Exception, function: Optional[str] = None, arguments: Optional[dict] = None
+) -> bool:
     settings = Settings.load()
 
-    key = get_classname(exception) + "/" + str(exception) + "/" + str(function) + "/" + _get_arguments_string(arguments)
-    now = datetime.now()
+    if settings.exception_rate_limit == 0:
+        return True
 
-    if key in LAST_EXCEPTIONS:
-        last_datetime = LAST_EXCEPTIONS[key]
-        difference: timedelta = now - last_datetime
-        if difference.total_seconds() >= settings.exception_rate_limit:
-            LAST_EXCEPTIONS[key] = now
-            return True
-
-        return False
-
-    LAST_EXCEPTIONS[key] = now
-    return True
+    is_task = function is not None or arguments is not None
+    # ponytail: two processes checking in the same instant can both notify, a lock would be needed to prevent that
+    return not Notification.objects.filter(
+        type=Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION,
+        created__gte=timezone.now() - timedelta(seconds=settings.exception_rate_limit),
+        **_get_notification_values(exception, function, arguments),
+    ).exists()
 
 
 def _get_stack_trace(exc: Exception, format_as_code: bool) -> str:
