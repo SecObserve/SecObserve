@@ -88,6 +88,17 @@ class TestAPIToken(BaseTestCase):
         user_mock.assert_called_with(request_data)
         api_mock.assert_called_with(self.user_internal, "api_token_name", None)
 
+    @patch("application.access_control.api.views.django_authenticate")
+    def test_create_api_token_view_password_not_trimmed(self, mock):
+        mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "  not-so-secret  ", "name": "api_token_name"}
+        response = api_client.post(reverse("create_user_api_token"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        mock.assert_called_once_with(username="user@example.com", password="  not-so-secret  ")
+
     # --- create_user_api_token with OIDC ---
 
     @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")

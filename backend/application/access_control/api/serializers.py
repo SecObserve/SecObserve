@@ -386,7 +386,7 @@ class ApiTokenCreateRequestSerializer(Serializer):
     # username and password are only needed if the request is not authenticated
     # with an OIDC token in the Authorization header.
     username = CharField(max_length=150, required=False)
-    password = CharField(max_length=128, required=False)
+    password = CharField(max_length=255, required=False, trim_whitespace=False)
     name = CharField(max_length=255, required=True)
     expiration_date = DateField(required=False, allow_null=True)
 
@@ -404,5 +404,5 @@ class ApiTokenRevokeRequestSerializer(Serializer):
     # username and password are only needed if the request is not authenticated
     # with an OIDC token in the Authorization header.
     username = CharField(max_length=150, required=False)
-    password = CharField(max_length=128, required=False)
+    password = CharField(max_length=255, required=False, trim_whitespace=False)
     name = CharField(max_length=255, required=True)
