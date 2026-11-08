@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import re
 from typing import Optional
@@ -202,7 +203,7 @@ class OIDCAuthentication(BaseAuthentication):
     def _get_groups_hash(self, payload: dict) -> str:
         groups = self._get_groups_from_token(payload)
         if groups:
-            return hashlib.sha256("".join(groups).encode("UTF-8")).hexdigest()
+            return hashlib.sha256(json.dumps(groups).encode("UTF-8")).hexdigest()
         return ""
 
     def _synchronize_groups(self, user: User, payload: dict) -> None:

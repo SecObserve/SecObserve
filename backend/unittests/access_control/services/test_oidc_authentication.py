@@ -493,7 +493,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name", user.full_name)
         self.assertEqual("test_email", user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             user.oidc_groups_hash,
         )
         self.assertFalse(user.is_external)
@@ -526,7 +526,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name", user.full_name)
         self.assertEqual("test_email@test.com", user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             user.oidc_groups_hash,
         )
         self.assertFalse(user.is_external)
@@ -562,7 +562,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name", user.full_name)
         self.assertEqual("test_email@test.net", user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             user.oidc_groups_hash,
         )
         self.assertTrue(user.is_external)
@@ -715,12 +715,20 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name_new", new_user.full_name)
         self.assertEqual("test_email_new", new_user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             new_user.oidc_groups_hash,
         )
         self.assertFalse(new_user.has_usable_password())
         user_save_mock.assert_called_once()
         synchronize_groups_mock.assert_called_with(new_user, payload)
+
+    def test_get_groups_hash_group_boundaries(self):
+        oidc_authentication = OIDCAuthentication()
+
+        self.assertNotEqual(
+            oidc_authentication._get_groups_hash({"groups": ["ab", "c"]}),
+            oidc_authentication._get_groups_hash({"groups": ["a", "bc"]}),
+        )
 
     def test_synchronize_groups(self):
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
