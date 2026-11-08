@@ -18,7 +18,7 @@ from unittests.base_test_case import BaseTestCase
 PROJECT_UUID = "6461408c-726c-4b70-aa7a-c9cc9d1c9685"
 INPUT_URLS = [
     "https://example.com/a.zip",
-    "docker://ghcr.io/secobserve/secobserve-backend:1.63.0",
+    "docker://ghcr.io/secobserve/secobserve-backend:1.64.0",
     "https://github.com/secobserve/secobserve.git",
     "pkg:pypi/django@5.0",
 ]
