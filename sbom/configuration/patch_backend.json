@@ -1,0 +1,23 @@
+[
+    {
+        "op": "add",
+        "path": "/metadata/component/description",
+        "value": "Backend image of SecObserve, the open source vulnerability management system for software development and cloud environments."
+    },
+    {
+        "op": "add",
+        "path": "/metadata/component/purl",
+        "value": "pkg:oci/secobserve-backend@sha256%3AREPLACE_DIGEST?repository_url=ghcr.io%2Fsecobserve%2Fsecobserve-backend&tag=REPLACE_VERSION"
+    },
+    {
+        "op": "add",
+        "path": "/metadata/component/licenses",
+        "value": [
+            {
+                "license": {
+                    "id": "BSD-3-Clause"
+                }
+            }
+        ]
+    }
+]

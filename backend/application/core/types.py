@@ -109,6 +109,45 @@ class Observation_Log_Comment:
         COMMENT_NOT_FOUND_IN_LATEST_SCAN,
     ]
 
+    COMMENT_CREATED_MANUALLY = "Observation created manually"
+    COMMENT_CHANGED_MANUALLY = "Observation changed manually"
+    COMMENT_RISK_ACCEPTANCE_EXPIRED = "Risk acceptance has expired."
+
+    COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE = "Updated by product rule "
+    COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE = "Updated by general rule "
+    COMMENT_PREFIX_UPDATED_BY_VEX_STATEMENT = "Updated by VEX statement from "
+
+    COMMENT_PREFIX_REMOVED_PRODUCT_RULE = "Removed product "
+    COMMENT_PREFIX_REMOVED_GENERAL_RULE = "Removed general "
+    COMMENT_REMOVED_UNKNOWN_RULE = "Removed unknown rule"
+    COMMENT_PREFIX_REMOVED_VEX_STATEMENT = "Removed VEX statement from "
+    COMMENT_REMOVED_UNKNOWN_VEX_STATEMENT = "Removed unknown VEX statement"
+
+    # Comments written by the system, which are not searched by the full text search.
+    # Logs written by rules and VEX statements are excluded via their foreign keys as well, but these are
+    # set to NULL when the rule or VEX statement is deleted. The logs of their removal never have a foreign key.
+    FULL_TEXT_SEARCH_EXCLUDED_COMMENTS = AUTOMATED_COMMENTS + [
+        COMMENT_CREATED_MANUALLY,
+        COMMENT_CHANGED_MANUALLY,
+        COMMENT_RISK_ACCEPTANCE_EXPIRED,
+        COMMENT_REMOVED_UNKNOWN_RULE,
+        COMMENT_REMOVED_UNKNOWN_VEX_STATEMENT,
+    ]
+    # The prefixes are as long as possible, to not exclude comments written by users, e.g. "Removed product from scope"
+    FULL_TEXT_SEARCH_EXCLUDED_COMMENT_PREFIXES = [
+        COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE,
+        COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE,
+        COMMENT_PREFIX_UPDATED_BY_VEX_STATEMENT,
+        # "<prefix>rule " has been written before rules got a type
+        COMMENT_PREFIX_REMOVED_PRODUCT_RULE + "rule ",
+        COMMENT_PREFIX_REMOVED_PRODUCT_RULE + "fields rule ",
+        COMMENT_PREFIX_REMOVED_PRODUCT_RULE + "rego rule ",
+        COMMENT_PREFIX_REMOVED_GENERAL_RULE + "rule ",
+        COMMENT_PREFIX_REMOVED_GENERAL_RULE + "fields rule ",
+        COMMENT_PREFIX_REMOVED_GENERAL_RULE + "rego rule ",
+        COMMENT_PREFIX_REMOVED_VEX_STATEMENT,
+    ]
+
 
 class VEX_Justification:
     JUSTIFICATION_COMPONENT_NOT_PRESENT = "component_not_present"

@@ -9,7 +9,7 @@ from django.core.management import call_command
 from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
-from application.access_control.models import User
+from application.access_control.models import Authorization_Group_Member, User
 from application.access_control.services.oidc_authentication import OIDCAuthentication
 from application.commons.models import Settings
 from unittests.base_test_case import BaseTestCase
@@ -493,7 +493,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name", user.full_name)
         self.assertEqual("test_email", user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             user.oidc_groups_hash,
         )
         self.assertFalse(user.is_external)
@@ -526,7 +526,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name", user.full_name)
         self.assertEqual("test_email@test.com", user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             user.oidc_groups_hash,
         )
         self.assertFalse(user.is_external)
@@ -562,7 +562,7 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name", user.full_name)
         self.assertEqual("test_email@test.net", user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             user.oidc_groups_hash,
         )
         self.assertTrue(user.is_external)
@@ -715,12 +715,20 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual("test_full_name_new", new_user.full_name)
         self.assertEqual("test_email_new", new_user.email)
         self.assertEqual(
-            "27cbb2858ce86012e498c8102d24d066837d67beec8c180f5e85e652df700c9f",
+            "4f7bbd75dd70222a2f4e9bbd6c8a7da590afda806083f44b1a75cda714d64dde",
             new_user.oidc_groups_hash,
         )
         self.assertFalse(new_user.has_usable_password())
         user_save_mock.assert_called_once()
         synchronize_groups_mock.assert_called_with(new_user, payload)
+
+    def test_get_groups_hash_group_boundaries(self):
+        oidc_authentication = OIDCAuthentication()
+
+        self.assertNotEqual(
+            oidc_authentication._get_groups_hash({"groups": ["ab", "c"]}),
+            oidc_authentication._get_groups_hash({"groups": ["a", "bc"]}),
+        )
 
     def test_synchronize_groups(self):
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
@@ -744,6 +752,26 @@ class TestOIDCAuthentication(BaseTestCase):
         self.assertEqual(2, len(groups))
         self.assertEqual("non_oidc_group", groups[0].name)
         self.assertEqual("oidc_group_2", groups[1].name)
+
+    def test_synchronize_groups_keeps_manager(self):
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+
+        oidc_authentication = OIDCAuthentication()
+        user = User.objects.get(username="db_internal_write")
+        oidc_authentication._synchronize_groups(user, {"groups": ["oidc_1"]})
+        Authorization_Group_Member.objects.filter(user=user, authorization_group__name="oidc_group_1").update(
+            is_manager=True
+        )
+
+        oidc_authentication._synchronize_groups(user, {"groups": ["oidc_1", "oidc_2"]})
+
+        members = Authorization_Group_Member.objects.filter(
+            user=user, authorization_group__name__startswith="oidc_group"
+        ).order_by("authorization_group__name")
+        self.assertEqual(
+            [("oidc_group_1", True), ("oidc_group_2", False)],
+            [(member.authorization_group.name, member.is_manager) for member in members],
+        )
 
 
 class MockPyJWK:

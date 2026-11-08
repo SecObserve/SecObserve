@@ -27,21 +27,24 @@ import GeneralRuleEvaluate from "../GeneralRuleEvaluate";
 import RuleSimulation from "../RuleSimulation";
 import { RULE_STATUS_CHOICES } from "../types";
 
-const listFilters = [
-    <TextInput source="name" alwaysOn />,
-    <ReferenceInput source="parser" reference="parsers" sort={{ field: "name", order: "ASC" }} alwaysOn>
-        <AutocompleteInputMedium optionText="name" />
-    </ReferenceInput>,
-];
-if (feature_general_rules_need_approval_enabled()) {
-    listFilters.push(
-        <AutocompleteInputMedium
-            source="approval_status"
-            choices={RULE_STATUS_CHOICES}
-            label="Approval status"
-            alwaysOn
-        />
-    );
+function listFilters() {
+    const filters = [
+        <TextInput source="name" alwaysOn />,
+        <ReferenceInput source="parser" reference="parsers" sort={{ field: "name", order: "ASC" }} alwaysOn>
+            <AutocompleteInputMedium optionText="name" />
+        </ReferenceInput>,
+    ];
+    if (feature_general_rules_need_approval_enabled()) {
+        filters.push(
+            <AutocompleteInputMedium
+                source="approval_status"
+                choices={RULE_STATUS_CHOICES}
+                label="Approval status"
+                alwaysOn
+            />
+        );
+    }
+    return filters;
 }
 
 const RuleNameURLField = (props: FieldProps) => {
@@ -68,7 +71,7 @@ const GeneralRuleList = () => {
             <List
                 perPage={getSettingRowsPerPage()}
                 pagination={<CustomPagination />}
-                filters={listFilters}
+                filters={listFilters()}
                 sort={{ field: "name", order: "ASC" }}
                 actions={<ListActions />}
                 disableSyncWithLocation={false}

@@ -39,7 +39,7 @@ class ScannerStub(BaseScanner):
         super().__init__()
         self.parser = ParserStub()
 
-    def _do_scan(self, license_components: list[License_Component]) -> Any:
+    def _do_scan(self, license_components: list[License_Component], product, branch) -> Any:
         return "scan_result"
 
 
@@ -297,6 +297,6 @@ class TestBaseScanner(BaseTestCase):
 
     def test_do_scan_not_implemented(self):
         with self.assertRaises(NotImplementedError) as e:
-            BaseScanner()._do_scan([])
+            BaseScanner()._do_scan([], None, None)
 
         self.assertEqual("scan_license_components() must be overridden", str(e.exception))

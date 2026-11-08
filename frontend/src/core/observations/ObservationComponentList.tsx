@@ -17,7 +17,7 @@ import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { ProductGroupReferenceInput } from "../../commons/custom_fields/ProductGroupReferenceInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
-import { has_attribute, humanReadableDate } from "../../commons/functions";
+import { feature_full_text_search, has_attribute, humanReadableDate } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import {
     AGE_CHOICES,
@@ -31,6 +31,9 @@ import { IDENTIFIER_OBSERVATION_COMPONENT_LIST, setListIdentifier } from "./func
 
 function listFilters() {
     const filters = [];
+    if (feature_full_text_search()) {
+        filters.push(<TextInput source="full_text_search" label="Full text search" alwaysOn />);
+    }
     filters.push(
         <TextInput source="title" alwaysOn />,
         <AutocompleteArrayInput

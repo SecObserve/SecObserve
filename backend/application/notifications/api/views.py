@@ -1,3 +1,5 @@
+import logging
+
 from django.db.models.query import QuerySet
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -19,6 +21,7 @@ from rest_framework.viewsets import GenericViewSet
 from application.access_control.models import User
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.services.log_message import format_log_message
 from application.core.models import Product
 from application.core.queries.product import get_product_by_id
 from application.notifications.api.filters import (
@@ -57,6 +60,8 @@ from application.notifications.services.send_notifications_base import (
     send_msteams_notification_test,
     send_slack_notification_test,
 )
+
+logger = logging.getLogger("secobserve.notifications")
 
 
 class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, RetrieveModelMixin):
@@ -111,7 +116,9 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
             else:
                 send_slack_notification_test(webhook_url)
         except Exception as e:
-            raise ValidationError(f"Failed to send test notification: {str(e)}") from e
+            # The error tells how the host answered, which must not be shown to the user
+            logger.warning(format_log_message(message="Failed to send test notification", exception=e))
+            raise ValidationError("Failed to send test notification, see the server log for details") from e
 
         return Response(status=HTTP_204_NO_CONTENT)
 

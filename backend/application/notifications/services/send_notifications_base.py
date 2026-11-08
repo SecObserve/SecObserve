@@ -9,6 +9,9 @@ import environ
 import requests
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from requests.adapters import HTTPAdapter
+from urllib3.exceptions import ConnectTimeoutError, LocationParseError
+from urllib3.util import parse_url
 
 from application.access_control.models import User
 from application.access_control.queries.user import get_user_by_email
@@ -48,34 +51,23 @@ def get_msteams_template(webhook: str, name: str) -> str:
 
 
 def send_msteams_notification(webhook: str, template: str, **kwargs: Any) -> None:
-    if not _validate_webhook_url(webhook):
+    addresses = _get_webhook_addresses(webhook)
+    if not addresses:
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
         headers = {"Content-Type": "application/json"} if _is_msteams_v2(webhook) else {}
-        response = requests.request(
-            method="POST",
-            url=webhook,
-            data=notification_message,
-            headers=headers,
-            allow_redirects=False,
-            timeout=60,
-        )
+        response = _post_webhook(webhook, addresses, notification_message, headers)
         response.raise_for_status()
 
 
 def send_slack_notification(webhook: str, template: str, **kwargs: Any) -> None:
-    if not _validate_webhook_url(webhook):
+    addresses = _get_webhook_addresses(webhook)
+    if not addresses:
         return
     notification_message = _create_notification_message(template, **kwargs)
     if notification_message:
-        response = requests.request(
-            method="POST",
-            url=webhook,
-            data=notification_message,
-            allow_redirects=False,
-            timeout=60,
-        )
+        response = _post_webhook(webhook, addresses, notification_message, {})
         response.raise_for_status()
 
 
@@ -144,51 +136,48 @@ def _send_user_webhook_notification(
 
 
 def send_msteams_notification_test(webhook: str) -> None:
-    if not _validate_webhook_url(webhook):
+    addresses = _get_webhook_addresses(webhook)
+    if not addresses:
         raise ValueError(f"Invalid webhook URL: {webhook}")
     v2 = _is_msteams_v2(webhook)
     template = "msteams_v2/test.tpl" if v2 else "msteams/test.tpl"
     notification_message = _create_notification_message(template)
     if notification_message:
         headers = {"Content-Type": "application/json"} if v2 else {}
-        response = requests.request(
-            method="POST",
-            url=webhook,
-            data=notification_message,
-            headers=headers,
-            allow_redirects=False,
-            timeout=60,
-        )
+        response = _post_webhook(webhook, addresses, notification_message, headers)
         response.raise_for_status()
 
 
 def send_slack_notification_test(webhook: str) -> None:
-    if not _validate_webhook_url(webhook):
+    addresses = _get_webhook_addresses(webhook)
+    if not addresses:
         raise ValueError(f"Invalid webhook URL: {webhook}")
     notification_message = _create_notification_message("slack/test.tpl")
     if notification_message:
-        response = requests.request(
-            method="POST",
-            url=webhook,
-            data=notification_message,
-            allow_redirects=False,
-            timeout=60,
-        )
+        response = _post_webhook(webhook, addresses, notification_message, {})
         response.raise_for_status()
 
 
-def _validate_webhook_url(webhook: str) -> bool:
-    split_url = urlsplit(webhook)
-    if split_url.scheme != "https" or not split_url.hostname:
+def _get_webhook_addresses(webhook: str) -> list[str]:
+    """
+    Returns the addresses a webhook may be sent to, or an empty list if the URL must not be used. The URL is
+    parsed like requests parses it and all addresses of the host have to be public. The request is then sent
+    to these addresses with _post_webhook().
+    """
+    try:
+        url = parse_url(webhook)
+    except LocationParseError:
+        url = None
+    if not url or url.scheme != "https" or not url.host or url.auth:
         logger.error(
             format_log_message(
-                message=f"Webhook URL must use https and a valid host: {webhook}",
+                message=f"Webhook URL must use https, a valid host and no user info: {webhook}",
             )
         )
-        return False
+        return []
 
     try:
-        address_infos = socket.getaddrinfo(split_url.hostname, split_url.port or 443, proto=socket.IPPROTO_TCP)
+        address_infos = socket.getaddrinfo(url.host.strip("[]"), url.port or 443, proto=socket.IPPROTO_TCP)
     except socket.gaierror as e:
         logger.error(
             format_log_message(
@@ -196,26 +185,66 @@ def _validate_webhook_url(webhook: str) -> bool:
                 exception=e,
             )
         )
-        return False
+        return []
 
+    addresses = []
     for address_info in address_infos:
         ip_addr = ipaddress.ip_address(address_info[4][0])
-        if (
-            ip_addr.is_private  # pylint: disable=too-many-boolean-expressions
-            or ip_addr.is_loopback
-            or ip_addr.is_link_local
-            or ip_addr.is_reserved
-            or ip_addr.is_multicast
-            or ip_addr.is_unspecified
-        ):
+        # is_global lets multicast and reserved ranges like the NAT64 prefix 64:ff9b::/96 pass
+        if not ip_addr.is_global or ip_addr.is_reserved or ip_addr.is_multicast:
             logger.error(
                 format_log_message(
                     message=f"Webhook host resolves to a non-public address, refusing request: {webhook}",
                 )
             )
-            return False
+            return []
+        addresses.append(str(ip_addr))
 
-    return True
+    return addresses
+
+
+class _PinnedHostAdapter(HTTPAdapter):
+    """Verifies the TLS certificate against the host name, while the URL contains the address to connect to."""
+
+    def __init__(self, hostname: str) -> None:
+        self.hostname = hostname
+        super().__init__()
+
+    def build_connection_pool_key_attributes(
+        self, request: requests.PreparedRequest, verify: bool | str, cert: str | tuple[str, str] | None = None
+    ) -> tuple[Any, Any]:
+        host_params, typed_pool_kwargs = super().build_connection_pool_key_attributes(request, verify, cert)
+        # urllib3 accepts these keys, the type stubs of requests only know the ones requests sets itself
+        pool_kwargs: dict[str, Any] = dict(typed_pool_kwargs)
+        if host_params["scheme"] == "https":
+            pool_kwargs["server_hostname"] = self.hostname
+            pool_kwargs["assert_hostname"] = self.hostname
+        return host_params, pool_kwargs
+
+
+def _post_webhook(webhook: str, addresses: list[str], data: str, headers: dict[str, str]) -> requests.Response:
+    # A second DNS lookup by requests could return another address than the one that has been checked
+    url = parse_url(webhook)
+    host = url.host or ""
+    host_header = f"{host}:{url.port}" if url.port else host
+    with requests.Session() as session:
+        session.mount("https://", _PinnedHostAdapter(host.strip("[]")))
+        for i, address in enumerate(addresses):
+            try:
+                return session.request(
+                    method="POST",
+                    url=url._replace(host=f"[{address}]" if ":" in address else address).url,
+                    data=data,
+                    headers={**headers, "Host": host_header},
+                    allow_redirects=False,
+                    timeout=60,
+                )
+            except requests.ConnectionError as e:
+                # Only a connection that could not be opened is retried, a request must not be sent twice
+                reason = getattr(e.args[0], "reason", None) if e.args else None
+                if i == len(addresses) - 1 or not isinstance(reason, ConnectTimeoutError):
+                    raise
+    raise ValueError(f"No address to send the webhook to: {webhook}")
 
 
 def _create_notification_message(template: str, **kwargs: Any) -> Optional[str]:
