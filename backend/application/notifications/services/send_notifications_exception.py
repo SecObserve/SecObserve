@@ -105,7 +105,7 @@ def send_exception_notification(exception: Exception) -> None:
             )
 
         Notification.objects.create(
-            **_get_notification_values(exception),
+            **_get_notification_values(exception, is_task=False),
             user=get_current_user(),
             type=Notification.TYPE_EXCEPTION,
         )
@@ -120,7 +120,7 @@ def send_task_exception_notification(
 ) -> None:
     settings = Settings.load()
 
-    if _ratelimit_exception(exception, function, arguments):
+    if _ratelimit_exception(exception, function, arguments, is_task=True):
         email_to_adresses = _get_email_to_addresses(settings.exception_email_to)
         if email_to_adresses and settings.email_from:
             for notification_email_to in email_to_adresses:
@@ -177,7 +177,7 @@ def send_task_exception_notification(
                 product = observation.product
 
         Notification.objects.create(
-            **_get_notification_values(exception, function, arguments),
+            **_get_notification_values(exception, True, function, arguments),
             product=product,
             observation=observation,
             user=user,
@@ -186,32 +186,34 @@ def send_task_exception_notification(
 
 
 def _get_notification_values(
-    exception: Exception, function: Optional[str] = None, arguments: Optional[dict] = None
+    exception: Exception, is_task: bool, function: Optional[str] = None, arguments: Optional[dict] = None
 ) -> dict:
     values = {
         "name": f'Exception "{get_classname(exception)}" has occured',
         "message": str(exception),
     }
-    if function is not None or arguments is not None:
+    if is_task:
         values["function"] = str(function)
         values["arguments"] = _get_arguments_string(arguments)
     return values
 
 
 def _ratelimit_exception(
-    exception: Exception, function: Optional[str] = None, arguments: Optional[dict] = None
+    exception: Exception,
+    function: Optional[str] = None,
+    arguments: Optional[dict] = None,
+    is_task: bool = False,
 ) -> bool:
     settings = Settings.load()
 
     if settings.exception_rate_limit == 0:
         return True
 
-    is_task = function is not None or arguments is not None
     # ponytail: two processes checking in the same instant can both notify, a lock would be needed to prevent that
     return not Notification.objects.filter(
         type=Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION,
         created__gte=timezone.now() - timedelta(seconds=settings.exception_rate_limit),
-        **_get_notification_values(exception, function, arguments),
+        **_get_notification_values(exception, is_task, function, arguments),
     ).exists()
 
 

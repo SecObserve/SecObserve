@@ -231,7 +231,7 @@ class TestPushNotifications(BaseTestCase):
             user=self.user_internal,
             exception=exception,
         )
-        mock_ratelimit.assert_called_with(exception, "test_function", "test_arguments")
+        mock_ratelimit.assert_called_with(exception, "test_function", "test_arguments", is_task=True)
         mock_send_teams.assert_not_called()
         mock_send_slack.assert_not_called()
         mock_send_email.assert_not_called()
@@ -271,7 +271,7 @@ class TestPushNotifications(BaseTestCase):
             exception=exception,
         )
 
-        mock_ratelimit.assert_called_with(exception, "test_function", arguments)
+        mock_ratelimit.assert_called_with(exception, "test_function", arguments, is_task=True)
         expected_calls_email = [
             call(
                 "test1@example.com",
@@ -393,25 +393,42 @@ class TestPushNotifications(BaseTestCase):
         self._set_rate_limit(10)
         self._create_task_notification()
 
-        self.assertFalse(_ratelimit_exception(Exception("test_exception"), "test_function", {"a": 1}))
+        self.assertFalse(_ratelimit_exception(Exception("test_exception"), "test_function", {"a": 1}, is_task=True))
 
     def test_ratelimit_exception_task_different_function(self):
         self._set_rate_limit(10)
         self._create_task_notification()
 
-        self.assertTrue(_ratelimit_exception(Exception("test_exception"), "other_function", {"a": 1}))
+        self.assertTrue(_ratelimit_exception(Exception("test_exception"), "other_function", {"a": 1}, is_task=True))
 
     def test_ratelimit_exception_task_different_arguments(self):
         self._set_rate_limit(10)
         self._create_task_notification()
 
-        self.assertTrue(_ratelimit_exception(Exception("test_exception"), "test_function", {"a": 2}))
+        self.assertTrue(_ratelimit_exception(Exception("test_exception"), "test_function", {"a": 2}, is_task=True))
 
     def test_ratelimit_exception_request_ignores_task_notification(self):
         self._set_rate_limit(10)
         self._create_task_notification()
 
         self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+
+    def test_ratelimit_exception_task_without_function_and_arguments(self):
+        self._set_rate_limit(10)
+        exception = Exception("no_function_exception")
+        self.assertTrue(_ratelimit_exception(exception, None, None, is_task=True))
+
+        send_task_exception_notification(None, None, None, exception)
+
+        notification = Notification.objects.get(type=Notification.TYPE_TASK, message="no_function_exception")
+        self.assertEqual("None", notification.function)
+        self.assertFalse(_ratelimit_exception(exception, None, None, is_task=True))
+
+    def test_ratelimit_exception_task_without_function_ignores_request_notification(self):
+        self._set_rate_limit(10)
+        self._create_notification(1)
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception"), None, None, is_task=True))
 
     # --- _get_stack_trace ---
 
