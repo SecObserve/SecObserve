@@ -1,4 +1,5 @@
 import logging
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
@@ -18,7 +19,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import IsAuthenticated
@@ -91,19 +92,24 @@ from application.commons.services.log_message import format_log_message
 logger = logging.getLogger("secobserve.access_control")
 
 
-# ponytail: counted per backend process (LocMemCache), use a shared cache backend to count across processes
+# Counted per process in LocMemCache, which evicts entries when full; a shared cache backend counts across processes
 class LoginRateThrottle(SimpleRateThrottle):
     scope = "login"
 
     def get_cache_key(self, request: Request, view: APIView) -> str | None:
-        try:
-            data = request.data
-        except ParseError:
-            return None
+        data = request.data
         username = data.get("username") if isinstance(data, dict) else None
-        if not isinstance(username, str) or not username:
+        if not isinstance(username, str):
             return None
-        return self.cache_format % {"scope": self.scope, "ident": username.lower()}
+        # Variants that whitespace trimming or the database collation match to one user share one counter
+        ident = (
+            "".join(c for c in unicodedata.normalize("NFKD", username) if unicodedata.category(c) not in ("Mn", "Cf"))
+            .strip()
+            .casefold()
+        )
+        if not ident:
+            return None
+        return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
 class UserViewSet(ModelViewSet):

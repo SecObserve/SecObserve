@@ -35,6 +35,15 @@ class TestLoginThrottle(BaseTestCase):
 
         self.assertEqual(429, self._post(AUTHENTICATE_URL, "Alice").status_code)
 
+    def test_username_variants_count_together(self):
+        for variant in [" alice ", "ALICE", "Álice", "al\u00adice"]:
+            with self.subTest(variant=variant):
+                cache.clear()
+                self._post(AUTHENTICATE_URL, "alice")
+                self._post(AUTHENTICATE_URL, variant)
+
+                self.assertEqual(429, self._post(AUTHENTICATE_URL, "alice").status_code)
+
     def test_other_username_unaffected(self):
         for _ in range(3):
             self._post(AUTHENTICATE_URL, "alice")
@@ -51,16 +60,22 @@ class TestLoginThrottle(BaseTestCase):
             response = self.api_client.post(AUTHENTICATE_URL, {"username": ["a"], "password": "x"}, format="json")
             self.assertNotEqual(429, response.status_code)
 
-    def test_malformed_body_not_a_server_error(self):
+    def test_malformed_body_bad_request(self):
         response = self.api_client.post(AUTHENTICATE_URL, "{not json", content_type="application/json")
 
-        self.assertLess(response.status_code, 500)
+        self.assertEqual(400, response.status_code)
 
     def test_create_token_throttled(self):
         self._post(CREATE_TOKEN_URL)
         self._post(CREATE_TOKEN_URL)
 
         self.assertEqual(429, self._post(CREATE_TOKEN_URL).status_code)
+
+    def test_create_token_whitespace_variant_throttled(self):
+        self._post(CREATE_TOKEN_URL, "alice")
+        self._post(CREATE_TOKEN_URL, " alice")
+
+        self.assertEqual(429, self._post(CREATE_TOKEN_URL, "alice ").status_code)
 
     def test_endpoints_share_the_username_counter(self):
         self._post(AUTHENTICATE_URL)

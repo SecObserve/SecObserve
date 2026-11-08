@@ -2,6 +2,7 @@
 Base settings to build other settings files upon.
 """
 
+import re
 from pathlib import Path
 from socket import gethostbyname, gethostname
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -391,6 +392,13 @@ else:
         "rest_framework.authentication.SessionAuthentication",
     ]
 
+LOGIN_THROTTLE_RATE = env.str("LOGIN_THROTTLE_RATE", "10/minute")
+# REST framework only reads the first letter of the period
+if not re.fullmatch(r"\d+/[smhd][a-z]*", LOGIN_THROTTLE_RATE):
+    raise ValueError(
+        f"LOGIN_THROTTLE_RATE '{LOGIN_THROTTLE_RATE}' must have the format <number>/<second|minute|hour|day>"
+    )
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": DEFAULT_AUTHENTICATION_CLASSES,
     "DEFAULT_RENDERER_CLASSES": [
@@ -411,7 +419,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "10/second",
         "user": "100/second",
-        "login": env.str("LOGIN_THROTTLE_RATE", "10/minute"),
+        "login": LOGIN_THROTTLE_RATE,
     },
     "EXCEPTION_HANDLER": "notifications.api.exception_handler.custom_exception_handler",
 }
