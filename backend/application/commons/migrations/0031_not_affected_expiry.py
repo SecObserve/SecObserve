@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("commons", "0028_settings_date_format"),
+        ("commons", "0030_settings_feature_full_text_search"),
     ]
 
     operations = [
