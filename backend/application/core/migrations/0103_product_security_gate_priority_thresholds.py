@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0100_observation_log_assessment_status_index"),
+        ("core", "0102_initialize_observation_last_assessment"),
     ]
 
     operations = [
