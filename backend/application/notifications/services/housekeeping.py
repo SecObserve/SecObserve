@@ -1,10 +1,13 @@
 import logging
+from datetime import timedelta
 from itertools import batched
 
+from django.conf import settings as django_settings
 from django.db.models import Exists, OuterRef
+from django.utils import timezone
 
 from application.core.models import Product_Authorization_Group_Member, Product_Member
-from application.notifications.models import Product_Notification
+from application.notifications.models import Product_Notification, Webhook_Delivery
 
 logger = logging.getLogger("secobserve.notifications")
 
@@ -58,3 +61,20 @@ def delete_orphaned_product_notifications() -> int:
         )
 
     return num_deleted_product_notifications
+
+
+def delete_old_webhook_deliveries() -> int:
+    cutoff = timezone.now() - timedelta(days=django_settings.WEBHOOK_DELIVERY_RETENTION_DAYS)
+    old_deliveries = Webhook_Delivery.objects.filter(created__lt=cutoff)
+
+    num_deleted_deliveries = 0
+    # Batches keep each delete short, the nightly volume of an OSV run can be large
+    while delivery_ids := list(old_deliveries.values_list("pk", flat=True)[:BULK_BATCH_SIZE]):
+        num_deleted_deliveries += Webhook_Delivery.objects.filter(pk__in=delivery_ids).delete()[0]
+
+    if num_deleted_deliveries:
+        logger.info(  # pylint: disable=logging-fstring-interpolation
+            f"Deleted {num_deleted_deliveries} old webhook deliveries"
+        )
+
+    return num_deleted_deliveries

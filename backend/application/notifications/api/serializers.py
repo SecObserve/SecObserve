@@ -1,6 +1,8 @@
-from typing import Optional
+from typing import Any, Optional
+from urllib.parse import urlsplit
 
 from rest_framework.serializers import (
+    BooleanField,
     CharField,
     ChoiceField,
     IntegerField,
@@ -8,15 +10,23 @@ from rest_framework.serializers import (
     ModelSerializer,
     Serializer,
     SerializerMethodField,
+    ValidationError,
 )
 
 from application.access_control.services.current_user import get_current_user
-from application.core.api.serializers_product import NestedProductSerializerSmall
+from application.commons.services.functions import get_comma_separated_as_list
+from application.core.api.serializers_product import (
+    NestedProductSerializer,
+    NestedProductSerializerSmall,
+)
 from application.notifications.models import (
     Notification,
     Notification_Viewed,
     Product_Notification,
+    Webhook,
+    Webhook_Delivery,
 )
+from application.notifications.types import Webhook_Event_Type
 
 
 class NotificationSerializer(ModelSerializer):
@@ -90,3 +100,79 @@ class NotificationBulkSerializer(Serializer):
 class WebhookTestSerializer(Serializer):
     webhook_url = CharField(max_length=2048)
     webhook_type = ChoiceField(choices=["msteams", "slack"])
+
+
+class WebhookEventTypesField(ListField):
+    """A list in the API, a comma separated string in the model."""
+
+    child = ChoiceField(choices=Webhook_Event_Type.SUBSCRIBABLE)
+
+    def to_representation(self, data: str) -> list[str]:  # type: ignore[override]
+        return get_comma_separated_as_list(data)
+
+    def to_internal_value(self, data: Any) -> str:  # type: ignore[override]
+        return ",".join(dict.fromkeys(super().to_internal_value(data)))
+
+
+class WebhookSerializer(ModelSerializer):
+    product_data = NestedProductSerializer(source="product", read_only=True)
+    event_types = WebhookEventTypesField(allow_empty=False)
+    user_full_name = SerializerMethodField()
+
+    class Meta:
+        model = Webhook
+        exclude = ["secret"]
+        read_only_fields = ["consecutive_failures", "next_attempt_at", "user"]
+
+    def get_user_full_name(self, obj: Webhook) -> Optional[str]:
+        return obj.user.full_name if obj.user else None
+
+    def validate_url(self, url: str) -> str:
+        # The network policy needs DNS and is enforced when sending
+        try:
+            parts = urlsplit(url)
+            valid = parts.scheme in ("http", "https") and bool(parts.hostname)
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValidationError("URL must start with http:// or https:// and contain a host")
+        return url
+
+    def validate(self, attrs: dict) -> dict:
+        if self.instance and "product" in attrs and attrs["product"] != self.instance.product:
+            raise ValidationError("Product cannot be changed")
+        return attrs
+
+    def update(self, instance: Webhook, validated_data: dict) -> Webhook:
+        for field, value in validated_data.items():
+            setattr(instance, field, value)
+        # Breaks a running drain's lease and clears a backoff, without overwriting the columns the drain writes
+        instance.next_attempt_at = None
+        instance.user = get_current_user()
+        instance.save(update_fields=[*validated_data, "next_attempt_at", "user"])
+        return instance
+
+
+class WebhookCreateSerializer(WebhookSerializer):
+    secret = CharField(read_only=True)
+
+    class Meta:
+        model = Webhook
+        fields = "__all__"
+        read_only_fields = WebhookSerializer.Meta.read_only_fields
+
+
+class WebhookSecretSerializer(Serializer):
+    secret = CharField()
+
+
+class WebhookSendTestResultSerializer(Serializer):
+    succeeded = BooleanField()
+    status_code = IntegerField(allow_null=True)
+    error = CharField(allow_blank=True)
+
+
+class WebhookDeliverySerializer(ModelSerializer):
+    class Meta:
+        model = Webhook_Delivery
+        fields = "__all__"

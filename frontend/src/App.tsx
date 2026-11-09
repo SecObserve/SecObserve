@@ -38,6 +38,7 @@ import license_policies from "./licenses/license_policies";
 import licenses from "./licenses/licenses";
 import notifications from "./notifications/notifications";
 import product_notifications from "./notifications/product_notifications";
+import webhooks from "./notifications/webhooks";
 import general_rules from "./rules/general_rules";
 import product_rules from "./rules/product_rules";
 import csaf from "./vex/csaf";
@@ -136,6 +137,14 @@ const AdminApp = () => {
                 options={{ label: "General Rules" }}
                 recordRepresentation={(record) => `${trim_string(record.name)}`}
             />
+            <Resource
+                name="webhooks"
+                {...webhooks} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
+                // nosemgrep because the props are well defined in the import
+                options={{ label: "Webhooks" }}
+                recordRepresentation={(record) => `${trim_string(record.name)}`}
+            />
+            <Resource name="webhook_deliveries" />
             <Resource
                 name="product_rules"
                 {...product_rules} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading

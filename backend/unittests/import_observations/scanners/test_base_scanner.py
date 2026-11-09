@@ -250,6 +250,18 @@ class TestBaseScanner(BaseTestCase):
         self.assertEqual(f"Parser {PARSER_NAME} not found", str(e.exception))
         mock_process_data.assert_not_called()
 
+    @patch("application.import_observations.services.import_observations.emit_import_event")
+    def test_scan_license_components_emits_import_completed_once(self, mock_emit_import):
+        numbers = ScannerStub()._scan_license_components(
+            [self.license_component], self.product, self.branch_main, self.service_frontend
+        )
+
+        mock_emit_import.assert_called_once()
+        kwargs = mock_emit_import.call_args.kwargs
+        self.assertEqual(self.product, kwargs["product"])
+        self.assertEqual(PARSER_NAME, kwargs["parser_name"])
+        self.assertEqual(numbers, kwargs["numbers"])
+
     @patch("application.import_observations.scanners.base_scanner._process_data")
     def test_scan_license_components_success(self, mock_process_data):
         mock_process_data.return_value = (1, 2, 3)

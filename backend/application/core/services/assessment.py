@@ -45,6 +45,11 @@ from application.notifications.services.send_notifications_observation_review im
 from application.notifications.services.send_notifications_observation_title import (
     send_observation_title_notification,
 )
+from application.notifications.services.webhook_events import (
+    emit_assessment_event,
+    emit_observation_event,
+)
+from application.notifications.types import Webhook_Event_Type
 from application.rules.services.rule_engine import Rule_Engine
 
 
@@ -155,6 +160,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
         )
 
         send_assessment_approval_notification(observation_log)
+        emit_assessment_event(Webhook_Event_Type.ASSESSMENT_APPROVAL_REQUESTED, observation_log)
 
 
 def _update_observation(  # pylint: disable=too-many-arguments
@@ -358,6 +364,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
             and observation_log.observation.current_status == Status.STATUS_IN_REVIEW
         ):
             send_observation_review_notification(observation_log.observation)
+            emit_observation_event(Webhook_Event_Type.OBSERVATION_REVIEW_REQUESTED, observation_log.observation)
 
         propagate_assessment(observation_log)
 
@@ -368,6 +375,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     observation_log.save()
 
     send_assessment_approval_receipt_notification(observation_log)
+    emit_assessment_event(Webhook_Event_Type.ASSESSMENT_APPROVAL_DECIDED, observation_log)
 
 
 def propagate_assessment(observation_log: Observation_Log) -> None:

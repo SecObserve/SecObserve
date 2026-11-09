@@ -293,6 +293,14 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["post"], "/api/notifications/1/mark_as_viewed/")
         self._check_authentication(["post"], "/api/notifications/bulk_mark_as_viewed/")
 
+        self._check_authentication(["get", "post"], "/api/webhooks/")
+        self._check_authentication(["delete", "get", "put", "patch"], "/api/webhooks/1/")
+        self._check_authentication(["post"], "/api/webhooks/1/send_test/")
+        self._check_authentication(["post"], "/api/webhooks/1/rotate_secret/")
+        self._check_authentication(["get"], "/api/webhook_deliveries/")
+        self._check_authentication(["get"], "/api/webhook_deliveries/1/")
+        self._check_authentication(["post"], "/api/webhook_deliveries/1/redeliver/")
+
         self._check_authentication(["get"], "/api/licenses/")
         self._check_authentication(["get"], "/api/licenses/1/")
 
