@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { ThemeType } from "react-admin";
 
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
@@ -165,6 +166,74 @@ export function getSettingRowsPerPage(): number {
     }
 
     return rows_per_page;
+}
+
+// The names must match ObservationColumn.OPTIONAL_COLUMNS in the backend
+export const OBSERVATION_OPTIONAL_COLUMNS = [
+    { name: "scanner_name", label: "Scanner" },
+    { name: "last_observation_log", label: "Age" },
+    { name: "last_assessment", label: "Assessed" },
+    { name: "has_potential_duplicates", label: "Duplicates" },
+    { name: "update_impact_score", label: "Update impact score" },
+] as const;
+
+export type ObservationOptionalColumnEntry = (typeof OBSERVATION_OPTIONAL_COLUMNS)[number];
+export type ObservationOptionalColumn = ObservationOptionalColumnEntry["name"];
+
+function getHiddenObservationColumns(): string {
+    const user = localStorage.getItem("user");
+    const user_json = user ? JSON.parse(user) : {};
+
+    return user_json.setting_hidden_observation_columns ?? "";
+}
+
+const hiddenObservationColumnsListeners = new Set<() => void>();
+
+function subscribeToHiddenObservationColumns(listener: () => void) {
+    hiddenObservationColumnsListeners.add(listener);
+    return () => {
+        hiddenObservationColumnsListeners.delete(listener);
+    };
+}
+
+// The button to choose the columns and the table are separate components, the table has to be
+// rendered again when a column has been shown or hidden
+export function useObservationColumnVisibility(): (column: ObservationOptionalColumn) => boolean {
+    const hidden_columns = useSyncExternalStore(subscribeToHiddenObservationColumns, getHiddenObservationColumns);
+
+    return (column) => !hidden_columns.split(",").includes(column);
+}
+
+function storeHiddenObservationColumns(setting_hidden_observation_columns: string) {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    user.setting_hidden_observation_columns = setting_hidden_observation_columns;
+    localStorage.setItem("user", JSON.stringify(user));
+    hiddenObservationColumnsListeners.forEach((listener) => listener());
+}
+
+let latestHiddenObservationColumns = "";
+let hiddenObservationColumnsSaves: Promise<void> = Promise.resolve();
+
+// Only known columns are saved, because the backend rejects the whole list if it contains an unknown one.
+// Each save sends the whole list, so saves run one after the other, otherwise an older one could overwrite a
+// newer one. The response of a save replaces the user in the local storage, so the latest value is restored.
+export function saveObservationColumnVisible(column: ObservationOptionalColumn, visible: boolean) {
+    const hidden_columns = getHiddenObservationColumns().split(",");
+    const setting_hidden_observation_columns = OBSERVATION_OPTIONAL_COLUMNS.map(({ name }) => name)
+        .filter((name) => (name === column ? !visible : hidden_columns.includes(name)))
+        .join(",");
+
+    latestHiddenObservationColumns = setting_hidden_observation_columns;
+    storeHiddenObservationColumns(setting_hidden_observation_columns);
+
+    hiddenObservationColumnsSaves = hiddenObservationColumnsSaves
+        .then(() => patchUserSettings({ setting_hidden_observation_columns: setting_hidden_observation_columns }))
+        .catch((error) => {
+            console.warn(error.message);
+        })
+        .then(() => {
+            storeHiddenObservationColumns(latestHiddenObservationColumns);
+        });
 }
 
 export type NotificationSettings = {

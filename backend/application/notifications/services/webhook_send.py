@@ -10,7 +10,8 @@ import requests
 from django.conf import settings
 
 from application.notifications.services.send_notifications_base import (
-    _validate_webhook_url,
+    _get_webhook_addresses,
+    _post_webhook,
 )
 
 SECRET_PREFIX = "whsec_"
@@ -44,7 +45,8 @@ def sign_webhook_payload(secret: str, message_id: str, timestamp: int, body: str
 
 
 def send_webhook_request(url: str, secret: str, message_id: str, body: str) -> Webhook_Send_Result:
-    if not _validate_webhook_url(url, settings.WEBHOOK_ALLOWED_NETWORKS):
+    addresses = _get_webhook_addresses(url, settings.WEBHOOK_ALLOWED_NETWORKS)
+    if not addresses:
         return Webhook_Send_Result(None, "URL rejected, see the backend log")
 
     timestamp = int(time.time())
@@ -56,11 +58,11 @@ def send_webhook_request(url: str, secret: str, message_id: str, body: str) -> W
         "webhook-signature": sign_webhook_payload(secret, message_id, timestamp, body),
     }
     try:
-        response = requests.post(
+        response = _post_webhook(
             url,
-            data=body,
-            headers=headers,
-            allow_redirects=False,
+            addresses,
+            body,
+            headers,
             timeout=(settings.WEBHOOK_TIMEOUT, settings.WEBHOOK_TIMEOUT),
             stream=True,
         )

@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
+from django.core.management import call_command
 from django.test import override_settings
 
 from application.commons.types import Age_Choices
@@ -9,6 +10,7 @@ from application.core.api.filters import (
     ObservationLogFilter,
     ProductFilter,
 )
+from application.core.models import Observation
 from unittests.base_test_case import BaseTestCase
 
 
@@ -28,3 +30,16 @@ class TestAgeFilters(BaseTestCase):
                 queryset = MagicMock()
                 filter_class().get_age(queryset, "age", Age_Choices.AGE_DAY)
                 queryset.filter.assert_called_once_with(**{lookup: datetime(2026, 3, 10, 17, 0, tzinfo=timezone.utc)})
+
+
+class TestAssessedFilter(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        Observation.objects.filter(pk__in=[1, 3]).update(last_assessment=datetime.now(timezone.utc))
+
+    def test_assessed(self) -> None:
+        for value, expected in [("true", [1, 3]), ("false", [2, 4])]:
+            with self.subTest(assessed=value):
+                observations = ObservationFilter({"assessed": value}, queryset=Observation.objects.order_by("id")).qs
+                self.assertEqual(expected, [observation.pk for observation in observations])

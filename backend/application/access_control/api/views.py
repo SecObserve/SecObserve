@@ -158,20 +158,21 @@ class UserViewSet(ModelViewSet):
         if setting_rows_per_page:
             user.setting_rows_per_page = setting_rows_per_page
 
-        # The notification settings are checked for presence instead of truthiness,
+        # These settings are checked for presence instead of truthiness,
         # otherwise they could not be cleared or switched off
         validated_data = request_serializer.validated_data
         if "email" in validated_data:
             user.email = validated_data["email"]
-        for notification_field in (
+        for field in (
+            "setting_hidden_observation_columns",
             "notification_ms_teams_webhook",
             "notification_slack_webhook",
             "notification_email_active",
             "notification_ms_teams_active",
             "notification_slack_active",
         ):
-            if notification_field in validated_data:
-                setattr(user, notification_field, validated_data[notification_field])
+            if field in validated_data:
+                setattr(user, field, validated_data[field])
 
         user.save()
 

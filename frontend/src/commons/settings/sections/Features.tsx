@@ -334,6 +334,9 @@ export const FeaturesFields = () => {
                         <Labeled label="Risk acceptance expiry (days)">
                             <NumberField source="risk_acceptance_expiry_days" />
                         </Labeled>
+                        <Labeled label="Full text search activated">
+                            <BooleanField source="feature_full_text_search" />
+                        </Labeled>
                     </Stack>
                 </Grid>
             </Grid>

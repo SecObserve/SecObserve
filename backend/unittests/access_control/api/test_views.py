@@ -777,3 +777,92 @@ class TestMySettings(BaseTestCase):
         self.assertEqual("internal@example.com", self.user_internal.email)
         self.assertTrue(self.user_internal.notification_email_active)
         save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_hidden_observation_columns(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch(
+            "/api/users/my_settings/", {"setting_hidden_observation_columns": "update_impact_score"}, "json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("update_impact_score", response.data["setting_hidden_observation_columns"])
+        self.assertEqual("update_impact_score", self.user_internal.setting_hidden_observation_columns)
+        save_mock.assert_called()
+
+        hidden_columns = "has_potential_duplicates,update_impact_score"
+        response = api_client.patch(
+            "/api/users/my_settings/", {"setting_hidden_observation_columns": hidden_columns}, "json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(hidden_columns, response.data["setting_hidden_observation_columns"])
+        self.assertEqual(hidden_columns, self.user_internal.setting_hidden_observation_columns)
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_hidden_observation_columns_all(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        hidden_columns = (
+            "scanner_name,last_observation_log,last_assessment,has_potential_duplicates,update_impact_score"
+        )
+        api_client = APIClient()
+        response = api_client.patch(
+            "/api/users/my_settings/", {"setting_hidden_observation_columns": hidden_columns}, "json"
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(hidden_columns, self.user_internal.setting_hidden_observation_columns)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_hidden_observation_columns_cleared(self, save_mock, authentication_mock):
+        self.user_internal.setting_hidden_observation_columns = "has_potential_duplicates"
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch("/api/users/my_settings/", {"setting_hidden_observation_columns": ""}, "json")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual("", response.data["setting_hidden_observation_columns"])
+        self.assertEqual("", self.user_internal.setting_hidden_observation_columns)
+        save_mock.assert_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_hidden_observation_columns_invalid(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch(
+            "/api/users/my_settings/",
+            {"setting_hidden_observation_columns": "has_potential_duplicates,invalid_column"},
+            "json",
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("Setting hidden observation columns: Invalid column invalid_column", response.data["message"])
+        save_mock.assert_not_called()
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.models.User.save")
+    def test_my_settings_hidden_observation_columns_whitespace(self, save_mock, authentication_mock):
+        authentication_mock.return_value = self.user_internal, None
+
+        api_client = APIClient()
+        response = api_client.patch(
+            "/api/users/my_settings/",
+            {"setting_hidden_observation_columns": "has_potential_duplicates, update_impact_score"},
+            "json",
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            "has_potential_duplicates,update_impact_score", self.user_internal.setting_hidden_observation_columns
+        )
+        save_mock.assert_called()

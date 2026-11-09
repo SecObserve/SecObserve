@@ -11,20 +11,20 @@ import {
     SimpleFormIterator,
     useNotify,
     useRecordContext,
+    useRefresh,
 } from "react-admin";
 
-import MenuButton from "../commons/custom_fields/MenuButton";
+import AddButton from "../commons/custom_fields/AddButton";
+import { BranchReferenceInput } from "../commons/custom_fields/BranchReferenceInput";
+import { ServiceReferenceInput } from "../commons/custom_fields/ServiceReferenceInput";
 import { Spinner } from "../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../commons/custom_fields/ToolbarCancelSave";
-import { validate_2048, validate_required, validate_required_255 } from "../commons/custom_validators";
-import { getIconAndFontColor } from "../commons/functions";
+import { validate_100, validate_2048, validate_required } from "../commons/custom_validators";
 import { TextInputWide } from "../commons/layout/themes";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 
 interface CreateScanCodeIOProjectProps {
     product: any;
-    disabled: boolean;
-    onCreated: () => void;
 }
 
 interface Pipeline {
@@ -59,10 +59,11 @@ const matchPipeline = (filter: string, pipeline: Pipeline, exact?: boolean) => {
     );
 };
 
-const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCodeIOProjectProps) => {
+const CreateScanCodeIOProject = ({ product }: CreateScanCodeIOProjectProps) => {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [pipelines, setPipelines] = useState<Pipeline[]>([]);
+    const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => {
         setOpen(true);
@@ -88,7 +89,15 @@ const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCod
         setLoading(true);
 
         const formData = new FormData();
-        formData.append("name", data.name);
+        if (data.name) {
+            formData.append("name", data.name);
+        }
+        if (data.branch) {
+            formData.append("branch", data.branch);
+        }
+        if (data.service) {
+            formData.append("service", data.service);
+        }
         for (const input_url of data.input_urls ?? []) {
             if (input_url.url) {
                 formData.append("input_urls", input_url.url);
@@ -107,7 +116,7 @@ const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCod
             .then(() => {
                 setLoading(false);
                 setOpen(false);
-                onCreated();
+                refresh();
                 notify("ScanCode.io project created", {
                     type: "success",
                 });
@@ -122,16 +131,13 @@ const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCod
 
     return (
         <Fragment>
-            <MenuButton
-                title="Create ScanCode.io project"
-                onClick={handleOpen}
-                icon={<AddCircleIcon sx={{ color: getIconAndFontColor() }} />}
-                disabled={disabled}
-            />
+            <AddButton title="Create ScanCode.io project" onClick={handleOpen} />
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Create ScanCode.io project</DialogTitle>
                 <DialogContent>
+                    {/* Without the empty record, the form would take its values from the product, e.g. the name */}
                     <SimpleForm
+                        record={{}}
                         onSubmit={createScanCodeIOProject}
                         toolbar={
                             <ToolbarCancelSave
@@ -142,11 +148,19 @@ const CreateScanCodeIOProject = ({ product, disabled, onCreated }: CreateScanCod
                             />
                         }
                     >
+                        {product.has_branches && (
+                            <BranchReferenceInput
+                                source="branch"
+                                product={product.id}
+                                defaultValue={product.repository_default_branch}
+                            />
+                        )}
+                        {product.has_services && <ServiceReferenceInput source="service" product={product.id} />}
                         <TextInputWide
                             source="name"
                             label="Project name"
-                            defaultValue={product.name}
-                            validate={validate_required_255}
+                            validate={validate_100}
+                            helperText="Must be unique in ScanCode.io. If empty: product - branch - service"
                         />
                         <ArrayInput source="input_urls" defaultValue={[{ url: "" }]} label="Input URLs">
                             <SimpleFormIterator disableReordering inline>
