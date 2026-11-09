@@ -19,3 +19,40 @@ class Product_Notification_Type:
         PRODUCT_RULE_TO_BE_REVIEWED,
         PRODUCT_RULE_APPROVAL_RECEIPT,
     )
+
+
+class Webhook_Event_Type:
+    OBSERVATION_CREATED = "observation.created"
+    OBSERVATION_REVIEW_REQUESTED = "observation.review_requested"
+    ASSESSMENT_APPROVAL_REQUESTED = "assessment.approval_requested"
+    ASSESSMENT_APPROVAL_DECIDED = "assessment.approval_decided"
+    RULE_APPROVAL_REQUESTED = "rule.approval_requested"
+    RULE_APPROVAL_DECIDED = "rule.approval_decided"
+    IMPORT_COMPLETED = "import.completed"
+    SECURITY_GATE_CHANGED = "security_gate.changed"
+    WEBHOOK_TEST = "webhook.test"
+
+    SUBSCRIBABLE = [
+        OBSERVATION_CREATED,
+        OBSERVATION_REVIEW_REQUESTED,
+        ASSESSMENT_APPROVAL_REQUESTED,
+        ASSESSMENT_APPROVAL_DECIDED,
+        RULE_APPROVAL_REQUESTED,
+        RULE_APPROVAL_DECIDED,
+        IMPORT_COMPLETED,
+        SECURITY_GATE_CHANGED,
+    ]
+
+    CHOICES = [(event_type, event_type) for event_type in SUBSCRIBABLE + [WEBHOOK_TEST]]
+
+
+class Webhook_Delivery_Status:
+    PENDING = "Pending"
+    SUCCEEDED = "Succeeded"
+    FAILED = "Failed"
+
+    CHOICES = [
+        (PENDING, PENDING),
+        (SUCCEEDED, SUCCEEDED),
+        (FAILED, FAILED),
+    ]

@@ -19,6 +19,18 @@ from unittests.base_test_case import BaseTestCase
 
 
 class TestSecurityGate(BaseTestCase):
+    @patch("application.core.services.security_gate.emit_security_gate_event")
+    @patch("application.core.models.Product.save")
+    @patch("application.core.services.security_gate.send_product_security_gate_notification")
+    def test_security_gate_event_only_when_changed(self, _notification_mock, _save_mock, emit_mock):
+        product = Product(security_gate_passed=True, security_gate_active=False)
+        check_security_gate(product)
+        emit_mock.assert_called_once_with(product)
+
+        emit_mock.reset_mock()
+        check_security_gate(product)
+        emit_mock.assert_not_called()
+
     @patch("application.core.models.Product.save")
     @patch("application.core.services.security_gate.send_product_security_gate_notification")
     def test_check_security_gate_unchanged(self, notification_mock, save_mock):
@@ -811,8 +823,9 @@ class TestCheckSecurityGates(BaseTestCase):
         product_passed = Product.objects.create(name="passed")
         product_without_gate = Product.objects.create(name="without gate", security_gate_active=False)
 
-        # Settings, products, the observation counts of all products and the saves of the 2 changed products
-        with self.assertNumQueries(5):
+        # Settings, products, the observation counts of all products, the saves of the 2 changed products
+        # and the webhook lookup of each of them
+        with self.assertNumQueries(7):
             check_security_gates(
                 Product.objects.filter(pk__in=[product_failed.pk, product_passed.pk, product_without_gate.pk])
             )

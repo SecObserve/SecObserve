@@ -163,6 +163,7 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             headers={"Host": "tenant.webhook.office.com"},
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -186,6 +187,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Host": "tenant.webhook.office.com"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -208,6 +210,7 @@ class TestPushNotifications(BaseTestCase):
             allow_redirects=False,
             headers={"Host": "tenant.webhook.office.com"},
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -231,6 +234,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Content-Type": "application/json", "Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -253,6 +257,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Content-Type": "application/json", "Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     # --- send_slack_notification ---
@@ -292,6 +297,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -315,6 +321,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -337,6 +344,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Host": "hooks.example.org"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base._create_notification_message")
@@ -430,6 +438,7 @@ class TestPushNotifications(BaseTestCase):
             headers={"Content-Type": "text/plain", "Host": "hooks.example.org:8443"},
             allow_redirects=False,
             timeout=60,
+            stream=False,
         )
 
     @patch("application.notifications.services.send_notifications_base.requests.Session.request")

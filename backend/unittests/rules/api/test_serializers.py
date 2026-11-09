@@ -4,8 +4,11 @@ from django.core.management import call_command
 from rest_framework.serializers import ValidationError
 
 from application.access_control.models import User
+from application.commons.models import Settings
 from application.core.models import Product
+from application.notifications.types import Webhook_Event_Type
 from application.rules.api.serializers import (
+    GeneralRuleSerializer,
     ProductRuleSerializer,
     RuleApprovalSerializer,
 )
@@ -98,3 +101,69 @@ class TestProductRuleSerializerNotification(BaseTestCase):
 
         self.assertEqual(Rule_Status.RULE_STATUS_NEEDS_APPROVAL, rule.approval_status)
         mock_send.assert_called_once_with(rule)
+
+
+class TestRuleSerializerWebhookEvent(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        self.product = Product.objects.get(pk=1)
+        self.user = User.objects.get(pk=2)
+        patcher = patch("application.rules.api.serializers.emit_rule_event")
+        self.mock_emit = patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = patch("application.rules.models.get_current_user", return_value=self.user)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _need_approval(self, needs: bool) -> None:
+        self.product.product_rules_need_approval = needs
+        self.product.save()
+        settings = Settings.load()
+        settings.feature_general_rules_need_approval = needs
+        settings.save()
+
+    def test_product_rule_create_needs_approval(self) -> None:
+        self._need_approval(True)
+
+        rule = ProductRuleSerializer().create({"product": self.product, "name": "r", "description": "d"})
+
+        self.mock_emit.assert_called_once_with(Webhook_Event_Type.RULE_APPROVAL_REQUESTED, rule)
+
+    def test_product_rule_create_auto_approved(self) -> None:
+        self._need_approval(False)
+
+        ProductRuleSerializer().create({"product": self.product, "name": "r", "description": "d"})
+
+        self.mock_emit.assert_not_called()
+
+    def test_product_rule_update_needs_approval(self) -> None:
+        self._need_approval(True)
+        instance = Rule.objects.create(product=self.product, name="r", approval_status=Rule_Status.RULE_STATUS_APPROVED)
+
+        rule = ProductRuleSerializer().update(instance, {"description": "changed"})
+
+        self.mock_emit.assert_called_once_with(Webhook_Event_Type.RULE_APPROVAL_REQUESTED, rule)
+
+    def test_general_rule_create_needs_approval(self) -> None:
+        self._need_approval(True)
+
+        rule = GeneralRuleSerializer().create({"name": "g"})
+
+        self.mock_emit.assert_called_once_with(Webhook_Event_Type.RULE_APPROVAL_REQUESTED, rule)
+
+    def test_general_rule_update_needs_approval(self) -> None:
+        self._need_approval(True)
+        instance = Rule.objects.create(name="g", approval_status=Rule_Status.RULE_STATUS_APPROVED)
+
+        rule = GeneralRuleSerializer().update(instance, {"description": "changed"})
+
+        self.mock_emit.assert_called_once_with(Webhook_Event_Type.RULE_APPROVAL_REQUESTED, rule)
+
+    def test_general_rule_update_auto_approved(self) -> None:
+        self._need_approval(False)
+        instance = Rule.objects.create(name="g", approval_status=Rule_Status.RULE_STATUS_APPROVED)
+
+        GeneralRuleSerializer().update(instance, {"description": "changed"})
+
+        self.mock_emit.assert_not_called()

@@ -41,6 +41,7 @@ from application.core.types import (
     Status,
     VEX_Justification,
 )
+from application.notifications.types import Webhook_Event_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -434,6 +435,78 @@ class TestSaveAssessmentApprovalNotification(BaseTestCase):
         self._save_assessment()
 
         mock_send.assert_not_called()
+
+
+class TestAssessmentWebhookEvents(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        self.log = Observation_Log.objects.get(pk=1)
+        self.log.assessment_status = Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
+        self.log.severity = Severity.SEVERITY_HIGH
+        self.log.status = Status.STATUS_IN_REVIEW
+        self.log.save()
+        self.approver = User.objects.get(pk=3)
+
+    @patch("application.core.services.assessment.emit_assessment_event")
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_save_assessment_needing_approval_emits_requested(self, _mock_send, mock_emit) -> None:
+        product = Product.objects.get(pk=1)
+        product.assessments_need_approval = True
+        product.save()
+
+        save_assessment(
+            observation=Observation.objects.get(pk=4),
+            new_severity=Severity.SEVERITY_HIGH,
+            new_status=None,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="comment",
+            new_vex_justification=None,
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+        )
+
+        mock_emit.assert_called_once()
+        self.assertEqual(Webhook_Event_Type.ASSESSMENT_APPROVAL_REQUESTED, mock_emit.call_args.args[0])
+        self.assertEqual(
+            Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL, mock_emit.call_args.args[1].assessment_status
+        )
+
+    @patch("application.core.services.assessment.emit_observation_event")
+    @patch("application.core.services.assessment.emit_assessment_event")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_rejection_emits_decided_with_the_decision(
+        self, mock_user, _mock_receipt, mock_emit, mock_emit_obs
+    ) -> None:
+        mock_user.return_value = self.approver
+        statuses = []
+        mock_emit.side_effect = lambda event_type, log: statuses.append((event_type, log.assessment_status))
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_REJECTED, "not ok", None, None, None)
+
+        self.assertEqual(
+            [(Webhook_Event_Type.ASSESSMENT_APPROVAL_DECIDED, Assessment_Status.ASSESSMENT_STATUS_REJECTED)], statuses
+        )
+        mock_emit_obs.assert_not_called()
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.emit_observation_event")
+    @patch("application.core.services.assessment.emit_assessment_event")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_approval_into_in_review_emits_decided_and_review_requested(
+        self, mock_user, _mock_receipt, mock_emit, mock_emit_obs, _gate, _tracker, _propagate
+    ) -> None:
+        mock_user.return_value = self.approver
+
+        assessment_approval(self.log, Assessment_Status.ASSESSMENT_STATUS_APPROVED, None, None, None, None)
+
+        mock_emit.assert_called_once_with(Webhook_Event_Type.ASSESSMENT_APPROVAL_DECIDED, self.log)
+        mock_emit_obs.assert_called_once_with(Webhook_Event_Type.OBSERVATION_REVIEW_REQUESTED, self.log.observation)
 
 
 class TestAssessmentApprovalReceiptNotification(BaseTestCase):

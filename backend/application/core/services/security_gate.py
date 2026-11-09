@@ -12,6 +12,9 @@ from application.core.queries.product import (
 from application.notifications.services.send_notifications_security_gate import (
     send_product_security_gate_notification,
 )
+from application.notifications.services.webhook_events import (
+    emit_security_gate_event,
+)
 
 SEVERITIES = ("critical", "high", "medium", "low", "none", "unknown")
 SECURITY_GATES_BATCH_SIZE = 1000
@@ -56,6 +59,7 @@ def _update_security_gate(product: Product, new_security_gate_passed: Optional[b
         product.security_gate_passed = new_security_gate_passed
         product.save()
         send_product_security_gate_notification(product)
+        emit_security_gate_event(product)
 
 
 def check_security_gate_observation(observation: Observation) -> None:
