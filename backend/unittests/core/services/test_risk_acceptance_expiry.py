@@ -16,7 +16,7 @@ from application.core.services.risk_acceptance_expiry import (
 from application.core.services.risk_acceptance_expiry_task import (
     expire_risk_acceptances,
 )
-from application.core.types import Status
+from application.core.types import Observation_Log_Comment, Status
 from unittests.base_test_case import BaseTestCase
 
 
@@ -225,4 +225,6 @@ class TestExpiryWithDatabase(BaseTestCase):
 
         expire_risk_acceptances()
 
-        mock_remove_assessment.assert_called_once_with(self.observation, "Not affected assessment has expired.")
+        mock_remove_assessment.assert_called_once_with(
+            self.observation, Observation_Log_Comment.COMMENT_NOT_AFFECTED_EXPIRED, propagate=False
+        )
