@@ -1,7 +1,7 @@
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { Badge, Box, Button, Chip, Divider, Popover, Stack, Typography } from "@mui/material";
 import queryString from "query-string";
-import { ReactElement, useRef, useState } from "react";
+import { ReactElement, ReactNode, useRef, useState } from "react";
 import {
     AddSavedQueryDialog,
     FilterForm,
@@ -47,10 +47,11 @@ interface FilterBarProps {
     filters: ReactElement[];
     moreFilters: SecondaryFilter[];
     saveQuery?: boolean;
+    actions?: ReactNode;
 }
 
-// One wrapping row: the primary filters, MORE FILTERS and a chip for each active secondary filter.
-export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBarProps) => {
+// One wrapping row: the primary filters, MORE FILTERS, a chip for each active secondary filter and optional actions.
+export const FilterBar = ({ filters, moreFilters, saveQuery = false, actions }: FilterBarProps) => {
     const { filterValues, displayedFilters, setFilters, sort, perPage, resource } = useListContext();
     const navigate = useNavigate();
     const barRef = useRef<HTMLDivElement>(null);
@@ -113,6 +114,7 @@ export const FilterBar = ({ filters, moreFilters, saveQuery = false }: FilterBar
                     sx={{ marginBottom: 1.75, marginTop: 1.75, marginLeft: 1 }}
                 />
             ))}
+            {actions}
             <Popover
                 open={Boolean(position)}
                 anchorReference="anchorPosition"

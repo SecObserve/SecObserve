@@ -13,6 +13,9 @@ from application.core.services.assessment import (
     _get_product_group_propagate_branches,
     _get_product_propagate_branches,
     propagate_assessment,
+    propagate_assessment_removal,
+    remove_assessment,
+    save_assessment,
     set_propagated_assessment_for_new_observation,
 )
 from application.core.types import Assessment_Status, Severity, Status
@@ -243,6 +246,17 @@ class TestPropagateAssessment(BasePropagationTestCase):
         save_assessment_mock.assert_not_called()
 
     @patch("application.core.services.assessment.save_assessment")
+    def test_not_propagated_with_only_new_observation(self, save_assessment_mock) -> None:
+        self._clone_observation(self.branch_main)
+        source_log = self._create_log(self.observation_dev, severity=Severity.SEVERITY_HIGH)
+        source_log.observation.product.propagate_branches_new_assessment = False
+        source_log.observation.product.propagate_branches_new_observation = True
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
     def test_observation_without_branch(self, save_assessment_mock) -> None:
         observation_without_branch = self._clone_observation(None, "Title", "component_name:version")
         self._clone_observation(self.branch_main)
@@ -334,6 +348,17 @@ class TestPropagateAssessment(BasePropagationTestCase):
         )
 
     @patch("application.core.services.assessment.save_assessment")
+    def test_branch_matching_several_patterns_propagated_once(self, save_assessment_mock) -> None:
+        self.product.propagate_branches = [{"propagate_to": "db_branch_internal_.*"}, {"propagate_to": "db_branch_.*"}]
+        self.product.save()
+        self._clone_observation(self.branch_main)
+        source_log = self._create_log(Observation.objects.get(pk=1))
+
+        propagate_assessment(source_log)
+
+        save_assessment_mock.assert_called_once()
+
+    @patch("application.core.services.assessment.save_assessment")
     def test_propagates_source_only_observation(self, save_assessment_mock) -> None:
         self._make_observation_dev_source_only()
         target_observation = self._clone_observation(self.branch_main)
@@ -394,6 +419,114 @@ class TestPropagateAssessment(BasePropagationTestCase):
         propagate_assessment(source_log)
 
         save_assessment_mock.assert_not_called()
+
+
+class TestPropagateAssessmentRemoval(BasePropagationTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.source_log = self._create_log(self.observation_dev, created=timezone.now() - timedelta(hours=3))
+        self.removal_log = self._create_log(
+            self.observation_dev,
+            status="",
+            comment="assessment removed",
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+        )
+
+    def _clone_with_copy(self, branch: Branch, original: Observation_Log) -> Observation:
+        observation = self._clone_observation(branch)
+        self._create_log(observation, propagated_from=original, created=timezone.now() - timedelta(hours=2))
+        return observation
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_removes_copy_on_matching_branch(self, remove_assessment_mock) -> None:
+        target_observation = self._clone_with_copy(self.branch_main, self.source_log)
+
+        propagate_assessment_removal(self.removal_log, self.source_log.pk)
+
+        remove_assessment_mock.assert_called_once_with(
+            target_observation, "assessment removed", propagated_from=self.removal_log
+        )
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_removes_original_and_copies_of_same_original(self, remove_assessment_mock) -> None:
+        # the removed assessment on dev is itself a copy of the original on release
+        observation_release = self._clone_observation(self._create_branch("db_branch_internal_release"))
+        original_log = self._create_log(observation_release, created=timezone.now() - timedelta(hours=4))
+        target_observation = self._clone_with_copy(self.branch_main, original_log)
+
+        propagate_assessment_removal(self.removal_log, original_log.pk)
+
+        self.assertEqual(
+            {observation_release, target_observation},
+            {call.args[0] for call in remove_assessment_mock.call_args_list},
+        )
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_keeps_independent_assessment(self, remove_assessment_mock) -> None:
+        self._create_log(self._clone_observation(self.branch_main))
+
+        propagate_assessment_removal(self.removal_log, self.source_log.pk)
+
+        remove_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_keeps_assessment_changed_after_copy(self, remove_assessment_mock) -> None:
+        target_observation = self._clone_with_copy(self.branch_main, self.source_log)
+        self._create_log(target_observation, status=Status.STATUS_OPEN, created=timezone.now() - timedelta(hours=1))
+
+        propagate_assessment_removal(self.removal_log, self.source_log.pk)
+
+        remove_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_not_propagated_without_propagation_flags(self, remove_assessment_mock) -> None:
+        self._clone_with_copy(self.branch_main, self.source_log)
+        self.removal_log.observation.product.propagate_branches_new_assessment = False
+        self.removal_log.observation.product.propagate_branches_new_observation = False
+
+        propagate_assessment_removal(self.removal_log, self.source_log.pk)
+
+        remove_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_propagate_branches_new_observation_only(self, remove_assessment_mock) -> None:
+        # the copy can have been applied to a new observation, it has to be removed as well
+        target_observation = self._clone_with_copy(self.branch_main, self.source_log)
+        self.removal_log.observation.product.propagate_branches_new_assessment = False
+        self.removal_log.observation.product.propagate_branches_new_observation = True
+
+        propagate_assessment_removal(self.removal_log, self.source_log.pk)
+
+        remove_assessment_mock.assert_called_once_with(
+            target_observation, "assessment removed", propagated_from=self.removal_log
+        )
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_propagate_branches_new_observation_only_product_group(self, remove_assessment_mock) -> None:
+        self._configure_product_group_propagation_only(new_assessment=False, new_observation=True)
+        target_observation = self._clone_with_copy(self.branch_main, self.source_log)
+
+        propagate_assessment_removal(Observation_Log.objects.get(pk=self.removal_log.pk), self.source_log.pk)
+
+        remove_assessment_mock.assert_called_once()
+        self.assertEqual(target_observation, remove_assessment_mock.call_args.args[0])
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_not_propagated_without_propagation_flags_product_group(self, remove_assessment_mock) -> None:
+        self._configure_product_group_propagation_only(new_assessment=False, new_observation=False)
+        self._clone_with_copy(self.branch_main, self.source_log)
+
+        propagate_assessment_removal(Observation_Log.objects.get(pk=self.removal_log.pk), self.source_log.pk)
+
+        remove_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.remove_assessment")
+    def test_target_branch_not_matching(self, remove_assessment_mock) -> None:
+        self._clone_with_copy(self._create_branch("feature_x"), self.source_log)
+
+        propagate_assessment_removal(self.removal_log, self.source_log.pk)
+
+        remove_assessment_mock.assert_not_called()
 
 
 class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
@@ -474,6 +607,67 @@ class TestSetPropagatedAssessmentForNewObservation(BasePropagationTestCase):
     def test_newest_log_within_branch_wins(self, save_assessment_mock) -> None:
         self._create_log(
             self.observation_main, status=Status.STATUS_IN_REVIEW, created=timezone.now() - timedelta(hours=2)
+        )
+        newer_log = self._create_log(self.observation_main, created=timezone.now() - timedelta(hours=1))
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_called_once()
+        self.assertEqual(newer_log, save_assessment_mock.call_args.kwargs["propagated_from"])
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_removed_assessment_not_applied(self, save_assessment_mock) -> None:
+        self._create_log(self.observation_main, created=timezone.now() - timedelta(hours=2))
+        self._create_log(
+            self.observation_main,
+            status="",
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+            created=timezone.now() - timedelta(hours=1),
+        )
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_expired_risk_acceptance_not_applied(self, save_assessment_mock) -> None:
+        self._create_log(
+            self.observation_main, status=Status.STATUS_RISK_ACCEPTED, created=timezone.now() - timedelta(hours=2)
+        )
+        self._create_log(
+            self.observation_main,
+            status="",
+            comment="Risk acceptance has expired.",
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+            created=timezone.now() - timedelta(hours=1),
+        )
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_removal_wins_over_older_assessment_of_other_branch(self, save_assessment_mock) -> None:
+        observation_release = self._clone_observation(self._create_branch("db_branch_internal_release"))
+        self._create_log(observation_release, created=timezone.now() - timedelta(hours=2))
+        self._create_log(
+            self.observation_main,
+            status="",
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+            created=timezone.now() - timedelta(hours=1),
+        )
+
+        set_propagated_assessment_for_new_observation(self.new_observation)
+
+        save_assessment_mock.assert_not_called()
+
+    @patch("application.core.services.assessment.save_assessment")
+    def test_assessment_after_removal_applied(self, save_assessment_mock) -> None:
+        self._create_log(
+            self.observation_main,
+            status="",
+            assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED,
+            created=timezone.now() - timedelta(hours=2),
         )
         newer_log = self._create_log(self.observation_main, created=timezone.now() - timedelta(hours=1))
 
@@ -755,3 +949,115 @@ class TestPropagationEndToEnd(BasePropagationTestCase):
         new_log = new_logs.first()
         self.assertEqual(candidate_log, new_log.propagated_from)
         self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED, new_log.assessment_status)
+
+    @patch("application.core.services.observation_log.send_observation_title_notification")
+    @patch("application.core.services.observation_log.send_observation_notification")
+    @patch("application.core.services.observation_log.get_current_user")
+    @patch("application.core.services.assessment.get_current_user")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    def test_propagate_assessment_removal_end_to_end(  # pylint: disable=too-many-positional-arguments
+        self,
+        check_security_gate_mock,
+        push_observation_to_issue_tracker_mock,
+        get_current_user_assessment_mock,
+        get_current_user_observation_log_mock,
+        send_observation_notification_mock,
+        send_observation_title_notification_mock,
+    ) -> None:
+        get_current_user_assessment_mock.return_value = self.user
+        get_current_user_observation_log_mock.return_value = self.user
+
+        target_observation = self._clone_observation(self.branch_main)
+        status_before_assessment = target_observation.current_status
+        save_assessment(
+            observation=self.observation_dev,
+            new_severity="",
+            new_status=Status.STATUS_NOT_AFFECTED,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="vulnerable function is not used",
+            new_vex_justification="",
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+        )
+        target_observation.refresh_from_db()
+        self.assertEqual(Status.STATUS_NOT_AFFECTED, target_observation.current_status)
+
+        removal_log = remove_assessment(
+            Observation.objects.get(pk=self.observation_dev.pk), "vulnerable function is used now"
+        )
+
+        target_observation.refresh_from_db()
+        self.assertEqual("", target_observation.assessment_status)
+        self.assertEqual(status_before_assessment, target_observation.current_status)
+
+        target_removal_log = Observation_Log.objects.get(
+            observation=target_observation, assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED
+        )
+        self.assertEqual(removal_log, target_removal_log.propagated_from)
+        self.assertEqual("vulnerable function is used now", target_removal_log.comment)
+
+        # assessment and removal on both branches, no re-propagation has happened
+        self.assertEqual(4, Observation_Log.objects.count())
+
+    @patch("application.core.services.observation_log.send_observation_title_notification")
+    @patch("application.core.services.observation_log.send_observation_notification")
+    @patch("application.core.services.observation_log.get_current_user")
+    @patch("application.core.services.assessment.get_current_user")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    def test_propagate_assessment_removal_to_new_observation_end_to_end(  # pylint: disable=too-many-positional-arguments
+        self,
+        check_security_gate_mock,
+        push_observation_to_issue_tracker_mock,
+        get_current_user_assessment_mock,
+        get_current_user_observation_log_mock,
+        send_observation_notification_mock,
+        send_observation_title_notification_mock,
+    ) -> None:
+        get_current_user_assessment_mock.return_value = self.user
+        get_current_user_observation_log_mock.return_value = self.user
+
+        # assessments only reach new observations
+        self.product.propagate_branches_new_assessment = False
+        self.product.propagate_branches_new_observation = True
+        self.product.save()
+
+        # cloned before the assessment, otherwise the clone would copy it
+        new_observation = self._clone_observation(self.branch_main)
+        status_before_assessment = new_observation.current_status
+
+        save_assessment(
+            observation=Observation.objects.get(pk=self.observation_dev.pk),
+            new_severity="",
+            new_status=Status.STATUS_NOT_AFFECTED,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="vulnerable function is not used",
+            new_vex_justification="",
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+        )
+        new_observation.refresh_from_db()
+        self.assertEqual(status_before_assessment, new_observation.current_status)
+
+        set_propagated_assessment_for_new_observation(Observation.objects.get(pk=new_observation.pk))
+        new_observation.refresh_from_db()
+        self.assertEqual(Status.STATUS_NOT_AFFECTED, new_observation.current_status)
+
+        removal_log = remove_assessment(
+            Observation.objects.get(pk=self.observation_dev.pk), "vulnerable function is used now"
+        )
+
+        new_observation.refresh_from_db()
+        self.assertEqual("", new_observation.assessment_status)
+        self.assertEqual(status_before_assessment, new_observation.current_status)
+
+        new_removal_log = Observation_Log.objects.get(
+            observation=new_observation, assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED
+        )
+        self.assertEqual(removal_log, new_removal_log.propagated_from)
+
+        # assessment and removal on both branches, no re-propagation has happened
+        self.assertEqual(4, Observation_Log.objects.count())

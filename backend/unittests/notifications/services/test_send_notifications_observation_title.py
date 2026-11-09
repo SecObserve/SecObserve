@@ -186,10 +186,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_severity.NUMERICAL_SEVERITIES = {"Critical": 1}
         mock_base_url.return_value = "https://app.example.com/"
         mock_status.STATUS_ACTIVE = ["Open", "Affected", "In review"]
-        mock_otn.DoesNotExist = Exception
-        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
         new_record = MagicMock(severity=None, status=None, priority=None)
-        mock_otn.return_value = new_record
+        mock_otn.objects.select_for_update.return_value.get_or_create.return_value = (new_record, True)
 
         observation = _make_observation(numerical_severity=1, current_status="Open")
         with self.captureOnCommitCallbacks(execute=True):
@@ -215,9 +213,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_severity.NUMERICAL_SEVERITIES = {"Critical": 1}
         mock_base_url.return_value = "https://app.example.com/"
         mock_status.STATUS_ACTIVE = ["Open", "Affected", "In review"]
-        mock_otn.DoesNotExist = Exception
         existing = MagicMock(severity="High", status="Open", priority=1)  # severity differs
-        mock_otn.objects.get.return_value = existing
+        mock_otn.objects.select_for_update.return_value.get_or_create.return_value = (existing, False)
 
         observation = _make_observation(
             numerical_severity=1,
@@ -246,9 +243,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_settings_cls.load.return_value = settings
         mock_severity.NUMERICAL_SEVERITIES = {"Critical": 1}
         mock_status.STATUS_ACTIVE = ["Open"]
-        mock_otn.DoesNotExist = Exception
         existing = MagicMock(severity="Critical", status="Open", priority=1)
-        mock_otn.objects.get.return_value = existing
+        mock_otn.objects.select_for_update.return_value.get_or_create.return_value = (existing, False)
 
         observation = _make_observation(
             numerical_severity=1,
@@ -280,10 +276,8 @@ class TestSendObservationTitleNotification(BaseTestCase):
         mock_severity.NUMERICAL_SEVERITIES = {"Critical": 1}
         mock_base_url.return_value = "https://app.example.com/"
         mock_status.STATUS_ACTIVE = ["Open"]
-        mock_otn.DoesNotExist = Exception
-        mock_otn.objects.get.side_effect = mock_otn.DoesNotExist
         new_record = MagicMock(severity=None, status=None, priority=None)
-        mock_otn.return_value = new_record
+        mock_otn.objects.select_for_update.return_value.get_or_create.return_value = (new_record, True)
 
         observation = _make_observation(title="XSS Attack", numerical_severity=1, current_status="Open")
         with self.captureOnCommitCallbacks(execute=True):

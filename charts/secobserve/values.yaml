@@ -221,6 +221,10 @@ backend:
     # @section -- Backend
     - { name: OIDC_AUTHORITY, value: https://oidc.secobserve.dev }
 
+    # -- OIDC issuer, optional, default is the issuer of the OpenID configuration
+    # @section -- Backend
+    - { name: OIDC_ISSUER, value: "" }
+
     # -- OIDC client id
     # @section -- Backend
     - { name: OIDC_CLIENT_ID, value: secobserve }

@@ -6,6 +6,7 @@
 |---------|:------------:|
 | [Flexible data model with products, product groups and services](../getting_started/data_model.md)  | :material-plus-circle-outline: |
 | [Observations with a wide range of information](../getting_started/anatomy_of_an_observation.md) | :material-plus-circle-outline: |
+| [Full text search for observations (PostgreSQL only)](../usage/full_text_search.md) | :material-plus-circle-outline: |
 | [Multiple branches and versions per product](../usage/branches.md) | :material-plus-circle-outline: |
 | [Identified components with vulnerabilities and licenses across all products](../usage/components.md) | :material-plus-circle-outline: |
 | [Automatic resolution of fixed vulnerabilities](../usage/import_observations.md#import-algorithm) | :material-plus-circle-outline: |
@@ -39,6 +40,7 @@
 | [Import/export vulnerabilities from/to VEX documents (CSAF, OpenVEX)](../integrations/vex.md) | :material-plus-circle-outline: |
 | [Vulnerability scanning from OSV](../integrations/osv_scan.md) | :material-plus-circle-outline: |
 | [Vulnerability scanning from VulnerableCode](../integrations/vulnerablecode_scan.md) | :material-plus-circle-outline: |
+| [Import of components from ScanCode.io](../integrations/scancodeio.md) | :material-plus-circle-outline: |
 | [Export of data to Microsoft Excel and CSV](../integrations/observations_export.md) | :material-plus-circle-outline: |
 | [Export metrics to CodeCharta](../integrations/codecharta.md) | :material-plus-circle-outline: |
 | [Notifications to Microsoft Teams, Slack and email](../usage/notifications.md) | :material-plus-circle-outline: |

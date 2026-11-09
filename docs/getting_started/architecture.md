@@ -12,4 +12,4 @@ The backend is implemented with Python and [Django](https://www.djangoproject.co
 
 ## Database
 
-Currently MySQL and PostgreSQL are supported as databases.
+Currently MySQL and PostgreSQL are supported as databases. The [full text search](../usage/full_text_search.md) for observations is only available with PostgreSQL.

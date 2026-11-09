@@ -189,10 +189,29 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
         self.allowed_licenses_count: int | None = None
         self.ignored_licenses_count: int | None = None
 
+        # Set while an import in a transaction runs, which writes last_observation_change once at its end
+        self.defer_observation_change = False
+
         super().__init__(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        # An instance loaded before a concurrent change must not reset the change timestamps,
+        # the product metrics are only recalculated when they change.
+        if not self._state.adding and kwargs.get("update_fields") is None:
+            unchanged_fields = {"last_observation_change", "last_license_change"} - self.get_dirty_fields().keys()
+            if unchanged_fields:
+                deferred_fields = self.get_deferred_fields()
+                kwargs["update_fields"] = [
+                    field.name
+                    for field in self._meta.concrete_fields
+                    if not field.primary_key
+                    and field.name not in unchanged_fields
+                    and field.attname not in deferred_fields
+                ]
+        super().save(*args, **kwargs)
 
 
 class Branch(Model, DirtyFieldsMixin):
@@ -396,6 +415,7 @@ class Observation(Model):
     created = DateTimeField(auto_now_add=True)
     modified = DateTimeField(auto_now=True)
     last_observation_log = DateTimeField(default=timezone.now)
+    last_assessment = DateTimeField(null=True)
     identity_hash = CharField(max_length=64)
 
     general_rule = ForeignKey(
@@ -484,6 +504,7 @@ class Observation(Model):
             Index(fields=["origin_cloud_qualified_resource"]),
             Index(fields=["origin_kubernetes_qualified_resource"]),
             Index(fields=["last_observation_log"]),
+            Index(fields=["last_assessment"]),
             Index(fields=["epss_score"]),
             Index(fields=["scanner"]),
             Index(fields=["update_impact_score"]),
@@ -566,6 +587,7 @@ class Observation_Log(Model):
         indexes = [
             Index(fields=["observation", "-created"]),
             Index(fields=["-created"]),
+            Index(fields=["assessment_status"]),
         ]
         ordering = ["observation", "-created"]
 

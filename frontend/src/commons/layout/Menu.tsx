@@ -25,7 +25,7 @@ import openvex from "../../vex/openvex";
 import vex_counters from "../../vex/vex_counters";
 import vex_documents from "../../vex/vex_documents";
 import { IntervalHooks } from "../IntervalHooks";
-import { feature_license_management, feature_vex_enabled, is_superuser } from "../functions";
+import { feature_license_management, feature_vex_enabled, is_superuser, useSettingsSnapshot } from "../functions";
 import settings from "../settings";
 import SubMenu from "./SubMenu";
 
@@ -34,6 +34,7 @@ type MenuName = "menuSettings" | "menuVEX";
 const Menu = ({ dense = false }: MenuProps) => {
     const [open] = useSidebarState();
     const [state, setState] = useState({ menuSettings: false, menuVEX: false });
+    useSettingsSnapshot();
     const handleToggle = (menu: MenuName) => {
         setState((state) => ({ ...state, [menu]: !state[menu] })); // eslint-disable-line security/detect-object-injection
     };

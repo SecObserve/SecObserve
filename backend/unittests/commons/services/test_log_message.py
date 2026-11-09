@@ -46,3 +46,26 @@ class TestLogMessage(BaseTestCase):
 
         log_message = "{'message': \"('protected_error', None)\", 'user': 'user_external@example.com', 'request_method': 'POST', 'request_path': '', 'request_client_ip': 'addr_0', 'exception_class': 'django.db.models.deletion.ProtectedError'}"
         self.assertEqual(log_message, message)
+
+    @patch("application.commons.services.log_message.get_current_request")
+    def test_format_log_message_webhook_token_is_redacted(self, mock_request):
+        request = HttpRequest()
+        request.method = "POST"
+        request.path = "/api/scancodeio/webhook/secret_token/"
+        mock_request.return_value = request
+
+        message = format_log_message(message="incoming_message")
+
+        self.assertNotIn("secret_token", message)
+        self.assertIn("'request_path': '/api/scancodeio/webhook/***/'", message)
+
+    @patch("application.commons.services.log_message.get_current_request")
+    def test_format_log_message_other_path_is_not_changed(self, mock_request):
+        request = HttpRequest()
+        request.method = "GET"
+        request.path = "/api/products/1/"
+        mock_request.return_value = request
+
+        message = format_log_message(message="incoming_message")
+
+        self.assertIn("'request_path': '/api/products/1/'", message)

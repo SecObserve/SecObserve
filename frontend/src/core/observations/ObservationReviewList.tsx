@@ -13,7 +13,11 @@ import {
 } from "react-admin";
 
 import { PERMISSION_OBSERVATION_ASSESSMENT } from "../../access_control/types";
-import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
+import {
+    getSettingListSize,
+    getSettingRowsPerPage,
+    useObservationColumnVisibility,
+} from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
@@ -49,6 +53,8 @@ type ObservationsReviewListProps = {
 };
 
 const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
+    const isColumnVisible = useObservationColumnVisibility();
+
     if (product) {
         setListIdentifier(IDENTIFIER_OBSERVATION_REVIEW_LIST_PRODUCT);
     } else {
@@ -159,13 +165,26 @@ const ObservationsReviewList = ({ product }: ObservationsReviewListProps) => {
                                         sx={{ wordBreak: "break-word" }}
                                     />
                                 )}
-                                <TextField source="scanner_name" label="Scanner" />
-                                <FunctionField<Observation>
-                                    label="Age"
-                                    sortBy="last_observation_log"
-                                    render={(record) => (record ? humanReadableDate(record.last_observation_log) : "")}
-                                />
-                                {product?.has_potential_duplicates && (
+                                {isColumnVisible("scanner_name") && <TextField source="scanner_name" label="Scanner" />}
+                                {isColumnVisible("last_observation_log") && (
+                                    <FunctionField<Observation>
+                                        label="Age"
+                                        sortBy="last_observation_log"
+                                        render={(record) =>
+                                            record ? humanReadableDate(record.last_observation_log) : ""
+                                        }
+                                    />
+                                )}
+                                {isColumnVisible("last_assessment") && has_attribute("last_assessment", data, sort) && (
+                                    <FunctionField<Observation>
+                                        label="Assessed"
+                                        sortBy="last_assessment"
+                                        render={(record) =>
+                                            record?.last_assessment ? humanReadableDate(record.last_assessment) : ""
+                                        }
+                                    />
+                                )}
+                                {isColumnVisible("has_potential_duplicates") && product?.has_potential_duplicates && (
                                     <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
                                 )}
                             </Datagrid>

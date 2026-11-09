@@ -1,4 +1,6 @@
 import os
+import threading
+import time
 from datetime import datetime, timezone
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -12,9 +14,10 @@ from application.import_observations.parsers.osv.parser import (
     OSV_MAX_RETRIES,
     OSV_Vulnerability,
     OSVParser,
-    _create_osv_session,
     _get_osv_max_threads,
+    create_osv_session,
 )
+from unittests.base_test_case import BaseTestCase
 
 
 class TestOSVParserCache(TestCase):
@@ -124,18 +127,88 @@ class TestOSVParserCache(TestCase):
         mock_objects.bulk_create.assert_not_called()
 
 
+class TestOSVParserCacheConcurrentScan(BaseTestCase):
+    @patch("application.import_observations.parsers.osv.parser.create_osv_session")
+    def test_fill_osv_cache_advisory_stored_by_other_scan(self, mock_create_osv_session):
+        """
+        Scenario: another product is scanned at the same time and stores the same missing
+        advisory between the cache lookup and the insert of this scan.
+        """
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        def _create_session_while_other_scan_stores_advisory():
+            OSV_Cache.objects.create(osv_id="GHSA-1", modified=now, data='{"id": "GHSA-1", "other": true}')
+            session = MagicMock()
+            session.get.return_value.text = '{"id": "GHSA-1"}'
+            return session
+
+        mock_create_osv_session.side_effect = _create_session_while_other_scan_stores_advisory
+
+        result = OSVParser()._fill_osv_cache([OSV_Vulnerability(id="GHSA-1", modified=now)])
+
+        self.assertEqual('{"id": "GHSA-1"}', result["GHSA-1"].data)
+        self.assertEqual(1, OSV_Cache.objects.filter(osv_id="GHSA-1").count())
+
+
+class TestOSVRequestLimit(TestCase):
+    @patch("application.import_observations.parsers.osv.parser._OSV_REQUEST_SLOTS", threading.BoundedSemaphore(3))
+    @patch("application.import_observations.parsers.osv.parser.create_osv_session")
+    @patch("application.import_observations.models.OSV_Cache.objects")
+    def test_concurrent_scans_share_the_limit(self, mock_objects, mock_create_osv_session):
+        mock_objects.filter.return_value = []
+        lock = threading.Lock()
+        in_flight = 0
+        max_in_flight = 0
+
+        def _get(url, timeout):  # pylint: disable=unused-argument
+            nonlocal in_flight, max_in_flight
+            with lock:
+                in_flight += 1
+                max_in_flight = max(max_in_flight, in_flight)
+            time.sleep(0.02)
+            with lock:
+                in_flight -= 1
+            return MagicMock(text="{}")
+
+        mock_create_osv_session.return_value.get.side_effect = _get
+        now = datetime(2024, 1, 1, tzinfo=timezone.utc)
+
+        def _scan(prefix: str) -> None:
+            OSVParser()._fill_osv_cache([OSV_Vulnerability(id=f"{prefix}-{i}", modified=now) for i in range(40)])
+
+        scans = [threading.Thread(target=_scan, args=(prefix,)) for prefix in ("A", "B")]
+        for scan in scans:
+            scan.start()
+        for scan in scans:
+            scan.join()
+
+        # Each scan has its own pool of OSV_MAX_THREADS (32 by default) threads
+        self.assertEqual(3, max_in_flight)
+
+
 class TestOSVSession(TestCase):
     def test_session_is_configured_with_retries(self):
         # The retry/backoff itself lives in urllib3 (and is covered by urllib3's own tests);
         # here we verify our wiring: the adapter mounted for api.osv.dev carries the expected
-        # Retry policy for GET requests and transient status codes.
-        session = _create_osv_session()
+        # Retry policy for GET and querybatch POST requests and transient status codes.
+        session = create_osv_session()
         try:
             adapter = session.get_adapter("https://api.osv.dev/v1/vulns/CVE-2021-22924")
             retries = adapter.max_retries
             self.assertEqual(retries.total, OSV_MAX_RETRIES)
             self.assertIn("GET", retries.allowed_methods)
+            self.assertIn("POST", retries.allowed_methods)
             self.assertIn(503, retries.status_forcelist)
+            self.assertIsNone(retries.read)
+        finally:
+            session.close()
+
+    def test_session_with_limited_read_retries(self):
+        session = create_osv_session(read_retries=1)
+        try:
+            retries = session.get_adapter("https://api.osv.dev/v1/querybatch").max_retries
+            self.assertEqual(retries.total, OSV_MAX_RETRIES)
+            self.assertEqual(retries.read, 1)
         finally:
             session.close()
 

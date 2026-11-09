@@ -3,7 +3,7 @@ from datetime import date
 from application.core.models import Observation
 from application.core.services.assessment import remove_assessment, save_assessment
 from application.core.services.risk_acceptance_expiry import EXPIRY_STATUSES
-from application.core.types import Status
+from application.core.types import Observation_Log_Comment, Status
 
 
 def expire_risk_acceptances() -> str:
@@ -13,11 +13,11 @@ def expire_risk_acceptances() -> str:
     )
     for observation in observations:
         comment = (
-            "Risk acceptance has expired."
+            Observation_Log_Comment.COMMENT_RISK_ACCEPTANCE_EXPIRED
             if observation.current_status == Status.STATUS_RISK_ACCEPTED
-            else "Not affected assessment has expired."
+            else Observation_Log_Comment.COMMENT_NOT_AFFECTED_EXPIRED
         )
-        assessment_removed = remove_assessment(observation, comment)
+        assessment_removed = remove_assessment(observation, comment, propagate=False)
         if not assessment_removed:
             observation.parser_status = Status.STATUS_OPEN
             observation.save()

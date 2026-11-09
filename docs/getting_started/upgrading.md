@@ -10,9 +10,37 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.64.0
+
+**Security notice**
+
+This releases fixes a security advisory: [SSRF protection of webhook notifications can be bypassed with a backslash URL or DNS rebinding](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-w76r-72pp-52j7)
+
+**Notable changes**
+
+There is a new [full text search](../usage/full_text_search.md) for observations, which searches in their texts, origins and the comments of their observation log. It is only available with PostgreSQL and deactivated by default, because it needs additional indexes in the database. Administrators activate it with the management command `python manage.py full_text_search activate` in the backend container, see [Activation](../usage/full_text_search.md#activation).
+
+## Release 1.63.0
+
+**Security notice**
+
+This releases fixes three security advisories:
+
+* [OIDC authentication does not validate the token issuer (iss)](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-h2w8-cwrc-rxmm)
+* [Server-Side Request Forgery (SSRF) via Api_Configuration.base_url, with an internal port-scan oracle](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-2hrr-r4rg-pc6r)
+* [Server-Side Request Forgery (SSRF) via Product.issue_tracker_base_url](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-f9vv-6hwf-2m78)
+
+**Breaking changes**
+
+* The backend validates the issuer (`iss` claim) of OpenID Connect tokens. By default, it must match the `issuer` published in the OpenID configuration at `OIDC_AUTHORITY/.well-known/openid-configuration`, otherwise the token is rejected with the message `Invalid issuer`. The new backend environment variable `OIDC_ISSUER` has to be set in these cases, see [Issuer validation](../integrations/oidc_authentication.md#issuer-validation):
+    * The backend reaches the OpenID Connect provider with another URL than the browser, e.g. an internal service name in Docker or Kubernetes.
+    * The provider publishes a templated issuer, like the multi-tenant endpoints of Microsoft Entra ID with `{tenantid}`.
+* Requests to the base URLs of [API imports](../integrations/api_import.md) (Dependency-Track, Trivy Operator Prometheus) and [issue trackers](../integrations/issue_trackers.md) (GitHub, GitLab, Jira) don't follow HTTP redirects anymore. A base URL that only worked because of a redirect, e.g. from `http` to `https` or to a moved host, has to be changed to the final URL. Otherwise the connection test, the import or the issue tracker synchronization fails.
+* Connection errors for API imports and issue trackers don't show the error text of the request anymore, only the HTTP status code if there is one. The full error can be found in the log of the backend.
+
 ## Release 1.62.0
 
-**Noteable changes**
+**Notable changes**
 
 * Administrators should set the environment variable `TIME_ZONE` (current default is `CET`), see [Configuration](configuration.md#backend) for more information how to set this values. It controls:
     * The day of the metrics, i.e. when a new day of the metrics starts
