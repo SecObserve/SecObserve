@@ -183,6 +183,9 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
         self.allowed_licenses_count: int | None = None
         self.ignored_licenses_count: int | None = None
 
+        # Set while an import in a transaction runs, which writes last_observation_change once at its end
+        self.defer_observation_change = False
+
         super().__init__(*args, **kwargs)
 
     def __str__(self) -> str:
@@ -406,6 +409,7 @@ class Observation(Model):
     created = DateTimeField(auto_now_add=True)
     modified = DateTimeField(auto_now=True)
     last_observation_log = DateTimeField(default=timezone.now)
+    last_assessment = DateTimeField(null=True)
     identity_hash = CharField(max_length=64)
 
     general_rule = ForeignKey(
@@ -494,6 +498,7 @@ class Observation(Model):
             Index(fields=["origin_cloud_qualified_resource"]),
             Index(fields=["origin_kubernetes_qualified_resource"]),
             Index(fields=["last_observation_log"]),
+            Index(fields=["last_assessment"]),
             Index(fields=["epss_score"]),
             Index(fields=["scanner"]),
             Index(fields=["update_impact_score"]),

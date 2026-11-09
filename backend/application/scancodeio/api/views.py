@@ -28,11 +28,14 @@ from rest_framework.viewsets import GenericViewSet
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
 from application.commons.models import Settings
+from application.core.queries.branch import get_branch_by_id
 from application.core.queries.product import get_product_by_id
+from application.core.queries.service import get_service_by_id
 from application.scancodeio.api.filters import ScanCodeIOProjectFilter
 from application.scancodeio.api.permissions import UserHasScanCodeIOProjectPermission
 from application.scancodeio.api.serializers import (
     CreateScanCodeIOProjectSerializer,
+    ScanCodeIOImportResultsResponseSerializer,
     ScanCodeIOPipelineSerializer,
     ScanCodeIOProjectDetailsSerializer,
     ScanCodeIOProjectSerializer,
@@ -48,7 +51,10 @@ from application.scancodeio.services.scancodeio import (
     get_scancodeio_pipelines,
     get_scancodeio_project_details,
     hash_webhook_token,
+)
+from application.scancodeio.services.scancodeio_import import (
     process_scancodeio_webhook,
+    reimport_scancodeio_results,
 )
 from application.scancodeio.types import CreateProjectParameters
 
@@ -82,6 +88,20 @@ class CreateScanCodeIOProjectView(APIView):
         if not request_serializer.is_valid():
             raise ValidationError(request_serializer.errors)
 
+        branch = None
+        branch_id = request_serializer.validated_data.get("branch")
+        if branch_id:
+            branch = get_branch_by_id(product, branch_id)
+            if not branch:
+                raise ValidationError(f"Branch {branch_id} does not exist for product {product.name}")
+
+        service = None
+        service_id = request_serializer.validated_data.get("service")
+        if service_id:
+            service = get_service_by_id(product, service_id)
+            if not service:
+                raise ValidationError(f"Service {service_id} does not exist for product {product.name}")
+
         parameters = CreateProjectParameters(
             name=request_serializer.validated_data["name"],
             input_urls=request_serializer.validated_data["input_urls"],
@@ -89,7 +109,7 @@ class CreateScanCodeIOProjectView(APIView):
             pipeline=request_serializer.validated_data["pipeline"],
             execute_now=request_serializer.validated_data["execute_now"],
         )
-        scancodeio_project = create_scancodeio_project(product, parameters)
+        scancodeio_project = create_scancodeio_project(product, branch, service, parameters)
 
         return Response(ScanCodeIOProjectSerializer(scancodeio_project).data, status=HTTP_201_CREATED)
 
@@ -150,6 +170,28 @@ class ScanCodeIOProjectViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixi
 
         details = get_scancodeio_project_details(scancodeio_project)
         return Response(ScanCodeIOProjectDetailsSerializer(details).data)
+
+    @extend_schema(
+        methods=["POST"],
+        request=None,
+        responses={HTTP_200_OK: ScanCodeIOImportResultsResponseSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def import_results(self, request: Request, pk: int) -> Response:  # pylint: disable=unused-argument
+        _check_feature_enabled()
+
+        scancodeio_project = self.get_object()
+
+        new, updated, deleted = reimport_scancodeio_results(scancodeio_project)
+        return Response(
+            ScanCodeIOImportResultsResponseSerializer(
+                {
+                    "license_components_new": new,
+                    "license_components_updated": updated,
+                    "license_components_deleted": deleted,
+                }
+            ).data
+        )
 
 
 class ScanCodeIOPipelinesView(APIView):

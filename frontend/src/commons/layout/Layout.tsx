@@ -1,9 +1,13 @@
 import { CheckForApplicationUpdate, Layout, LayoutProps } from "react-admin";
 
+import { useSettingsRefresh } from "../useSettingsRefresh";
 import AppBar from "./AppBar";
 import Menu from "./Menu";
 
-export default ({ children }: LayoutProps) => {
+const CustomLayout = ({ children }: LayoutProps) => {
+    // Not in the Menu, because it is only mounted while the drawer is open on small screens
+    useSettingsRefresh();
+
     return (
         <Layout appBar={AppBar} menu={Menu}>
             {children}
@@ -11,3 +15,5 @@ export default ({ children }: LayoutProps) => {
         </Layout>
     );
 };
+
+export default CustomLayout;

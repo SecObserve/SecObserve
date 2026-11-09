@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from rest_framework.request import Request
@@ -5,6 +6,8 @@ from rest_framework.response import Response
 
 from application.commons.services.functions import get_classname
 from application.commons.services.global_request import get_current_request
+
+SCANCODEIO_WEBHOOK_TOKEN_PATTERN = re.compile(r"(/api/scancodeio/webhook/)[^/?]+")
 
 
 def format_log_message(  # pylint: disable=too-many-branches
@@ -34,7 +37,7 @@ def format_log_message(  # pylint: disable=too-many-branches
     if current_request:
         if current_request.method:
             message_dict["request_method"] = current_request.method
-        message_dict["request_path"] = current_request.get_full_path()
+        message_dict["request_path"] = _redact_secrets(current_request.get_full_path())
         message_dict["request_client_ip"] = __get_client_ip(current_request)
 
     if response:
@@ -46,6 +49,10 @@ def format_log_message(  # pylint: disable=too-many-branches
         message_dict["exception_class"] = get_classname(exception)
 
     return str(message_dict)
+
+
+def _redact_secrets(path: str) -> str:
+    return SCANCODEIO_WEBHOOK_TOKEN_PATTERN.sub(r"\1***", path)
 
 
 def __get_client_ip(request: Request) -> str:

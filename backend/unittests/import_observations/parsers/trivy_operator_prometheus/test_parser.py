@@ -1,4 +1,5 @@
 import json
+from decimal import Decimal
 from os import path
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
@@ -6,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import requests
 
 from application.core.models import Product
+from application.core.services.observation import get_current_severity
 from application.import_observations.models import Api_Configuration
 from application.import_observations.parsers.trivy_operator_prometheus.parser import (
     TrivyOperatorPrometheus,
@@ -282,11 +284,10 @@ class TestTrivyOperatorPrometheusParser(TestCase):
             self.assertEqual(2, len(observations))
             self.assertEqual("CVE-2023-1111", observations[0].title)
             self.assertEqual("Medium", observations[0].parser_severity)
-            self.assertEqual("6.1", observations[0].numerical_severity)
             self.assertEqual("CVE-2023-1111", observations[0].vulnerability_id)
             self.assertEqual("registry.io/namespace/image", observations[0].origin_docker_image_name)
             self.assertEqual("v0.26.0", observations[0].origin_docker_image_tag)
-            self.assertEqual("6.1", observations[0].cvss3_score)
+            self.assertEqual(Decimal("6.1"), observations[0].cvss3_score)
             self.assertEqual("recoure.org/x/net", observations[0].origin_component_name)
             self.assertEqual("Trivy Operator", observations[0].scanner)
             self.assertEqual(
@@ -300,3 +301,25 @@ class TestTrivyOperatorPrometheusParser(TestCase):
             self.assertEqual("default", observations[0].origin_kubernetes_namespace)
             self.assertEqual("StatefulSet", observations[0].origin_kubernetes_resource_type)
             self.assertEqual("recource_name", observations[0].origin_kubernetes_resource_name)
+
+    def test_vulnerabilities_cvss_scores(self):
+        with open(path.dirname(__file__) + "/files/trivy_vulnerability_id_scores.json") as testfile:
+            parser = TrivyOperatorPrometheus()
+
+            observations, _ = parser.get_observations(json.load(testfile), Product(name="product"), None)
+
+        expected_scores_and_severities = {
+            "CVE-2023-0001": (Decimal("7.5"), "High"),  # score is used, if the severity is unknown
+            "CVE-2023-0002": (None, "Unknown"),  # empty
+            "CVE-2023-0003": (None, "Unknown"),  # missing
+            "CVE-2023-0004": (None, "Unknown"),  # not a number
+            "CVE-2023-0005": (None, "Unknown"),  # NaN
+            "CVE-2023-0006": (None, "Unknown"),  # out of range
+            "CVE-2023-0007": (None, "Medium"),  # empty, with a known severity
+        }
+        self.assertEqual(len(expected_scores_and_severities), len(observations))
+        for observation in observations:
+            expected_score, expected_severity = expected_scores_and_severities[observation.vulnerability_id]
+            with self.subTest(vulnerability_id=observation.vulnerability_id):
+                self.assertEqual(expected_severity, get_current_severity(observation))
+                self.assertEqual(expected_score, observation.cvss3_score)

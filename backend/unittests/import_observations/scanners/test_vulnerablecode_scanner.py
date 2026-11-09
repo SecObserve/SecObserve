@@ -118,8 +118,9 @@ class MockRetryAfterResponse:
 
 
 class MockResponse:
-    def __init__(self, payload):
+    def __init__(self, payload, is_redirect=False):
         self.payload = payload
+        self.is_redirect = is_redirect
 
     def raise_for_status(self):
         pass
@@ -247,7 +248,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
     def test_do_scan_no_license_components(self, mock_post, mock_get, mock_settings_load):
         mock_settings_load.return_value = self.settings
 
-        self.assertEqual([], VulnerableCodeScanner()._do_scan([]))
+        self.assertEqual([], VulnerableCodeScanner()._do_scan([], None, None))
 
         mock_post.assert_not_called()
         mock_get.assert_not_called()
@@ -262,11 +263,19 @@ class TestVulnerableCodeScanner(BaseTestCase):
             packages=[MockResponse({"next": None, "results": [self._packages_result(advisories=[])]})],
         )
 
-        self.assertEqual([], VulnerableCodeScanner()._do_scan([self.license_component]))
+        self.assertEqual([], VulnerableCodeScanner()._do_scan([self.license_component], None, None))
 
         # No advisories are requested when no package is affected
         self.assertEqual(
-            [{"url": PACKAGES_URL, "headers": EXPECTED_HEADERS, "data": PACKAGES_REQUEST_BODY, "timeout": 300}],
+            [
+                {
+                    "url": PACKAGES_URL,
+                    "headers": EXPECTED_HEADERS,
+                    "data": PACKAGES_REQUEST_BODY,
+                    "timeout": 300,
+                    "allow_redirects": False,
+                }
+            ],
             self._post_calls(mock_post, PACKAGES_URL),
         )
         self.assertEqual([], self._post_calls(mock_post, ADVISORIES_URL))
@@ -283,7 +292,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # The advisory of the packages endpoint is completed with severities,
         # references and url from the advisories endpoint
@@ -297,11 +306,27 @@ class TestVulnerableCodeScanner(BaseTestCase):
         self.assertEqual(["pkg:pypi/django@5.1.4"], advisory["fixed_by_packages"])
 
         self.assertEqual(
-            [{"url": PACKAGES_URL, "headers": EXPECTED_HEADERS, "data": PACKAGES_REQUEST_BODY, "timeout": 300}],
+            [
+                {
+                    "url": PACKAGES_URL,
+                    "headers": EXPECTED_HEADERS,
+                    "data": PACKAGES_REQUEST_BODY,
+                    "timeout": 300,
+                    "allow_redirects": False,
+                }
+            ],
             self._post_calls(mock_post, PACKAGES_URL),
         )
         self.assertEqual(
-            [{"url": ADVISORIES_URL, "headers": EXPECTED_HEADERS, "data": ADVISORIES_REQUEST_BODY, "timeout": 300}],
+            [
+                {
+                    "url": ADVISORIES_URL,
+                    "headers": EXPECTED_HEADERS,
+                    "data": ADVISORIES_REQUEST_BODY,
+                    "timeout": 300,
+                    "allow_redirects": False,
+                }
+            ],
             self._post_calls(mock_post, ADVISORIES_URL),
         )
         mock_get.assert_not_called()
@@ -319,7 +344,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
 
         without_purl = License_Component(product=self.product_1, component_name="no-purl", component_purl="")
 
-        VulnerableCodeScanner()._do_scan([self.license_component, without_purl])
+        VulnerableCodeScanner()._do_scan([self.license_component, without_purl], None, None)
 
         # Only the component with a purl is sent to the API
         self.assertEqual(PACKAGES_REQUEST_BODY, self._post_calls(mock_post, PACKAGES_URL)[0]["data"])
@@ -339,7 +364,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # The advisories of all pages are collected before they are completed,
         # so a purl returned on more than one page only yields one set of advisories
@@ -365,7 +390,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # A page without affected purls must not abandon the remaining pages
         self.assertEqual(
@@ -390,7 +415,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # A later page without affected purls must not discard what earlier pages found
         self.assertEqual(
@@ -423,7 +448,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             ],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         self.assertEqual(
             [
@@ -456,7 +481,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component, self._component_json()])
+        components = VulnerableCodeScanner()._do_scan([self.license_component, self._component_json()], None, None)
 
         self.assertEqual(2, len(components))
         self.assertEqual(
@@ -480,7 +505,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
         self._mock_post(mock_post, packages=[MockResponse({"next": None, "results": []})])
 
         scanner = VulnerableCodeScanner()
-        scanner._do_scan([self.license_component])
+        scanner._do_scan([self.license_component], None, None)
 
         self.assertEqual(EXPECTED_HEADERS, scanner.headers)
         self.assertEqual(EXPECTED_HEADERS, mock_post.call_args.kwargs["headers"])
@@ -494,7 +519,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
         self._mock_post(mock_post, packages=[MockResponse({"next": None, "results": []})])
 
         scanner = VulnerableCodeScanner()
-        scanner._do_scan([self.license_component])
+        scanner._do_scan([self.license_component], None, None)
 
         self.assertEqual(EXPECTED_HEADERS_WITH_API_KEY, scanner.headers)
         self.assertEqual(EXPECTED_HEADERS_WITH_API_KEY, mock_post.call_args.kwargs["headers"])
@@ -539,7 +564,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component, self._component_json()])
+        components = VulnerableCodeScanner()._do_scan([self.license_component, self._component_json()], None, None)
 
         # The same advisory has a different fixed_by_packages per purl, so the merged
         # advisories must not be the same dict
@@ -561,7 +586,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": []})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # The advisory is kept, with resource_url as url, so that it still has a reference
         self.assertEqual(1, len(components))
@@ -586,13 +611,13 @@ class TestVulnerableCodeScanner(BaseTestCase):
         )
         mock_get.return_value = MockResponse({"next": None, "results": [FALLBACK_ADVISORY]})
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # A package with more than max_advisories advisories must not be treated as unaffected
         self.assertEqual(
             [VulnerableCodeComponent(component=self.license_component, advisory=FALLBACK_ADVISORY)], components
         )
-        mock_get.assert_called_once_with(url=FALLBACK_URL, headers=EXPECTED_HEADERS, timeout=300)
+        mock_get.assert_called_once_with(url=FALLBACK_URL, headers=EXPECTED_HEADERS, timeout=300, allow_redirects=False)
         # Those advisories are already complete, so no details are requested
         self.assertEqual([], self._post_calls(mock_post, ADVISORIES_URL))
 
@@ -616,7 +641,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             MockResponse({"next": None, "results": [second_advisory]}),
         ]
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         self.assertEqual(
             [
@@ -643,13 +668,128 @@ class TestVulnerableCodeScanner(BaseTestCase):
         )
         mock_get.return_value = MockResponse({"next": None, "results": [FALLBACK_ADVISORY]})
 
-        VulnerableCodeScanner()._do_scan([self.license_component])
+        VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         self.assertEqual([FALLBACK_ADVISORY], VulnerableCode_Cache.objects.get(purl=PURL_DJANGO).data)
 
     # ---------------------------------------------------------------
     # _rebuild_url
     # ---------------------------------------------------------------
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    def test_rebuild_url_keeps_configured_host(self, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        scanner = VulnerableCodeScanner()
+
+        for url in [
+            "https://evil.test/api/v3/packages/?page=2",
+            "//evil.test/api/v3/packages/?page=2",
+            "/api/v3/packages/?page=2",
+        ]:
+            self.assertEqual(f"{PACKAGES_URL}?page=2", scanner._rebuild_url(url))
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    def test_rebuild_url_rejects_path_without_leading_slash(self, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        scanner = VulnerableCodeScanner()
+
+        for url in ["@evil.test/x", ".evil.test/x", ":secret@evil.test/x", "x", "?page=2"]:
+            with self.assertRaises(ScanException):
+                scanner._rebuild_url(url)
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_next_url_changing_the_host_is_not_requested(self, mock_post, mock_get, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[MockResponse({"next": "@evil.test/x", "results": [self._packages_result()]})],
+        )
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component], None, None)
+
+        self.assertEqual(1, mock_post.call_count)
+        mock_get.assert_not_called()
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_affected_by_vulnerabilities_url_changing_the_host_is_not_requested(
+        self, mock_post, mock_get, mock_settings_load
+    ):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[
+                MockResponse(
+                    {
+                        "next": None,
+                        "results": [{"purl": PURL_DJANGO, "affected_by_vulnerabilities_url": ".evil.test/x"}],
+                    }
+                )
+            ],
+        )
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component], None, None)
+
+        mock_get.assert_not_called()
+
+    # ---------------------------------------------------------------
+    # Redirects
+    # ---------------------------------------------------------------
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.post")
+    def test_redirects_are_not_followed(self, mock_post, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(mock_post, packages=[MockResponse({}, is_redirect=True)])
+
+        with self.assertRaises(ScanException) as e:
+            VulnerableCodeScanner()._do_scan([self.license_component], None, None)
+
+        self.assertEqual("VulnerableCode redirected the request, the base URL has to be corrected", e.exception.message)
+        self.assertFalse(mock_post.call_args.kwargs["allow_redirects"])
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.post")
+    def test_redirect_of_advisories_is_not_followed(self, mock_post, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[MockResponse({"next": None, "results": [self._packages_result()]})],
+            advisories=[MockResponse({}, is_redirect=True)],
+        )
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component], None, None)
+
+        self.assertFalse(mock_post.call_args.kwargs["allow_redirects"])
+
+    @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
+    @patch("requests.Session.get")
+    @patch("requests.Session.post")
+    def test_redirect_of_affected_by_vulnerabilities_url_is_not_followed(self, mock_post, mock_get, mock_settings_load):
+        mock_settings_load.return_value = self.settings
+        self._mock_post(
+            mock_post,
+            packages=[
+                MockResponse(
+                    {
+                        "next": None,
+                        "results": [{"purl": PURL_DJANGO, "affected_by_vulnerabilities_url": FALLBACK_URL}],
+                    }
+                )
+            ],
+        )
+        mock_get.return_value = MockResponse({}, is_redirect=True)
+
+        with self.assertRaises(ScanException):
+            VulnerableCodeScanner()._do_scan([self.license_component], None, None)
+
+        self.assertFalse(mock_get.call_args.kwargs["allow_redirects"])
 
     @patch("application.import_observations.scanners.vulnerablecode_scanner.Settings.load")
     @patch("requests.Session.get")
@@ -666,7 +806,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        VulnerableCodeScanner()._do_scan([self.license_component])
+        VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # The next page is requested from the configured instance, not from the host of
         # the next link, which would redirect and turn the POST into a GET
@@ -689,7 +829,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             ],
         )
 
-        VulnerableCodeScanner()._do_scan([self.license_component])
+        VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         self.assertEqual(
             [ADVISORIES_URL, next_url], [kwargs["url"] for kwargs in self._post_calls(mock_post, ADVISORIES_URL)]
@@ -717,7 +857,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             MockResponse({"next": None, "results": []}),
         ]
 
-        VulnerableCodeScanner()._do_scan([self.license_component])
+        VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # Both the url from the packages endpoint and its next link keep path and query,
         # but are requested from the configured instance
@@ -734,7 +874,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan(license_components)
+        components = VulnerableCodeScanner()._do_scan(license_components, None, None)
 
         # Everything behind the version is cut off before the purl is sent
         self.assertEqual(PACKAGES_REQUEST_BODY, self._post_calls(mock_post, PACKAGES_URL)[0]["data"])
@@ -811,7 +951,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        VulnerableCodeScanner()._do_scan([self._component_django(PURL_DJANGO_QUALIFIERS)])
+        VulnerableCodeScanner()._do_scan([self._component_django(PURL_DJANGO_QUALIFIERS)], None, None)
 
         self.assertEqual([PURL_DJANGO], [cache_item.purl for cache_item in VulnerableCode_Cache.objects.all()])
 
@@ -823,7 +963,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
         mock_settings_load.return_value = self.settings
         VulnerableCode_Cache.objects.create(purl=PURL_DJANGO, data=[merged_advisory()])
 
-        components = VulnerableCodeScanner()._do_scan([self._component_django(PURL_DJANGO_QUALIFIERS)])
+        components = VulnerableCodeScanner()._do_scan([self._component_django(PURL_DJANGO_QUALIFIERS)], None, None)
 
         # The stripped purl hits the cache entry of the component without qualifiers
         self.assertEqual(
@@ -883,7 +1023,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
         mock_settings_load.return_value = self.settings
         VulnerableCode_Cache.objects.create(purl=PURL_DJANGO, data=[merged_advisory()])
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         self.assertEqual(
             [VulnerableCodeComponent(component=self.license_component, advisory=merged_advisory())], components
@@ -900,7 +1040,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
         VulnerableCode_Cache.objects.create(purl=PURL_DJANGO, data=[])
 
         # A purl that is known not to be affected is not requested again either
-        self.assertEqual([], VulnerableCodeScanner()._do_scan([self.license_component]))
+        self.assertEqual([], VulnerableCodeScanner()._do_scan([self.license_component], None, None))
         mock_post.assert_not_called()
         mock_get.assert_not_called()
 
@@ -917,7 +1057,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component, self._component_json()])
+        components = VulnerableCodeScanner()._do_scan([self.license_component, self._component_json()], None, None)
 
         self.assertEqual(
             {PURL_DJANGO, PURL_JSON},
@@ -942,7 +1082,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         self.assertEqual(
             [VulnerableCodeComponent(component=self.license_component, advisory=merged_advisory())], components
@@ -966,7 +1106,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        VulnerableCodeScanner()._do_scan([self.license_component])
+        VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # The merged advisories are cached, so that a cache hit needs no completion
         self.assertEqual([merged_advisory()], VulnerableCode_Cache.objects.get(purl=PURL_DJANGO).data)
@@ -982,7 +1122,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             packages=[MockResponse({"next": None, "results": [self._packages_result(advisories=[])]})],
         )
 
-        VulnerableCodeScanner()._do_scan([self.license_component])
+        VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # Negative result, so that the purl can be skipped on the next scan
         self.assertEqual([], VulnerableCode_Cache.objects.get(purl=PURL_DJANGO).data)
@@ -1001,7 +1141,7 @@ class TestVulnerableCodeScanner(BaseTestCase):
             advisories=[MockResponse({"next": None, "results": [advisory_details()]})],
         )
 
-        components = VulnerableCodeScanner()._do_scan([self.license_component])
+        components = VulnerableCodeScanner()._do_scan([self.license_component], None, None)
 
         # The existing entry is neither read ...
         self.assertEqual(

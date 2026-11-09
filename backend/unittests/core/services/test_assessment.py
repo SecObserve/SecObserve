@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Optional
 from unittest.mock import patch
 
 from django.core.management import call_command
@@ -19,7 +20,11 @@ from application.core.models import (
     Product_Authorization_Group_Member,
     Product_Member,
 )
-from application.core.services.assessment import assessment_approval, save_assessment
+from application.core.services.assessment import (
+    assessment_approval,
+    remove_assessment,
+    save_assessment,
+)
 from application.core.services.assessment_approver import (
     assessment_approvers_configured,
     get_effective_assessment_approvers,
@@ -31,6 +36,7 @@ from application.core.services.observations_bulk_actions import (
 )
 from application.core.types import (
     Assessment_Status,
+    Observation_Log_Comment,
     Severity,
     Status,
     VEX_Justification,
@@ -613,3 +619,70 @@ class TestAssessmentApprovalMarksProductAsChanged(BaseTestCase):
         product = Product.objects.get(pk=self.log.observation.product.pk)
         self.assertEqual(Status.STATUS_FALSE_POSITIVE, self.log.observation.current_status)
         self.assertGreater(product.last_observation_change, self.last_change)
+
+
+class TestLastAssessment(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        self.product = Product.objects.get(pk=1)
+        self.observation = Observation.objects.get(pk=4)
+
+    def _save_assessment(self, new_status: Optional[str], comment: str = "comment") -> None:
+        save_assessment(
+            observation=self.observation,
+            new_severity=None,
+            new_status=new_status,
+            new_priority=None,
+            new_priority_changed=False,
+            comment=comment,
+            new_vex_justification=None,
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=None,
+        )
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.Rule_Engine")
+    def test_assessment_without_changes(self, *_mocks) -> None:
+        self._save_assessment(None)
+
+        self.observation.refresh_from_db()
+        self.assertIsNotNone(self.observation.last_assessment)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.Rule_Engine")
+    def test_expiry_is_no_assessment(self, *_mocks) -> None:
+        self.observation.last_assessment = timezone.now()
+        self.observation.save()
+
+        self._save_assessment(None, Observation_Log_Comment.COMMENT_RISK_ACCEPTANCE_EXPIRED)
+
+        self.observation.refresh_from_db()
+        self.assertIsNone(self.observation.last_assessment)
+
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_assessment_that_needs_approval(self, _mock_send) -> None:
+        self.product.assessments_need_approval = True
+        self.product.save()
+
+        self._save_assessment(Status.STATUS_FALSE_POSITIVE)
+
+        self.observation.refresh_from_db()
+        self.assertEqual(Status.STATUS_OPEN, self.observation.current_status)
+        self.assertIsNotNone(self.observation.last_assessment)
+
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    def test_removed_assessment(self, *_mocks) -> None:
+        self.observation.assessment_status = Status.STATUS_FALSE_POSITIVE
+        self.observation.last_assessment = timezone.now()
+        self.observation.save()
+
+        remove_assessment(self.observation, "comment", propagate=False)
+
+        self.observation.refresh_from_db()
+        self.assertIsNone(self.observation.last_assessment)

@@ -1,3 +1,4 @@
+import logging
 import uuid
 from functools import partial
 
@@ -25,6 +26,7 @@ from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.services.log_message import format_log_message
 from application.core.models import Product
 from application.core.queries.product import get_product_by_id
 from application.notifications.api.filters import (
@@ -88,6 +90,8 @@ from application.notifications.types import (
     Webhook_Event_Type,
 )
 
+logger = logging.getLogger("secobserve.notifications")
+
 
 class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, RetrieveModelMixin):
     serializer_class = NotificationSerializer
@@ -141,7 +145,9 @@ class NotificationViewSet(GenericViewSet, DestroyModelMixin, ListModelMixin, Ret
             else:
                 send_slack_notification_test(webhook_url)
         except Exception as e:
-            raise ValidationError(f"Failed to send test notification: {str(e)}") from e
+            # The error tells how the host answered, which must not be shown to the user
+            logger.warning(format_log_message(message="Failed to send test notification", exception=e))
+            raise ValidationError("Failed to send test notification, see the server log for details") from e
 
         return Response(status=HTTP_204_NO_CONTENT)
 

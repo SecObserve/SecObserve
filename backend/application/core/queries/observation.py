@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from django.db.models import Exists, OuterRef, Q
@@ -15,6 +16,8 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.product import get_products
+from application.core.types import Observation_Log_Comment
 
 
 def get_observation_by_id(observation_id: int) -> Optional[Observation]:
@@ -70,9 +73,8 @@ def get_observations_for_vulnerability_check(
     filename: str,
     api_configuration_name: str,
 ) -> QuerySet[Observation]:
-    # The import reads product, product group and service of every observation it processes, so
-    # they are joined in instead of being loaded one query per observation.
-    observations = Observation.objects.select_related("product", "product__product_group", "origin_service")
+    # The import reads the service of every observation, the product it sets itself
+    observations = Observation.objects.select_related("origin_service")
 
     if filename or api_configuration_name:
         return observations.filter(
@@ -205,36 +207,11 @@ def get_observation_logs() -> QuerySet[Observation_Log]:
     observation_logs = Observation_Log.objects.all().order_by("id")
 
     if not user.is_superuser:
-        product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)
-        product_group_members = Product_Member.objects.filter(
-            product=OuterRef("observation__product__product_group"), user=user
-        )
-
-        product_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("observation__product_id"),
-            authorization_group__users=user,
-        )
-
-        product_group_authorization_group_members = Product_Authorization_Group_Member.objects.filter(
-            product=OuterRef("observation__product__product_group"),
-            authorization_group__users=user,
-        )
-
-        observation_logs = observation_logs.annotate(
-            observation__product__member=Exists(product_members),
-            observation__product__product_group__member=Exists(product_group_members),
-            observation__product__authorization_group_member=Exists(product_authorization_group_members),
-            observation__product__product_group_authorization_group_member=Exists(
-                product_group_authorization_group_members
-            ),
-        )
-
-        observation_logs = observation_logs.filter(
-            Q(observation__product__member=True)
-            | Q(observation__product__product_group__member=True)
-            | Q(observation__product__authorization_group_member=True)
-            | Q(observation__product__product_group_authorization_group_member=True)
-        )
+        # Checking the authorization once per product instead of once per observation log is much faster,
+        # because there are typically far more observation logs than products. Passing the product ids as
+        # values instead of a subquery lets the database estimate how many observation logs will match.
+        product_ids = list(get_products().values_list("id", flat=True))
+        observation_logs = observation_logs.filter(observation__product_id__in=product_ids)
 
     return observation_logs
 
@@ -261,3 +238,91 @@ def get_current_modifying_observation_log(observation: Observation) -> Optional[
         return get_modifying_observation_logs().filter(observation_id=observation.id).latest("created")
     except Observation_Log.DoesNotExist:
         return None
+
+
+# Searched fields and the names of their trigram indexes,
+# which are created and dropped by the management command full_text_search
+OBSERVATION_FULL_TEXT_SEARCH_INDEXES = {
+    "title": "core_obs_title_trgm_idx",
+    "description": "core_obs_description_trgm_idx",
+    "vulnerability_id": "core_obs_vuln_id_trgm_idx",
+    "vulnerability_id_aliases": "core_obs_vuln_alias_trgm_idx",
+    "origin_component_name_version": "core_obs_component_trgm_idx",
+    "origin_docker_image_name_tag": "core_obs_docker_image_trgm_idx",
+    "origin_endpoint_url": "core_obs_endpoint_url_trgm_idx",
+    "origin_source_file": "core_obs_source_file_trgm_idx",
+    "origin_cloud_qualified_resource": "core_obs_cloud_res_trgm_idx",
+    "origin_kubernetes_qualified_resource": "core_obs_k8s_res_trgm_idx",
+}
+OBSERVATION_LOG_FULL_TEXT_SEARCH_INDEXES = {
+    "comment": "core_obs_log_comment_trgm_idx",
+}
+OBSERVATION_FULL_TEXT_SEARCH_FIELDS = list(OBSERVATION_FULL_TEXT_SEARCH_INDEXES)
+OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS = list(OBSERVATION_LOG_FULL_TEXT_SEARCH_INDEXES)
+
+# A term in double quotes is matched as a whole word, all other characters except whitespace as part of a word.
+# Unbalanced double quotes are ignored.
+FULL_TEXT_SEARCH_TERM_PATTERN = re.compile(r'"([^"]*)"|([^\s"]+)')
+
+# Shorter terms have no trigrams, PostgreSQL would have to scan the whole tables for them
+FULL_TEXT_SEARCH_MIN_TERM_LENGTH = 3
+# Each term adds two subqueries to the query
+FULL_TEXT_SEARCH_MAX_TERMS = 10
+
+
+def _get_full_text_search_terms(value: str) -> list[tuple[str, bool]]:
+    terms = []
+    for quoted_term, term in FULL_TEXT_SEARCH_TERM_PATTERN.findall(value):
+        if term:
+            terms.append((term, False))
+        else:
+            terms.append((quoted_term.strip(), True))
+    return [term for term in terms if len(term[0]) >= FULL_TEXT_SEARCH_MIN_TERM_LENGTH][:FULL_TEXT_SEARCH_MAX_TERMS]
+
+
+def _get_searchable_observation_logs() -> QuerySet[Observation_Log]:
+    # Comments written by the system would match nearly every observation
+    observation_logs = Observation_Log.objects.filter(
+        general_rule__isnull=True,
+        general_rule_rego__isnull=True,
+        product_rule__isnull=True,
+        product_rule_rego__isnull=True,
+        vex_statement__isnull=True,
+    ).exclude(comment__in=Observation_Log_Comment.FULL_TEXT_SEARCH_EXCLUDED_COMMENTS)
+    for prefix in Observation_Log_Comment.FULL_TEXT_SEARCH_EXCLUDED_COMMENT_PREFIXES:
+        observation_logs = observation_logs.exclude(comment__startswith=prefix)
+    return observation_logs
+
+
+def _get_full_text_search_filter(fields: list[str], term: str, whole_word: bool) -> Q:
+    # Not preceded or followed by a letter, digit or underscore, works for PostgreSQL and Python (SQLite)
+    whole_word_regex = rf"(?<!\w){re.escape(term)}(?!\w)"
+
+    full_text_search_filter = Q()
+    for field in fields:
+        # icontains is needed for whole words as well, because only icontains can use the trigram indexes.
+        # The regular expression is then only checked for the rows found with the indexes.
+        field_filter = Q(**{f"{field}__icontains": term})
+        if whole_word:
+            field_filter &= Q(**{f"{field}__iregex": whole_word_regex})
+        full_text_search_filter |= field_filter
+    return full_text_search_filter
+
+
+def filter_observations_full_text(queryset: QuerySet[Observation], value: str) -> QuerySet[Observation]:
+    # All terms must be found, each of them either in the texts of the observation or in a comment of its log
+    for term, whole_word in _get_full_text_search_terms(value):
+        matching_observations = Observation.objects.filter(
+            _get_full_text_search_filter(OBSERVATION_FULL_TEXT_SEARCH_FIELDS, term, whole_word)
+        ).values("id")
+        matching_observation_logs = (
+            _get_searchable_observation_logs()
+            .filter(_get_full_text_search_filter(OBSERVATION_LOG_FULL_TEXT_SEARCH_FIELDS, term, whole_word))
+            .values("observation_id")
+        )
+
+        # A union instead of an OR condition, because PostgreSQL can use the indexes of both tables only this way.
+        # Duplicates don't matter for IN, so UNION ALL saves the deduplication.
+        queryset = queryset.filter(id__in=matching_observations.union(matching_observation_logs, all=True))
+
+    return queryset

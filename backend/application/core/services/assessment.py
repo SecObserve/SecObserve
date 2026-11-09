@@ -103,6 +103,11 @@ def save_assessment(  # pylint: disable=too-many-arguments
         else Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED
     )
 
+    # An expiry reopens the observation, also on the branches it is propagated to
+    observation.last_assessment = (
+        None if comment == Observation_Log_Comment.COMMENT_RISK_ACCEPTANCE_EXPIRED else timezone.now()
+    )
+
     if assessment_status in (
         Assessment_Status.ASSESSMENT_STATUS_APPROVED,
         Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
@@ -258,6 +263,7 @@ def remove_assessment(
         observation.assessment_priority = None
         observation.assessment_vex_justification = ""
         observation.assessment_vex_remediations = None
+        observation.last_assessment = None
 
         observation.current_severity = get_current_severity(observation)
         previous_status = observation.current_status

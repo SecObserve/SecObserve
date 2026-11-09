@@ -137,18 +137,17 @@ class SPDXParser(BaseParser, BaseFileParser):
         return relationship_dict
 
     def _get_dependencies(self, package_id: str, package_dict: dict, relationship_dict: dict) -> str:
-        dependencies: list[str] = []
+        dependencies: set[str] = set()
         self._get_dependencies_recursive(package_id, package_dict, relationship_dict, dependencies)
 
-        dependencies.sort()
-        return "\n".join(dependencies)
+        return "\n".join(sorted(dependencies))
 
     def _get_dependencies_recursive(
         self,
         package_id: str,
         package_dict: dict,
         relationship_dict: dict,
-        dependencies: list,
+        dependencies: set[str],
     ) -> None:
         if package_id in relationship_dict.keys():
             for dependency_id in relationship_dict[package_id]:
@@ -156,7 +155,7 @@ class SPDXParser(BaseParser, BaseFileParser):
                 translated_package_id = self._translate_package_id(package_id, package_dict)
                 dependency = f"{translated_dependency_id} --> {translated_package_id}"
                 if dependency not in dependencies:
-                    dependencies.append(dependency)
+                    dependencies.add(dependency)
                     self._get_dependencies_recursive(dependency_id, package_dict, relationship_dict, dependencies)
 
     def _translate_package_id(self, package_id: str, package_dict: dict) -> str:
