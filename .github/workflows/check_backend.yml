@@ -91,7 +91,7 @@ jobs:
           path: backend/coverage.xml
           retention-days: 1
 
-  check_code_sonarqube_backend:
+  backend_changes:
     permissions:
       contents: read
     if: >-
@@ -99,7 +99,40 @@ jobs:
       (github.ref == 'refs/heads/dev' ||
       (github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository))
-    needs: [unittests]
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.diff.outputs.backend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      # Without a usable base commit (new branch, force push) the backend is treated as changed.
+      - name: Check for changes in the backend folder
+        id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            backend=true
+          elif git diff --quiet "$BASE_SHA...$HEAD_SHA" -- backend; then
+            backend=false
+          else
+            backend=true
+          fi
+          echo "Changes in backend: $backend"
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+
+  check_code_sonarqube_backend:
+    permissions:
+      contents: read
+    # The repository and branch conditions are checked in backend_changes,
+    # this job is skipped when backend_changes is skipped.
+    if: needs.backend_changes.outputs.backend == 'true'
+    needs: [unittests, backend_changes]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
