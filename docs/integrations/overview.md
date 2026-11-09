@@ -16,9 +16,11 @@
 
     ---
 
-    Components can be uploaded from CycloneDX and SPDX SBOMs for vulnerability scanning and license management.
+    Components can be uploaded from CycloneDX and SPDX SBOMs for vulnerability scanning and license management. Alternatively they can be imported from the results of ScanCode.io pipelines.
 
     [:octicons-arrow-right-24: Upload SBOM](../usage/upload_sbom.md)
+
+    [:octicons-arrow-right-24: ScanCode.io](scancodeio.md)
 
     [:octicons-arrow-right-24: Components](../usage/components.md)
 

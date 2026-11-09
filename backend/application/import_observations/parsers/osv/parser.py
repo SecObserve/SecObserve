@@ -1,4 +1,5 @@
 import logging
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime
@@ -66,6 +67,22 @@ OSV_Non_Linux_Ecosystems = {
     "gem": "RubyGems",
     "swift": "SwiftURL",
 }
+
+OSV_Linux_Purl_Types = frozenset({"apk", "deb", "rpm"})
+
+# The OSV API finds nothing for the purls of these packages if they have a distro qualifier
+OSV_Autodetected_Query_Packages = frozenset({("apk", "alpine"), ("deb", "debian")})
+
+# The release of these distributions can be set partially, e.g. "enterprise_linux:9" for all of
+# "enterprise_linux:9::*". This works when filtering the affected ecosystems, but the OSV API finds
+# nothing for it. So they are queried by the distribution, the parser then filters by the release.
+OSV_Distributions_Queried_Without_Release = frozenset(
+    {
+        OSVLinuxDistribution.DISTRIBUTION_OPENSUSE,
+        OSVLinuxDistribution.DISTRIBUTION_REDHAT,
+        OSVLinuxDistribution.DISTRIBUTION_SUSE,
+    }
+)
 
 
 class OSVParser(BaseParser):
@@ -204,13 +221,14 @@ class OSVParser(BaseParser):
             if osv_vulnerability.id not in valid_vulnerability_ids:
                 missing_osv_vulnerabilities.append(osv_vulnerability)
 
-        session = _create_osv_session()
+        session = create_osv_session()
 
         def _read_osv_vulnerability(osv_vulnerability: OSV_Vulnerability) -> OSV_Cache:
-            response = session.get(
-                url=f"{OSV_VULNERABILITY_URL}{osv_vulnerability.id}",
-                timeout=OSV_REQUEST_TIMEOUT,
-            )
+            with _OSV_REQUEST_SLOTS:
+                response = session.get(
+                    url=f"{OSV_VULNERABILITY_URL}{osv_vulnerability.id}",
+                    timeout=OSV_REQUEST_TIMEOUT,
+                )
             response.raise_for_status()
             return OSV_Cache(osv_id=osv_vulnerability.id, modified=osv_vulnerability.modified, data=response.text)
 
@@ -218,7 +236,10 @@ class OSVParser(BaseParser):
             osv_cache_items_from_osv = list(executor.map(_read_osv_vulnerability, missing_osv_vulnerabilities))
 
         if osv_cache_items_from_osv:
-            OSV_Cache.objects.bulk_create(osv_cache_items_from_osv, batch_size=OSV_CACHE_BATCH_SIZE)
+            # Several products are scanned at the same time, another scan may have stored the same advisory
+            OSV_Cache.objects.bulk_create(
+                osv_cache_items_from_osv, batch_size=OSV_CACHE_BATCH_SIZE, ignore_conflicts=True
+            )
 
         valid_osv_cache_items = [
             vulnerability
@@ -337,15 +358,8 @@ class OSVParser(BaseParser):
 
         package_osv_ecosystem = OSV_Non_Linux_Ecosystems.get(package_type)
 
-        if not package_osv_ecosystem and branch and branch.osv_linux_distribution and branch.osv_linux_release:
-            package_osv_ecosystem = f"{branch.osv_linux_distribution}:{branch.osv_linux_release}"
-        if not package_osv_ecosystem and branch and branch.osv_linux_distribution:
-            package_osv_ecosystem = branch.osv_linux_distribution
-
-        if not package_osv_ecosystem and product.osv_linux_distribution and product.osv_linux_release:
-            package_osv_ecosystem = f"{product.osv_linux_distribution}:{product.osv_linux_release}"
-        if not package_osv_ecosystem and product.osv_linux_distribution:
-            package_osv_ecosystem = product.osv_linux_distribution
+        if not package_osv_ecosystem:
+            package_osv_ecosystem = self._get_configured_osv_ecosystem(product, branch)
 
         package_osv_ecosystem = self._get_linux_package_osv_ecosystem(parsed_purl, package_osv_ecosystem)
 
@@ -363,6 +377,46 @@ class OSVParser(BaseParser):
                 affected.append(affected_item)
 
         return affected
+
+    def get_query_osv_ecosystem(
+        self, parsed_purl: PackageURL, product: Product, branch: Optional[Branch]
+    ) -> Optional[str]:
+        """The ecosystem to query OSV for a Linux package by name and version. None means that
+        the package is queried by its purl."""
+        if parsed_purl.type not in OSV_Linux_Purl_Types:
+            return None
+
+        configured_osv_ecosystem = self._get_configured_osv_ecosystem(product, branch)
+        if configured_osv_ecosystem:
+            distribution = configured_osv_ecosystem.split(":", 1)[0]
+            if distribution in OSV_Distributions_Queried_Without_Release:
+                return distribution
+            return configured_osv_ecosystem
+
+        if (parsed_purl.type, parsed_purl.namespace) in OSV_Autodetected_Query_Packages:
+            return self._get_linux_package_osv_ecosystem(parsed_purl, None)
+
+        return None
+
+    def get_query_version(self, parsed_purl: PackageURL) -> Optional[str]:
+        version = parsed_purl.version
+        if version and parsed_purl.type == "rpm":
+            # OSV compares a missing epoch as 0
+            version, _ = self._get_rpm_version_and_parser(parsed_purl, version)
+        return version
+
+    def _get_configured_osv_ecosystem(self, product: Product, branch: Optional[Branch]) -> Optional[str]:
+        if branch and branch.osv_linux_distribution and branch.osv_linux_release:
+            return f"{branch.osv_linux_distribution}:{branch.osv_linux_release}"
+        if branch and branch.osv_linux_distribution:
+            return branch.osv_linux_distribution
+
+        if product.osv_linux_distribution and product.osv_linux_release:
+            return f"{product.osv_linux_distribution}:{product.osv_linux_release}"
+        if product.osv_linux_distribution:
+            return product.osv_linux_distribution
+
+        return None
 
     def _get_linux_package_osv_ecosystem(
         self, parsed_purl: PackageURL, package_osv_ecosystem: Optional[str]
@@ -523,16 +577,23 @@ def _get_osv_max_threads() -> int:
     return env.int("OSV_MAX_THREADS", default=32)
 
 
-def _create_osv_session() -> requests.Session:
+# Shared by all scans of the process, the background tasks scan several products at the same time
+_OSV_REQUEST_SLOTS = threading.BoundedSemaphore(_get_osv_max_threads())
+
+
+def create_osv_session(read_retries: Optional[int] = None) -> requests.Session:
     # urllib3 decrements `total` on every retried error, so connection/SSL failures (the
     # SSL EOF seen under load) are retried too, even though they are neither "connect" nor
     # "read" errors in its taxonomy.
+    # Callers with a long timeout should limit `read_retries`, because every retried read
+    # timeout waits for the full timeout again. `None` leaves the read retries to `total`.
     retry = Retry(
         total=OSV_MAX_RETRIES,
+        read=read_retries,
         backoff_factor=OSV_BACKOFF_FACTOR,
         status_forcelist=(429, 500, 502, 503, 504),
-        # Only idempotent GETs are retried; verify idempotency before adding other methods.
-        allowed_methods=frozenset({"GET"}),
+        # /v1/querybatch is a POST, but it only reads, so retrying it is as safe as retrying the GETs.
+        allowed_methods=frozenset({"GET", "POST"}),
         # Let urllib3 retry the status_forcelist codes silently; the caller's
         # raise_for_status() surfaces a clear HTTPError once the retries are exhausted.
         raise_on_status=False,

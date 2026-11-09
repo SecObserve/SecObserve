@@ -1,4 +1,6 @@
+import re
 from typing import Any
+from urllib.parse import urlsplit
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
@@ -26,6 +28,38 @@ class StatusSettingsSerializer(Serializer):
     date_format = CharField()
 
 
+SCANCODEIO_REQUIRED_SETTINGS = {
+    "scancodeio_base_url": "ScanCode.io base URL",
+    "scancodeio_api_key": "ScanCode.io API key",
+    "scancodeio_webhook_base_url": "SecObserve URL for ScanCode.io webhooks",
+}
+
+BASE_URL_MESSAGE = "Enter an http(s) URL without credentials, query or fragment."
+
+
+def _validate_base_url(value: str) -> str:
+    # URLValidator is not used, because it rejects host names without a domain like http://nginx.
+    # Private addresses are allowed, these services normally run in the internal network.
+    if not value:
+        return value
+
+    try:
+        split_url = urlsplit(value)
+        _ = split_url.port  # raises a ValueError for an invalid port
+    except ValueError as e:
+        raise ValidationError(BASE_URL_MESSAGE) from e
+
+    if (
+        split_url.scheme not in ("http", "https")
+        or not split_url.hostname
+        or "@" in split_url.netloc
+        or re.search(r"[?#\\\s]", value)
+    ):
+        raise ValidationError(BASE_URL_MESSAGE)
+
+    return value
+
+
 class SettingsSerializer(ModelSerializer):
     id = SerializerMethodField()
     observation_title_notification_status_list = ListField(
@@ -37,11 +71,42 @@ class SettingsSerializer(ModelSerializer):
     class Meta:
         model = Settings
         exclude = ["observation_title_notification_statuses"]
+        # Only set by the management command full_text_search, which creates and drops the indexes as well
+        read_only_fields = ["feature_full_text_search"]
 
     def get_id(self, obj: Settings) -> int:  # pylint: disable=unused-argument
         # obj is needed for the signature but we don't need it
         # The id is hardcoded to 1 because there is only one instance of the Settings model
         return 1
+
+    def validate(self, attrs: dict) -> dict:
+        attrs = super().validate(attrs)
+
+        if self._current_value(attrs, "feature_scancodeio_integration"):
+            errors = {
+                field: f"{label} is required when the ScanCode.io integration is enabled."
+                for field, label in SCANCODEIO_REQUIRED_SETTINGS.items()
+                if not self._current_value(attrs, field)
+            }
+            if errors:
+                raise ValidationError(errors)
+
+        return attrs
+
+    def _current_value(self, attrs: dict, field: str) -> Any:
+        # A partial update doesn't contain all fields, then the stored value is relevant
+        if field in attrs:
+            return attrs[field]
+        return getattr(self.instance, field, None)
+
+    def validate_vulnerablecode_base_url(self, value: str) -> str:
+        return _validate_base_url(value)
+
+    def validate_scancodeio_base_url(self, value: str) -> str:
+        return _validate_base_url(value)
+
+    def validate_scancodeio_webhook_base_url(self, value: str) -> str:
+        return _validate_base_url(value)
 
     def validate_observation_title_notification_status_list(self, value: list[str]) -> list[str]:
         if not isinstance(value, list):

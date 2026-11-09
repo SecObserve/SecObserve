@@ -1,5 +1,6 @@
 import { PackageURL } from "packageurl-js";
 import { RaRecord, SortPayload } from "ra-core";
+import { useSyncExternalStore } from "react";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 import { getResolvedSettingTheme, getSettingPackageInfoPreference } from "../access_control/users/functions";
@@ -245,11 +246,42 @@ export const humanReadableDate = (date: string | undefined) => {
     return rtf.format(Math.trunc(diffInDays), "day").replace(" ago", "");
 };
 
+const settings_subscribers = new Set<() => void>();
+
 export function set_settings_in_local_storage(): Promise<void> {
     return httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/status/settings/").then((response) => {
-        localStorage.setItem("settings", JSON.stringify(response.json));
+        const settings = JSON.stringify(response.json);
+        if (settings !== localStorage.getItem("settings")) {
+            localStorage.setItem("settings", settings);
+            settings_subscribers.forEach((subscriber) => subscriber());
+        }
     });
 }
+
+function subscribe_to_settings(subscriber: () => void): () => void {
+    settings_subscribers.add(subscriber);
+    // The storage event is only fired for changes made by other browser tabs
+    window.addEventListener("storage", subscriber);
+    return () => {
+        settings_subscribers.delete(subscriber);
+        window.removeEventListener("storage", subscriber);
+    };
+}
+
+/** Re-renders a component that stays mounted when the settings change, other components read them when mounting. */
+export function useSettingsSnapshot(): string | null {
+    return useSyncExternalStore(subscribe_to_settings, () => localStorage.getItem("settings"));
+}
+
+export const feature_disable_user_login = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        return features.indexOf("feature_disable_user_login") !== -1;
+    } catch {
+        return false;
+    }
+};
 
 export const feature_email = () => {
     try {
@@ -432,6 +464,17 @@ export const vulnerablecode_base_url_is_set = () => {
     }
 };
 
+export const feature_scancodeio_integration = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_scancodeio_integration = features.indexOf("feature_scancodeio_integration");
+        return feature_scancodeio_integration !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const feature_exploit_information = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
@@ -449,6 +492,17 @@ export const feature_show_product_header_chips = () => {
         const features = settings.features ?? [];
         const feature_show_product_header_chips = features.indexOf("feature_show_product_header_chips");
         return feature_show_product_header_chips !== -1;
+    } catch {
+        return false;
+    }
+};
+
+export const feature_full_text_search = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        const feature_full_text_search = features.indexOf("feature_full_text_search");
+        return feature_full_text_search !== -1;
     } catch {
         return false;
     }

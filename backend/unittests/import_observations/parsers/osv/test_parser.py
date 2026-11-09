@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.core.management import call_command
 from packageurl import PackageURL
 
+from application.core.models import Branch, Product
 from application.import_observations.parsers.osv.parser import (
     OSV_Component,
     OSV_Vulnerability,
@@ -384,6 +385,23 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
         self.assertEqual("OSV (Open Source Vulnerabilities)", scanner)
         self.assertEqual(len(observations), 0)
 
+    def test_get_configured_osv_ecosystem(self):
+        parser = OSVParser()
+        product_empty = Product()
+        product_distribution = Product(osv_linux_distribution="Debian")
+        product_release = Product(osv_linux_distribution="Debian", osv_linux_release="11")
+        branch_empty = Branch()
+        branch_distribution = Branch(osv_linux_distribution="Ubuntu")
+        branch_release = Branch(osv_linux_distribution="Ubuntu", osv_linux_release="22.04:LTS")
+
+        self.assertIsNone(parser._get_configured_osv_ecosystem(product_empty, None))
+        self.assertIsNone(parser._get_configured_osv_ecosystem(product_empty, branch_empty))
+        self.assertEqual("Debian", parser._get_configured_osv_ecosystem(product_distribution, None))
+        self.assertEqual("Debian:11", parser._get_configured_osv_ecosystem(product_release, None))
+        self.assertEqual("Debian:11", parser._get_configured_osv_ecosystem(product_release, branch_empty))
+        self.assertEqual("Ubuntu", parser._get_configured_osv_ecosystem(product_release, branch_distribution))
+        self.assertEqual("Ubuntu:22.04:LTS", parser._get_configured_osv_ecosystem(product_release, branch_release))
+
     def test_get_linux_package_osv_ecosystem_already_set(self):
         parser = OSVParser()
         package_osv_ecosystem = parser._get_linux_package_osv_ecosystem(
@@ -407,7 +425,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
     def test_get_linux_package_osv_ecosystem_alpine_2(self):
         parser = OSVParser()
         package_osv_ecosystem = parser._get_linux_package_osv_ecosystem(
-            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.62.2-r12?arch=x86_64&distro=3.21.3"),
+            PackageURL.from_string("pkg:apk/alpine/busybox-binsh@1.64.0-r12?arch=x86_64&distro=3.21.3"),
             None,
         )
         self.assertEqual("Alpine:v3.21", package_osv_ecosystem)

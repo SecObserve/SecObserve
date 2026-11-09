@@ -59,3 +59,16 @@ class TestExpiryFilters(BaseTestCase):
         self.assertEqual([extension.pk], [log.pk for log in logs])
         logs = ObservationLogFilter({"expiry_extension": "false"}, queryset=Observation_Log.objects.all()).qs
         self.assertNotIn(extension.pk, [log.pk for log in logs])
+
+
+class TestAssessedFilter(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        Observation.objects.filter(pk__in=[1, 3]).update(last_assessment=datetime.now(timezone.utc))
+
+    def test_assessed(self) -> None:
+        for value, expected in [("true", [1, 3]), ("false", [2, 4])]:
+            with self.subTest(assessed=value):
+                observations = ObservationFilter({"assessed": value}, queryset=Observation.objects.order_by("id")).qs
+                self.assertEqual(expected, [observation.pk for observation in observations])

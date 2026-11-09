@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Confirm, useDelete, useNotify, useRefresh } from "react-admin";
 
 import RemoveButton from "../../commons/custom_fields/RemoveButton";
+import { feature_scancodeio_integration } from "../../commons/functions";
 
 type ServiceDeleteProps = {
     service: any;
@@ -44,7 +45,10 @@ const ServiceDelete = (props: ServiceDeleteProps) => {
                 content={
                     "Are you sure you want to delete the service " +
                     props.service.name +
-                    " and all of its observations?"
+                    " and all of its observations?" +
+                    (feature_scancodeio_integration()
+                        ? " If it has a ScanCode.io project, that project is permanently deleted as well, including its inputs and results."
+                        : "")
                 }
                 onConfirm={handleConfirm}
                 onClose={handleDialogClose}

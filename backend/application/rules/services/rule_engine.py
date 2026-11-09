@@ -21,7 +21,7 @@ from application.core.services.risk_acceptance_expiry import (
     update_expiry_date,
 )
 from application.core.services.security_gate import check_security_gate
-from application.core.types import Assessment_Status
+from application.core.types import Assessment_Status, Observation_Log_Comment
 from application.issue_tracker.services.issue_tracker import (
     push_observation_to_issue_tracker,
 )
@@ -423,9 +423,9 @@ def _write_observation_log(
         comment = rule.description
     else:
         if rule.product:
-            comment = f"Updated by product rule {rule.name}"
+            comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE}{rule.name}"
         else:
-            comment = f"Updated by general rule {rule.name}"
+            comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE}{rule.name}"
 
     general_rule = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
     general_rule_rego = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_REGO else None
@@ -500,11 +500,17 @@ def _write_observation_log_no_rule(
     )
 
     if previous_product_rule:
-        comment = f"Removed product {previous_product_rule.type.lower()} rule {previous_product_rule.name}"
+        comment = (
+            f"{Observation_Log_Comment.COMMENT_PREFIX_REMOVED_PRODUCT_RULE}"
+            f"{previous_product_rule.type.lower()} rule {previous_product_rule.name}"
+        )
     elif previous_general_rule:
-        comment = f"Removed general {previous_general_rule.type.lower()} rule {previous_general_rule.name}"
+        comment = (
+            f"{Observation_Log_Comment.COMMENT_PREFIX_REMOVED_GENERAL_RULE}"
+            f"{previous_general_rule.type.lower()} rule {previous_general_rule.name}"
+        )
     else:
-        comment = "Removed unknown rule"
+        comment = Observation_Log_Comment.COMMENT_REMOVED_UNKNOWN_RULE
 
     create_observation_log(
         observation=observation,

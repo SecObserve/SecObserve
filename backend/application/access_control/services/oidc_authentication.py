@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import re
 from typing import Optional
@@ -58,14 +59,14 @@ class OIDCAuthentication(BaseAuthentication):
     def _validate_jwt(self, token: str) -> Optional[tuple[User, dict]]:
         settings = Settings.load()
         try:
-            jwks_uri = self._get_jwks_uri()
+            jwks_uri, discovered_issuer = self._get_openid_configuration()
             jwks_client = PyJWKClient(jwks_uri)
             signing_key = jwks_client.get_signing_key_from_jwt(token)
             options = Options(
                 verify_signature=True,
                 verify_aud=True,
                 strict_aud=settings.oidc_strict_audience,
-                require=["exp"],
+                require=["exp", "iss"],
                 verify_iat=True,
                 verify_exp=True,
                 verify_nbf=True,
@@ -76,6 +77,7 @@ class OIDCAuthentication(BaseAuthentication):
                 key=signing_key.key,
                 algorithms=ALGORITHMS,
                 audience=os.environ["OIDC_CLIENT_ID"],
+                issuer=self._get_issuer(discovered_issuer),
                 leeway=settings.oidc_clock_skew,
             )
             username = payload.get(os.environ["OIDC_USERNAME"])
@@ -89,19 +91,30 @@ class OIDCAuthentication(BaseAuthentication):
         except PyJWTError as e:
             raise AuthenticationFailed(str(e)) from e
 
-    def _get_jwks_uri(self) -> str:
-        jwks_uri = cache.get("jwks_uri")
-        if not jwks_uri:
+    def _get_openid_configuration(self) -> tuple[str, str]:
+        openid_configuration = cache.get("oidc_configuration")
+        if not openid_configuration:
             response = requests.request(
                 method="GET",
                 url=f"{os.environ['OIDC_AUTHORITY']}/.well-known/openid-configuration",
                 timeout=60,
             )
             response.raise_for_status()
-            jwks_uri = response.json()["jwks_uri"]
-            cache.set("jwks_uri", jwks_uri, timeout=5 * 60)
+            response_json = response.json()
+            openid_configuration = (response_json.get("jwks_uri", ""), response_json.get("issuer", ""))
+            if not openid_configuration[0]:
+                raise AuthenticationFailed("No jwks_uri found in OpenID configuration")
+            cache.set("oidc_configuration", openid_configuration, timeout=5 * 60)
 
-        return jwks_uri
+        return openid_configuration
+
+    def _get_issuer(self, discovered_issuer: str) -> str:
+        # OIDC_ISSUER is needed when the backend reaches the OIDC provider with
+        # another URL than the browser, because the issuer reflects the browser's URL
+        issuer = os.environ.get("OIDC_ISSUER") or discovered_issuer
+        if not issuer:
+            raise AuthenticationFailed("No issuer found in OpenID configuration and OIDC_ISSUER is not set")
+        return issuer
 
     def _create_user(self, username: str, payload: dict) -> User:
         user = User(username=username, first_name="", last_name="", email="")
@@ -190,15 +203,16 @@ class OIDCAuthentication(BaseAuthentication):
     def _get_groups_hash(self, payload: dict) -> str:
         groups = self._get_groups_from_token(payload)
         if groups:
-            return hashlib.sha256("".join(groups).encode("UTF-8")).hexdigest()
+            return hashlib.sha256(json.dumps(groups).encode("UTF-8")).hexdigest()
         return ""
 
     def _synchronize_groups(self, user: User, payload: dict) -> None:
-        groups = Authorization_Group.objects.exclude(oidc_group="")
+        oidc_groups = self._get_groups_from_token(payload)
+        # Memberships that stay are kept, removing and adding them again would reset is_manager
+        groups = Authorization_Group.objects.exclude(oidc_group="").exclude(oidc_group__in=oidc_groups)
         for group in groups:
             group.users.remove(user)
 
-        oidc_groups = self._get_groups_from_token(payload)
         authorization_groups = Authorization_Group.objects.filter(oidc_group__in=oidc_groups)
         for authorization_group in authorization_groups:
             user.authorization_groups.add(authorization_group)

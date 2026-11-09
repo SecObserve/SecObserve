@@ -75,6 +75,7 @@ nav:
     - Import observations: usage/import_observations.md
     - Upload SBOMs: usage/upload_sbom.md
     - Assess observations: usage/assess_observations.md
+    - Full text search: usage/full_text_search.md
     - Product groups: usage/product_groups.md
     - Branches and Versions: usage/branches.md
     - Rule engine: usage/rule_engine.md
@@ -101,6 +102,7 @@ nav:
     - VEX documents: integrations/vex.md
     - Vulnerability scanning from OSV: integrations/osv_scan.md
     - Vulnerability scanning from VulnerableCode: integrations/vulnerablecode_scan.md
+    - ScanCode.io: integrations/scancodeio.md
     - Export of observations: integrations/observations_export.md
     - CodeCharta: integrations/codecharta.md
     - Links to additional information: integrations/links.md

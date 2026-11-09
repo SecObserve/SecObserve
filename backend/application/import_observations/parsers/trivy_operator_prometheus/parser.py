@@ -1,9 +1,14 @@
 import json
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
 
 import requests
 
+from application.commons.services.connection_error import (
+    get_connection_error_message,
+    raise_for_status,
+)
 from application.core.models import Branch, Observation, Product
 from application.core.types import Severity
 from application.import_observations.models import Api_Configuration
@@ -63,12 +68,14 @@ class TrivyOperatorPrometheus(BaseParser, BaseAPIParser):
                 timeout=60,
                 verify=trivy_operator_prometheus_verify_ssl,
                 auth=trivy_basic_auth_param,
+                allow_redirects=False,
             )
-            response.raise_for_status()
+            raise_for_status(response)
+            data = response.json()
         except Exception as e:
-            return False, [f"Cannot access Prometheus: {str(e)}"], {}
+            return False, [get_connection_error_message("Cannot access Prometheus", e)], {}
 
-        return True, [], response.json()
+        return True, [], data
 
     def check_format(self, import_data: Any) -> tuple[bool, list[str], dict]:
         try:
@@ -189,7 +196,7 @@ class TrivyOperatorPrometheus(BaseParser, BaseAPIParser):
         origin_component_name = finding.get("metric", {}).get("resource", "")
         vuln_title = finding.get("metric", {}).get("vuln_title", "")
         vulnerability_id = finding.get("metric", {}).get("vuln_id", "")
-        cvss3_score = finding.get("metric", {}).get("vuln_score")
+        cvss3_score = self._get_cvss_score(finding)
         severity = finding.get("metric", {}).get("severity", Severity.SEVERITY_UNKNOWN)
         origin_docker_image_registry = finding.get("metric", {}).get("image_registry", "")
         origin_docker_image_repository = finding.get("metric", {}).get("image_repository", "")
@@ -201,7 +208,6 @@ class TrivyOperatorPrometheus(BaseParser, BaseAPIParser):
         return Observation(
             title=vulnerability_id,
             parser_severity=self._get_severity(severity),
-            numerical_severity=cvss3_score,
             vulnerability_id=vulnerability_id,
             origin_docker_image_name=origin_docker_image_name,
             origin_docker_image_tag=origin_docker_image_tag,
@@ -244,6 +250,14 @@ class TrivyOperatorPrometheus(BaseParser, BaseAPIParser):
             description += f"\n\n**Prometheus host:** {prometheus_endpoint_url}"
 
         return description
+
+    def _get_cvss_score(self, finding: dict) -> Optional[Decimal]:
+        # Prometheus labels are always strings, the label can also be empty
+        try:
+            cvss_score = Decimal(finding.get("metric", {}).get("vuln_score", ""))
+            return cvss_score if 0 <= cvss_score <= 10 else None
+        except InvalidOperation:
+            return None
 
     def _get_severity(self, severity: str) -> str:
         if (

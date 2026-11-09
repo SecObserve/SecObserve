@@ -1,3 +1,4 @@
+from django.db import transaction
 from huey.contrib.djhuey import on_commit_task
 
 from application.access_control.services.current_user import get_current_user
@@ -62,37 +63,37 @@ def send_observation_title_notification(observation: Observation) -> None:
                 or observation.parser.type == observation_title_notification_parser_type
             )
         ):
-            try:
-                observation_title_notified = Observation_Title_Notified.objects.get(title=observation.title)
-                new_notification = False
-            except Observation_Title_Notified.DoesNotExist:
-                observation_title_notified = Observation_Title_Notified(title=observation.title)
-                new_notification = True
-
-            if (
-                observation.current_severity != observation_title_notified.severity
-                or observation.current_status != observation_title_notified.status
-                or observation.current_priority != observation_title_notified.priority
-            ):
-                first_line = (
-                    f'New notification for observation title "{observation.title}"'
-                    if new_notification
-                    else f'Change in observation title "{observation.title}"'
+            # Several tasks for one title can run at the same time, e.g. an import of observations with the same title.
+            # The lock makes them wait for each other, so only the first one sends the notification.
+            with transaction.atomic():
+                observation_title_notified, new_notification = (
+                    Observation_Title_Notified.objects.select_for_update().get_or_create(title=observation.title)
                 )
 
-                url = (
-                    get_base_url_frontend()
-                    + '#/observations?filter={"current_status":["Open","Affected","In+review"],"title":"'
-                    + observation.title
-                    + '"}'
-                )
+                if (
+                    observation.current_severity != observation_title_notified.severity
+                    or observation.current_status != observation_title_notified.status
+                    or observation.current_priority != observation_title_notified.priority
+                ):
+                    first_line = (
+                        f'New notification for observation title "{observation.title}"'
+                        if new_notification
+                        else f'Change in observation title "{observation.title}"'
+                    )
 
-                _send_observation_title_notifications(settings, observation, first_line, url)
+                    url = (
+                        get_base_url_frontend()
+                        + '#/observations?filter={"current_status":["Open","Affected","In+review"],"title":"'
+                        + observation.title
+                        + '"}'
+                    )
 
-                observation_title_notified.severity = observation.current_severity
-                observation_title_notified.status = observation.current_status
-                observation_title_notified.priority = observation.current_priority
-                observation_title_notified.save()
+                    _send_observation_title_notifications(settings, observation, first_line, url)
+
+                    observation_title_notified.severity = observation.current_severity
+                    observation_title_notified.status = observation.current_status
+                    observation_title_notified.priority = observation.current_priority
+                    observation_title_notified.save()
     except Exception as e:
         handle_task_exception(e)
         raise

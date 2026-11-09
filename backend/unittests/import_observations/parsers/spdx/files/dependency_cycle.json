@@ -1,0 +1,42 @@
+{
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "dependency_cycle",
+  "documentNamespace": "http://aquasecurity.github.io/trivy/container_image/dependency_cycle-b3fdfb29-cea7-4576-875b-9cd70d2552ba",
+  "creationInfo": {
+    "creators": [
+      "Organization: aquasecurity",
+      "Tool: trivy-0.58.0"
+    ],
+    "created": "2024-12-21T15:02:40Z"
+  },
+  "packages": [
+    {
+      "name": "a",
+      "SPDXID": "SPDXRef-Package-a",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NONE"
+    },
+    {
+      "name": "b",
+      "SPDXID": "SPDXRef-Package-b",
+      "versionInfo": "1.0.0",
+      "downloadLocation": "NONE"
+    }
+  ],
+  "files": [
+  ],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-Package-a",
+      "relatedSpdxElement": "SPDXRef-Package-b",
+      "relationshipType": "DEPENDS_ON"
+    },
+    {
+      "spdxElementId": "SPDXRef-Package-b",
+      "relatedSpdxElement": "SPDXRef-Package-a",
+      "relationshipType": "DEPENDS_ON"
+    }
+  ]
+}
