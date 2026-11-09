@@ -411,6 +411,7 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
     existing_components = License_Component.objects.filter(
         product=vulnerability_check.product,
         branch=vulnerability_check.branch,
+        origin_service=vulnerability_check.service,
         upload_filename=vulnerability_check.filename,
     ).select_related("effective_spdx_license")
 
@@ -569,6 +570,7 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
                     identity_hash__in=inserted_hashes,
                     product=vulnerability_check.product,
                     branch=vulnerability_check.branch,
+                    origin_service=vulnerability_check.service,
                     upload_filename=vulnerability_check.filename,
                 )
             }

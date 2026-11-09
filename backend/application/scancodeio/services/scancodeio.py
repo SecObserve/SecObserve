@@ -1,10 +1,10 @@
 import hashlib
 import logging
 import secrets
-from typing import Any
+from typing import Any, Optional
 
 import requests
-from django.db import DatabaseError, IntegrityError
+from django.db import DatabaseError, IntegrityError, transaction
 from django.utils.text import slugify
 from huey.contrib.djhuey import on_commit_task
 from rest_framework.exceptions import ValidationError
@@ -12,12 +12,13 @@ from rest_framework.status import HTTP_204_NO_CONTENT, HTTP_404_NOT_FOUND
 
 from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
-from application.core.models import Product
+from application.core.models import Branch, Product, Service
 from application.scancodeio.models import ScanCodeIO_Project
-from application.scancodeio.queries.scancodeio_project import (
-    get_scancodeio_project_by_product,
+from application.scancodeio.queries.scancodeio_project import get_scancodeio_project
+from application.scancodeio.types import (
+    SCANCODEIO_PROJECT_NAME_MAX_LENGTH,
+    CreateProjectParameters,
 )
-from application.scancodeio.types import CreateProjectParameters
 
 logger = logging.getLogger("secobserve.scancodeio")
 
@@ -85,6 +86,12 @@ class ScanCodeIOClient:
     def get_project(self, project_uuid: str) -> dict[str, Any]:
         return self._request("get", f"/api/projects/{project_uuid}/")
 
+    def get_results(self, project_uuid: str) -> dict[str, Any]:
+        # Files and relations are not imported, leaving them out keeps the response small
+        return self._request(
+            "get", f"/api/projects/{project_uuid}/results/", params={"sections": ["packages", "dependencies"]}
+        )
+
     def delete_project(self, project_uuid: str) -> None:
         # A project that has already been deleted in ScanCode.io is no reason to keep it in SecObserve
         self._request("delete", f"/api/projects/{project_uuid}/", ignore_not_found=True)
@@ -101,11 +108,17 @@ class ScanCodeIOClient:
                 self.base_url + path,
                 headers=self.headers,
                 timeout=SCANCODEIO_REQUEST_TIMEOUT,
+                allow_redirects=False,
                 **kwargs,
             )
         except requests.exceptions.RequestException as e:
             logger.warning(format_log_message(message="ScanCode.io request failed", exception=e))
-            raise ValidationError(f"ScanCode.io is not reachable: {e}") from e
+            # The details contain internal host names and are only for the logs
+            raise ValidationError("ScanCode.io is not reachable") from e
+
+        # A redirect counts as ok for requests
+        if response.is_redirect:
+            raise ValidationError("ScanCode.io redirected the request, the base URL has to be corrected")
 
         if ignore_not_found and response.status_code == HTTP_404_NOT_FOUND:
             return None
@@ -145,6 +158,10 @@ def get_scancodeio_project_details(scancodeio_project: ScanCodeIO_Project) -> di
     return details
 
 
+def get_scancodeio_results(scancodeio_project: ScanCodeIO_Project) -> dict[str, Any]:
+    return ScanCodeIOClient().get_results(str(scancodeio_project.project_uuid))
+
+
 def get_scancodeio_project_ui_url(scancodeio_project: ScanCodeIO_Project) -> str:
     base_url = Settings.load().scancodeio_base_url.rstrip("/")
     if base_url == SCANCODEIO_DEV_BASE_URL:
@@ -160,9 +177,11 @@ def delete_scancodeio_project(scancodeio_project: ScanCodeIO_Project) -> None:
     scancodeio_project.delete()
 
 
-def create_scancodeio_project(product: Product, parameters: CreateProjectParameters) -> ScanCodeIO_Project:
-    if get_scancodeio_project_by_product(product):
-        raise ValidationError(f"Product {product.name} already has a ScanCode.io project")
+def create_scancodeio_project(
+    product: Product, branch: Optional[Branch], service: Optional[Service], parameters: CreateProjectParameters
+) -> ScanCodeIO_Project:
+    if get_scancodeio_project(product, branch, service):
+        raise ValidationError(_project_exists_message(product, branch, service))
 
     if not parameters.input_urls and not parameters.upload_file:
         raise ValidationError("At least one input URL or a file to upload is required")
@@ -179,25 +198,59 @@ def create_scancodeio_project(product: Product, parameters: CreateProjectParamet
     webhook_url = f"{webhook_base_url}/api/scancodeio/webhook/{webhook_token}/"
     webhook_token_hash = hash_webhook_token(webhook_token)
 
+    if not parameters.name:
+        parameters.name = _get_default_project_name(product, branch, service)
+
     client = ScanCodeIOClient()
     response = client.create_project(parameters, webhook_url)
 
     try:
-        scancodeio_project = ScanCodeIO_Project.objects.create(
-            product=product,
-            project_uuid=response["uuid"],
-            project_name=response["name"],
-            webhook_token_hash=webhook_token_hash,
-        )
+        with transaction.atomic():
+            # A concurrent request could have created the project in the meantime. The unique constraint doesn't
+            # apply to an empty branch or service, so the product is locked to check for it. The request to
+            # ScanCode.io can take a while, so it is done before the lock.
+            Product.objects.select_for_update().get(pk=product.pk)
+            if get_scancodeio_project(product, branch, service):
+                raise ValidationError(_project_exists_message(product, branch, service))
+
+            scancodeio_project = ScanCodeIO_Project.objects.create(
+                product=product,
+                branch=branch,
+                service=service,
+                project_uuid=response["uuid"],
+                project_name=response["name"],
+                webhook_token_hash=webhook_token_hash,
+            )
+    except ValidationError:
+        _delete_orphaned_project(client, response["uuid"])
+        raise
     except DatabaseError as e:
         # Without a reference in SecObserve, the project in ScanCode.io could neither be shown nor deleted
         _delete_orphaned_project(client, response["uuid"])
         if isinstance(e, IntegrityError):
-            # A concurrent request has created a project for the product in the meantime
-            raise ValidationError(f"Product {product.name} already has a ScanCode.io project") from e
+            raise ValidationError(_project_exists_message(product, branch, service)) from e
         raise
 
     return scancodeio_project
+
+
+def _get_default_project_name(product: Product, branch: Optional[Branch], service: Optional[Service]) -> str:
+    # The name of a project must be unique in ScanCode.io, so the product name alone is not sufficient
+    parts = [product.name]
+    if branch:
+        parts.append(branch.name)
+    if service:
+        parts.append(service.name)
+    return " - ".join(parts)[:SCANCODEIO_PROJECT_NAME_MAX_LENGTH]
+
+
+def _project_exists_message(product: Product, branch: Optional[Branch], service: Optional[Service]) -> str:
+    message = f"Product {product.name}"
+    if branch:
+        message += f", branch {branch.name}"
+    if service:
+        message += f", service {service.name}"
+    return f"{message} already has a ScanCode.io project"
 
 
 @on_commit_task()
@@ -218,14 +271,3 @@ def _delete_orphaned_project(client: ScanCodeIOClient, project_uuid: str) -> Non
 def hash_webhook_token(webhook_token: str) -> str:
     # The token is random with 256 bits, so a fast hash is sufficient and allows to look it up
     return hashlib.sha256(webhook_token.encode("utf-8")).hexdigest()
-
-
-def process_scancodeio_webhook(scancodeio_project: ScanCodeIO_Project, payload: dict[str, Any]) -> None:
-    # Dummy implementation, the results will be imported into SecObserve later
-    run = payload.get("run", {})
-    logger.info(
-        format_log_message(
-            message=f"ScanCode.io webhook for project {scancodeio_project.project_name}: "
-            + f"pipeline {run.get('pipeline_name')} finished with status {run.get('status')}"
-        )
-    )

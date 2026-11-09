@@ -410,6 +410,7 @@ class Observation(Model):
     created = DateTimeField(auto_now_add=True)
     modified = DateTimeField(auto_now=True)
     last_observation_log = DateTimeField(default=timezone.now)
+    last_assessment = DateTimeField(null=True)
     identity_hash = CharField(max_length=64)
 
     general_rule = ForeignKey(
@@ -498,6 +499,7 @@ class Observation(Model):
             Index(fields=["origin_cloud_qualified_resource"]),
             Index(fields=["origin_kubernetes_qualified_resource"]),
             Index(fields=["last_observation_log"]),
+            Index(fields=["last_assessment"]),
             Index(fields=["epss_score"]),
             Index(fields=["scanner"]),
             Index(fields=["update_impact_score"]),

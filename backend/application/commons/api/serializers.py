@@ -1,4 +1,6 @@
+import re
 from typing import Any
+from urllib.parse import urlsplit
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
@@ -34,6 +36,31 @@ SCANCODEIO_REQUIRED_SETTINGS = {
     "scancodeio_api_key": "ScanCode.io API key",
     "scancodeio_webhook_base_url": "SecObserve URL for ScanCode.io webhooks",
 }
+
+BASE_URL_MESSAGE = "Enter an http(s) URL without credentials, query or fragment."
+
+
+def _validate_base_url(value: str) -> str:
+    # URLValidator is not used, because it rejects host names without a domain like http://nginx.
+    # Private addresses are allowed, these services normally run in the internal network.
+    if not value:
+        return value
+
+    try:
+        split_url = urlsplit(value)
+        _ = split_url.port  # raises a ValueError for an invalid port
+    except ValueError as e:
+        raise ValidationError(BASE_URL_MESSAGE) from e
+
+    if (
+        split_url.scheme not in ("http", "https")
+        or not split_url.hostname
+        or "@" in split_url.netloc
+        or re.search(r"[?#\\\s]", value)
+    ):
+        raise ValidationError(BASE_URL_MESSAGE)
+
+    return value
 
 
 class SettingsSerializer(ModelSerializer):
@@ -86,6 +113,15 @@ class SettingsSerializer(ModelSerializer):
         if field in attrs:
             return attrs[field]
         return getattr(self.instance, field, None)
+
+    def validate_vulnerablecode_base_url(self, value: str) -> str:
+        return _validate_base_url(value)
+
+    def validate_scancodeio_base_url(self, value: str) -> str:
+        return _validate_base_url(value)
+
+    def validate_scancodeio_webhook_base_url(self, value: str) -> str:
+        return _validate_base_url(value)
 
     def validate_observation_title_notification_status_list(self, value: list[str]) -> list[str]:
         if not isinstance(value, list):

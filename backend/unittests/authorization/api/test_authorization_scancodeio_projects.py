@@ -38,8 +38,8 @@ class TestAuthorizationScanCodeIOProjects(TestAuthorizationBase):
         self._test_authorization_scancodeio_projects()
 
     def _test_authorization_scancodeio_projects(self):
-        project_internal = "{'id': 1, 'product': 1, 'project_uuid': '6461408c-726c-4b70-aa7a-c9cc9d1c9685', 'project_name': 'project_internal', 'created': '2026-10-23T14:00:00+02:00'}"
-        project_external = "{'id': 2, 'product': 2, 'project_uuid': '7cbd4e4a-2a1c-4a50-9a4e-2d8f8a8c1f3b', 'project_name': 'project_external', 'created': '2026-10-23T14:00:00+02:00'}"
+        project_internal = "{'id': 1, 'product': 1, 'branch': None, 'branch_name': '', 'service': None, 'service_name': '', 'project_uuid': '6461408c-726c-4b70-aa7a-c9cc9d1c9685', 'project_name': 'project_internal', 'created': '2026-10-23T14:00:00+02:00'}"
+        project_external = "{'id': 2, 'product': 2, 'branch': None, 'branch_name': '', 'service': None, 'service_name': '', 'project_uuid': '7cbd4e4a-2a1c-4a50-9a4e-2d8f8a8c1f3b', 'project_name': 'project_external', 'created': '2026-10-23T14:00:00+02:00'}"
 
         expected_data = (
             f"{{'count': 2, 'next': None, 'previous': None, 'results': [{project_internal}, {project_external}]}}"

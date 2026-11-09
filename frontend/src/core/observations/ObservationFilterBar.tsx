@@ -8,6 +8,7 @@ import {
     TextInput,
 } from "react-admin";
 
+import { OBSERVATION_OPTIONAL_COLUMNS } from "../../access_control/users/functions";
 import { BranchReferenceInput } from "../../commons/custom_fields/BranchReferenceInput";
 import { DateRangeFilter } from "../../commons/custom_fields/DateRangeFilter";
 import { FilterBar, SecondaryFilter } from "../../commons/custom_fields/FilterBar";
@@ -18,6 +19,7 @@ import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWid
 import { feature_exploit_information, feature_full_text_search } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
 import { OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES, PURL_TYPE_CHOICES, Product } from "../types";
+import ObservationColumnsButton from "./ObservationColumnsButton";
 
 const ORIGIN = "Origin";
 const SCAN = "Scan";
@@ -83,6 +85,7 @@ export function observationFilters(product?: Product, review = false, product_fi
         { column: SCAN, input: <TextInput source="api_configuration_name" label="API configuration" /> }
     );
 
+    secondary.push({ column: TRIAGE, input: <NullableBooleanInput source="assessed" label="Assessed" /> });
     if (!product || product.has_priorities) {
         secondary.push({
             column: TRIAGE,
@@ -184,6 +187,20 @@ export function originFilters(product?: Product): SecondaryFilter[] {
     return filters;
 }
 
+// Only the optional columns the list can show are offered. A review list has no update impact score,
+// and it only shows the potential duplicates for a product that has them.
+function offeredColumns(product?: Product, review = false) {
+    return OBSERVATION_OPTIONAL_COLUMNS.filter(({ name }) => {
+        if (name === "has_potential_duplicates") {
+            return product ? product.has_potential_duplicates : !review;
+        }
+        if (name === "update_impact_score") {
+            return !review;
+        }
+        return true;
+    });
+}
+
 interface ObservationFilterBarProps {
     product?: Product;
     review?: boolean;
@@ -193,5 +210,12 @@ interface ObservationFilterBarProps {
 
 export const ObservationFilterBar = ({ product, review, product_filters, saveQuery }: ObservationFilterBarProps) => {
     const { primary, secondary } = observationFilters(product, review, product_filters);
-    return <FilterBar filters={primary} moreFilters={secondary} saveQuery={saveQuery} />;
+    return (
+        <FilterBar
+            filters={primary}
+            moreFilters={secondary}
+            saveQuery={saveQuery}
+            actions={<ObservationColumnsButton columns={offeredColumns(product, review)} />}
+        />
+    );
 };
