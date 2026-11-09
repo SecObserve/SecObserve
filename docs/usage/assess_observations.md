@@ -27,6 +27,11 @@ In the assessment dialog the user can change either the severity and/or the stat
 
 A new entry with the changed values is stored in the `Observation Log` after the assessment has been saved.
 
+The lists of observations show in the column `Assessed` when an observation has been assessed last, and the filter `Assessed` finds the observations that have or have not been assessed.
+Every saved assessment counts, also one with only a comment, one that needs approval or has been rejected, and one propagated from another branch.
+Removing the assessment and the expiry of a risk acceptance mark the observation as not assessed again.
+Changes by parsers, rules and VEX statements are no assessments.
+
 ## Approvals
 
 With the default settings of the product, the assessment is activated right away. If more control is needed, the product can be configured to require an approval before the assessment is activated. This can be done while creating or editing a product:
@@ -99,6 +104,14 @@ Propagated assessments are marked with the id of the original assessment. They a
 Activation of this direction is controlled with the parameter *"Propagate new assessments to new observations"*.
 
 When an import creates a new observation, the newest matching assessment from the other configured branches is applied to it automatically. Only manual assessments count as source: approved, not itself propagated, not created by rules, VEX statements or the parser, and changing severity or status.
+
+Removals count as well: if the newest matching assessment has been removed, nothing is applied to the new observation. This includes removals because of an expired risk acceptance.
+
+### Propagation of removed assessments
+
+Removals are propagated if *"Propagate new assessments to other branches"* or *"Propagate new assessments to new observations"* is active, because propagated copies can come from both directions.
+
+Removing an assessment removes it from similar findings on matching branches as well, if they still have the same assessment: the original one or a propagated copy of it. Findings with an assessment made on their own branch keep it. Assessments removed because their risk acceptance has expired are not propagated, because every finding expires with its own expiry date.
 
 
 ## Reviews

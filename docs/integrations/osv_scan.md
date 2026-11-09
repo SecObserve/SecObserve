@@ -41,6 +41,10 @@ To correctly identify other Linux packages, the Linux distribution and version h
 | Red Hat            | rhel_aus:8.4::appstream |
 | Ubuntu             | Pro:24.04:LTS |
 
+If the Linux distribution is set, or for Alpine and Debian packages if it can be determined from the PURL, OSV is queried with the name, ecosystem and version of the package instead of the PURL.
+
+For Red Hat, SUSE and openSUSE only the beginning of the version needs to be set, e.g. `enterprise_linux:9` for all ecosystems of Red Hat Enterprise Linux 9. For all other Linux distributions the complete version has to be set. Alpine packages are only found if a version is set, e.g. `v3.18`, or if it can be determined from the PURL.
+
 
 ## Manual scan
 
@@ -68,3 +72,13 @@ The hour (in UTC, unless [`TIME_ZONE`](../getting_started/configuration.md#time-
 Only products that have `Automatic OSV scanning enabled` turned on will be imported automatically.
 
 ![OSV scanning settings](../assets/images/screenshot_osv_scanning_settings_2.png)
+
+#### Execution
+
+The automatic scan enqueues a separate background task for each product. These tasks have a lower priority than all other background tasks, so that for example notifications don't wait until all products have been scanned. If the background process is restarted during the scans, only the scans running at that moment are lost, the remaining products are still scanned. Scans that are still queued 20 hours after they have been enqueued are dropped, so that they don't pile up with the scans of the next night.
+
+A scan that fails with a transient error, like an outage of `api.osv.dev` or a lost database connection, is retried, see `OSV_SCAN_RETRIES` and `OSV_SCAN_RETRY_DELAY` in the [configuration](../getting_started/configuration.md#backend).
+
+When all scans of a run have finished, the entry `Scan products with OSV` in the `Background tasks` administration shows the result, e.g. `Scanned 998 of 1000 products, 2 failed.`, and one [exception notification](./notifications.md#notifications-for-exceptions) lists the products whose last attempt has failed. If scans were lost because the background process stopped, the next run adds an entry that the previous run did not finish and sends an exception notification.
+
+As long as the scans of a run are not finished, at most 20 hours, a manually started import doesn't enqueue the products again, so that no product is scanned twice at the same time.

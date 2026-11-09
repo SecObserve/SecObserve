@@ -3,6 +3,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import ChecklistIcon from "@mui/icons-material/Checklist";
 import UploadIcon from "@mui/icons-material/CloudUpload";
 import ConstructionIcon from "@mui/icons-material/Construction";
+import DocumentScannerIcon from "@mui/icons-material/DocumentScanner";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -36,7 +37,7 @@ import {
     PERMISSION_PRODUCT_RULE_CREATE,
     PERMISSION_SERVICE_CREATE,
 } from "../../access_control/types";
-import { feature_license_management } from "../../commons/functions";
+import { feature_license_management, feature_scancodeio_integration } from "../../commons/functions";
 import TabsWithSubMenu from "../../commons/layout/TabsWithSubMenu";
 import { useStyles } from "../../commons/layout/themes";
 import observations from "../../core/observations";
@@ -56,6 +57,8 @@ import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
 import ProductRuleEmbeddedList from "../../rules/product_rules/ProductRuleEmbeddedList";
+import CreateScanCodeIOProject from "../../scancodeio/CreateScanCodeIOProject";
+import ScanCodeIOEmbeddedList from "../../scancodeio/ScanCodeIOEmbeddedList";
 import BranchCreate from "../branches/BranchCreate";
 import BranchEmbeddedList from "../branches/BranchEmbeddedList";
 import ShowDefaultBranchObservationsButton from "../branches/ShowDefaultBranchObservationsButton";
@@ -265,6 +268,14 @@ const ProductShow = () => {
                                     )}
                                     <ApiConfigurationEmbeddedList product={product} />
                                 </Tab>
+                                {feature_scancodeio_integration() &&
+                                    feature_license_management() &&
+                                    product?.permissions?.includes(PERMISSION_PRODUCT_EDIT) && (
+                                        <Tab label="ScanCode.io" path="scancodeio" icon={<DocumentScannerIcon />}>
+                                            <CreateScanCodeIOProject product={product} />
+                                            <ScanCodeIOEmbeddedList product={product} />
+                                        </Tab>
+                                    )}
                                 <Tab label="Members" path="members" icon={<PeopleAltIcon />}>
                                     <Typography variant="h6">User members</Typography>
                                     {product?.permissions?.includes(PERMISSION_PRODUCT_MEMBER_CREATE) && (

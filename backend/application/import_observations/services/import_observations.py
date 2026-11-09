@@ -291,7 +291,9 @@ def api_check_connection(
     return format_valid, errors
 
 
-def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tuple[int, int, int]:
+def _process_data(  # pylint: disable=too-many-statements
+    import_parameters: ImportParameters, settings: Settings
+) -> Tuple[int, int, int]:
     observations_before_query = get_observations_for_vulnerability_check(
         import_parameters.product,
         import_parameters.branch,
@@ -300,7 +302,7 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
         import_parameters.api_configuration_name,
     )
     if not transaction.get_autocommit():
-        # The import locks the product (with its first observation log) and all these observations anyway. Lock them
+        # The import locks the product (with its change timestamp) and all these observations anyway. Lock them
         # first, the product before the observations by id, in the order of find_potential_duplicates and EPSS.
         Product.objects.select_for_update().filter(pk=import_parameters.product.pk).first()
         list(observations_before_query.select_for_update().order_by("pk").values_list("pk", flat=True))
@@ -314,7 +316,12 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     # Read current observations for the same vulnerability check, to find updated and resolved observations
     observations_before: dict[str, Observation] = {}
     for observation_before_for_dict in observations_before_query:
+        # One product instance for all observations, it collects the change timestamp of all their logs
+        observation_before_for_dict.product = import_parameters.product
         observations_before[observation_before_for_dict.identity_hash] = observation_before_for_dict
+
+    # Only in a transaction, without one a crash could leave committed changes without a new change timestamp
+    import_parameters.product.defer_observation_change = not transaction.get_autocommit()
 
     observations_this_run: set[str] = set()
     vulnerability_check_observations: set[Observation] = set()
@@ -378,6 +385,10 @@ def _process_data(import_parameters: ImportParameters, settings: Settings) -> Tu
     observations_resolved = _resolve_unimported_observations(observations_before)
     vulnerability_check_observations.update(observations_resolved)
 
+    import_parameters.product.defer_observation_change = False
+    if "last_observation_change" in import_parameters.product.get_dirty_fields():
+        import_parameters.product.save(update_fields=["last_observation_change"])
+
     if (not import_parameters.branch and not import_parameters.product.repository_default_branch) or (
         import_parameters.branch and import_parameters.branch.is_default_branch
     ):
@@ -401,6 +412,7 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
     existing_components = License_Component.objects.filter(
         product=vulnerability_check.product,
         branch=vulnerability_check.branch,
+        origin_service=vulnerability_check.service,
         upload_filename=vulnerability_check.filename,
     ).select_related("effective_spdx_license")
 
@@ -559,6 +571,7 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
                     identity_hash__in=inserted_hashes,
                     product=vulnerability_check.product,
                     branch=vulnerability_check.branch,
+                    origin_service=vulnerability_check.service,
                     upload_filename=vulnerability_check.filename,
                 )
             }
@@ -688,13 +701,17 @@ def _process_current_observation(
     apply_epss(observation_before, epss_scores)
     apply_exploit_information(observation_before, settings, exploit_informations)
     observation_before.import_last_seen = timezone.now()
-    observation_before.save()
 
     _set_references(observation_before, imported_observation.unsaved_references)
     _set_evidences(observation_before, imported_observation.unsaved_evidences)
 
-    # Write observation log if status or severity has been changed
-    if previous_status != observation_before.current_status or previous_severity != observation_before.current_severity:
+    # Write observation log if status or severity has been changed, it saves the observation as well
+    if (
+        previous_status == observation_before.current_status
+        and previous_severity == observation_before.current_severity
+    ):
+        observation_before.save()
+    else:
         status = observation_before.current_status if previous_status != observation_before.current_status else ""
         severity = (
             observation_before.current_severity if previous_severity != observation_before.current_severity else ""
@@ -826,17 +843,22 @@ def _resolve_unimported_observations(
     # and seem to have been resolved.
     observations_resolved: set[Observation] = set()
     for observation in observations_before.values():
+        # Resolved by an earlier import, there is nothing to change
+        if observation.parser_status == Status.STATUS_RESOLVED:
+            continue
+
         old_status = get_current_status(observation)
-
         observation.parser_status = Status.STATUS_RESOLVED
-        observation.save()
-
         new_status = get_current_status(observation)
-        if old_status != new_status:
+
+        if old_status == new_status:
+            observation.save()
+        else:
             if old_status in Status.STATUS_ACTIVE:
                 observations_resolved.add(observation)
 
             observation.current_status = new_status
+            # Saves the observation as well
             create_observation_log(
                 observation=observation,
                 severity="",

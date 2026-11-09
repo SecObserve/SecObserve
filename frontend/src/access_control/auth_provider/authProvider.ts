@@ -1,6 +1,5 @@
 import { AuthProvider } from "react-admin";
 
-import { set_settings_in_local_storage } from "../../commons/functions";
 import { queryClient } from "../../commons/queryClient";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { oidc_signed_in, oidc_signin_again, userManager } from "./oidc";
@@ -99,9 +98,6 @@ const authProvider: AuthProvider = {
             const user_json = JSON.parse(user);
             fullName = user_json.full_name;
         }
-
-        // Not awaited, pages don't wait for getIdentity and a failure must not hide the identity
-        set_settings_in_local_storage().catch(() => undefined);
 
         return Promise.resolve({ id, fullName, avatar });
     },

@@ -6,12 +6,14 @@ interface MenuButtonProps {
     title: string;
     onClick: () => void;
     icon: any;
+    disabled?: boolean;
 }
 
-const MenuButton = ({ title, onClick, icon }: MenuButtonProps) => {
+const MenuButton = ({ title, onClick, icon, disabled }: MenuButtonProps) => {
     return (
         <Button
             onClick={onClick}
+            disabled={disabled}
             size="small"
             sx={{
                 paddingTop: 0,

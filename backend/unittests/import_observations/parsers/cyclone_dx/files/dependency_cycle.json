@@ -1,0 +1,42 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:c49146f5-ba0e-424c-8dad-3b1eb7ee5450",
+  "version": 1,
+  "metadata": {
+    "tools": [
+      {
+        "name": "trivy",
+        "version": "0.58.0"
+      }
+    ]
+  },
+  "components": [
+    {
+      "bom-ref": "pkg:pypi/a@1.0.0",
+      "type": "library",
+      "name": "a",
+      "version": "1.0.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/b@1.0.0",
+      "type": "library",
+      "name": "b",
+      "version": "1.0.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "pkg:pypi/a@1.0.0",
+      "dependsOn": [
+        "pkg:pypi/b@1.0.0"
+      ]
+    },
+    {
+      "ref": "pkg:pypi/b@1.0.0",
+      "dependsOn": [
+        "pkg:pypi/a@1.0.0"
+      ]
+    }
+  ]
+}

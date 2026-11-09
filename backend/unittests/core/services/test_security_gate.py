@@ -1,14 +1,20 @@
 from unittest.mock import patch
 
+from django.utils import timezone
+
 from application.commons.models import Settings
-from application.core.models import Product
+from application.core.models import Observation, Product
 from application.core.services.security_gate import (
     SEVERITIES,
     check_security_gate,
     check_security_gate_observation,
+    check_security_gates,
     evaluate_security_gate,
     get_security_gate_thresholds,
 )
+from application.core.types import Severity, Status
+from application.import_observations.models import Parser
+from application.import_observations.types import Parser_Source, Parser_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -783,3 +789,35 @@ class TestEvaluateSecurityGate(BaseTestCase):
     def test_evaluate_without_counts(self):
         with self.assertRaises(ValueError):
             evaluate_security_gate(self.branch_2, self.thresholds)
+
+
+class TestCheckSecurityGates(BaseTestCase):
+    @patch("application.core.services.security_gate.send_product_security_gate_notification")
+    def test_check_security_gates(self, notification_mock):
+        settings = Settings.load()
+        settings.security_gate_active = True
+        settings.security_gate_threshold_critical = 0
+        settings.save()
+        parser = Parser.objects.create(name="parser", type=Parser_Type.TYPE_MANUAL, source=Parser_Source.SOURCE_MANUAL)
+        product_failed = Product.objects.create(name="failed")
+        Observation.objects.create(
+            title="critical",
+            product=product_failed,
+            parser=parser,
+            parser_severity=Severity.SEVERITY_CRITICAL,
+            parser_status=Status.STATUS_OPEN,
+            import_last_seen=timezone.now(),
+        )
+        product_passed = Product.objects.create(name="passed")
+        product_without_gate = Product.objects.create(name="without gate", security_gate_active=False)
+
+        # Settings, products, the observation counts of all products and the saves of the 2 changed products
+        with self.assertNumQueries(5):
+            check_security_gates(
+                Product.objects.filter(pk__in=[product_failed.pk, product_passed.pk, product_without_gate.pk])
+            )
+
+        self.assertFalse(Product.objects.get(pk=product_failed.pk).security_gate_passed)
+        self.assertTrue(Product.objects.get(pk=product_passed.pk).security_gate_passed)
+        self.assertIsNone(Product.objects.get(pk=product_without_gate.pk).security_gate_passed)
+        self.assertEqual(2, notification_mock.call_count)

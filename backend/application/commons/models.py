@@ -236,6 +236,19 @@ class Settings(Model, DirtyFieldsMixin):
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Time to live for VulnerableCode cache in hours",
     )
+    feature_scancodeio_integration = BooleanField(default=False, help_text="Enable ScanCode.io integration")
+    scancodeio_base_url = CharField(
+        max_length=255,
+        blank=True,
+        help_text="Base URL of the ScanCode.io instance",
+    )
+    scancodeio_api_key = EncryptedCharField(max_length=255, blank=True)  # nosemgrep
+    # We treat EncryptedCharField as a regular CharField
+    scancodeio_webhook_base_url = CharField(
+        max_length=255,
+        blank=True,
+        help_text="Base URL of SecObserve as reached by ScanCode.io, used for webhooks",
+    )
     feature_exploit_information = BooleanField(default=True, help_text="Enable CVSS enrichment")
     exploit_information_max_age_years = IntegerField(
         default=10,
@@ -268,6 +281,8 @@ class Settings(Model, DirtyFieldsMixin):
 
     feature_cross_scanner_deduplication = BooleanField(default=False)
     feature_show_product_header_chips = BooleanField(default=False)
+    # Only set by the management command full_text_search, which creates and drops the indexes as well
+    feature_full_text_search = BooleanField(default=False)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         """

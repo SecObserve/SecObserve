@@ -22,7 +22,9 @@ from application.access_control.queries.authorization_group_member import (
     get_authorization_group_member,
 )
 from application.access_control.services.current_user import get_current_user
+from application.access_control.types import ObservationColumn
 from application.authorization.services.roles_permissions import Permissions
+from application.commons.services.functions import get_comma_separated_as_list
 from application.core.models import Product_Authorization_Group_Member, Product_Member
 from application.notifications.models import Product_Notification
 
@@ -55,6 +57,7 @@ class UserListSerializer(ModelSerializer):
             "setting_package_info_preference",
             "setting_metrics_timespan",
             "setting_rows_per_page",
+            "setting_hidden_observation_columns",
             "permissions",
             "oidc_groups_hash",
             "is_oidc_user",
@@ -78,6 +81,7 @@ class UserListSerializer(ModelSerializer):
             data.pop("setting_package_info_preference")
             data.pop("setting_metrics_timespan")
             data.pop("setting_rows_per_page")
+            data.pop("setting_hidden_observation_columns")
             data.pop("permissions")
             data.pop("oidc_groups_hash")
             data.pop("is_oidc_user")
@@ -138,6 +142,7 @@ class UserSerializer(UserListSerializer):
             "setting_package_info_preference",
             "setting_metrics_timespan",
             "setting_rows_per_page",
+            "setting_hidden_observation_columns",
             "permissions",
             "oidc_groups_hash",
             "is_oidc_user",
@@ -302,6 +307,7 @@ class UserSettingsSerializer(ModelSerializer):
             "setting_package_info_preference",
             "setting_metrics_timespan",
             "setting_rows_per_page",
+            "setting_hidden_observation_columns",
             "email",
             "notification_email_active",
             "notification_ms_teams_active",
@@ -309,6 +315,14 @@ class UserSettingsSerializer(ModelSerializer):
             "notification_ms_teams_webhook",
             "notification_slack_webhook",
         ]
+
+    def validate_setting_hidden_observation_columns(self, value: str) -> str:
+        columns = get_comma_separated_as_list(value)
+        for column in columns:
+            if column not in ObservationColumn.OPTIONAL_COLUMNS:
+                raise ValidationError(f"Invalid column {column}")
+
+        return ",".join(columns)
 
     def validate(self, attrs: dict) -> dict:
         self.instance: User

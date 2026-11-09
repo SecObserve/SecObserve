@@ -1,14 +1,47 @@
-from unittest.mock import MagicMock, call, patch
+from datetime import timedelta
+from unittest.mock import ANY, MagicMock, patch
+
+import requests
+from django.db import OperationalError
+from django.utils import timezone
+from huey import SKIPPED
+from huey.contrib.djhuey import HUEY
 
 from application.background_tasks.models import Periodic_Task
 from application.background_tasks.periodic_tasks.import_observations_tasks import (
+    OSV_SCAN_RUN_KEY,
+    OSV_SCAN_TASK_NAME,
+    OSVScanRun,
     task_api_import,
+    task_osv_scan_product,
+    task_osv_scan_summary,
 )
 from application.background_tasks.types import Status
 from application.commons.models import Settings
+from application.core.models import Product
 from unittests.base_test_case import BaseTestCase
 
 TASK_NAME = "Import observations from API configurations, OSV and VulnerableCode"
+
+
+def _create_product(name: str, osv: bool = True, vulnerablecode: bool = True) -> Product:
+    return Product.objects.create(
+        name=name,
+        osv_enabled=osv,
+        automatic_osv_scanning_enabled=osv,
+        vulnerablecode_enabled=vulnerablecode,
+        automatic_vulnerablecode_scanning_enabled=vulnerablecode,
+    )
+
+
+def _get_osv_scan_run() -> Periodic_Task:
+    return Periodic_Task.objects.filter(task=OSV_SCAN_TASK_NAME).latest("start_time")
+
+
+def _http_error(status_code: int) -> requests.HTTPError:
+    response = requests.Response()
+    response.status_code = status_code
+    return requests.HTTPError(f"{status_code} Error", response=response)
 
 
 class TestImportObservationsTasks(BaseTestCase):
@@ -27,14 +60,12 @@ class TestImportObservationsTasks(BaseTestCase):
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
     def test_task_api_import_all_enabled(
         self,
         mock_settings_load,
         mock_api_config_filter,
-        mock_product_filter,
         mock_api_import_observations,
         mock_scan_product_osv,
         mock_scan_product_vc,
@@ -57,8 +88,8 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_config.automatic_import_kubernetes_cluster = "cluster1"
         mock_api_config_filter.return_value = [mock_api_config]
 
-        # Mock products
-        mock_product_filter.return_value = [self.product_1]
+        product = _create_product("product_osv_vulnerablecode")
+        _create_product("product_none", osv=False, vulnerablecode=False)
 
         # Mock import results
         mock_api_import_observations.return_value = (1, 2, 3)  # new, updated, resolved
@@ -85,35 +116,28 @@ class TestImportObservationsTasks(BaseTestCase):
         self.assertEqual(api_import_params.endpoint_url, mock_api_config.automatic_import_endpoint_url)
         self.assertEqual(api_import_params.kubernetes_cluster, mock_api_config.automatic_import_kubernetes_cluster)
 
-        # Check OSV and VulnerableCode scanning was called
-        mock_product_filter.assert_has_calls(
-            [
-                call(osv_enabled=True, automatic_osv_scanning_enabled=True),
-                call(vulnerablecode_enabled=True, automatic_vulnerablecode_scanning_enabled=True),
-            ]
-        )
-        mock_scan_product_osv.assert_called_once_with(self.product_1)
-        mock_scan_product_vc.assert_called_once_with(self.product_1)
+        # Check VulnerableCode scanning was called, and OSV scanning by the enqueued task
+        mock_scan_product_vc.assert_called_once_with(product)
+        mock_scan_product_osv.assert_called_once_with(product)
+        self.assertEqual("Scanned 1 of 1 products.", _get_osv_scan_run().message)
 
         # Check the composed message
         self.assertEqual(
             "Imported observations for 1 products from API configurations."
-            "\nImported observations for 1 products from OSV scanning."
-            "\nImported observations for 1 products from VulnerableCode scanning.",
+            "\nImported observations for 1 products from VulnerableCode scanning."
+            "\nEnqueued OSV scanning for 1 products.",
             self._get_task_message(),
         )
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
     def test_task_api_import_api_disabled(
         self,
         mock_settings_load,
         mock_api_config_filter,
-        mock_product_filter,
         mock_api_import_observations,
         mock_scan_product_osv,
         mock_scan_product_vc,
@@ -127,9 +151,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.vulnerablecode_base_url = "http://vulnerablecode.example.com"
         mock_settings_load.return_value = settings
 
-        # Mock products
-        mock_product = MagicMock()
-        mock_product_filter.return_value = [mock_product]
+        product = _create_product("product_osv_vulnerablecode")
 
         # Mock import results
         mock_scan_product_osv.return_value = (4, 5, 6)  # new, updated, resolved
@@ -144,14 +166,8 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_import_observations.assert_not_called()
 
         # Check OSV and VulnerableCode scanning was called
-        mock_product_filter.assert_has_calls(
-            [
-                call(osv_enabled=True, automatic_osv_scanning_enabled=True),
-                call(vulnerablecode_enabled=True, automatic_vulnerablecode_scanning_enabled=True),
-            ]
-        )
-        mock_scan_product_osv.assert_called_once_with(mock_product)
-        mock_scan_product_vc.assert_called_once_with(mock_product)
+        mock_scan_product_osv.assert_called_once_with(product)
+        mock_scan_product_vc.assert_called_once_with(product)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
@@ -207,14 +223,12 @@ class TestImportObservationsTasks(BaseTestCase):
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
     def test_task_api_import_vulnerablecode_disabled(
         self,
         mock_settings_load,
         mock_api_config_filter,
-        mock_product_filter,
         mock_api_import_observations,
         mock_scan_product_osv,
         mock_scan_product_vc,
@@ -232,9 +246,7 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_config = MagicMock()
         mock_api_config_filter.return_value = [mock_api_config]
 
-        # Mock products
-        mock_product = MagicMock()
-        mock_product_filter.return_value = [mock_product]
+        product = _create_product("product_osv_vulnerablecode")
 
         # Mock import results
         mock_api_import_observations.return_value = (1, 2, 3)  # new, updated, resolved
@@ -249,21 +261,18 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_import_observations.assert_called_once()
 
         # Check VulnerableCode scanning was not called, but OSV scanning was
-        mock_product_filter.assert_called_once_with(osv_enabled=True, automatic_osv_scanning_enabled=True)
         mock_scan_product_vc.assert_not_called()
-        mock_scan_product_osv.assert_called_once_with(mock_product)
+        mock_scan_product_osv.assert_called_once_with(product)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
     def test_task_api_import_vulnerablecode_no_base_url(
         self,
         mock_settings_load,
         mock_api_config_filter,
-        mock_product_filter,
         mock_api_import_observations,
         mock_scan_product_osv,
         mock_scan_product_vc,
@@ -281,9 +290,7 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_config = MagicMock()
         mock_api_config_filter.return_value = [mock_api_config]
 
-        # Mock products
-        mock_product = MagicMock()
-        mock_product_filter.return_value = [mock_product]
+        product = _create_product("product_osv_vulnerablecode")
 
         # Mock import results
         mock_api_import_observations.return_value = (1, 2, 3)  # new, updated, resolved
@@ -298,9 +305,8 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_import_observations.assert_called_once()
 
         # Check VulnerableCode scanning was not called, but OSV scanning was
-        mock_product_filter.assert_called_once_with(osv_enabled=True, automatic_osv_scanning_enabled=True)
         mock_scan_product_vc.assert_not_called()
-        mock_scan_product_osv.assert_called_once_with(mock_product)
+        mock_scan_product_osv.assert_called_once_with(product)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
@@ -339,16 +345,14 @@ class TestImportObservationsTasks(BaseTestCase):
         # Check the task is marked as failed, although the remaining imports have been executed
         self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
 
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
     def test_task_api_import_osv_exception_handling(
         self,
         mock_settings_load,
-        mock_product_filter,
         mock_scan_product,
-        mock_handle_task_exception,
+        mock_send_task_exception_notification,
     ):
         # Setup
         # Mock settings
@@ -358,9 +362,7 @@ class TestImportObservationsTasks(BaseTestCase):
         settings.feature_automatic_vulnerablecode_scanning = False
         mock_settings_load.return_value = settings
 
-        # Mock products
-        mock_product = MagicMock()
-        mock_product_filter.return_value = [mock_product]
+        _create_product("product_osv")
 
         # Mock scan_product to raise exception
         test_exception = Exception("Test OSV scanning exception")
@@ -370,11 +372,20 @@ class TestImportObservationsTasks(BaseTestCase):
         task_api_import()
 
         # Assert
-        # Check exception was handled
-        mock_handle_task_exception.assert_called_once_with(test_exception, product=mock_product)
+        # Check the exception was notified by the summary of the run
+        mock_send_task_exception_notification.assert_called_once_with(
+            function="task_osv_scan_product", arguments=None, user=None, exception=ANY
+        )
+        self.assertEqual(
+            "OSV scanning failed for 1 of 1 products:\nproduct_osv: Test OSV scanning exception",
+            str(mock_send_task_exception_notification.call_args.kwargs["exception"]),
+        )
+        osv_scan_run = _get_osv_scan_run()
+        self.assertEqual(Status.STATUS_FAILURE, osv_scan_run.status)
+        self.assertEqual("Scanned 0 of 1 products, 1 failed.", osv_scan_run.message)
 
-        # Check the task is marked as failed, although the remaining imports have been executed
-        self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
+        # A failed OSV scan fails the summary of its run, not the task that has enqueued it
+        self.assertEqual(Status.STATUS_SUCCESS, self._get_task().status)
 
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
@@ -412,27 +423,27 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_handle_task_exception.assert_called_once_with(test_exception, product=mock_product)
 
         # Check the failed imports are counted with the VulnerableCode counter
-        self.assertTrue(self._get_task_message().endswith("\nVulnerableCode scanning failed for 1 products."))
+        self.assertIn("\nVulnerableCode scanning failed for 1 products.", self._get_task_message())
 
         # Check the task is marked as failed, although the remaining imports have been executed
         self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
 
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.handle_task_exception")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.VulnerableCodeScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.api_import_observations")
-    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Product.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Api_Configuration.objects.filter")
     @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
     def test_task_api_import_all_failed(
         self,
         mock_settings_load,
         mock_api_config_filter,
-        mock_product_filter,
         mock_api_import_observations,
         mock_scan_product_osv,
         mock_scan_product_vc,
         mock_handle_task_exception,
+        mock_send_task_exception_notification,
     ):
         # Setup
         # Mock settings
@@ -447,9 +458,7 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_config = MagicMock()
         mock_api_config_filter.return_value = [mock_api_config]
 
-        # Mock products
-        mock_product = MagicMock()
-        mock_product_filter.return_value = [mock_product]
+        _create_product("product_osv_vulnerablecode")
 
         # Mock every stage to raise an exception
         mock_api_import_observations.side_effect = Exception("Test API import exception")
@@ -460,14 +469,15 @@ class TestImportObservationsTasks(BaseTestCase):
         task_api_import()
 
         # Assert
-        # Check every exception was handled
-        self.assertEqual(3, mock_handle_task_exception.call_count)
+        # Check every exception was handled, the one of OSV scanning by the enqueued task
+        self.assertEqual(2, mock_handle_task_exception.call_count)
+        mock_send_task_exception_notification.assert_called_once()
 
-        # All three failure messages together exceed the length of Periodic_Task.message,
-        # so the message is truncated by so_periodic_task
+        # A failed OSV scan fails its own task, not the one that has enqueued it
         message = self._get_task_message()
-        self.assertEqual(255, len(message))
-        self.assertTrue(message.endswith(" ..."))
+        self.assertIn("\nAPI import failed for 1 configurations.", message)
+        self.assertIn("\nVulnerableCode scanning failed for 1 products.", message)
+        self.assertNotIn("OSV scanning failed", message)
 
         self.assertEqual(Status.STATUS_FAILURE, self._get_task().status)
 
@@ -504,3 +514,193 @@ class TestImportObservationsTasks(BaseTestCase):
         mock_api_import_observations.assert_called_once()
         api_import_params = mock_api_import_observations.call_args[0][0]
         self.assertEqual("", api_import_params.service_name)
+
+
+class TestTaskOSVScanProduct(BaseTestCase):
+    def _task(self, retries: int) -> MagicMock:
+        task = MagicMock()
+        task.retries = retries
+        return task
+
+    def test_priority_below_default(self):
+        # Huey dequeues tasks with a higher priority first, all other tasks have the default priority 0
+        self.assertLess(task_osv_scan_product.s(1, "run").priority, 0)
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner")
+    def test_scan(self, mock_osv_scanner):
+        product = _create_product("product_osv")
+        mock_osv_scanner.return_value.scan_product.return_value = (1, 2, 3)  # new, updated, resolved
+
+        with self.assertLogs("secobserve.import_observations", level="INFO") as logs:
+            task_osv_scan_product.call_local(product.pk, "run")
+
+        mock_osv_scanner.assert_called_once_with("run")
+        mock_osv_scanner.return_value.scan_product.assert_called_once_with(product)
+        self.assertIn("OSV scanning - product_osv: 1 new, 2 updated, 3 resolved", logs.output[0])
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    def test_product_deleted(self, mock_scan_product):
+        product = _create_product("product_osv")
+        product_id = product.pk
+        product.delete()
+
+        task_osv_scan_product.call_local(product_id, "run")
+
+        mock_scan_product.assert_not_called()
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    def test_product_disabled(self, mock_scan_product):
+        product_manual = Product.objects.create(
+            name="product_osv_manual", osv_enabled=True, automatic_osv_scanning_enabled=False
+        )
+        product_no_osv = Product.objects.create(
+            name="product_no_osv", osv_enabled=False, automatic_osv_scanning_enabled=True
+        )
+
+        task_osv_scan_product.call_local(product_manual.pk, "run")
+        task_osv_scan_product.call_local(product_no_osv.pk, "run")
+
+        mock_scan_product.assert_not_called()
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
+    def test_feature_disabled(self, mock_settings_load, mock_scan_product):
+        settings = Settings()
+        settings.feature_automatic_osv_scanning = False
+        mock_settings_load.return_value = settings
+        product = _create_product("product_osv")
+
+        task_osv_scan_product.call_local(product.pk, "run")
+
+        mock_scan_product.assert_not_called()
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    def test_transient_error_is_retried(self, mock_scan_product):
+        product = _create_product("product_osv")
+        for test_exception in (_http_error(503), _http_error(429), requests.ConnectionError(), OperationalError()):
+            mock_scan_product.side_effect = test_exception
+            task = self._task(retries=2)
+
+            with self.assertRaises(Exception) as context:
+                task_osv_scan_product.call_local(product.pk, "run", task=task)
+
+            self.assertIs(test_exception, context.exception)
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    def test_other_error_is_not_retried(self, mock_scan_product):
+        product = _create_product("product_osv")
+        for test_exception in (_http_error(404), Exception("Test OSV scanning exception")):
+            mock_scan_product.side_effect = test_exception
+
+            result = task_osv_scan_product.call_local(product.pk, "run", task=self._task(retries=2))
+
+            self.assertEqual(f"product_osv: {test_exception}", result)
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    def test_last_attempt(self, mock_scan_product):
+        product = _create_product("product_osv")
+        mock_scan_product.side_effect = _http_error(503)
+
+        result = task_osv_scan_product.call_local(product.pk, "run", task=self._task(retries=0))
+
+        self.assertEqual("product_osv: 503 Error", result)
+
+
+class TestTaskOSVScanSummary(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        HUEY.delete(OSV_SCAN_RUN_KEY)
+        self.start_time = timezone.now() - timedelta(hours=1)
+
+    def tearDown(self):
+        # A run left in the store would stop the OSV scans of the following tests
+        HUEY.delete(OSV_SCAN_RUN_KEY)
+        super().tearDown()
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.release_run_cache")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
+    def test_success(self, mock_send_task_exception_notification, mock_release_run_cache):
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("run", self.start_time, 2))
+
+        task_osv_scan_summary.call_local("run", self.start_time, [None, None])
+
+        osv_scan_run = _get_osv_scan_run()
+        self.assertEqual(Status.STATUS_SUCCESS, osv_scan_run.status)
+        self.assertEqual("Scanned 2 of 2 products.", osv_scan_run.message)
+        self.assertEqual(self.start_time, osv_scan_run.start_time)
+        self.assertGreaterEqual(osv_scan_run.duration, 3600000)
+        mock_send_task_exception_notification.assert_not_called()
+        self.assertIsNone(HUEY.get(OSV_SCAN_RUN_KEY, peek=True))
+        mock_release_run_cache.assert_called_once_with("run")
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
+    def test_failures(self, mock_send_task_exception_notification):
+        failures = [f"product_{i}: 503 Error" for i in range(22)]
+
+        task_osv_scan_summary.call_local("run", self.start_time, [None, SKIPPED] + failures)
+
+        osv_scan_run = _get_osv_scan_run()
+        self.assertEqual(Status.STATUS_FAILURE, osv_scan_run.status)
+        self.assertEqual("Scanned 1 of 24 products, 22 failed, 1 not scanned.", osv_scan_run.message)
+        mock_send_task_exception_notification.assert_called_once()
+        message = str(mock_send_task_exception_notification.call_args.kwargs["exception"])
+        self.assertTrue(message.startswith("OSV scanning failed for 22 of 24 products:\nproduct_0: 503 Error\n"))
+        self.assertTrue(message.endswith("\nproduct_19: 503 Error\n... and 2 more"))
+
+    def test_keeps_the_key_of_another_run(self):
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("other_run", self.start_time, 2))
+
+        task_osv_scan_summary.call_local("run", self.start_time, [None])
+
+        self.assertEqual("other_run", HUEY.get(OSV_SCAN_RUN_KEY, peek=True).run_id)
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.send_task_exception_notification")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
+    def test_unfinished_run(self, mock_settings_load, mock_scan_product, mock_send_task_exception_notification):
+        settings = Settings()
+        settings.feature_automatic_api_import = False
+        settings.feature_automatic_osv_scanning = True
+        settings.feature_automatic_vulnerablecode_scanning = False
+        mock_settings_load.return_value = settings
+        mock_scan_product.return_value = (0, 0, 0)
+        _create_product("product_osv")
+        start_time = timezone.now() - timedelta(hours=21)
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("lost_run", start_time, 5))
+
+        task_api_import()
+
+        unfinished_run = Periodic_Task.objects.get(task=OSV_SCAN_TASK_NAME, start_time=start_time)
+        self.assertEqual(Status.STATUS_FAILURE, unfinished_run.status)
+        self.assertEqual(
+            "Did not finish, some scans of the 5 products were lost when the background tasks stopped.",
+            unfinished_run.message,
+        )
+        mock_send_task_exception_notification.assert_called_once()
+        self.assertEqual(
+            "OSV scanning: Did not finish, some scans of the 5 products were lost when the background tasks stopped.",
+            str(mock_send_task_exception_notification.call_args.kwargs["exception"]),
+        )
+        self.assertEqual("Scanned 1 of 1 products.", _get_osv_scan_run().message)
+        self.assertIsNone(HUEY.get(OSV_SCAN_RUN_KEY, peek=True))
+
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.OSVScanner.scan_product")
+    @patch("application.background_tasks.periodic_tasks.import_observations_tasks.Settings.load")
+    def test_younger_run_is_not_enqueued_again(self, mock_settings_load, mock_scan_product):
+        settings = Settings()
+        settings.feature_automatic_api_import = False
+        settings.feature_automatic_osv_scanning = True
+        settings.feature_automatic_vulnerablecode_scanning = False
+        mock_settings_load.return_value = settings
+        _create_product("product_osv")
+        HUEY.put(OSV_SCAN_RUN_KEY, OSVScanRun("running_run", self.start_time, 5))
+
+        task_api_import()
+
+        mock_scan_product.assert_not_called()
+        self.assertFalse(Periodic_Task.objects.filter(task=OSV_SCAN_TASK_NAME).exists())
+        self.assertEqual("running_run", HUEY.get(OSV_SCAN_RUN_KEY, peek=True).run_id)
+        self.assertIn(
+            "OSV scanning of the previous run is still in progress.",
+            Periodic_Task.objects.filter(task=TASK_NAME).latest("start_time").message,
+        )

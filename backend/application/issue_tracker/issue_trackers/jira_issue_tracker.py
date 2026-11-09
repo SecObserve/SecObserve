@@ -22,6 +22,9 @@ class JiraIssueTracker(BaseIssueTracker):
                     product.issue_tracker_api_key,
                 ),
             )
+            # The JIRA client has no option to disable redirects, the request for the server info
+            # in the constructor still follows them.
+            self.jira._session.max_redirects = 0  # pylint: disable=protected-access
 
     def create_issue(self, observation: Observation) -> str:
         labels = observation.product.issue_tracker_labels.split(",")

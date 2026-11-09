@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Confirm, useDelete, useNotify, useRefresh } from "react-admin";
 
 import RemoveButton from "../../commons/custom_fields/RemoveButton";
+import { feature_scancodeio_integration } from "../../commons/functions";
 
 type BranchDeleteProps = {
     branch: any;
@@ -44,7 +45,10 @@ const BranchDelete = (props: BranchDeleteProps) => {
                 content={
                     "Are you sure you want to delete the branch / version " +
                     props.branch.name +
-                    " and all of its observations?"
+                    " and all of its observations?" +
+                    (feature_scancodeio_integration()
+                        ? " If it has a ScanCode.io project, that project is permanently deleted as well, including its inputs and results."
+                        : "")
                 }
                 onConfirm={handleConfirm}
                 onClose={handleDialogClose}

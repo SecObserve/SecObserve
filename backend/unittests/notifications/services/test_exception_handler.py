@@ -9,6 +9,7 @@ from rest_framework.exceptions import (
     PermissionDenied,
     ValidationError,
 )
+from rest_framework.serializers import CharField, ListField, Serializer, URLField
 from rest_framework.status import (
     HTTP_400_BAD_REQUEST,
     HTTP_401_UNAUTHORIZED,
@@ -22,6 +23,16 @@ from application.access_control.models import User
 from application.notifications.api.exception_handler import custom_exception_handler
 from application.vex.models import VEX_Document
 from unittests.base_test_case import BaseTestCase
+
+
+class NestedValidationTestSerializer(Serializer):
+    field_name = CharField()
+
+
+class ValidationTestSerializer(Serializer):
+    name = CharField()
+    input_urls = ListField(child=URLField())
+    nested = NestedValidationTestSerializer()
 
 
 class TestExceptionHandler(BaseTestCase):
@@ -121,6 +132,30 @@ class TestExceptionHandler(BaseTestCase):
         self.assertEqual(data, response.data)
         mock_format.assert_not_called()
         mock_logging.assert_not_called()
+
+    def test_dict_error(self):
+        exception = ValidationError({"name": "Confirmation name must match the project name."})
+        response = custom_exception_handler(exception, None)
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+        data = {"message": "Name: Confirmation name must match the project name."}
+        self.assertEqual(data, response.data)
+
+    def test_serializer_errors(self):
+        serializer = ValidationTestSerializer(
+            data={"input_urls": ["https://example.com/a.zip", "no_url", "also_no_url"], "nested": {}}
+        )
+        serializer.is_valid()
+        response = custom_exception_handler(ValidationError(serializer.errors), None)
+
+        self.assertEqual(HTTP_400_BAD_REQUEST, response.status_code)
+        data = {
+            "message": "Name: This field is required.\n"
+            + "Input urls (entry 2): Enter a valid URL.\n"
+            + "Input urls (entry 3): Enter a valid URL.\n"
+            + "Nested / Field name: This field is required."
+        }
+        self.assertEqual(data, response.data)
 
     @patch("application.notifications.api.exception_handler.set_rollback")
     @patch("application.notifications.api.exception_handler.logger.error")

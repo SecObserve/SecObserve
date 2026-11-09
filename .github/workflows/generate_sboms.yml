@@ -14,21 +14,22 @@ jobs:
   generate_sboms:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24
+          node-version: 26
       -
         name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
+          persist-credentials: false
           ref: 'v${{ github.event.inputs.release }}'
       - 
         name: Install programs
         env:
-          CDXGEN_VERSION: 13.1.0
-          TRIVY_VERSION: 0.74.0
+          CDXGEN_VERSION: 13.6.0
+          TRIVY_VERSION: 0.76.1
           SBOM_UTILITY_VERSION: 0.19.2
           CYCLONE_DX_CLI_VERSION: 0.33.1
         run: |
@@ -107,11 +108,10 @@ jobs:
             | sbom-utility patch --patch-file ./configuration/patch_complete.json --quiet --input-file - --output-file sbom_"$VERSION".json
           sbom-utility validate --input-file sbom_"$VERSION".json
       - 
-        name: Commit SBOMs
-        uses: stefanzweifel/git-auto-commit-action@4a55954c782fc1ea30b9056cd3e7a2b40ca8887d # v7
+        name: Upload SBOMs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          skip_fetch: true
-          create_branch: true
-          commit_message: "chore: generate SBOMs for release ${{ github.event.inputs.release }}"
-          branch: "chore/sboms_release_${{ github.event.inputs.release }}"
-          file_pattern: "sbom/sbom*.json"
+          name: sboms_release_${{ github.event.inputs.release }}
+          path: sbom/sbom*.json
+          if-no-files-found: error
+          retention-days: 3

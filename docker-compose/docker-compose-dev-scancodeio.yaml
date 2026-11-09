@@ -3,7 +3,7 @@
 
 services:
   redis:
-    image: docker.io/library/redis:8.10.2-alpine
+    image: redis:8.10.3-alpine
     # Enable redis data persistence using the "Append Only File" with the
     # default policy of fsync every second. See https://redis.io/topics/persistence
     command: redis-server --appendonly yes --loglevel warning
@@ -64,7 +64,7 @@ services:
         condition: service_started
 
   nginx:
-    image: docker.io/library/nginx:1.31.8-alpine
+    image: nginx:1.31.8-alpine
     ports:
       - 4100:80
     volumes:
@@ -77,7 +77,7 @@ services:
     restart: always
 
   clamav:
-    image: docker.io/clamav/clamav:1.5.4_base
+    image: clamav/clamav:1.5.4
     volumes:
       - dev_scancodeio_clamav_data:/var/lib/clamav
       - dev_scancodeio_workspace:/var/scancodeio/workspace/
@@ -92,6 +92,9 @@ services:
     restart: "no"
 
   backend:
+    environment:
+      # ScanCode.io calls the webhook of SecObserve with the service name as host
+      ALLOWED_HOSTS: ${SO_ALLOWED_HOSTS:-localhost,backend}
     depends_on:
       - postgres
       - scancodeio
