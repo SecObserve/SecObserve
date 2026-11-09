@@ -158,17 +158,20 @@ def send_slack_notification_test(webhook: str) -> None:
         response.raise_for_status()
 
 
-def _get_webhook_addresses(webhook: str) -> list[str]:
+def _get_webhook_addresses(
+    webhook: str, allowed_networks: Sequence[ipaddress.IPv4Network | ipaddress.IPv6Network] = ()
+) -> list[str]:
     """
     Returns the addresses a webhook may be sent to, or an empty list if the URL must not be used. The URL is
-    parsed like requests parses it and all addresses of the host have to be public. The request is then sent
-    to these addresses with _post_webhook().
+    parsed like requests parses it and all addresses of the host have to be public or in allowed_networks.
+    http is only accepted if all addresses are in allowed_networks. The request is then sent to these
+    addresses with _post_webhook().
     """
     try:
         url = parse_url(webhook)
     except LocationParseError:
         url = None
-    if not url or url.scheme != "https" or not url.host or url.auth:
+    if not url or url.scheme not in ("http", "https") or not url.host or url.auth:
         logger.error(
             format_log_message(
                 message=f"Webhook URL must use https, a valid host and no user info: {webhook}",
@@ -177,8 +180,10 @@ def _get_webhook_addresses(webhook: str) -> list[str]:
         return []
 
     try:
-        address_infos = socket.getaddrinfo(url.host.strip("[]"), url.port or 443, proto=socket.IPPROTO_TCP)
-    except socket.gaierror as e:
+        address_infos = socket.getaddrinfo(
+            url.host.strip("[]"), url.port or (443 if url.scheme == "https" else 80), proto=socket.IPPROTO_TCP
+        )
+    except (socket.gaierror, UnicodeError) as e:
         logger.error(
             format_log_message(
                 message=f"Could not resolve webhook host: {webhook}",
@@ -190,76 +195,25 @@ def _get_webhook_addresses(webhook: str) -> list[str]:
     addresses = []
     for address_info in address_infos:
         ip_addr = ipaddress.ip_address(address_info[4][0])
-        # is_global lets multicast and reserved ranges like the NAT64 prefix 64:ff9b::/96 pass
-        if not ip_addr.is_global or ip_addr.is_reserved or ip_addr.is_multicast:
-            logger.error(
-                format_log_message(
-                    message=f"Webhook host resolves to a non-public address, refusing request: {webhook}",
+        if not any(ip_addr in network for network in allowed_networks if network.version == ip_addr.version):
+            if url.scheme != "https":
+                logger.error(
+                    format_log_message(
+                        message=f"Webhook URL must use https unless the host is in an allowed network: {webhook}",
+                    )
                 )
-            )
-            return []
+                return []
+            # is_global lets multicast and reserved ranges like the NAT64 prefix 64:ff9b::/96 pass
+            if not ip_addr.is_global or ip_addr.is_reserved or ip_addr.is_multicast:
+                logger.error(
+                    format_log_message(
+                        message=f"Webhook host resolves to a non-public address, refusing request: {webhook}",
+                    )
+                )
+                return []
         addresses.append(str(ip_addr))
 
     return addresses
-
-
-def _validate_webhook_url(
-    webhook: str, allowed_networks: Sequence[ipaddress.IPv4Network | ipaddress.IPv6Network] = ()
-) -> bool:
-    try:
-        split_url = urlsplit(webhook)
-        port = split_url.port
-    except ValueError as e:
-        logger.error(format_log_message(message=f"Webhook URL is malformed: {webhook}", exception=e))
-        return False
-    if split_url.scheme not in ("http", "https") or not split_url.hostname:
-        logger.error(
-            format_log_message(
-                message=f"Webhook URL must use https and a valid host: {webhook}",
-            )
-        )
-        return False
-
-    try:
-        address_infos = socket.getaddrinfo(
-            split_url.hostname, port or (443 if split_url.scheme == "https" else 80), proto=socket.IPPROTO_TCP
-        )
-    except (socket.gaierror, UnicodeError) as e:
-        logger.error(
-            format_log_message(
-                message=f"Could not resolve webhook host: {webhook}",
-                exception=e,
-            )
-        )
-        return False
-
-    for address_info in address_infos:
-        ip_addr = ipaddress.ip_address(address_info[4][0])
-        if any(ip_addr in network for network in allowed_networks if network.version == ip_addr.version):
-            continue
-        if split_url.scheme != "https":
-            logger.error(
-                format_log_message(
-                    message=f"Webhook URL must use https unless the host is in an allowed network: {webhook}",
-                )
-            )
-            return False
-        if (
-            ip_addr.is_private  # pylint: disable=too-many-boolean-expressions
-            or ip_addr.is_loopback
-            or ip_addr.is_link_local
-            or ip_addr.is_reserved
-            or ip_addr.is_multicast
-            or ip_addr.is_unspecified
-        ):
-            logger.error(
-                format_log_message(
-                    message=f"Webhook host resolves to a non-public address, refusing request: {webhook}",
-                )
-            )
-            return False
-
-    return True
 
 
 class _PinnedHostAdapter(HTTPAdapter):
@@ -281,7 +235,15 @@ class _PinnedHostAdapter(HTTPAdapter):
         return host_params, pool_kwargs
 
 
-def _post_webhook(webhook: str, addresses: list[str], data: str, headers: dict[str, str]) -> requests.Response:
+def _post_webhook(
+    webhook: str,
+    addresses: list[str],
+    data: str,
+    headers: dict[str, str],
+    *,
+    timeout: float | tuple[float, float] = 60,
+    stream: bool = False,
+) -> requests.Response:
     # A second DNS lookup by requests could return another address than the one that has been checked
     url = parse_url(webhook)
     host = url.host or ""
@@ -296,7 +258,8 @@ def _post_webhook(webhook: str, addresses: list[str], data: str, headers: dict[s
                     data=data,
                     headers={**headers, "Host": host_header},
                     allow_redirects=False,
-                    timeout=60,
+                    timeout=timeout,
+                    stream=stream,
                 )
             except requests.ConnectionError as e:
                 # Only a connection that could not be opened is retried, a request must not be sent twice

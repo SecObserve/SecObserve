@@ -8,7 +8,8 @@ from requests import ConnectionError as RequestsConnectionError
 from requests import Response
 
 from application.notifications.services.send_notifications_base import (
-    _validate_webhook_url,
+    _get_webhook_addresses,
+    _post_webhook,
 )
 from application.notifications.services.webhook_send import (
     generate_webhook_secret,
@@ -49,8 +50,8 @@ class TestSendWebhookRequest(SimpleTestCase):
 
     def setUp(self):
         self.mock_time = self._patch("time.time", 1700000000)
-        self.mock_validate = self._patch("_validate_webhook_url", True)
-        self.mock_post = self._patch("requests.post")
+        self.mock_addresses = self._patch("_get_webhook_addresses", ["93.184.216.34"])
+        self.mock_post = self._patch("_post_webhook")
 
     def _patch(self, name, return_value=None):
         patcher = patch(f"application.notifications.services.webhook_send.{name}", return_value=return_value)
@@ -64,10 +65,10 @@ class TestSendWebhookRequest(SimpleTestCase):
         self.mock_post.return_value = _response(204)
         result = self._send()
 
-        _, kwargs = self.mock_post.call_args
-        self.assertEqual(self.mock_post.call_args.args[0], "https://example.com/hook")
-        self.assertEqual(kwargs["data"], '{"a": 1}')
-        headers = kwargs["headers"]
+        (url, addresses, data, headers), kwargs = self.mock_post.call_args
+        self.assertEqual(url, "https://example.com/hook")
+        self.assertEqual(addresses, ["93.184.216.34"])
+        self.assertEqual(data, '{"a": 1}')
         self.assertEqual(headers["webhook-id"], "msg_1")
         self.assertEqual(headers["webhook-timestamp"], "1700000000")
         self.assertEqual(
@@ -75,7 +76,6 @@ class TestSendWebhookRequest(SimpleTestCase):
         )
         self.assertEqual(headers["Content-Type"], "application/json")
         self.assertEqual(headers["User-Agent"], "SecObserve-Webhooks")
-        self.assertFalse(kwargs["allow_redirects"])
         self.assertEqual(kwargs["timeout"], (7, 7))
         self.assertTrue(kwargs["stream"])
         self.assertTrue(result.succeeded)
@@ -153,7 +153,7 @@ class TestSendWebhookRequest(SimpleTestCase):
         self.assertIn("ConnectionError", result.error)
 
     def test_rejected_url_is_not_sent(self):
-        self.mock_validate.return_value = False
+        self.mock_addresses.return_value = []
         result = self._send()
         self.mock_post.assert_not_called()
         self.assertTrue(result.retryable)
@@ -164,7 +164,7 @@ def _addrinfo(*ips):
     return [(2, 1, 6, "", (ip, 0)) for ip in ips]
 
 
-class TestValidateWebhookUrlAllowedNetworks(SimpleTestCase):
+class TestGetWebhookAddressesAllowedNetworks(SimpleTestCase):
     allowed = [ip_network("10.0.0.0/8")]
 
     def setUp(self):
@@ -174,38 +174,50 @@ class TestValidateWebhookUrlAllowedNetworks(SimpleTestCase):
 
     def test_https_private_allowlisted(self):
         self.mock_dns.return_value = _addrinfo("10.1.2.3")
-        self.assertTrue(_validate_webhook_url("https://h.example/x", self.allowed))
+        self.assertEqual(["10.1.2.3"], _get_webhook_addresses("https://h.example/x", self.allowed))
 
     def test_https_private_without_allowlist(self):
         self.mock_dns.return_value = _addrinfo("10.1.2.3")
-        self.assertFalse(_validate_webhook_url("https://h.example/x"))
+        self.assertEqual([], _get_webhook_addresses("https://h.example/x"))
+
+    def test_https_mixed(self):
+        self.mock_dns.return_value = _addrinfo("10.1.2.3", "93.184.216.34")
+        self.assertEqual(["10.1.2.3", "93.184.216.34"], _get_webhook_addresses("https://h.example/x", self.allowed))
 
     def test_http_private_allowlisted(self):
         self.mock_dns.return_value = _addrinfo("10.1.2.3")
-        self.assertTrue(_validate_webhook_url("http://h.example/x", self.allowed))
+        self.assertEqual(["10.1.2.3"], _get_webhook_addresses("http://h.example/x", self.allowed))
+        self.mock_dns.assert_called_with("h.example", 80, proto=6)
 
     def test_http_public(self):
         self.mock_dns.return_value = _addrinfo("93.184.216.34")
-        self.assertFalse(_validate_webhook_url("http://h.example/x", self.allowed))
+        self.assertEqual([], _get_webhook_addresses("http://h.example/x", self.allowed))
 
     def test_http_mixed(self):
         self.mock_dns.return_value = _addrinfo("10.1.2.3", "93.184.216.34")
-        self.assertFalse(_validate_webhook_url("http://h.example/x", self.allowed))
+        self.assertEqual([], _get_webhook_addresses("http://h.example/x", self.allowed))
 
     def test_ftp(self):
         self.mock_dns.return_value = _addrinfo("10.1.2.3")
-        self.assertFalse(_validate_webhook_url("ftp://h.example/x", self.allowed))
+        self.assertEqual([], _get_webhook_addresses("ftp://h.example/x", self.allowed))
+
+    @patch("application.notifications.services.send_notifications_base.requests.Session.request")
+    def test_http_is_sent_to_the_checked_address(self, mock_request):
+        _post_webhook("http://h.example:8080/x", ["10.1.2.3"], "data", {})
+
+        self.assertEqual("http://10.1.2.3:8080/x", mock_request.call_args.kwargs["url"])
+        self.assertEqual({"Host": "h.example:8080"}, mock_request.call_args.kwargs["headers"])
 
 
-class TestValidateWebhookUrlMalformed(SimpleTestCase):
+class TestGetWebhookAddressesMalformed(SimpleTestCase):
     def test_invalid_port(self):
-        self.assertFalse(_validate_webhook_url("https://host:abc/"))
+        self.assertEqual([], _get_webhook_addresses("https://host:abc/"))
 
     def test_invalid_idna_label(self):
-        self.assertFalse(_validate_webhook_url(f"https://{'a' * 64}.example/"))
+        self.assertEqual([], _get_webhook_addresses(f"https://{'a' * 64}.example/"))
 
     @override_settings(WEBHOOK_ALLOWED_NETWORKS=[])
-    @patch("application.notifications.services.webhook_send.requests.post")
+    @patch("application.notifications.services.webhook_send._post_webhook")
     def test_send_malformed_url_is_not_sent(self, mock_post):
         result = send_webhook_request("https://host:abc/", generate_webhook_secret(), "msg_1", "{}")
         mock_post.assert_not_called()
