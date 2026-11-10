@@ -107,8 +107,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      # Without a usable base commit (new branch, force push) the frontend is treated as changed.
-      - name: Check for changes in the frontend folder
+      # Without a usable base commit (new branch, force push) frontend/src is treated as changed.
+      - name: Check for changes in frontend/src
         id: diff
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -117,12 +117,12 @@ jobs:
           if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
             || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             frontend=true
-          elif git diff --quiet "$BASE_SHA...$HEAD_SHA" -- frontend; then
+          elif git diff --quiet "$BASE_SHA...$HEAD_SHA" -- frontend/src; then
             frontend=false
           else
             frontend=true
           fi
-          echo "Changes in frontend: $frontend"
+          echo "Changes in frontend/src: $frontend"
           echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
 
   check_code_sonarqube_frontend:
