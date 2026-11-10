@@ -70,7 +70,8 @@ priority := 1 if {
 ```
 
 Observations without a CVE can be given priority 1 with `not input.vulnerability_id` when they must always block.
-Imports apply the current EPSS and exploit data before the rules run. To keep the priorities of the default branches current between imports, enable applying the rules again after the EPSS import, see [Evaluation](rule_engine.md#evaluation).
+Imports apply the current EPSS and exploit data before the rules run.
+To keep the priorities of the default branches current between imports, enable applying the rules again after the EPSS import, see [Evaluation](rule_engine.md#evaluation).
 
 ### Why does the gate fail?
 

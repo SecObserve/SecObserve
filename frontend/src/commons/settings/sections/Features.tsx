@@ -189,9 +189,6 @@ export const FeaturesInputs = () => (
                                 <NumberInput
                                     source="apply_rules_epss_step"
                                     label="EPSS step in percentage points"
-                                    min={0.001}
-                                    max={100}
-                                    step={0.5}
                                     validate={validate_required_0_001_100}
                                 />
                             )
