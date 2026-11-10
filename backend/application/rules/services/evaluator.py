@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.dispatch import Signal
 
 from application.core.models import Observation, Product
+from application.core.queries.product import get_default_branch_filter
 from application.core.services.security_gate import check_security_gate
 from application.core.types import Status
 from application.rules.models import Rule
@@ -37,7 +38,7 @@ def evaluate_general_rule(rule: Rule) -> EvaluationResult:
     return _apply_rules(_get_affected_observation_pks(rule))
 
 
-# Any Rego rule triggers the pass, whatever it reads; narrow to rules reading EPSS or exploit data if it gets too slow
+# Default branches only: the product gate reads them, other branches and tags get current data at their next import
 def apply_rules_to_enriched_observations(observation_pks: Iterable[int]) -> EvaluationResult:
     rego_rules = list(
         Rule.objects.filter(
@@ -54,7 +55,9 @@ def apply_rules_to_enriched_observations(observation_pks: Iterable[int]) -> Eval
     products = Q(product__in=rule_products) | Q(product__product_group__in=rule_groups)
     if any(product is None for product, _ in rego_rules):
         products |= Q(product__apply_general_rules=True)
-    observations = Observation.objects.filter(products, current_status__in=Status.STATUS_ACTIVE)
+    observations = Observation.objects.filter(
+        products, get_default_branch_filter(), current_status__in=Status.STATUS_ACTIVE
+    )
 
     pks: list[int] = []
     for chunk in batched(observation_pks, CHUNK_SIZE):

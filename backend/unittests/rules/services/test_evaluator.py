@@ -223,6 +223,16 @@ class TestApplyRulesToEnrichedObservations(ObservationFixtureMixin, BaseTestCase
 
         self._assert_priority_set_without_general_rules(product_group)
 
+    def test_apply_rules_to_enriched_observations_skips_other_branches(self):
+        feature = Branch.objects.create(product=self.product_1, name="feature")
+        observation = self._hot_observation("hot on feature", branch=feature)
+
+        result = apply_rules_to_enriched_observations([observation.pk])
+
+        observation.refresh_from_db()
+        self.assertEqual(result, EvaluationResult(observations_processed=0, observations_changed=0))
+        self.assertIsNone(observation.current_priority)
+
     def test_apply_rules_to_enriched_observations_skips_inactive_and_products_without_rego(self):
         product_2 = Product.objects.create(name="product_2", apply_general_rules=False)
         branch_2 = Branch.objects.create(product=product_2, name="main")

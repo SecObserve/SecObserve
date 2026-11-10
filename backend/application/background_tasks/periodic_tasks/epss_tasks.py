@@ -18,14 +18,17 @@ from application.rules.services.evaluator import apply_rules_to_enriched_observa
 @so_periodic_task("Import EPSS and cvss-bt")
 def task_import_epss() -> str:
     settings = Settings.load()
-    message = import_epss() + "\n"
+    lines = [import_epss()]
     num_changed, crossed = epss_apply_observations(settings.apply_rules_epss_step)
-    message += f"Applied EPSS scores to {num_changed} observations.\n"
+    lines.append(f"Applied EPSS scores to {num_changed} observations.")
     changed_exploit: list[int] = []
     try:
         cvss_bt_message, changed_exploit = import_cvss_bt()
-        message += cvss_bt_message + "\n"
+        lines.append(cvss_bt_message)
     finally:
-        result = apply_rules_to_enriched_observations(set(crossed) | set(changed_exploit))
-    message += f"Rules applied to {result.observations_processed} observations, {result.observations_changed} changed."
-    return message
+        if settings.feature_apply_rules_after_epss_import:
+            result = apply_rules_to_enriched_observations(set(crossed) | set(changed_exploit))
+            lines.append(
+                f"Rules applied to {result.observations_processed} observations, {result.observations_changed} changed."
+            )
+    return "\n".join(lines)
