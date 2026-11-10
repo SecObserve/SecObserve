@@ -386,7 +386,11 @@ class AuthenticateView(APIView):
         responses={status.HTTP_200_OK: AuthenticationResponseSerializer},
     )
     def post(self, request: Request) -> Response:
-        user = _get_authenticated_user(request.data)
+        request_serializer = AuthenticationRequestSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        user = _get_authenticated_user(request_serializer.validated_data)
 
         jwt = create_jwt(user)
 
@@ -409,9 +413,9 @@ class JWTSecretResetView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def _get_authenticated_user(data: dict[str, Any] | list[Any]) -> User:
-    username = data.get("username") if isinstance(data, dict) else None
-    password = data.get("password") if isinstance(data, dict) else None
+def _get_authenticated_user(data: dict[str, Any]) -> User:
+    username = data.get("username")
+    password = data.get("password")
 
     user: User = django_authenticate(username=username, password=password)  # type: ignore[assignment]
     if not user:
