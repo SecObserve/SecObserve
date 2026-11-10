@@ -108,8 +108,8 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      # Without a usable base commit (new branch, force push) the backend is treated as changed.
-      - name: Check for changes in the backend folder
+      # Without a usable base commit (new branch, force push) backend/application is treated as changed.
+      - name: Check for changes in backend/application
         id: diff
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -118,12 +118,12 @@ jobs:
           if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
             || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             backend=true
-          elif git diff --quiet "$BASE_SHA...$HEAD_SHA" -- backend; then
+          elif git diff --quiet "$BASE_SHA...$HEAD_SHA" -- backend/application; then
             backend=false
           else
             backend=true
           fi
-          echo "Changes in backend: $backend"
+          echo "Changes in backend/application: $backend"
           echo "backend=$backend" >> "$GITHUB_OUTPUT"
 
   check_code_sonarqube_backend:
