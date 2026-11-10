@@ -1,7 +1,9 @@
 import gzip
+import math
 import re
 from collections.abc import Iterator, Sequence
 from datetime import datetime
+from decimal import Decimal
 from typing import Optional
 
 import requests
@@ -92,17 +94,36 @@ def import_epss() -> str:
     return f"Imported {num_epss_scores} EPSS scores."
 
 
-def epss_apply_observations() -> list[int]:
-    changed: list[int] = []
+def epss_apply_observations(step: Decimal) -> tuple[int, list[int]]:
+    """Number of observations with changed EPSS data and the pks of those whose score or percentile crossed a step."""
+    num_observations = 0
+    crossed: list[int] = []
 
     for observations in batched_cve_observations(EPSS_FIELDS):
         epss_scores = get_epss_scores_by_cves(observation.vulnerability_id for observation in observations)
-        updates = [observation for observation in observations if apply_epss(observation, epss_scores)]
+        updates = []
+        for observation in observations:
+            before = (observation.epss_score, observation.epss_percentile)
+            if apply_epss(observation, epss_scores):
+                updates.append(observation)
+                if epss_step_crossed(before[0], observation.epss_score, step) or epss_step_crossed(
+                    before[1], observation.epss_percentile, step
+                ):
+                    crossed.append(observation.pk)
 
         Observation.objects.bulk_update(updates, ["epss_score", "epss_percentile"])
-        changed += [observation.pk for observation in updates]
+        num_observations += len(updates)
 
-    return changed
+    return num_observations, crossed
+
+
+def epss_step_crossed(before: Optional[Decimal], after: Optional[Decimal], step: Decimal) -> bool:
+    """True when the value moved into another multiple of the step, or appeared or disappeared."""
+    return _step(before, step) != _step(after, step)
+
+
+def _step(value: Optional[Decimal], step: Decimal) -> Optional[int]:
+    return None if value is None else math.floor(Decimal(value) / step)
 
 
 def apply_epss(observation: Observation, epss_scores: Optional[dict[str, EPSS_Score]] = None) -> bool:

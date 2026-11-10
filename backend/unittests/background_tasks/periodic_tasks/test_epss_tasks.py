@@ -16,6 +16,7 @@ class TestEpssTasks(BaseTestCase):
     @patch("application.background_tasks.periodic_tasks.epss_tasks.epss_apply_observations")
     @patch("application.background_tasks.periodic_tasks.epss_tasks.import_epss")
     def test_task_import_epss(self, mock_import_epss, mock_epss_apply_observations, mock_import_cvss_bt):
+        mock_epss_apply_observations.return_value = (0, [])
         mock_import_cvss_bt.return_value = ("", [])
 
         # Execute
@@ -32,6 +33,7 @@ class TestEpssTasks(BaseTestCase):
     def test_task_import_epss_execution_order(
         self, mock_import_epss, mock_epss_apply_observations, mock_import_cvss_bt
     ):
+        mock_epss_apply_observations.return_value = (0, [])
         mock_import_cvss_bt.return_value = ("", [])
 
         # Execute
@@ -55,7 +57,7 @@ class TestEpssTasks(BaseTestCase):
         self, mock_import_epss, mock_epss_apply_observations, mock_import_cvss_bt, mock_apply_rules
     ):
         mock_import_epss.return_value = "Imported 4 EPSS scores."
-        mock_epss_apply_observations.return_value = [1, 2]
+        mock_epss_apply_observations.return_value = (2, [1, 2])
         mock_import_cvss_bt.return_value = ("cvss-bt done", [2, 3])
         mock_apply_rules.return_value = EvaluationResult(observations_processed=3, observations_changed=1)
 
@@ -80,7 +82,7 @@ class TestEpssTasks(BaseTestCase):
         self, mock_import_epss, mock_epss_apply_observations, mock_import_cvss_bt, mock_apply_rules, mock_send
     ):
         mock_import_epss.return_value = "Imported 4 EPSS scores."
-        mock_epss_apply_observations.return_value = [1, 2]
+        mock_epss_apply_observations.return_value = (2, [1, 2])
         mock_import_cvss_bt.side_effect = Exception("down")
 
         with self.assertRaises(Exception) as context:

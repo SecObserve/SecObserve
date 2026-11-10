@@ -15,6 +15,7 @@ from application.epss.services.epss import (
     apply_epss,
     batched_cve_observations,
     epss_apply_observations,
+    epss_step_crossed,
     import_epss,
 )
 from unittests.base_test_case import BaseTestCase
@@ -42,29 +43,44 @@ class TestEPSS(BaseTestCase):
 
         mock_filter.return_value = Observation.objects.all()
 
-        epss_apply_observations()
+        epss_apply_observations(Decimal("1"))
 
         mock_filter.assert_called_with(vulnerability_id__startswith="CVE-")
         mock_bulk_update.assert_has_calls([call([observation_1], ["epss_score", "epss_percentile"])])
 
     @patch("application.core.models.Observation.objects.filter")
     @patch("application.core.models.Observation.objects.bulk_update")
-    def test_epss_apply_observations_returns_changed_pks(self, mock_bulk_update, mock_filter):
+    def test_epss_apply_observations_returns_crossed_pks(self, mock_bulk_update, mock_filter):
         observation_1 = Observation.objects.get(id=1)
         observation_1.vulnerability_id = "CVE-1"
+        observation_1.epss_score = Decimal("0.380")
+        observation_1.epss_percentile = Decimal("72.900")
         observation_1.save()
         observation_2 = Observation.objects.get(id=2)
         observation_2.vulnerability_id = "CVE-2"
+        observation_2.epss_score = Decimal("0.383")
+        observation_2.epss_percentile = Decimal("72.900")
         observation_2.save()
 
         EPSS_Score.objects.create(cve="CVE-1", epss_score=0.00383, epss_percentile=0.72606)
+        EPSS_Score.objects.create(cve="CVE-2", epss_score=0.0039, epss_percentile=0.731)
 
         mock_filter.return_value = Observation.objects.all()
 
-        changed = epss_apply_observations()
+        # Both change, only the percentile of the second one crosses 73
+        self.assertEqual((2, [2]), epss_apply_observations(Decimal("1")))
 
-        mock_bulk_update.assert_has_calls([call([observation_1], ["epss_score", "epss_percentile"])])
-        self.assertEqual([1], changed)
+    def test_epss_step_crossed(self):
+        one, five = Decimal("1"), Decimal("5")
+        self.assertTrue(epss_step_crossed(Decimal("9.9"), Decimal("10.1"), one))
+        self.assertFalse(epss_step_crossed(Decimal("10.1"), Decimal("10.9"), one))
+        self.assertFalse(epss_step_crossed(Decimal("0.2"), Decimal("0.8"), one))
+        self.assertTrue(epss_step_crossed(None, Decimal("0.01"), one))
+        self.assertTrue(epss_step_crossed(Decimal("5"), None, one))
+        self.assertFalse(epss_step_crossed(None, None, one))
+        self.assertTrue(epss_step_crossed(Decimal("9.9"), Decimal("10.1"), five))
+        self.assertFalse(epss_step_crossed(Decimal("11"), Decimal("14"), five))
+        self.assertTrue(epss_step_crossed(Decimal("94.9"), Decimal("95.1"), one))
 
     @patch("application.epss.models.EPSS_Score.objects.filter")
     def test_apply_epss_not_cve(self, mock_epss_score):
@@ -158,9 +174,10 @@ class TestBatchedCveObservations(BaseTestCase):
         # Observations, their scores, the update and the empty next batch.
         # A field missing in EPSS_FIELDS would add one query per observation.
         with self.assertNumQueries(4):
-            changed = epss_apply_observations()
+            result = epss_apply_observations(Decimal("1"))
 
-        self.assertEqual(sorted(observation.pk for observation in observations), changed)
+        # EPSS appearing for the first time is a crossing
+        self.assertEqual((3, sorted(observation.pk for observation in observations)), result)
         for observation in observations:
             observation.refresh_from_db()
             self.assertEqual(Decimal("50.000"), observation.epss_score)

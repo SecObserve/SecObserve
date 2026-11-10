@@ -150,6 +150,14 @@ class TestSettingsSerializer(BaseTestCase):
         self.assertTrue(serializer.is_valid())
         self.assertNotIn("feature_full_text_search", serializer.validated_data)
 
+    def test_validate_apply_rules_epss_step(self):
+        serializer = SettingsSerializer(Settings.load(), data={"apply_rules_epss_step": "0"}, partial=True)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("apply_rules_epss_step", serializer.errors)
+
+        serializer = SettingsSerializer(Settings.load(), data={"apply_rules_epss_step": "0.5"}, partial=True)
+        self.assertTrue(serializer.is_valid(), serializer.errors)
+
     def test_security_gate_priority_thresholds_invalid(self):
         with self.assertRaisesRegex(ValidationError, "between 1 and 99"):
             SettingsSerializer().validate({"security_gate_priority_thresholds": [{"priority": 0, "threshold": 0}]})
