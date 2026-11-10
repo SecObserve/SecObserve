@@ -413,9 +413,9 @@ class JWTSecretResetView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def _get_authenticated_user(data: dict[str, Any] | list[Any]) -> User:
-    username = data.get("username") if isinstance(data, dict) else None
-    password = data.get("password") if isinstance(data, dict) else None
+def _get_authenticated_user(data: dict[str, Any]) -> User:
+    username = data.get("username")
+    password = data.get("password")
 
     user: User = django_authenticate(username=username, password=password)  # type: ignore[assignment]
     if not user:

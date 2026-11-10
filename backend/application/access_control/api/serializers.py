@@ -218,9 +218,9 @@ class UserUpdateSerializer(ModelSerializer):
 
 
 class UserPasswordSerializer(Serializer):
-    current_password = CharField(max_length=255, required=False)
-    new_password_1 = CharField(max_length=255, required=True)
-    new_password_2 = CharField(max_length=255, required=True)
+    current_password = CharField(max_length=255, required=False, trim_whitespace=False)
+    new_password_1 = CharField(max_length=255, required=True, trim_whitespace=False)
+    new_password_2 = CharField(max_length=255, required=True, trim_whitespace=False)
 
 
 class UserPasswortRulesSerializer(Serializer):
