@@ -298,6 +298,91 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
     @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_unchanged_only_import_last_seen(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertTrue(observation_updates)
+        for observation_update in observation_updates:
+            self.assertTrue(
+                observation_update.startswith('UPDATE "core_observation" SET "import_last_seen" = '),
+                observation_update,
+            )
+            self.assertNotIn('"modified"', observation_update)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_changed_fields_and_modified(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        observation_ids = list(Observation.objects.filter(product=product).values_list("pk", flat=True))
+        Observation.objects.filter(pk__in=observation_ids).update(description="old description")
+        modified_before = {
+            observation.pk: observation.modified for observation in Observation.objects.filter(pk__in=observation_ids)
+        }
+
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual(len(observation_updates), len(observation_ids))
+        for observation_update in observation_updates:
+            self.assertIn('"description" = ', observation_update)
+            self.assertIn('"import_last_seen" = ', observation_update)
+            self.assertIn('"modified" = ', observation_update)
+            self.assertNotIn('"title" = ', observation_update)
+
+        for observation in Observation.objects.filter(pk__in=observation_ids):
+            self.assertNotEqual("old description", observation.description)
+            self.assertGreater(observation.modified, modified_before[observation.pk])
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_product_timestamp_only(
         self,
         mock_apply_vex_statements_for_observation,

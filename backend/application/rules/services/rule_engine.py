@@ -242,7 +242,7 @@ class Rule_Engine:
     ) -> bool:
         service_name = observation.origin_service.name if observation.origin_service else ""
         if (  # pylint: disable=too-many-boolean-expressions
-            (not rule.parser or observation.parser == rule.parser)
+            (not rule.parser_id or observation.parser_id == rule.parser_id)
             and (not rule.scanner_prefix or observation.scanner.lower().startswith(rule.scanner_prefix.lower()))
             and _check_regex(rule.title, observation.title)
             and _check_regex(rule.description_observation, observation.description)
@@ -305,7 +305,7 @@ class Rule_Engine:
         observation_before: Optional[Observation],
         simulation: Optional[bool] = False,
     ) -> bool:
-        if (rule.parser and observation.parser != rule.parser) or (
+        if (rule.parser_id and observation.parser_id != rule.parser_id) or (
             rule.scanner_prefix and not observation.scanner.lower().startswith(rule.scanner_prefix.lower())
         ):
             return False

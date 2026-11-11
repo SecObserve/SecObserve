@@ -1,7 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 from django.core.files.base import File
 from django.db import connection, transaction
@@ -660,6 +660,8 @@ def _process_current_observation(
     epss_scores: dict[str, EPSS_Score],
     exploit_informations: dict[str, Exploit_Information],
 ) -> None:
+    values_before = _get_field_values(observation_before)
+
     # Set data in the current observation from the new observation
     observation_before.title = imported_observation.title
     observation_before.description = imported_observation.description
@@ -715,7 +717,7 @@ def _process_current_observation(
         previous_status == observation_before.current_status
         and previous_severity == observation_before.current_severity
     ):
-        observation_before.save()
+        _save_changed_fields(observation_before, values_before)
     else:
         status = observation_before.current_status if previous_status != observation_before.current_status else ""
         severity = (
@@ -734,6 +736,25 @@ def _process_current_observation(
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
         )
+
+
+def _get_field_values(observation: Observation) -> dict[str, Any]:
+    return {field.attname: getattr(observation, field.attname) for field in Observation._meta.concrete_fields}
+
+
+def _save_changed_fields(observation: Observation, values_before: dict[str, Any]) -> None:
+    # The pre_save signal normalizes the observation, but update_fields is already fixed by then.
+    # Normalizing beforehand makes sure that changed derived fields are written as well.
+    normalize_observation_fields(observation)
+    observation.identity_hash = get_identity_hash(observation)
+
+    values_after = _get_field_values(observation)
+    changed_fields = [name for name, value in values_after.items() if values_before[name] != value]
+    # import_last_seen changes with every import, modified shall only be set for real changes
+    if any(name != "import_last_seen" for name in changed_fields):
+        changed_fields.append("modified")
+
+    observation.save(update_fields=changed_fields)
 
 
 def _process_new_observation(
