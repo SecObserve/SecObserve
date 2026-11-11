@@ -107,7 +107,7 @@ mypy = { version = "2.4.1", optional = true }  # https://github.com/python/mypy
 django-stubs = { version = "6.1.2", optional = true }  # https://github.com/typeddjango/django-stubs
 djangorestframework-stubs = { version = "3.18.2", extras = ["requests"], optional = true }  # https://github.com/typeddjango/djangorestframework-stubs
 types-PyMySQL = { version = "1.2.0.20260923", optional = true }  # https://github.com/python/typeshed
-import-linter = { version = "2.15", optional = true }  # https://github.com/seddonym/import-linter
+import-linter = { version = "2.16", optional = true }  # https://github.com/seddonym/import-linter
 
 [tool.poetry.extras]
 dev = ["Werkzeug", "ipdb", "django-extensions", "django-silk"]
