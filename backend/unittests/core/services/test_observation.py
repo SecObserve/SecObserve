@@ -1,4 +1,5 @@
 from copy import deepcopy
+from decimal import Decimal
 from unittest.mock import patch
 
 from application.core.models import Component, Observation, Service
@@ -360,6 +361,25 @@ class TestObservation(BaseTestCase):
 
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
+
+    def test_normalize_observation_fields_cvss_scores(self):
+        for score, expected in [
+            (9.8, Decimal("9.8")),
+            ("7.5", Decimal("7.5")),
+            (5, Decimal("5.0")),
+            (Decimal("7.25"), Decimal("7.2")),
+            (None, None),
+        ]:
+            with self.subTest(score=score):
+                observation = Observation(title="cvss", cvss3_score=score, cvss4_score=score)
+
+                normalize_observation_fields(observation)
+
+                self.assertEqual(expected, observation.cvss3_score)
+                self.assertEqual(expected, observation.cvss4_score)
+                if expected is not None:
+                    self.assertIsInstance(observation.cvss3_score, Decimal)
+                    self.assertIsInstance(observation.cvss4_score, Decimal)
 
     def test_normalize_observation_fields_origin_component_name_version_1(self):
         before_observation = Observation(title="empty", origin_component_name_version="component_name")

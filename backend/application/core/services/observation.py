@@ -209,6 +209,7 @@ def normalize_observation_fields(observation: Observation) -> None:
     _normalize_origin_cloud(observation)
     _normalize_origin_kubernetes(observation)
 
+    _normalize_cvss_scores(observation)
     _normalize_severity(observation)
     _normalize_status(observation)
     observation.current_priority = get_current_priority(observation)
@@ -246,6 +247,15 @@ def _normalize_vulnerability_ids(observation: Observation) -> None:
         observation.vulnerability_id = ""
     if observation.vulnerability_id_aliases is None:
         observation.vulnerability_id_aliases = ""
+
+
+def _normalize_cvss_scores(observation: Observation) -> None:
+    # Parsers deliver the scores as float or string, the database returns them as Decimal with one decimal place.
+    # Without the conversion, an unchanged score would be detected as a change.
+    if observation.cvss3_score is not None:
+        observation.cvss3_score = Decimal(str(observation.cvss3_score)).quantize(Decimal("0.1"))
+    if observation.cvss4_score is not None:
+        observation.cvss4_score = Decimal(str(observation.cvss4_score)).quantize(Decimal("0.1"))
 
 
 def _normalize_cvss_vectors(observation: Observation) -> None:

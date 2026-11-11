@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import call, patch
 
 from django.core.files.base import File
@@ -30,7 +31,9 @@ from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
     _deduplicate_cross_scanner,
+    _get_field_values,
     _resolve_unimported_observations,
+    _save_changed_fields,
     api_import_observations,
     file_upload_observations,
     process_license_components,
@@ -1822,6 +1825,35 @@ class TestDeduplicateCrossScanner(BaseTestCase):
         self.assertFalse(result)
         mock_filter.assert_called_once()
         mock_filter_instance.exclude.assert_called_once()
+
+
+class TestSaveChangedFields(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_unchanged_float_cvss_score_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss3_score = Decimal("9.8")
+        observation.cvss3_vector = ""
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = _get_field_values(observation)
+        # Parsers deliver the score as float, e.g. from JSON
+        observation.cvss3_score = 9.8
+
+        with CaptureQueriesContext(connection) as context:
+            _save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
 
 
 class TestResolveUnimportedObservations(BaseTestCase):
