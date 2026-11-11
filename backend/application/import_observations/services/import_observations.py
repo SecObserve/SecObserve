@@ -6,7 +6,6 @@ from typing import Any, Optional, Tuple
 
 from django.core.files.base import File
 from django.db import connection, transaction
-from django.db.models import Prefetch, QuerySet
 from django.db.models.functions import MD5
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -308,7 +307,6 @@ def _process_data(  # pylint: disable=too-many-statements
         # first, the product before the observations by id, in the order of find_potential_duplicates and EPSS.
         Product.objects.select_for_update().filter(pk=import_parameters.product.pk).first()
         list(observations_before_query.select_for_update().order_by("pk").values_list("pk", flat=True))
-    observations_before_query = _prefetch_references_and_evidences(observations_before_query)
 
     observations_new = 0
     observations_updated = 0
@@ -324,6 +322,10 @@ def _process_data(  # pylint: disable=too-many-statements
         # The query filters by this branch, setting it saves reading it per observation, e.g. for Rego rules
         observation_before_for_dict.branch = import_parameters.branch
         observations_before[observation_before_for_dict.identity_hash] = observation_before_for_dict
+
+    references_by_observation, evidences_by_observation = _get_references_and_evidences(
+        list(observations_before.values())
+    )
 
     # Only in a transaction, without one a crash could leave committed changes without a new change timestamp
     import_parameters.product.defer_observation_change = not transaction.get_autocommit()
@@ -358,6 +360,17 @@ def _process_data(  # pylint: disable=too-many-statements
             if observation_before:
                 _process_current_observation(
                     imported_observation, observation_before, settings, epss_scores, exploit_informations
+                )
+                # Popped, because they aren't needed anymore, which frees the memory during a large import
+                _update_references(
+                    observation_before,
+                    imported_observation.unsaved_references,
+                    references_by_observation.pop(observation_before.pk, []),
+                )
+                _update_evidences(
+                    observation_before,
+                    imported_observation.unsaved_evidences,
+                    evidences_by_observation.pop(observation_before.pk, []),
                 )
 
                 rule_engine.apply_rules_for_observation(observation_before)
@@ -715,9 +728,6 @@ def _process_current_observation(
     apply_exploit_information(observation_before, settings, exploit_informations)
     observation_before.import_last_seen = timezone.now()
 
-    _update_references(observation_before, imported_observation.unsaved_references)
-    _update_evidences(observation_before, imported_observation.unsaved_evidences)
-
     # Write observation log if status or severity has been changed, it saves the observation as well
     if (
         previous_status == observation_before.current_status
@@ -805,21 +815,38 @@ def _process_new_observation(
     )
 
 
-def _prefetch_references_and_evidences(observations: QuerySet[Observation]) -> QuerySet[Observation]:
+def _get_references_and_evidences(
+    observations: list[Observation],
+) -> Tuple[dict[int, list[str]], dict[int, list[tuple[str, str]]]]:
     """
-    Reads the references and evidences of all observations in one query each,
-    instead of two queries per observation in _update_references and _update_evidences.
+    Reads the references and evidences of all observations in one query each, instead of two queries per
+    observation in _update_references and _update_evidences. Returns them by observation id.
 
-    The evidences carry the raw finding of the scanner, which is the largest column of an import.
-    Only its hash is read, to keep the evidences of a large vulnerability check out of memory.
+    Only plain values are read, no model instances, to keep a large vulnerability check small in memory.
+    The evidences carry the raw finding of the scanner, which is the largest column of an import,
+    so only its hash is read.
     """
-    return observations.prefetch_related(
-        Prefetch("references", queryset=Reference.objects.order_by("id")),
-        Prefetch(
-            "evidences",
-            queryset=Evidence.objects.defer("evidence").annotate(evidence_md5=MD5("evidence")).order_by("id"),
-        ),
-    )
+    references: dict[int, list[str]] = {}
+    evidences: dict[int, list[tuple[str, str]]] = {}
+    if not observations:
+        return references, evidences
+
+    observation_ids = [observation.pk for observation in observations]
+
+    for observation_id, url in (
+        Reference.objects.filter(observation_id__in=observation_ids).order_by("id").values_list("observation_id", "url")
+    ):
+        references.setdefault(observation_id, []).append(url)
+
+    for observation_id, name, evidence_md5 in (
+        Evidence.objects.filter(observation_id__in=observation_ids)
+        .annotate(evidence_md5=MD5("evidence"))
+        .order_by("id")
+        .values_list("observation_id", "name", "evidence_md5")
+    ):
+        evidences.setdefault(observation_id, []).append((name, evidence_md5))
+
+    return references, evidences
 
 
 def _build_references(observation: Observation, unsaved_references: list[str]) -> list[Reference]:
@@ -840,44 +867,39 @@ def _build_evidences(observation: Observation, unsaved_evidences: list[list[str]
     return evidences
 
 
-def _update_references(observation: Observation, unsaved_references: list[str]) -> None:
+def _update_references(observation: Observation, unsaved_references: list[str], references_before: list[str]) -> None:
     """
-    Needs the references prefetched with _prefetch_references_and_evidences.
+    references_before are the URLs of the observation's references, read with _get_references_and_evidences.
     """
     references = _build_references(observation, unsaved_references)
 
     # A re-import of an unchanged observation finds the same references. Comparing them costs no
     # query, rewriting them is one query per reference, on every import of every observation.
-    references_before = [reference.url for reference in observation.references.all()]
     if [reference.url for reference in references] == references_before:
         return
 
     if references_before:
         Reference.objects.filter(observation=observation).delete()
     Reference.objects.bulk_create(references)
-    # Drops the prefetched references, they are outdated now
-    observation.refresh_from_db(fields=["references"])
 
 
-def _update_evidences(observation: Observation, unsaved_evidences: list[list[str]]) -> None:
+def _update_evidences(
+    observation: Observation, unsaved_evidences: list[list[str]], evidences_before: list[tuple[str, str]]
+) -> None:
     """
-    Needs the evidences prefetched with _prefetch_references_and_evidences.
+    evidences_before are the names and MD5 hashes of the observation's evidences,
+    read with _get_references_and_evidences.
     """
     evidences = _build_evidences(observation, unsaved_evidences)
 
     # Same as for the references, but compared by the hash of the evidence. Should the database
     # hash an evidence differently, e.g. because of its character set, it is rewritten every time.
-    evidences_before = [
-        (evidence.name, evidence.evidence_md5) for evidence in observation.evidences.all()  # type: ignore[attr-defined]
-    ]
     if [(evidence.name, _md5(evidence.evidence)) for evidence in evidences] == evidences_before:
         return
 
     if evidences_before:
         Evidence.objects.filter(observation=observation).delete()
     Evidence.objects.bulk_create(evidences)
-    # Drops the prefetched evidences, they are outdated now
-    observation.refresh_from_db(fields=["evidences"])
 
 
 def _md5(value: str) -> str:

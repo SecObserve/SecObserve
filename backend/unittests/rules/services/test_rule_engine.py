@@ -5,9 +5,6 @@ import jsonpickle
 from django.core.management import call_command
 
 from application.core.models import Evidence, Observation, Product, Reference
-from application.import_observations.services.import_observations import (
-    _prefetch_references_and_evidences,
-)
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from application.rules.types import Rule_Type
@@ -208,8 +205,7 @@ class TestRuleEngineRegoInput(BaseTestCase):
 
         Reference.objects.create(observation_id=1, url="https://example.com/reference")
         Evidence.objects.create(observation_id=1, name="evidence", evidence='{"finding": "raw scanner data"}')
-        # Read the same way as the import reads the observations, with prefetched references and evidences
-        observation = _prefetch_references_and_evidences(Observation.objects.filter(id=1)).get()
+        observation = Observation.objects.prefetch_related("references", "evidences").get(id=1)
         self.assertIn("references", observation._prefetched_objects_cache)
         self.assertIn("evidences", observation._prefetched_objects_cache)
         self.assertTrue(observation.references.all())
