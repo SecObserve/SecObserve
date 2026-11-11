@@ -2,15 +2,16 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 
-from application.core.models import Observation
+from application.core.models import Evidence, Observation, Reference
 from application.import_observations.services.import_observations import (
-    _set_evidences,
-    _set_references,
+    _prefetch_references_and_evidences,
+    _update_evidences,
+    _update_references,
 )
 from unittests.base_test_case import BaseTestCase
 
 
-class TestSetReferencesAndEvidences(BaseTestCase):
+class TestUpdateReferencesAndEvidences(BaseTestCase):
     @classmethod
     @patch("application.core.signals.get_current_user")
     def setUpClass(cls, mock_user):
@@ -18,47 +19,69 @@ class TestSetReferencesAndEvidences(BaseTestCase):
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
         super().setUpClass()
 
-    def _urls(self, observation: Observation) -> list[str]:
-        return list(observation.references.order_by("id").values_list("url", flat=True))
+    def _observation(self) -> Observation:
+        # Read the same way as the import reads the observations
+        return _prefetch_references_and_evidences(Observation.objects.filter(id=1)).get()
 
-    def _evidences(self, observation: Observation) -> list[tuple[str, str]]:
-        return list(observation.evidences.order_by("id").values_list("name", "evidence"))
+    def _urls(self) -> list[str]:
+        return list(Reference.objects.filter(observation_id=1).order_by("id").values_list("url", flat=True))
+
+    def _evidences(self) -> list[tuple[str, str]]:
+        return list(Evidence.objects.filter(observation_id=1).order_by("id").values_list("name", "evidence"))
 
     def test_references_are_written_and_replaced(self):
-        observation = Observation.objects.get(id=1)
+        _update_references(self._observation(), ["https://example.com/1", "https://example.com/2"])
+        self.assertEqual(["https://example.com/1", "https://example.com/2"], self._urls())
 
-        _set_references(observation, ["https://example.com/1", "https://example.com/2"])
-        self.assertEqual(["https://example.com/1", "https://example.com/2"], self._urls(observation))
+        _update_references(self._observation(), ["https://example.com/3"])
+        self.assertEqual(["https://example.com/3"], self._urls())
 
-        _set_references(observation, ["https://example.com/3"])
-        self.assertEqual(["https://example.com/3"], self._urls(observation))
-
-        _set_references(observation, [])
-        self.assertEqual([], self._urls(observation))
+        _update_references(self._observation(), [])
+        self.assertEqual([], self._urls())
 
     def test_unchanged_references_are_not_rewritten(self):
-        observation = Observation.objects.get(id=1)
-        _set_references(observation, ["https://example.com/1", "https://example.com/2"])
+        _update_references(self._observation(), ["https://example.com/1", "https://example.com/2"])
+        observation = self._observation()
 
-        # Only the query that compares them, no delete and no insert
-        with self.assertNumQueries(1):
-            _set_references(observation, ["https://example.com/1", "https://example.com/2"])
+        # Compared with the prefetched references, no select, no delete and no insert
+        with self.assertNumQueries(0):
+            _update_references(observation, ["https://example.com/1", "https://example.com/2"])
+
+    def test_changed_references_drop_prefetched_references(self):
+        observation = self._observation()
+
+        _update_references(observation, ["https://example.com/1"])
+
+        self.assertEqual(["https://example.com/1"], [reference.url for reference in observation.references.all()])
 
     def test_evidences_are_written_and_replaced(self):
-        observation = Observation.objects.get(id=1)
+        _update_evidences(self._observation(), [["name_1", "evidence_1"], ["name_2", "evidence_2"]])
+        self.assertEqual([("name_1", "evidence_1"), ("name_2", "evidence_2")], self._evidences())
 
-        _set_evidences(observation, [["name_1", "evidence_1"], ["name_2", "evidence_2"]])
-        self.assertEqual([("name_1", "evidence_1"), ("name_2", "evidence_2")], self._evidences(observation))
+        _update_evidences(self._observation(), [["name_1", "evidence_3"]])
+        self.assertEqual([("name_1", "evidence_3")], self._evidences())
 
-        _set_evidences(observation, [["name_1", "evidence_3"]])
-        self.assertEqual([("name_1", "evidence_3")], self._evidences(observation))
+        _update_evidences(self._observation(), [["name_2", "evidence_3"]])
+        self.assertEqual([("name_2", "evidence_3")], self._evidences())
 
-        _set_evidences(observation, [])
-        self.assertEqual([], self._evidences(observation))
+        _update_evidences(self._observation(), [])
+        self.assertEqual([], self._evidences())
 
     def test_unchanged_evidences_are_not_rewritten(self):
-        observation = Observation.objects.get(id=1)
-        _set_evidences(observation, [["name_1", "evidence_1"]])
+        evidence = '{"finding": "äöü € 🙂"}'
+        _update_evidences(self._observation(), [["name_1", evidence]])
+        observation = self._observation()
 
-        with self.assertNumQueries(1):
-            _set_evidences(observation, [["name_1", "evidence_1"]])
+        # Compared with the hashes of the prefetched evidences, no select, no delete and no insert
+        with self.assertNumQueries(0):
+            _update_evidences(observation, [["name_1", evidence]])
+
+    def test_changed_evidences_drop_prefetched_evidences(self):
+        observation = self._observation()
+
+        _update_evidences(observation, [["name_1", "evidence_1"]])
+
+        self.assertEqual(
+            [("name_1", "evidence_1")],
+            [(evidence.name, evidence.evidence) for evidence in observation.evidences.all()],
+        )

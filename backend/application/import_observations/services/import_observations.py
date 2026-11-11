@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import os
 from dataclasses import dataclass
@@ -5,6 +6,8 @@ from typing import Any, Optional, Tuple
 
 from django.core.files.base import File
 from django.db import connection, transaction
+from django.db.models import Prefetch, QuerySet
+from django.db.models.functions import MD5
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
@@ -305,6 +308,7 @@ def _process_data(  # pylint: disable=too-many-statements
         # first, the product before the observations by id, in the order of find_potential_duplicates and EPSS.
         Product.objects.select_for_update().filter(pk=import_parameters.product.pk).first()
         list(observations_before_query.select_for_update().order_by("pk").values_list("pk", flat=True))
+    observations_before_query = _prefetch_references_and_evidences(observations_before_query)
 
     observations_new = 0
     observations_updated = 0
@@ -709,8 +713,8 @@ def _process_current_observation(
     apply_exploit_information(observation_before, settings, exploit_informations)
     observation_before.import_last_seen = timezone.now()
 
-    _set_references(observation_before, imported_observation.unsaved_references)
-    _set_evidences(observation_before, imported_observation.unsaved_evidences)
+    _update_references(observation_before, imported_observation.unsaved_references)
+    _update_evidences(observation_before, imported_observation.unsaved_evidences)
 
     # Write observation log if status or severity has been changed, it saves the observation as well
     if (
@@ -781,8 +785,9 @@ def _process_new_observation(
     apply_exploit_information(imported_observation, settings, exploit_informations)
     imported_observation.save()
 
-    _set_references(imported_observation, imported_observation.unsaved_references)
-    _set_evidences(imported_observation, imported_observation.unsaved_evidences)
+    # The observation has just been created, so there are no references and evidences to compare with
+    Reference.objects.bulk_create(_build_references(imported_observation, imported_observation.unsaved_references))
+    Evidence.objects.bulk_create(_build_evidences(imported_observation, imported_observation.unsaved_evidences))
 
     create_observation_log(
         observation=imported_observation,
@@ -798,40 +803,84 @@ def _process_new_observation(
     )
 
 
-def _set_references(observation: Observation, unsaved_references: list[str]) -> None:
+def _prefetch_references_and_evidences(observations: QuerySet[Observation]) -> QuerySet[Observation]:
+    """
+    Reads the references and evidences of all observations in one query each,
+    instead of two queries per observation in _update_references and _update_evidences.
+
+    The evidences carry the raw finding of the scanner, which is the largest column of an import.
+    Only its hash is read, to keep the evidences of a large vulnerability check out of memory.
+    """
+    return observations.prefetch_related(
+        Prefetch("references", queryset=Reference.objects.order_by("id")),
+        Prefetch(
+            "evidences",
+            queryset=Evidence.objects.defer("evidence").annotate(evidence_md5=MD5("evidence")).order_by("id"),
+        ),
+    )
+
+
+def _build_references(observation: Observation, unsaved_references: list[str]) -> list[Reference]:
     references = []
     for unsaved_reference in unsaved_references or []:
         reference = Reference(observation=observation, url=unsaved_reference)
         clip_fields("core", "Reference", reference)
         references.append(reference)
-
-    # A re-import of an unchanged observation finds the same references. Comparing them is one
-    # query, rewriting them is one query per reference, on every import of every observation.
-    references_before = list(observation.references.order_by("id").values_list("url", flat=True))
-    if [reference.url for reference in references] == references_before:
-        return
-
-    if references_before:
-        observation.references.all().delete()
-    Reference.objects.bulk_create(references)
+    return references
 
 
-def _set_evidences(observation: Observation, unsaved_evidences: list[list[str]]) -> None:
+def _build_evidences(observation: Observation, unsaved_evidences: list[list[str]]) -> list[Evidence]:
     evidences = []
     for unsaved_evidence in unsaved_evidences or []:
         evidence = Evidence(observation=observation, name=unsaved_evidence[0], evidence=unsaved_evidence[1])
         clip_fields("core", "Evidence", evidence)
         evidences.append(evidence)
+    return evidences
 
-    # Same as for the references, but the evidences also carry the raw finding of the scanner,
-    # which is the largest column that an import writes.
-    evidences_before = list(observation.evidences.order_by("id").values_list("name", "evidence"))
-    if [(evidence.name, evidence.evidence) for evidence in evidences] == evidences_before:
+
+def _update_references(observation: Observation, unsaved_references: list[str]) -> None:
+    """
+    Needs the references prefetched with _prefetch_references_and_evidences.
+    """
+    references = _build_references(observation, unsaved_references)
+
+    # A re-import of an unchanged observation finds the same references. Comparing them costs no
+    # query, rewriting them is one query per reference, on every import of every observation.
+    references_before = [reference.url for reference in observation.references.all()]
+    if [reference.url for reference in references] == references_before:
+        return
+
+    if references_before:
+        Reference.objects.filter(observation=observation).delete()
+    Reference.objects.bulk_create(references)
+    # Drops the prefetched references, they are outdated now
+    observation.refresh_from_db(fields=["references"])
+
+
+def _update_evidences(observation: Observation, unsaved_evidences: list[list[str]]) -> None:
+    """
+    Needs the evidences prefetched with _prefetch_references_and_evidences.
+    """
+    evidences = _build_evidences(observation, unsaved_evidences)
+
+    # Same as for the references, but compared by the hash of the evidence. Should the database
+    # hash an evidence differently, e.g. because of its character set, it is rewritten every time.
+    evidences_before = [
+        (evidence.name, evidence.evidence_md5) for evidence in observation.evidences.all()  # type: ignore[attr-defined]
+    ]
+    if [(evidence.name, _md5(evidence.evidence)) for evidence in evidences] == evidences_before:
         return
 
     if evidences_before:
-        observation.evidences.all().delete()
+        Evidence.objects.filter(observation=observation).delete()
     Evidence.objects.bulk_create(evidences)
+    # Drops the prefetched evidences, they are outdated now
+    observation.refresh_from_db(fields=["evidences"])
+
+
+def _md5(value: str) -> str:
+    # Same as the MD5 function of the database, only used to detect changes
+    return hashlib.md5(value.encode("utf-8"), usedforsecurity=False).hexdigest()
 
 
 def _deduplicate_cross_scanner(observation: Observation, settings: Settings) -> bool:

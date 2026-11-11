@@ -496,6 +496,86 @@ class TestFileUploadObservations(BaseTestCase):
                 product_update.startswith('UPDATE "core_product" SET "last_observation_change" = '), product_update
             )
 
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_references_and_evidences_queries(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        # New observations: nothing to compare with, only inserted
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 0, table)
+            self.assertEqual(len(self._table_queries(context, "DELETE", table)), 0, table)
+            self.assertTrue(self._table_queries(context, "INSERT", table), table)
+
+        references_before = list(Reference.objects.filter(observation__product=product).values_list("id", "url"))
+        evidences_before = list(Evidence.objects.filter(observation__product=product).values_list("id", "evidence"))
+        self.assertTrue(references_before)
+        self.assertTrue(evidences_before)
+
+        # Unchanged observations: one prefetch for all of them, nothing rewritten
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+            self.assertEqual(len(self._table_queries(context, "DELETE", table)), 0, table)
+            self.assertEqual(len(self._table_queries(context, "INSERT", table)), 0, table)
+
+        evidence_select = self._table_queries(context, "SELECT", "core_evidence")[0]
+        # Only the hash of the evidence is read, not the evidence itself
+        self.assertNotIn('"core_evidence"."evidence",', evidence_select)
+        self.assertNotIn('"core_evidence"."evidence" FROM', evidence_select)
+        self.assertIn('MD5("core_evidence"."evidence")', evidence_select)
+        self.assertEqual(
+            references_before,
+            list(Reference.objects.filter(observation__product=product).values_list("id", "url")),
+        )
+        self.assertEqual(
+            evidences_before,
+            list(Evidence.objects.filter(observation__product=product).values_list("id", "evidence")),
+        )
+
+        # Changed and resolved observations: still one prefetch for all of them
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+
+    def _table_queries(self, context, statement, table):
+        prefixes = {
+            "SELECT": "SELECT ",
+            "DELETE": f'DELETE FROM "{table}"',
+            "INSERT": f'INSERT INTO "{table}"',
+        }
+        return [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith(prefixes[statement])
+            and (statement != "SELECT" or f'FROM "{table}"' in query["sql"])
+        ]
+
     def _product_updates(self, context):
         return [query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_product"')]
 
