@@ -78,7 +78,7 @@ def get_current_severity(observation: Observation) -> str:
     # Scanners deliver malformed vectors, e.g. of another CVSS version, which must not fail the whole import
     if observation.cvss3_vector:
         try:
-            observation.cvss3_score = CVSS3(observation.cvss3_vector).base_score
+            observation.cvss3_score = _to_cvss_score(CVSS3(observation.cvss3_vector).base_score)
         except CVSSError as e:
             logger.warning(
                 "Malformed CVSS3 vector %s for %s: %s", observation.cvss3_vector, observation.vulnerability_id, str(e)
@@ -86,7 +86,7 @@ def get_current_severity(observation: Observation) -> str:
 
     if observation.cvss4_vector:
         try:
-            observation.cvss4_score = CVSS4(observation.cvss4_vector).base_score
+            observation.cvss4_score = _to_cvss_score(CVSS4(observation.cvss4_vector).base_score)
         except CVSSError as e:
             logger.warning(
                 "Malformed CVSS4 vector %s for %s: %s", observation.cvss4_vector, observation.vulnerability_id, str(e)
@@ -209,6 +209,7 @@ def normalize_observation_fields(observation: Observation) -> None:
     _normalize_origin_cloud(observation)
     _normalize_origin_kubernetes(observation)
 
+    _normalize_cvss_scores(observation)
     _normalize_severity(observation)
     _normalize_status(observation)
     observation.current_priority = get_current_priority(observation)
@@ -246,6 +247,19 @@ def _normalize_vulnerability_ids(observation: Observation) -> None:
         observation.vulnerability_id = ""
     if observation.vulnerability_id_aliases is None:
         observation.vulnerability_id_aliases = ""
+
+
+def _normalize_cvss_scores(observation: Observation) -> None:
+    if observation.cvss3_score is not None:
+        observation.cvss3_score = _to_cvss_score(observation.cvss3_score)
+    if observation.cvss4_score is not None:
+        observation.cvss4_score = _to_cvss_score(observation.cvss4_score)
+
+
+def _to_cvss_score(value: Decimal | float | int | str) -> Decimal:
+    # Parsers and the CVSS 4 calculator deliver float or string, the database returns Decimal with one decimal place.
+    # Without the conversion, an unchanged score would be detected as a change.
+    return Decimal(str(value)).quantize(Decimal("0.1"))
 
 
 def _normalize_cvss_vectors(observation: Observation) -> None:
