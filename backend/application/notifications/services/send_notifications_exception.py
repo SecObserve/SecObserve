@@ -25,6 +25,8 @@ from application.notifications.services.send_notifications_base import (
 
 logger = logging.getLogger("secobserve.notifications")
 
+LAST_EXCEPTIONS: dict[str, datetime] = {}
+
 
 @on_commit_task()
 def send_email_notification_background(notification_email_to: str, subject: str, template: str, **kwargs: Any) -> None:
@@ -210,16 +212,30 @@ def _ratelimit_exception(
     if settings.exception_rate_limit == 0:
         return True
 
+    notification_type = Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION
+    notification_values = _get_notification_values(exception, is_task, function, arguments)
+
     # Two processes checking in the same instant can both notify, a lock would be needed to prevent that
     try:
         return not Notification.objects.filter(
-            type=Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION,
+            type=notification_type,
             created__gte=timezone.now() - timedelta(seconds=settings.exception_rate_limit),
-            **_get_notification_values(exception, is_task, function, arguments),
+            **notification_values,
         ).exists()
     except DatabaseError:
-        # The database itself may be the failing part, which must not suppress the notification
-        return True
+        # Without the database the limit can only be kept per process
+        key = "/".join([notification_type, *notification_values.values()])
+        return _ratelimit_exception_in_process(key, settings.exception_rate_limit)
+
+
+def _ratelimit_exception_in_process(key: str, exception_rate_limit: int) -> bool:
+    now = timezone.now()
+    last_datetime = LAST_EXCEPTIONS.get(key)
+    if last_datetime and (now - last_datetime).total_seconds() < exception_rate_limit:
+        return False
+
+    LAST_EXCEPTIONS[key] = now
+    return True
 
 
 def _get_stack_trace(exc: Exception, format_as_code: bool) -> str:

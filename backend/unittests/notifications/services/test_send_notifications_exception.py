@@ -7,6 +7,7 @@ from django.utils import timezone
 from application.commons.models import Settings
 from application.notifications.models import Notification
 from application.notifications.services.send_notifications_exception import (
+    LAST_EXCEPTIONS,
     _get_stack_trace,
     _ratelimit_exception,
     send_email_notification_background,
@@ -431,11 +432,27 @@ class TestPushNotifications(BaseTestCase):
 
         self.assertTrue(_ratelimit_exception(Exception("test_exception"), None, None, is_task=True))
 
-    def test_ratelimit_exception_database_error_notifies(self):
+    @patch.dict(LAST_EXCEPTIONS, clear=True)
+    def test_ratelimit_exception_database_error_limits_per_process(self):
         self._set_rate_limit(10)
 
         with patch.object(Notification.objects, "filter", side_effect=OperationalError("connection lost")):
             self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+            self.assertFalse(_ratelimit_exception(Exception("test_exception")))
+            self.assertTrue(_ratelimit_exception(Exception("other_exception")))
+            self.assertTrue(_ratelimit_exception(Exception("test_exception"), "test_function", None, is_task=True))
+
+    @patch.dict(LAST_EXCEPTIONS, clear=True)
+    def test_ratelimit_exception_database_error_outside_window(self):
+        self._set_rate_limit(10)
+
+        with patch.object(Notification.objects, "filter", side_effect=OperationalError("connection lost")):
+            self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+            with patch(
+                "application.notifications.services.send_notifications_exception.timezone.now",
+                return_value=timezone.now() + timedelta(seconds=11),
+            ):
+                self.assertTrue(_ratelimit_exception(Exception("test_exception")))
 
     # --- _get_stack_trace ---
 
