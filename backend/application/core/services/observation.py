@@ -78,7 +78,7 @@ def get_current_severity(observation: Observation) -> str:
     # Scanners deliver malformed vectors, e.g. of another CVSS version, which must not fail the whole import
     if observation.cvss3_vector:
         try:
-            observation.cvss3_score = CVSS3(observation.cvss3_vector).base_score
+            observation.cvss3_score = _to_cvss_score(CVSS3(observation.cvss3_vector).base_score)
         except CVSSError as e:
             logger.warning(
                 "Malformed CVSS3 vector %s for %s: %s", observation.cvss3_vector, observation.vulnerability_id, str(e)
@@ -86,7 +86,7 @@ def get_current_severity(observation: Observation) -> str:
 
     if observation.cvss4_vector:
         try:
-            observation.cvss4_score = CVSS4(observation.cvss4_vector).base_score
+            observation.cvss4_score = _to_cvss_score(CVSS4(observation.cvss4_vector).base_score)
         except CVSSError as e:
             logger.warning(
                 "Malformed CVSS4 vector %s for %s: %s", observation.cvss4_vector, observation.vulnerability_id, str(e)
@@ -250,12 +250,16 @@ def _normalize_vulnerability_ids(observation: Observation) -> None:
 
 
 def _normalize_cvss_scores(observation: Observation) -> None:
-    # Parsers deliver the scores as float or string, the database returns them as Decimal with one decimal place.
-    # Without the conversion, an unchanged score would be detected as a change.
     if observation.cvss3_score is not None:
-        observation.cvss3_score = Decimal(str(observation.cvss3_score)).quantize(Decimal("0.1"))
+        observation.cvss3_score = _to_cvss_score(observation.cvss3_score)
     if observation.cvss4_score is not None:
-        observation.cvss4_score = Decimal(str(observation.cvss4_score)).quantize(Decimal("0.1"))
+        observation.cvss4_score = _to_cvss_score(observation.cvss4_score)
+
+
+def _to_cvss_score(value: Decimal | float | int | str) -> Decimal:
+    # Parsers and the CVSS 4 calculator deliver float or string, the database returns Decimal with one decimal place.
+    # Without the conversion, an unchanged score would be detected as a change.
+    return Decimal(str(value)).quantize(Decimal("0.1"))
 
 
 def _normalize_cvss_vectors(observation: Observation) -> None:

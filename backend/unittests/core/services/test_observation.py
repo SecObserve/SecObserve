@@ -159,6 +159,21 @@ class TestObservation(BaseTestCase):
         )
         self.assertEqual(Severity.SEVERITY_NONE, get_current_severity(observation))
 
+    def test_get_current_severity_scores_from_vectors_are_decimal(self):
+        observation = Observation(
+            title="cvss_vectors",
+            cvss3_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            cvss4_vector="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+        )
+
+        get_current_severity(observation)
+
+        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
+        self.assertIsInstance(observation.cvss3_score, Decimal)
+        # The CVSS 4 calculator delivers a float
+        self.assertEqual(Decimal("9.3"), observation.cvss4_score)
+        self.assertIsInstance(observation.cvss4_score, Decimal)
+
     def test_get_current_severity_cvss4_critical(self):
         observation = Observation(
             title="parser_severity",
