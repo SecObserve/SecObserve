@@ -1,8 +1,13 @@
+from decimal import Decimal
 from unittest.mock import MagicMock, call, patch
 
 import jsonpickle
+from django.core.management import call_command
 
-from application.core.models import Observation, Product
+from application.core.models import Evidence, Observation, Product, Reference
+from application.import_observations.services.import_observations import (
+    _prefetch_references_and_evidences,
+)
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from application.rules.types import Rule_Type
@@ -185,3 +190,61 @@ class TestRuleEngine(BaseTestCase):
         product.save()
         rule_engine = Rule_Engine(product)
         self.assertTrue(_check_regex("v.+lue", "VALUE"))
+
+
+class TestRuleEngineRegoInput(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_input_only_database_fields(self, mock_rule, mock_rego_interpreter):
+        mock_rule.return_value = []
+        mock_rego_interpreter.return_value.query.return_value = {}
+
+        Reference.objects.create(observation_id=1, url="https://example.com/reference")
+        Evidence.objects.create(observation_id=1, name="evidence", evidence='{"finding": "raw scanner data"}')
+        # Read the same way as the import reads the observations, with prefetched references and evidences
+        observation = _prefetch_references_and_evidences(Observation.objects.filter(id=1)).get()
+        self.assertIn("references", observation._prefetched_objects_cache)
+        self.assertIn("evidences", observation._prefetched_objects_cache)
+        self.assertTrue(observation.references.all())
+        self.assertTrue(observation.evidences.all())
+        observation.cvss3_score = Decimal("9.8")
+        # Set by the parsers, not a database field
+        observation.unsaved_references = ["https://example.com/unsaved"]
+
+        rule = Rule(
+            id=1,
+            name="rego_rule",
+            type=Rule_Type.RULE_TYPE_REGO,
+            rego_module="package rule",
+        )
+        rule_engine = Rule_Engine(observation.product)
+
+        rule_engine.check_rule_for_observation(rule, observation, None, True)
+
+        mock_rego_interpreter.return_value.query.assert_called_once()
+        rego_input = mock_rego_interpreter.return_value.query.call_args.args[0]
+
+        expected_keys = {
+            field.attname
+            for field in Observation._meta.concrete_fields
+            if getattr(observation, field.attname) is not None and getattr(observation, field.attname) != ""
+        }
+        expected_keys.update(["product_name", "branch_name"])
+        if observation.origin_service:
+            expected_keys.add("origin_service_name")
+        self.assertEqual(expected_keys, set(rego_input.keys()))
+
+        self.assertEqual("db_observation_internal", rego_input["title"])
+        self.assertEqual(observation.product_id, rego_input["product_id"])
+        self.assertEqual(9.8, rego_input["cvss3_score"])
+        self.assertEqual(observation.product.name, rego_input["product_name"])
+        self.assertEqual(observation.branch.name, rego_input["branch_name"])
+        for key in ["_state", "_prefetched_objects_cache", "unsaved_references", "references", "evidences"]:
+            self.assertNotIn(key, rego_input)

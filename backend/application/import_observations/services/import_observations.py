@@ -321,6 +321,8 @@ def _process_data(  # pylint: disable=too-many-statements
     for observation_before_for_dict in observations_before_query:
         # One product instance for all observations, it collects the change timestamp of all their logs
         observation_before_for_dict.product = import_parameters.product
+        # The query filters by this branch, setting it saves reading it per observation, e.g. for Rego rules
+        observation_before_for_dict.branch = import_parameters.branch
         observations_before[observation_before_for_dict.identity_hash] = observation_before_for_dict
 
     # Only in a transaction, without one a crash could leave committed changes without a new change timestamp
