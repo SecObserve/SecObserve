@@ -364,15 +364,19 @@ class ObservationFilter(FilterSet):
         value: str,
     ) -> QuerySet:
         # name is used as a positional argument
-        # Most logs are auto approved, they would hide the status of the last assessment that needs approval
+        # Logs of imports, rules and VEX statements are auto approved, they would hide the status of the last
+        # assessment. Propagated assessments are auto approved as well, but they replace the previous assessment.
         last_status = (
             Observation_Log.objects.filter(observation=OuterRef("pk"))
-            .exclude(assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED)
+            .exclude(
+                assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+                propagated_from__isnull=True,
+            )
             .order_by("-created", "-id")
             .values("assessment_status")[:1]
         )
-        return queryset.annotate(last_non_auto_approved_assessment_status=Subquery(last_status)).filter(
-            last_non_auto_approved_assessment_status=value
+        return queryset.annotate(last_assessment_status_value=Subquery(last_status)).filter(
+            last_assessment_status_value=value
         )
 
 
