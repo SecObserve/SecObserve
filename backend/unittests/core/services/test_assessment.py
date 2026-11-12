@@ -436,6 +436,55 @@ class TestSaveAssessmentApprovalNotification(BaseTestCase):
         mock_send.assert_not_called()
 
 
+class TestSaveAssessmentExpiryDateApproval(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        product = Product.objects.get(pk=1)
+        product.assessments_need_approval = True
+        product.save()
+        self.expiry_date = timezone.now().date() + timedelta(days=30)
+        self.observation = Observation.objects.get(pk=4)
+        self.observation.assessment_status = Status.STATUS_RISK_ACCEPTED
+        self.observation.current_status = Status.STATUS_RISK_ACCEPTED
+        self.observation.risk_acceptance_expiry_date = self.expiry_date
+        self.observation.save()
+
+    def _save_assessment(self, new_risk_acceptance_expiry_date) -> Observation_Log:
+        save_assessment(
+            observation=self.observation,
+            new_severity=None,
+            new_status=None,
+            new_priority=None,
+            new_priority_changed=False,
+            comment="comment",
+            new_vex_justification=None,
+            new_vex_remediations=None,
+            new_risk_acceptance_expiry_date=new_risk_acceptance_expiry_date,
+        )
+        return Observation_Log.objects.filter(observation=self.observation).latest("id")
+
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_changed_expiry_date_needs_approval(self, _mock_send) -> None:
+        new_expiry_date = self.expiry_date + timedelta(days=365)
+
+        observation_log = self._save_assessment(new_expiry_date)
+
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL, observation_log.assessment_status)
+        self.assertEqual(new_expiry_date, observation_log.risk_acceptance_expiry_date)
+        self.observation.refresh_from_db()
+        self.assertEqual(self.expiry_date, self.observation.risk_acceptance_expiry_date)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.Rule_Engine")
+    def test_unchanged_expiry_date_is_auto_approved(self, *_mocks) -> None:
+        observation_log = self._save_assessment(self.expiry_date)
+
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED, observation_log.assessment_status)
+
+
 class TestAssessmentApprovalReceiptNotification(BaseTestCase):
     """The receipt for the author of the assessment is triggered by assessment_approval()."""
 
