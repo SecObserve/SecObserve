@@ -359,7 +359,7 @@ class Rule_Engine:
                 observation.current_status = get_current_status(observation)
 
                 if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-                    if simulation and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
+                    if observation_before and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
                         observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(
                             observation.product
                         )
