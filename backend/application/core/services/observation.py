@@ -334,7 +334,7 @@ def _normalize_origin_component(observation: Observation) -> None:  # pylint: di
     if observation.origin_component_purl_type is None:
         observation.origin_component_purl_type = ""
 
-    if not observation.origin_component:
+    if not observation.origin_component_id:
         component = Component(
             name=observation.origin_component_name,
             version=observation.origin_component_version,
