@@ -94,6 +94,10 @@ def save_assessment(  # pylint: disable=too-many-arguments
             or log_priority_changed
             or (log_vex_justification and log_vex_justification != observation.current_vex_justification)
             or (log_vex_remediations and log_vex_remediations != observation.current_vex_remediations)
+            or (
+                log_risk_acceptance_expiry_date
+                and (new_status or observation.current_status) == Status.STATUS_RISK_ACCEPTED
+            )
         )
         else Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED
     )
