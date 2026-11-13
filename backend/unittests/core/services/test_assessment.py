@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from typing import Optional
 from unittest.mock import patch
 
@@ -450,7 +450,7 @@ class TestSaveAssessmentExpiryDateApproval(BaseTestCase):
         self.observation.risk_acceptance_expiry_date = self.expiry_date
         self.observation.save()
 
-    def _save_assessment(self, new_risk_acceptance_expiry_date) -> Observation_Log:
+    def _save_assessment(self, new_risk_acceptance_expiry_date: Optional[date]) -> Observation_Log:
         save_assessment(
             observation=self.observation,
             new_severity=None,
@@ -483,6 +483,32 @@ class TestSaveAssessmentExpiryDateApproval(BaseTestCase):
         observation_log = self._save_assessment(self.expiry_date)
 
         self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED, observation_log.assessment_status)
+
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_removed_expiry_date_needs_approval(self, _mock_send) -> None:
+        observation_log = self._save_assessment(None)
+
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL, observation_log.assessment_status)
+        self.observation.refresh_from_db()
+        self.assertEqual(self.expiry_date, self.observation.risk_acceptance_expiry_date)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.user_is_allowed_assessment_approver", return_value=True)
+    @patch("application.core.services.assessment.get_current_user")
+    @patch("application.core.services.assessment.send_assessment_approval_notification")
+    def test_approved_removal_of_expiry_date(self, _mock_send, mock_user, *_mocks) -> None:
+        mock_user.return_value = User.objects.get(pk=2)
+        observation_log = self._save_assessment(None)
+
+        mock_user.return_value = User.objects.get(pk=3)
+        assessment_approval(observation_log, Assessment_Status.ASSESSMENT_STATUS_APPROVED, None, None, None, None)
+
+        self.observation.refresh_from_db()
+        self.assertIsNone(self.observation.risk_acceptance_expiry_date)
+        self.assertEqual(Status.STATUS_RISK_ACCEPTED, self.observation.current_status)
 
 
 class TestAssessmentApprovalReceiptNotification(BaseTestCase):

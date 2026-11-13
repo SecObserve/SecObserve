@@ -83,6 +83,10 @@ def save_assessment(  # pylint: disable=too-many-arguments
         and new_risk_acceptance_expiry_date != observation.risk_acceptance_expiry_date
         else None
     )
+    # Removing the expiry date makes the risk acceptance unlimited, which is a change as well
+    risk_acceptance_expiry_date_removed = (
+        not new_risk_acceptance_expiry_date and observation.risk_acceptance_expiry_date is not None
+    )
 
     assessment_status = (
         Assessment_Status.ASSESSMENT_STATUS_NEEDS_APPROVAL
@@ -95,7 +99,7 @@ def save_assessment(  # pylint: disable=too-many-arguments
             or (log_vex_justification and log_vex_justification != observation.current_vex_justification)
             or (log_vex_remediations and log_vex_remediations != observation.current_vex_remediations)
             or (
-                log_risk_acceptance_expiry_date
+                (log_risk_acceptance_expiry_date or risk_acceptance_expiry_date_removed)
                 and (new_status or observation.current_status) == Status.STATUS_RISK_ACCEPTED
             )
         )
