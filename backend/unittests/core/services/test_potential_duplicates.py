@@ -267,6 +267,23 @@ class TestWritePotentialDuplicates(BaseTestCase):
             {id_pair: duplicate_type for id_pair, (_, duplicate_type) in self._rows().items()},
         )
 
+    def test_unchanged_pairs_are_kept_when_others_change(self):
+        id_1, id_2, id_3 = self.observation_1.pk, self.observation_2.pk, self.observation_3.pk
+        component = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
+        source = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE
+        _write_potential_duplicates(self.observations, {(id_1, id_2): component, (id_1, id_3): component})
+        rows_before = self._rows()
+
+        _write_potential_duplicates(self.observations, {(id_1, id_2): source, (id_1, id_3): component})
+
+        rows_after = self._rows()
+        # The unchanged pair keeps its rows, the changed pair gets a new type
+        self.assertEqual(rows_before[(id_1, id_3)], rows_after[(id_1, id_3)])
+        self.assertEqual(rows_before[(id_3, id_1)], rows_after[(id_3, id_1)])
+        self.assertEqual(source, rows_after[(id_1, id_2)][1])
+        self.assertEqual(source, rows_after[(id_2, id_1)][1])
+        self.assertEqual(4, len(rows_after))
+
 
 class TestMatchDuplicateCandidates(BaseTestCase):
     def _candidate(self, id, **kwargs):

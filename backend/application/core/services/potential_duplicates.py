@@ -52,11 +52,11 @@ def find_potential_duplicates(product: Product, branch: Optional[Branch], servic
         with transaction.atomic():
             # The recalculations of a product also have to be serialized: an atomic block
             # alone does not exclude them from each other, so two tasks for the same scope
-            # would both delete the rows of their own snapshot and then insert the same pair
-            # twice, which violates the unique constraint. Waiting for the product row here,
-            # before the delete, makes the second task see what the first one has written.
-            # The lock is released with the transaction, so a worker that dies cannot leave
-            # it behind.
+            # would both compare against the existing rows of their own snapshot and then
+            # insert the same pair twice, which violates the unique constraint. Waiting for
+            # the product row here, before the existing rows are read, makes the second task
+            # see what the first one has written. The lock is released with the transaction,
+            # so a worker that dies cannot leave it behind.
             Product.objects.select_for_update().filter(pk=product.pk).first()
 
             _write_potential_duplicates(observations, duplicate_types)
@@ -143,8 +143,10 @@ def _write_potential_duplicates(observations: QuerySet[Observation], duplicate_t
         types_to_write[(observation_id_2, observation_id_1)] = duplicate_type
 
     # A re-import mostly finds the same pairs, so only the rows that have changed are deleted and inserted
-    existing_rows = Potential_Duplicate.objects.filter(observation__in=observations).values_list(
-        "id", "observation_id", "potential_duplicate_observation_id", "type"
+    existing_rows = (
+        Potential_Duplicate.objects.filter(observation__in=observations)
+        .values_list("id", "observation_id", "potential_duplicate_observation_id", "type")
+        .iterator(chunk_size=BULK_BATCH_SIZE)
     )
     obsolete_ids = []
     for potential_duplicate_id, observation_id, potential_duplicate_observation_id, duplicate_type in existing_rows:
