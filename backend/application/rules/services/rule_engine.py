@@ -115,8 +115,8 @@ class Rule_Engine:
 
         # Write observation and observation log if no rule was found but there was one before
         if not rule_fields_found and (
-            observation_before.general_rule != observation.general_rule
-            or observation_before.product_rule != observation.product_rule
+            observation_before.general_rule_id != observation.general_rule_id
+            or observation_before.product_rule_id != observation.product_rule_id
         ):
             _write_observation_log_no_rule(
                 observation, observation_before.product_rule, observation_before.general_rule
@@ -131,8 +131,8 @@ class Rule_Engine:
 
         # Write observation and observation log if no rule was found but there was one before
         if not rule_rego_found and (
-            observation_before.general_rule_rego != observation.general_rule_rego
-            or observation_before.product_rule_rego != observation.product_rule_rego
+            observation_before.general_rule_rego_id != observation.general_rule_rego_id
+            or observation_before.product_rule_rego_id != observation.product_rule_rego_id
         ):
             _write_observation_log_no_rule(
                 observation, observation_before.product_rule_rego, observation_before.general_rule_rego
@@ -195,8 +195,8 @@ class Rule_Engine:
             or observation_before.current_vex_justification != observation.current_vex_justification
             or observation_before.rule_vex_remediations != observation.rule_vex_remediations
             or observation_before.current_vex_remediations != observation.current_vex_remediations
-            or observation_before.general_rule != observation.general_rule
-            or observation_before.product_rule != observation.product_rule
+            or observation_before.general_rule_id != observation.general_rule_id
+            or observation_before.product_rule_id != observation.product_rule_id
         ):
             _write_observation_log(
                 observation=observation,
@@ -221,8 +221,8 @@ class Rule_Engine:
             or observation_before.current_vex_justification != observation.current_vex_justification
             or observation_before.rule_rego_vex_remediations != observation.rule_rego_vex_remediations
             or observation_before.current_vex_remediations != observation.current_vex_remediations
-            or observation_before.general_rule_rego != observation.general_rule_rego
-            or observation_before.product_rule_rego != observation.product_rule_rego
+            or observation_before.general_rule_rego_id != observation.general_rule_rego_id
+            or observation_before.product_rule_rego_id != observation.product_rule_rego_id
         ):
             _write_observation_log(
                 observation=observation,

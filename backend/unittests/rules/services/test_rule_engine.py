@@ -7,10 +7,10 @@ import jsonpickle
 from django.core.management import call_command
 
 from application.core.models import Evidence, Observation, Product, Reference
-from application.core.types import Status
+from application.core.types import Severity, Status
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
-from application.rules.types import Rule_Type
+from application.rules.types import Rule_Status, Rule_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -289,3 +289,32 @@ class TestRuleEngineRegoInput(BaseTestCase):
         self.assertEqual(observation.branch.name, rego_input["branch_name"])
         for key in ["_state", "_prefetched_objects_cache", "unsaved_references", "references", "evidences"]:
             self.assertNotIn(key, rego_input)
+
+
+class TestRuleEngineRuleIds(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_apply_rules_for_observation_unchanged_rule_not_loaded(self):
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        rule = Rule.objects.create(
+            name="general_rule",
+            title=f"^{observation.title}$",
+            new_severity=Severity.SEVERITY_LOW,
+            approval_status=Rule_Status.RULE_STATUS_AUTO_APPROVED,
+        )
+        rule_engine = Rule_Engine(observation.product)
+        rule_engine.rules = [rule]
+        rule_engine.apply_rules_for_observation(observation)
+
+        # Read from the database, an observation has only the id of its rule
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        with self.assertNumQueries(0):
+            rule_engine.apply_rules_for_observation(observation)
+
+        self.assertEqual(rule.pk, observation.general_rule_id)
+        self.assertEqual(Severity.SEVERITY_LOW, observation.current_severity)
