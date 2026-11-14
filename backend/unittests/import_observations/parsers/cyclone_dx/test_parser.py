@@ -282,3 +282,79 @@ b:1.0.0 --> a:1.0.0"""
             self.assertEqual(dependencies, license_components[0].component_dependencies)
             self.assertEqual("b", license_components[1].component_name)
             self.assertEqual(dependencies, license_components[1].component_dependencies)
+
+    def test_null_values_observations(self):
+        with open(path.dirname(__file__) + "/files/null_values.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            observations, scanner = parser_instance.get_observations(data, Product(name="product"), None)
+
+            self.assertEqual("scanner", scanner)
+            self.assertEqual(2, len(observations))
+
+            observation = observations[0]
+            self.assertEqual("CVE-0000-0001", observation.vulnerability_id)
+            self.assertEqual("Only a detail", observation.description)
+            self.assertEqual(Severity.SEVERITY_UNKNOWN, observation.parser_severity)
+            self.assertIsNone(observation.cvss3_score)
+            self.assertEqual("", observation.cvss3_vector)
+            self.assertIsNone(observation.cwe)
+            self.assertEqual("", observation.vulnerability_id_aliases)
+            self.assertEqual(["https://example.com/advisory"], observation.unsaved_references)
+            self.assertEqual("comp1", observation.origin_component_name)
+            self.assertEqual("1.0", observation.origin_component_version)
+            self.assertEqual("", observation.origin_component_type)
+            self.assertEqual("", observation.origin_component_purl)
+            self.assertEqual("", observation.origin_component_cpe)
+            self.assertEqual("", observation.origin_component_cyclonedx_bom_link)
+            self.assertEqual("root --> comp1:1.0", observation.origin_component_dependencies)
+
+            observation = observations[1]
+            self.assertEqual("CVE-0000-0003", observation.vulnerability_id)
+            self.assertEqual(Severity.SEVERITY_HIGH, observation.parser_severity)
+            self.assertEqual(79, observation.cwe)
+            self.assertEqual("", observation.origin_component_name)
+            self.assertEqual("", observation.origin_component_version)
+            self.assertEqual("Library", observation.origin_component_type)
+
+    def test_null_values_license_components(self):
+        with open(path.dirname(__file__) + "/files/null_values.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            license_components, scanner = parser_instance.get_license_components(data)
+
+            self.assertEqual("scanner", scanner)
+            self.assertEqual(3, len(license_components))
+
+            license_component = license_components[0]
+            self.assertEqual("root", license_component.component_name)
+            self.assertEqual("", license_component.component_version)
+            self.assertEqual([], license_component.unsaved_declared_licenses)
+
+            license_component = license_components[1]
+            self.assertEqual("comp1", license_component.component_name)
+            self.assertEqual(["MIT"], license_component.unsaved_declared_licenses)
+            self.assertEqual("root --> comp1:1.0", license_component.component_dependencies)
+
+            license_component = license_components[2]
+            self.assertEqual("", license_component.component_name)
+            self.assertEqual("", license_component.component_version)
+            self.assertEqual([], license_component.unsaved_declared_licenses)
+
+    def test_null_values_top_level(self):
+        with open(path.dirname(__file__) + "/files/null_values_top_level.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            observations, scanner = parser_instance.get_observations(data, Product(name="product"), None)
+            self.assertEqual("", scanner)
+            self.assertEqual([], observations)
+
+            license_components, scanner = parser_instance.get_license_components(data)
+            self.assertEqual("", scanner)
+            self.assertEqual([], license_components)

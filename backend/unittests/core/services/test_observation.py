@@ -1,4 +1,5 @@
 from copy import deepcopy
+from decimal import Decimal
 from unittest.mock import patch
 
 from application.core.models import Component, Observation, Service
@@ -157,6 +158,21 @@ class TestObservation(BaseTestCase):
             cvss3_score=0,
         )
         self.assertEqual(Severity.SEVERITY_NONE, get_current_severity(observation))
+
+    def test_get_current_severity_scores_from_vectors_are_decimal(self):
+        observation = Observation(
+            title="cvss_vectors",
+            cvss3_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            cvss4_vector="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+        )
+
+        get_current_severity(observation)
+
+        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
+        self.assertIsInstance(observation.cvss3_score, Decimal)
+        # The CVSS 4 calculator delivers a float
+        self.assertEqual(Decimal("9.3"), observation.cvss4_score)
+        self.assertIsInstance(observation.cvss4_score, Decimal)
 
     def test_get_current_severity_cvss4_critical(self):
         observation = Observation(
@@ -361,6 +377,25 @@ class TestObservation(BaseTestCase):
         normalize_observation_fields(after_observation)
         self.assertEqual(before_observation, after_observation)
 
+    def test_normalize_observation_fields_cvss_scores(self):
+        for score, expected in [
+            (9.8, Decimal("9.8")),
+            ("7.5", Decimal("7.5")),
+            (5, Decimal("5.0")),
+            (Decimal("7.25"), Decimal("7.2")),
+            (None, None),
+        ]:
+            with self.subTest(score=score):
+                observation = Observation(title="cvss", cvss3_score=score, cvss4_score=score)
+
+                normalize_observation_fields(observation)
+
+                self.assertEqual(expected, observation.cvss3_score)
+                self.assertEqual(expected, observation.cvss4_score)
+                if expected is not None:
+                    self.assertIsInstance(observation.cvss3_score, Decimal)
+                    self.assertIsInstance(observation.cvss4_score, Decimal)
+
     def test_normalize_observation_fields_origin_component_name_version_1(self):
         before_observation = Observation(title="empty", origin_component_name_version="component_name")
         after_observation = deepcopy(before_observation)
@@ -452,6 +487,25 @@ class TestObservation(BaseTestCase):
 
         self.assertEqual(component, observation.origin_component)
         self.assertEqual(components_before, Component.objects.count())
+
+    def test_normalize_observation_fields_existing_origin_component_not_loaded(self):
+        component = Component.objects.create(
+            identity_hash="identity_hash",
+            name="component_name",
+            version="component_version",
+            name_version="component_name:component_version",
+        )
+        # Read from the database, an observation has only the id of its component
+        observation = Observation(
+            title="empty",
+            origin_component_name_version="component_name:component_version",
+            origin_component_id=component.pk,
+        )
+
+        with self.assertNumQueries(0):
+            normalize_observation_fields(observation)
+
+        self.assertEqual(component.pk, observation.origin_component_id)
 
     def test_normalize_observation_fields_without_origin_component(self):
         observation = Observation(title="empty")

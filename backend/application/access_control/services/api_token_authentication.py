@@ -24,8 +24,13 @@ class APITokenAuthentication(BaseAuthentication):
         if len(authentication_header) > 2:
             raise AuthenticationFailed("Invalid token header: Token string should not contain spaces.")
 
-        auth_prefix = authentication_header[0].decode("UTF-8")
-        auth_token = authentication_header[1].decode("UTF-8")
+        try:
+            auth_prefix = authentication_header[0].decode("UTF-8")
+            auth_token = authentication_header[1].decode("UTF-8")
+        except UnicodeDecodeError as e:
+            raise AuthenticationFailed(
+                "Invalid token header: Token string should not contain invalid characters."
+            ) from e
 
         if auth_prefix.lower() != API_TOKEN_PREFIX.lower():
             # Authorization header is possibly for another backend

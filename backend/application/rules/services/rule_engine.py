@@ -115,8 +115,8 @@ class Rule_Engine:
 
         # Write observation and observation log if no rule was found but there was one before
         if not rule_fields_found and (
-            observation_before.general_rule != observation.general_rule
-            or observation_before.product_rule != observation.product_rule
+            observation_before.general_rule_id != observation.general_rule_id
+            or observation_before.product_rule_id != observation.product_rule_id
         ):
             _write_observation_log_no_rule(
                 observation, observation_before.product_rule, observation_before.general_rule
@@ -131,8 +131,8 @@ class Rule_Engine:
 
         # Write observation and observation log if no rule was found but there was one before
         if not rule_rego_found and (
-            observation_before.general_rule_rego != observation.general_rule_rego
-            or observation_before.product_rule_rego != observation.product_rule_rego
+            observation_before.general_rule_rego_id != observation.general_rule_rego_id
+            or observation_before.product_rule_rego_id != observation.product_rule_rego_id
         ):
             _write_observation_log_no_rule(
                 observation, observation_before.product_rule_rego, observation_before.general_rule_rego
@@ -195,8 +195,8 @@ class Rule_Engine:
             or observation_before.current_vex_justification != observation.current_vex_justification
             or observation_before.rule_vex_remediations != observation.rule_vex_remediations
             or observation_before.current_vex_remediations != observation.current_vex_remediations
-            or observation_before.general_rule != observation.general_rule
-            or observation_before.product_rule != observation.product_rule
+            or observation_before.general_rule_id != observation.general_rule_id
+            or observation_before.product_rule_id != observation.product_rule_id
         ):
             _write_observation_log(
                 observation=observation,
@@ -221,8 +221,8 @@ class Rule_Engine:
             or observation_before.current_vex_justification != observation.current_vex_justification
             or observation_before.rule_rego_vex_remediations != observation.rule_rego_vex_remediations
             or observation_before.current_vex_remediations != observation.current_vex_remediations
-            or observation_before.general_rule_rego != observation.general_rule_rego
-            or observation_before.product_rule_rego != observation.product_rule_rego
+            or observation_before.general_rule_rego_id != observation.general_rule_rego_id
+            or observation_before.product_rule_rego_id != observation.product_rule_rego_id
         ):
             _write_observation_log(
                 observation=observation,
@@ -242,7 +242,7 @@ class Rule_Engine:
     ) -> bool:
         service_name = observation.origin_service.name if observation.origin_service else ""
         if (  # pylint: disable=too-many-boolean-expressions
-            (not rule.parser or observation.parser == rule.parser)
+            (not rule.parser_id or observation.parser_id == rule.parser_id)
             and (not rule.scanner_prefix or observation.scanner.lower().startswith(rule.scanner_prefix.lower()))
             and _check_regex(rule.title, observation.title)
             and _check_regex(rule.description_observation, observation.description)
@@ -289,7 +289,7 @@ class Rule_Engine:
             else:
                 observation.risk_acceptance_expiry_date = None
 
-            if rule.product:
+            if rule.product_id:
                 observation.product_rule = rule
             else:
                 observation.general_rule = rule
@@ -305,7 +305,7 @@ class Rule_Engine:
         observation_before: Optional[Observation],
         simulation: Optional[bool] = False,
     ) -> bool:
-        if (rule.parser and observation.parser != rule.parser) or (
+        if (rule.parser_id and observation.parser_id != rule.parser_id) or (
             rule.scanner_prefix and not observation.scanner.lower().startswith(rule.scanner_prefix.lower())
         ):
             return False
@@ -314,9 +314,15 @@ class Rule_Engine:
         jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
         jsonpickle_backend.set_preferred_backend("simplejson")
 
+        # Only the database fields are given to the rule. The instance carries Django internals as well, e.g. the
+        # related objects in _state or prefetched related objects. jsonpickle would serialize them completely,
+        # for prefetched references and evidences this can mean several MB per observation.
+        observation_state = {
+            field.attname: getattr(observation, field.attname) for field in Observation._meta.concrete_fields
+        }
         observation_dict = json.loads(
             jsonpickle.dumps(
-                observation,
+                observation_state,
                 unpicklable=False,
                 use_decimal=True,
                 backend=jsonpickle_backend,
@@ -353,7 +359,7 @@ class Rule_Engine:
                 observation.current_status = get_current_status(observation)
 
                 if observation.current_status == Status.STATUS_RISK_ACCEPTED:
-                    if simulation and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
+                    if observation_before and observation_before.current_status != Status.STATUS_RISK_ACCEPTED:
                         observation.risk_acceptance_expiry_date = calculate_risk_acceptance_expiry_date(
                             observation.product
                         )
@@ -368,7 +374,7 @@ class Rule_Engine:
                 observation.rule_rego_vex_remediations = rule.new_vex_remediations
                 observation.current_vex_remediations = get_current_vex_remediations(observation)
 
-            if rule.product:
+            if rule.product_id:
                 observation.product_rule_rego = rule
             else:
                 observation.general_rule_rego = rule
@@ -430,15 +436,15 @@ def _write_observation_log(
     if rule.description:
         comment = rule.description
     else:
-        if rule.product:
+        if rule.product_id:
             comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE}{rule.name}"
         else:
             comment = f"{Observation_Log_Comment.COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE}{rule.name}"
 
-    general_rule = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
-    general_rule_rego = rule if rule.product is None and rule.type == Rule_Type.RULE_TYPE_REGO else None
-    product_rule = rule if rule.product and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
-    product_rule_rego = rule if rule.product and rule.type == Rule_Type.RULE_TYPE_REGO else None
+    general_rule = rule if rule.product_id is None and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
+    general_rule_rego = rule if rule.product_id is None and rule.type == Rule_Type.RULE_TYPE_REGO else None
+    product_rule = rule if rule.product_id and rule.type == Rule_Type.RULE_TYPE_FIELDS else None
+    product_rule_rego = rule if rule.product_id and rule.type == Rule_Type.RULE_TYPE_REGO else None
 
     create_observation_log(
         observation=observation,

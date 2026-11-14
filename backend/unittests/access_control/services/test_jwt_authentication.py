@@ -91,6 +91,17 @@ class TestJWTAuthentication(BaseTestCase):
             str(e.exception),
         )
 
+    def test_authenticate_invalid_header_not_utf8(self):
+        request = HttpRequest()
+        request.META["HTTP_AUTHORIZATION"] = b"JWT \xff"
+        with self.assertRaises(AuthenticationFailed) as e:
+            JWTAuthentication().authenticate(request)
+
+        self.assertEqual(
+            "Invalid token header: Token string should not contain invalid characters.",
+            str(e.exception),
+        )
+
     def test_authenticate_wrong_header(self):
         request = HttpRequest()
         request.META["HTTP_AUTHORIZATION"] = b"header token"

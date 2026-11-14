@@ -4,6 +4,8 @@ import { queryClient } from "../../commons/queryClient";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { oidc_signed_in, oidc_signin_again, userManager } from "./oidc";
 
+const TOO_MANY_LOGIN_ATTEMPTS = "Too many login attempts, try again later";
+
 let _isLoggingOut = false;
 export function getIsLoggingOut(): boolean {
     return _isLoggingOut;
@@ -23,6 +25,9 @@ const authProvider: AuthProvider = {
             });
             return fetch(request)
                 .then((response) => {
+                    if (response.status === 429) {
+                        throw new Error(TOO_MANY_LOGIN_ATTEMPTS);
+                    }
                     if (response.status < 200 || response.status >= 300) {
                         throw new Error(response.statusText);
                     }
@@ -36,6 +41,8 @@ const authProvider: AuthProvider = {
                 .catch((error) => {
                     if (error.message == "Forbidden") {
                         throw new Error("Invalid credentials");
+                    } else if (error.message == TOO_MANY_LOGIN_ATTEMPTS) {
+                        throw error;
                     } else {
                         throw new Error("Network error");
                     }

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import call, patch
 
 from django.core.files.base import File
@@ -17,6 +18,7 @@ from application.core.models import (
     Reference,
     Service,
 )
+from application.core.services.observation import get_current_severity
 from application.core.types import Severity, Status
 from application.import_observations.models import (
     Api_Configuration,
@@ -30,7 +32,9 @@ from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
     _deduplicate_cross_scanner,
+    _get_field_values,
     _resolve_unimported_observations,
+    _save_changed_fields,
     api_import_observations,
     file_upload_observations,
     process_license_components,
@@ -298,6 +302,91 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
     @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_unchanged_only_import_last_seen(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertTrue(observation_updates)
+        for observation_update in observation_updates:
+            self.assertTrue(
+                observation_update.startswith('UPDATE "core_observation" SET "import_last_seen" = '),
+                observation_update,
+            )
+            self.assertNotIn('"modified"', observation_update)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_changed_fields_and_modified(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        observation_ids = list(Observation.objects.filter(product=product).values_list("pk", flat=True))
+        Observation.objects.filter(pk__in=observation_ids).update(description="old description")
+        modified_before = {
+            observation.pk: observation.modified for observation in Observation.objects.filter(pk__in=observation_ids)
+        }
+
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual(len(observation_updates), len(observation_ids))
+        for observation_update in observation_updates:
+            self.assertIn('"description" = ', observation_update)
+            self.assertIn('"import_last_seen" = ', observation_update)
+            self.assertIn('"modified" = ', observation_update)
+            self.assertNotIn('"title" = ', observation_update)
+
+        for observation in Observation.objects.filter(pk__in=observation_ids):
+            self.assertNotEqual("old description", observation.description)
+            self.assertGreater(observation.modified, modified_before[observation.pk])
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_product_timestamp_only(
         self,
         mock_apply_vex_statements_for_observation,
@@ -410,6 +499,86 @@ class TestFileUploadObservations(BaseTestCase):
             self.assertTrue(
                 product_update.startswith('UPDATE "core_product" SET "last_observation_change" = '), product_update
             )
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_references_and_evidences_queries(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        # New observations: nothing to compare with, only inserted
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 0, table)
+            self.assertEqual(len(self._table_queries(context, "DELETE", table)), 0, table)
+            self.assertTrue(self._table_queries(context, "INSERT", table), table)
+
+        references_before = list(Reference.objects.filter(observation__product=product).values_list("id", "url"))
+        evidences_before = list(Evidence.objects.filter(observation__product=product).values_list("id", "evidence"))
+        self.assertTrue(references_before)
+        self.assertTrue(evidences_before)
+
+        # Unchanged observations: one prefetch for all of them, nothing rewritten
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+            self.assertEqual(len(self._table_queries(context, "DELETE", table)), 0, table)
+            self.assertEqual(len(self._table_queries(context, "INSERT", table)), 0, table)
+
+        evidence_select = self._table_queries(context, "SELECT", "core_evidence")[0]
+        # Only the hash of the evidence is read, not the evidence itself
+        self.assertNotIn('"core_evidence"."evidence",', evidence_select)
+        self.assertNotIn('"core_evidence"."evidence" FROM', evidence_select)
+        self.assertIn('MD5("core_evidence"."evidence")', evidence_select)
+        self.assertEqual(
+            references_before,
+            list(Reference.objects.filter(observation__product=product).values_list("id", "url")),
+        )
+        self.assertEqual(
+            evidences_before,
+            list(Evidence.objects.filter(observation__product=product).values_list("id", "evidence")),
+        )
+
+        # Changed and resolved observations: still one prefetch for all of them
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+
+    def _table_queries(self, context, statement, table):
+        prefixes = {
+            "SELECT": "SELECT ",
+            "DELETE": f'DELETE FROM "{table}"',
+            "INSERT": f'INSERT INTO "{table}"',
+        }
+        return [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith(prefixes[statement])
+            and (statement != "SELECT" or f'FROM "{table}"' in query["sql"])
+        ]
 
     def _product_updates(self, context):
         return [query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_product"')]
@@ -1657,6 +1826,54 @@ class TestDeduplicateCrossScanner(BaseTestCase):
         self.assertFalse(result)
         mock_filter.assert_called_once()
         mock_filter_instance.exclude.assert_called_once()
+
+
+class TestSaveChangedFields(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_unchanged_float_cvss_score_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss3_score = Decimal("9.8")
+        observation.cvss3_vector = ""
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = _get_field_values(observation)
+        # Parsers deliver the score as float, e.g. from JSON
+        observation.cvss3_score = 9.8
+
+        with CaptureQueriesContext(connection) as context:
+            _save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
+
+    def test_unchanged_cvss4_vector_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss4_vector = "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = _get_field_values(observation)
+        # Calculates the score from the vector, like _process_current_observation does
+        get_current_severity(observation)
+
+        with CaptureQueriesContext(connection) as context:
+            _save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.3"), observation.cvss4_score)
 
 
 class TestResolveUnimportedObservations(BaseTestCase):

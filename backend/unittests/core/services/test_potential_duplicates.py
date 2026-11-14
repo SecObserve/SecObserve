@@ -1,10 +1,13 @@
 from os import path
 from unittest.mock import call, patch
 
+from django.utils import timezone
+
 from application.core.models import Observation, Potential_Duplicate, Product
 from application.core.services.potential_duplicates import (
     DuplicateCandidate,
     _match_duplicate_candidates,
+    _write_potential_duplicates,
     find_potential_duplicates,
     set_potential_duplicate,
     set_potential_duplicate_both_ways,
@@ -212,6 +215,74 @@ class TestFindPotentialDuplicatesLocking(BaseTestCase):
         find_potential_duplicates.call_local(product, None, None)
 
         self.assertEqual(["lock", "write"], order)
+
+
+class TestWritePotentialDuplicates(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        product = Product.objects.create(name="product_for_writing")
+        parser = Parser.objects.create(name="parser_for_writing", type="SCA", source="File")
+        self.observation_1, self.observation_2, self.observation_3 = [
+            Observation.objects.create(
+                product=product, parser=parser, title=f"observation_{number}", import_last_seen=timezone.now()
+            )
+            for number in range(3)
+        ]
+        self.observations = Observation.objects.filter(product=product)
+
+    def _rows(self) -> dict[tuple[int, int], tuple[int, str]]:
+        return {
+            (row.observation_id, row.potential_duplicate_observation_id): (row.pk, row.type)
+            for row in Potential_Duplicate.objects.filter(observation__in=self.observations)
+        }
+
+    def test_unchanged_pairs_are_kept(self):
+        duplicate_types = {
+            (self.observation_1.pk, self.observation_2.pk): Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
+        }
+        _write_potential_duplicates(self.observations, duplicate_types)
+        rows_before = self._rows()
+
+        # Only the existing rows are read
+        with self.assertNumQueries(1):
+            _write_potential_duplicates(self.observations, duplicate_types)
+
+        self.assertEqual(rows_before, self._rows())
+
+    def test_changed_pairs_are_rewritten(self):
+        id_1, id_2, id_3 = self.observation_1.pk, self.observation_2.pk, self.observation_3.pk
+        component = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
+        source = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE
+        _write_potential_duplicates(self.observations, {(id_1, id_2): component, (id_1, id_3): component})
+
+        _write_potential_duplicates(self.observations, {(id_1, id_2): source, (id_2, id_3): component})
+
+        self.assertEqual(
+            {
+                (id_1, id_2): source,
+                (id_2, id_1): source,
+                (id_2, id_3): component,
+                (id_3, id_2): component,
+            },
+            {id_pair: duplicate_type for id_pair, (_, duplicate_type) in self._rows().items()},
+        )
+
+    def test_unchanged_pairs_are_kept_when_others_change(self):
+        id_1, id_2, id_3 = self.observation_1.pk, self.observation_2.pk, self.observation_3.pk
+        component = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_COMPONENT
+        source = Potential_Duplicate.POTENTIAL_DUPLICATE_TYPE_SOURCE
+        _write_potential_duplicates(self.observations, {(id_1, id_2): component, (id_1, id_3): component})
+        rows_before = self._rows()
+
+        _write_potential_duplicates(self.observations, {(id_1, id_2): source, (id_1, id_3): component})
+
+        rows_after = self._rows()
+        # The unchanged pair keeps its rows, the changed pair gets a new type
+        self.assertEqual(rows_before[(id_1, id_3)], rows_after[(id_1, id_3)])
+        self.assertEqual(rows_before[(id_3, id_1)], rows_after[(id_3, id_1)])
+        self.assertEqual(source, rows_after[(id_1, id_2)][1])
+        self.assertEqual(source, rows_after[(id_2, id_1)][1])
+        self.assertEqual(4, len(rows_after))
 
 
 class TestMatchDuplicateCandidates(BaseTestCase):

@@ -37,7 +37,7 @@ def has_oidc_bearer_header(request: Request) -> bool:
     if len(auth) != 2:
         return False
 
-    return auth[0].decode("UTF-8").lower() == OIDC_PREFIX.lower()
+    return auth[0].lower() == OIDC_PREFIX.lower().encode()
 
 
 def get_freshly_authenticated_oidc_user(request: Request) -> tuple[User, dict]:
