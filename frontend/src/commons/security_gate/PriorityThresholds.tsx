@@ -1,12 +1,18 @@
 import { Chip, Stack, Typography } from "@mui/material";
-import { ArrayInput, Labeled, NumberInput, SimpleFormIterator, useRecordContext } from "react-admin";
+import { ArrayInput, ArrayInputProps, Labeled, NumberInput, SimpleFormIterator, useRecordContext } from "react-admin";
 
 import { validate_required_0_999999, validate_required_1_99 } from "../custom_validators";
 
 export type PriorityThreshold = { priority: number; threshold: number };
 
-export const PriorityThresholdsInput = () => (
-    <ArrayInput source="security_gate_priority_thresholds" label="Thresholds per priority">
+type PriorityThresholdsInputProps = Pick<ArrayInputProps, "label" | "helperText" | "sx">;
+
+export const PriorityThresholdsInput = ({
+    label = "Thresholds per priority",
+    helperText,
+    sx,
+}: PriorityThresholdsInputProps) => (
+    <ArrayInput source="security_gate_priority_thresholds" label={label} helperText={helperText} sx={sx}>
         <SimpleFormIterator inline>
             <NumberInput
                 source="priority"
