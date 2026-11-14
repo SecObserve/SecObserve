@@ -488,6 +488,25 @@ class TestObservation(BaseTestCase):
         self.assertEqual(component, observation.origin_component)
         self.assertEqual(components_before, Component.objects.count())
 
+    def test_normalize_observation_fields_existing_origin_component_not_loaded(self):
+        component = Component.objects.create(
+            identity_hash="identity_hash",
+            name="component_name",
+            version="component_version",
+            name_version="component_name:component_version",
+        )
+        # Read from the database, an observation has only the id of its component
+        observation = Observation(
+            title="empty",
+            origin_component_name_version="component_name:component_version",
+            origin_component_id=component.pk,
+        )
+
+        with self.assertNumQueries(0):
+            normalize_observation_fields(observation)
+
+        self.assertEqual(component.pk, observation.origin_component_id)
+
     def test_normalize_observation_fields_without_origin_component(self):
         observation = Observation(title="empty")
         components_before = Component.objects.count()

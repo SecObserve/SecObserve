@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from django.db.models import Q, QuerySet
+from django.db.models import OuterRef, Q, QuerySet, Subquery
 from django_filters import (
     BooleanFilter,
     CharFilter,
@@ -33,7 +33,7 @@ from application.core.models import (
 )
 from application.core.queries.observation import filter_observations_full_text
 from application.core.queries.product import get_default_branch_filter
-from application.core.types import Severity, Status
+from application.core.types import Assessment_Status, Severity, Status
 from application.licenses.models import License_Component
 
 
@@ -227,6 +227,14 @@ class ObservationFilter(FilterSet):
     created = DateTimeFromToRangeFilter(field_name="created")
     last_observation_log = DateTimeFromToRangeFilter(field_name="last_observation_log")
     assessed = BooleanFilter(field_name="last_assessment", lookup_expr="isnull", exclude=True)
+    last_assessment_status = ChoiceFilter(
+        method="get_last_assessment_status",
+        choices=[
+            choice
+            for choice in Assessment_Status.ASSESSMENT_STATUS_CHOICES
+            if choice[0] != Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED
+        ],
+    )
     product_group = ModelChoiceFilter(
         field_name="product__product_group",
         queryset=Product.objects.filter(is_product_group=True),
@@ -348,6 +356,28 @@ class ObservationFilter(FilterSet):
         if not is_full_text_search_available():
             raise ValidationError("Full text search is not activated")
         return filter_observations_full_text(queryset, value)
+
+    def get_last_assessment_status(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: str,
+    ) -> QuerySet:
+        # name is used as a positional argument
+        # Logs of imports, rules and VEX statements are auto approved, they would hide the status of the last
+        # assessment. Propagated assessments are auto approved as well, but they replace the previous assessment.
+        last_status = (
+            Observation_Log.objects.filter(observation=OuterRef("pk"))
+            .exclude(
+                assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+                propagated_from__isnull=True,
+            )
+            .order_by("-created", "-id")
+            .values("assessment_status")[:1]
+        )
+        return queryset.annotate(last_assessment_status_value=Subquery(last_status)).filter(
+            last_assessment_status_value=value
+        )
 
 
 class ObservationLogFilter(FilterSet):
