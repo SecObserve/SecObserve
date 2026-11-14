@@ -120,6 +120,15 @@ class TestBranchSerializerSecurityGate(BaseTestCase):
 
         self.assertIsNone(BranchSerializer().get_security_gate_passed(self.branch_1))
 
+    @patch("application.core.services.security_gate.get_priority_counts", return_value={1: 1})
+    def test_security_gate_failed_on_priority(self, get_priority_counts_mock):
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_priority_thresholds = [{"priority": 1, "threshold": 0}]
+        self._annotate(self.branch_1)
+
+        self.assertFalse(BranchSerializer().get_security_gate_passed(self.branch_1))
+        get_priority_counts_mock.assert_called_once_with(self.branch_1)
+
 
 class TestBranchSerializer(BaseTestCase):
     @patch("application.core.api.serializers_product.is_user_designated_assessment_approver")
@@ -307,6 +316,50 @@ class TestBranchSerializer(BaseTestCase):
         self.assertEqual(0, data["security_gate_threshold_low"])
         self.assertEqual(0, data["security_gate_threshold_none"])
         self.assertEqual(0, data["security_gate_threshold_unknown"])
+
+    @patch("application.core.api.serializers_product.get_product_member")
+    def test_validate_security_gate_active_copies_priority_thresholds(self, mock_product_member):
+        settings = Settings.load()
+        settings.security_gate_priority_thresholds = [{"priority": 1, "threshold": 0}]
+        settings.save()
+        data = ProductSerializer().validate({"security_gate_active": True})
+        self.assertEqual(data["security_gate_priority_thresholds"], [{"priority": 1, "threshold": 0}])
+        self.assertIsNot(data["security_gate_priority_thresholds"], settings.security_gate_priority_thresholds)
+
+    def test_validate_security_gate_inactive_clears_priority_thresholds(self):
+        data = ProductSerializer().validate(
+            {"security_gate_active": False, "security_gate_priority_thresholds": [{"priority": 1, "threshold": 0}]}
+        )
+        self.assertIsNone(data["security_gate_priority_thresholds"])
+
+    def test_validate_priority_thresholds_rejects_invalid(self):
+        with self.assertRaisesRegex(ValidationError, "Priority 1 is listed twice"):
+            ProductSerializer().validate(
+                {
+                    "security_gate_active": True,
+                    "security_gate_priority_thresholds": [
+                        {"priority": 1, "threshold": 0},
+                        {"priority": 1, "threshold": 1},
+                    ],
+                }
+            )
+
+    def test_validate_priority_thresholds_sorted_and_partial_update_keeps_stored(self):
+        data = ProductSerializer().validate(
+            {
+                "security_gate_active": True,
+                "security_gate_priority_thresholds": [
+                    {"priority": 2, "threshold": 1},
+                    {"priority": 1, "threshold": 0},
+                ],
+            }
+        )
+        self.assertEqual([pair["priority"] for pair in data["security_gate_priority_thresholds"]], [1, 2])
+
+        self.product_1.security_gate_active = True
+        self.product_1.security_gate_priority_thresholds = [{"priority": 1, "threshold": 0}]
+        data = ProductSerializer(self.product_1, partial=True).validate({"name": "renamed"})
+        self.assertNotIn("security_gate_priority_thresholds", data)
 
     def test_validate_repository_prefix_empty(self):
         product = Product()

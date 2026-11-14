@@ -13,6 +13,9 @@ from rest_framework.serializers import (
 )
 
 from application.commons.models import Settings
+from application.commons.services.security_gate_priority_thresholds import (
+    normalize_security_gate_priority_thresholds,
+)
 from application.core.types import Status
 
 
@@ -91,7 +94,19 @@ class SettingsSerializer(ModelSerializer):
             if errors:
                 raise ValidationError(errors)
 
+        self._validate_security_gate_priority_thresholds(attrs)
+
         return attrs
+
+    def _validate_security_gate_priority_thresholds(self, attrs: dict) -> None:
+        try:
+            priority_thresholds = normalize_security_gate_priority_thresholds(
+                self._current_value(attrs, "security_gate_priority_thresholds")
+            )
+        except ValueError as error:
+            raise ValidationError(str(error)) from error
+        if "security_gate_priority_thresholds" in attrs:
+            attrs["security_gate_priority_thresholds"] = priority_thresholds
 
     def _current_value(self, attrs: dict, field: str) -> Any:
         # A partial update doesn't contain all fields, then the stored value is relevant

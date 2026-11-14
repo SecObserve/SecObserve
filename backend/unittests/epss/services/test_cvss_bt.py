@@ -125,7 +125,7 @@ class TestCVSS_BT(BaseTestCase):
 
         # with feature_exploit_information = True
 
-        import_cvss_bt()
+        _, changed = import_cvss_bt()
 
         mock_requests_get.assert_called_with(
             "https://raw.githubusercontent.com/t0sche/cvss-bt/refs/heads/main/cvss-bt.csv", timeout=300, stream=True
@@ -180,6 +180,15 @@ class TestCVSS_BT(BaseTestCase):
         observation = Observation.objects.get(title="no change")
         self.assertEqual("", observation.cve_found_in)
 
+        self.assertEqual(
+            set(
+                Observation.objects.filter(product=product)
+                .exclude(title__in=["too old", "no change"])
+                .values_list("pk", flat=True)
+            ),
+            set(changed),
+        )
+
         # with feature_exploit_information = False
 
         settings = Settings.load()
@@ -204,6 +213,15 @@ class TestCVSS_BT(BaseTestCase):
 
         observation = Observation.objects.get(title="poc_github")
         self.assertEqual("", observation.cve_found_in)
+
+    @patch("application.epss.services.cvss_bt.requests.get")
+    def test_import_cvss_bt_invalid_first_row_returns_no_pks(self, mock_requests_get) -> None:
+        mock_requests_get.return_value.iter_lines.return_value = [b"cve,epss"]
+
+        with self.assertLogs("secobserve.epss", level="ERROR"):
+            result = import_cvss_bt()
+
+        self.assertEqual(("Error: First row of cvss-bt CSV is not valid.", []), result)
 
     def test_apply_exploit_information_observations_without_query_per_observation(self) -> None:
         parser = Parser(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)
@@ -231,9 +249,9 @@ class TestCVSS_BT(BaseTestCase):
         # Observations, their exploit information, the update, the change timestamp of the products and the
         # empty next batch. A field missing in EXPLOIT_INFORMATION_FIELDS would add one query per observation.
         with self.assertNumQueries(5):
-            num_observations = apply_exploit_information_observations(settings)
+            changed = apply_exploit_information_observations(settings)
 
-        self.assertEqual(3, num_observations)
+        self.assertEqual(sorted(Observation.objects.filter(product=product).values_list("pk", flat=True)), changed)
         for observation in Observation.objects.filter(product=product):
             self.assertEqual("CISA KEV", observation.cve_found_in)
             self.assertEqual("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", observation.cvss3_vector)

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from typing import Any
 
 from dirtyfields import DirtyFieldsMixin
@@ -5,7 +6,9 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     BooleanField,
     CharField,
+    DecimalField,
     IntegerField,
+    JSONField,
     Model,
     TextField,
 )
@@ -48,6 +51,12 @@ class Settings(Model, DirtyFieldsMixin):
         default=99999,
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Number of unknown observations that must not be exceeded",
+    )
+    security_gate_priority_thresholds = JSONField(
+        default=list,
+        blank=True,
+        help_text="Thresholds per priority as a list of {priority, threshold}, "
+        "applied in addition to the thresholds per severity",
     )
 
     jwt_validity_duration_user = IntegerField(
@@ -254,6 +263,16 @@ class Settings(Model, DirtyFieldsMixin):
         default=10,
         validators=[MinValueValidator(0), MaxValueValidator(999999)],
         help_text="Maximum age of CVEs for enrichment in years",
+    )
+    feature_apply_rules_after_epss_import = BooleanField(
+        default=False, help_text="Apply rules again after the EPSS and cvss-bt import"
+    )
+    apply_rules_epss_step = DecimalField(
+        max_digits=6,
+        decimal_places=3,
+        default=Decimal(1),
+        validators=[MinValueValidator(Decimal("0.001")), MaxValueValidator(Decimal(100))],
+        help_text="Steps of the EPSS score and percentile in percentage points; crossing one applies the rules again",
     )
     periodic_task_max_entries = IntegerField(
         default=10,

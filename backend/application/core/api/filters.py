@@ -32,7 +32,11 @@ from application.core.models import (
     Service,
 )
 from application.core.queries.observation import filter_observations_full_text
-from application.core.queries.product import get_default_branch_filter
+from application.core.queries.product import (
+    get_default_branch_filter,
+    get_product_by_id,
+)
+from application.core.services.security_gate import get_security_gate_failing_filter
 from application.core.types import Assessment_Status, Severity, Status
 from application.licenses.models import License_Component
 
@@ -242,6 +246,7 @@ class ObservationFilter(FilterSet):
     cve_known_exploited = BooleanFilter(field_name="cve_known_exploited", method="get_cve_known_exploited")
     default_branch = BooleanFilter(method="get_default_branch")
     full_text_search = CharFilter(method="get_full_text_search")
+    fails_security_gate = BooleanFilter(method="get_fails_security_gate")
 
     ordering = ExtendedOrderingFilter(
         # tuple-mapping retains order
@@ -356,6 +361,29 @@ class ObservationFilter(FilterSet):
         if not is_full_text_search_available():
             raise ValidationError("Full text search is not activated")
         return filter_observations_full_text(queryset, value)
+
+    def get_fails_security_gate(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Optional[bool],
+    ) -> QuerySet:
+        # name is used as a positional argument
+        product_id = self.data.get("product")
+        if value is None or not product_id:
+            return queryset
+
+        product = get_product_by_id(product_id)
+        if not product:
+            return queryset.none()
+
+        failing_filter = get_security_gate_failing_filter(product)
+        if failing_filter is None:
+            # Without a security gate, no observation fails it
+            return queryset.none() if value else queryset
+        if value:
+            return queryset.filter(failing_filter)
+        return queryset.exclude(failing_filter)
 
     def get_last_assessment_status(
         self,

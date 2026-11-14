@@ -38,7 +38,7 @@ EXPLOIT_INFORMATION_FIELDS = (
 )
 
 
-def import_cvss_bt() -> str:
+def import_cvss_bt() -> tuple[str, list[int]]:
     response = requests.get(  # nosec B113
         # This is a false positive, there is a timeout of 5 minutes
         "https://raw.githubusercontent.com/t0sche/cvss-bt/refs/heads/main/cvss-bt.csv",
@@ -60,7 +60,7 @@ def import_cvss_bt() -> str:
     for row in reader:
         if first_row:
             if not _check_first_row(row):
-                return "Error: First row of cvss-bt CSV is not valid."
+                return "Error: First row of cvss-bt CSV is not valid.", []
 
             Exploit_Information.objects.all().delete()
 
@@ -100,12 +100,12 @@ def import_cvss_bt() -> str:
     if exploit_information_list:
         Exploit_Information.objects.bulk_create(exploit_information_list)
 
-    num_observations = apply_exploit_information_observations(settings)
+    changed = apply_exploit_information_observations(settings)
 
     return (
         f"Imported {num_exploit_informations} exploit information entries.\n"
-        + f"Applied exploit information to {num_observations} observations."
-    )
+        + f"Applied exploit information to {len(changed)} observations."
+    ), changed
 
 
 def _check_first_row(row: list[str]) -> bool:
@@ -150,8 +150,8 @@ def _get_year_from_cve(cve: str) -> Optional[int]:
     return int(cve_year)
 
 
-def apply_exploit_information_observations(settings: Settings) -> int:
-    num_observations = 0
+def apply_exploit_information_observations(settings: Settings) -> list[int]:
+    changed: list[int] = []
 
     for observations in batched_cve_observations(EXPLOIT_INFORMATION_FIELDS):
         exploit_informations = get_exploit_information_by_cves(
@@ -162,7 +162,7 @@ def apply_exploit_information_observations(settings: Settings) -> int:
             for observation in observations
             if apply_exploit_information(observation, settings, exploit_informations)
         ]
-        num_observations += len(updates)
+        changed += [observation.pk for observation in updates]
 
         Observation.objects.bulk_update(
             updates,
@@ -181,7 +181,7 @@ def apply_exploit_information_observations(settings: Settings) -> int:
             last_observation_change=timezone.now()
         )
 
-    return num_observations
+    return changed
 
 
 def apply_exploit_information(
