@@ -1,3 +1,5 @@
+from copy import copy
+from datetime import date
 from decimal import Decimal
 from unittest.mock import MagicMock, call, patch
 
@@ -5,7 +7,7 @@ import jsonpickle
 from django.core.management import call_command
 
 from application.core.models import Evidence, Observation, Product, Reference
-from application.core.types import Severity
+from application.core.types import Severity, Status
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from application.rules.types import Rule_Status, Rule_Type
@@ -160,6 +162,48 @@ class TestRuleEngine(BaseTestCase):
         mock_rego_interpreter.return_value.query.assert_called_once_with({"product_name": "product_1"})
         self.assertEqual(rule_engine.rego_interpreters[rule.pk], mock_rego_interpreter.return_value)
         self.assertEqual(jsonpickle_output_before, jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False))
+
+    def _check_rego_risk_accepted(self, mock_rego_interpreter, status_before: str) -> Observation:
+        mock_rego_interpreter.return_value.query.return_value = {"status": Status.STATUS_RISK_ACCEPTED}
+        rule_engine = Rule_Engine(self.product_1)
+        rule = Rule(id=1, name="rego_rule", type=Rule_Type.RULE_TYPE_REGO, rego_module="package rule")
+        observation = Observation(
+            title="observation",
+            product=self.product_1,
+            current_status=status_before,
+            risk_acceptance_expiry_date=date(2026, 1, 1),
+        )
+        observation_before = copy(observation)
+
+        self.assertTrue(rule_engine._check_rule_rego(rule, observation, observation_before))
+        return observation
+
+    @patch(
+        "application.rules.services.rule_engine.calculate_risk_acceptance_expiry_date", return_value=date(2027, 6, 30)
+    )
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_risk_accepted_sets_expiry_date(self, mock_rule, mock_rego_interpreter, *_mocks):
+        mock_rule.return_value = []
+
+        observation = self._check_rego_risk_accepted(mock_rego_interpreter, Status.STATUS_OPEN)
+
+        self.assertEqual(Status.STATUS_RISK_ACCEPTED, observation.current_status)
+        self.assertEqual(date(2027, 6, 30), observation.risk_acceptance_expiry_date)
+
+    @patch(
+        "application.rules.services.rule_engine.calculate_risk_acceptance_expiry_date", return_value=date(2027, 6, 30)
+    )
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_already_risk_accepted_keeps_expiry_date(self, mock_rule, mock_rego_interpreter, *_mocks):
+        mock_rule.return_value = []
+
+        observation = self._check_rego_risk_accepted(mock_rego_interpreter, Status.STATUS_RISK_ACCEPTED)
+
+        self.assertEqual(date(2026, 1, 1), observation.risk_acceptance_expiry_date)
 
     # --- apply_rules ---
 
