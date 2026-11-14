@@ -56,6 +56,16 @@ class TestObservationFailsSecurityGateFilter(ObservationFixtureMixin, BaseTestCa
 
         self.assertEqual(self._titles(response), [])
 
+    def test_fails_filter_without_security_gate(self):
+        self.product_1.security_gate_active = False
+        self.product_1.save()
+
+        response = APIClient().get(f"/api/observations/?product={self.product_1.pk}&fails_security_gate=true")
+        self.assertEqual(self._titles(response), [])
+
+        response = APIClient().get(f"/api/observations/?product={self.product_1.pk}&fails_security_gate=false")
+        self.assertEqual(self._titles(response), ["crit", "crit other branch", "crit resolved", "low", "p1"])
+
     def test_fails_filter_without_product_is_noop(self):
         response = APIClient().get("/api/observations/?fails_security_gate=true")
 

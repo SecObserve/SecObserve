@@ -379,7 +379,8 @@ class ObservationFilter(FilterSet):
 
         failing_filter = get_security_gate_failing_filter(product)
         if failing_filter is None:
-            return queryset
+            # Without a security gate, no observation fails it
+            return queryset.none() if value else queryset
         if value:
             return queryset.filter(failing_filter)
         return queryset.exclude(failing_filter)
