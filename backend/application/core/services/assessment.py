@@ -48,7 +48,7 @@ from application.notifications.services.send_notifications_observation_title imp
 from application.rules.services.rule_engine import Rule_Engine
 
 
-def save_assessment(  # pylint: disable=too-many-arguments
+def save_assessment(  # pylint: disable=too-many-arguments, too-many-locals
     *,
     observation: Observation,
     new_severity: Optional[str],
