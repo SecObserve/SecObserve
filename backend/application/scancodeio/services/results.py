@@ -32,6 +32,8 @@ def get_license_components(results: dict[str, Any]) -> tuple[list[License_Compon
             component_version=package.get("version") or "",
             component_purl=_get_component_purl(package.get("purl") or "", apk_purl_namespace),
             component_dependencies=_get_component_dependencies(package_uid, packages, dependencies),
+            component_url=_get_component_url(package),
+            component_copyright=(package.get("copyright") or "").strip(),
         )
 
         declared_license = package.get("declared_license_expression_spdx") or package.get("declared_license_expression")
@@ -159,6 +161,16 @@ def _get_component_purl(purl: str, apk_purl_namespace: str) -> str:
     if purl.startswith(SCANCODEIO_ALPINE_PURL_PREFIX):
         return f"pkg:apk/{apk_purl_namespace}/{purl.removeprefix(SCANCODEIO_ALPINE_PURL_PREFIX)}"
     return purl
+
+
+def _get_component_url(package: dict[str, Any]) -> str:
+    # The homepage of the project is preferred, the page of the package in its repository (e.g. npm or PyPI)
+    # is the fallback for packages without one.
+    for key in ("homepage_url", "repository_homepage_url"):
+        url = package.get(key)
+        if url:
+            return url
+    return ""
 
 
 def _get_component_dependencies(

@@ -45,6 +45,7 @@ class TestOSVParser(BaseTestCase):
             component_cpe="cpe:/a:org.json:json:20190722",
             component_cyclonedx_bom_link="urn:cdx:a/1#b",
             component_dependencies="json_dependencies",
+            component_url="https://github.com/stleary/JSON-java",
         )
 
         license_component_python = License_Component(
@@ -113,6 +114,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
         self.assertEqual("cpe:/a:org.json:json:20190722", observation.origin_component_cpe)
         self.assertEqual("urn:cdx:a/1#b", observation.origin_component_cyclonedx_bom_link)
         self.assertEqual("json_dependencies", observation.origin_component_dependencies)
+        self.assertEqual("https://github.com/stleary/JSON-java", observation.origin_component_url)
 
         unsaved_references = observation.unsaved_references
         self.assertEqual(6, len(unsaved_references))

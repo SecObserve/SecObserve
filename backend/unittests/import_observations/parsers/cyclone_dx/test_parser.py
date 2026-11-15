@@ -344,6 +344,56 @@ b:1.0.0 --> a:1.0.0"""
             self.assertEqual("", license_component.component_name)
             self.assertEqual("", license_component.component_version)
             self.assertEqual([], license_component.unsaved_declared_licenses)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("", license_component.component_copyright)
+
+    def test_url_copyright_license_components(self):
+        with open(path.dirname(__file__) + "/files/url_copyright.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            license_components, _ = parser_instance.get_license_components(data)
+
+            self.assertEqual(4, len(license_components))
+
+            license_component = license_components[0]
+            self.assertEqual("website", license_component.component_name)
+            self.assertEqual("https://website.example.com", license_component.component_url)
+            self.assertEqual("Copyright (c) Website Inc.", license_component.component_copyright)
+
+            license_component = license_components[1]
+            self.assertEqual("distribution", license_component.component_name)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("Copyright (c) Alice\nCopyright (c) Bob", license_component.component_copyright)
+
+            license_component = license_components[2]
+            self.assertEqual("vcs", license_component.component_name)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("", license_component.component_copyright)
+
+            license_component = license_components[3]
+            self.assertEqual("nothing", license_component.component_name)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("", license_component.component_copyright)
+
+    def test_url_observations(self):
+        with open(path.dirname(__file__) + "/files/url_copyright.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            observations, _ = parser_instance.get_observations(data, Product(name="product"), None)
+
+            self.assertEqual(2, len(observations))
+
+            observation = observations[0]
+            self.assertEqual("website", observation.origin_component_name)
+            self.assertEqual("https://website.example.com", observation.origin_component_url)
+
+            observation = observations[1]
+            self.assertEqual("nothing", observation.origin_component_name)
+            self.assertEqual("", observation.origin_component_url)
 
     def test_null_values_top_level(self):
         with open(path.dirname(__file__) + "/files/null_values_top_level.json") as testfile:

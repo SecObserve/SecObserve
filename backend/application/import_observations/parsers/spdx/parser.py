@@ -2,7 +2,13 @@ from json import dumps
 from typing import Any, Optional
 
 from rest_framework.exceptions import ValidationError
-from spdx_tools.spdx.model import Document, RelationshipType, SpdxNoAssertion, SpdxNone
+from spdx_tools.spdx.model import (
+    Document,
+    Package,
+    RelationshipType,
+    SpdxNoAssertion,
+    SpdxNone,
+)
 from spdx_tools.spdx.parser.error import SPDXParsingError
 from spdx_tools.spdx.parser.jsonlikedict.json_like_dict_parser import JsonLikeDictParser
 
@@ -89,6 +95,8 @@ class SPDXParser(BaseParser, BaseFileParser):
                 component_version=version,
                 component_purl=purl,
                 component_dependencies=dependencies,
+                component_url=self._get_url(package),
+                component_copyright=self._get_copyright(package),
             )
 
             license_component.unsaved_declared_licenses = declared_licenses
@@ -104,6 +112,19 @@ class SPDXParser(BaseParser, BaseFileParser):
             observations.append(license_component)
 
         return observations, scanner
+
+    def _get_url(self, package: Package) -> str:
+        if self._is_value(package.homepage):
+            return str(package.homepage).strip()
+        return ""
+
+    def _get_copyright(self, package: Package) -> str:
+        if self._is_value(package.copyright_text):
+            return str(package.copyright_text).strip()
+        return ""
+
+    def _is_value(self, value: Any) -> bool:
+        return value is not None and not isinstance(value, (SpdxNoAssertion, SpdxNone))
 
     def _get_scanner(self, data: dict) -> str:
         scanner = ""
