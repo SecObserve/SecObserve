@@ -10,11 +10,19 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.65.0
+
+**Security notice**
+
+This release fixes two security advisories:
+- [Raw HTML in markdown fields can redirect users to an external site](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-945g-2xcx-qx56)
+- [Stored HTML injection / XSS in the markdown editor through raw HTML](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-2rg9-vgcc-hp58)
+
 ## Release 1.64.0
 
 **Security notice**
 
-This releases fixes a security advisory: [SSRF protection of webhook notifications can be bypassed with a backslash URL or DNS rebinding](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-w76r-72pp-52j7)
+This release fixes a security advisory: [SSRF protection of webhook notifications can be bypassed with a backslash URL or DNS rebinding](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-w76r-72pp-52j7)
 
 **Notable changes**
 
@@ -24,7 +32,7 @@ There is a new [full text search](../usage/full_text_search.md) for observations
 
 **Security notice**
 
-This releases fixes three security advisories:
+This release fixes three security advisories:
 
 * [OIDC authentication does not validate the token issuer (iss)](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-h2w8-cwrc-rxmm)
 * [Server-Side Request Forgery (SSRF) via Api_Configuration.base_url, with an internal port-scan oracle](https://github.com/SecObserve/SecObserve/security/advisories/GHSA-2hrr-r4rg-pc6r)
