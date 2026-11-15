@@ -4,6 +4,8 @@ import { queryClient } from "../../commons/queryClient";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { oidc_signed_in, oidc_signin_again, userManager } from "./oidc";
 
+const TOO_MANY_LOGIN_ATTEMPTS = "Too many login attempts, try again later";
+
 let _isLoggingOut = false;
 export function getIsLoggingOut(): boolean {
     return _isLoggingOut;
@@ -23,6 +25,9 @@ const authProvider: AuthProvider = {
             });
             return fetch(request)
                 .then((response) => {
+                    if (response.status === 429) {
+                        throw new Error(TOO_MANY_LOGIN_ATTEMPTS);
+                    }
                     if (response.status < 200 || response.status >= 300) {
                         throw new Error(response.statusText);
                     }
@@ -36,6 +41,8 @@ const authProvider: AuthProvider = {
                 .catch((error) => {
                     if (error.message == "Forbidden") {
                         throw new Error("Invalid credentials");
+                    } else if (error.message == TOO_MANY_LOGIN_ATTEMPTS) {
+                        throw error;
                     } else {
                         throw new Error("Network error");
                     }
@@ -44,7 +51,12 @@ const authProvider: AuthProvider = {
     },
     logout: async () => {
         _isLoggingOut = true;
-        queryClient.clear();
+        // react-admin calls logout() for anonymous users as well, while its routes are still mounted.
+        // Clearing the cache then restarts the authentication check, which calls logout() again in an endless loop.
+        // react-admin clears the cache itself after navigating to the login page.
+        if (jwt_signed_in() || oidc_signed_in()) {
+            queryClient.clear();
+        }
 
         localStorage.removeItem("jwt");
         localStorage.removeItem("user");

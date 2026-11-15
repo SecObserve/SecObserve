@@ -1,3 +1,4 @@
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from itertools import batched
 
@@ -5,9 +6,12 @@ from django.db.models import Q
 from django.dispatch import Signal
 
 from application.core.models import Observation, Product
+from application.core.queries.product import get_default_branch_filter
 from application.core.services.security_gate import check_security_gate
+from application.core.types import Status
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine
+from application.rules.types import Rule_Status, Rule_Type
 
 CHUNK_SIZE = 1000
 
@@ -31,14 +35,43 @@ def evaluate_general_rule(rule: Rule) -> EvaluationResult:
     Applies a general rule to all observations of products with apply_general_rules
     enabled and reverts stale effects. A disabled or unapproved rule is revert-only.
     """
-    pks = _get_affected_observation_pks(rule)
+    return _apply_rules(_get_affected_observation_pks(rule))
 
+
+# Default branches only: the product gate reads them, other branches and tags get current data at their next import
+def apply_rules_to_enriched_observations(observation_pks: Iterable[int]) -> EvaluationResult:
+    rego_rules = list(
+        Rule.objects.filter(
+            type=Rule_Type.RULE_TYPE_REGO,
+            enabled=True,
+            approval_status__in=[Rule_Status.RULE_STATUS_APPROVED, Rule_Status.RULE_STATUS_AUTO_APPROVED],
+        ).values_list("product_id", "product__is_product_group")
+    )
+    if not rego_rules:
+        return EvaluationResult(observations_processed=0, observations_changed=0)
+
+    rule_products = [product for product, is_group in rego_rules if product and not is_group]
+    rule_groups = [product for product, is_group in rego_rules if is_group]
+    products = Q(product__in=rule_products) | Q(product__product_group__in=rule_groups)
+    if any(product is None for product, _ in rego_rules):
+        products |= Q(product__apply_general_rules=True)
+    observations = Observation.objects.filter(
+        products, get_default_branch_filter(), current_status__in=Status.STATUS_ACTIVE
+    )
+
+    pks: list[int] = []
+    for chunk in batched(observation_pks, CHUNK_SIZE):
+        pks += observations.filter(pk__in=chunk).values_list("pk", flat=True)
+    return _apply_rules(pks)
+
+
+def _apply_rules(observation_pks: Sequence[int]) -> EvaluationResult:
     rule_engines: dict[int, Rule_Engine] = {}
     products_with_changes: dict[int, Product] = {}
     observations_processed = 0
     observations_changed = 0
 
-    for chunk in batched(pks, CHUNK_SIZE):
+    for chunk in batched(observation_pks, CHUNK_SIZE):
         # Chunked by the initial primary keys: the rule engine saves changed observations,
         # which would move them out of offset-paginated pages.
         observations = (

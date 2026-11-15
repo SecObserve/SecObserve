@@ -9,15 +9,6 @@ import { useLinkStyles } from "../../commons/layout/themes";
 import { getPrismTheme } from "../functions";
 import LabeledTextField from "./LabeledTextField";
 
-declare global {
-    interface Window {
-        hljs?: {
-            highlightElement: (el: HTMLElement) => void;
-        };
-    }
-}
-export {};
-
 interface MarkdownProps {
     content: string;
     label: string;
@@ -101,6 +92,8 @@ const MarkdownField = (props: MarkdownProps) => {
                             lineHeight: 1.43,
                         }}
                         options={{
+                            // Markdown content is untrusted, so raw HTML is shown as text.
+                            disableParsingRawHTML: true,
                             overrides: {
                                 a: {
                                     props: {

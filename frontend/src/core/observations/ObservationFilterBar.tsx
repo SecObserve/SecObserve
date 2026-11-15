@@ -18,7 +18,13 @@ import { ServiceReferenceInput } from "../../commons/custom_fields/ServiceRefere
 import { TextInputAutoWidth } from "../../commons/custom_fields/TextInputAutoWidth";
 import { feature_exploit_information, feature_full_text_search } from "../../commons/functions";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { OBSERVATION_SEVERITY_CHOICES, OBSERVATION_STATUS_CHOICES, PURL_TYPE_CHOICES, Product } from "../types";
+import {
+    LAST_ASSESSMENT_STATUS_CHOICES,
+    OBSERVATION_SEVERITY_CHOICES,
+    OBSERVATION_STATUS_CHOICES,
+    PURL_TYPE_CHOICES,
+    Product,
+} from "../types";
 import ObservationColumnsButton from "./ObservationColumnsButton";
 
 const ORIGIN = "Origin";
@@ -86,6 +92,19 @@ export function observationFilters(product?: Product, review = false, product_fi
     );
 
     secondary.push({ column: TRIAGE, input: <NullableBooleanInput source="assessed" label="Assessed" /> });
+    // For a product, only when its assessments need approval
+    if (!review && (!product || product.assessments_need_approval || product.product_group_assessments_need_approval)) {
+        secondary.push({
+            column: TRIAGE,
+            input: (
+                <AutocompleteInput
+                    source="last_assessment_status"
+                    label="Assessment status"
+                    choices={LAST_ASSESSMENT_STATUS_CHOICES}
+                />
+            ),
+        });
+    }
     if (!product || product.has_priorities) {
         secondary.push({
             column: TRIAGE,
@@ -108,6 +127,12 @@ export function observationFilters(product?: Product, review = false, product_fi
         secondary.push({
             column: TRIAGE,
             input: <NullableBooleanInput source="fix_available" label="Fix available" />,
+        });
+    }
+    if (product?.security_gate_passed != null) {
+        secondary.push({
+            column: TRIAGE,
+            input: <NullableBooleanInput source="fails_security_gate" label="Fails security gate" />,
         });
     }
 

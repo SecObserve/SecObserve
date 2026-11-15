@@ -90,7 +90,7 @@ jobs:
             end_to_end_tests/test-results/
           retention-days: 7
 
-  check_code_sonarqube_frontend:
+  frontend_changes:
     permissions:
       contents: read
     if: >-
@@ -98,6 +98,40 @@ jobs:
       (github.ref == 'refs/heads/dev' ||
       (github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository))
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.diff.outputs.frontend }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      # Without a usable base commit (new branch, force push) frontend/src is treated as changed.
+      - name: Check for changes in frontend/src
+        id: diff
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] \
+            || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            frontend=true
+          elif git diff --quiet "$BASE_SHA...$HEAD_SHA" -- frontend/src; then
+            frontend=false
+          else
+            frontend=true
+          fi
+          echo "Changes in frontend/src: $frontend"
+          echo "frontend=$frontend" >> "$GITHUB_OUTPUT"
+
+  check_code_sonarqube_frontend:
+    permissions:
+      contents: read
+    # The repository and branch conditions are checked in frontend_changes,
+    # this job is skipped when frontend_changes is skipped.
+    if: needs.frontend_changes.outputs.frontend == 'true'
+    needs: [frontend_changes]
     runs-on: ubuntu-latest
     steps:
       - 
@@ -108,7 +142,7 @@ jobs:
           fetch-depth: 0  
       - 
         name: Run SonarQube scan for frontend
-        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8
+        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_FRONTEND }}
         with:

@@ -1,5 +1,6 @@
 import { Identifier, RaRecord } from "react-admin";
 
+import { PriorityThreshold } from "../commons/security_gate/PriorityThresholds";
 import { Parser } from "../import_observations/types";
 
 export interface Product extends RaRecord {
@@ -19,6 +20,7 @@ export interface Product extends RaRecord {
     security_gate_threshold_low: number;
     security_gate_threshold_none: number;
     security_gate_threshold_unknown: number;
+    security_gate_priority_thresholds: PriorityThreshold[] | null;
     apply_general_rules: boolean;
     notification_ms_teams_webhook: string;
     notification_slack_webhook: string;
@@ -308,11 +310,21 @@ export const ASSESSMENT_STATUS_APPROVED = "Approved";
 export const ASSESSMENT_STATUS_APPROVED_WITH_EDITS = "Approved with edits";
 export const ASSESSMENT_STATUS_NEEDS_APPROVAL = "Needs approval";
 export const ASSESSMENT_STATUS_REJECTED = "Rejected";
+export const ASSESSMENT_STATUS_REMOVED = "Removed";
 
 export const ASSESSMENT_STATUS_CHOICES = [
     { id: ASSESSMENT_STATUS_APPROVED, name: ASSESSMENT_STATUS_APPROVED },
     { id: ASSESSMENT_STATUS_APPROVED_WITH_EDITS, name: ASSESSMENT_STATUS_APPROVED_WITH_EDITS },
     { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
+];
+
+// The assessment status of the last observation log that is not auto approved
+export const LAST_ASSESSMENT_STATUS_CHOICES = [
+    { id: ASSESSMENT_STATUS_APPROVED, name: ASSESSMENT_STATUS_APPROVED },
+    { id: ASSESSMENT_STATUS_APPROVED_WITH_EDITS, name: ASSESSMENT_STATUS_APPROVED_WITH_EDITS },
+    { id: ASSESSMENT_STATUS_NEEDS_APPROVAL, name: ASSESSMENT_STATUS_NEEDS_APPROVAL },
+    { id: ASSESSMENT_STATUS_REJECTED, name: ASSESSMENT_STATUS_REJECTED },
+    { id: ASSESSMENT_STATUS_REMOVED, name: ASSESSMENT_STATUS_REMOVED },
 ];
 
 export const PURL_TYPE_CHOICES = [

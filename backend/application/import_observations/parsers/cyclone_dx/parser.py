@@ -140,7 +140,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         root_components = self._get_root_component_with_subs(data)
         components_list.extend(root_components)
 
-        sbom_components = data.get("components", [])
+        sbom_components = data.get("components") or []
         for sbom_component in sbom_components:
             components = self._get_sbom_component_with_subs(sbom_component)
             components_list.extend(components)
@@ -151,7 +151,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         return components_dict
 
     def _get_root_component_with_subs(self, data: dict) -> list[Component]:
-        metadata_component = data.get("metadata", {}).get("component")
+        metadata_component = (data.get("metadata") or {}).get("component")
         if not metadata_component:
             return []
 
@@ -163,7 +163,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         if component:
             components.append(component)
 
-        for sub_component in component_data.get("components", []):
+        for sub_component in component_data.get("components") or []:
             components.extend(self._get_sbom_component_with_subs(sub_component))
 
         return components
@@ -176,7 +176,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
 
         declared_licenses: list[str] = []
         concluded_licenses: list[str] = []
-        licenses = component_data.get("licenses", [])
+        licenses = component_data.get("licenses") or []
         if licenses and licenses[0].get("expression"):
             acknowledgement = licenses[0].get("acknowledgement")
             if acknowledgement == "concluded":
@@ -185,13 +185,14 @@ class CycloneDXParser(BaseParser, BaseFileParser):
                 declared_licenses.append(licenses[0].get("expression"))
         else:
             for my_license in licenses:
-                component_license = my_license.get("license", {}).get("id")
+                license_data = my_license.get("license") or {}
+                component_license = license_data.get("id")
                 if not component_license:
-                    component_license = my_license.get("license", {}).get("name")
+                    component_license = license_data.get("name")
                 if not component_license:
                     continue
 
-                acknowledgement = my_license.get("license", {}).get("acknowledgement")
+                acknowledgement = license_data.get("acknowledgement")
                 if acknowledgement == "concluded":
                     if component_license and component_license not in concluded_licenses:
                         concluded_licenses.append(component_license)
@@ -205,11 +206,11 @@ class CycloneDXParser(BaseParser, BaseFileParser):
 
         return Component(
             bom_ref=bom_ref,
-            name=component_data.get("name", ""),
-            version=component_data.get("version", ""),
-            type=type_mapping.get(component_data.get("type", ""), ""),
-            purl=component_data.get("purl", ""),
-            cpe=component_data.get("cpe", ""),
+            name=component_data.get("name") or "",
+            version=component_data.get("version") or "",
+            type=type_mapping.get(component_data.get("type") or "", ""),
+            purl=component_data.get("purl") or "",
+            cpe=component_data.get("cpe") or "",
             cyclonedx_bom_link=bom_link,
             json=component_data,
             unsaved_declared_licenses=declared_licenses,
@@ -219,7 +220,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
     def _create_observations(self, data: dict) -> list[Observation]:  # pylint: disable=too-many-locals
         observations = []
 
-        for vulnerability in data.get("vulnerabilities", []):
+        for vulnerability in data.get("vulnerabilities") or []:
             vulnerability_id = vulnerability.get("id")
             cvss3_score, cvss3_vector = self._get_cvss(vulnerability, 3)
             cvss4_score, cvss4_vector = self._get_cvss(vulnerability, 4)
@@ -230,9 +231,9 @@ class CycloneDXParser(BaseParser, BaseFileParser):
             description = vulnerability.get("description")
             detail = vulnerability.get("detail")
             if detail:
-                description += f"\n\n{detail}"
+                description = f"{description}\n\n{detail}" if description else detail
             recommendation = vulnerability.get("recommendation")
-            for affected in vulnerability.get("affects", []):
+            for affected in vulnerability.get("affects") or []:
                 ref = affected.get("ref")
                 if ref:
                     component = self.components.get(ref)
@@ -288,33 +289,35 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         container_digest = ""
         file = ""
 
-        serial_number = data.get("serialNumber", "")
+        serial_number = data.get("serialNumber") or ""
         if serial_number.startswith("urn:uuid:"):
             serial_number = serial_number.replace("urn:uuid:", "")
         else:
             serial_number = ""
 
-        tools = data.get("metadata", {}).get("tools")
+        metadata = data.get("metadata") or {}
+        tools = metadata.get("tools")
         if tools:
             if isinstance(tools, dict):
-                components_or_services = tools.get("components", [])
+                components_or_services = tools.get("components")
                 if not components_or_services:
-                    components_or_services = tools.get("services", [])
+                    components_or_services = tools.get("services")
                 if components_or_services:
-                    scanner = components_or_services[0].get("name", "")
+                    scanner = components_or_services[0].get("name") or ""
                     version = components_or_services[0].get("version")
                     if version:
                         scanner += " / " + version
 
             if isinstance(tools, list):
-                scanner = tools[0].get("name", "")
+                scanner = tools[0].get("name") or ""
                 version = tools[0].get("version")
                 if version:
                     scanner += " / " + version
 
-        component_type = data.get("metadata", {}).get("component", {}).get("type")
-        component_name = data.get("metadata", {}).get("component", {}).get("name", "")
-        component_version = data.get("metadata", {}).get("component", {}).get("version", "")
+        metadata_component = metadata.get("component") or {}
+        component_type = metadata_component.get("type")
+        component_name = metadata_component.get("name") or ""
+        component_version = metadata_component.get("version") or ""
         if component_type == "container":
             container_name = component_name
             if component_version and component_version.startswith("sha256:"):
@@ -326,7 +329,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
 
         return Metadata(
             serial_number=serial_number,
-            version=data.get("version", 1),
+            version=data.get("version") or 1,
             scanner=scanner,
             container_name=container_name,
             container_tag=container_tag,
@@ -335,14 +338,14 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         )
 
     def _get_cvss(self, vulnerability: dict, version: int) -> tuple[Optional[float], str]:
-        ratings = vulnerability.get("ratings", [])
+        ratings = vulnerability.get("ratings")
         if ratings:
             cvss_score = 0
             cvss_vector = ""
             for rating in ratings:
                 method = rating.get("method")
                 if method and method.lower().startswith(f"cvssv{str(version)}"):
-                    current_cvss_score = rating.get("score", 0)
+                    current_cvss_score = rating.get("score") or 0
                     if current_cvss_score > cvss_score:
                         cvss_score = current_cvss_score
                         cvss_vector = str(rating.get("vector"))
@@ -353,25 +356,26 @@ class CycloneDXParser(BaseParser, BaseFileParser):
     def _get_highest_severity(self, vulnerability: dict) -> str:
         current_severity = Severity.SEVERITY_UNKNOWN
         current_numerical_severity = 999
-        ratings = vulnerability.get("ratings", [])
+        ratings = vulnerability.get("ratings")
         if ratings:
             for rating in ratings:
-                severity = rating.get("severity", Severity.SEVERITY_UNKNOWN).capitalize()
+                severity = (rating.get("severity") or Severity.SEVERITY_UNKNOWN).capitalize()
                 numerical_severity = Severity.NUMERICAL_SEVERITIES.get(severity, 99)
                 if numerical_severity < current_numerical_severity:
                     current_severity = severity
+                    current_numerical_severity = numerical_severity
         return current_severity
 
     def _get_cwe(self, vulnerability: dict) -> Optional[str]:
-        cwes = vulnerability.get("cwes", [])
-        if len(cwes) >= 1:
+        cwes = vulnerability.get("cwes")
+        if cwes:
             return cwes[0]
 
         return None
 
     def _get_aliases(self, vulnerability: dict) -> str:
         aliases = []
-        references = vulnerability.get("references", [])
+        references = vulnerability.get("references") or []
         for reference in references:
             reference_id = reference.get("id")
             if reference_id and reference_id != vulnerability.get("id") and reference_id not in aliases:
@@ -381,10 +385,12 @@ class CycloneDXParser(BaseParser, BaseFileParser):
         return ""
 
     def _add_references(self, vulnerability: dict, observation: Observation) -> None:
-        advisories = vulnerability.get("advisories", [])
+        advisories = vulnerability.get("advisories")
         if advisories:
             for advisory in advisories:
-                observation.unsaved_references.append(advisory.get("url"))
+                url = advisory.get("url")
+                if url:
+                    observation.unsaved_references.append(url)
 
     def _add_evidences(
         self,
@@ -405,8 +411,8 @@ class CycloneDXParser(BaseParser, BaseFileParser):
     def _get_dependencies(self, data: dict) -> dict[str, list[str]]:
         dependency_dict: dict[str, list[str]] = {}
 
-        for dependency in data.get("dependencies", {}):
-            for dependency_key in dependency.get("dependsOn", []):
+        for dependency in data.get("dependencies") or []:
+            for dependency_key in dependency.get("dependsOn") or []:
                 if dependency_key not in dependency_dict:
                     dependency_dict[dependency_key] = [dependency.get("ref")]
                 else:

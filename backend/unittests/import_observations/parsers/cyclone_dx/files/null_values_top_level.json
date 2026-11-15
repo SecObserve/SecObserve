@@ -1,0 +1,10 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": null,
+  "version": null,
+  "metadata": null,
+  "components": null,
+  "dependencies": null,
+  "vulnerabilities": null
+}

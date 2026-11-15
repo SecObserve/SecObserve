@@ -36,6 +36,7 @@ import { Labeled } from "react-admin";
 
 import { getTheme } from "../../access_control/users/functions";
 import "./MarkdownEdit.css";
+import { sanitizeHtmlPlugin } from "./sanitizeHtmlPlugin";
 
 interface MarkdownEditProps {
     label: string;
@@ -90,6 +91,7 @@ const MarkdownEdit = ({ label, initialValue, setValue, overlayContainer, maxLeng
                 </DiffSourceToggleWrapper>
             ),
         }),
+        sanitizeHtmlPlugin(),
         listsPlugin(),
         quotePlugin(),
         headingsPlugin(),

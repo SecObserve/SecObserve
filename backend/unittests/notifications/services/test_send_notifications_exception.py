@@ -1,5 +1,8 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import ANY, call, patch
+
+from django.db import OperationalError
+from django.utils import timezone
 
 from application.commons.models import Settings
 from application.notifications.models import Notification
@@ -230,7 +233,7 @@ class TestPushNotifications(BaseTestCase):
             user=self.user_internal,
             exception=exception,
         )
-        mock_ratelimit.assert_called_with(exception, "test_function", "test_arguments")
+        mock_ratelimit.assert_called_with(exception, "test_function", "test_arguments", is_task=True)
         mock_send_teams.assert_not_called()
         mock_send_slack.assert_not_called()
         mock_send_email.assert_not_called()
@@ -270,7 +273,7 @@ class TestPushNotifications(BaseTestCase):
             exception=exception,
         )
 
-        mock_ratelimit.assert_called_with(exception, "test_function", arguments)
+        mock_ratelimit.assert_called_with(exception, "test_function", arguments, is_task=True)
         expected_calls_email = [
             call(
                 "test1@example.com",
@@ -340,63 +343,116 @@ class TestPushNotifications(BaseTestCase):
 
     # --- _ratelimit_exception ---
 
-    def test_ratelimit_exception_new_key(self):
-        LAST_EXCEPTIONS.clear()
-        exception = Exception("test_exception")
-
-        self.assertTrue(_ratelimit_exception(exception))
-        self.assertEqual(1, len(LAST_EXCEPTIONS.keys()))
-
-        difference: timedelta = datetime.now() - LAST_EXCEPTIONS["builtins.Exception/test_exception/None/"]
-        self.assertGreater(difference.microseconds, 0)
-        self.assertLess(difference.microseconds, 999)
-
-    @patch("application.commons.models.Settings.load")
-    def test_ratelimit_exception_true(self, mock_settings_load):
-        settings = Settings()
-        settings.exception_rate_limit = 10
-        mock_settings_load.return_value = settings
-
-        LAST_EXCEPTIONS.clear()
-        LAST_EXCEPTIONS["builtins.Exception/test_exception/test_function/test_arguments"] = datetime.now() - timedelta(
-            seconds=11
+    def _create_notification(self, seconds_ago, type=Notification.TYPE_EXCEPTION, message="test_exception", **kwargs):
+        notification = Notification.objects.create(
+            name='Exception "builtins.Exception" has occured',
+            message=message,
+            type=type,
+            **kwargs,
         )
-        exception = Exception("test_exception")
+        Notification.objects.filter(pk=notification.pk).update(created=timezone.now() - timedelta(seconds=seconds_ago))
 
-        self.assertTrue(_ratelimit_exception(exception, "test_function", "test_arguments"))
-        self.assertEqual(1, len(LAST_EXCEPTIONS.keys()))
-
-    @patch("application.commons.models.Settings.load")
-    def test_ratelimit_exception_false(self, mock_settings_load):
-        settings = Settings()
-        settings.exception_rate_limit = 10
-        mock_settings_load.return_value = settings
-
-        LAST_EXCEPTIONS.clear()
-        LAST_EXCEPTIONS["builtins.Exception/test_exception/test_function/test_arguments"] = datetime.now() - timedelta(
-            seconds=9
+    def _create_task_notification(self, **kwargs):
+        self._create_notification(
+            1, type=Notification.TYPE_TASK, function="test_function", arguments="{'a': 1}", **kwargs
         )
-        exception = Exception("test_exception")
 
-        self.assertFalse(_ratelimit_exception(exception, "test_function", "test_arguments"))
-        self.assertEqual(1, len(LAST_EXCEPTIONS.keys()))
+    def _set_rate_limit(self, seconds):
+        settings = Settings.load()
+        settings.exception_rate_limit = seconds
+        settings.save()
 
-    @patch("application.commons.models.Settings.load")
-    def test_ratelimit_exception_true_more_than_a_day(self, mock_settings_load):
-        settings = Settings()
-        settings.exception_rate_limit = 10
-        mock_settings_load.return_value = settings
+    def test_ratelimit_exception_no_notification(self):
+        self._set_rate_limit(10)
 
-        # timedelta.seconds only holds the seconds within the day, so the difference has to be
-        # calculated with total_seconds() to not suppress the notification after a long pause
-        LAST_EXCEPTIONS.clear()
-        LAST_EXCEPTIONS["builtins.Exception/test_exception/test_function/test_arguments"] = datetime.now() - timedelta(
-            days=1, seconds=1
-        )
-        exception = Exception("test_exception")
+        self.assertTrue(_ratelimit_exception(Exception("test_exception")))
 
-        self.assertTrue(_ratelimit_exception(exception, "test_function", "test_arguments"))
-        self.assertEqual(1, len(LAST_EXCEPTIONS.keys()))
+    def test_ratelimit_exception_inside_window(self):
+        self._set_rate_limit(10)
+        self._create_notification(9)
+
+        self.assertFalse(_ratelimit_exception(Exception("test_exception")))
+
+    def test_ratelimit_exception_outside_window(self):
+        self._set_rate_limit(10)
+        self._create_notification(11)
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+
+    def test_ratelimit_exception_zero_always_notifies(self):
+        self._set_rate_limit(0)
+        self._create_notification(0)
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+
+    def test_ratelimit_exception_different_message(self):
+        self._set_rate_limit(10)
+        self._create_notification(1, message="other_exception")
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+
+    def test_ratelimit_exception_task_inside_window(self):
+        self._set_rate_limit(10)
+        self._create_task_notification()
+
+        self.assertFalse(_ratelimit_exception(Exception("test_exception"), "test_function", {"a": 1}, is_task=True))
+
+    def test_ratelimit_exception_task_different_function(self):
+        self._set_rate_limit(10)
+        self._create_task_notification()
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception"), "other_function", {"a": 1}, is_task=True))
+
+    def test_ratelimit_exception_task_different_arguments(self):
+        self._set_rate_limit(10)
+        self._create_task_notification()
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception"), "test_function", {"a": 2}, is_task=True))
+
+    def test_ratelimit_exception_request_ignores_task_notification(self):
+        self._set_rate_limit(10)
+        self._create_task_notification()
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+
+    def test_ratelimit_exception_task_without_function_and_arguments(self):
+        self._set_rate_limit(10)
+        exception = Exception("no_function_exception")
+        self.assertTrue(_ratelimit_exception(exception, None, None, is_task=True))
+
+        send_task_exception_notification(None, None, None, exception)
+
+        notification = Notification.objects.get(type=Notification.TYPE_TASK, message="no_function_exception")
+        self.assertEqual("None", notification.function)
+        self.assertFalse(_ratelimit_exception(exception, None, None, is_task=True))
+
+    def test_ratelimit_exception_task_without_function_ignores_request_notification(self):
+        self._set_rate_limit(10)
+        self._create_notification(1)
+
+        self.assertTrue(_ratelimit_exception(Exception("test_exception"), None, None, is_task=True))
+
+    @patch.dict(LAST_EXCEPTIONS, clear=True)
+    def test_ratelimit_exception_database_error_limits_per_process(self):
+        self._set_rate_limit(10)
+
+        with patch.object(Notification.objects, "filter", side_effect=OperationalError("connection lost")):
+            self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+            self.assertFalse(_ratelimit_exception(Exception("test_exception")))
+            self.assertTrue(_ratelimit_exception(Exception("other_exception")))
+            self.assertTrue(_ratelimit_exception(Exception("test_exception"), "test_function", None, is_task=True))
+
+    @patch.dict(LAST_EXCEPTIONS, clear=True)
+    def test_ratelimit_exception_database_error_outside_window(self):
+        self._set_rate_limit(10)
+
+        with patch.object(Notification.objects, "filter", side_effect=OperationalError("connection lost")):
+            self.assertTrue(_ratelimit_exception(Exception("test_exception")))
+            with patch(
+                "application.notifications.services.send_notifications_exception.timezone.now",
+                return_value=timezone.now() + timedelta(seconds=11),
+            ):
+                self.assertTrue(_ratelimit_exception(Exception("test_exception")))
 
     # --- _get_stack_trace ---
 
