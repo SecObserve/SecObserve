@@ -189,12 +189,12 @@ def apply_license_policy_product(
             if evaluation_result_before != component.evaluation_result:
                 component.last_change = timezone.now()
                 evaluation_result_changed = True
+                updates.append(component)
 
-            updates.append(component)
-
-        License_Component.objects.bulk_update(
-            updates, ["evaluation_result", "numerical_evaluation_result", "last_change"]
-        )
+        if updates:
+            License_Component.objects.bulk_update(
+                updates, ["evaluation_result", "numerical_evaluation_result", "last_change"]
+            )
 
     if evaluation_result_changed:
         product.last_license_change = timezone.now()

@@ -1,3 +1,6 @@
+import json
+import os
+import tempfile
 from decimal import Decimal
 from unittest.mock import call, patch
 
@@ -28,6 +31,9 @@ from application.import_observations.models import (
 from application.import_observations.parsers.dependency_track.parser import (
     DependencyTrack,
 )
+from application.import_observations.services.import_license_components import (
+    process_license_components,
+)
 from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
@@ -38,17 +44,19 @@ from application.import_observations.services.import_observations import (
     _save_changed_fields,
     api_import_observations,
     file_upload_observations,
-    process_license_components,
 )
 from application.licenses.models import (
     License,
     License_Component,
+    License_Component_Evidence,
     License_Policy,
     License_Policy_Item,
 )
 from application.licenses.types import License_Policy_Evaluation_Result
 from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
+
+LICENSES_FILE = "unittests/import_observations/parsers/cyclone_dx/files/licenses_1.json"
 
 
 class TestFileUploadObservations(BaseTestCase):
@@ -567,6 +575,184 @@ class TestFileUploadObservations(BaseTestCase):
 
         for table in ["core_reference", "core_evidence"]:
             self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_licenses_unchanged_queries(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        product = self._prepare_license_import()
+
+        self._import_file(product, LICENSES_FILE)
+        components_before = self._license_components(product)
+        evidences_before = self._license_evidences(product)
+        self.assertEqual(67, len(components_before))
+        self.assertEqual(67, len(evidences_before))
+
+        with CaptureQueriesContext(connection) as context:
+            numbers = self._import_file(product, LICENSES_FILE)
+
+        self.assertEqual((0, 67, 0), numbers[3:])
+
+        # The core components are only needed for new license components
+        self.assertEqual(0, len(self._table_queries(context, "SELECT", "core_component")))
+        self.assertEqual(0, len(self._table_queries(context, "INSERT", "core_component")))
+
+        # Evidences are compared by their hash, nothing is rewritten
+        evidence_table = "licenses_license_component_evidence"
+        self.assertEqual(1, len(self._table_queries(context, "SELECT", evidence_table)))
+        self.assertEqual(0, len(self._table_queries(context, "DELETE", evidence_table)))
+        self.assertEqual(0, len(self._table_queries(context, "INSERT", evidence_table)))
+        self.assertIn(
+            'MD5("licenses_license_component_evidence"."evidence")',
+            self._table_queries(context, "SELECT", evidence_table)[0],
+        )
+
+        # Unchanged components only get a new import_last_seen
+        component_updates = self._license_component_updates(context)
+        self.assertEqual(1, len(component_updates))
+        self.assertTrue(
+            component_updates[0].startswith('UPDATE "licenses_license_component" SET "import_last_seen" = '),
+            component_updates[0],
+        )
+
+        components_after = self._license_components(product)
+        self.assertEqual(evidences_before, self._license_evidences(product))
+        for component_before, component_after in zip(components_before, components_after):
+            self.assertEqual(component_before["id"], component_after["id"])
+            self.assertEqual(component_before["last_change"], component_after["last_change"])
+            self.assertEqual(component_before["evaluation_result"], component_after["evaluation_result"])
+            self.assertGreater(component_after["import_last_seen"], component_before["import_last_seen"])
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_licenses_changed(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        product = self._prepare_license_import()
+
+        self._import_file(product, LICENSES_FILE)
+        components_before = {c["component_name"]: c for c in self._license_components(product)}
+        evidences_before = self._license_evidences(product)
+
+        with open(LICENSES_FILE, "r") as file:
+            sbom = json.load(file)
+        for component in sbom["components"]:
+            if component["name"] == "argon2-cffi":
+                # Changed license
+                component["licenses"] = [{"license": {"id": "Apache-2.0"}}]
+            if component["name"] == "CacheControl":
+                # Only the evidence changes
+                component["description"] = "changed description"
+
+        with tempfile.TemporaryDirectory() as directory:
+            # Same file name, to update the same vulnerability check
+            changed_file = os.path.join(directory, os.path.basename(LICENSES_FILE))
+            with open(changed_file, "w") as file:
+                json.dump(sbom, file)
+
+            with CaptureQueriesContext(connection) as context:
+                numbers = self._import_file(product, changed_file)
+
+        self.assertEqual((0, 67, 0), numbers[3:])
+
+        components_after = {c["component_name"]: c for c in self._license_components(product)}
+        evidences_after = self._license_evidences(product)
+
+        argon2_before = components_before["argon2-cffi"]
+        argon2_after = components_after["argon2-cffi"]
+        self.assertEqual("MIT", argon2_before["effective_license_name"])
+        self.assertEqual("Apache-2.0", argon2_after["effective_license_name"])
+        self.assertGreater(argon2_after["last_change"], argon2_before["last_change"])
+        # The evidence contains the license as well
+        self.assertNotEqual(evidences_before[argon2_before["id"]], evidences_after[argon2_after["id"]])
+
+        cache_control_before = components_before["CacheControl"]
+        cache_control_after = components_after["CacheControl"]
+        self.assertEqual(cache_control_before["last_change"], cache_control_after["last_change"])
+        self.assertNotEqual(evidences_before[cache_control_before["id"]], evidences_after[cache_control_after["id"]])
+        self.assertIn("changed description", evidences_after[cache_control_after["id"]][0][1])
+
+        for name, component_before in components_before.items():
+            if name not in ["argon2-cffi", "CacheControl"]:
+                self.assertEqual(component_before["last_change"], components_after[name]["last_change"], name)
+                self.assertEqual(evidences_before[component_before["id"]], evidences_after[component_before["id"]])
+
+        # Only the two changed evidences are replaced
+        evidence_table = "licenses_license_component_evidence"
+        self.assertEqual(1, len(self._table_queries(context, "DELETE", evidence_table)))
+        self.assertEqual(1, len(self._table_queries(context, "INSERT", evidence_table)))
+        changed_evidences = [
+            component_id
+            for component_id, evidences in evidences_after.items()
+            if evidences != evidences_before[component_id]
+        ]
+        self.assertEqual(sorted([argon2_after["id"], cache_control_after["id"]]), sorted(changed_evidences))
+
+    def _prepare_license_import(self):
+        try:
+            License_Policy.objects.get(name="Standard")
+        except License_Policy.DoesNotExist:
+            call_command("loaddata", "unittests/fixtures/initial_license_data.json")
+
+        settings = Settings.load()
+        settings.feature_license_management = True
+        settings.save()
+
+        License_Component.objects.all().delete()
+        return Product.objects.get(id=1)
+
+    def _license_components(self, product):
+        return list(
+            License_Component.objects.filter(product=product)
+            .order_by("id")
+            .values(
+                "id", "component_name", "effective_license_name", "evaluation_result", "last_change", "import_last_seen"
+            )
+        )
+
+    def _license_evidences(self, product):
+        evidences = {}
+        for license_component_id, evidence_id, evidence in (
+            License_Component_Evidence.objects.filter(license_component__product=product)
+            .order_by("id")
+            .values_list("license_component_id", "id", "evidence")
+        ):
+            evidences.setdefault(license_component_id, []).append((evidence_id, evidence))
+        return evidences
+
+    def _license_component_updates(self, context):
+        return [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith('UPDATE "licenses_license_component"')
+        ]
 
     def _table_queries(self, context, statement, table):
         prefixes = {
