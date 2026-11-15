@@ -1,7 +1,7 @@
 import hashlib
 from datetime import datetime
 from itertools import batched
-from typing import Tuple
+from typing import Optional, Tuple
 
 from django.db import connection
 from django.db.models import Field
@@ -159,13 +159,11 @@ def process_license_components(  # pylint: disable=too-many-locals
     spdx_cache = SPDXLicenseCache()
     unique_components = _prepare_license_components(license_components, spdx_cache)
 
-    # Core components are only needed for new license components and for existing ones without a core component
     set_core_components(
         [
             unsaved_component
             for unsaved_component in unique_components
-            if unsaved_component.identity_hash not in existing_components_dict
-            or existing_components_dict[unsaved_component.identity_hash].component_id is None
+            if _needs_core_component(unsaved_component, existing_components_dict.get(unsaved_component.identity_hash))
         ]
     )
 
@@ -274,6 +272,23 @@ def _prepare_license_components(
     return unique_components
 
 
+def _needs_core_component(
+    unsaved_component: License_Component, existing_component: Optional[License_Component]
+) -> bool:
+    """
+    Core components are only needed for new license components, for existing ones without a core component
+    and for existing ones whose core component might have changed. The identity of a license component
+    doesn't contain the purl, but the identity of a core component does, so a changed purl can lead to
+    a different core component.
+    """
+    return (
+        existing_component is None
+        or existing_component.component_id is None
+        or existing_component.component_purl != unsaved_component.component_purl
+        or existing_component.component_name_version != unsaved_component.component_name_version
+    )
+
+
 def _update_existing_license_component(
     existing_component: License_Component,
     unsaved_component: License_Component,
@@ -285,10 +300,11 @@ def _update_existing_license_component(
     values_before = _get_license_component_values(existing_component, LICENSE_COMPONENT_UPDATE_ATTNAMES)
     effective_values_before = _get_license_component_values(existing_component, LICENSE_COMPONENT_EFFECTIVE_ATTNAMES)
 
+    # Must be checked before the imported fields are copied, because it compares them
+    if _needs_core_component(unsaved_component, existing_component):
+        existing_component.component = unsaved_component.component
     for field_name in LICENSE_COMPONENT_IMPORTED_FIELDS:
         setattr(existing_component, field_name, getattr(unsaved_component, field_name))
-    if existing_component.component_id is None:
-        existing_component.component = unsaved_component.component
 
     license_evaluator.evaluate(existing_component)
 

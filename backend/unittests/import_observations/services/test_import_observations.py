@@ -1883,6 +1883,59 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
         self.assertEqual(license_component.component_url, "")
         self.assertEqual(license_component.component_copyright, "")
 
+    def _import_with_purl(self, purl):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=self.branch, service=None, filename="sbom.json"
+        )
+        component = License_Component(component_name="django", component_version="6.0.7", component_purl=purl)
+        return process_license_components([component], "scanner", vulnerability_check)
+
+    def _license_component(self):
+        return License_Component.objects.select_related("component").get(
+            product=self.product, upload_filename="sbom.json"
+        )
+
+    def test_core_component_changed_purl(self):
+        self.assertEqual(self._import_with_purl(None), (1, 0, 0))
+        license_component = self._license_component()
+        self.assertEqual("", license_component.component.purl)
+        self.assertEqual("django:6.0.7", license_component.component.name_version)
+
+        # Same license component, but the purl leads to a different core component
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (0, 1, 0))
+        license_component = self._license_component()
+        self.assertEqual("pkg:pypi/django@6.0.7", license_component.component_purl)
+        self.assertEqual("pkg:pypi/django@6.0.7", license_component.component.purl)
+
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7?arch=amd64"), (0, 1, 0))
+        license_component_qualifiers = self._license_component()
+        # Qualifiers are not part of the identity of the core component
+        self.assertEqual(license_component.component_id, license_component_qualifiers.component_id)
+
+    def test_core_component_unchanged_purl(self):
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (1, 0, 0))
+        component_id = self._license_component().component_id
+
+        with CaptureQueriesContext(connection) as context:
+            self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (0, 1, 0))
+
+        self.assertEqual(component_id, self._license_component().component_id)
+        # The license component queries join the core components, only direct accesses are relevant here
+        core_component_queries = [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith('SELECT "core_component"')
+            or query["sql"].startswith('INSERT INTO "core_component"')
+        ]
+        self.assertEqual([], core_component_queries)
+
+    def test_core_component_missing(self):
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (1, 0, 0))
+        License_Component.objects.filter(product=self.product, upload_filename="sbom.json").update(component=None)
+
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (0, 1, 0))
+        self.assertEqual("pkg:pypi/django@6.0.7", self._license_component().component.purl)
+
 
 class APIImportObservation(BaseTestCase):
     def setUp(self):
