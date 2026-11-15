@@ -1888,8 +1888,9 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
         self._assert_evaluation_results_unknown()
 
     def _set_outdated_evaluation_results(self):
-        # The components have no license, so the license policy evaluates them as unknown
-        License_Component.objects.filter(product=self.product).update(
+        # The components have no license, so the license policy evaluates them as unknown.
+        # Only the branch is relevant, because the license policy is applied to the components of the branch.
+        License_Component.objects.filter(product=self.product, branch=self.branch).update(
             evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED
         )
 
@@ -1899,7 +1900,11 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
     def _assert_evaluation_results_unknown(self):
         self.assertEqual(
             {License_Policy_Evaluation_Result.RESULT_UNKNOWN},
-            set(License_Component.objects.filter(product=self.product).values_list("evaluation_result", flat=True)),
+            set(
+                License_Component.objects.filter(product=self.product, branch=self.branch).values_list(
+                    "evaluation_result", flat=True
+                )
+            ),
         )
 
     def test_url_and_copyright(self):
