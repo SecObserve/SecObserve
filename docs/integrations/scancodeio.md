@@ -48,7 +48,7 @@ A project is created with `Create ScanCode.io project`:
 
 When a pipeline has finished successfully, SecObserve reads the packages and dependencies of the project from ScanCode.io in the background task `Import ScanCode.io results`:
 
-* Every package becomes a license component of the product, with its name, version, purl, declared license and dependencies.The complete package data of ScanCode.io is stored as evidence, unchanged. The components belong to the branch and service of the project, and their filename is `ScanCode.io`.
+* Every package becomes a license component of the product, with its name, version, purl, declared license, dependencies, URL and copyright. The URL is the homepage of the package. Without one, it is the page of the package in its repository, e.g. npm or PyPI, or else its version control URL. The complete package data of ScanCode.io is stored as evidence, unchanged. The components belong to the branch and service of the project, and their filename is `ScanCode.io`.
 * If all analyzed Docker images have the same Linux distribution, it is stored with its release in the [OSV settings](./osv_scan.md#vulnerability-scanning-from-osv) of the project's branch, or of the product if the project has no branch. ScanCode.io's purls for operating system packages have no distro qualifier, so the OSV scan needs this setting to find their vulnerabilities. 
 * The last import date of the project's branch is updated, so the housekeeping doesn't treat the branch as inactive.
 

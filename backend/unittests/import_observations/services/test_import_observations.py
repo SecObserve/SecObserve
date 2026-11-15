@@ -1669,6 +1669,33 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
         self.assertEqual(self._component_names(service_1), ["a"])
         self.assertEqual(self._component_names(None), ["b"])
 
+    def test_url_and_copyright(self):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=self.branch, service=None, filename="sbom.json"
+        )
+
+        def import_component(url, copyright_text):
+            component = License_Component(
+                component_name="a", component_version="1.0", component_url=url, component_copyright=copyright_text
+            )
+            return process_license_components([component], "scanner", vulnerability_check)
+
+        self.assertEqual(import_component("https://a.example.com", "Copyright (c) A"), (1, 0, 0))
+        license_component = License_Component.objects.get(product=self.product, upload_filename="sbom.json")
+        self.assertEqual(license_component.component_url, "https://a.example.com")
+        self.assertEqual(license_component.component_copyright, "Copyright (c) A")
+
+        # A repeated import updates both fields of the existing component
+        self.assertEqual(import_component("https://b.example.com", "Copyright (c) B"), (0, 1, 0))
+        license_component.refresh_from_db()
+        self.assertEqual(license_component.component_url, "https://b.example.com")
+        self.assertEqual(license_component.component_copyright, "Copyright (c) B")
+
+        self.assertEqual(import_component(None, None), (0, 1, 0))
+        license_component.refresh_from_db()
+        self.assertEqual(license_component.component_url, "")
+        self.assertEqual(license_component.component_copyright, "")
+
 
 class APIImportObservation(BaseTestCase):
     def setUp(self):

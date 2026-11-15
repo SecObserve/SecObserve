@@ -117,6 +117,8 @@ class License_Component(Model, DirtyFieldsMixin):
     component_cpe = CharField(max_length=255, blank=True)
     component_dependencies = TextField(max_length=32768, blank=True)
     component_cyclonedx_bom_link = CharField(max_length=512, blank=True)
+    component_url = CharField(max_length=2048, blank=True)
+    component_copyright = TextField(max_length=4096, blank=True)
 
     imported_declared_license_name = CharField(max_length=255, blank=True, default=NO_LICENSE_INFORMATION)
     imported_declared_spdx_license = ForeignKey(

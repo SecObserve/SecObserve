@@ -471,6 +471,8 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
             existing_component.component_cpe = unsaved_component.component_cpe
             existing_component.component_dependencies = unsaved_component.component_dependencies
             existing_component.component_cyclonedx_bom_link = unsaved_component.component_cyclonedx_bom_link
+            existing_component.component_url = unsaved_component.component_url
+            existing_component.component_copyright = unsaved_component.component_copyright
             existing_component.imported_declared_license_name = unsaved_component.imported_declared_license_name
             existing_component.imported_declared_spdx_license = unsaved_component.imported_declared_spdx_license
             existing_component.imported_declared_non_spdx_license = unsaved_component.imported_declared_non_spdx_license
@@ -547,6 +549,8 @@ def process_license_components(  # pylint: disable=too-many-statements disable=t
             "component_cpe",
             "component_dependencies",
             "component_cyclonedx_bom_link",
+            "component_url",
+            "component_copyright",
             "imported_declared_license_name",
             "imported_declared_spdx_license",
             "imported_declared_license_expression",
