@@ -33,7 +33,7 @@ type_mapping = {
 
 
 @dataclass
-class Component:
+class Component:  # pylint: disable=too-many-instance-attributes
     bom_ref: str
     name: str
     version: str
@@ -41,6 +41,8 @@ class Component:
     purl: str
     cpe: str
     cyclonedx_bom_link: str
+    url: str
+    copyright: str
     json: dict[str, str]
     unsaved_declared_licenses: list[str]
     unsaved_concluded_licenses: list[str]
@@ -114,6 +116,8 @@ class CycloneDXParser(BaseParser, BaseFileParser):
                 component_cpe=component.cpe,
                 component_cyclonedx_bom_link=component.cyclonedx_bom_link,
                 component_dependencies=observation_component_dependencies,
+                component_url=component.url,
+                component_copyright=component.copyright,
             )
             model_component.unsaved_declared_licenses = component.unsaved_declared_licenses
             model_component.unsaved_concluded_licenses = component.unsaved_concluded_licenses
@@ -212,10 +216,31 @@ class CycloneDXParser(BaseParser, BaseFileParser):
             purl=component_data.get("purl") or "",
             cpe=component_data.get("cpe") or "",
             cyclonedx_bom_link=bom_link,
+            url=self._get_component_url(component_data),
+            copyright=self._get_component_copyright(component_data),
             json=component_data,
             unsaved_declared_licenses=declared_licenses,
             unsaved_concluded_licenses=concluded_licenses,
         )
+
+    def _get_component_url(self, component_data: dict[str, Any]) -> str:
+        for external_reference in component_data.get("externalReferences") or []:
+            if external_reference.get("type") == "website" and external_reference.get("url"):
+                return external_reference.get("url")
+        return ""
+
+    def _get_component_copyright(self, component_data: dict[str, Any]) -> str:
+        component_copyright = (component_data.get("copyright") or "").strip()
+        if component_copyright:
+            return component_copyright
+
+        # CycloneDX 1.5+ can contain the copyright texts found in the files of the component as evidence
+        copyright_texts: list[str] = []
+        for evidence_copyright in (component_data.get("evidence") or {}).get("copyright") or []:
+            text = (evidence_copyright.get("text") or "").strip()
+            if text and text not in copyright_texts:
+                copyright_texts.append(text)
+        return "\n".join(copyright_texts)
 
     def _create_observations(self, data: dict) -> list[Observation]:  # pylint: disable=too-many-locals
         observations = []

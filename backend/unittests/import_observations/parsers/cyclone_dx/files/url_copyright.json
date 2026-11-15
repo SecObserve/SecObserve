@@ -1,0 +1,108 @@
+{
+    "bomFormat": "CycloneDX",
+    "specVersion": "1.6",
+    "version": 1,
+    "metadata": {
+        "tools": {
+            "components": [
+                {
+                    "type": "application",
+                    "name": "scanner"
+                }
+            ]
+        }
+    },
+    "components": [
+        {
+            "bom-ref": "website",
+            "type": "library",
+            "name": "website",
+            "version": "1.0",
+            "copyright": " Copyright (c) Website Inc. ",
+            "externalReferences": [
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/website/website"
+                },
+                {
+                    "type": "website",
+                    "url": "https://website.example.com"
+                },
+                {
+                    "type": "distribution",
+                    "url": "https://pypi.org/project/website/"
+                }
+            ],
+            "evidence": {
+                "copyright": [
+                    {
+                        "text": "Copyright (c) Evidence"
+                    }
+                ]
+            }
+        },
+        {
+            "bom-ref": "distribution",
+            "type": "library",
+            "name": "distribution",
+            "version": "1.0",
+            "externalReferences": [
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/distribution/distribution"
+                },
+                {
+                    "type": "website"
+                },
+                {
+                    "type": "distribution",
+                    "url": "https://pypi.org/project/distribution/"
+                }
+            ],
+            "evidence": {
+                "copyright": [
+                    {
+                        "text": "Copyright (c) Alice"
+                    },
+                    {
+                        "text": null
+                    },
+                    {
+                        "text": " Copyright (c) Bob "
+                    },
+                    {
+                        "text": "Copyright (c) Alice"
+                    }
+                ]
+            }
+        },
+        {
+            "bom-ref": "vcs",
+            "type": "library",
+            "name": "vcs",
+            "version": "1.0",
+            "copyright": "",
+            "externalReferences": [
+                {
+                    "type": "issue-tracker",
+                    "url": "https://github.com/vcs/vcs/issues"
+                },
+                {
+                    "type": "vcs",
+                    "url": "https://github.com/vcs/vcs"
+                }
+            ]
+        },
+        {
+            "bom-ref": "nothing",
+            "type": "library",
+            "name": "nothing",
+            "version": "1.0",
+            "copyright": null,
+            "externalReferences": null,
+            "evidence": {
+                "copyright": null
+            }
+        }
+    ]
+}

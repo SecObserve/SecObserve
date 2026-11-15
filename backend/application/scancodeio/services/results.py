@@ -165,8 +165,8 @@ def _get_component_purl(purl: str, apk_purl_namespace: str) -> str:
 
 def _get_component_url(package: dict[str, Any]) -> str:
     # The homepage of the project is preferred, the page of the package in its repository (e.g. npm or PyPI)
-    # and the version control repository are fallbacks for packages without one.
-    for key in ("homepage_url", "repository_homepage_url", "vcs_url"):
+    # is the fallback for packages without one.
+    for key in ("homepage_url", "repository_homepage_url"):
         url = package.get(key)
         if url:
             return url

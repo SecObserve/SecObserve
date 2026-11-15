@@ -133,7 +133,7 @@ class TestGetLicenseComponents(BaseTestCase):
                 {"homepage_url": "", "repository_homepage_url": "https://repository", "vcs_url": "git+https://vcs"},
                 "https://repository",
             ),
-            ({"homepage_url": None, "repository_homepage_url": None, "vcs_url": "git+https://vcs"}, "git+https://vcs"),
+            ({"homepage_url": None, "repository_homepage_url": None, "vcs_url": "git+https://vcs"}, ""),
             ({"homepage_url": None, "repository_homepage_url": "", "vcs_url": None}, ""),
         ]:
             with self.subTest(urls=urls):
