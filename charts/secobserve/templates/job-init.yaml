@@ -8,7 +8,8 @@ metadata:
     {{- include "secobserve.labels" . | nindent 4 }}
     app.kubernetes.io/component: init
   annotations:
-    helm.sh/hook: post-install,pre-upgrade
+    {{- /* An external database exists before the install; the bundled one is created by it. */}}
+    helm.sh/hook: {{ if .Values.postgresql.enabled }}post-install{{ else }}pre-install{{ end }},pre-upgrade
     helm.sh/hook-weight: "0"
     helm.sh/hook-delete-policy: before-hook-creation
 spec:
