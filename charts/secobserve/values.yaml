@@ -33,6 +33,27 @@ labels: {}
 # @section -- Pod
 extraInitContainers: []
 
+# -- secrets used to pull images from private registries
+# @section -- Pod
+imagePullSecrets: []
+
+# -- entries added to /etc/hosts of every Pod
+# @section -- Pod
+hostAliases: []
+
+# -- topology spread constraints for every Pod; add app.kubernetes.io/component to matchLabelKeys to spread each component on its own
+# @section -- Pod
+topologySpreadConstraints: []
+
+podDisruptionBudget:
+  # -- create a PodDisruptionBudget for the api and frontend Deployments, only used when architecture is ha
+  # @section -- Pod
+  enabled: false
+
+  # -- maximum number of unavailable Pods of each Deployment
+  # @section -- Pod
+  maxUnavailable: 1
+
 # @section -- Frontend
 frontend:
   # -- number of frontend replicas, only used when `architecture` is `ha`
@@ -47,6 +68,10 @@ frontend:
     # -- image repository
     # @section -- Frontend
     repository: secobserve/secobserve-frontend
+
+    # -- image digest; takes precedence over tag when set
+    # @section -- Frontend
+    digest: ""
 
     # -- image tag (uses appVersion value of Chart.yaml if not specified)
     # @section -- Frontend
@@ -124,6 +149,10 @@ backend:
     # @section -- Backend
     replicaCount: 2
 
+    # -- resource requirements of the api containers, only used when architecture is ha; backend.resources when empty
+    # @section -- Backend
+    resources: {}
+
   background:
     # -- number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the
     # Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue,
@@ -152,10 +181,18 @@ backend:
       # @section -- Backend
       failureThreshold: 2
 
+    # -- resource requirements of the background containers, only used when architecture is ha; backend.resources when empty
+    # @section -- Backend
+    resources: {}
+
   init:
     # -- number of retries for the init Job, only used when `architecture` is `ha`
     # @section -- Backend
     backoffLimit: 6
+
+    # -- resource requirements of the init Job container, only used when architecture is ha; backend.resources when empty
+    # @section -- Backend
+    resources: {}
 
   # -- image registry
   # @section -- Backend
@@ -164,6 +201,10 @@ backend:
     # -- image repository
     # @section -- Backend
     repository: secobserve/secobserve-backend
+
+    # -- image digest; takes precedence over tag when set
+    # @section -- Backend
+    digest: ""
 
     # -- image tag (uses appVersion value of Chart.yaml if not specified)
     # @section -- Backend

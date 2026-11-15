@@ -1,0 +1,18 @@
+{{- if and (eq (default "single" .Values.architecture) "ha") .Values.podDisruptionBudget.enabled }}
+{{- range $component := list "api" "frontend" }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ printf "%s-%s" (include "secobserve.fullname" $) $component | trunc 63 | trimSuffix "-" }}
+  namespace: "{{ $.Release.Namespace }}"
+  labels:
+    {{- include "secobserve.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  maxUnavailable: {{ $.Values.podDisruptionBudget.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "secobserve.componentSelectorLabels" (dict "context" $ "component" $component) | nindent 6 }}
+{{- end }}
+{{- end }}

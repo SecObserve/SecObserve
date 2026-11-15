@@ -33,7 +33,7 @@ spec:
       {{- include "secobserve.podPlacement" . | nindent 6 }}
       containers:
         - name: frontend
-          image: "{{ .Values.frontend.image.registry }}/{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag | default .Chart.AppVersion }}"
+          image: "{{ include "secobserve.image" (dict "image" .Values.frontend.image "context" $) }}"
           imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
           {{- with .Values.frontend.env }}
           env:

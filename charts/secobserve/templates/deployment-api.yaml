@@ -30,14 +30,14 @@ spec:
         {{- if .Values.dbchecker.enabled }}
         {{- include "secobserve.dbcheckerInitContainer" . | nindent 8 }}
         {{- end }}
-        {{- include "secobserve.migrationsInitContainer" . | nindent 8 }}
+        {{- include "secobserve.migrationsInitContainer" (dict "context" . "resources" .Values.backend.api.resources) | nindent 8 }}
         {{- with .Values.extraInitContainers }}
         {{- tpl (toYaml .) $ | nindent 8 }}
         {{- end }}
       {{- include "secobserve.podPlacement" . | nindent 6 }}
       containers:
         - name: backend
-          image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          image: "{{ include "secobserve.image" (dict "image" .Values.backend.image "context" $) }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           args:
             - api
@@ -61,7 +61,7 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 12
           resources:
-            {{- toYaml .Values.backend.resources | nindent 12 }}
+            {{- include "secobserve.backendResources" (dict "context" . "resources" .Values.backend.api.resources) | nindent 12 }}
           {{- with .Values.backend.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}
