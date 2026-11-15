@@ -52,6 +52,9 @@ from application.licenses.models import (
     License_Policy,
     License_Policy_Item,
 )
+from application.licenses.services.license_policy import (
+    apply_license_policy_to_component,
+)
 from application.licenses.types import License_Policy_Evaluation_Result
 from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
@@ -1855,6 +1858,49 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
 
         self.assertEqual(self._component_names(service_1), ["a"])
         self.assertEqual(self._component_names(None), ["b"])
+
+    def test_license_policy_excludes_components_of_import(self):
+        self.product.license_policy = License_Policy.objects.get(name="Standard")
+        self.product.save()
+        service_1 = Service.objects.get(id=1)
+
+        self.assertEqual(self._import(service_1, ["a", "b"]), (2, 0, 0))
+        self.assertEqual(self._import(None, ["c"]), (1, 0, 0))
+
+        # Import without service: only the components with service are evaluated by the license policy
+        self._set_outdated_evaluation_results()
+        with patch(
+            "application.licenses.services.license_policy.apply_license_policy_to_component",
+            wraps=apply_license_policy_to_component,
+        ) as mock_apply:
+            self.assertEqual(self._import(None, ["c"]), (0, 1, 0))
+        self.assertEqual(["a", "b"], self._evaluated_component_names(mock_apply))
+        self._assert_evaluation_results_unknown()
+
+        # Import with service: only the component without service is evaluated by the license policy
+        self._set_outdated_evaluation_results()
+        with patch(
+            "application.licenses.services.license_policy.apply_license_policy_to_component",
+            wraps=apply_license_policy_to_component,
+        ) as mock_apply:
+            self.assertEqual(self._import(service_1, ["a", "b"]), (0, 2, 0))
+        self.assertEqual(["c"], self._evaluated_component_names(mock_apply))
+        self._assert_evaluation_results_unknown()
+
+    def _set_outdated_evaluation_results(self):
+        # The components have no license, so the license policy evaluates them as unknown
+        License_Component.objects.filter(product=self.product).update(
+            evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED
+        )
+
+    def _evaluated_component_names(self, mock_apply):
+        return sorted(mock_call.args[0].component_name for mock_call in mock_apply.call_args_list)
+
+    def _assert_evaluation_results_unknown(self):
+        self.assertEqual(
+            {License_Policy_Evaluation_Result.RESULT_UNKNOWN},
+            set(License_Component.objects.filter(product=self.product).values_list("evaluation_result", flat=True)),
+        )
 
     def test_url_and_copyright(self):
         vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(

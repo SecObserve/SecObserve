@@ -25,6 +25,7 @@ from application.licenses.services.license_component import (
     set_effective_license,
 )
 from application.licenses.services.license_policy import (
+    LicenseComponentUpload,
     apply_license_policy_product,
     apply_license_policy_to_component,
     get_license_evaluation_results_for_product,
@@ -228,9 +229,17 @@ def process_license_components(  # pylint: disable=too-many-locals
         vulnerability_check, scanner, (len(components_new), components_updated, components_deleted)
     )
 
-    # The components of this import have already been evaluated, but other components of the branch might
-    # not reflect the current license policy yet. Only components with a changed evaluation are written.
-    apply_license_policy_product(spdx_cache, vulnerability_check.product, vulnerability_check.branch)
+    # The components of this import have already been evaluated and are excluded, but other components
+    # of the branch might not reflect the current license policy yet. Only components with a changed
+    # evaluation are written.
+    apply_license_policy_product(
+        spdx_cache,
+        vulnerability_check.product,
+        vulnerability_check.branch,
+        LicenseComponentUpload(
+            origin_service=vulnerability_check.service, upload_filename=vulnerability_check.filename
+        ),
+    )
 
     return len(components_new), components_updated, components_deleted
 
