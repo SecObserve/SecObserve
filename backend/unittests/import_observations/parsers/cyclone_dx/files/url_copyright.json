@@ -104,5 +104,18 @@
                 "copyright": null
             }
         }
+    ],
+    "vulnerabilities": [
+        {
+            "id": "CVE-2026-0001",
+            "affects": [
+                {
+                    "ref": "website"
+                },
+                {
+                    "ref": "nothing"
+                }
+            ]
+        }
     ]
 }

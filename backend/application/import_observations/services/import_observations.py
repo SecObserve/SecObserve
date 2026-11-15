@@ -702,6 +702,7 @@ def _process_current_observation(
 
     observation_before.origin_component_type = imported_observation.origin_component_type
     observation_before.origin_component_dependencies = imported_observation.origin_component_dependencies
+    observation_before.origin_component_url = imported_observation.origin_component_url
 
     previous_severity = observation_before.current_severity
     observation_before.parser_severity = imported_observation.parser_severity

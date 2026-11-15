@@ -33,6 +33,7 @@ from application.import_observations.services.import_observations import (
     FileUploadParameters,
     _deduplicate_cross_scanner,
     _get_field_values,
+    _process_current_observation,
     _resolve_unimported_observations,
     _save_changed_fields,
     api_import_observations,
@@ -1901,6 +1902,20 @@ class TestSaveChangedFields(BaseTestCase):
         ]
         self.assertEqual([], observation_updates)
         self.assertEqual(Decimal("9.3"), observation.cvss4_score)
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_component_url_updated(self, mock_apply_epss, mock_apply_exploit_information):
+        imported_observation = Observation.objects.get(id=1)
+        imported_observation.origin_component_url = "https://new.example.com"
+        observation_before = Observation.objects.get(id=1)
+        settings = Settings.load()
+
+        _process_current_observation(imported_observation, observation_before, settings, {}, {})
+
+        self.assertEqual("https://new.example.com", Observation.objects.get(id=1).origin_component_url)
+        mock_apply_epss.assert_called_once_with(observation_before, {})
+        mock_apply_exploit_information.assert_called_once_with(observation_before, settings, {})
 
 
 class TestResolveUnimportedObservations(BaseTestCase):

@@ -283,6 +283,7 @@ class CycloneDXParser(BaseParser, BaseFileParser):
                             origin_component_cpe=component.cpe,
                             origin_component_cyclonedx_bom_link=component.cyclonedx_bom_link,
                             origin_component_dependencies=observation_component_dependencies,
+                            origin_component_url=component.url,
                             cvss3_score=cvss3_score,
                             cvss3_vector=cvss3_vector,
                             cvss4_score=cvss4_score,

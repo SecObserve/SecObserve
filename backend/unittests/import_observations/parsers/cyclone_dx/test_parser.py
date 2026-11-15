@@ -377,6 +377,24 @@ b:1.0.0 --> a:1.0.0"""
             self.assertEqual("", license_component.component_url)
             self.assertEqual("", license_component.component_copyright)
 
+    def test_url_observations(self):
+        with open(path.dirname(__file__) + "/files/url_copyright.json") as testfile:
+            parser, parser_instance, data = detect_parser(testfile)
+            self.assertEqual("CycloneDX", parser.name)
+            self.assertIsInstance(parser_instance, CycloneDXParser)
+
+            observations, _ = parser_instance.get_observations(data, Product(name="product"), None)
+
+            self.assertEqual(2, len(observations))
+
+            observation = observations[0]
+            self.assertEqual("website", observation.origin_component_name)
+            self.assertEqual("https://website.example.com", observation.origin_component_url)
+
+            observation = observations[1]
+            self.assertEqual("nothing", observation.origin_component_name)
+            self.assertEqual("", observation.origin_component_url)
+
     def test_null_values_top_level(self):
         with open(path.dirname(__file__) + "/files/null_values_top_level.json") as testfile:
             parser, parser_instance, data = detect_parser(testfile)
