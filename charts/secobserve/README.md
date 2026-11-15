@@ -682,12 +682,12 @@ true
 		</tr>
 		<tr>
 			<td>dbchecker.port</td>
-			<td>int</td>
+			<td>string</td>
 			<td><pre lang="json">
-5432
+""
 </pre>
 </td>
-			<td>database port checked by the init container</td>
+			<td>database port override; inferred from database.port when empty</td>
 		</tr>
 		<tr>
 			<td>dbchecker.resources</td>
@@ -960,7 +960,7 @@ null
 true
 </pre>
 </td>
-			<td>persist the Huey SQLite queue across backend container and Pod restarts</td>
+			<td>persist the Huey queue across Pod restarts, only used when the database engine is SQLite</td>
 		</tr>
 		<tr>
 			<td>huey.persistence.existingClaim</td>
@@ -1005,7 +1005,6 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
-  "kubernetes.io/ingress.class": "nginx",
   "nginx.ingress.kubernetes.io/proxy-read-timeout": "600",
   "nginx.ingress.kubernetes.io/proxy-send-timeout": "600",
   "nginx.ingress.kubernetes.io/ssl-redirect": "true"

@@ -94,6 +94,17 @@ password
 {{- end -}}
 {{- end -}}
 
+{{/* Return the database engine; the last backend.env DATABASE_ENGINE entry with a value wins. */}}
+{{- define "secobserve.databaseEngine" -}}
+{{- $engine := .Values.database.engine -}}
+{{- range .Values.backend.env -}}
+{{- if and (eq .name "DATABASE_ENGINE") (hasKey . "value") -}}
+{{- $engine = .value -}}
+{{- end -}}
+{{- end -}}
+{{- $engine -}}
+{{- end -}}
+
 {{/* Return the PVC used for the Huey SQLite queue. */}}
 {{- define "secobserve.huey.claimName" -}}
 {{- default (printf "%s-huey" (include "secobserve.fullname" .) | trunc 63 | trimSuffix "-") .Values.huey.persistence.existingClaim -}}

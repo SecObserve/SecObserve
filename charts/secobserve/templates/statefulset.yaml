@@ -130,9 +130,10 @@ spec:
             failureThreshold: 12
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
-          {{- if or .Values.huey.persistence.enabled .Values.backend.volumeMounts }}
+          {{- $hueyVolume := and .Values.huey.persistence.enabled (eq (include "secobserve.databaseEngine" .) "django.db.backends.sqlite3") }}
+          {{- if or $hueyVolume .Values.backend.volumeMounts }}
           volumeMounts:
-            {{- if .Values.huey.persistence.enabled }}
+            {{- if $hueyVolume }}
             - name: huey
               mountPath: /var/lib/huey
             {{- end }}
@@ -145,9 +146,9 @@ spec:
             {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 12 }}
           {{- end }}
 
-      {{- if or .Values.huey.persistence.enabled .Values.frontend.volumes .Values.backend.volumes }}
+      {{- if or $hueyVolume .Values.frontend.volumes .Values.backend.volumes }}
       volumes:
-        {{- if .Values.huey.persistence.enabled }}
+        {{- if $hueyVolume }}
         - name: huey
           persistentVolumeClaim:
             claimName: {{ include "secobserve.huey.claimName" . }}

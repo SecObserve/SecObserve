@@ -53,6 +53,25 @@ tests:
           path: spec.template.spec.initContainers[1].name
           value: wait-for-migrations
 
+  - it: checks the database port in dbchecker
+    set:
+      architecture: ha
+      database.port: 6432
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 6432;'
+
+  - it: lets dbchecker.port override the database port
+    set:
+      architecture: ha
+      database.port: 6432
+      dbchecker.port: 7000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 7000;'
+
   - it: honours the configured replica count
     set:
       architecture: ha
