@@ -51,7 +51,12 @@ const authProvider: AuthProvider = {
     },
     logout: async () => {
         _isLoggingOut = true;
-        queryClient.clear();
+        // react-admin calls logout() for anonymous users as well, while its routes are still mounted.
+        // Clearing the cache then restarts the authentication check, which calls logout() again in an endless loop.
+        // react-admin clears the cache itself after navigating to the login page.
+        if (jwt_signed_in() || oidc_signed_in()) {
+            queryClient.clear();
+        }
 
         localStorage.removeItem("jwt");
         localStorage.removeItem("user");

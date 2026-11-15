@@ -69,7 +69,10 @@ export async function httpClient(url: string, options?: fetchUtils.Options | und
     } else if (jwt_signed_in()) {
         return fetchUtils.fetchJson(url, Object.assign(createOptionsFromTokenJWT(), options));
     } else {
-        throw new Error("Not authenticated");
+        // Without a session, there is nothing to request. This happens while logging out, when the current page
+        // refetches its data before react-admin has navigated to the login page. Rejecting would make the page show
+        // a "Not authenticated" notification, so the request is left pending and discarded with the page.
+        return new Promise<never>(() => undefined);
     }
 }
 
