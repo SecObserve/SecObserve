@@ -36,6 +36,8 @@ With the default `architecture: single`, all roles run in one Pod and the chart 
 
 Set `architecture: ha` to split the backend into separate workloads: an `init` Job, a scalable `api` Deployment, a `background` Deployment running the Huey consumer, and a separate `frontend` Deployment. `backend.background.replicaCount` is limited to 1, because the Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue. The PersistentVolumeClaim is not created for this architecture.
 
+With an external database (`postgresql.enabled=false`) that already exists before `helm install`, the `init` Job runs before the other resources, so `helm install --wait` works. With the bundled PostgreSQL chart it runs after them, because the database is created by the install itself, so install the `ha` architecture without `--wait`.
+
 The `background` container has a liveness probe that restarts it when a task has been running for longer than `HUEY_TASK_MAX_RUNTIME_HOURS` (default 12), for example because its worker thread is blocked on a dead database connection. Set `HUEY_TASK_MAX_RUNTIME_HOURS` in `backend.env` above the longest regular runtime of a task, or disable the probe with `backend.background.livenessProbe.enabled=false`. The `single` architecture has no such probe, because the consumer shares its container with the API.
 
 Application and bundled PostgreSQL resource names are derived from the Helm release name. External databases can be configured through `database.*` values with `postgresql.enabled=false`.

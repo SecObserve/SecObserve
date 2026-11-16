@@ -39,6 +39,17 @@ tests:
           path: spec.template.spec.initContainers[0].name
           value: dbchecker
 
+  - it: runs before the install with an external database
+    set:
+      architecture: ha
+      postgresql.enabled: false
+      database.host: postgres.example.internal
+      database.passwordSecret.name: external-db
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+
   - it: uses the configured backoffLimit
     set:
       architecture: ha
