@@ -108,7 +108,16 @@ tests:
           path: spec.template.spec.containers[1].env[8].value
           value: legacy-postgres.example.internal
 
-  - it: persists the Huey queue by default
+  - it: has no Huey volume with the default PostgreSQL engine
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[1].volumeMounts
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: persists the Huey queue with the SQLite engine
+    set:
+      database.engine: django.db.backends.sqlite3
     asserts:
       - equal:
           path: spec.template.spec.securityContext.fsGroup
@@ -147,6 +156,7 @@ tests:
 
   - it: can disable Huey persistence
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.enabled: false
     asserts:
       - notExists:
@@ -156,11 +166,29 @@ tests:
 
   - it: mounts an existing Huey claim
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.existingClaim: shared-huey
     asserts:
       - equal:
           path: spec.template.spec.volumes[0].persistentVolumeClaim.claimName
           value: shared-huey
+
+  - it: checks the database port in dbchecker
+    set:
+      database.port: 6432
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 6432;'
+
+  - it: lets dbchecker.port override the database port
+    set:
+      database.port: 6432
+      dbchecker.port: 7000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 7000;'
 
   - it: renders scheduling configuration
     set:

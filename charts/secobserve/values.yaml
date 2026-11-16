@@ -310,8 +310,6 @@ ingress:
   # -- annotations to add to ingress
   # @section -- Ingress
   annotations:
-    # Use the NGINX ingress class
-    kubernetes.io/ingress.class: nginx
     # Enable SSL redirect for HTTPS
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     # Configure a custom timeout for the proxy
@@ -373,7 +371,7 @@ database:
 # @section -- Huey
 huey:
   persistence:
-    # -- persist the Huey SQLite queue across backend container and Pod restarts
+    # -- persist the Huey queue across Pod restarts, only used when the database engine is SQLite
     # @section -- Huey
     enabled: true
 
@@ -473,9 +471,9 @@ dbchecker:
   # @section -- dbchecker
   hostname: ""
 
-  # -- database port checked by the init container
+  # -- database port override; inferred from database.port when empty
   # @section -- dbchecker
-  port: 5432
+  port: ""
 
   image:
     # -- Docker image used to check Database readiness at startup
