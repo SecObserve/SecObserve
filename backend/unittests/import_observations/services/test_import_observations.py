@@ -1890,6 +1890,9 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
     def test_license_policy_excludes_components_of_import_without_branch(self):
         self.product.license_policy = License_Policy.objects.get(name="Standard")
         self.product.save()
+        # Without a branch, all license components of the product are evaluated, including ones
+        # committed by other test classes
+        License_Component.objects.filter(product=self.product).delete()
 
         self.assertEqual(self._import(None, ["a"]), (1, 0, 0))
         self.assertEqual(self._import_without_branch(["b"]), (1, 0, 0))
