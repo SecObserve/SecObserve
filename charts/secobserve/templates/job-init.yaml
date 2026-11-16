@@ -39,14 +39,14 @@ spec:
       {{- include "secobserve.podPlacement" . | nindent 6 }}
       containers:
         - name: init
-          image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          image: "{{ include "secobserve.image" (dict "image" .Values.backend.image "context" $) }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           args:
             - init
           env:
             {{- include "secobserve.backendEnv" . | nindent 12 }}
           resources:
-            {{- toYaml .Values.backend.resources | nindent 12 }}
+            {{- include "secobserve.backendResources" (dict "context" . "resources" .Values.backend.init.resources) | nindent 12 }}
           {{- with .Values.backend.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

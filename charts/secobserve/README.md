@@ -72,6 +72,24 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 			<td>additional init containers to add to the SecObserve Pod</td>
 		</tr>
 		<tr>
+			<td>hostAliases</td>
+			<td>list</td>
+			<td><pre lang="json">
+[]
+</pre>
+</td>
+			<td>entries added to /etc/hosts of every Pod</td>
+		</tr>
+		<tr>
+			<td>imagePullSecrets</td>
+			<td>list</td>
+			<td><pre lang="json">
+[]
+</pre>
+</td>
+			<td>secrets used to pull images from private registries</td>
+		</tr>
+		<tr>
 			<td>labels</td>
 			<td>object</td>
 			<td><pre lang="json">
@@ -97,6 +115,24 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 </pre>
 </td>
 			<td>annotations to add to the SecObserve Pod</td>
+		</tr>
+		<tr>
+			<td>podDisruptionBudget.enabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+false
+</pre>
+</td>
+			<td>create a PodDisruptionBudget for the api and frontend Deployments, only used when architecture is ha</td>
+		</tr>
+		<tr>
+			<td>podDisruptionBudget.maxUnavailable</td>
+			<td>int</td>
+			<td><pre lang="json">
+1
+</pre>
+</td>
+			<td>maximum number of unavailable Pods of each Deployment</td>
 		</tr>
 		<tr>
 			<td>replicaCount</td>
@@ -128,6 +164,15 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 </pre>
 </td>
 			<td>Toleration labels for pod assignment</td>
+		</tr>
+		<tr>
+			<td>topologySpreadConstraints</td>
+			<td>list</td>
+			<td><pre lang="json">
+[]
+</pre>
+</td>
+			<td>topology spread constraints for every Pod; add app.kubernetes.io/component to matchLabelKeys to spread each component on its own</td>
 		</tr>
 	</tbody>
 </table>
@@ -188,6 +233,15 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 			<td>number of API replicas, only used when `architecture` is `ha`</td>
 		</tr>
 		<tr>
+			<td>backend.api.resources</td>
+			<td>object</td>
+			<td><pre lang="json">
+{}
+</pre>
+</td>
+			<td>resource requirements of the api containers, only used when architecture is ha; backend.resources when empty</td>
+		</tr>
+		<tr>
 			<td>backend.background.livenessProbe.enabled</td>
 			<td>bool</td>
 			<td><pre lang="json">
@@ -240,6 +294,15 @@ true
 </pre>
 </td>
 			<td>number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue, so a second consumer is not safe yet.</td>
+		</tr>
+		<tr>
+			<td>backend.background.resources</td>
+			<td>object</td>
+			<td><pre lang="json">
+{}
+</pre>
+</td>
+			<td>resource requirements of the background containers, only used when architecture is ha; backend.resources when empty</td>
 		</tr>
 		<tr>
 			<td>backend.env[0]</td>
@@ -411,6 +474,7 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
+  "digest": "",
   "pullPolicy": "IfNotPresent",
   "registry": "ghcr.io",
   "repository": "secobserve/secobserve-backend",
@@ -419,6 +483,15 @@ true
 </pre>
 </td>
 			<td>image registry</td>
+		</tr>
+		<tr>
+			<td>backend.image.digest</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>image digest; takes precedence over tag when set</td>
 		</tr>
 		<tr>
 			<td>backend.image.pullPolicy</td>
@@ -455,6 +528,15 @@ null
 </pre>
 </td>
 			<td>number of retries for the init Job, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
+			<td>backend.init.resources</td>
+			<td>object</td>
+			<td><pre lang="json">
+{}
+</pre>
+</td>
+			<td>resource requirements of the init Job container, only used when architecture is ha; backend.resources when empty</td>
 		</tr>
 		<tr>
 			<td>backend.resources</td>
@@ -818,6 +900,15 @@ true
 </pre>
 </td>
 			<td>OIDC prompt</td>
+		</tr>
+		<tr>
+			<td>frontend.image.digest</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>image digest; takes precedence over tag when set</td>
 		</tr>
 		<tr>
 			<td>frontend.image.pullPolicy</td>

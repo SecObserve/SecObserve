@@ -256,19 +256,40 @@ app.kubernetes.io/component: {{ .component }}
 {{- end -}}
 
 {{/*
+Image reference, by digest when one is set. Call with a dict, for example:
+{{ include "secobserve.image" (dict "image" .Values.backend.image "context" $) }}
+*/}}
+{{- define "secobserve.image" -}}
+{{- if .image.digest -}}
+{{- printf "%s/%s@%s" .image.registry .image.repository .image.digest -}}
+{{- else -}}
+{{- printf "%s/%s:%v" .image.registry .image.repository (.image.tag | default .context.Chart.AppVersion) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Resources of a backend component, falling back to backend.resources when empty. Call with a dict, for example:
+{{ include "secobserve.backendResources" (dict "context" $ "resources" .Values.backend.api.resources) }}
+*/}}
+{{- define "secobserve.backendResources" -}}
+{{- toYaml (default .context.Values.backend.resources .resources) -}}
+{{- end -}}
+
+{{/*
 Init container waiting for the init Job to have applied all migrations. Uses the
-backend image, so no additional image has to be pulled.
+backend image, so no additional image has to be pulled. Call with a dict of
+"context" and the "resources" of the component the Pod belongs to.
 */}}
 {{- define "secobserve.migrationsInitContainer" -}}
 - name: wait-for-migrations
-  image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
-  imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
-  {{- if .Values.backend.securityContext.enabled }}
+  image: "{{ include "secobserve.image" (dict "image" .context.Values.backend.image "context" .context) }}"
+  imagePullPolicy: {{ .context.Values.backend.image.pullPolicy }}
+  {{- if .context.Values.backend.securityContext.enabled }}
   securityContext:
-    {{- omit .Values.backend.securityContext "enabled" | toYaml | nindent 4 }}
+    {{- omit .context.Values.backend.securityContext "enabled" | toYaml | nindent 4 }}
   {{- end }}
   env:
-    {{- include "secobserve.backendEnv" . | nindent 4 }}
+    {{- include "secobserve.backendEnv" .context | nindent 4 }}
   command:
     - sh
     - -c
@@ -282,11 +303,23 @@ backend image, so no additional image has to be pulled.
 
       echo 'Migrations OK ✓'
   resources:
-    {{- toYaml .Values.backend.resources | nindent 4 }}
+    {{- include "secobserve.backendResources" . | nindent 4 }}
 {{- end -}}
 
 {{/* Pod level scheduling and security settings shared by all workloads. */}}
 {{- define "secobserve.podPlacement" -}}
+{{- with .Values.imagePullSecrets }}
+imagePullSecrets:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.hostAliases }}
+hostAliases:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.topologySpreadConstraints }}
+topologySpreadConstraints:
+  {{- tpl (toYaml .) $ | nindent 2 }}
+{{- end }}
 {{- with .Values.nodeSelector }}
 nodeSelector:
   {{- toYaml . | nindent 2 }}
