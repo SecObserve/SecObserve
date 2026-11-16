@@ -1887,6 +1887,37 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
         self.assertEqual(["c"], self._evaluated_component_names(mock_apply))
         self._assert_evaluation_results_unknown()
 
+    def test_license_policy_excludes_components_of_import_without_branch(self):
+        self.product.license_policy = License_Policy.objects.get(name="Standard")
+        self.product.save()
+
+        self.assertEqual(self._import(None, ["a"]), (1, 0, 0))
+        self.assertEqual(self._import_without_branch(["b"]), (1, 0, 0))
+
+        License_Component.objects.filter(product=self.product).update(
+            evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED
+        )
+
+        # Without a branch, the license policy is applied to all branches of the product. The component
+        # with the same service and file name in another branch is not part of this import and must be evaluated.
+        with patch(
+            "application.licenses.services.license_policy.apply_license_policy_to_component",
+            wraps=apply_license_policy_to_component,
+        ) as mock_apply:
+            self.assertEqual(self._import_without_branch(["b"]), (0, 1, 0))
+        self.assertEqual(["a"], self._evaluated_component_names(mock_apply))
+        self.assertEqual(
+            {License_Policy_Evaluation_Result.RESULT_UNKNOWN},
+            set(License_Component.objects.filter(product=self.product).values_list("evaluation_result", flat=True)),
+        )
+
+    def _import_without_branch(self, component_names):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=None, service=None, filename="sbom.json"
+        )
+        components = [License_Component(component_name=name, component_version="1.0") for name in component_names]
+        return process_license_components(components, "scanner", vulnerability_check)
+
     def _set_outdated_evaluation_results(self):
         # The components have no license, so the license policy evaluates them as unknown.
         # Only the branch is relevant, because the license policy is applied to the components of the branch.

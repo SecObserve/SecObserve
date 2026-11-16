@@ -35,8 +35,9 @@ class LicensePolicyEvaluationResult:
 
 @dataclass(frozen=True)
 class LicenseComponentUpload:
-    """Identifies the license components of one upload within a product and branch."""
+    """Identifies the license components of one upload within a product."""
 
+    branch: Optional[Branch]
     origin_service: Optional[Service]
     upload_filename: str
 
@@ -177,8 +178,12 @@ def apply_license_policy_product(
     if branch:
         components = components.filter(branch=branch)
     if excluded_upload:
+        # The branch is part of the exclusion, because without a branch the components
+        # of all branches are evaluated, not only the ones without a branch
         components = components.exclude(
-            origin_service=excluded_upload.origin_service, upload_filename=excluded_upload.upload_filename
+            branch=excluded_upload.branch,
+            origin_service=excluded_upload.origin_service,
+            upload_filename=excluded_upload.upload_filename,
         )
 
     evaluation_result_changed = False

@@ -237,7 +237,9 @@ def process_license_components(  # pylint: disable=too-many-locals
         vulnerability_check.product,
         vulnerability_check.branch,
         LicenseComponentUpload(
-            origin_service=vulnerability_check.service, upload_filename=vulnerability_check.filename
+            branch=vulnerability_check.branch,
+            origin_service=vulnerability_check.service,
+            upload_filename=vulnerability_check.filename,
         ),
     )
 
