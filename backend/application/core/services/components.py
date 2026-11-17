@@ -1,4 +1,5 @@
 import hashlib
+from itertools import batched
 from typing import Optional
 
 from packageurl import PackageURL
@@ -28,6 +29,51 @@ def get_or_create_component(component: Component) -> Optional[Component]:
         },
     )
     return existing_component
+
+
+COMPONENTS_BATCH_SIZE = 500
+
+
+def get_or_create_components(components: list[Component]) -> list[Optional[Component]]:
+    """
+    Batch version of get_or_create_component: needs a few queries for all components
+    instead of one or two per component. The result is aligned with the given list,
+    None for components without name and purl.
+    """
+    identity_hashes: list[Optional[str]] = []
+    components_to_store: dict[str, Component] = {}
+    for component in components:
+        if not component.name and not component.purl:
+            identity_hashes.append(None)
+            continue
+
+        _prepare_component(component)
+        component.identity_hash = _get_identity_hash(component)
+        identity_hashes.append(component.identity_hash)
+        components_to_store.setdefault(component.identity_hash, component)
+
+    stored_components = _get_components_by_identity_hashes(list(components_to_store.keys()))
+
+    missing_components = [
+        component for identity_hash, component in components_to_store.items() if identity_hash not in stored_components
+    ]
+    if missing_components:
+        # ignore_conflicts, because a concurrent import might have created some of the components.
+        # The primary keys are not returned with ignore_conflicts, so the components are read again.
+        Component.objects.bulk_create(missing_components, batch_size=COMPONENTS_BATCH_SIZE, ignore_conflicts=True)
+        stored_components.update(
+            _get_components_by_identity_hashes([component.identity_hash for component in missing_components])
+        )
+
+    return [stored_components.get(identity_hash) if identity_hash else None for identity_hash in identity_hashes]
+
+
+def _get_components_by_identity_hashes(identity_hashes: list[str]) -> dict[str, Component]:
+    components: dict[str, Component] = {}
+    for batch in batched(identity_hashes, COMPONENTS_BATCH_SIZE):
+        for component in Component.objects.filter(identity_hash__in=batch):
+            components[component.identity_hash] = component
+    return components
 
 
 def _get_identity_hash(component: Component) -> str:
