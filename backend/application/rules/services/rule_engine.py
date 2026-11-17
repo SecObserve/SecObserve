@@ -9,6 +9,7 @@ from regopy import Input
 
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
+from application.commons.services.request_cache import cache_for_request
 from application.core.models import Observation, Product
 from application.core.services.observation import (
     get_current_priority,
@@ -87,7 +88,7 @@ class Rule_Engine:
         self.rego_interpreters: dict[Any, RegoInterpreter] = {}
         for rule in self.rules:
             if rule.type == Rule_Type.RULE_TYPE_REGO:
-                self.rego_interpreters[rule.pk] = RegoInterpreter(rule.rego_module)
+                self.rego_interpreters[rule.pk] = _compile_rego_module(rule.rego_module)
 
     def apply_rules_for_observation(self, observation: Observation) -> None:
         observation_before = copy(observation)
@@ -370,10 +371,16 @@ class Rule_Engine:
     def _get_rego_interpreter(self, rule: Rule) -> RegoInterpreter:
         rego_interpreter = self.rego_interpreters.get(rule.pk)
         if rego_interpreter is None:
-            rego_interpreter = RegoInterpreter(rule.rego_module)
+            rego_interpreter = _compile_rego_module(rule.rego_module)
             self.rego_interpreters[rule.pk] = rego_interpreter
 
         return rego_interpreter
+
+
+# General rules are part of every product's Rule_Engine, compile each module once per request or background task
+@cache_for_request
+def _compile_rego_module(rego_module: str) -> RegoInterpreter:
+    return RegoInterpreter(rego_module)
 
 
 def _is_in_rule_scope(rule: Rule, observation: Observation) -> bool:

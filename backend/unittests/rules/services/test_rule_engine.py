@@ -7,9 +7,14 @@ import jsonpickle
 from django.core.management import call_command
 from regopy import Input
 
+from application.commons.services.request_cache import (
+    activate_task_cache,
+    deactivate_task_cache,
+)
 from application.core.models import Evidence, Observation, Product, Reference
 from application.core.types import Severity, Status
 from application.rules.models import Rule
+from application.rules.services.rego_interpreter import RegoInterpreter
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from application.rules.types import Rule_Status, Rule_Type
 from unittests.base_test_case import BaseTestCase
@@ -374,3 +379,22 @@ class TestRuleEngineRegoPerObservation(BaseTestCase):
         rule_engine.apply_rules_for_observation(observation)
 
         self.assertEqual(1, observation.rule_rego_priority)
+
+    @patch("application.rules.services.rule_engine.RegoInterpreter", wraps=RegoInterpreter)
+    def test_rule_engines_of_one_task_compile_a_rego_module_once(self, mock_rego_interpreter):
+        rego_module = 'package rule\n\npriority := 2 if input.title == "compiled once"\n'
+        changed_rego_module = 'package rule\n\npriority := 3 if input.title == "compiled once"\n'
+        rule = self._rego_rule("rego_rule", rego_module)
+
+        activate_task_cache()
+        try:
+            for product in Product.objects.filter(pk__in=[1, 2]):
+                Rule_Engine(product)
+            rule.rego_module = changed_rego_module
+            rule.save()
+            Rule_Engine(Product.objects.get(pk=1))
+        finally:
+            deactivate_task_cache()
+
+        self.assertEqual(1, mock_rego_interpreter.call_args_list.count(call(rego_module)))
+        self.assertEqual(1, mock_rego_interpreter.call_args_list.count(call(changed_rego_module)))
