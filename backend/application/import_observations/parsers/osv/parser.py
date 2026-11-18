@@ -518,7 +518,7 @@ class OSVParser(BaseParser):
         versions = affected.get("versions", [])
         return version in versions
 
-    def _is_version_in_ranges(
+    def _is_version_in_ranges(  # pylint: disable=too-many-branches
         self, parsed_purl: PackageURL, version: str, affected: dict
     ) -> tuple[Optional[bool], Optional[str], list[Event]]:
         if not version:
