@@ -6,6 +6,7 @@ from packageurl import PackageURL
 
 from application.core.models import Branch, Product
 from application.import_observations.parsers.osv.parser import (
+    Event,
     OSV_Component,
     OSV_Vulnerability,
     OSVParser,
@@ -330,6 +331,169 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
 
         self.assertFalse(parser._is_version_in_ranges(purl, "1.54.0-3.el9", affected)[0])
 
+    def test_get_events_last_affected(self):
+        affected = {
+            "ranges": [
+                {
+                    "type": "ECOSYSTEM",
+                    "events": [
+                        {"introduced": "1.0.0"},
+                        {"fixed": "1.2.0"},
+                        {"introduced": "2.0.0"},
+                        {"last_affected": "2.3.0"},
+                    ],
+                }
+            ]
+        }
+
+        self.assertEqual(
+            [
+                Event("ECOSYSTEM", introduced="1.0.0", fixed="1.2.0"),
+                Event("ECOSYSTEM", introduced="2.0.0", fixed="", last_affected="2.3.0"),
+            ],
+            OSVParser()._get_events(affected),
+        )
+
+    def test_is_version_in_ranges_last_affected(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:composer/symfony/http-kernel@2.3.0")
+        affected = {
+            "ranges": [
+                {
+                    "type": "ECOSYSTEM",
+                    "events": [
+                        {"introduced": "1.0.0"},
+                        {"fixed": "1.2.0"},
+                        {"introduced": "2.0.0"},
+                        {"last_affected": "2.3.0"},
+                    ],
+                }
+            ]
+        }
+
+        self.assertEqual((True, "1.2.0"), parser._is_version_in_ranges(purl, "1.1.0", affected)[:2])
+        self.assertEqual((False, None), parser._is_version_in_ranges(purl, "1.2.0", affected)[:2])
+        self.assertEqual((False, None), parser._is_version_in_ranges(purl, "1.9.0", affected)[:2])
+        self.assertEqual((True, None), parser._is_version_in_ranges(purl, "2.0.0", affected)[:2])
+        self.assertEqual((True, None), parser._is_version_in_ranges(purl, "v2.3.0", affected)[:2])
+        self.assertEqual((False, None), parser._is_version_in_ranges(purl, "2.3.1", affected)[:2])
+
+    def test_is_version_in_ranges_rpm_last_affected(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:rpm/azurelinux/glibc@2.38-20.azl3?distro=azurelinux-3.0")
+        affected = {"ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"last_affected": "2.38-21"}]}]}
+
+        self.assertTrue(parser._is_version_in_ranges(purl, "2.38-20.azl3", affected)[0])
+        self.assertTrue(parser._is_version_in_ranges(purl, "2.38-21", affected)[0])
+        self.assertFalse(parser._is_version_in_ranges(purl, "2.38-22.azl3", affected)[0])
+
+    def test_get_description_events_last_affected(self):
+        description = OSVParser()._get_description(
+            {"summary": "summary"},
+            False,
+            None,
+            [
+                Event("ECOSYSTEM", introduced="1.0", fixed="1.2"),
+                Event("ECOSYSTEM", introduced="2.0", fixed="", last_affected="2.3"),
+            ],
+        )
+
+        expected_description = """summary
+
+**Confidence: Low** (Events could not be evaluated)
+
+**Events:**
+
+* ECOSYSTEM: Introduced: 1.0 - Fixed: 1.2
+
+* ECOSYSTEM: Introduced: 2.0 - Last affected: 2.3"""
+        self.assertEqual(expected_description, description)
+
+    def test_get_affected_ecosystems_packagist(self):
+        parser = OSVParser()
+        purl = PackageURL.from_string("pkg:composer/drupal/core@10.2.1")
+        osv_vulnerability = {
+            "affected": [
+                {"package": {"ecosystem": "Packagist", "name": "drupal/core"}, "id": 1},
+                {"package": {"ecosystem": "Packagist:https://packages.drupal.org/8", "name": "drupal/core"}, "id": 2},
+                {"package": {"ecosystem": "Packagist", "name": "drupal/drupal"}, "id": 3},
+                {"package": {"ecosystem": "npm", "name": "drupal/core"}, "id": 4},
+            ]
+        }
+
+        affected = parser._get_affected_ecosystems(purl, osv_vulnerability, Product(), None)
+
+        self.assertEqual([1, 2], [affected_item["id"] for affected_item in affected])
+
+    def test_get_affected_ecosystems_docker_hardened_images(self):
+        parser = OSVParser()
+        osv_vulnerability = {
+            "affected": [
+                {"package": {"ecosystem": "Docker Hardened Images:Debian:13", "name": "iptables"}, "id": 1},
+                {"package": {"ecosystem": "Docker Hardened Images:Alpine:3.23", "name": "iptables"}, "id": 2},
+                {"package": {"ecosystem": "Debian:13", "name": "iptables"}, "id": 3},
+            ]
+        }
+        # The namespace of the purl takes precedence over the configured distribution
+        product = Product(osv_linux_distribution="Debian", osv_linux_release="13")
+
+        for purl, expected_ids in (
+            ("pkg:deb/dhi/iptables@1.8.11-2%2Bdhi1?distro=debian-13", [1]),
+            ("pkg:apk/dhi/iptables@1.8.11-r0", [2]),
+            ("pkg:deb/debian/iptables@1.8.11-2?distro=debian-13", [3]),
+        ):
+            with self.subTest(purl=purl):
+                affected = parser._get_affected_ecosystems(
+                    PackageURL.from_string(purl), osv_vulnerability, product, None
+                )
+                self.assertEqual(expected_ids, [affected_item["id"] for affected_item in affected])
+
+    def test_get_affected_ecosystems_configured_distributions(self):
+        parser = OSVParser()
+        osv_vulnerability = {
+            "affected": [
+                {"package": {"ecosystem": "Azure Linux:3", "name": "openssl"}, "id": 1},
+                {"package": {"ecosystem": "TuxCare:OracleLinux:7", "name": "openssl"}, "id": 2},
+                {"package": {"ecosystem": "TuxCare:Maven", "name": "openssl"}, "id": 3},
+            ]
+        }
+        purl = PackageURL.from_string("pkg:rpm/azurelinux/openssl@3.3.3-1.azl3")
+
+        for distribution, release, expected_ids in (
+            ("Azure Linux", "3", [1]),
+            ("Azure Linux", "2", []),
+            ("TuxCare", "OracleLinux:7", [2]),
+        ):
+            with self.subTest(distribution=distribution, release=release):
+                product = Product(osv_linux_distribution=distribution, osv_linux_release=release)
+                affected = parser._get_affected_ecosystems(purl, osv_vulnerability, product, None)
+                self.assertEqual(expected_ids, [affected_item["id"] for affected_item in affected])
+
+    def test_docker_hardened_images_affected_versions(self):
+        call_command(
+            "loaddata",
+            [
+                "unittests/import_observations/parsers/osv/files/fixtures_osv_cache_docker_hardened_images.json",
+            ],
+        )
+
+        osv_components = [
+            self._get_osv_component_dhi_iptables("1.8.11-2+dhi1"),
+            self._get_osv_component_dhi_iptables("1.8.11-2+dhi4"),
+            # Cannot be parsed as a version, but it is not in the list of affected versions
+            self._get_osv_component_dhi_iptables("1.8.11-2+deb13u0+dhi4"),
+        ]
+
+        parser = OSVParser()
+        observations, _ = parser.get_observations(osv_components, self.product_1, self.branch_1)
+
+        self.assertEqual(1, len(observations))
+        observation = observations[0]
+        self.assertEqual("CVE-2012-2663", observation.title)
+        self.assertEqual("1.8.11-2+dhi1", observation.origin_component_version)
+        self.assertEqual("DHI-cn4q-izas-s6hm-cdwh", observation.vulnerability_id_aliases)
+        self.assertIn("**Confidence: High** (Component found in affected versions)", observation.description)
+
     def test_get_cvss_correctly_labelled(self):
         osv_vulnerability = {
             "severity": [
@@ -547,6 +711,26 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
                 OSV_Vulnerability(
                     id="RHSA-2023:6738",
                     modified=datetime(2024, 8, 7, 20, 1, 58, 452618, timezone.utc),
+                ),
+            },
+        )
+
+    def _get_osv_component_dhi_iptables(self, version):
+        return OSV_Component(
+            license_component=License_Component(
+                product=self.product_1,
+                branch=self.branch_1,
+                component_name="iptables",
+                component_version=version,
+                component_name_version=f"iptables:{version}",
+                component_purl=f"pkg:deb/dhi/iptables@{version.replace('+', '%2B')}?distro=debian-13",
+                component_purl_type="deb",
+                component_dependencies="",
+            ),
+            vulnerabilities={
+                OSV_Vulnerability(
+                    id="DHI-cn4q-izas-s6hm-cdwh",
+                    modified=datetime(2026, 11, 18, 18, 30, 10, 544000, timezone.utc),
                 ),
             },
         )

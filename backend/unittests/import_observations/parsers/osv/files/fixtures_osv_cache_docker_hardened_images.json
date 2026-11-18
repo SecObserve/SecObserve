@@ -1,0 +1,11 @@
+[
+    {
+        "model": "import_observations.osv_cache",
+        "pk": 1,
+        "fields": {
+            "osv_id": "DHI-cn4q-izas-s6hm-cdwh",
+            "data": "{\"id\":\"DHI-cn4q-izas-s6hm-cdwh\",\"summary\":\"extensions/libxt_tcp.c in iptables through 1.4.21 does not match TCP SYN+FIN packets in --syn rules, which might allow\\u2026\",\"details\":\"extensions/libxt_tcp.c in iptables through 1.4.21 does not match TCP SYN+FIN packets in --syn rules, which might allow remote attackers to bypass intended firewall restrictions via crafted packets.  NOTE: the CVE-2012-6638 fix makes this issue less relevant.\",\"modified\":\"2026-11-18T18:30:10.544095154Z\",\"published\":\"2026-11-10T00:26:14Z\",\"upstream\":[\"CVE-2012-2663\"],\"references\":[{\"type\":\"ADVISORY\",\"url\":\"https://scout.docker.com/v/DHI-cn4q-izas-s6hm-cdwh\"},{\"type\":\"ADVISORY\",\"url\":\"https://nvd.nist.gov/vuln/detail/CVE-2012-2663\"},{\"type\":\"ADVISORY\",\"url\":\"https://bugzilla.redhat.com/show_bug.cgi?id=826702\"},{\"type\":\"ADVISORY\",\"url\":\"http://www.spinics.net/lists/netfilter-devel/msg21248.html\"},{\"type\":\"ADVISORY\",\"url\":\"https://security-tracker.debian.org/tracker/CVE-2012-2663\"},{\"type\":\"ADVISORY\",\"url\":\"https://access.redhat.com/security/cve/CVE-2012-2663\"},{\"type\":\"ADVISORY\",\"url\":\"https://ubuntu.com/security/CVE-2012-2663\"},{\"type\":\"ADVISORY\",\"url\":\"http://people.ubuntu.com/~ubuntu-security/cve/CVE-2012-2663\"}],\"affected\":[{\"package\":{\"name\":\"iptables\",\"ecosystem\":\"Docker Hardened Images:Debian:13\",\"purl\":\"pkg:deb/dhi/iptables\"},\"versions\":[\"1.8.11-2+deb13u0+dhi3\",\"1.8.11-2+dhi0\",\"1.8.11-2+dhi1\",\"1.8.11-2+dhi2\",\"1.8.11-2+dhi3\"],\"database_specific\":{\"owner_kind\":\"HSP\",\"source\":\"https://github.com/docker-hardened-images/advisories/blob/main/dhi/osv/2026/DHI-cn4q-izas-s6hm-cdwh.json\"}}],\"schema_version\":\"1.9.2\",\"severity\":[{\"type\":\"CVSS_V2\",\"score\":\"AV:N/AC:L/Au:N/C:P/I:P/A:P\"}]}",
+            "modified": "2026-11-18T18:30:10.544Z"
+        }
+    }
+]

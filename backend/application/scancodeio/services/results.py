@@ -247,9 +247,12 @@ def _release_ubuntu(version_parts: list[str]) -> Optional[str]:
 OSV_LINUX_DISTRIBUTIONS: dict[str, tuple[str, Optional[Callable[[list[str]], Optional[str]]]]] = {
     "almalinux": (OSVLinuxDistribution.DISTRIBUTION_ALMALINUX, _release_major),
     "alpine": (OSVLinuxDistribution.DISTRIBUTION_ALPINE, _release_alpine),
+    "azurelinux": (OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, _release_major),
     "chainguard": (OSVLinuxDistribution.DISTRIBUTION_CHAINGUARD, None),
     "debian": (OSVLinuxDistribution.DISTRIBUTION_DEBIAN, _release_major),
     "mageia": (OSVLinuxDistribution.DISTRIBUTION_MAGEIA, _release_major),
+    # Azure Linux 2 was named CBL-Mariner
+    "mariner": (OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, _release_major),
     "opensuse": (OSVLinuxDistribution.DISTRIBUTION_OPENSUSE, None),
     "opensuse-leap": (OSVLinuxDistribution.DISTRIBUTION_OPENSUSE, None),
     "opensuse-tumbleweed": (OSVLinuxDistribution.DISTRIBUTION_OPENSUSE, None),

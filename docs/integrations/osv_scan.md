@@ -15,6 +15,7 @@ OSV delivers vulnerabilities for a component, without regard to the version of t
 * **conan:** ConanCenter
 * **cran:** CRAN
 * **cargo:** crates.io
+* **composer:** Packagist
 * **golang:** Go
 * **hackage:** Hackage
 * **hex:** Hex
@@ -31,6 +32,8 @@ Some Linux distribution and version can be determined automatically by informati
 * Alpine
 * Chainguard
 * Debian
+* Docker Hardened Images (only for packages with the namespace `dhi` in their PURL; for the other packages of the image the Linux distribution and version need to be set for the product or branch, if their PURLs have no `distro` qualifier)
+
 * Ubuntu (only the free version, not Pro)
 * Wolfi
 
@@ -38,12 +41,16 @@ To correctly identify other Linux packages, the Linux distribution and version h
 
 | Linux distribution | Version   |
 |--------------------|-----------|
+| Azure Linux        | 3         |
 | Red Hat            | rhel_aus:8.4::appstream |
+| TuxCare            | CentOS:7  |
 | Ubuntu             | Pro:24.04:LTS |
 
 If the Linux distribution is set, or for Alpine and Debian packages if it can be determined from the PURL, OSV is queried with the name, ecosystem and version of the package instead of the PURL.
 
 For Red Hat, SUSE and openSUSE only the beginning of the version needs to be set, e.g. `enterprise_linux:9` for all ecosystems of Red Hat Enterprise Linux 9. For all other Linux distributions the complete version has to be set. Alpine packages are only found if a version is set, e.g. `v3.18`, or if it can be determined from the PURL.
+
+TuxCare provides extended support for Linux distributions that have reached their end of life. Its packages are only found if the version contains the original distribution and its release, e.g. `CentOS:7`, `CentOS-Stream:8`, `AlmaLinux:9.2`, `OracleLinux:7`, `RHEL:8`, `Debian:10` or `Ubuntu:20.04`.
 
 
 ## Manual scan
