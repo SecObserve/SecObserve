@@ -1,16 +1,9 @@
-import { FormControl } from "@mui/material";
 import { useEffect, useState } from "react";
-import {
-    BooleanInput,
-    BooleanInputProps,
-    Identifier,
-    ListContextProvider,
-    ResourceContextProvider,
-    useListController,
-} from "react-admin";
+import { Identifier, ListContextProvider, ResourceContextProvider, useListController } from "react-admin";
 
 import { getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
+import { DefaultBranchInput } from "../../commons/custom_fields/DefaultBranchInput";
 import { ProductReferenceInput } from "../../commons/custom_fields/ProductReferenceInput";
 import { usePublishFilterValues } from "../products/FilterValuesContext";
 import { OBSERVATION_STATUS_ACTIVE, ProductGroup } from "../types";
@@ -20,14 +13,6 @@ import { ObservationDatagrid } from "./ObservationList";
 import { IDENTIFIER_OBSERVATION_GROUP_EMBEDDED_LIST, setListIdentifier } from "./functions";
 
 const STORE_KEY = "observations.embedded.group";
-
-// A FormControl gets the same dense margins from the theme as the other filter inputs,
-// the medium switch has about the height of their text fields
-const DefaultBranchInput = (props: BooleanInputProps) => (
-    <FormControl fullWidth={false}>
-        <BooleanInput {...props} size="medium" />
-    </FormControl>
-);
 
 function groupProductFilters(product_group: ProductGroup) {
     return [
