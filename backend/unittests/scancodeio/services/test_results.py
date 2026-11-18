@@ -359,6 +359,12 @@ class TestApplyOSVLinuxDistribution(BaseTestCase):
     def test_photon(self):
         self._assert_distribution([_image("photon", "5.0")], OSVLinuxDistribution.DISTRIBUTION_PHOTON_OS, "5.0")
 
+    def test_azure_linux(self):
+        self._assert_distribution([_image("azurelinux", "3.0")], OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, "3")
+
+    def test_mariner(self):
+        self._assert_distribution([_image("mariner", "2.0")], OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, "2")
+
     def test_distribution_without_release(self):
         self._assert_distribution([_image("rhel", "9.3")], OSVLinuxDistribution.DISTRIBUTION_REDHAT, "")
 
