@@ -32,10 +32,11 @@ Some Linux distribution and version can be determined automatically by informati
 * Alpine
 * Chainguard
 * Debian
-* Docker Hardened Images (only for packages with the namespace `dhi` in their PURL; for the other packages of the image the Linux distribution and version need to be set for the product or branch, if their PURLs have no `distro` qualifier)
-
+* Docker Hardened Images
 * Ubuntu (only the free version, not Pro)
 * Wolfi
+
+Packages of Docker Hardened Images are recognized by the namespace `dhi` in their PURL. For the other packages of the image, the Linux distribution and version need to be set for the product or branch, if their PURLs have no `distro` qualifier.
 
 To correctly identify other Linux packages, the Linux distribution and version has to be set in the product or branch settings according to [OSV affected package specification](https://ossf.github.io/osv-schema/#affectedpackage-field). If it is not set for a branch, the product settings are used. Examples are:
 

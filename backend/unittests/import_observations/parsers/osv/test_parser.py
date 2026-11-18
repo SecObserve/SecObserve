@@ -349,7 +349,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
         self.assertEqual(
             [
                 Event("ECOSYSTEM", introduced="1.0.0", fixed="1.2.0"),
-                Event("ECOSYSTEM", introduced="2.0.0", fixed="", last_affected="2.3.0"),
+                Event("ECOSYSTEM", introduced="2.0.0", last_affected="2.3.0"),
             ],
             OSVParser()._get_events(affected),
         )
@@ -394,7 +394,7 @@ A stack overflow in the XML.toJSONObject component of hutool-json v5.8.10 and or
             None,
             [
                 Event("ECOSYSTEM", introduced="1.0", fixed="1.2"),
-                Event("ECOSYSTEM", introduced="2.0", fixed="", last_affected="2.3"),
+                Event("ECOSYSTEM", introduced="2.0", last_affected="2.3"),
             ],
         )
 

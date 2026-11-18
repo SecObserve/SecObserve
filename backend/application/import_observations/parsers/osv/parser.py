@@ -47,8 +47,8 @@ class OSV_Component:
 @dataclass
 class Event:
     type: str
-    introduced: str
-    fixed: str
+    introduced: str = ""
+    fixed: str = ""
     last_affected: str = ""
 
 
@@ -530,7 +530,8 @@ class OSVParser(BaseParser):
 
         events = self._get_events(affected)
         if not events and affected.get("versions"):
-            # Without ranges, the list of affected versions is complete, e.g. for Docker Hardened Images
+            # Without ranges, the list of affected versions is complete, e.g. for Docker Hardened Images.
+            # The version has not been found in it, which is decisive even if the version cannot be parsed.
             return False, None, events
 
         version_semver = version_parser(version)
@@ -582,7 +583,7 @@ class OSVParser(BaseParser):
 
         osv_ranges = affected.get("ranges", [])
         for osv_range in osv_ranges:
-            event = Event(osv_range.get("type", ""), introduced="", fixed="")
+            event = Event(osv_range.get("type", ""))
             for osv_event in osv_range.get("events", []):
                 introduced = osv_event.get("introduced", "")
                 if introduced:
@@ -595,7 +596,7 @@ class OSVParser(BaseParser):
                     event.last_affected = last_affected
                 if event.introduced and (event.fixed or event.last_affected):
                     events.append(event)
-                    event = Event(osv_range.get("type", ""), introduced="", fixed="")
+                    event = Event(osv_range.get("type", ""))
         return events
 
 
