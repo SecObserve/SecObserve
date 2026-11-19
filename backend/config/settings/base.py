@@ -3,6 +3,7 @@ Base settings to build other settings files upon.
 """
 
 import ipaddress
+import re
 from pathlib import Path
 from socket import gethostbyname, gethostname
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -392,6 +393,13 @@ else:
         "rest_framework.authentication.SessionAuthentication",
     ]
 
+LOGIN_THROTTLE_RATE = env.str("LOGIN_THROTTLE_RATE", "10/minute")
+# REST framework only reads the first letter of the period
+if not re.fullmatch(r"\d+/[smhd][a-z]*", LOGIN_THROTTLE_RATE):
+    raise ValueError(
+        f"LOGIN_THROTTLE_RATE '{LOGIN_THROTTLE_RATE}' must have the format <number>/<second|minute|hour|day>"
+    )
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": DEFAULT_AUTHENTICATION_CLASSES,
     "DEFAULT_RENDERER_CLASSES": [
@@ -409,7 +417,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
-    "DEFAULT_THROTTLE_RATES": {"anon": "10/second", "user": "100/second"},
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "10/second",
+        "user": "100/second",
+        "login": LOGIN_THROTTLE_RATE,
+    },
     "EXCEPTION_HANDLER": "notifications.api.exception_handler.custom_exception_handler",
 }
 
@@ -461,6 +473,11 @@ HUEY_WORKERS = env.int("HUEY_WORKERS", 3)
 if HUEY_WORKERS < 1:
     raise ValueError("HUEY_WORKERS must be at least 1")
 
+# Threads share one CPU core, processes use one core each but need more memory
+HUEY_WORKER_TYPE = env.str("HUEY_WORKER_TYPE", "thread")
+if HUEY_WORKER_TYPE not in ["thread", "process"]:
+    raise ValueError("HUEY_WORKER_TYPE must be thread or process")
+
 # The deprecated variable still wins; without TIME_ZONE the schedules stay in UTC instead of moving to its CET default
 BACKGROUND_TASKS_TIME_ZONE = env_time_zone("BACKGROUND_TASKS_TIME_ZONE", env.str("TIME_ZONE", default="UTC"))
 
@@ -474,7 +491,7 @@ HUEY = {
     "utc": True,  # Use UTC for all times internally.
     "consumer": {
         "workers": HUEY_WORKERS,  # Number of worker threads/processes.
-        "worker_type": "thread",
+        "worker_type": HUEY_WORKER_TYPE,
         "initial_delay": 0.1,  # Smallest polling interval, same as -d.
         "backoff": 1.15,  # Exponential backoff using this rate, -b.
         "max_delay": 10.0,  # Max possible polling interval, -m.

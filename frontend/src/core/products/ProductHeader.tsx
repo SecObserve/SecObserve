@@ -17,6 +17,7 @@ import {
 import { useStyles } from "../../commons/layout/themes";
 import { Product } from "../types";
 import { useBranchFilter } from "./BranchFilterContext";
+import SecurityGateWhyDialog from "./SecurityGateWhyDialog";
 
 const useBranchRecord = (product: Product | undefined, branch_id: Identifier | undefined) => {
     // The counts of a product are the ones of its default branch, so that branch does not have to be loaded
@@ -96,9 +97,12 @@ const ProductHeader = () => {
                         </Labeled>
                     </Stack>
                     {product?.security_gate_passed != undefined && (
-                        <Labeled>
-                            <SecurityGateTextField label="Security gate" />
-                        </Labeled>
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                            <Labeled>
+                                <SecurityGateTextField label="Security gate" />
+                            </Labeled>
+                            <SecurityGateWhyDialog product={product} />
+                        </Stack>
                     )}
                     <Stack spacing={8} direction="row">
                         <Labeled>

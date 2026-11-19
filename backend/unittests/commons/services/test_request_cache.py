@@ -80,6 +80,38 @@ class CacheForRequestDecoratorTest(BaseTestCase):
             self.assertEqual(expensive(1), "result-1")
             self.assertEqual(counter["calls"], 2)  # no caching
 
+    def test_decorator_uses_task_cache_without_request(self):
+        """Without a request, the cache activated for the current task should be used."""
+        counter = {"calls": 0}
+
+        @rc.cache_for_request
+        def expensive(arg):
+            counter["calls"] += 1
+            return f"result-{arg}"
+
+        with mock.patch("application.commons.services.request_cache.get_current_request", return_value=None):
+            rc.activate_task_cache()
+            try:
+                self.assertEqual(expensive(1), "result-1")
+                self.assertEqual(expensive(1), "result-1")
+                self.assertEqual(counter["calls"], 1)
+            finally:
+                rc.deactivate_task_cache()
+
+            # no caching after the task cache has been deactivated
+            self.assertEqual(expensive(1), "result-1")
+            self.assertEqual(counter["calls"], 2)
+
+    def test_request_cache_wins_over_task_cache(self):
+        """If there is a current request, its cache should be used instead of the task cache."""
+        request_cache = rc.RequestCache()
+        rc.activate_task_cache()
+        try:
+            with self._mock_get_current_request(request_cache):
+                self.assertIs(rc._get_request_cache(), request_cache)
+        finally:
+            rc.deactivate_task_cache()
+
     def test_cache_key_generation_is_consistent(self):
         """Cache key calculation should be order‑insensitive for kwargs."""
         key1 = rc._cache_calculate_key(1, 2, foo="bar", baz=3)

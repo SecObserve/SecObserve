@@ -35,8 +35,13 @@ class OIDCAuthentication(BaseAuthentication):
         if len(auth) > 2:
             raise AuthenticationFailed("Invalid token header: Token string should not contain spaces.")
 
-        auth_prefix = auth[0].decode("UTF-8")
-        auth_token = auth[1].decode("UTF-8")
+        try:
+            auth_prefix = auth[0].decode("UTF-8")
+            auth_token = auth[1].decode("UTF-8")
+        except UnicodeDecodeError as e:
+            raise AuthenticationFailed(
+                "Invalid token header: Token string should not contain invalid characters."
+            ) from e
 
         if auth_prefix.lower() != OIDC_PREFIX.lower():
             # Authorization header is possibly for another backend
@@ -71,15 +76,19 @@ class OIDCAuthentication(BaseAuthentication):
                 verify_exp=True,
                 verify_nbf=True,
             )
-            payload = decode(
-                jwt=token,
-                options=options,
-                key=signing_key.key,
-                algorithms=ALGORITHMS,
-                audience=os.environ["OIDC_CLIENT_ID"],
-                issuer=self._get_issuer(discovered_issuer),
-                leeway=settings.oidc_clock_skew,
-            )
+            try:
+                payload = decode(
+                    jwt=token,
+                    options=options,
+                    key=signing_key.key,
+                    algorithms=ALGORITHMS,
+                    audience=os.environ["OIDC_CLIENT_ID"],
+                    issuer=self._get_issuer(discovered_issuer),
+                    leeway=settings.oidc_clock_skew,
+                )
+            except (TypeError, ValueError) as e:
+                # PyJWT raises these when the key type does not fit the algorithm in the token header
+                raise AuthenticationFailed(str(e)) from e
             username = payload.get(os.environ["OIDC_USERNAME"])
             if not username:
                 raise AuthenticationFailed("No username found in JWT")

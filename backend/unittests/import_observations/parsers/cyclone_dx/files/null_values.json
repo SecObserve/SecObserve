@@ -1,0 +1,126 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": null,
+  "version": null,
+  "metadata": {
+    "tools": {
+      "components": null,
+      "services": [
+        {
+          "name": "scanner",
+          "version": null
+        }
+      ]
+    },
+    "component": {
+      "bom-ref": "root",
+      "type": "application",
+      "name": "root",
+      "version": null,
+      "licenses": null,
+      "components": null
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "comp-1",
+      "type": null,
+      "name": "comp1",
+      "version": "1.0",
+      "purl": null,
+      "cpe": null,
+      "licenses": [
+        {
+          "license": null
+        },
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "components": null
+    },
+    {
+      "bom-ref": "comp-2",
+      "type": "library",
+      "name": null,
+      "version": null,
+      "licenses": null
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "root",
+      "dependsOn": [
+        "comp-1"
+      ]
+    },
+    {
+      "ref": "comp-1",
+      "dependsOn": null
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-0000-0001",
+      "description": null,
+      "detail": "Only a detail",
+      "ratings": [
+        {
+          "method": "CVSSv31",
+          "score": null,
+          "severity": null
+        }
+      ],
+      "cwes": null,
+      "references": null,
+      "advisories": [
+        {
+          "url": null
+        },
+        {
+          "url": "https://example.com/advisory"
+        }
+      ],
+      "affects": [
+        {
+          "ref": "comp-1"
+        }
+      ]
+    },
+    {
+      "id": "CVE-0000-0002",
+      "description": "Not affecting any component",
+      "ratings": null,
+      "cwes": null,
+      "references": null,
+      "advisories": null,
+      "affects": null
+    },
+    {
+      "id": "CVE-0000-0003",
+      "description": "Description",
+      "ratings": [
+        {
+          "severity": "medium"
+        },
+        {
+          "severity": "high"
+        },
+        {
+          "severity": "low"
+        }
+      ],
+      "cwes": [
+        79
+      ],
+      "affects": [
+        {
+          "ref": "comp-2"
+        }
+      ]
+    }
+  ]
+}

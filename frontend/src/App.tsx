@@ -5,8 +5,8 @@ import { AuthProvider } from "react-oidc-context";
 import { Route } from "react-router";
 
 import AccessControlAdministration from "./access_control/access_control_administration/AccessControlAdministration";
-import authProvider, { getIsLoggingOut } from "./access_control/auth_provider/authProvider";
-import { onSigninCallback, updateRefreshToken, userManager } from "./access_control/auth_provider/oidc";
+import authProvider, { getIsLoggingOut, jwt_signed_in } from "./access_control/auth_provider/authProvider";
+import { oidc_signed_in, onSigninCallback, updateRefreshToken, userManager } from "./access_control/auth_provider/oidc";
 import authorization_groups from "./access_control/authorization_groups";
 import { Login } from "./access_control/login";
 import users from "./access_control/users";
@@ -56,14 +56,33 @@ const refreshAuthProvider = addRefreshAuthToAuthProvider(authProvider, () =>
 );
 const defaultTheme = getTheme();
 
+/**
+ * Sends a user who is not signed in to the login page before <Admin> is mounted.
+ *
+ * Otherwise react-admin renders its protected routes first, fails the authentication check and logs
+ * the user out to get to the login page. Clearing the query cache during that logout restarts the
+ * authentication check, which can end in an endless logout loop that keeps the router from ever
+ * showing the login page.
+ */
+function redirectAnonymousUserToLogin() {
+    if (jwt_signed_in() || oidc_signed_in() || window.location.hash.startsWith("#/login")) {
+        return;
+    }
+    if (window.location.hash != "" && window.location.hash != "#/") {
+        localStorage.setItem("last_location", window.location.hash);
+    }
+    window.history.replaceState(window.history.state, "", "#/login");
+}
+
 const AdminApp = () => {
     const auth = useAuth();
     const initialLoadDone = useRef(false);
 
     if (auth.isLoading && !initialLoadDone.current) return null;
 
-    if (!auth.isLoading) {
+    if (!auth.isLoading && !initialLoadDone.current) {
         initialLoadDone.current = true;
+        redirectAnonymousUserToLogin();
     }
 
     if (getIsLoggingOut()) return null;

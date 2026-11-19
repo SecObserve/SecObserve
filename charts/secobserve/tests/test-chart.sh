@@ -42,9 +42,15 @@ grep -q "name: custom-secobserve-frontend" "$test_dir/ha.yaml"
 grep -q "type: Recreate" "$test_dir/ha.yaml"
 grep -q 'name: "custom-secobserve-backend-svc"' "$test_dir/ha.yaml"
 grep -q 'name: "custom-secobserve-frontend-svc"' "$test_dir/ha.yaml"
-# the single-Pod workload and the Huey PVC are rendered for the single architecture only
+# the single-Pod workload is rendered for the single architecture only, the Huey PVC also needs the SQLite engine
 grep -q "# Source: secobserve/templates/statefulset.yaml" "$test_dir/default.yaml"
-grep -q "# Source: secobserve/templates/pvc.yaml" "$test_dir/default.yaml"
+if grep -q "# Source: secobserve/templates/pvc.yaml" "$test_dir/default.yaml"; then
+    echo "Expected no Huey PVC with the default PostgreSQL engine" >&2
+    exit 1
+fi
+helm template custom "$chart_dir" --namespace secobserve \
+    --set database.engine=django.db.backends.sqlite3 >"$test_dir/sqlite.yaml"
+grep -q "# Source: secobserve/templates/pvc.yaml" "$test_dir/sqlite.yaml"
 if grep -q "# Source: secobserve/templates/statefulset.yaml" "$test_dir/ha.yaml"; then
     echo "Expected no SecObserve StatefulSet in the ha architecture" >&2
     exit 1

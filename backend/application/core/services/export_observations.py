@@ -100,6 +100,7 @@ COLUMNS = [
     ExportColumn("Component version", "origin_component_version", 14),
     ExportColumn("Component ecosystem", "origin_component_purl_type", 12),
     ExportColumn("Component CPE", "origin_component_cpe", 20),
+    ExportColumn("Component URL", "origin_component_url", 30),
     ExportColumn("Component dependencies", "origin_component_dependencies", 30),
     ExportColumn("Component CycloneDX BOM link", "origin_component_cyclonedx_bom_link", 30),
     ExportColumn("Docker image name", "origin_docker_image_name", 20),

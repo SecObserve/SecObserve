@@ -67,6 +67,7 @@ from application.core.api.serializers_product import (
     ProductMemberSerializer,
     ProductNameSerializer,
     ProductSerializer,
+    SecurityGateCountSerializer,
     ServiceNameSerializer,
     ServiceSerializer,
 )
@@ -104,6 +105,7 @@ from application.core.services.product_api_token import (
     get_product_api_tokens,
     revoke_product_api_token,
 )
+from application.core.services.security_gate import explain_security_gate
 from application.core.types import Status
 from application.issue_tracker.services.issue_tracker import (
     push_observations_to_issue_tracker,
@@ -366,6 +368,15 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
         rule_engine.apply_all_rules_for_product()
 
         return Response(status=HTTP_204_NO_CONTENT)
+
+    @extend_schema(
+        methods=["GET"],
+        responses={HTTP_200_OK: SecurityGateCountSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"])
+    def security_gate_counts(self, request: Request, pk: int) -> Response:
+        product = self.__get_product(pk)
+        return Response(SecurityGateCountSerializer(explain_security_gate(product), many=True).data)
 
     @extend_schema(
         methods=["POST"],

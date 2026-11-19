@@ -4,6 +4,7 @@ from .prod import *  # noqa
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     "anon": "1000/second",
     "user": "1000/second",
+    "login": "1000/second",
 }
 
 

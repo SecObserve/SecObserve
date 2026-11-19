@@ -511,6 +511,32 @@ class TestOSVScannerLinuxQueries(BaseTestCase):
             Product(osv_linux_distribution="Ubuntu", osv_linux_release="Pro:24.04:LTS"),
         )
 
+    def test_configured_azure_linux_and_tuxcare(self):
+        self._assert_name_query(
+            "pkg:rpm/azurelinux/glibc@2.38-20.azl3?distro=azurelinux-3.0",
+            "glibc",
+            "Azure Linux:3",
+            "2.38-20.azl3",
+            Product(osv_linux_distribution="Azure Linux", osv_linux_release="3"),
+        )
+        self._assert_name_query(
+            "pkg:rpm/centos/libxml2@2.9.1-6.el7?distro=centos-7",
+            "libxml2",
+            "TuxCare:CentOS:7",
+            "2.9.1-6.el7",
+            Product(osv_linux_distribution="TuxCare", osv_linux_release="CentOS:7"),
+        )
+
+    def test_docker_hardened_images_queried_by_purl(self):
+        for purl in (
+            "pkg:deb/dhi/iptables@1.8.11-2%2Bdhi1?distro=debian-13",
+            "pkg:apk/dhi/vim@9.1.1-r0",
+        ):
+            with self.subTest(purl=purl):
+                self._assert_purl_query(purl)
+                # The configured distribution applies to the other packages of the image
+                self._assert_purl_query(purl, Product(osv_linux_distribution="Debian", osv_linux_release="13"))
+
     def test_distributions_queried_without_release(self):
         for distribution, release in (
             ("Red Hat", "enterprise_linux:9"),

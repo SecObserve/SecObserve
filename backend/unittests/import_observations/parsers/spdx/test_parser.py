@@ -47,6 +47,8 @@ class TestSPDXParser(TestCase):
             dependencies = """alpine:3.20.3 --> .python-rundeps:20241001.223602
 ghcr.io/secobserve/secobserve-backend:1.20.0 --> alpine:3.20.3"""
             self.assertEqual(dependencies, license_component.component_dependencies)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("", license_component.component_copyright)
             self.assertEqual(1, len(license_component.unsaved_evidences))
             self.assertEqual("Package", license_component.unsaved_evidences[0][0])
             self.assertIn(
@@ -65,6 +67,11 @@ ghcr.io/secobserve/secobserve-backend:1.20.0 --> alpine:3.20.3"""
             )
             dependencies = """ghcr.io/secobserve/secobserve-backend:1.20.0 --> Django"""
             self.assertEqual(dependencies, license_component.component_dependencies)
+            self.assertEqual("https://www.djangoproject.com/", license_component.component_url)
+            self.assertEqual(
+                "Copyright (c) Django Software Foundation and individual contributors.",
+                license_component.component_copyright,
+            )
             self.assertEqual(1, len(license_component.unsaved_evidences))
             self.assertEqual("Package", license_component.unsaved_evidences[0][0])
             self.assertIn(
@@ -77,12 +84,16 @@ ghcr.io/secobserve/secobserve-backend:1.20.0 --> alpine:3.20.3"""
             self.assertEqual([], license_component.unsaved_concluded_licenses)
             self.assertEqual("PyJWT", license_component.component_name)
             self.assertEqual("2.9.0", license_component.component_version)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("", license_component.component_copyright)
 
             license_component = license_components[4]
             self.assertEqual([], license_component.unsaved_declared_licenses)
             self.assertEqual([], license_component.unsaved_concluded_licenses)
             self.assertEqual("PyMySQL", license_component.component_name)
             self.assertEqual("1.1.1", license_component.component_version)
+            self.assertEqual("", license_component.component_url)
+            self.assertEqual("", license_component.component_copyright)
 
             license_component = license_components[89]
             self.assertEqual(

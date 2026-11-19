@@ -43,8 +43,6 @@ class Webhook_Event_Type:
         SECURITY_GATE_CHANGED,
     ]
 
-    CHOICES = [(event_type, event_type) for event_type in SUBSCRIBABLE + [WEBHOOK_TEST]]
-
 
 class Webhook_Delivery_Status:
     PENDING = "Pending"

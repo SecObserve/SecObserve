@@ -22,6 +22,21 @@ tests:
           path: spec.rules[0].http.paths[0].backend.service.name
           value: test-release-secobserve-svc
 
+  - it: sets no deprecated ingress class annotation by default
+    asserts:
+      - notExists:
+          path: metadata.annotations["kubernetes.io/ingress.class"]
+
+  - it: follows a custom ingress class without a conflicting annotation
+    set:
+      ingress.ingressClassName: traefik
+    asserts:
+      - equal:
+          path: spec.ingressClassName
+          value: traefik
+      - notExists:
+          path: metadata.annotations["kubernetes.io/ingress.class"]
+
   - it: appends additional ingress paths
     set:
       ingress.paths:

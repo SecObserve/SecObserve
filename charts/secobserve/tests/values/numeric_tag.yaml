@@ -1,0 +1,4 @@
+architecture: ha
+backend:
+  image:
+    tag: 1.65

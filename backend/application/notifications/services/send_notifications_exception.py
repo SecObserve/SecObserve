@@ -3,6 +3,8 @@ import traceback
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
+from django.db import DatabaseError
+from django.utils import timezone
 from huey.contrib.djhuey import on_commit_task
 
 from application.access_control.models import User
@@ -22,7 +24,6 @@ from application.notifications.services.send_notifications_base import (
 )
 
 logger = logging.getLogger("secobserve.notifications")
-
 
 LAST_EXCEPTIONS: dict[str, datetime] = {}
 
@@ -107,8 +108,7 @@ def send_exception_notification(exception: Exception) -> None:
             )
 
         Notification.objects.create(
-            name=f'Exception "{get_classname(exception)}" has occured',
-            message=str(exception),
+            **_get_notification_values(exception, is_task=False),
             user=get_current_user(),
             type=Notification.TYPE_EXCEPTION,
         )
@@ -123,7 +123,7 @@ def send_task_exception_notification(
 ) -> None:
     settings = Settings.load()
 
-    if _ratelimit_exception(exception, function, arguments):
+    if _ratelimit_exception(exception, function, arguments, is_task=True):
         email_to_adresses = _get_email_to_addresses(settings.exception_email_to)
         if email_to_adresses and settings.email_from:
             for notification_email_to in email_to_adresses:
@@ -180,10 +180,7 @@ def send_task_exception_notification(
                 product = observation.product
 
         Notification.objects.create(
-            name=f'Exception "{get_classname(exception)}" has occured',
-            message=str(exception),
-            function=str(function),
-            arguments=_get_arguments_string(arguments),
+            **_get_notification_values(exception, True, function, arguments),
             product=product,
             observation=observation,
             user=user,
@@ -191,19 +188,50 @@ def send_task_exception_notification(
         )
 
 
-def _ratelimit_exception(exception: Exception, function: str = None, arguments: dict = None) -> bool:
+def _get_notification_values(
+    exception: Exception, is_task: bool, function: Optional[str] = None, arguments: Optional[dict] = None
+) -> dict:
+    values = {
+        "name": f'Exception "{get_classname(exception)}" has occured',
+        "message": str(exception),
+    }
+    if is_task:
+        values["function"] = str(function)
+        values["arguments"] = _get_arguments_string(arguments)
+    return values
+
+
+def _ratelimit_exception(
+    exception: Exception,
+    function: Optional[str] = None,
+    arguments: Optional[dict] = None,
+    is_task: bool = False,
+) -> bool:
     settings = Settings.load()
 
-    key = get_classname(exception) + "/" + str(exception) + "/" + str(function) + "/" + _get_arguments_string(arguments)
-    now = datetime.now()
+    if settings.exception_rate_limit == 0:
+        return True
 
-    if key in LAST_EXCEPTIONS:
-        last_datetime = LAST_EXCEPTIONS[key]
-        difference: timedelta = now - last_datetime
-        if difference.total_seconds() >= settings.exception_rate_limit:
-            LAST_EXCEPTIONS[key] = now
-            return True
+    notification_type = Notification.TYPE_TASK if is_task else Notification.TYPE_EXCEPTION
+    notification_values = _get_notification_values(exception, is_task, function, arguments)
 
+    # Two processes checking in the same instant can both notify, a lock would be needed to prevent that
+    try:
+        return not Notification.objects.filter(
+            type=notification_type,
+            created__gte=timezone.now() - timedelta(seconds=settings.exception_rate_limit),
+            **notification_values,
+        ).exists()
+    except DatabaseError:
+        # Without the database the limit can only be kept per process
+        key = "/".join([notification_type, *notification_values.values()])
+        return _ratelimit_exception_in_process(key, settings.exception_rate_limit)
+
+
+def _ratelimit_exception_in_process(key: str, exception_rate_limit: int) -> bool:
+    now = timezone.now()
+    last_datetime = LAST_EXCEPTIONS.get(key)
+    if last_datetime and (now - last_datetime).total_seconds() < exception_rate_limit:
         return False
 
     LAST_EXCEPTIONS[key] = now

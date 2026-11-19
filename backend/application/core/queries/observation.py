@@ -1,7 +1,8 @@
 import re
-from typing import Optional
+from collections.abc import Sequence
+from typing import Optional, cast
 
-from django.db.models import Exists, OuterRef, Q
+from django.db.models import Count, Exists, OuterRef, Q
 from django.db.models.query import QuerySet
 
 from application.access_control.services.current_user import get_current_user
@@ -16,8 +17,8 @@ from application.core.models import (
     Product_Member,
     Service,
 )
-from application.core.queries.product import get_products
-from application.core.types import Observation_Log_Comment
+from application.core.queries.product import get_default_branch_filter, get_products
+from application.core.types import Observation_Log_Comment, Status
 
 
 def get_observation_by_id(observation_id: int) -> Optional[Observation]:
@@ -326,3 +327,27 @@ def filter_observations_full_text(queryset: QuerySet[Observation], value: str) -
         queryset = queryset.filter(id__in=matching_observations.union(matching_observation_logs, all=True))
 
     return queryset
+
+
+def count_active_observations_by_priority(product: Product, branch: Optional[Branch] = None) -> dict[int, int]:
+    counts = _get_active_observations([product], branch).values("current_priority").annotate(count=Count("pk"))
+    # current_priority is filtered to not null
+    return {cast(int, count["current_priority"]): count["count"] for count in counts}
+
+
+def count_active_observations_by_product_and_priority(products: Sequence[Product]) -> dict[int, dict[int, int]]:
+    counts: dict[int, dict[int, int]] = {}
+    for count in (
+        _get_active_observations(products).values("product_id", "current_priority").annotate(count=Count("pk"))
+    ):
+        counts.setdefault(count["product_id"], {})[cast(int, count["current_priority"])] = count["count"]
+    return counts
+
+
+def _get_active_observations(products: Sequence[Product], branch: Optional[Branch] = None) -> QuerySet[Observation]:
+    return Observation.objects.filter(
+        Q(branch=branch) if branch else get_default_branch_filter(),
+        product__in=products,
+        current_status__in=Status.STATUS_ACTIVE,
+        current_priority__isnull=False,
+    )

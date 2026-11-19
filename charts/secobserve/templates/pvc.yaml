@@ -1,4 +1,4 @@
-{{- if and (ne (default "single" .Values.architecture) "ha") .Values.huey.persistence.enabled (not .Values.huey.persistence.existingClaim) }}
+{{- if and (ne (default "single" .Values.architecture) "ha") .Values.huey.persistence.enabled (eq (include "secobserve.databaseEngine" .) "django.db.backends.sqlite3") (not .Values.huey.persistence.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

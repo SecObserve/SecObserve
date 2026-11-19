@@ -87,6 +87,16 @@ const ObservationShowOrigins = ({ observation, showDependencies, elevated }: Obs
                                             <TextField source="origin_component_cpe" label="Component CPE" />
                                         </Labeled>
                                     )}
+                                    {observation.origin_component_url && observation.origin_component_url != "" && (
+                                        <Labeled>
+                                            <TextUrlField
+                                                label="Component URL"
+                                                text={observation.origin_component_url}
+                                                url={observation.origin_component_url}
+                                                new_tab={true}
+                                            />
+                                        </Labeled>
+                                    )}
                                 </Stack>
                                 {observation.origin_component_dependencies &&
                                     observation.origin_component_dependencies != "" &&

@@ -8,7 +8,33 @@ release:
   namespace: test-namespace
 
 tests:
-  - it: creates a release-scoped Huey PVC
+  - it: is not created with the default PostgreSQL engine
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is not created when backend.env selects PostgreSQL
+    set:
+      database.engine: django.db.backends.sqlite3
+      backend.env:
+        - name: DATABASE_ENGINE
+          value: django.db.backends.postgresql
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: is created when backend.env selects SQLite
+    set:
+      backend.env:
+        - name: DATABASE_ENGINE
+          value: django.db.backends.sqlite3
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: creates a release-scoped Huey PVC with the SQLite engine
+    set:
+      database.engine: django.db.backends.sqlite3
     asserts:
       - equal:
           path: metadata.name
@@ -22,6 +48,7 @@ tests:
 
   - it: supports a custom storage class and annotations
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.storageClass: fast
       huey.persistence.annotations:
         example.com/owner: secobserve
@@ -35,6 +62,7 @@ tests:
 
   - it: does not create a PVC when an existing claim is configured
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.existingClaim: shared-huey
     asserts:
       - hasDocuments:
@@ -42,6 +70,7 @@ tests:
 
   - it: does not create a PVC when persistence is disabled
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.enabled: false
     asserts:
       - hasDocuments:

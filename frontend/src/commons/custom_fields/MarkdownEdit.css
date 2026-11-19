@@ -68,3 +68,20 @@
 .dark-theme [class*="_selectItem"]:hover {
     background-color: #3d3d3d !important;
 }
+
+/* HTML tags that are not rendered in the editor for security reasons are shown as text, see sanitizeHtmlPlugin.ts */
+.raw-html-tag::before {
+    content: attr(data-open-tag);
+}
+
+.raw-html-tag::after {
+    content: attr(data-close-tag);
+}
+
+.raw-html-tag::before,
+.raw-html-tag::after {
+    font-family: monospace;
+    font-size: 0.875em;
+    opacity: 0.7;
+    white-space: pre-wrap;
+}

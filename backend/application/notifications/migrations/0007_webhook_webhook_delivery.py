@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("core", "0100_observation_log_assessment_status_index"),
-        ("notifications", "0005_product_notification_product_rule_approval_receipt"),
+        ("notifications", "0006_notification_type_created_index"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("name", models.CharField(max_length=255)),
-                ("url", models.TextField(max_length=2048)),
+                ("url", models.CharField(max_length=2048)),
                 ("secret", encrypted_model_fields.fields.EncryptedCharField()),
                 ("event_types", models.CharField(max_length=512)),
                 (

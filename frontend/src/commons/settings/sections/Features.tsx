@@ -11,7 +11,12 @@ import {
     useRecordContext,
 } from "react-admin";
 
-import { validate_0_999999, validate_255, validate_required_255 } from "../../custom_validators";
+import {
+    validate_0_999999,
+    validate_255,
+    validate_required_0_001_100,
+    validate_required_255,
+} from "../../custom_validators";
 import { TextInputWide } from "../../layout/themes";
 import { VEX_JUSTIFICATION_TYPE_CHOICES } from "../../types";
 
@@ -171,6 +176,31 @@ export const FeaturesInputs = () => (
             <Grid size={3}>
                 <Stack spacing={2}>
                     <BooleanInput
+                        source="feature_apply_rules_after_epss_import"
+                        label="Apply rules again after the EPSS import"
+                    />
+                </Stack>
+            </Grid>
+            <Grid size={3}>
+                <Stack spacing={2}>
+                    <FormDataConsumer>
+                        {({ formData }) =>
+                            formData.feature_apply_rules_after_epss_import && (
+                                <NumberInput
+                                    source="apply_rules_epss_step"
+                                    label="EPSS step in percentage points"
+                                    validate={validate_required_0_001_100}
+                                />
+                            )
+                        }
+                    </FormDataConsumer>
+                </Stack>
+            </Grid>
+        </Grid>
+        <Grid container spacing={2} sx={{ width: "100%" }}>
+            <Grid size={3}>
+                <Stack spacing={2}>
+                    <BooleanInput
                         source="feature_cross_scanner_deduplication"
                         label="Enable cross scanner deduplication"
                     />
@@ -313,6 +343,24 @@ export const FeaturesFields = () => {
                         {settings.feature_exploit_information && (
                             <Labeled label="Maximum age of CVEs for enrichment in years">
                                 <NumberField source="exploit_information_max_age_years" />
+                            </Labeled>
+                        )}
+                    </Stack>
+                </Grid>
+            </Grid>
+            <Grid container spacing={2} sx={{ width: "100%", marginBottom: 2 }}>
+                <Grid size={3}>
+                    <Stack spacing={2}>
+                        <Labeled label="Apply rules again after the EPSS import">
+                            <BooleanField source="feature_apply_rules_after_epss_import" />
+                        </Labeled>
+                    </Stack>
+                </Grid>
+                <Grid size={3}>
+                    <Stack spacing={2}>
+                        {settings.feature_apply_rules_after_epss_import && (
+                            <Labeled label="EPSS step in percentage points">
+                                <NumberField source="apply_rules_epss_step" />
                             </Labeled>
                         )}
                     </Stack>

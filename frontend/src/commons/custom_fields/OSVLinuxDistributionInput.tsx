@@ -7,6 +7,7 @@ import TextUrlField from "./TextUrlField";
 const DISTRIBUTION_CHOICES = [
     { id: "AlmaLinux", name: "AlmaLinux" },
     { id: "Alpine", name: "Alpine" },
+    { id: "Azure Linux", name: "Azure Linux" },
     { id: "Chainguard", name: "Chainguard" },
     { id: "Debian", name: "Debian" },
     { id: "Mageia", name: "Mageia" },
@@ -15,6 +16,7 @@ const DISTRIBUTION_CHOICES = [
     { id: "Red Hat", name: "Red Hat" },
     { id: "Rocky Linux", name: "Rocky Linux" },
     { id: "SUSE", name: "SUSE" },
+    { id: "TuxCare", name: "TuxCare" },
     { id: "Ubuntu", name: "Ubuntu" },
     { id: "Wolfi", name: "Wolfi" },
 ];
