@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("core", "0100_observation_log_assessment_status_index"),
-        ("notifications", "0005_product_notification_product_rule_approval_receipt"),
+        ("notifications", "0006_notification_type_created_index"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
