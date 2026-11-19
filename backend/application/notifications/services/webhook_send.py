@@ -61,7 +61,8 @@ def send_webhook_request(url: str, secret: str, message_id: str, body: str) -> W
         response = _post_webhook(
             url,
             addresses,
-            body,
+            # A str body would be encoded as ISO-8859-1, the signature is computed over UTF-8
+            body.encode(),
             headers,
             timeout=(settings.WEBHOOK_TIMEOUT, settings.WEBHOOK_TIMEOUT),
             stream=True,

@@ -35,6 +35,7 @@ Readers and Writers can view the webhooks of their products.
 | `import.completed` | An import of observations has finished: file upload, API import, OSV or VulnerableCode scan. | `product`, `import` with the numbers of new, updated and resolved observations |
 | `security_gate.changed` | The security gate of the product changed between passed, failed and not evaluated. | `product`, whose `security_gate_passed` is the new state |
 
+With a minimum severity (`min_severity`), a webhook gets the `observation.*` and `assessment.*` events only for observations with at least this severity. The other events are not filtered by severity.
 General rules belong to no product: `product` is `null` and only global webhooks get their events.
 A test request has the type `webhook.test`.
 

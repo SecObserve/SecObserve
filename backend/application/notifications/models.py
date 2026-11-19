@@ -101,7 +101,7 @@ class Observation_Title_Notified(Model):
 class Webhook(Model):
     product = ForeignKey(Product, on_delete=CASCADE, null=True)
     name = CharField(max_length=255)
-    url = TextField(max_length=2048)
+    url = CharField(max_length=2048)
     secret = EncryptedCharField(max_length=255)  # nosemgrep
     # We treat EncryptedCharField as a regular CharField
     event_types = CharField(max_length=512)

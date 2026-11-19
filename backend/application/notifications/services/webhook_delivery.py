@@ -38,7 +38,7 @@ def kick_webhooks(webhook_ids: Iterable[int]) -> None:
             continue
         _kicked_at[webhook_id] = now
         if _claim(webhook_id, KICK_DELAY):
-            deliver_webhook.schedule(args=(webhook_id,), delay=KICK_DELAY.seconds)
+            deliver_webhook.schedule(args=(webhook_id,), delay=KICK_DELAY.total_seconds())
 
 
 def dispatch_webhooks() -> None:

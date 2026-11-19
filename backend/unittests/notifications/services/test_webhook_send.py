@@ -68,7 +68,7 @@ class TestSendWebhookRequest(SimpleTestCase):
         (url, addresses, data, headers), kwargs = self.mock_post.call_args
         self.assertEqual(url, "https://example.com/hook")
         self.assertEqual(addresses, ["93.184.216.34"])
-        self.assertEqual(data, '{"a": 1}')
+        self.assertEqual(data, b'{"a": 1}')
         self.assertEqual(headers["webhook-id"], "msg_1")
         self.assertEqual(headers["webhook-timestamp"], "1700000000")
         self.assertEqual(

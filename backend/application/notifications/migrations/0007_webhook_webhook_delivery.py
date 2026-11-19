@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("name", models.CharField(max_length=255)),
-                ("url", models.TextField(max_length=2048)),
+                ("url", models.CharField(max_length=2048)),
                 ("secret", encrypted_model_fields.fields.EncryptedCharField()),
                 ("event_types", models.CharField(max_length=512)),
                 (

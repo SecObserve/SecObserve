@@ -174,7 +174,7 @@ def _get_webhook_addresses(
     if not url or url.scheme not in ("http", "https") or not url.host or url.auth:
         logger.error(
             format_log_message(
-                message=f"Webhook URL must use https, a valid host and no user info: {webhook}",
+                message=f"Webhook URL must use http or https, a valid host and no user info: {webhook}",
             )
         )
         return []
@@ -238,7 +238,7 @@ class _PinnedHostAdapter(HTTPAdapter):
 def _post_webhook(
     webhook: str,
     addresses: list[str],
-    data: str,
+    data: str | bytes,
     headers: dict[str, str],
     *,
     timeout: float | tuple[float, float] = 60,
