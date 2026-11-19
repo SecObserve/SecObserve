@@ -100,6 +100,8 @@
 
     [:octicons-arrow-right-24: Notification channels](notifications.md)
 
+    [:octicons-arrow-right-24: Standard webhooks](webhooks.md)
+
 -   :material-open-in-new:{ .lg .middle } __Information links__
 
     ---

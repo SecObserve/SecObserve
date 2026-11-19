@@ -1,4 +1,4 @@
-# Outbound webhooks
+# Standard Webhooks
 
 Webhooks send SecObserve events to your own HTTP endpoints, to drive automation: open a ticket for a new observation, ask the approvers of an assessment in a chat, or stop a deployment when the security gate fails.
 The requests are signed JSON following [Standard Webhooks](https://www.standardwebhooks.com/), so libraries for many languages can verify them.
