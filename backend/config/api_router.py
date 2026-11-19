@@ -53,6 +53,8 @@ from application.licenses.api.views import (
 from application.notifications.api.views import (
     NotificationViewSet,
     ProductNotificationViewSet,
+    WebhookDeliveryViewSet,
+    WebhookViewSet,
 )
 from application.rules.api.views import GeneralRuleViewSet, ProductRuleViewSet
 from application.scancodeio.api.views import ScanCodeIOProjectViewSet
@@ -108,6 +110,8 @@ router.register("product_rules", ProductRuleViewSet, basename="product_rules")
 router.register("evidences", EvidenceViewSet, basename="evidences")
 router.register("notifications", NotificationViewSet, basename="notifications")
 router.register("product_notifications", ProductNotificationViewSet, basename="product_notifications")
+router.register("webhooks", WebhookViewSet, basename="webhooks")
+router.register("webhook_deliveries", WebhookDeliveryViewSet, basename="webhook_deliveries")
 router.register("vulnerability_checks", VulnerabilityCheckViewSet, basename="vulnerability_checks")
 router.register("potential_duplicates", PotentialDuplicateViewSet, basename="potential_duplicates")
 router.register("scancodeio_projects", ScanCodeIOProjectViewSet, basename="scancodeio_projects")

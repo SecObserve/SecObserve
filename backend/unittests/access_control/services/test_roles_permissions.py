@@ -23,5 +23,6 @@ class TestRolesPermissions(BaseTestCase):
             Permissions.Service_View,
             Permissions.VEX_View,
             Permissions.Concluded_License_View,
+            Permissions.Webhook_View,
         }
         self.assertEqual(permissions, get_permissions_for_role(Roles.Reader))

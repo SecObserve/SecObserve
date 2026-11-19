@@ -1,6 +1,6 @@
 # Notification channels
 
-SecObserve can send notifications to email addresses, Microsoft Teams and Slack. This page describes how these channels are set up. *Which* events are notified and *who* receives them is described in [Notifications](../usage/notifications.md).
+SecObserve can send notifications to email addresses, Microsoft Teams and Slack. For machine-readable events to any HTTP endpoint, see [Outbound webhooks](webhooks.md). This page describes how these channels are set up. *Which* events are notified and *who* receives them is described in [Notifications](../usage/notifications.md).
 
 ## Email
 

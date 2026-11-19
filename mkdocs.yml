@@ -99,6 +99,7 @@ nav:
     - Source code repositories: integrations/source_code_repositories.md
     - Issue trackers: integrations/issue_trackers.md
     - Notification channels: integrations/notifications.md
+    - Outbound webhooks: integrations/webhooks.md
     - VEX documents: integrations/vex.md
     - Vulnerability scanning from OSV: integrations/osv_scan.md
     - Vulnerability scanning from VulnerableCode: integrations/vulnerablecode_scan.md

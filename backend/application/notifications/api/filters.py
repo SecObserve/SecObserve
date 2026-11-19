@@ -8,6 +8,8 @@ from application.notifications.models import (
     Notification,
     Notification_Viewed,
     Product_Notification,
+    Webhook,
+    Webhook_Delivery,
 )
 
 
@@ -76,3 +78,33 @@ class ProductNotificationFilter(FilterSet):
             "product",
             "user",
         ]
+
+
+class WebhookFilter(FilterSet):
+    ordering = OrderingFilter(
+        fields=(
+            ("name", "name"),
+            ("product__name", "product_data.name"),
+            ("active", "active"),
+            ("consecutive_failures", "consecutive_failures"),
+        ),
+    )
+
+    class Meta:
+        model = Webhook
+        fields = ["product", "active"]
+
+
+class WebhookDeliveryFilter(FilterSet):
+    ordering = OrderingFilter(
+        fields=(
+            ("id", "id"),
+            ("created", "created"),
+            ("event_type", "event_type"),
+            ("status", "status"),
+        ),
+    )
+
+    class Meta:
+        model = Webhook_Delivery
+        fields = ["webhook", "status", "event_type"]
