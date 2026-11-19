@@ -3,6 +3,7 @@ import {
     BooleanField,
     Datagrid,
     FilterForm,
+    FunctionField,
     ListContextProvider,
     ResourceContextProvider,
     SelectInput,
@@ -62,9 +63,10 @@ const WebhookEmbeddedList = ({ product }: WebhookEmbeddedListProps) => {
                         bulkActionButtons={false}
                         rowClick={false}
                     >
-                        <WithRecord
+                        <FunctionField<Webhook>
                             label="Name"
-                            render={(webhook: Webhook) => (
+                            sortBy="name"
+                            render={(webhook) => (
                                 <TextUrlField text={webhook.name} url={`#/webhooks/${webhook.id}/show`} />
                             )}
                         />

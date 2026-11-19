@@ -1,7 +1,9 @@
+import { Typography } from "@mui/material";
 import { FC } from "react";
 import { BooleanInput, SelectArrayInput, SelectInput, TextArrayField, useRecordContext } from "react-admin";
 
 import { PERMISSION_WEBHOOK_DELETE, PERMISSION_WEBHOOK_EDIT } from "../../access_control/types";
+import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { validate_required, validate_required_255, validate_required_2048 } from "../../commons/custom_validators";
 import { is_superuser } from "../../commons/functions";
 import { TextInputWide } from "../../commons/layout/themes";
@@ -26,6 +28,20 @@ export const WebhookEventTypesField: FC<{ label?: string }> = () => {
         <TextArrayField
             source="event_types"
             record={{ ...webhook, event_types: webhook.event_types.map(get_event_type_name) }}
+        />
+    );
+};
+
+// Links to the webhooks tab of the product (group), label and sortBy are read by Datagrid and Labeled
+export const WebhookScopeField: FC<{ label?: string; sortBy?: string }> = () => {
+    const webhook = useRecordContext<Webhook>();
+    if (!webhook) return null;
+    const product = webhook.product_data;
+    if (!product) return <Typography variant="body2">Global</Typography>;
+    return (
+        <TextUrlField
+            text={product.name}
+            url={`#/${product.is_product_group ? "product_groups" : "products"}/${product.id}/show/webhooks`}
         />
     );
 };

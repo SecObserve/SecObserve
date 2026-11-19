@@ -1,6 +1,15 @@
 import { Stack } from "@mui/material";
 import { Fragment } from "react";
-import { BooleanField, Datagrid, List, SelectInput, TextField, TopToolbar, WithRecord } from "react-admin";
+import {
+    BooleanField,
+    Datagrid,
+    FunctionField,
+    List,
+    SelectInput,
+    TextField,
+    TopToolbar,
+    WithRecord,
+} from "react-admin";
 
 import webhooks from ".";
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
@@ -12,7 +21,7 @@ import { Webhook } from "../types";
 import WebhookCreate from "./WebhookCreate";
 import WebhookDelete from "./WebhookDelete";
 import WebhookEdit from "./WebhookEdit";
-import { WebhookEventTypesField, canDeleteWebhook, canEditWebhook } from "./functions";
+import { WebhookEventTypesField, WebhookScopeField, canDeleteWebhook, canEditWebhook } from "./functions";
 
 const listFilters = [
     <SelectInput
@@ -44,13 +53,12 @@ const WebhookList = () => {
                 empty={false}
             >
                 <Datagrid size={getSettingListSize()} rowClick={false} bulkActionButtons={false}>
-                    <WithRecord
+                    <FunctionField<Webhook>
                         label="Name"
-                        render={(webhook: Webhook) => (
-                            <TextUrlField text={webhook.name} url={`#/webhooks/${webhook.id}/show`} />
-                        )}
+                        sortBy="name"
+                        render={(webhook) => <TextUrlField text={webhook.name} url={`#/webhooks/${webhook.id}/show`} />}
                     />
-                    <WithRecord label="Scope" render={(webhook: Webhook) => webhook.product_data?.name ?? "Global"} />
+                    <WebhookScopeField label="Scope" sortBy="product_data.name" />
                     <TextField source="url" label="URL" />
                     <WebhookEventTypesField label="Event types" />
                     <BooleanField source="active" textAlign="center" />

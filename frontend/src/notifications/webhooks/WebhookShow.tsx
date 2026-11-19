@@ -25,7 +25,7 @@ import WebhookDelete from "./WebhookDelete";
 import WebhookDeliveryEmbeddedList from "./WebhookDeliveryEmbeddedList";
 import WebhookEdit from "./WebhookEdit";
 import WebhookSecretDialog from "./WebhookSecretDialog";
-import { WebhookEventTypesField, canDeleteWebhook, canEditWebhook } from "./functions";
+import { WebhookEventTypesField, WebhookScopeField, canDeleteWebhook, canEditWebhook } from "./functions";
 
 const API = () => window.__RUNTIME_CONFIG__.API_BASE_URL + "/webhooks/";
 
@@ -147,7 +147,7 @@ const WebhookComponent = () => (
                                 <TextField source="name" />
                             </Labeled>
                             <Labeled label="Scope">
-                                <FunctionField render={(w: Webhook) => w.product_data?.name ?? "Global"} />
+                                <WebhookScopeField />
                             </Labeled>
                             <Labeled label="URL">
                                 <TextField source="url" />
