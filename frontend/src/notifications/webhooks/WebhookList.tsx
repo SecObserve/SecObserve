@@ -27,42 +27,47 @@ const listFilters = [
 
 const ListActions = () => <TopToolbar>{is_superuser() && <WebhookCreate product={null} />}</TopToolbar>;
 
-const WebhookList = () => (
-    <Fragment>
-        <ListHeader icon={webhooks.icon} title="Webhooks" />
-        <List
-            perPage={getSettingRowsPerPage()}
-            pagination={<CustomPagination />}
-            filters={listFilters}
-            sort={{ field: "name", order: "ASC" }}
-            actions={<ListActions />}
-            disableSyncWithLocation={false}
-            storeKey="webhooks.list"
-        >
-            <Datagrid size={getSettingListSize()} rowClick={false} bulkActionButtons={false}>
-                <WithRecord
-                    label="Name"
-                    render={(webhook: Webhook) => (
-                        <TextUrlField text={webhook.name} url={`#/webhooks/${webhook.id}/show`} />
-                    )}
-                />
-                <WithRecord label="Scope" render={(webhook: Webhook) => webhook.product_data?.name ?? "Global"} />
-                <TextField source="url" label="URL" />
-                <WithRecord label="Event types" render={(webhook: Webhook) => webhook.event_types.join(", ")} />
-                <BooleanField source="active" textAlign="center" />
-                <TextField source="consecutive_failures" label="Consecutive failures" />
-                <TextField source="user_full_name" label="Changed by" />
-                <WithRecord
-                    render={(webhook: Webhook) => (
-                        <Stack direction="row" spacing={4}>
-                            {canEditWebhook(webhook) && <WebhookEdit />}
-                            {canDeleteWebhook(webhook) && <WebhookDelete webhook={webhook} />}
-                        </Stack>
-                    )}
-                />
-            </Datagrid>
-        </List>
-    </Fragment>
-);
+const WebhookList = () => {
+    localStorage.removeItem("webhookembeddedlist");
+
+    return (
+        <Fragment>
+            <ListHeader icon={webhooks.icon} title="Webhooks" />
+            <List
+                perPage={getSettingRowsPerPage()}
+                pagination={<CustomPagination />}
+                filters={listFilters}
+                sort={{ field: "name", order: "ASC" }}
+                actions={<ListActions />}
+                disableSyncWithLocation={false}
+                storeKey="webhooks.list"
+                empty={false}
+            >
+                <Datagrid size={getSettingListSize()} rowClick={false} bulkActionButtons={false}>
+                    <WithRecord
+                        label="Name"
+                        render={(webhook: Webhook) => (
+                            <TextUrlField text={webhook.name} url={`#/webhooks/${webhook.id}/show`} />
+                        )}
+                    />
+                    <WithRecord label="Scope" render={(webhook: Webhook) => webhook.product_data?.name ?? "Global"} />
+                    <TextField source="url" label="URL" />
+                    <WithRecord label="Event types" render={(webhook: Webhook) => webhook.event_types.join(", ")} />
+                    <BooleanField source="active" textAlign="center" />
+                    <TextField source="consecutive_failures" label="Consecutive failures" />
+                    <TextField source="user_full_name" label="Changed by" />
+                    <WithRecord
+                        render={(webhook: Webhook) => (
+                            <Stack direction="row" spacing={4}>
+                                {canEditWebhook(webhook) && <WebhookEdit />}
+                                {canDeleteWebhook(webhook) && <WebhookDelete webhook={webhook} />}
+                            </Stack>
+                        )}
+                    />
+                </Datagrid>
+            </List>
+        </Fragment>
+    );
+};
 
 export default WebhookList;

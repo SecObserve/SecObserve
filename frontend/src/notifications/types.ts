@@ -80,7 +80,7 @@ export const WEBHOOK_EVENT_TYPE_CHOICES = [
 export interface Webhook extends RaRecord {
     id: Identifier;
     product: Identifier | null;
-    product_data: { name: string; permissions: number[] } | null;
+    product_data: { id: Identifier; name: string; is_product_group: boolean; permissions: number[] } | null;
     name: string;
     url: string;
     event_types: string[];

@@ -18,6 +18,7 @@ import {
 } from "react-admin";
 
 import { DateField } from "../../commons/custom_fields/DateField";
+import { is_superuser } from "../../commons/functions";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
 import { Webhook } from "../types";
 import WebhookDelete from "./WebhookDelete";
@@ -96,16 +97,37 @@ const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
 const ShowActions = () => {
     const webhook = useRecordContext<Webhook>();
     const redirect = useRedirect();
+
+    // Navigation follows the list the webhook was opened from. Only superusers see the list
+    // in the administration menu, all others come from the webhooks tab of a product (group).
+    const product = webhook?.product_data;
+    const fromProduct = !!product && (!!localStorage.getItem("webhookembeddedlist") || !is_superuser());
+    const filter = fromProduct ? { product: Number(product.id) } : undefined;
+    const storeKey = fromProduct ? "webhooks.embedded" : "webhooks.list";
+
+    const handleDeleted = () => {
+        if (fromProduct) {
+            redirect(`/${product.is_product_group ? "product_groups" : "products"}/${product.id}/show/webhooks`);
+        } else {
+            redirect("list", "webhooks");
+        }
+    };
+
     return (
         <TopToolbar>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-                <PrevNextButtons linkType="show" sort={{ field: "name", order: "ASC" }} storeKey="webhooks.list" />
+                {webhook && (
+                    <PrevNextButtons
+                        filter={filter}
+                        linkType="show"
+                        sort={{ field: "name", order: "ASC" }}
+                        storeKey={storeKey}
+                    />
+                )}
                 {webhook && canEditWebhook(webhook) && <SendTest webhook={webhook} />}
                 {webhook && canEditWebhook(webhook) && <RotateSecret webhook={webhook} />}
                 {webhook && canEditWebhook(webhook) && <WebhookEdit />}
-                {webhook && canDeleteWebhook(webhook) && (
-                    <WebhookDelete webhook={webhook} onDeleted={() => redirect("list", "webhooks")} />
-                )}
+                {webhook && canDeleteWebhook(webhook) && <WebhookDelete webhook={webhook} onDeleted={handleDeleted} />}
             </Stack>
         </TopToolbar>
     );

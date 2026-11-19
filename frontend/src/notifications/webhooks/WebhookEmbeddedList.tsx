@@ -49,6 +49,8 @@ const WebhookEmbeddedList = ({ product }: WebhookEmbeddedListProps) => {
         return <div>Loading...</div>;
     }
 
+    localStorage.setItem("webhookembeddedlist", "true");
+
     return (
         <ResourceContextProvider value="webhooks">
             <ListContextProvider value={listContext}>
