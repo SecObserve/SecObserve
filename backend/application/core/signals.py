@@ -19,6 +19,7 @@ from application.core.services.observation import (
     set_product_flags,
 )
 from application.core.services.security_gate import (
+    SECURITY_GATE_FIELDS,
     check_security_gate,
     check_security_gates,
 )
@@ -60,15 +61,8 @@ def product_post_save(
 ) -> None:
     # sender is needed according to Django documentation
     if not created:
-        if (
-            "security_gate_active" in instance.get_dirty_fields().keys()  # pylint: disable=too-many-boolean-expressions
-            or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
-            or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
-            or "security_gate_threshold_medium" in instance.get_dirty_fields().keys()
-            or "security_gate_threshold_low" in instance.get_dirty_fields().keys()
-            or "security_gate_threshold_none" in instance.get_dirty_fields().keys()
-            or "security_gate_threshold_unknown" in instance.get_dirty_fields().keys()
-        ):
+        dirty_fields = instance.get_dirty_fields()
+        if any(field in dirty_fields for field in SECURITY_GATE_FIELDS):
             if instance.is_product_group:
                 check_security_gates(instance.products.all())
             else:
@@ -92,15 +86,8 @@ def settings_post_save(  # pylint: disable=unused-argument
     sender: Any, instance: Settings, created: bool, **kwargs: Any
 ) -> None:
     # parameters are needed according to Django documentation
-    if (  # pylint: disable=too-many-boolean-expressions
-        "security_gate_active" in instance.get_dirty_fields().keys()
-        or "security_gate_threshold_critical" in instance.get_dirty_fields().keys()
-        or "security_gate_threshold_high" in instance.get_dirty_fields().keys()
-        or "security_gate_threshold_medium" in instance.get_dirty_fields().keys()
-        or "security_gate_threshold_low" in instance.get_dirty_fields().keys()
-        or "security_gate_threshold_none" in instance.get_dirty_fields().keys()
-        or "security_gate_threshold_unknown" in instance.get_dirty_fields().keys()
-    ):
+    dirty_fields = instance.get_dirty_fields()
+    if any(field in dirty_fields for field in SECURITY_GATE_FIELDS):
         settings_post_save_task()
 
 

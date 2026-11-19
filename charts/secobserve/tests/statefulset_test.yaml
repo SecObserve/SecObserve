@@ -108,7 +108,16 @@ tests:
           path: spec.template.spec.containers[1].env[8].value
           value: legacy-postgres.example.internal
 
-  - it: persists the Huey queue by default
+  - it: has no Huey volume with the default PostgreSQL engine
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[1].volumeMounts
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: persists the Huey queue with the SQLite engine
+    set:
+      database.engine: django.db.backends.sqlite3
     asserts:
       - equal:
           path: spec.template.spec.securityContext.fsGroup
@@ -147,6 +156,7 @@ tests:
 
   - it: can disable Huey persistence
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.enabled: false
     asserts:
       - notExists:
@@ -156,11 +166,29 @@ tests:
 
   - it: mounts an existing Huey claim
     set:
+      database.engine: django.db.backends.sqlite3
       huey.persistence.existingClaim: shared-huey
     asserts:
       - equal:
           path: spec.template.spec.volumes[0].persistentVolumeClaim.claimName
           value: shared-huey
+
+  - it: checks the database port in dbchecker
+    set:
+      database.port: 6432
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 6432;'
+
+  - it: lets dbchecker.port override the database port
+    set:
+      database.port: 6432
+      dbchecker.port: 7000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 7000;'
 
   - it: renders scheduling configuration
     set:
@@ -215,3 +243,67 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[0].command[2]
           value: echo ready
+
+  - it: renders imagePullSecrets, hostAliases and topologySpreadConstraints
+    set:
+      architecture: single
+      imagePullSecrets:
+        - name: registry-credentials
+      hostAliases:
+        - ip: 10.0.0.10
+          hostnames:
+            - secobserve.internal
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: registry-credentials
+      - equal:
+          path: spec.template.spec.hostAliases[0].hostnames[0]
+          value: secobserve.internal
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].labelSelector.matchLabels["app.kubernetes.io/instance"]
+          value: test-release
+
+  - it: omits the pod placement options by default
+    set:
+      architecture: single
+    asserts:
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+      - notExists:
+          path: spec.template.spec.hostAliases
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints
+
+  - it: pins the images to the digests when set
+    set:
+      backend.image.tag: 1.2.3
+      backend.image.digest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      frontend.image.digest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/secobserve/secobserve-frontend@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: ghcr.io/secobserve/secobserve-backend@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+  - it: ignores the per-component backend resources
+    set:
+      backend.api.resources:
+        limits:
+          cpu: 2000m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].resources.limits.cpu
+          value: 1000m

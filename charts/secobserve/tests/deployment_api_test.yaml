@@ -53,6 +53,25 @@ tests:
           path: spec.template.spec.initContainers[1].name
           value: wait-for-migrations
 
+  - it: checks the database port in dbchecker
+    set:
+      architecture: ha
+      database.port: 6432
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 6432;'
+
+  - it: lets dbchecker.port override the database port
+    set:
+      architecture: ha
+      database.port: 6432
+      dbchecker.port: 7000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'nc -z -w 2 \S+ 7000;'
+
   - it: honours the configured replica count
     set:
       architecture: ha
@@ -61,3 +80,111 @@ tests:
       - equal:
           path: spec.replicas
           value: 4
+
+  - it: renders imagePullSecrets, hostAliases and topologySpreadConstraints
+    set:
+      architecture: ha
+      imagePullSecrets:
+        - name: registry-credentials
+      hostAliases:
+        - ip: 10.0.0.10
+          hostnames:
+            - secobserve.internal
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: registry-credentials
+      - equal:
+          path: spec.template.spec.hostAliases[0].hostnames[0]
+          value: secobserve.internal
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].labelSelector.matchLabels["app.kubernetes.io/instance"]
+          value: test-release
+
+  - it: omits the pod placement options by default
+    set:
+      architecture: ha
+    asserts:
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+      - notExists:
+          path: spec.template.spec.hostAliases
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints
+
+  - it: pins the backend images to the digest when set
+    set:
+      architecture: ha
+      backend.image.tag: 1.2.3
+      backend.image.digest: sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/secobserve/secobserve-backend@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      - equal:
+          path: spec.template.spec.initContainers[1].image
+          value: ghcr.io/secobserve/secobserve-backend@sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+  - it: uses the tag of the backend image when no digest is set
+    set:
+      architecture: ha
+      backend.image.tag: 1.2.3
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/secobserve/secobserve-backend:1.2.3
+
+  - it: renders a numeric backend image tag unchanged
+    set:
+      architecture: ha
+      backend.image.tag: 12345
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/secobserve/secobserve-backend:12345
+
+  - it: renders a decimal backend image tag unchanged
+    values:
+      - values/numeric_tag.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ghcr.io/secobserve/secobserve-backend:1.65
+
+  - it: uses backend.resources when backend.api.resources is empty
+    set:
+      architecture: ha
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 1000m
+      - equal:
+          path: spec.template.spec.initContainers[1].resources.limits.cpu
+          value: 1000m
+
+  - it: uses backend.api.resources for the api and wait-for-migrations containers
+    set:
+      architecture: ha
+      backend.api.resources:
+        limits:
+          cpu: 2000m
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.cpu
+          value: 2000m
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: wait-for-migrations
+      - equal:
+          path: spec.template.spec.initContainers[1].resources.limits.cpu
+          value: 2000m

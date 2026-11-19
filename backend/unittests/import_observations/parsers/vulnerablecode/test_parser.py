@@ -26,6 +26,7 @@ class TestVulnerableCodeParser(BaseTestCase):
             "component_cpe": "cpe:/a:djangoproject:django:5.1.2",
             "component_cyclonedx_bom_link": "urn:cdx:a/1#b",
             "component_dependencies": "django_dependencies",
+            "component_url": "https://www.djangoproject.com/",
         }
         defaults.update(kwargs)
         return License_Component(**defaults)
@@ -94,6 +95,7 @@ class TestVulnerableCodeParser(BaseTestCase):
         self.assertEqual("cpe:/a:djangoproject:django:5.1.2", observation.origin_component_cpe)
         self.assertEqual("urn:cdx:a/1#b", observation.origin_component_cyclonedx_bom_link)
         self.assertEqual("django_dependencies", observation.origin_component_dependencies)
+        self.assertEqual("https://www.djangoproject.com/", observation.origin_component_url)
 
         self.assertEqual(
             [

@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from threading import Lock
+from threading import Lock, local
 from typing import Any, Callable, Optional, TypeVar
 
 from django.core.cache.backends.base import BaseCache
@@ -10,6 +10,10 @@ from rest_framework.request import Request
 from application.commons.services.global_request import get_current_request
 
 T = TypeVar("T")
+
+# Cache for code running outside of a request, e.g. in a background task.
+# Huey runs its tasks in worker threads, so the cache is stored per thread.
+_task_cache = local()
 
 # Attribution 1: This code has been taken from https://github.com/anexia-it/django-request-cache, which has
 # been published under the MIT License. Since this project hasn't been updated for several years,
@@ -86,7 +90,23 @@ def _get_request_cache() -> Optional[RequestCache]:
     Return the current requests cache
     :return:
     """
-    return getattr(get_current_request(), "cache", None)
+    request_cache = getattr(get_current_request(), "cache", None)
+    if request_cache is not None:
+        return request_cache
+
+    return getattr(_task_cache, "cache", None)
+
+
+def activate_task_cache() -> None:
+    """
+    Activate a cache for the current thread, which is used when there is no current request.
+    Must be followed by a call of deactivate_task_cache() when the task is finished.
+    """
+    _task_cache.cache = RequestCache()
+
+
+def deactivate_task_cache() -> None:
+    _task_cache.cache = None
 
 
 cache_args_kwargs_marker = object()  # marker for separating args from kwargs (needs to be global)

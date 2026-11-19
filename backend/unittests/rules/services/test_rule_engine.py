@@ -1,11 +1,16 @@
+from copy import copy
+from datetime import date
+from decimal import Decimal
 from unittest.mock import MagicMock, call, patch
 
 import jsonpickle
+from django.core.management import call_command
 
-from application.core.models import Observation, Product
+from application.core.models import Evidence, Observation, Product, Reference
+from application.core.types import Severity, Status
 from application.rules.models import Rule
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
-from application.rules.types import Rule_Type
+from application.rules.types import Rule_Status, Rule_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -158,6 +163,48 @@ class TestRuleEngine(BaseTestCase):
         self.assertEqual(rule_engine.rego_interpreters[rule.pk], mock_rego_interpreter.return_value)
         self.assertEqual(jsonpickle_output_before, jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False))
 
+    def _check_rego_risk_accepted(self, mock_rego_interpreter, status_before: str) -> Observation:
+        mock_rego_interpreter.return_value.query.return_value = {"status": Status.STATUS_RISK_ACCEPTED}
+        rule_engine = Rule_Engine(self.product_1)
+        rule = Rule(id=1, name="rego_rule", type=Rule_Type.RULE_TYPE_REGO, rego_module="package rule")
+        observation = Observation(
+            title="observation",
+            product=self.product_1,
+            current_status=status_before,
+            risk_acceptance_expiry_date=date(2026, 1, 1),
+        )
+        observation_before = copy(observation)
+
+        self.assertTrue(rule_engine._check_rule_rego(rule, observation, observation_before))
+        return observation
+
+    @patch(
+        "application.rules.services.rule_engine.calculate_risk_acceptance_expiry_date", return_value=date(2027, 6, 30)
+    )
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_risk_accepted_sets_expiry_date(self, mock_rule, mock_rego_interpreter, *_mocks):
+        mock_rule.return_value = []
+
+        observation = self._check_rego_risk_accepted(mock_rego_interpreter, Status.STATUS_OPEN)
+
+        self.assertEqual(Status.STATUS_RISK_ACCEPTED, observation.current_status)
+        self.assertEqual(date(2027, 6, 30), observation.risk_acceptance_expiry_date)
+
+    @patch(
+        "application.rules.services.rule_engine.calculate_risk_acceptance_expiry_date", return_value=date(2027, 6, 30)
+    )
+    @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_already_risk_accepted_keeps_expiry_date(self, mock_rule, mock_rego_interpreter, *_mocks):
+        mock_rule.return_value = []
+
+        observation = self._check_rego_risk_accepted(mock_rego_interpreter, Status.STATUS_RISK_ACCEPTED)
+
+        self.assertEqual(date(2026, 1, 1), observation.risk_acceptance_expiry_date)
+
     # --- apply_rules ---
 
     # --- _check_regex ---
@@ -185,3 +232,89 @@ class TestRuleEngine(BaseTestCase):
         product.save()
         rule_engine = Rule_Engine(product)
         self.assertTrue(_check_regex("v.+lue", "VALUE"))
+
+
+class TestRuleEngineRegoInput(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    @patch("application.rules.services.rule_engine.RegoInterpreter")
+    @patch("application.rules.models.Rule.objects.filter")
+    def test_check_rule_rego_input_only_database_fields(self, mock_rule, mock_rego_interpreter):
+        mock_rule.return_value = []
+        mock_rego_interpreter.return_value.query.return_value = {}
+
+        Reference.objects.create(observation_id=1, url="https://example.com/reference")
+        Evidence.objects.create(observation_id=1, name="evidence", evidence='{"finding": "raw scanner data"}')
+        observation = Observation.objects.prefetch_related("references", "evidences").get(id=1)
+        self.assertIn("references", observation._prefetched_objects_cache)
+        self.assertIn("evidences", observation._prefetched_objects_cache)
+        self.assertTrue(observation.references.all())
+        self.assertTrue(observation.evidences.all())
+        observation.cvss3_score = Decimal("9.8")
+        # Set by the parsers, not a database field
+        observation.unsaved_references = ["https://example.com/unsaved"]
+
+        rule = Rule(
+            id=1,
+            name="rego_rule",
+            type=Rule_Type.RULE_TYPE_REGO,
+            rego_module="package rule",
+        )
+        rule_engine = Rule_Engine(observation.product)
+
+        rule_engine.check_rule_for_observation(rule, observation, None, True)
+
+        mock_rego_interpreter.return_value.query.assert_called_once()
+        rego_input = mock_rego_interpreter.return_value.query.call_args.args[0]
+
+        expected_keys = {
+            field.attname
+            for field in Observation._meta.concrete_fields
+            if getattr(observation, field.attname) is not None and getattr(observation, field.attname) != ""
+        }
+        expected_keys.update(["product_name", "branch_name"])
+        if observation.origin_service:
+            expected_keys.add("origin_service_name")
+        self.assertEqual(expected_keys, set(rego_input.keys()))
+
+        self.assertEqual("db_observation_internal", rego_input["title"])
+        self.assertEqual(observation.product_id, rego_input["product_id"])
+        self.assertEqual(9.8, rego_input["cvss3_score"])
+        self.assertEqual(observation.product.name, rego_input["product_name"])
+        self.assertEqual(observation.branch.name, rego_input["branch_name"])
+        for key in ["_state", "_prefetched_objects_cache", "unsaved_references", "references", "evidences"]:
+            self.assertNotIn(key, rego_input)
+
+
+class TestRuleEngineRuleIds(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_apply_rules_for_observation_unchanged_rule_not_loaded(self):
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        rule = Rule.objects.create(
+            name="general_rule",
+            title=f"^{observation.title}$",
+            new_severity=Severity.SEVERITY_LOW,
+            approval_status=Rule_Status.RULE_STATUS_AUTO_APPROVED,
+        )
+        rule_engine = Rule_Engine(observation.product)
+        rule_engine.rules = [rule]
+        rule_engine.apply_rules_for_observation(observation)
+
+        # Read from the database, an observation has only the id of its rule
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        with self.assertNumQueries(0):
+            rule_engine.apply_rules_for_observation(observation)
+
+        self.assertEqual(rule.pk, observation.general_rule_id)
+        self.assertEqual(Severity.SEVERITY_LOW, observation.current_severity)

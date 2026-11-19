@@ -245,7 +245,9 @@
         "SPDXID": "SPDXRef-Package-d254ad6cee138a57",
         "versionInfo": "",
         "supplier": "NOASSERTION",
-        "downloadLocation": "NONE",
+        "downloadLocation": "https://pypi.org/project/Django/",
+        "homepage": "https://www.djangoproject.com/",
+        "copyrightText": "Copyright (c) Django Software Foundation and individual contributors.",
         "filesAnalyzed": true,
         "packageVerificationCode": {
           "packageVerificationCodeValue": "9adbaa08952f54dd4f2612d23e22c9df80a88c5d"
@@ -296,7 +298,8 @@
         "SPDXID": "SPDXRef-Package-10c43c2162ce278d",
         "versionInfo": "2.9.0",
         "supplier": "NOASSERTION",
-        "downloadLocation": "NONE",
+        "downloadLocation": "https://github.com/jpadilla/pyjwt",
+        "copyrightText": "NOASSERTION",
         "filesAnalyzed": true,
         "packageVerificationCode": {
           "packageVerificationCodeValue": "354513a47550187a9b84a4ae8073aeb2e3269fc4"
@@ -337,7 +340,9 @@
         "SPDXID": "SPDXRef-Package-1b2850e1ae4916b3",
         "versionInfo": "1.1.1",
         "supplier": "NOASSERTION",
-        "downloadLocation": "NONE",
+        "downloadLocation": "git+https://github.com/PyMySQL/PyMySQL",
+        "homepage": "NOASSERTION",
+        "copyrightText": "NONE",
         "filesAnalyzed": true,
         "packageVerificationCode": {
           "packageVerificationCodeValue": "3b81a3837f4f8641bd91978890861c2404dbb31e"
@@ -2596,7 +2601,7 @@
       {
         "name": "libcom_err",
         "SPDXID": "SPDXRef-Package-202055e74aac337d",
-        "versionInfo": "1.64.0-r5",
+        "versionInfo": "1.65.0-r5",
         "supplier": "NOASSERTION",
         "downloadLocation": "NONE",
         "filesAnalyzed": false,
@@ -2606,14 +2611,14 @@
             "checksumValue": "b12095c140bb68ff17a3667e9bf3ba8ba9a52d00"
           }
         ],
-        "sourceInfo": "built package from: e2fsprogs 1.64.0-r5",
+        "sourceInfo": "built package from: e2fsprogs 1.65.0-r5",
         "licenseConcluded": "GPL-2.0-or-later AND LGPL-2.0-or-later AND BSD-3-Clause AND MIT",
         "licenseDeclared": "GPL-2.0-or-later AND LGPL-2.0-or-later AND BSD-3-Clause AND MIT",
         "externalRefs": [
           {
             "referenceCategory": "PACKAGE-MANAGER",
             "referenceType": "purl",
-            "referenceLocator": "pkg:apk/alpine/libcom_err@1.64.0-r5?arch=x86_64\u0026distro=3.20.3"
+            "referenceLocator": "pkg:apk/alpine/libcom_err@1.65.0-r5?arch=x86_64\u0026distro=3.20.3"
           }
         ],
         "primaryPackagePurpose": "LIBRARY",
@@ -2634,7 +2639,7 @@
             "annotator": "Tool: trivy-0.58.0",
             "annotationDate": "2024-12-21T15:02:40Z",
             "annotationType": "OTHER",
-            "comment": "PkgID: libcom_err@1.64.0-r5"
+            "comment": "PkgID: libcom_err@1.65.0-r5"
           },
           {
             "annotator": "Tool: trivy-0.58.0",

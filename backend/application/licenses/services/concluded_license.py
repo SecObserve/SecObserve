@@ -16,8 +16,10 @@ class ConcludeLicenseApplicator:
         self.product_group_name_version: dict[str, Concluded_License] = {}
         self.product_group_name: dict[str, Concluded_License] = {}
 
-        concluded_licenses = Concluded_License.objects.filter(product=product).order_by(
-            "last_updated", "component_purl_type", "component_name", "component_version"
+        concluded_licenses = (
+            Concluded_License.objects.filter(product=product)
+            .select_related("user", "manual_concluded_spdx_license")
+            .order_by("last_updated", "component_purl_type", "component_name", "component_version")
         )
         for concluded_license in concluded_licenses:
             self.product_name_version[
@@ -33,8 +35,10 @@ class ConcludeLicenseApplicator:
             product_group_products = list(
                 Product.objects.filter(product_group=product.product_group).exclude(pk=product.pk)
             )
-            concluded_licenses = Concluded_License.objects.filter(product__in=product_group_products).order_by(
-                "last_updated", "component_purl_type", "component_name", "component_version"
+            concluded_licenses = (
+                Concluded_License.objects.filter(product__in=product_group_products)
+                .select_related("user", "product", "manual_concluded_spdx_license")
+                .order_by("last_updated", "component_purl_type", "component_name", "component_version")
             )
             for concluded_license in concluded_licenses:
                 self.product_group_name_version[

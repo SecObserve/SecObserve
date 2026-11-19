@@ -52,11 +52,11 @@ def find_potential_duplicates(product: Product, branch: Optional[Branch], servic
         with transaction.atomic():
             # The recalculations of a product also have to be serialized: an atomic block
             # alone does not exclude them from each other, so two tasks for the same scope
-            # would both delete the rows of their own snapshot and then insert the same pair
-            # twice, which violates the unique constraint. Waiting for the product row here,
-            # before the delete, makes the second task see what the first one has written.
-            # The lock is released with the transaction, so a worker that dies cannot leave
-            # it behind.
+            # would both compare against the existing rows of their own snapshot and then
+            # insert the same pair twice, which violates the unique constraint. Waiting for
+            # the product row here, before the existing rows are read, makes the second task
+            # see what the first one has written. The lock is released with the transaction,
+            # so a worker that dies cannot leave it behind.
             Product.objects.select_for_update().filter(pk=product.pk).first()
 
             _write_potential_duplicates(observations, duplicate_types)
@@ -136,27 +136,40 @@ def _get_id_pair(candidate_1: DuplicateCandidate, candidate_2: DuplicateCandidat
 
 
 def _write_potential_duplicates(observations: QuerySet[Observation], duplicate_types: DuplicateTypes) -> None:
-    Potential_Duplicate.objects.filter(observation__in=observations).delete()
-
-    potential_duplicates = []
+    # Every pair is stored in both directions
+    types_to_write: dict[tuple[int, int], str] = {}
     for (observation_id_1, observation_id_2), duplicate_type in duplicate_types.items():
-        # Every pair is stored in both directions
-        potential_duplicates.append(
-            Potential_Duplicate(
-                observation_id=observation_id_1,
-                potential_duplicate_observation_id=observation_id_2,
-                type=duplicate_type,
-            )
-        )
-        potential_duplicates.append(
-            Potential_Duplicate(
-                observation_id=observation_id_2,
-                potential_duplicate_observation_id=observation_id_1,
-                type=duplicate_type,
-            )
-        )
+        types_to_write[(observation_id_1, observation_id_2)] = duplicate_type
+        types_to_write[(observation_id_2, observation_id_1)] = duplicate_type
 
-    Potential_Duplicate.objects.bulk_create(potential_duplicates, batch_size=BULK_BATCH_SIZE)
+    # A re-import mostly finds the same pairs, so only the rows that have changed are deleted and inserted
+    existing_rows = (
+        Potential_Duplicate.objects.filter(observation__in=observations)
+        .values_list("id", "observation_id", "potential_duplicate_observation_id", "type")
+        .iterator(chunk_size=BULK_BATCH_SIZE)
+    )
+    obsolete_ids = []
+    for potential_duplicate_id, observation_id, potential_duplicate_observation_id, duplicate_type in existing_rows:
+        id_pair = (observation_id, potential_duplicate_observation_id)
+        if types_to_write.get(id_pair) == duplicate_type:
+            del types_to_write[id_pair]
+        else:
+            obsolete_ids.append(potential_duplicate_id)
+
+    for obsolete_ids_batch in batched(obsolete_ids, BULK_BATCH_SIZE):
+        Potential_Duplicate.objects.filter(id__in=obsolete_ids_batch).delete()
+
+    Potential_Duplicate.objects.bulk_create(
+        [
+            Potential_Duplicate(
+                observation_id=observation_id,
+                potential_duplicate_observation_id=potential_duplicate_observation_id,
+                type=duplicate_type,
+            )
+            for (observation_id, potential_duplicate_observation_id), duplicate_type in types_to_write.items()
+        ],
+        batch_size=BULK_BATCH_SIZE,
+    )
 
 
 def _set_has_potential_duplicates(

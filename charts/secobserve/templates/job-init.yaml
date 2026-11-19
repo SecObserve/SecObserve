@@ -8,7 +8,8 @@ metadata:
     {{- include "secobserve.labels" . | nindent 4 }}
     app.kubernetes.io/component: init
   annotations:
-    helm.sh/hook: post-install,pre-upgrade
+    {{- /* An external database exists before the install; the bundled one is created by it. */}}
+    helm.sh/hook: {{ if .Values.postgresql.enabled }}post-install{{ else }}pre-install{{ end }},pre-upgrade
     helm.sh/hook-weight: "0"
     helm.sh/hook-delete-policy: before-hook-creation
 spec:
@@ -38,14 +39,14 @@ spec:
       {{- include "secobserve.podPlacement" . | nindent 6 }}
       containers:
         - name: init
-          image: "{{ .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          image: "{{ include "secobserve.image" (dict "image" .Values.backend.image "context" $) }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           args:
             - init
           env:
             {{- include "secobserve.backendEnv" . | nindent 12 }}
           resources:
-            {{- toYaml .Values.backend.resources | nindent 12 }}
+            {{- include "secobserve.backendResources" (dict "context" . "resources" .Values.backend.init.resources) | nindent 12 }}
           {{- with .Values.backend.volumeMounts }}
           volumeMounts:
             {{- toYaml . | nindent 12 }}

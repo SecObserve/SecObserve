@@ -32,7 +32,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         i = 0
         for row in worksheet.rows:
             i += 1
-            self.assertEqual(47, len(row))
+            self.assertEqual(49, len(row))
         self.assertEqual(2, i)
 
         actual_values = []
@@ -43,6 +43,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         expected_values = [
             "Branch",
             "Branch id",
+            "Component copyright",
             "Component cpe",
             "Component cyclonedx bom link",
             "Component dependencies",
@@ -52,6 +53,7 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "Component purl",
             "Component purl type",
             "Component type",
+            "Component url",
             "Component version",
             "Created",
             "Effective license expression",
@@ -93,9 +95,11 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "",
             "",
             "",
+            "",
             1,
             "internal_component",
             "internal_component:1.0.0",
+            "",
             "",
             "",
             "",

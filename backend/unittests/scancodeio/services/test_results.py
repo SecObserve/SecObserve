@@ -19,6 +19,8 @@ ALPINE_PACKAGE = {
     "declared_license_expression": "gpl-2.0",
     "declared_license_expression_spdx": "GPL-2.0-only",
     "package_uid": "pkg:alpine/busybox@1.34.1-r5?arch=x86_64&uuid=1",
+    "homepage_url": "https://busybox.net/",
+    "copyright": "Copyright (c) Erik Andersen\nCopyright (c) Rob Landley\n",
     "datasource_ids": ["alpine_installed_db"],
     "tag": "img-06c7c4-layer-01-40e48c",
 }
@@ -104,14 +106,45 @@ class TestGetLicenseComponents(BaseTestCase):
         self.assertEqual(alpine_component.unsaved_declared_licenses, ["GPL-2.0-only"])
         self.assertEqual(alpine_component.unsaved_concluded_licenses, [])
         self.assertEqual(alpine_component.unsaved_evidences, [["Package", dumps(ALPINE_PACKAGE)]])
+        self.assertEqual(alpine_component.component_url, "https://busybox.net/")
+        self.assertEqual(alpine_component.component_copyright, "Copyright (c) Erik Andersen\nCopyright (c) Rob Landley")
 
         self.assertEqual(license_components[1].component_name, "app")
         self.assertEqual(license_components[1].component_purl, "pkg:npm/app@1.0.0")
         self.assertEqual(license_components[1].unsaved_declared_licenses, [])
+        self.assertEqual(license_components[1].component_url, "")
+        self.assertEqual(license_components[1].component_copyright, "")
 
         # Without a SPDX expression, the license expression of ScanCode is used
         self.assertEqual(license_components[2].component_name, "library")
         self.assertEqual(license_components[2].unsaved_declared_licenses, ["mit"])
+
+    def test_component_url(self):
+        for urls, expected_url in [
+            (
+                {
+                    "homepage_url": "https://homepage",
+                    "repository_homepage_url": "https://repository",
+                    "vcs_url": "git+https://vcs",
+                },
+                "https://homepage",
+            ),
+            (
+                {"homepage_url": "", "repository_homepage_url": "https://repository", "vcs_url": "git+https://vcs"},
+                "https://repository",
+            ),
+            ({"homepage_url": None, "repository_homepage_url": None, "vcs_url": "git+https://vcs"}, ""),
+            ({"homepage_url": None, "repository_homepage_url": "", "vcs_url": None}, ""),
+        ]:
+            with self.subTest(urls=urls):
+                license_components, _ = get_license_components(_results(packages=[{**APP_PACKAGE, **urls}]))
+
+                self.assertEqual(license_components[0].component_url, expected_url)
+
+    def test_component_copyright_none(self):
+        license_components, _ = get_license_components(_results(packages=[{**APP_PACKAGE, "copyright": None}]))
+
+        self.assertEqual(license_components[0].component_copyright, "")
 
     def test_apk_purl_namespace(self):
         for images, expected_purl in [
@@ -325,6 +358,12 @@ class TestApplyOSVLinuxDistribution(BaseTestCase):
 
     def test_photon(self):
         self._assert_distribution([_image("photon", "5.0")], OSVLinuxDistribution.DISTRIBUTION_PHOTON_OS, "5.0")
+
+    def test_azure_linux(self):
+        self._assert_distribution([_image("azurelinux", "3.0")], OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, "3")
+
+    def test_mariner(self):
+        self._assert_distribution([_image("mariner", "2.0")], OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, "2")
 
     def test_distribution_without_release(self):
         self._assert_distribution([_image("rhel", "9.3")], OSVLinuxDistribution.DISTRIBUTION_REDHAT, "")

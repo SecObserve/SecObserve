@@ -88,6 +88,17 @@ class TestAPIToken(BaseTestCase):
         user_mock.assert_called_with(request_data)
         api_mock.assert_called_with(self.user_internal, "api_token_name", None)
 
+    @patch("application.access_control.api.views.django_authenticate")
+    def test_create_api_token_view_password_not_trimmed(self, mock):
+        mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "  not-so-secret  ", "name": "api_token_name"}
+        response = api_client.post(reverse("create_user_api_token"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        mock.assert_called_once_with(username="user@example.com", password="  not-so-secret  ")
+
     # --- create_user_api_token with OIDC ---
 
     @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
@@ -473,6 +484,47 @@ class TestAuthenticate(BaseTestCase):
         user_mock.assert_called_with(request_data)
         jwt_mock.assert_called_with(self.user_internal)
 
+    def test_authenticate_view_invalid_body(self):
+        api_client = APIClient()
+        for request_data in (
+            {"username": "user@example.com", "password": ["not-so-secret"]},
+            {"username": "user@example.com", "password": {"a": "b"}},
+            {"username": "user@example.com"},
+        ):
+            with self.subTest(request_data=request_data):
+                response = api_client.post(reverse("authenticate"), request_data, "json")
+                self.assertEqual(400, response.status_code)
+
+    @patch("application.access_control.api.views.django_authenticate")
+    def test_authenticate_view_password_not_trimmed(self, mock):
+        mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "  not-so-secret  "}
+        response = api_client.post(reverse("authenticate"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        mock.assert_called_once_with(username="user@example.com", password="  not-so-secret  ")
+
+    @patch("application.access_control.api.views.django_authenticate")
+    def test_authenticate_view_long_password(self, mock):
+        mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "a" * 200}
+        response = api_client.post(reverse("authenticate"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        mock.assert_called_once_with(username="user@example.com", password="a" * 200)
+
+    def test_authenticate_view_wrong_credentials(self):
+        api_client = APIClient()
+        request_data = {"username": "user@example.com", "password": "not-so-secret"}
+        response = api_client.post(reverse("authenticate"), request_data, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+
 
 class TestGetAuthenticatedUser(BaseTestCase):
     @patch("application.access_control.api.views.django_authenticate")
@@ -661,6 +713,39 @@ class TestChangePassword(BaseTestCase):
         django_authenticate_mock.assert_called_with(username="user_admin@example.com", password="current")
         save_mock.assert_called()
         set_password_mock.assert_called_with("new")
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    @patch("application.access_control.api.views.UserViewSet.get_object")
+    @patch("application.access_control.models.User.set_password")
+    @patch("application.access_control.models.User.save")
+    @patch("application.access_control.api.views.django_authenticate")
+    @patch("application.access_control.api.views.validate_password")
+    def test_change_password_not_trimmed(
+        self,
+        validate_password_mock,
+        django_authenticate_mock,
+        save_mock,
+        set_password_mock,
+        get_object_mock,
+        authentication_mock,
+    ):
+        get_object_mock.return_value = self.user_internal
+        authentication_mock.return_value = self.user_admin, None
+        django_authenticate_mock.return_value = self.user_admin
+        validate_password_mock.return_value = None
+
+        api_client = APIClient()
+        request_data = {
+            "current_password": "  current  ",
+            "new_password_1": "  new  ",
+            "new_password_2": "  new  ",
+        }
+        response = api_client.patch("/api/users/123/change_password/", request_data, "json")
+
+        self.assertEqual(204, response.status_code)
+        django_authenticate_mock.assert_called_with(username="user_admin@example.com", password="  current  ")
+        save_mock.assert_called()
+        set_password_mock.assert_called_with("  new  ")
 
 
 class TestMySettings(BaseTestCase):

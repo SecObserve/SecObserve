@@ -15,7 +15,7 @@
       "type": "integer",
       "minimum": 1,
       "maximum": 1,
-      "description": "SecObserve currently uses a pod-local SQLite Huey queue, so only one application replica is safe."
+      "description": "Every replica runs the Huey consumer, whose startup flushes clear the locks of the whole queue, so only one application replica is safe."
     },
     "frontend": {
       "type": "object",

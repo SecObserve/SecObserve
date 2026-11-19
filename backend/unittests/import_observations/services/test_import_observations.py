@@ -1,3 +1,7 @@
+import json
+import os
+import tempfile
+from decimal import Decimal
 from unittest.mock import call, patch
 
 from django.core.files.base import File
@@ -17,6 +21,7 @@ from application.core.models import (
     Reference,
     Service,
 )
+from application.core.services.observation import get_current_severity
 from application.core.types import Severity, Status
 from application.import_observations.models import (
     Api_Configuration,
@@ -26,25 +31,36 @@ from application.import_observations.models import (
 from application.import_observations.parsers.dependency_track.parser import (
     DependencyTrack,
 )
+from application.import_observations.services.import_license_components import (
+    process_license_components,
+)
 from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
     _deduplicate_cross_scanner,
+    _get_field_values,
+    _process_current_observation,
     _resolve_unimported_observations,
+    _save_changed_fields,
     api_import_observations,
     file_upload_observations,
-    process_license_components,
 )
 from application.licenses.models import (
     License,
     License_Component,
+    License_Component_Evidence,
     License_Policy,
     License_Policy_Item,
+)
+from application.licenses.services.license_policy import (
+    apply_license_policy_to_component,
 )
 from application.licenses.types import License_Policy_Evaluation_Result
 from application.notifications.types import Webhook_Event_Type
 from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
+
+LICENSES_FILE = "unittests/import_observations/parsers/cyclone_dx/files/licenses_1.json"
 
 
 class TestFileUploadObservations(BaseTestCase):
@@ -410,6 +426,91 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
     @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_unchanged_only_import_last_seen(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertTrue(observation_updates)
+        for observation_update in observation_updates:
+            self.assertTrue(
+                observation_update.startswith('UPDATE "core_observation" SET "import_last_seen" = '),
+                observation_update,
+            )
+            self.assertNotIn('"modified"', observation_update)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_changed_fields_and_modified(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+        observation_ids = list(Observation.objects.filter(product=product).values_list("pk", flat=True))
+        Observation.objects.filter(pk__in=observation_ids).update(description="old description")
+        modified_before = {
+            observation.pk: observation.modified for observation in Observation.objects.filter(pk__in=observation_ids)
+        }
+
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual(len(observation_updates), len(observation_ids))
+        for observation_update in observation_updates:
+            self.assertIn('"description" = ', observation_update)
+            self.assertIn('"import_last_seen" = ', observation_update)
+            self.assertIn('"modified" = ', observation_update)
+            self.assertNotIn('"title" = ', observation_update)
+
+        for observation in Observation.objects.filter(pk__in=observation_ids):
+            self.assertNotEqual("old description", observation.description)
+            self.assertGreater(observation.modified, modified_before[observation.pk])
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_product_timestamp_only(
         self,
         mock_apply_vex_statements_for_observation,
@@ -522,6 +623,264 @@ class TestFileUploadObservations(BaseTestCase):
             self.assertTrue(
                 product_update.startswith('UPDATE "core_product" SET "last_observation_change" = '), product_update
             )
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_references_and_evidences_queries(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        # New observations: nothing to compare with, only inserted
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 0, table)
+            self.assertEqual(len(self._table_queries(context, "DELETE", table)), 0, table)
+            self.assertTrue(self._table_queries(context, "INSERT", table), table)
+
+        references_before = list(Reference.objects.filter(observation__product=product).values_list("id", "url"))
+        evidences_before = list(Evidence.objects.filter(observation__product=product).values_list("id", "evidence"))
+        self.assertTrue(references_before)
+        self.assertTrue(evidences_before)
+
+        # Unchanged observations: one prefetch for all of them, nothing rewritten
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_1/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+            self.assertEqual(len(self._table_queries(context, "DELETE", table)), 0, table)
+            self.assertEqual(len(self._table_queries(context, "INSERT", table)), 0, table)
+
+        evidence_select = self._table_queries(context, "SELECT", "core_evidence")[0]
+        # Only the hash of the evidence is read, not the evidence itself
+        self.assertNotIn('"core_evidence"."evidence",', evidence_select)
+        self.assertNotIn('"core_evidence"."evidence" FROM', evidence_select)
+        self.assertIn('MD5("core_evidence"."evidence")', evidence_select)
+        self.assertEqual(
+            references_before,
+            list(Reference.objects.filter(observation__product=product).values_list("id", "url")),
+        )
+        self.assertEqual(
+            evidences_before,
+            list(Evidence.objects.filter(observation__product=product).values_list("id", "evidence")),
+        )
+
+        # Changed and resolved observations: still one prefetch for all of them
+        with CaptureQueriesContext(connection) as context:
+            self._import_file(product, "unittests/fixtures/data_2/bandit.sarif")
+
+        for table in ["core_reference", "core_evidence"]:
+            self.assertEqual(len(self._table_queries(context, "SELECT", table)), 1, table)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_licenses_unchanged_queries(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        product = self._prepare_license_import()
+
+        self._import_file(product, LICENSES_FILE)
+        components_before = self._license_components(product)
+        evidences_before = self._license_evidences(product)
+        self.assertEqual(67, len(components_before))
+        self.assertEqual(67, len(evidences_before))
+
+        with CaptureQueriesContext(connection) as context:
+            numbers = self._import_file(product, LICENSES_FILE)
+
+        self.assertEqual((0, 67, 0), numbers[3:])
+
+        # The core components are only needed for new license components
+        self.assertEqual(0, len(self._table_queries(context, "SELECT", "core_component")))
+        self.assertEqual(0, len(self._table_queries(context, "INSERT", "core_component")))
+
+        # Evidences are compared by their hash, nothing is rewritten
+        evidence_table = "licenses_license_component_evidence"
+        self.assertEqual(1, len(self._table_queries(context, "SELECT", evidence_table)))
+        self.assertEqual(0, len(self._table_queries(context, "DELETE", evidence_table)))
+        self.assertEqual(0, len(self._table_queries(context, "INSERT", evidence_table)))
+        self.assertIn(
+            'MD5("licenses_license_component_evidence"."evidence")',
+            self._table_queries(context, "SELECT", evidence_table)[0],
+        )
+
+        # Unchanged components only get a new import_last_seen
+        component_updates = self._license_component_updates(context)
+        self.assertEqual(1, len(component_updates))
+        self.assertTrue(
+            component_updates[0].startswith('UPDATE "licenses_license_component" SET "import_last_seen" = '),
+            component_updates[0],
+        )
+
+        components_after = self._license_components(product)
+        self.assertEqual(evidences_before, self._license_evidences(product))
+        for component_before, component_after in zip(components_before, components_after):
+            self.assertEqual(component_before["id"], component_after["id"])
+            self.assertEqual(component_before["last_change"], component_after["last_change"])
+            self.assertEqual(component_before["evaluation_result"], component_after["evaluation_result"])
+            self.assertGreater(component_after["import_last_seen"], component_before["import_last_seen"])
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_licenses_changed(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        product = self._prepare_license_import()
+
+        self._import_file(product, LICENSES_FILE)
+        components_before = {c["component_name"]: c for c in self._license_components(product)}
+        evidences_before = self._license_evidences(product)
+
+        with open(LICENSES_FILE, "r") as file:
+            sbom = json.load(file)
+        for component in sbom["components"]:
+            if component["name"] == "argon2-cffi":
+                # Changed license
+                component["licenses"] = [{"license": {"id": "Apache-2.0"}}]
+            if component["name"] == "CacheControl":
+                # Only the evidence changes
+                component["description"] = "changed description"
+
+        with tempfile.TemporaryDirectory() as directory:
+            # Same file name, to update the same vulnerability check
+            changed_file = os.path.join(directory, os.path.basename(LICENSES_FILE))
+            with open(changed_file, "w") as file:
+                json.dump(sbom, file)
+
+            with CaptureQueriesContext(connection) as context:
+                numbers = self._import_file(product, changed_file)
+
+        self.assertEqual((0, 67, 0), numbers[3:])
+
+        components_after = {c["component_name"]: c for c in self._license_components(product)}
+        evidences_after = self._license_evidences(product)
+
+        argon2_before = components_before["argon2-cffi"]
+        argon2_after = components_after["argon2-cffi"]
+        self.assertEqual("MIT", argon2_before["effective_license_name"])
+        self.assertEqual("Apache-2.0", argon2_after["effective_license_name"])
+        self.assertGreater(argon2_after["last_change"], argon2_before["last_change"])
+        # The evidence contains the license as well
+        self.assertNotEqual(evidences_before[argon2_before["id"]], evidences_after[argon2_after["id"]])
+
+        cache_control_before = components_before["CacheControl"]
+        cache_control_after = components_after["CacheControl"]
+        self.assertEqual(cache_control_before["last_change"], cache_control_after["last_change"])
+        self.assertNotEqual(evidences_before[cache_control_before["id"]], evidences_after[cache_control_after["id"]])
+        self.assertIn("changed description", evidences_after[cache_control_after["id"]][0][1])
+
+        for name, component_before in components_before.items():
+            if name not in ["argon2-cffi", "CacheControl"]:
+                self.assertEqual(component_before["last_change"], components_after[name]["last_change"], name)
+                self.assertEqual(evidences_before[component_before["id"]], evidences_after[component_before["id"]])
+
+        # Only the two changed evidences are replaced
+        evidence_table = "licenses_license_component_evidence"
+        self.assertEqual(1, len(self._table_queries(context, "DELETE", evidence_table)))
+        self.assertEqual(1, len(self._table_queries(context, "INSERT", evidence_table)))
+        changed_evidences = [
+            component_id
+            for component_id, evidences in evidences_after.items()
+            if evidences != evidences_before[component_id]
+        ]
+        self.assertEqual(sorted([argon2_after["id"], cache_control_after["id"]]), sorted(changed_evidences))
+
+    def _prepare_license_import(self):
+        try:
+            License_Policy.objects.get(name="Standard")
+        except License_Policy.DoesNotExist:
+            call_command("loaddata", "unittests/fixtures/initial_license_data.json")
+
+        settings = Settings.load()
+        settings.feature_license_management = True
+        settings.save()
+
+        License_Component.objects.all().delete()
+        return Product.objects.get(id=1)
+
+    def _license_components(self, product):
+        return list(
+            License_Component.objects.filter(product=product)
+            .order_by("id")
+            .values(
+                "id", "component_name", "effective_license_name", "evaluation_result", "last_change", "import_last_seen"
+            )
+        )
+
+    def _license_evidences(self, product):
+        evidences = {}
+        for license_component_id, evidence_id, evidence in (
+            License_Component_Evidence.objects.filter(license_component__product=product)
+            .order_by("id")
+            .values_list("license_component_id", "id", "evidence")
+        ):
+            evidences.setdefault(license_component_id, []).append((evidence_id, evidence))
+        return evidences
+
+    def _license_component_updates(self, context):
+        return [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith('UPDATE "licenses_license_component"')
+        ]
+
+    def _table_queries(self, context, statement, table):
+        prefixes = {
+            "SELECT": "SELECT ",
+            "DELETE": f'DELETE FROM "{table}"',
+            "INSERT": f'INSERT INTO "{table}"',
+        }
+        return [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith(prefixes[statement])
+            and (statement != "SELECT" or f'FROM "{table}"' in query["sql"])
+        ]
 
     def _product_updates(self, context):
         return [query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_product"')]
@@ -962,7 +1321,7 @@ class TestFileUploadObservations(BaseTestCase):
             )
             self.assertEqual(license_components[1].component_purl_type, "pypi")
             self.assertEqual(license_components[1].component_cpe, "")
-            dependencies = """SecObserve:1.64.0 --> argon2-cffi:23.1.0
+            dependencies = """SecObserve:1.65.0 --> argon2-cffi:23.1.0
 argon2-cffi:23.1.0 --> argon2-cffi-bindings:21.2.0"""
             self.assertEqual(license_components[1].component_dependencies, dependencies)
             self.assertEqual(license_components[1].effective_spdx_license, License.objects.get(spdx_id="MIT"))
@@ -1612,6 +1971,168 @@ class TestProcessLicenseComponentsServices(BaseTestCase):
         self.assertEqual(self._component_names(service_1), ["a"])
         self.assertEqual(self._component_names(None), ["b"])
 
+    def test_license_policy_excludes_components_of_import(self):
+        self.product.license_policy = License_Policy.objects.get(name="Standard")
+        self.product.save()
+        service_1 = Service.objects.get(id=1)
+
+        self.assertEqual(self._import(service_1, ["a", "b"]), (2, 0, 0))
+        self.assertEqual(self._import(None, ["c"]), (1, 0, 0))
+
+        # Import without service: only the components with service are evaluated by the license policy
+        self._set_outdated_evaluation_results()
+        with patch(
+            "application.licenses.services.license_policy.apply_license_policy_to_component",
+            wraps=apply_license_policy_to_component,
+        ) as mock_apply:
+            self.assertEqual(self._import(None, ["c"]), (0, 1, 0))
+        self.assertEqual(["a", "b"], self._evaluated_component_names(mock_apply))
+        self._assert_evaluation_results_unknown()
+
+        # Import with service: only the component without service is evaluated by the license policy
+        self._set_outdated_evaluation_results()
+        with patch(
+            "application.licenses.services.license_policy.apply_license_policy_to_component",
+            wraps=apply_license_policy_to_component,
+        ) as mock_apply:
+            self.assertEqual(self._import(service_1, ["a", "b"]), (0, 2, 0))
+        self.assertEqual(["c"], self._evaluated_component_names(mock_apply))
+        self._assert_evaluation_results_unknown()
+
+    def test_license_policy_excludes_components_of_import_without_branch(self):
+        self.product.license_policy = License_Policy.objects.get(name="Standard")
+        self.product.save()
+        # Without a branch, all license components of the product are evaluated, including ones
+        # committed by other test classes
+        License_Component.objects.filter(product=self.product).delete()
+
+        self.assertEqual(self._import(None, ["a"]), (1, 0, 0))
+        self.assertEqual(self._import_without_branch(["b"]), (1, 0, 0))
+
+        License_Component.objects.filter(product=self.product).update(
+            evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED
+        )
+
+        # Without a branch, the license policy is applied to all branches of the product. The component
+        # with the same service and file name in another branch is not part of this import and must be evaluated.
+        with patch(
+            "application.licenses.services.license_policy.apply_license_policy_to_component",
+            wraps=apply_license_policy_to_component,
+        ) as mock_apply:
+            self.assertEqual(self._import_without_branch(["b"]), (0, 1, 0))
+        self.assertEqual(["a"], self._evaluated_component_names(mock_apply))
+        self.assertEqual(
+            {License_Policy_Evaluation_Result.RESULT_UNKNOWN},
+            set(License_Component.objects.filter(product=self.product).values_list("evaluation_result", flat=True)),
+        )
+
+    def _import_without_branch(self, component_names):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=None, service=None, filename="sbom.json"
+        )
+        components = [License_Component(component_name=name, component_version="1.0") for name in component_names]
+        return process_license_components(components, "scanner", vulnerability_check)
+
+    def _set_outdated_evaluation_results(self):
+        # The components have no license, so the license policy evaluates them as unknown.
+        # Only the branch is relevant, because the license policy is applied to the components of the branch.
+        License_Component.objects.filter(product=self.product, branch=self.branch).update(
+            evaluation_result=License_Policy_Evaluation_Result.RESULT_ALLOWED
+        )
+
+    def _evaluated_component_names(self, mock_apply):
+        return sorted(mock_call.args[0].component_name for mock_call in mock_apply.call_args_list)
+
+    def _assert_evaluation_results_unknown(self):
+        self.assertEqual(
+            {License_Policy_Evaluation_Result.RESULT_UNKNOWN},
+            set(
+                License_Component.objects.filter(product=self.product, branch=self.branch).values_list(
+                    "evaluation_result", flat=True
+                )
+            ),
+        )
+
+    def test_url_and_copyright(self):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=self.branch, service=None, filename="sbom.json"
+        )
+
+        def import_component(url, copyright_text):
+            component = License_Component(
+                component_name="a", component_version="1.0", component_url=url, component_copyright=copyright_text
+            )
+            return process_license_components([component], "scanner", vulnerability_check)
+
+        self.assertEqual(import_component("https://a.example.com", "Copyright (c) A"), (1, 0, 0))
+        license_component = License_Component.objects.get(product=self.product, upload_filename="sbom.json")
+        self.assertEqual(license_component.component_url, "https://a.example.com")
+        self.assertEqual(license_component.component_copyright, "Copyright (c) A")
+
+        # A repeated import updates both fields of the existing component
+        self.assertEqual(import_component("https://b.example.com", "Copyright (c) B"), (0, 1, 0))
+        license_component.refresh_from_db()
+        self.assertEqual(license_component.component_url, "https://b.example.com")
+        self.assertEqual(license_component.component_copyright, "Copyright (c) B")
+
+        self.assertEqual(import_component(None, None), (0, 1, 0))
+        license_component.refresh_from_db()
+        self.assertEqual(license_component.component_url, "")
+        self.assertEqual(license_component.component_copyright, "")
+
+    def _import_with_purl(self, purl):
+        vulnerability_check, _ = Vulnerability_Check.objects.get_or_create(
+            product=self.product, branch=self.branch, service=None, filename="sbom.json"
+        )
+        component = License_Component(component_name="django", component_version="6.0.7", component_purl=purl)
+        return process_license_components([component], "scanner", vulnerability_check)
+
+    def _license_component(self):
+        return License_Component.objects.select_related("component").get(
+            product=self.product, upload_filename="sbom.json"
+        )
+
+    def test_core_component_changed_purl(self):
+        self.assertEqual(self._import_with_purl(None), (1, 0, 0))
+        license_component = self._license_component()
+        self.assertEqual("", license_component.component.purl)
+        self.assertEqual("django:6.0.7", license_component.component.name_version)
+
+        # Same license component, but the purl leads to a different core component
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (0, 1, 0))
+        license_component = self._license_component()
+        self.assertEqual("pkg:pypi/django@6.0.7", license_component.component_purl)
+        self.assertEqual("pkg:pypi/django@6.0.7", license_component.component.purl)
+
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7?arch=amd64"), (0, 1, 0))
+        license_component_qualifiers = self._license_component()
+        # Qualifiers are not part of the identity of the core component
+        self.assertEqual(license_component.component_id, license_component_qualifiers.component_id)
+
+    def test_core_component_unchanged_purl(self):
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (1, 0, 0))
+        component_id = self._license_component().component_id
+
+        with CaptureQueriesContext(connection) as context:
+            self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (0, 1, 0))
+
+        self.assertEqual(component_id, self._license_component().component_id)
+        # The license component queries join the core components, only direct accesses are relevant here
+        core_component_queries = [
+            query["sql"]
+            for query in context.captured_queries
+            if query["sql"].startswith('SELECT "core_component"')
+            or query["sql"].startswith('INSERT INTO "core_component"')
+        ]
+        self.assertEqual([], core_component_queries)
+
+    def test_core_component_missing(self):
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (1, 0, 0))
+        License_Component.objects.filter(product=self.product, upload_filename="sbom.json").update(component=None)
+
+        self.assertEqual(self._import_with_purl("pkg:pypi/django@6.0.7"), (0, 1, 0))
+        self.assertEqual("pkg:pypi/django@6.0.7", self._license_component().component.purl)
+
 
 class APIImportObservation(BaseTestCase):
     def setUp(self):
@@ -1769,6 +2290,68 @@ class TestDeduplicateCrossScanner(BaseTestCase):
         self.assertFalse(result)
         mock_filter.assert_called_once()
         mock_filter_instance.exclude.assert_called_once()
+
+
+class TestSaveChangedFields(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_unchanged_float_cvss_score_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss3_score = Decimal("9.8")
+        observation.cvss3_vector = ""
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = _get_field_values(observation)
+        # Parsers deliver the score as float, e.g. from JSON
+        observation.cvss3_score = 9.8
+
+        with CaptureQueriesContext(connection) as context:
+            _save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
+
+    def test_unchanged_cvss4_vector_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss4_vector = "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = _get_field_values(observation)
+        # Calculates the score from the vector, like _process_current_observation does
+        get_current_severity(observation)
+
+        with CaptureQueriesContext(connection) as context:
+            _save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.3"), observation.cvss4_score)
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_component_url_updated(self, mock_apply_epss, mock_apply_exploit_information):
+        imported_observation = Observation.objects.get(id=1)
+        imported_observation.origin_component_url = "https://new.example.com"
+        observation_before = Observation.objects.get(id=1)
+        settings = Settings.load()
+
+        _process_current_observation(imported_observation, observation_before, settings, {}, {})
+
+        self.assertEqual("https://new.example.com", Observation.objects.get(id=1).origin_component_url)
+        mock_apply_epss.assert_called_once_with(observation_before, {})
+        mock_apply_exploit_information.assert_called_once_with(observation_before, settings, {})
 
 
 class TestResolveUnimportedObservations(BaseTestCase):

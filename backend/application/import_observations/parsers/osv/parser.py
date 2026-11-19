@@ -47,8 +47,9 @@ class OSV_Component:
 @dataclass
 class Event:
     type: str
-    introduced: str
-    fixed: str
+    introduced: str = ""
+    fixed: str = ""
+    last_affected: str = ""
 
 
 OSV_Non_Linux_Ecosystems = {
@@ -56,6 +57,7 @@ OSV_Non_Linux_Ecosystems = {
     "conan": "ConanCenter",
     "cran": "CRAN",
     "cargo": "crates.io",
+    "composer": "Packagist",
     "golang": "Go",
     "hackage": "Hackage",
     "hex": "Hex",
@@ -69,6 +71,12 @@ OSV_Non_Linux_Ecosystems = {
 }
 
 OSV_Linux_Purl_Types = frozenset({"apk", "deb", "rpm"})
+
+# Packages of Docker Hardened Images are recognized by the namespace of their purl, independent of the
+# Linux distribution of the product or branch, which applies to the other packages of the image.
+OSV_DOCKER_HARDENED_IMAGES = "Docker Hardened Images"
+OSV_DOCKER_HARDENED_IMAGES_PURL_NAMESPACE = "dhi"
+OSV_Docker_Hardened_Images_Distributions = {"apk": "Alpine", "deb": "Debian"}
 
 # The OSV API finds nothing for the purls of these packages if they have a distro qualifier
 OSV_Autodetected_Query_Packages = frozenset({("apk", "alpine"), ("deb", "debian")})
@@ -185,6 +193,7 @@ class OSVParser(BaseParser):
                         origin_component_cpe=osv_component.license_component.component_cpe,
                         origin_component_cyclonedx_bom_link=osv_component.license_component.component_cyclonedx_bom_link,  # noqa: E501 pylint: disable=line-too-long
                         origin_component_dependencies=osv_component.license_component.component_dependencies,
+                        origin_component_url=osv_component.license_component.component_url,
                     )
                     observations.append(observation)
 
@@ -305,7 +314,11 @@ class OSVParser(BaseParser):
             osv_description_parts.append("**Confidence: Low** (Events could not be evaluated)")
             osv_description_parts.append("**Events:**")
             for event in events:
-                osv_description_parts.append(f"* {event.type}: Introduced: {event.introduced} - Fixed: {event.fixed}")
+                if event.fixed:
+                    upper_bound = f"Fixed: {event.fixed}"
+                else:
+                    upper_bound = f"Last affected: {event.last_affected}"
+                osv_description_parts.append(f"* {event.type}: Introduced: {event.introduced} - {upper_bound}")
 
         return "\n\n".join(osv_description_parts)
 
@@ -356,7 +369,7 @@ class OSVParser(BaseParser):
         package_type = parsed_purl.type
         package_name = self._get_package_name(parsed_purl)
 
-        package_osv_ecosystem = OSV_Non_Linux_Ecosystems.get(package_type)
+        package_osv_ecosystem = OSV_Non_Linux_Ecosystems.get(package_type) or _get_dhi_osv_ecosystem(parsed_purl)
 
         if not package_osv_ecosystem:
             package_osv_ecosystem = self._get_configured_osv_ecosystem(product, branch)
@@ -383,7 +396,7 @@ class OSVParser(BaseParser):
     ) -> Optional[str]:
         """The ecosystem to query OSV for a Linux package by name and version. None means that
         the package is queried by its purl."""
-        if parsed_purl.type not in OSV_Linux_Purl_Types:
+        if parsed_purl.type not in OSV_Linux_Purl_Types or _get_dhi_osv_ecosystem(parsed_purl):
             return None
 
         configured_osv_ecosystem = self._get_configured_osv_ecosystem(product, branch)
@@ -505,7 +518,7 @@ class OSVParser(BaseParser):
         versions = affected.get("versions", [])
         return version in versions
 
-    def _is_version_in_ranges(
+    def _is_version_in_ranges(  # pylint: disable=too-many-branches
         self, parsed_purl: PackageURL, version: str, affected: dict
     ) -> tuple[Optional[bool], Optional[str], list[Event]]:
         if not version:
@@ -516,6 +529,10 @@ class OSVParser(BaseParser):
             version, version_parser = self._get_rpm_version_and_parser(parsed_purl, version)
 
         events = self._get_events(affected)
+        if not events and affected.get("versions"):
+            # Without ranges, the list of affected versions is complete, e.g. for Docker Hardened Images.
+            # The version has not been found in it, which is decisive even if the version cannot be parsed.
+            return False, None, events
 
         version_semver = version_parser(version)
         if not version_semver:
@@ -525,15 +542,22 @@ class OSVParser(BaseParser):
         for event in events:
             if event.type in ("ECOSYSTEM", "SEMVER"):
                 introduced_semver = version_parser(event.introduced)
-                fixed_semver = version_parser(event.fixed)
-
                 if not introduced_semver:
                     introduced_semver = version_parser("0.0.0")
-                if not fixed_semver:
-                    continue
 
-                if introduced_semver <= version_semver < fixed_semver:
-                    return True, event.fixed, events
+                if event.fixed:
+                    fixed_semver = version_parser(event.fixed)
+                    if not fixed_semver:
+                        continue
+                    if introduced_semver <= version_semver < fixed_semver:
+                        return True, event.fixed, events
+                else:
+                    # The range is closed by last_affected, the version of last_affected is still affected
+                    last_affected_semver = version_parser(event.last_affected)
+                    if not last_affected_semver:
+                        continue
+                    if introduced_semver <= version_semver <= last_affected_semver:
+                        return True, None, events
 
                 num_rejected_events += 1
 
@@ -559,7 +583,7 @@ class OSVParser(BaseParser):
 
         osv_ranges = affected.get("ranges", [])
         for osv_range in osv_ranges:
-            event = Event(osv_range.get("type", ""), introduced="", fixed="")
+            event = Event(osv_range.get("type", ""))
             for osv_event in osv_range.get("events", []):
                 introduced = osv_event.get("introduced", "")
                 if introduced:
@@ -567,9 +591,12 @@ class OSVParser(BaseParser):
                 fixed = osv_event.get("fixed", "")
                 if fixed:
                     event.fixed = fixed
-                if event.introduced and event.fixed:
+                last_affected = osv_event.get("last_affected", "")
+                if last_affected:
+                    event.last_affected = last_affected
+                if event.introduced and (event.fixed or event.last_affected):
                     events.append(event)
-                    event = Event(osv_range.get("type", ""), introduced="", fixed="")
+                    event = Event(osv_range.get("type", ""))
         return events
 
 
@@ -624,3 +651,16 @@ def _unique_vulnerabilities(data: list[OSV_Component]) -> list[OSV_Vulnerability
             if known is None or vulnerability.modified > known.modified:
                 newest[vulnerability.id] = vulnerability
     return sorted(newest.values(), key=lambda vulnerability: vulnerability.id)
+
+
+def _get_dhi_osv_ecosystem(parsed_purl: PackageURL) -> Optional[str]:
+    """The OSV ecosystems of Docker Hardened Images are e.g. "Docker Hardened Images:Debian:13". The release
+    is not needed to filter the affected packages, because their versions are listed explicitly."""
+    if parsed_purl.namespace != OSV_DOCKER_HARDENED_IMAGES_PURL_NAMESPACE:
+        return None
+
+    distribution = OSV_Docker_Hardened_Images_Distributions.get(parsed_purl.type)
+    if not distribution:
+        return None
+
+    return f"{OSV_DOCKER_HARDENED_IMAGES}:{distribution}"

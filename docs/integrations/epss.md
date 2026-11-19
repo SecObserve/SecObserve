@@ -9,3 +9,5 @@ SecObserve imports the EPSS data and updates all observations with a CVE value w
 Per default the task to import the EPSS data and update the observations is scheduled to run every night at 03:00 UTC time. This default can be changed by administrators via the **Background tasks** section in the [Settings](../getting_started/configuration.md#administration-in-secobserve).  Hours are in UTC, unless [`TIME_ZONE`](../getting_started/configuration.md#time-zone-of-the-background-tasks) is set.
 
 ![EPSS import cron](../assets/images/screenshot_settings_cron_epss.png){ width="80%" style="display: block; margin: 0 auto" }
+
+Rules that read EPSS data, for example Rego rules setting a priority, can be applied again after each import, see [Evaluation](../usage/rule_engine.md#evaluation) in the rule engine documentation.

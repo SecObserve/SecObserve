@@ -72,6 +72,7 @@ class Product(Model, DirtyFieldsMixin):  # pylint: disable=too-many-instance-att
     security_gate_threshold_unknown = IntegerField(
         null=True, validators=[MinValueValidator(0), MaxValueValidator(999999)]
     )
+    security_gate_priority_thresholds = JSONField(null=True, blank=True)
 
     members: ManyToManyField = ManyToManyField(
         User, through="Product_Member", related_name="product_members", blank=True
@@ -344,6 +345,7 @@ class Observation(Model):
     origin_component_cpe = CharField(max_length=255, blank=True)
     origin_component_dependencies = TextField(max_length=32768, blank=True)
     origin_component_cyclonedx_bom_link = CharField(max_length=512, blank=True)
+    origin_component_url = CharField(max_length=2048, blank=True)
 
     origin_docker_image_name = CharField(max_length=255, blank=True)
     origin_docker_image_tag = CharField(max_length=255, blank=True)

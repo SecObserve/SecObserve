@@ -48,6 +48,9 @@ class Notification(Model):
 
     class Meta:
         db_table = "commons_notification"
+        indexes = [
+            Index(fields=["type", "created"]),
+        ]
 
 
 class Notification_Viewed(Model):

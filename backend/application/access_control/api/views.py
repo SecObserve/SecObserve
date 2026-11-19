@@ -1,4 +1,5 @@
 import logging
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
@@ -25,6 +26,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
@@ -88,6 +90,26 @@ from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
 
 logger = logging.getLogger("secobserve.access_control")
+
+
+# Counted per process in LocMemCache, which evicts entries when full; a shared cache backend counts across processes
+class LoginRateThrottle(SimpleRateThrottle):
+    scope = "login"
+
+    def get_cache_key(self, request: Request, view: APIView) -> str | None:
+        data = request.data
+        username = data.get("username") if isinstance(data, dict) else None
+        if not isinstance(username, str):
+            return None
+        # Variants that whitespace trimming or the database collation match to one user share one counter
+        ident = (
+            "".join(c for c in unicodedata.normalize("NFKD", username) if unicodedata.category(c) not in ("Mn", "Cf"))
+            .strip()
+            .casefold()
+        )
+        if not ident:
+            return None
+        return self.cache_format % {"scope": self.scope, "ident": ident}
 
 
 class UserViewSet(ModelViewSet):
@@ -288,6 +310,7 @@ class ApiTokenViewSet(ListModelMixin, GenericViewSet):
 
 class UserAPITokenCreateView(APIView):
     authentication_classes = []
+    throttle_classes = [*APIView.throttle_classes, LoginRateThrottle]
     permission_classes = []
 
     @extend_schema(
@@ -324,6 +347,7 @@ class UserAPITokenCreateView(APIView):
 
 class UserAPITokenRevokeView(APIView):
     authentication_classes = []
+    throttle_classes = [*APIView.throttle_classes, LoginRateThrottle]
     permission_classes = []
 
     @extend_schema(
@@ -354,6 +378,7 @@ class UserAPITokenRevokeView(APIView):
 
 class AuthenticateView(APIView):
     authentication_classes = []
+    throttle_classes = [*APIView.throttle_classes, LoginRateThrottle]
     permission_classes = []
 
     @extend_schema(
@@ -361,7 +386,11 @@ class AuthenticateView(APIView):
         responses={status.HTTP_200_OK: AuthenticationResponseSerializer},
     )
     def post(self, request: Request) -> Response:
-        user = _get_authenticated_user(request.data)
+        request_serializer = AuthenticationRequestSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            raise ValidationError(request_serializer.errors)
+
+        user = _get_authenticated_user(request_serializer.validated_data)
 
         jwt = create_jwt(user)
 
@@ -384,9 +413,9 @@ class JWTSecretResetView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-def _get_authenticated_user(data: dict[str, Any] | list[Any]) -> User:
-    username = data.get("username") if isinstance(data, dict) else None
-    password = data.get("password") if isinstance(data, dict) else None
+def _get_authenticated_user(data: dict[str, Any]) -> User:
+    username = data.get("username")
+    password = data.get("password")
 
     user: User = django_authenticate(username=username, password=password)  # type: ignore[assignment]
     if not user:
