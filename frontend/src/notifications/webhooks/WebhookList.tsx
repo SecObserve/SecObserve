@@ -12,7 +12,7 @@ import { Webhook } from "../types";
 import WebhookCreate from "./WebhookCreate";
 import WebhookDelete from "./WebhookDelete";
 import WebhookEdit from "./WebhookEdit";
-import { canDeleteWebhook, canEditWebhook } from "./functions";
+import { WebhookEventTypesField, canDeleteWebhook, canEditWebhook } from "./functions";
 
 const listFilters = [
     <SelectInput
@@ -52,7 +52,7 @@ const WebhookList = () => {
                     />
                     <WithRecord label="Scope" render={(webhook: Webhook) => webhook.product_data?.name ?? "Global"} />
                     <TextField source="url" label="URL" />
-                    <WithRecord label="Event types" render={(webhook: Webhook) => webhook.event_types.join(", ")} />
+                    <WebhookEventTypesField label="Event types" />
                     <BooleanField source="active" textAlign="center" />
                     <TextField source="consecutive_failures" label="Consecutive failures" />
                     <TextField source="user_full_name" label="Changed by" />

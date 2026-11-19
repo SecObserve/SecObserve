@@ -1,4 +1,5 @@
-import { BooleanInput, SelectArrayInput, SelectInput } from "react-admin";
+import { FC } from "react";
+import { BooleanInput, SelectArrayInput, SelectInput, TextArrayField, useRecordContext } from "react-admin";
 
 import { PERMISSION_WEBHOOK_DELETE, PERMISSION_WEBHOOK_EDIT } from "../../access_control/types";
 import { validate_required, validate_required_255, validate_required_2048 } from "../../commons/custom_validators";
@@ -13,6 +14,21 @@ export const canEditWebhook = (webhook: Webhook | undefined) =>
 
 export const canDeleteWebhook = (webhook: Webhook | undefined) =>
     webhook?.product ? !!webhook.product_data?.permissions?.includes(PERMISSION_WEBHOOK_DELETE) : is_superuser();
+
+const get_event_type_name = (event_type: string) =>
+    WEBHOOK_EVENT_TYPE_CHOICES.find((choice) => choice.id === event_type)?.name ?? event_type;
+
+// label is read by Datagrid and Labeled
+export const WebhookEventTypesField: FC<{ label?: string }> = () => {
+    const webhook = useRecordContext<Webhook>();
+    if (!webhook) return null;
+    return (
+        <TextArrayField
+            source="event_types"
+            record={{ ...webhook, event_types: webhook.event_types.map(get_event_type_name) }}
+        />
+    );
+};
 
 export const WebhookFields = () => (
     <>

@@ -25,7 +25,7 @@ import WebhookDelete from "./WebhookDelete";
 import WebhookDeliveryEmbeddedList from "./WebhookDeliveryEmbeddedList";
 import WebhookEdit from "./WebhookEdit";
 import WebhookSecretDialog from "./WebhookSecretDialog";
-import { canDeleteWebhook, canEditWebhook } from "./functions";
+import { WebhookEventTypesField, canDeleteWebhook, canEditWebhook } from "./functions";
 
 const API = () => window.__RUNTIME_CONFIG__.API_BASE_URL + "/webhooks/";
 
@@ -155,7 +155,7 @@ const WebhookComponent = () => (
                         </Stack>
                         <Stack direction="row" spacing={4} useFlexGap sx={{ flexWrap: "wrap" }}>
                             <Labeled label="Event types">
-                                <FunctionField render={(w: Webhook) => w.event_types.join(", ")} />
+                                <WebhookEventTypesField />
                             </Labeled>
                             <Labeled label="Minimum severity">
                                 <FunctionField render={(w: Webhook) => w.min_severity || "All"} />
