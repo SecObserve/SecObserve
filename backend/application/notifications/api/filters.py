@@ -85,8 +85,10 @@ class WebhookFilter(FilterSet):
         fields=(
             ("name", "name"),
             ("product__name", "product_data.name"),
+            ("url", "url"),
             ("active", "active"),
             ("consecutive_failures", "consecutive_failures"),
+            ("user__full_name", "user_full_name"),
         ),
     )
 
@@ -102,6 +104,9 @@ class WebhookDeliveryFilter(FilterSet):
             ("created", "created"),
             ("event_type", "event_type"),
             ("status", "status"),
+            ("attempts", "attempts"),
+            ("response_status_code", "response_status_code"),
+            ("error", "error"),
         ),
     )
 

@@ -365,3 +365,29 @@ class TestWebhookViews(BaseTestCase):
 
         response = self.api_client.get("/api/webhook_deliveries/")
         self.assertEqual([other.pk, pending.pk, failed.pk], [row["id"] for row in response.data["results"]])
+
+    def test_ordering(self):
+        other_webhook = Webhook.objects.create(
+            product=Product.objects.get(pk=2),
+            name="other",
+            url="https://a.example.com/hook",
+            secret="whsec_c2VjcmV0",
+            event_types="observation.created",
+            user=User.objects.get(username="db_internal_write"),
+        )
+        self.webhook.user = User.objects.get(username="db_admin")
+        self.webhook.save()
+        first = self._delivery(self.webhook, attempts=3, response_status_code=500, error="b")
+        second = self._delivery(self.webhook, attempts=1, response_status_code=200, error="a")
+
+        def ordered_ids(url: str) -> list[int]:
+            response = self.api_client.get(url)
+            self.assertEqual(200, response.status_code)
+            return [row["id"] for row in response.data["results"]]
+
+        self.assertEqual([other_webhook.pk, self.webhook.pk], ordered_ids("/api/webhooks/?ordering=url"))
+        self.assertEqual([other_webhook.pk, self.webhook.pk], ordered_ids("/api/webhooks/?ordering=-user_full_name"))
+        self.assertEqual([self.webhook.pk, other_webhook.pk], ordered_ids("/api/webhooks/?ordering=user_full_name"))
+        for field in ("attempts", "response_status_code", "error"):
+            self.assertEqual([second.pk, first.pk], ordered_ids(f"/api/webhook_deliveries/?ordering={field}"))
+            self.assertEqual([first.pk, second.pk], ordered_ids(f"/api/webhook_deliveries/?ordering=-{field}"))
