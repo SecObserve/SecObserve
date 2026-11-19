@@ -67,7 +67,11 @@ def _drain(webhook_id: int) -> None:
     if not lease:
         return
 
-    webhook = Webhook.objects.get(pk=webhook_id)
+    webhook = Webhook.objects.filter(pk=webhook_id).first()
+    if not webhook:
+        # Deleted after the claim, together with its deliveries
+        return
+
     pending = Webhook_Delivery.objects.filter(webhook_id=webhook_id, status=Webhook_Delivery_Status.PENDING)
 
     for delivery in pending.order_by("pk")[:BATCH_SIZE]:

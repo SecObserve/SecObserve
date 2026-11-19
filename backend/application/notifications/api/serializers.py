@@ -136,6 +136,9 @@ class WebhookSerializer(ModelSerializer):
             valid = False
         if not valid:
             raise ValidationError("URL must start with http:// or https:// and contain a host")
+        # Would be rejected when sending, the URL is visible to all members of the product
+        if "@" in parts.netloc:
+            raise ValidationError("URL must not contain a user name or password")
         return url
 
     def validate(self, attrs: dict) -> dict:

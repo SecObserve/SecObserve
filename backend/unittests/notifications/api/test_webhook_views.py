@@ -109,6 +109,26 @@ class TestWebhookViews(BaseTestCase):
         )
         self.assertEqual(400, response.status_code)
 
+    def test_rejects_url_with_user_info(self):
+        for url in (
+            "https://user:password@example.com/hook",
+            "https://user@example.com/hook",
+            "https://:password@example.com/hook",
+        ):
+            response = self._create(url=url)
+            self.assertEqual(400, response.status_code, url)
+            self.assertEqual({"message": "Url: URL must not contain a user name or password"}, response.json(), url)
+
+        response = self.api_client.patch(
+            f"/api/webhooks/{self.webhook.pk}/", {"url": "https://user:password@example.com/hook"}, format="json"
+        )
+        self.assertEqual(400, response.status_code)
+
+    def test_accepts_url_with_at_sign_after_host(self):
+        response = self._create(url="https://example.com/hook?mail=a@example.com")
+
+        self.assertEqual(201, response.status_code)
+
     def test_accepts_http_url_with_single_label_host(self):
         response = self._create(url="http://receiver:8080/hook")
 
