@@ -32,7 +32,8 @@ def build_webhook_payload(event_type: str, data: dict[str, Any]) -> str:
     )
 
 
-def emit_observation_event(event_type: str, observation: Observation) -> None:
+def emit_observation_event(event_type: str, observation: Observation, webhooks: Optional[list[Webhook]] = None) -> None:
+    """Callers emitting for many observations of one product pass the result of get_subscribed_webhooks()."""
     _emit(
         event_type,
         observation.product,
@@ -41,6 +42,7 @@ def emit_observation_event(event_type: str, observation: Observation) -> None:
             "observation": _observation(observation, base_url),
         },
         observation,
+        webhooks,
     )
 
 
@@ -99,21 +101,28 @@ def emit_security_gate_event(product: Product) -> None:
     _emit(Webhook_Event_Type.SECURITY_GATE_CHANGED, product, lambda base_url: {"product": _product(product, base_url)})
 
 
-def _emit(
+def get_subscribed_webhooks(event_type: str, product: Optional[Product]) -> list[Webhook]:
+    scope = Q(product__isnull=True)
+    if product is not None:
+        scope |= Q(product_id__in=[pk for pk in (product.pk, product.product_group_id) if pk is not None])
+    return [
+        webhook
+        for webhook in Webhook.objects.filter(scope, active=True).only("pk", "event_types", "min_severity")
+        if event_type in get_comma_separated_as_list(webhook.event_types)
+    ]
+
+
+def _emit(  # pylint: disable=too-many-arguments
     event_type: str,
     product: Optional[Product],
     build_data: Callable[[str], dict[str, Any]],
     observation: Optional[Observation] = None,
+    webhooks: Optional[list[Webhook]] = None,
 ) -> None:
     """Rows join the producer's transaction; the kick runs after commit and cannot fail the request."""
-    scope = Q(product__isnull=True)
-    if product is not None:
-        scope |= Q(product_id__in=[pk for pk in (product.pk, product.product_group_id) if pk is not None])
-    webhooks = [
-        webhook
-        for webhook in Webhook.objects.filter(scope, active=True).only("pk", "event_types", "min_severity")
-        if event_type in get_comma_separated_as_list(webhook.event_types) and _matches_severity(webhook, observation)
-    ]
+    if webhooks is None:
+        webhooks = get_subscribed_webhooks(event_type, product)
+    webhooks = [webhook for webhook in webhooks if _matches_severity(webhook, observation)]
     if not webhooks:
         return
 

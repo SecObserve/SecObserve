@@ -72,6 +72,7 @@ class TestFileUploadObservations(BaseTestCase):
         call_command("loaddata", "unittests/fixtures/import_observations_fixtures.json")
         super().setUp()
 
+    @patch("application.import_observations.services.import_observations.get_subscribed_webhooks")
     @patch("application.import_observations.services.import_observations.emit_observation_event")
     @patch("application.commons.services.global_request.get_current_request")
     @patch("application.import_observations.services.import_observations.check_security_gate")
@@ -92,6 +93,7 @@ class TestFileUploadObservations(BaseTestCase):
         _mock_security_gate,
         mock_get_current_request,
         mock_emit,
+        mock_get_webhooks,
     ):
         mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
         mock_deduplicate_cross_scanner.return_value = False
@@ -122,8 +124,11 @@ class TestFileUploadObservations(BaseTestCase):
         active = {o.pk for o in observations if o.current_status == Status.STATUS_OPEN}
         self.assertEqual(2, len(active))
         self.assertEqual(2, mock_emit.call_count)
+        # The webhooks are looked up once per import, not once per observation
+        mock_get_webhooks.assert_called_once_with(Webhook_Event_Type.OBSERVATION_CREATED, Product.objects.get(id=1))
         for emit_call in mock_emit.call_args_list:
             self.assertEqual(Webhook_Event_Type.OBSERVATION_CREATED, emit_call.args[0])
+            self.assertIs(mock_get_webhooks.return_value, emit_call.args[2])
         self.assertEqual(active, {emit_call.args[1].pk for emit_call in mock_emit.call_args_list})
 
         # Importing the same file again finds no new observation

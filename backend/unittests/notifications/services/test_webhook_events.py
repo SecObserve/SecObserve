@@ -15,6 +15,7 @@ from application.notifications.services.webhook_events import (
     emit_observation_event,
     emit_rule_event,
     emit_security_gate_event,
+    get_subscribed_webhooks,
 )
 from application.notifications.types import Webhook_Event_Type
 from application.rules.types import Rule_Status
@@ -152,6 +153,19 @@ class TestWebhookEvents(BaseTestCase):
         self.observation_1.numerical_severity = 1
         self._emit()
         self.assertEqual(1, Webhook_Delivery.objects.count())
+
+    def test_given_webhooks_are_not_looked_up(self):
+        self._webhook()
+        with self.assertNumQueries(0):
+            emit_observation_event(OBSERVATION_CREATED, self.observation_1, [])
+        self.assertEqual(0, Webhook_Delivery.objects.count())
+
+    def test_given_webhooks_with_min_severity(self):
+        self._webhook(min_severity=Severity.SEVERITY_CRITICAL)
+        webhook = self._webhook()
+        webhooks = get_subscribed_webhooks(OBSERVATION_CREATED, self.product_1)
+        emit_observation_event(OBSERVATION_CREATED, self.observation_1, webhooks)
+        self.assertEqual([webhook.pk], list(Webhook_Delivery.objects.values_list("webhook_id", flat=True)))
 
     def test_min_severity_ignored_for_import(self):
         self._webhook(min_severity=Severity.SEVERITY_CRITICAL, event_types=Webhook_Event_Type.IMPORT_COMPLETED)
