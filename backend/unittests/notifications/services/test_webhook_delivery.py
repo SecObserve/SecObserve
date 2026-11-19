@@ -241,6 +241,22 @@ class TestWebhookDelivery(BaseTestCase):
             [NOW + timedelta(seconds=60), NOW + timedelta(seconds=120), NOW + timedelta(seconds=120)], leases
         )
 
+    def test_webhook_deleted_after_claim(self):
+        mock_handle_task_exception = self._patch("handle_task_exception")
+        self._delivery()
+
+        def claim_and_delete(webhook_id, duration):
+            Webhook.objects.filter(pk=webhook_id).delete()
+            return NOW + duration
+
+        self._patch("_claim").side_effect = claim_and_delete
+
+        deliver_webhook.call_local(self.webhook.pk)
+
+        self.mock_send.assert_not_called()
+        self.mock_schedule.assert_not_called()
+        mock_handle_task_exception.assert_not_called()
+
     def test_unexpected_exception_is_reported_and_reraised(self):
         mock_handle_task_exception = self._patch("handle_task_exception")
         error = RuntimeError("boom")
