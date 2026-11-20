@@ -79,7 +79,7 @@ services:
 
 
   playwright:
-    image: mcr.microsoft.com/playwright:v1.65.0
+    image: mcr.microsoft.com/playwright:v1.65.1
     depends_on:
       frontend:
         condition: service_healthy
