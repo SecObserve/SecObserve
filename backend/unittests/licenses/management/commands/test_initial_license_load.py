@@ -62,6 +62,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         # No errors should have been logged
         mock_logger.error.assert_not_called()
 
+    @patch("application.licenses.management.commands.initial_license_load._license_details_missing", return_value=False)
     @patch("application.licenses.management.commands.initial_license_load.import_choosealicense")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
@@ -80,6 +81,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_import_scancode,
         mock_import_licenses,
         mock_import_choosealicense,
+        mock_license_details_missing,
     ):
         """
         When any of the existence checks return True, the command should exit
@@ -154,3 +156,40 @@ class TestInitialLicenseLoadCommand(TestCase):
         # (traceback format is implementation‑specific, we just ensure it was called)
         mock_logger.error.assert_any_call("Import failed")
         # mock_logger.error.assert_any_call(traceback.format_exc())
+
+    @patch("application.licenses.management.commands.initial_license_load._license_details_missing", return_value=True)
+    @patch("application.licenses.management.commands.initial_license_load.import_choosealicense")
+    @patch("application.licenses.management.commands.initial_license_load.import_licenses")
+    @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
+    @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
+    @patch(
+        "application.licenses.management.commands.initial_license_load.License_Group.objects.exists", return_value=True
+    )
+    @patch("application.licenses.management.commands.initial_license_load.License.objects.exists", return_value=True)
+    @patch(
+        "application.licenses.management.commands.initial_license_load.License_Policy.objects.exists", return_value=True
+    )
+    @patch("application.licenses.management.commands.initial_license_load.logger")
+    def test_handle_license_details_missing(
+        self,
+        mock_logger,
+        mock_license_policy_exists,
+        mock_license_group_exists,
+        mock_license_exists,
+        mock_create_policy,
+        mock_import_scancode,
+        mock_import_licenses,
+        mock_import_choosealicense,
+        mock_license_details_missing,
+    ):
+        """
+        When licenses exist, but no license details, e.g. after an upgrade,
+        only the license details are imported.
+        """
+        call_command("initial_license_load")
+
+        mock_import_scancode.assert_called_once_with()
+        mock_import_choosealicense.assert_called_once_with()
+        mock_import_licenses.assert_not_called()
+        mock_create_policy.assert_not_called()
+        mock_logger.error.assert_not_called()

@@ -1,3 +1,4 @@
+from django.utils import timezone
 from huey.contrib.djhuey import db_periodic_task
 
 from application.background_tasks.services.crontab import crontab_in_time_zone
@@ -21,9 +22,13 @@ def task_spdx_license_import() -> str:
     if not settings.feature_license_management:
         return "License management feature is disabled."
 
+    # License details from ScanCode LicenseDB and choosealicense.com are only downloaded on Sundays (UTC)
+    weekly = timezone.now().weekday() == 6
+
     message = import_licenses()
 
-    message += "\n" + import_scancode_licensedb()
-    message += "\n" + import_choosealicense()
+    message += "\n" + import_scancode_licensedb(enrich_licenses=weekly)
+    if weekly:
+        message += "\n" + import_choosealicense()
 
     return message

@@ -40,3 +40,22 @@ class Command(BaseCommand):
             except Exception as e:
                 logger.error(str(e))
                 logger.error(traceback.format_exc())
+        elif licenses_exist and _license_details_missing():
+            logger.info("Importing license details ...")
+
+            try:
+                import_scancode_licensedb()
+                logger.info("... license details imported from ScanCode LicenseDB")
+
+                import_choosealicense()
+                logger.info("... license summaries imported from choosealicense.com")
+            except Exception as e:
+                logger.error(str(e))
+                logger.error(traceback.format_exc())
+
+
+def _license_details_missing() -> bool:
+    return (
+        not License.objects.exclude(scancode_key="").exists()
+        or not License.objects.exclude(choosealicense_key="").exists()
+    )

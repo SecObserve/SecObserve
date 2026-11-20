@@ -34,3 +34,15 @@ class TestImportScancodeLicensedb(BaseTestCase):
         mock_enrich.assert_called_once_with(index)
         license_group = License_Group.objects.get(name="Test Category (ScanCode LicenseDB)")
         self.assertEqual([spdx_license], list(license_group.licenses.all()))
+
+    @patch("application.licenses.services.license_group.enrich_licenses_from_scancode")
+    @patch("application.licenses.services.license_group.requests.get")
+    def test_import_scancode_licensedb_without_enrichment(self, mock_get, mock_enrich):
+        response = MagicMock()
+        response.content = dumps([]).encode()
+        mock_get.return_value = response
+
+        result = import_scancode_licensedb(enrich_licenses=False)
+
+        self.assertEqual("License Groups from ScanCode LicenseDB imported", result)
+        mock_enrich.assert_not_called()
