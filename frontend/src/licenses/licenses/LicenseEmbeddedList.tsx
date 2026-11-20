@@ -13,24 +13,21 @@ import {
 import { getSettingListSize, getSettingRowsPerPage } from "../../access_control/users/functions";
 import { CustomPagination } from "../../commons/custom_fields/CustomPagination";
 import { AutocompleteInputMedium } from "../../commons/layout/themes";
-import { SCANCODE_CATEGORY_CHOICES } from "../types";
+import { useScancodeCategoryChoices } from "./functions";
 
 const showLicense = (id: any) => {
     return "../../../../licenses/" + id + "/show";
 };
 
-const listFilters = [
-    <TextInput source="spdx_id" label="SPDX Id" alwaysOn />,
-    <TextInput source="name" alwaysOn />,
-    <NullableBooleanInput source="is_osi_approved" label="OSI approved" alwaysOn />,
-    <NullableBooleanInput source="is_deprecated" label="Deprecated" alwaysOn />,
-    <AutocompleteInputMedium
-        source="scancode_category"
-        label="Category"
-        choices={SCANCODE_CATEGORY_CHOICES}
-        alwaysOn
-    />,
-];
+function listFilters(categoryChoices: { id: string; name: string }[]) {
+    return [
+        <TextInput source="spdx_id" label="SPDX Id" alwaysOn />,
+        <TextInput source="name" alwaysOn />,
+        <NullableBooleanInput source="is_osi_approved" label="OSI approved" alwaysOn />,
+        <NullableBooleanInput source="is_deprecated" label="Deprecated" alwaysOn />,
+        <AutocompleteInputMedium source="scancode_category" label="Category" choices={categoryChoices} alwaysOn />,
+    ];
+}
 
 type LicenseEmbeddedListProps = {
     license_group: any;
@@ -48,6 +45,7 @@ const LicenseEmbeddedList = ({ license_group }: LicenseEmbeddedListProps) => {
         disableSyncWithLocation: false,
         storeKey: storeKey,
     });
+    const categoryChoices = useScancodeCategoryChoices(license_group?.id);
 
     if (listContext.isLoading) {
         return <div>Loading...</div>;
@@ -57,7 +55,7 @@ const LicenseEmbeddedList = ({ license_group }: LicenseEmbeddedListProps) => {
         <ResourceContextProvider value="licenses">
             <ListContextProvider value={listContext}>
                 <div style={{ width: "100%" }}>
-                    <FilterForm filters={listFilters} />
+                    <FilterForm filters={listFilters(categoryChoices)} />
                     <Datagrid
                         size={getSettingListSize()}
                         rowClick={showLicense}

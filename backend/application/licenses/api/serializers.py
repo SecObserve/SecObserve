@@ -87,6 +87,10 @@ class LicenseSerializer(LicenseListSerializer):
         return License_Policy_Item.objects.filter(license=obj).exists()
 
 
+class LicenseScancodeCategoriesSerializer(Serializer):
+    scancode_categories = ListField(child=CharField())
+
+
 class LicenseComponentEvidenceSerializer(ModelSerializer):
     product = SerializerMethodField()
 

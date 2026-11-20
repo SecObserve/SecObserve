@@ -4,7 +4,7 @@ from django.core.management import call_command
 from rest_framework.test import APIClient
 
 from application.access_control.models import User
-from application.licenses.models import License_Component
+from application.licenses.models import License, License_Component, License_Group
 from unittests.base_test_case import BaseTestCase
 
 
@@ -73,3 +73,33 @@ class TestImport(BaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         mock_save_concluded_license.assert_called_once_with(License_Component.objects.get(pk=1))
+
+
+class TestLicenseScancodeCategories(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create(username="test_scancode_categories@example.com")
+        License.objects.create(spdx_id="Test-Category-1", name="Test 1", scancode_category="Permissive")
+        copyleft = License.objects.create(spdx_id="Test-Category-2", name="Test 2", scancode_category="Copyleft")
+        License.objects.create(spdx_id="Test-Category-3", name="Test 3", scancode_category="Permissive")
+        License.objects.create(spdx_id="Test-Category-4", name="Test 4", scancode_category="")
+        self.license_group = License_Group.objects.create(name="Test category group", is_public=True)
+        self.license_group.licenses.add(copyleft)
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_scancode_categories(self, mock_authenticate):
+        mock_authenticate.return_value = self.user, None
+
+        response = APIClient().get("/api/licenses/scancode_categories/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({"scancode_categories": ["Copyleft", "Permissive"]}, response.data)
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_scancode_categories_license_group(self, mock_authenticate):
+        mock_authenticate.return_value = self.user, None
+
+        response = APIClient().get(f"/api/licenses/scancode_categories/?license_groups={self.license_group.pk}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual({"scancode_categories": ["Copyleft"]}, response.data)

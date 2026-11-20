@@ -302,6 +302,7 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["post"], "/api/webhook_deliveries/1/redeliver/")
 
         self._check_authentication(["get"], "/api/licenses/")
+        self._check_authentication(["get"], "/api/licenses/scancode_categories/")
         self._check_authentication(["get"], "/api/licenses/1/")
 
         self._check_authentication(["get"], "/api/license_components/")
