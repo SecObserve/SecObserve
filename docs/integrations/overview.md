@@ -52,7 +52,7 @@
 
     ---
 
-    The list of SPDX licenses and license groups are updated nightly. Additionally there is a weekly enrichment of licenses 
+    The list of SPDX licenses and license groups are updated nightly. Additionally there is a weekly enrichment of licenses
     from ScanCode LicenseDB and choosealicense.com.
 
     [:octicons-arrow-right-24: License data](license_data.md)
