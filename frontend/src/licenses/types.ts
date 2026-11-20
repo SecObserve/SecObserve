@@ -41,3 +41,18 @@ export const COMPONENT_TYPE_CHOICES = [
     { id: COMPONENT_TYPE_OPERATING_SYSTEM, name: COMPONENT_TYPE_OPERATING_SYSTEM },
     { id: COMPONENT_TYPE_PLATFORM, name: COMPONENT_TYPE_PLATFORM },
 ];
+
+export const SCANCODE_CATEGORY_CHOICES = [
+    "CLA",
+    "Commercial",
+    "Copyleft",
+    "Copyleft Limited",
+    "Free Restricted",
+    "Non-Commercial",
+    "Patent License",
+    "Permissive",
+    "Proprietary Free",
+    "Public Domain",
+    "Source-available",
+    "Unstated License",
+].map((category) => ({ id: category, name: category }));

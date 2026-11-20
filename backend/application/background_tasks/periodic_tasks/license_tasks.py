@@ -22,7 +22,6 @@ def task_spdx_license_import() -> str:
 
     message = import_licenses()
 
-    import_scancode_licensedb()
-    message += "\nLicense Groups from ScanCode LicenseDB imported"
+    message += "\n" + import_scancode_licensedb()
 
     return message

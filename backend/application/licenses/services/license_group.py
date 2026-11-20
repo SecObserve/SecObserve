@@ -3,6 +3,7 @@ from json import loads
 import requests
 
 from application.licenses.models import License, License_Group, License_Group_Member
+from application.licenses.services.license_scancode import enrich_licenses_from_scancode
 
 
 def copy_license_group(source_license_group: License_Group, name: str) -> License_Group:
@@ -22,7 +23,7 @@ def copy_license_group(source_license_group: License_Group, name: str) -> Licens
     return new_license_group
 
 
-def import_scancode_licensedb() -> None:
+def import_scancode_licensedb() -> str:
     license_groups: dict[str, License_Group] = {}
 
     response = requests.get("https://scancode-licensedb.aboutcode.org/index.json", timeout=60, stream=True)
@@ -38,6 +39,8 @@ def import_scancode_licensedb() -> None:
             _add_license_to_group(license_groups, category, spdx_license_key)
             for other_spdx_license_key in other_spdx_license_keys:
                 _add_license_to_group(license_groups, category, other_spdx_license_key)
+
+    return "License Groups from ScanCode LicenseDB imported\n" + enrich_licenses_from_scancode(data)
 
 
 def _add_license_to_group(license_groups: dict[str, License_Group], category: str, spdx_license_key: str) -> None:
