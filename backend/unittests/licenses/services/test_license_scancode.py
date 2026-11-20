@@ -13,7 +13,6 @@ DETAILS = {
         "key": "test-1",
         "owner": "Owner 1",
         "homepage_url": "https://example.com/home_1",
-        "osi_url": "https://example.com/osi_1",
         "faq_url": "https://example.com/faq_1",
         "text_urls": ["https://example.com/text_1"],
     },
@@ -66,7 +65,6 @@ class TestEnrichLicensesFromScancode(BaseTestCase):
         self.assertEqual("Permissive", self.license_1.scancode_category)
         self.assertEqual("Owner 1", self.license_1.scancode_owner)
         self.assertEqual("https://example.com/home_1", self.license_1.scancode_homepage_url)
-        self.assertEqual("https://example.com/osi_1", self.license_1.scancode_osi_url)
         self.assertEqual("https://example.com/faq_1", self.license_1.scancode_faq_url)
         self.assertEqual(["https://example.com/text_1"], self.license_1.scancode_text_urls)
         self.license_2.refresh_from_db()
@@ -176,17 +174,14 @@ class TestEnrichLicensesFromScancode(BaseTestCase):
         self.assertEqual(["http://example.com/license"], spdx_license.scancode_text_urls)
         self.assertEqual("", spdx_license.scancode_homepage_url)
 
-    def test_duplicate_osi_and_faq_url(self):
+    def test_osi_url_is_ignored(self):
         spdx_license = self._enrich_with_details(
             {
-                "osi_url": "https://example.com/osi",
-                "faq_url": "https://example.com/osi",
+                "osi_url": "https://example.com/home",
                 "homepage_url": "https://example.com/home",
             }
         )
 
-        self.assertEqual("https://example.com/osi", spdx_license.scancode_osi_url)
-        self.assertEqual("", spdx_license.scancode_faq_url)
         self.assertEqual("https://example.com/home", spdx_license.scancode_homepage_url)
 
     def test_duplicate_faq_and_homepage_url(self):
@@ -204,13 +199,13 @@ class TestEnrichLicensesFromScancode(BaseTestCase):
         spdx_license = self._enrich_with_details(
             {
                 "text_urls": ["http://example.com/License"],
-                "osi_url": "HTTPS://Example.com/license/",
+                "faq_url": "HTTPS://Example.com/license/",
                 "homepage_url": "https://example.com/license/",
             }
         )
 
         self.assertEqual(["http://example.com/License"], spdx_license.scancode_text_urls)
-        self.assertEqual("", spdx_license.scancode_osi_url)
+        self.assertEqual("", spdx_license.scancode_faq_url)
         self.assertEqual("", spdx_license.scancode_homepage_url)
 
     def test_duplicates_within_text_urls(self):

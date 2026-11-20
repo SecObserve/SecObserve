@@ -14,7 +14,6 @@ SCANCODE_FIELDS = [
     "scancode_category",
     "scancode_owner",
     "scancode_homepage_url",
-    "scancode_osi_url",
     "scancode_faq_url",
     "scancode_text_urls",
 ]
@@ -94,22 +93,21 @@ def _get_details(session: requests.Session, entry: dict[str, Any]) -> dict[str, 
 
 
 def _get_values(entry: dict[str, Any], details: dict[str, Any]) -> dict[str, Any]:
-    text_urls, osi_url, faq_url, homepage_url = _deduplicate_urls(details)
+    text_urls, faq_url, homepage_url = _deduplicate_urls(details)
     return {
         "scancode_key": (entry.get("license_key") or "")[:255],
         "scancode_category": (entry.get("category") or "")[:64],
         "scancode_owner": (details.get("owner") or "")[:255],
         "scancode_homepage_url": homepage_url[:2048],
-        "scancode_osi_url": osi_url[:2048],
         "scancode_faq_url": faq_url[:2048],
         "scancode_text_urls": text_urls,
     }
 
 
-def _deduplicate_urls(details: dict[str, Any]) -> tuple[list[str], str, str, str]:
+def _deduplicate_urls(details: dict[str, Any]) -> tuple[list[str], str, str]:
     """
     ScanCode LicenseDB often has the same URL in several fields. Each URL is kept only in the
-    most specific field, in the order license text, OSI, FAQ, homepage.
+    most specific field, in the order license text, FAQ, homepage.
     """
     seen: set[str] = set()
 
@@ -122,11 +120,11 @@ def _deduplicate_urls(details: dict[str, Any]) -> tuple[list[str], str, str, str
 
     text_urls = [url for url in details.get("text_urls") or [] if isinstance(url, str) and is_new(url)]
     single_urls = []
-    for field in ("osi_url", "faq_url", "homepage_url"):
+    for field in ("faq_url", "homepage_url"):
         url = details.get(field) or ""
         single_urls.append(url if is_new(url) else "")
 
-    return text_urls, single_urls[0], single_urls[1], single_urls[2]
+    return text_urls, single_urls[0], single_urls[1]
 
 
 def _normalize_url(url: str) -> str:

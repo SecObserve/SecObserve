@@ -8,6 +8,7 @@ import TextUrlField from "../../commons/custom_fields/TextUrlField";
 import { useStyles } from "../../commons/layout/themes";
 import LicenseGroupEmbeddedList from "../license_groups/LicenseGroupEmbeddedList";
 import LicensePolicyEmbeddedList from "../license_policies/LicensePolicyEmbeddedList";
+import ChooseALicense from "./ChooseALicense";
 
 const ShowActions = () => {
     return (
@@ -98,11 +99,6 @@ const LicenseComponent = () => {
                                             <UrlList urls={license.scancode_text_urls} />
                                         </Labeled>
                                     )}
-                                    {license.scancode_osi_url && (
-                                        <Labeled label="OSI">
-                                            <UrlList urls={[license.scancode_osi_url]} />
-                                        </Labeled>
-                                    )}
                                     {license.scancode_faq_url && (
                                         <Labeled label="FAQ">
                                             <UrlList urls={[license.scancode_faq_url]} />
@@ -125,6 +121,7 @@ const LicenseComponent = () => {
                             </Paper>
                         )}
                     </Stack>
+                    {license.choosealicense_key && <ChooseALicense license={license} />}
                     {license.is_in_license_group && (
                         <Accordion sx={{ marginBottom: 0, padding: 0 }} disableGutters>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>

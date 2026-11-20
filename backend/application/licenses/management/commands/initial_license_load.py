@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 
 from application.licenses.models import License, License_Group, License_Policy
 from application.licenses.services.license import import_licenses
+from application.licenses.services.license_choosealicense import import_choosealicense
 from application.licenses.services.license_group import import_scancode_licensedb
 from application.licenses.services.license_policy import create_scancode_standard_policy
 
@@ -33,6 +34,9 @@ class Command(BaseCommand):
 
                 create_scancode_standard_policy()
                 logger.info("... standard license policy created")
+
+                import_choosealicense()
+                logger.info("... license summaries imported from choosealicense.com")
             except Exception as e:
                 logger.error(str(e))
                 logger.error(traceback.format_exc())

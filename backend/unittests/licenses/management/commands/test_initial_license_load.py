@@ -8,6 +8,7 @@ from django.core.management import call_command
 class TestInitialLicenseLoadCommand(TestCase):
     """Unit tests for the `initial_license_load` management command."""
 
+    @patch("application.licenses.management.commands.initial_license_load.import_choosealicense")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
     @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
@@ -24,6 +25,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_create_policy,
         mock_import_scancode,
         mock_import_licenses,
+        mock_import_choosealicense,
     ):
         """
         Verify that when there are no licenses, license groups or policies
@@ -42,6 +44,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_import_licenses.assert_called_once_with()
         mock_import_scancode.assert_called_once_with()
         mock_create_policy.assert_called_once_with()
+        mock_import_choosealicense.assert_called_once_with()
 
         # Verify that the logger received the expected INFO messages
         expected_calls = [
@@ -49,6 +52,7 @@ class TestInitialLicenseLoadCommand(TestCase):
             call("... licenses imported from SPDX"),
             call("... license groups imported from ScanCode LicenseDB"),
             call("... standard license policy created"),
+            call("... license summaries imported from choosealicense.com"),
         ]
 
         # Note: The logger was patched, so we check that `info` was called with the
@@ -58,6 +62,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         # No errors should have been logged
         mock_logger.error.assert_not_called()
 
+    @patch("application.licenses.management.commands.initial_license_load.import_choosealicense")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
     @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
@@ -74,6 +79,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_create_policy,
         mock_import_scancode,
         mock_import_licenses,
+        mock_import_choosealicense,
     ):
         """
         When any of the existence checks return True, the command should exit
@@ -90,11 +96,13 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_import_licenses.assert_not_called()
         mock_import_scancode.assert_not_called()
         mock_create_policy.assert_not_called()
+        mock_import_choosealicense.assert_not_called()
 
         # No INFO or ERROR logs should have been written
         mock_logger.info.assert_not_called()
         mock_logger.error.assert_not_called()
 
+    @patch("application.licenses.management.commands.initial_license_load.import_choosealicense")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
     @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
@@ -111,6 +119,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_create_policy,
         mock_import_scancode,
         mock_import_licenses,
+        mock_import_choosealicense,
     ):
         """
         If `import_licenses` raises an exception, the exception message and stack
@@ -132,6 +141,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         # The remaining helpers should not be called
         mock_import_scancode.assert_not_called()
         mock_create_policy.assert_not_called()
+        mock_import_choosealicense.assert_not_called()
 
         # Verify that the logger received the expected INFO messages
         expected_calls = [call("Importing licenses, license groups and license policies ...")]

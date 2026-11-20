@@ -41,9 +41,13 @@ class License(Model):
     scancode_category = CharField(max_length=64, blank=True)
     scancode_owner = CharField(max_length=255, blank=True)
     scancode_homepage_url = CharField(max_length=2048, blank=True)
-    scancode_osi_url = CharField(max_length=2048, blank=True)
     scancode_faq_url = CharField(max_length=2048, blank=True)
     scancode_text_urls = JSONField(default=list, blank=True)
+    choosealicense_key = CharField(max_length=64, blank=True)
+    choosealicense_description = TextField(max_length=2048, blank=True)
+    choosealicense_permissions = JSONField(default=list, blank=True)
+    choosealicense_conditions = JSONField(default=list, blank=True)
+    choosealicense_limitations = JSONField(default=list, blank=True)
 
     class Meta:
         indexes = [Index(fields=["name"])]

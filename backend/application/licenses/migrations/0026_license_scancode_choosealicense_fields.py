@@ -30,17 +30,37 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="license",
-            name="scancode_osi_url",
-            field=models.CharField(blank=True, max_length=2048),
-        ),
-        migrations.AddField(
-            model_name="license",
             name="scancode_faq_url",
             field=models.CharField(blank=True, max_length=2048),
         ),
         migrations.AddField(
             model_name="license",
             name="scancode_text_urls",
+            field=models.JSONField(blank=True, default=list),
+        ),
+        migrations.AddField(
+            model_name="license",
+            name="choosealicense_key",
+            field=models.CharField(blank=True, max_length=64),
+        ),
+        migrations.AddField(
+            model_name="license",
+            name="choosealicense_description",
+            field=models.TextField(blank=True, max_length=2048),
+        ),
+        migrations.AddField(
+            model_name="license",
+            name="choosealicense_permissions",
+            field=models.JSONField(blank=True, default=list),
+        ),
+        migrations.AddField(
+            model_name="license",
+            name="choosealicense_conditions",
+            field=models.JSONField(blank=True, default=list),
+        ),
+        migrations.AddField(
+            model_name="license",
+            name="choosealicense_limitations",
             field=models.JSONField(blank=True, default=list),
         ),
     ]
