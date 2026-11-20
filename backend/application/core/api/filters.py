@@ -230,6 +230,7 @@ class ObservationFilter(FilterSet):
     age = ChoiceFilter(field_name="age", method="get_age", choices=Age_Choices.AGE_CHOICES)
     created = DateTimeFromToRangeFilter(field_name="created")
     last_observation_log = DateTimeFromToRangeFilter(field_name="last_observation_log")
+    import_last_seen = DateTimeFromToRangeFilter(field_name="import_last_seen")
     assessed = BooleanFilter(field_name="last_assessment", lookup_expr="isnull", exclude=True)
     last_assessment_status = ChoiceFilter(
         method="get_last_assessment_status",
