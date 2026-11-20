@@ -23,6 +23,7 @@ from application.core.models import (
     Product_Authorization_Group_Member,
     Product_Member,
 )
+from application.notifications.models import Webhook
 from unittests.base_test_case import BaseTestCase
 
 
@@ -304,6 +305,38 @@ class TestAuthorization(BaseTestCase):
             )
         )
         mock.assert_called_with(self.product_1, self.user_internal)
+
+    # --- Webhook ---
+
+    def test_user_has_permission_webhook_wrong_permission(self):
+        with self.assertRaises(NoAuthorizationImplementedError) as e:
+            user_has_permission(Webhook(product=self.product_1), Permissions.Product_Edit, self.user_internal)
+        self.assertEqual(
+            "No authorization implemented for class Webhook and permission 1102",
+            str(e.exception),
+        )
+
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_webhook_correct_permission(self, mock):
+        mock.return_value = Roles.Maintainer
+        self.assertTrue(
+            user_has_permission(Webhook(product=self.product_1), Permissions.Webhook_Edit, self.user_internal)
+        )
+        mock.assert_called_with(self.product_1, self.user_internal)
+
+    @patch("application.authorization.services.authorization.get_highest_user_role")
+    def test_user_has_permission_webhook_reader(self, mock):
+        mock.return_value = Roles.Reader
+        self.assertTrue(
+            user_has_permission(Webhook(product=self.product_1), Permissions.Webhook_View, self.user_internal)
+        )
+        self.assertFalse(
+            user_has_permission(Webhook(product=self.product_1), Permissions.Webhook_Edit, self.user_internal)
+        )
+
+    def test_user_has_permission_webhook_global(self):
+        self.assertFalse(user_has_permission(Webhook(), Permissions.Webhook_View, self.user_internal))
+        self.assertTrue(user_has_permission(Webhook(), Permissions.Webhook_Delete, self.user_admin))
 
     # --- VEX_Base ---
 

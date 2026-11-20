@@ -8,6 +8,7 @@ import FactCheckIcon from "@mui/icons-material/FactCheck";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import TokenIcon from "@mui/icons-material/Token";
+import WebhookIcon from "@mui/icons-material/Webhook";
 import { Badge, Divider, Stack, Typography } from "@mui/material";
 import { Fragment } from "react";
 import {
@@ -36,6 +37,7 @@ import {
     PERMISSION_PRODUCT_RULE_APPLY,
     PERMISSION_PRODUCT_RULE_CREATE,
     PERMISSION_SERVICE_CREATE,
+    PERMISSION_WEBHOOK_CREATE,
 } from "../../access_control/types";
 import { feature_license_management, feature_scancodeio_integration } from "../../commons/functions";
 import TabsWithSubMenu from "../../commons/layout/TabsWithSubMenu";
@@ -53,6 +55,8 @@ import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
 import MetricsStatusCurrent from "../../metrics/MetricsStatusCurrent";
 import notifications from "../../notifications/notifications";
 import ProductNotificationSettings from "../../notifications/product_notifications/ProductNotificationSettings";
+import WebhookCreate from "../../notifications/webhooks/WebhookCreate";
+import WebhookEmbeddedList from "../../notifications/webhooks/WebhookEmbeddedList";
 import general_rules from "../../rules/general_rules";
 import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
@@ -78,7 +82,7 @@ import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
 
-const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications"];
+const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications", "webhooks"];
 
 type ShowActionsProps = {
     filter: any;
@@ -298,6 +302,12 @@ const ProductShow = () => {
                                 </Tab>
                                 <Tab label="Notifications" path="notifications" icon={<notifications.icon />}>
                                     <ProductNotificationSettings product={product} />
+                                </Tab>
+                                <Tab label="Webhooks" path="webhooks" icon={<WebhookIcon />}>
+                                    {product?.permissions?.includes(PERMISSION_WEBHOOK_CREATE) && (
+                                        <WebhookCreate product={product} />
+                                    )}
+                                    <WebhookEmbeddedList product={product} />
                                 </Tab>
                             </TabbedShowLayout>
                         )}

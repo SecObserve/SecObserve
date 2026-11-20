@@ -10,6 +10,7 @@ from application.core.services.risk_acceptance_expiry_task import (
     expire_risk_acceptances,
 )
 from application.notifications.services.housekeeping import (
+    delete_old_webhook_deliveries,
     delete_orphaned_product_notifications,
 )
 
@@ -24,6 +25,7 @@ from application.notifications.services.housekeeping import (
 def task_housekeeping() -> str:
     message = housekeeping()
     message += f"\nDeleted {delete_orphaned_product_notifications()} orphaned product notifications."
+    message += f"\nDeleted {delete_old_webhook_deliveries()} old webhook deliveries."
     return message
 
 

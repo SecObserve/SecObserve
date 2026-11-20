@@ -4,6 +4,7 @@ from rest_framework.serializers import ValidationError
 
 from application.licenses.api.serializers import (
     LicenseGroupMemberSerializer,
+    LicenseListSerializer,
     LicensePolicyItemSerializer,
     LicensePolicyMemberSerializer,
 )
@@ -15,6 +16,16 @@ from application.licenses.models import (
     License_Policy_Member,
 )
 from unittests.base_test_case import BaseTestCase
+
+
+class TestLicenseListSerializer(BaseTestCase):
+    def test_details_excluded(self):
+        data = LicenseListSerializer(License(spdx_id="MIT", name="MIT License", scancode_category="Permissive")).data
+
+        self.assertEqual("MIT / MIT License", data["spdx_id_name"])
+        self.assertEqual("Permissive", data["scancode_category"])
+        self.assertNotIn("scancode_text_urls", data)
+        self.assertNotIn("choosealicense_permissions", data)
 
 
 class TestLicenseGroupMemberSerializer(BaseTestCase):

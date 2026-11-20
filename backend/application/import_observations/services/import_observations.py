@@ -70,6 +70,12 @@ from application.import_observations.services.parser_detector import (
 from application.issue_tracker.services.issue_tracker import (
     push_observations_to_issue_tracker,
 )
+from application.notifications.services.webhook_events import (
+    emit_import_event,
+    emit_observation_event,
+    get_subscribed_webhooks,
+)
+from application.notifications.types import Webhook_Event_Type
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
 
@@ -280,7 +286,7 @@ def api_check_connection(
     return format_valid, errors
 
 
-def _process_data(  # pylint: disable=too-many-statements
+def _process_data(  # pylint: disable=too-many-statements disable=too-many-locals
     import_parameters: ImportParameters, settings: Settings
 ) -> Tuple[int, int, int]:
     observations_before_query = get_observations_for_vulnerability_check(
@@ -330,6 +336,7 @@ def _process_data(  # pylint: disable=too-many-statements
     ]
     epss_scores = get_epss_scores_by_cves(cves)
     exploit_informations = get_exploit_information_by_cves(cves)
+    created_webhooks = get_subscribed_webhooks(Webhook_Event_Type.OBSERVATION_CREATED, import_parameters.product)
 
     for imported_observation in import_parameters.imported_observations:
         # Set additional data in newly uploaded observation
@@ -383,6 +390,9 @@ def _process_data(  # pylint: disable=too-many-statements
 
                     if imported_observation.current_status in Status.STATUS_ACTIVE:
                         observations_new += 1
+                        emit_observation_event(
+                            Webhook_Event_Type.OBSERVATION_CREATED, imported_observation, created_webhooks
+                        )
 
                     # Add identity_hash to set of observations in this run to detect duplicates in this run
                     observations_this_run.add(imported_observation.identity_hash)
@@ -407,7 +417,18 @@ def _process_data(  # pylint: disable=too-many-statements
     push_observations_to_issue_tracker(import_parameters.product, vulnerability_check_observations)
     find_potential_duplicates(import_parameters.product, import_parameters.branch, import_parameters.service)
 
-    return observations_new, observations_updated, len(observations_resolved)
+    numbers = (observations_new, observations_updated, len(observations_resolved))
+    emit_import_event(
+        product=import_parameters.product,
+        branch=import_parameters.branch,
+        service=import_parameters.service,
+        parser_name=import_parameters.parser.name,
+        filename=import_parameters.filename,
+        api_configuration_name=import_parameters.api_configuration_name,
+        numbers=numbers,
+    )
+
+    return numbers
 
 
 def _prepare_imported_observation(import_parameters: ImportParameters, imported_observation: Observation) -> None:
