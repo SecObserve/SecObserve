@@ -6,9 +6,9 @@ from django.core.management.base import BaseCommand
 
 from application.licenses.models import License, License_Group, License_Policy
 from application.licenses.services.license import import_licenses
-from application.licenses.services.license_choosealicense import import_choosealicense
 from application.licenses.services.license_group import import_scancode_licensedb
 from application.licenses.services.license_policy import create_scancode_standard_policy
+from application.licenses.tasks import task_import_license_details
 
 logger = logging.getLogger("secobserve.licenses")
 
@@ -29,29 +29,20 @@ class Command(BaseCommand):
                 import_licenses()
                 logger.info("... licenses imported from SPDX")
 
-                import_scancode_licensedb()
+                import_scancode_licensedb(enrich_licenses=False)
                 logger.info("... license groups imported from ScanCode LicenseDB")
 
                 create_scancode_standard_policy()
                 logger.info("... standard license policy created")
 
-                import_choosealicense()
-                logger.info("... license summaries imported from choosealicense.com")
+                task_import_license_details()
+                logger.info("... import of license details started in the background")
             except Exception as e:
                 logger.error(str(e))
                 logger.error(traceback.format_exc())
         elif licenses_exist and _license_details_missing():
-            logger.info("Importing license details ...")
-
-            try:
-                import_scancode_licensedb()
-                logger.info("... license details imported from ScanCode LicenseDB")
-
-                import_choosealicense()
-                logger.info("... license summaries imported from choosealicense.com")
-            except Exception as e:
-                logger.error(str(e))
-                logger.error(traceback.format_exc())
+            task_import_license_details()
+            logger.info("Import of license details started in the background")
 
 
 def _license_details_missing() -> bool:
