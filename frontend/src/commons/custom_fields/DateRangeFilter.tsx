@@ -24,7 +24,7 @@ const PRESETS = [
     { token: "1 year", label: "Last year", days: 365, age: "Past 365 days" },
 ];
 
-const DATE_SOURCES = ["created", "last_observation_log"];
+const DATE_SOURCES = ["created", "last_observation_log", "import_last_seen"];
 // Its presets are sent as the existing age filter, to keep the backend's semantics of the last change.
 const AGE_SOURCE = "last_observation_log";
 

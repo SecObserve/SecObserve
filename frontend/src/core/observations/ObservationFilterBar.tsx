@@ -79,6 +79,7 @@ export function observationFilters(product?: Product, review = false, product_fi
             fields={[
                 { source: "created", label: "Created" },
                 { source: "last_observation_log", label: "Last change" },
+                { source: "import_last_seen", label: "Last seen" },
             ]}
             alwaysOn
         />
