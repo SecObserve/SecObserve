@@ -66,7 +66,17 @@ class LicenseListSerializer(ModelSerializer):
 
     class Meta:
         model = License
-        fields = "__all__"
+        # Details are only needed when showing a single license
+        exclude = [
+            "scancode_owner",
+            "scancode_homepage_url",
+            "scancode_faq_url",
+            "scancode_text_urls",
+            "choosealicense_description",
+            "choosealicense_permissions",
+            "choosealicense_conditions",
+            "choosealicense_limitations",
+        ]
 
     def get_spdx_id_name(self, obj: License) -> str:
         return f"{obj.spdx_id} / {obj.name}"
@@ -85,6 +95,10 @@ class LicenseSerializer(LicenseListSerializer):
 
     def get_is_in_license_policy(self, obj: License) -> bool:
         return License_Policy_Item.objects.filter(license=obj).exists()
+
+
+class LicenseScancodeCategoriesSerializer(Serializer):
+    scancode_categories = ListField(child=CharField())
 
 
 class LicenseComponentEvidenceSerializer(ModelSerializer):

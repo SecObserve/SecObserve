@@ -69,6 +69,7 @@ from application.licenses.api.serializers import (
     LicensePolicyListSerializer,
     LicensePolicyMemberSerializer,
     LicensePolicySerializer,
+    LicenseScancodeCategoriesSerializer,
     LicenseSerializer,
 )
 from application.licenses.models import (
@@ -85,7 +86,10 @@ from application.licenses.models import (
     License_Policy_Member,
 )
 from application.licenses.queries.concluded_license import get_concluded_licenses
-from application.licenses.queries.license import get_license
+from application.licenses.queries.license import (
+    get_license,
+    get_scancode_categories,
+)
 from application.licenses.queries.license_component import (
     get_license_component,
     get_license_component_licenses,
@@ -362,6 +366,17 @@ class LicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         if self.action == "list":
             return LicenseListSerializer
         return super().get_serializer_class()
+
+    @extend_schema(
+        methods=["GET"],
+        responses={HTTP_200_OK: LicenseScancodeCategoriesSerializer},
+        parameters=[OpenApiParameter(name="license_groups", type=int)],
+    )
+    @action(detail=False, methods=["get"])
+    def scancode_categories(self, request: Request) -> Response:  # pylint: disable=unused-argument
+        categories = get_scancode_categories(self.filter_queryset(self.get_queryset()))
+        response_serializer = LicenseScancodeCategoriesSerializer({"scancode_categories": categories})
+        return Response(response_serializer.data, status=HTTP_200_OK)
 
 
 class LicenseGroupViewSet(ModelViewSet):

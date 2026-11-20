@@ -52,8 +52,8 @@
 
     ---
 
-    The list of SPDX licenses is updated nightly. Additionally superusers can manually import license groups generated
-    from the ScanCode LicenseDB.
+    The list of SPDX licenses and license groups are updated nightly. Additionally there is a weekly enrichment of licenses
+    from ScanCode LicenseDB and choosealicense.com.
 
     [:octicons-arrow-right-24: License data](license_data.md)
 
@@ -96,7 +96,7 @@
     ---
 
     Notifications about observations, security gates, approvals and exceptions can be sent via
-    email, MS Teams or Slack.
+    email, MS Teams, Slack and Standard Webhooks.
 
     [:octicons-arrow-right-24: Notification channels](notifications.md)
 
