@@ -277,6 +277,19 @@ class TestLicensePolicyParent(BaseTestCase):
         )
 
     @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_self_with_parent(self, mock_get_license_policies):
+        license_policy = License_Policy(name="self_parent", parent=self.parent)
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer(license_policy).validate_parent(license_policy)
+
+        self.assertEqual(
+            "[ErrorDetail(string='A license policy cannot be its own parent', code='invalid')]",
+            str(e.exception),
+        )
+        mock_get_license_policies.assert_not_called()
+
+    @patch("application.licenses.api.serializers.get_license_policies")
     def test_validate_parent_has_children(self, mock_get_license_policies):
         mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
         parent = License_Policy.objects.create(name="new_parent")

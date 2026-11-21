@@ -477,6 +477,9 @@ class LicensePolicySerializer(ModelSerializer):
 
     def validate_parent(self, value: Optional[License_Policy]) -> Optional[License_Policy]:
         self.instance: License_Policy
+        if value and self.instance and value == self.instance:
+            raise ValidationError("A license policy cannot be its own parent")
+
         if (
             value
             and (not self.instance or self.instance.parent != value)
@@ -488,8 +491,6 @@ class LicensePolicySerializer(ModelSerializer):
             raise ValidationError("A child cannot be a parent itself")
 
         if value and self.instance and value != self.instance.parent:
-            if value == self.instance:
-                raise ValidationError("A license policy cannot be its own parent")
             if self.instance.children.exists():
                 raise ValidationError("A parent cannot be a child itself")
 
