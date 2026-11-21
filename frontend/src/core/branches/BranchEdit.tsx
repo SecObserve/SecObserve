@@ -14,7 +14,7 @@ export type BranchEditProps = {
 
 const BranchEdit = ({ product }: BranchEditProps) => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -76,7 +76,10 @@ const BranchEdit = ({ product }: BranchEditProps) => {
             <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Edit branch / version</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={branch_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={branch_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <TextInputWide source="name" validate={validate_required_255} autoFocus />
                         <BooleanInput source="is_default_branch" label="Default branch / version" />
                         <TextInputWide source="purl" label="PURL" validate={validate_255} />

@@ -37,7 +37,6 @@ const GeneralRuleEvaluate = ({ rule }: GeneralRuleEvaluateProps) => {
                 );
             })
             .catch((error) => {
-                setOpen(false);
                 setLoading(false);
                 notify(error.message, {
                     type: "warning",

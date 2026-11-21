@@ -12,7 +12,7 @@ type WebhookDeleteProps = {
 
 const WebhookDelete = ({ webhook, onDeleted }: WebhookDeleteProps) => {
     const [open, setOpen] = useState(false);
-    const [deleteOne] = useDelete();
+    const [deleteOne, { isPending }] = useDelete();
     const refresh = useRefresh();
     const notify = useNotify();
 
@@ -22,6 +22,7 @@ const WebhookDelete = ({ webhook, onDeleted }: WebhookDeleteProps) => {
             { id: webhook.id },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     notify("Webhook deleted");
                     refresh();
                     onDeleted?.();
@@ -31,13 +32,13 @@ const WebhookDelete = ({ webhook, onDeleted }: WebhookDeleteProps) => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (
         <>
             <RemoveButton title="Delete" onClick={() => setOpen(true)} />
             <Confirm
+                loading={isPending}
                 isOpen={open}
                 title="Delete webhook"
                 content={

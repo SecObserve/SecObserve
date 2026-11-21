@@ -17,6 +17,7 @@ export type AuthorizationGroupMemberAddProps = {
 
 const AuthorizationGroupMemberAdd = ({ id }: AuthorizationGroupMemberAddProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -61,6 +62,7 @@ const AuthorizationGroupMemberAdd = ({ id }: AuthorizationGroupMemberAddProps) =
         const add_user = (data: any, close_dialog: boolean) => {
             const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/authorization_group_members/";
             const body = JSON.stringify({ authorization_group: id, ...data });
+            setSaving(true);
             httpClient(url, {
                 method: "POST",
                 body: body,
@@ -76,14 +78,15 @@ const AuthorizationGroupMemberAdd = ({ id }: AuthorizationGroupMemberAddProps) =
                 })
                 .catch((error) => {
                     notify(error.message, { type: "warning" });
-                });
+                })
+                .finally(() => setSaving(false));
         };
 
         return (
             <Toolbar>
                 <CancelButton onClick={handleCancel} />
-                <SaveButton label="Save & Continue" type="button" onClick={handleSaveContinue} />
-                <SaveButton type="button" onClick={handleSaveClose} />
+                <SaveButton disabled={saving} label="Save & Continue" type="button" onClick={handleSaveContinue} />
+                <SaveButton disabled={saving} type="button" onClick={handleSaveClose} />
             </Toolbar>
         );
     };

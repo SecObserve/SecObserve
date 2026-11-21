@@ -48,11 +48,11 @@ const CSAFUpdate = () => {
 
                     refresh();
                     setLoading(false);
+                    setOpen(false);
                     notify("CASF document updated", {
                         type: "success",
                     });
                 }
-                setOpen(false);
             })
             .catch(function (error) {
                 setLoading(false);
@@ -65,7 +65,7 @@ const CSAFUpdate = () => {
     return (
         <Fragment>
             <EditButton title="Update CSAF document" onClick={handleOpen} />
-            <Dialog open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Update CSAF document</DialogTitle>
                 <DialogContent>
                     <SimpleForm

@@ -45,7 +45,6 @@ const VEXDocumentImport = () => {
             })
             .catch((error) => {
                 setLoading(false);
-                setOpen(false);
                 notify(error.message, {
                     type: "warning",
                 });
@@ -55,7 +54,7 @@ const VEXDocumentImport = () => {
     return (
         <Fragment>
             <SmallButton title="Import VEX document" onClick={handleOpen} icon={<UploadIcon />} />
-            <Dialog open={open && !loading} onClose={handleClose}>
+            <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Import VEX document</DialogTitle>
                 <DialogContent>
                     <SimpleForm

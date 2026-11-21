@@ -67,6 +67,7 @@ type AssessmentApprovalProps = {
 const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [decision, setDecision] = useState(ASSESSMENT_STATUS_APPROVED);
     const [comment, setComment] = useState(observation_log.comment);
     const justificationEnabled = justificationIsEnabledForStatus(approvalStatus(observation_log));
@@ -91,11 +92,13 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
             }
         }
 
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/observation_logs/" + observation_log.id + "/approval/", {
             method: "PATCH",
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Observation Log updated", {
                     type: "success",
@@ -105,9 +108,8 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
-
-        setOpen(false);
+            })
+            .finally(() => setSaving(false));
     };
 
     const handleClose = (event: object, reason: string) => {
@@ -126,7 +128,10 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                     &nbsp;&nbsp;Assessment approval
                 </DialogTitle>
                 <DialogContent dividers>
-                    <SimpleForm onSubmit={saveApproval} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={saveApproval}
+                        toolbar={<ToolbarCancelSave disabled={saving} onClick={handleCancel} />}
+                    >
                         <AutocompleteInputMedium
                             source="assessment_status"
                             choices={ASSESSMENT_STATUS_CHOICES}

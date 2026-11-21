@@ -54,7 +54,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
     const justificationEnabled = justificationIsEnabledForStatus(status);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
     const handleOpen = () => setOpen(true);
     const handleCancel = () => setOpen(false);
     const handleClose = (event: object, reason: string) => {
@@ -98,7 +98,7 @@ const ObservationCreate = ({ id, risk_acceptance_expiry_date_calculated }: Obser
                     <CreateBase resource="observations">
                         <SimpleForm
                             onSubmit={create_observation}
-                            toolbar={<ToolbarCancelSave onClick={handleCancel} />}
+                            toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
                         >
                             <Typography variant="h6" sx={{ marginBottom: 1 }}>
                                 Observation

@@ -47,11 +47,11 @@ const OpenVEXUpdate = () => {
 
                     refresh();
                     setLoading(false);
+                    setOpen(false);
                     notify("OpenVEX document updated", {
                         type: "success",
                     });
                 }
-                setOpen(false);
             })
             .catch(function (error) {
                 setLoading(false);
@@ -64,7 +64,7 @@ const OpenVEXUpdate = () => {
     return (
         <Fragment>
             <EditButton title="Update OpenVEX document" onClick={handleOpen} />
-            <Dialog open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Update OpenVEX document</DialogTitle>
                 <DialogContent>
                     <SimpleForm

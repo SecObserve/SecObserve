@@ -12,6 +12,7 @@ import { httpClient } from "../../commons/ra-data-django-rest-framework";
 const ConcludedLicense = () => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
 
@@ -29,6 +30,7 @@ const ConcludedLicense = () => {
             manual_concluded_non_spdx_license: data.manual_concluded_non_spdx_license,
         };
 
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/license_components/" + data.id + "/concluded_license/", {
             method: "PATCH",
             body: JSON.stringify(patch),
@@ -44,7 +46,8 @@ const ConcludedLicense = () => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     const handleClose = (event: object, reason: string) => {
@@ -88,7 +91,7 @@ const ConcludedLicense = () => {
                 <DialogContent>
                     <SimpleForm
                         onSubmit={concludedLicenseUpdate}
-                        toolbar={<ToolbarCancelSave onClick={handleCancel} />}
+                        toolbar={<ToolbarCancelSave disabled={saving} onClick={handleCancel} />}
                         validate={validateFields}
                     >
                         <ReferenceInput

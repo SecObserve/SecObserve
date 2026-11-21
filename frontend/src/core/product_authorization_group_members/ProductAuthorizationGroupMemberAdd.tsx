@@ -18,7 +18,7 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
     const handleOpen = () => setOpen(true);
     const handleCancel = () => {
         resetState();
@@ -83,8 +83,8 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
         return (
             <Toolbar>
                 <CancelButton onClick={handleCancel} />
-                <SaveButton label="Save & Continue" type="button" onClick={handleSaveContinue} />
-                <SaveButton type="button" onClick={handleSaveClose} />
+                <SaveButton disabled={isPending} label="Save & Continue" type="button" onClick={handleSaveContinue} />
+                <SaveButton disabled={isPending} type="button" onClick={handleSaveClose} />
             </Toolbar>
         );
     };
@@ -96,6 +96,7 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
             { data: data },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("Authorization group member added", { type: "success" });
                 },
@@ -104,7 +105,6 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

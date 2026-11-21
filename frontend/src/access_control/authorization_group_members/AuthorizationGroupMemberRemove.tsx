@@ -10,6 +10,7 @@ type AuthorizationGroupMemberRemoveProps = {
 
 const AuthorizationGroupMemberRemove = ({ authorization_group_member }: AuthorizationGroupMemberRemoveProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
@@ -21,24 +22,26 @@ const AuthorizationGroupMemberRemove = ({ authorization_group_member }: Authoriz
             "/authorization_group_members/" +
             authorization_group_member.id +
             "/";
+        setSaving(true);
         httpClient(url, {
             method: "DELETE",
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("User removed", { type: "success" });
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
-            });
-
-        setOpen(false);
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
         <>
             <RemoveButton title="Remove" onClick={handleClick} />
             <Confirm
+                loading={saving}
                 isOpen={open}
                 title="Remove user"
                 content={

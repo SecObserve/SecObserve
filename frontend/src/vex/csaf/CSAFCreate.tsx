@@ -66,11 +66,11 @@ const CSAFCreate = () => {
 
                     refresh();
                     setLoading(false);
+                    setOpen(false);
                     notify("CASF document created", {
                         type: "success",
                     });
                 }
-                setOpen(false);
             })
             .catch(function (error) {
                 setLoading(false);
@@ -83,7 +83,7 @@ const CSAFCreate = () => {
     return (
         <Fragment>
             <AddButton title="Create CSAF document" onClick={handleOpen} />
-            <Dialog open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Create CSAF document</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="csaf">

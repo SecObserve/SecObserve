@@ -73,7 +73,6 @@ const ApiImportObservations = (product: any) => {
             })
             .catch((error) => {
                 setLoading(false);
-                setOpen(false);
                 notify(error.message, {
                     type: "warning",
                 });
@@ -87,7 +86,7 @@ const ApiImportObservations = (product: any) => {
                 onClick={handleOpen}
                 icon={<UploadIcon sx={{ color: getIconAndFontColor() }} />}
             />
-            <Dialog open={open && !loading} onClose={handleClose}>
+            <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Import observations from API</DialogTitle>
                 <DialogContent>
                     <SimpleForm

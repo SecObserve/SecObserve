@@ -42,9 +42,7 @@ const ObservationBulkDeleteButton = ({ product, storeKey }: ObservationBulkDelet
             })
             .catch((error) => {
                 refresh();
-                setOpen(false);
                 setLoading(false);
-                unselectAll();
                 notify(error.message, {
                     type: "warning",
                 });

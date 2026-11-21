@@ -29,7 +29,7 @@ import { AutocompleteInputWide, PasswordInputWide, TextInputWide } from "../../c
 const ApiConfigurationEdit = () => {
     const [open, setOpen] = useState(false);
     const [parsers, setParsers] = useState<any[]>([]);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const dataProvider = useDataProvider();
@@ -223,7 +223,7 @@ const ApiConfigurationEdit = () => {
                 <DialogContent>
                     <SimpleForm
                         onSubmit={api_configuration_update}
-                        toolbar={<ToolbarCancelSave onClick={handleCancel} />}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
                     >
                         <TextInputWide autoFocus source="name" validate={validate_required_255} />
                         <ReferenceInput

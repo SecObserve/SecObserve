@@ -15,7 +15,7 @@ export type LicensePolicyItemEditProps = {
 
 const LicensePolicyItemEdit = ({ license_policy_id, license_policy_item_id }: LicensePolicyItemEditProps) => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -75,7 +75,10 @@ const LicensePolicyItemEdit = ({ license_policy_id, license_policy_item_id }: Li
             <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Edit license policy item</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={item_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={item_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <ReferenceInput
                             source="license_group"
                             reference="license_groups"

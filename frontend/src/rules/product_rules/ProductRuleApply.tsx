@@ -35,7 +35,6 @@ const ProductRuleApply = (props: ProductRuleApplyProps) => {
             })
             .catch((error) => {
                 refresh();
-                setOpen(false);
                 setLoading(false);
                 notify(error.message, {
                     type: "warning",
