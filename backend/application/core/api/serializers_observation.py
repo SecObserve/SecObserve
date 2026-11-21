@@ -444,7 +444,7 @@ class ObservationCreateSerializer(ModelSerializer):
         if attrs.get("branch") and attrs["branch"].product != attrs["product"]:
             raise ValidationError("Branch does not belong to the same product as the observation")
 
-        if attrs.get("service") and attrs["service"].product != attrs["product"]:
+        if attrs.get("origin_service") and attrs["origin_service"].product != attrs["product"]:
             raise ValidationError("Service does not belong to the same product as the observation")
 
         validate_cvss_and_severity(attrs)

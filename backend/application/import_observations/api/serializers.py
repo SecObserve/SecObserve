@@ -120,9 +120,27 @@ class ApiConfigurationSerializer(ModelSerializer):
 
     def validate(self, attrs: dict) -> dict:
         self.instance: Api_Configuration
+
+        data_product = attrs.get("product")
+        if self.instance is not None and data_product and data_product != self.instance.product:
+            raise ValidationError("Product cannot be changed")
+
+        product = self.instance.product if self.instance is not None else data_product
+
+        automatic_import_branch = attrs.get("automatic_import_branch")
+        if automatic_import_branch and automatic_import_branch.product != product:
+            raise ValidationError(
+                {"automatic_import_branch": "Branch does not belong to the same product as the API Configuration"}
+            )
+
+        automatic_import_service = attrs.get("automatic_import_service")
+        if automatic_import_service and automatic_import_service.product != product:
+            raise ValidationError(
+                {"automatic_import_service": "Service does not belong to the same product as the API Configuration"}
+            )
+
         if attrs.pop("test_connection", False):
             if self.instance is not None:
-                product = attrs.get("product", self.instance.product)
                 name = attrs.get("name", self.instance.name)
                 parser = attrs.get("parser", self.instance.parser)
                 base_url = attrs.get("base_url", self.instance.base_url)
@@ -134,7 +152,6 @@ class ApiConfigurationSerializer(ModelSerializer):
                 basic_auth_password = attrs.get("basic_auth_password", self.instance.basic_auth_password)
                 verify_ssl = attrs.get("verify_ssl", self.instance.verify_ssl)
             else:
-                product = attrs.get("product")
                 name = attrs.get("name")
                 parser = attrs.get("parser")
                 base_url = attrs.get("base_url")
@@ -162,24 +179,6 @@ class ApiConfigurationSerializer(ModelSerializer):
             valid, errors = api_check_connection(api_configuration)
             if not valid:
                 raise ValidationError("\n".join(errors))
-
-        data_product = attrs.get("product")
-        if self.instance is not None and data_product and data_product != self.instance.product:
-            raise ValidationError("Product cannot be changed")
-
-        product = self.instance.product if self.instance is not None else data_product
-
-        automatic_import_branch = attrs.get("automatic_import_branch")
-        if automatic_import_branch and automatic_import_branch.product != product:
-            raise ValidationError(
-                {"automatic_import_branch": "Branch does not belong to the same product as the API Configuration"}
-            )
-
-        automatic_import_service = attrs.get("automatic_import_service")
-        if automatic_import_service and automatic_import_service.product != product:
-            raise ValidationError(
-                {"automatic_import_service": "Service does not belong to the same product as the API Configuration"}
-            )
 
         return attrs
 

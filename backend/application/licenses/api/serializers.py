@@ -528,17 +528,6 @@ class LicensePolicySerializer(ModelSerializer):
 
         return validated_data
 
-    def update(self, instance: License_Policy, validated_data: dict) -> License_Policy:
-        parent = validated_data.get("parent")
-        instance_has_children = instance.children.exists()
-        if parent:
-            if instance_has_children:
-                raise ValidationError("A parent cannot have a parent itself")
-            if instance == parent:
-                raise ValidationError("A license policy cannot be parent of itself")
-
-        return super().update(instance, validated_data)
-
 
 class LicensePolicyItemSerializer(ModelSerializer):
     license_spdx_id = SerializerMethodField()
