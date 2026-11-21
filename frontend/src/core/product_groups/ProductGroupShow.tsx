@@ -41,7 +41,7 @@ import ProductRuleApply from "../../rules/product_rules/ProductRuleApply";
 import ProductRuleCreate from "../../rules/product_rules/ProductRuleCreate";
 import ProductRuleEmbeddedList from "../../rules/product_rules/ProductRuleEmbeddedList";
 import observations from "../observations";
-import ObservationGroupEmbeddedList from "../observations/ObservationGroupEmbeddedList";
+import ObservationsEmbeddedList from "../observations/ObservationEmbeddedList";
 import ProductAuthorizationGroupMemberAdd from "../product_authorization_group_members/ProductAuthorizationGroupMemberAdd";
 import ProductAuthorizationGroupMemberEmbeddedList from "../product_authorization_group_members/ProductAuthorizationGroupMemberEmbeddedList";
 import ProductMemberAdd from "../product_members/ProductMemberAdd";
@@ -87,7 +87,7 @@ const ProductGroupShow = () => {
                                 <ProductEmbeddedList product_group={product_group} />
                             </Tab>
                             <Tab label="Observations" path="observations" icon={<observations.icon />}>
-                                <ObservationGroupEmbeddedList product_group={product_group} />
+                                <ObservationsEmbeddedList product_group={product_group} />
                             </Tab>
                             <Tab label="Metrics" path="metrics" icon={<BarChartIcon />}>
                                 <MetricsHeader repository_default_branch={undefined} />
