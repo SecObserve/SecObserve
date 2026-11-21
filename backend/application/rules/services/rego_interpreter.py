@@ -1,5 +1,3 @@
-from typing import Any, Optional
-
 from regopy import Input, Interpreter
 from regopy.rego_shared import RegoError
 from rest_framework.exceptions import ValidationError
@@ -20,10 +18,10 @@ class RegoInterpreter:
         except RegoError as e:
             raise RegoException(f"Error while building rego bundle: {str(e)}") from e
 
-    def query(self, data: Optional[Any] = None) -> dict:
+    def query(self, rego_input: Input) -> dict:
         try:
             rego_run = Interpreter()
-            rego_run.set_input(Input(data))
+            rego_run.set_input(rego_input)
             output = rego_run.query_bundle(self.rego_bundle)
 
             node = output.results

@@ -5,10 +5,16 @@ from unittest.mock import MagicMock, call, patch
 
 import jsonpickle
 from django.core.management import call_command
+from regopy import Input
 
+from application.commons.services.request_cache import (
+    activate_task_cache,
+    deactivate_task_cache,
+)
 from application.core.models import Evidence, Observation, Product, Reference
 from application.core.types import Severity, Status
 from application.rules.models import Rule
+from application.rules.services.rego_interpreter import RegoInterpreter
 from application.rules.services.rule_engine import Rule_Engine, _check_regex
 from application.rules.types import Rule_Status, Rule_Type
 from unittests.base_test_case import BaseTestCase
@@ -138,10 +144,11 @@ class TestRuleEngine(BaseTestCase):
         product_qs.filter.assert_called_once_with(approval_status__in=["Approved", "Auto approved"])
         group_qs.filter.assert_called_once_with(approval_status__in=["Approved", "Auto approved"])
 
+    @patch("application.rules.services.rule_engine.Input")
     @patch("application.rules.services.rule_engine.jsonpickle.dumps", return_value="{}")
     @patch("application.rules.services.rule_engine.RegoInterpreter")
     @patch("application.rules.models.Rule.objects.filter")
-    def test_check_rule_rego_lazy_loads_interpreter(self, mock_rule, mock_rego_interpreter, _mock_dumps):
+    def test_check_rule_rego_lazy_loads_interpreter(self, mock_rule, mock_rego_interpreter, _mock_dumps, mock_input):
         mock_rule.return_value = []
         mock_rego_interpreter.return_value.query.return_value = {"severity": "High"}
         rule_engine = Rule_Engine(self.product_1)
@@ -159,7 +166,8 @@ class TestRuleEngine(BaseTestCase):
 
         self.assertTrue(result)
         mock_rego_interpreter.assert_called_once_with("package rule")
-        mock_rego_interpreter.return_value.query.assert_called_once_with({"product_name": "product_1"})
+        mock_input.assert_called_once_with({"product_name": "product_1"})
+        mock_rego_interpreter.return_value.query.assert_called_once_with(mock_input.return_value)
         self.assertEqual(rule_engine.rego_interpreters[rule.pk], mock_rego_interpreter.return_value)
         self.assertEqual(jsonpickle_output_before, jsonpickle.dumps({"b": 1, "a": 2}, unpicklable=False))
 
@@ -242,9 +250,10 @@ class TestRuleEngineRegoInput(BaseTestCase):
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
         super().setUpClass()
 
+    @patch("application.rules.services.rule_engine.Input")
     @patch("application.rules.services.rule_engine.RegoInterpreter")
     @patch("application.rules.models.Rule.objects.filter")
-    def test_check_rule_rego_input_only_database_fields(self, mock_rule, mock_rego_interpreter):
+    def test_check_rule_rego_input_only_database_fields(self, mock_rule, mock_rego_interpreter, mock_input):
         mock_rule.return_value = []
         mock_rego_interpreter.return_value.query.return_value = {}
 
@@ -269,8 +278,8 @@ class TestRuleEngineRegoInput(BaseTestCase):
 
         rule_engine.check_rule_for_observation(rule, observation, None, True)
 
-        mock_rego_interpreter.return_value.query.assert_called_once()
-        rego_input = mock_rego_interpreter.return_value.query.call_args.args[0]
+        mock_rego_interpreter.return_value.query.assert_called_once_with(mock_input.return_value)
+        rego_input = mock_input.call_args.args[0]
 
         expected_keys = {
             field.attname
@@ -318,3 +327,74 @@ class TestRuleEngineRuleIds(BaseTestCase):
 
         self.assertEqual(rule.pk, observation.general_rule_id)
         self.assertEqual(Severity.SEVERITY_LOW, observation.current_severity)
+
+
+class TestRuleEngineRegoPerObservation(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def _rego_rule(self, name: str, rego_module: str) -> Rule:
+        return Rule.objects.create(
+            name=name,
+            type=Rule_Type.RULE_TYPE_REGO,
+            rego_module=rego_module,
+            approval_status=Rule_Status.RULE_STATUS_AUTO_APPROVED,
+        )
+
+    @patch("application.rules.services.rule_engine.Input", wraps=Input)
+    def test_apply_rules_for_observation_converts_rego_input_once(self, mock_input):
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        matching_rule = self._rego_rule(
+            "matching_rule", f'package rule\n\npriority := 4 if input.title == "{observation.title}"\n'
+        )
+        rule_engine = Rule_Engine(observation.product)
+        rule_engine.rules = [
+            self._rego_rule("other_title", 'package rule\n\npriority := 4 if input.title == "other"\n'),
+            self._rego_rule("other_scanner", 'package rule\n\nstatus := "Not affected" if input.scanner == "other"\n'),
+            matching_rule,
+        ]
+
+        rule_engine.apply_rules_for_observation(observation)
+
+        mock_input.assert_called_once()
+        self.assertEqual(4, observation.rule_rego_priority)
+        self.assertEqual(matching_rule, observation.general_rule_rego)
+
+    def test_apply_rules_for_observation_rego_input_after_field_rules(self):
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        field_rule = Rule.objects.create(
+            name="field_rule",
+            title=f"^{observation.title}$",
+            new_severity=Severity.SEVERITY_LOW,
+            approval_status=Rule_Status.RULE_STATUS_AUTO_APPROVED,
+        )
+        rego_rule = self._rego_rule("rego_rule", 'package rule\n\npriority := 1 if input.current_severity == "Low"\n')
+        rule_engine = Rule_Engine(observation.product)
+        rule_engine.rules = [field_rule, rego_rule]
+
+        rule_engine.apply_rules_for_observation(observation)
+
+        self.assertEqual(1, observation.rule_rego_priority)
+
+    @patch("application.rules.services.rule_engine.RegoInterpreter", wraps=RegoInterpreter)
+    def test_rule_engines_of_one_task_compile_a_rego_module_once(self, mock_rego_interpreter):
+        rego_module = 'package rule\n\npriority := 2 if input.title == "compiled once"\n'
+        changed_rego_module = 'package rule\n\npriority := 3 if input.title == "compiled once"\n'
+        rule = self._rego_rule("rego_rule", rego_module)
+
+        activate_task_cache()
+        try:
+            for product in Product.objects.filter(pk__in=[1, 2]):
+                Rule_Engine(product)
+            rule.rego_module = changed_rego_module
+            rule.save()
+            Rule_Engine(Product.objects.get(pk=1))
+        finally:
+            deactivate_task_cache()
+
+        self.assertEqual(1, mock_rego_interpreter.call_args_list.count(call(rego_module)))
+        self.assertEqual(1, mock_rego_interpreter.call_args_list.count(call(changed_rego_module)))
