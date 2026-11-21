@@ -17,7 +17,7 @@ const ProductRuleCreate = ({ product }: ProductRuleCreateProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
 
     const handleOpen = () => setOpen(true);
     const handleCancel = () => setOpen(false);
@@ -55,7 +55,7 @@ const ProductRuleCreate = ({ product }: ProductRuleCreateProps) => {
                     <CreateBase resource="product_rules">
                         <SimpleForm
                             onSubmit={create_product_rule}
-                            toolbar={<ToolbarCancelSave onClick={handleCancel} />}
+                            toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
                             validate={validateRuleForm}
                         >
                             <RuleCreateEditComponent

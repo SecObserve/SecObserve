@@ -9,7 +9,7 @@ type ProductAuthorizationGroupMemberDeleteProps = {
 
 const ProductAuthorizationGroupMemberDelete = (props: ProductAuthorizationGroupMemberDeleteProps) => {
     const [open, setOpen] = useState(false);
-    const [deleteOne] = useDelete();
+    const [deleteOne, { isPending }] = useDelete();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
@@ -40,6 +40,7 @@ const ProductAuthorizationGroupMemberDelete = (props: ProductAuthorizationGroupM
         <>
             <RemoveButton title="Remove" onClick={handleClick} />
             <Confirm
+                loading={isPending}
                 isOpen={open}
                 title="Remove authorization group member"
                 content={

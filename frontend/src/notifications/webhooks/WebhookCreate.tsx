@@ -15,6 +15,7 @@ type WebhookCreateProps = {
 
 const WebhookCreate = ({ product }: WebhookCreateProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [secret, setSecret] = useState<string | null>(null);
     const refresh = useRefresh();
     const notify = useNotify();
@@ -37,6 +38,7 @@ const WebhookCreate = ({ product }: WebhookCreateProps) => {
         };
 
         // Not useCreate, so that the secret does not end up in the react-admin cache
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/webhooks/", {
             method: "POST",
             body: JSON.stringify(body),
@@ -48,7 +50,8 @@ const WebhookCreate = ({ product }: WebhookCreateProps) => {
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
@@ -58,7 +61,10 @@ const WebhookCreate = ({ product }: WebhookCreateProps) => {
                 <DialogTitle>Add webhook</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="webhooks">
-                        <SimpleForm onSubmit={createWebhook} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                        <SimpleForm
+                            onSubmit={createWebhook}
+                            toolbar={<ToolbarCancelSave disabled={saving} onClick={handleCancel} />}
+                        >
                             <WebhookFields />
                         </SimpleForm>
                     </CreateBase>

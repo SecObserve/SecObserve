@@ -38,6 +38,7 @@ const ObservationAssessment = () => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [comment, setComment] = useState("");
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState(OBSERVATION_STATUS_OPEN);
     const justificationEnabled = justificationIsEnabledForStatus(status);
     const remediationsEnabled = remediationsAreEnabledForStatus(status);
@@ -65,6 +66,7 @@ const ObservationAssessment = () => {
             patch.priority = data.priority ?? null;
         }
 
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/observations/" + data.id + "/assessment/", {
             method: "PATCH",
             body: JSON.stringify(patch),
@@ -80,7 +82,8 @@ const ObservationAssessment = () => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     const handleClose = (event: object, reason: string) => {
@@ -99,7 +102,7 @@ const ObservationAssessment = () => {
                 <DialogContent>
                     <SimpleForm
                         onSubmit={observationUpdate}
-                        toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable={true} />}
+                        toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable disabled={saving} />}
                     >
                         <AutocompleteInputMedium source="severity" choices={OBSERVATION_SEVERITY_CHOICES} />
                         <AutocompleteInputMedium

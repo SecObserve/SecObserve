@@ -9,6 +9,7 @@ interface ToolbarCancelSaveProps {
     saveButtonLabel?: string;
     saveButtonIcon?: ReactNode;
     alwaysEnable?: boolean;
+    disabled?: boolean;
 }
 
 export const ToolbarCancelSave = ({
@@ -16,17 +17,16 @@ export const ToolbarCancelSave = ({
     saveButtonLabel,
     saveButtonIcon,
     alwaysEnable,
+    disabled,
 }: ToolbarCancelSaveProps) => (
     <Toolbar>
         <CancelButton onClick={onClick} />
-        {saveButtonLabel && !saveButtonIcon && <SaveButton label={saveButtonLabel} />}
-        {saveButtonLabel && saveButtonIcon && !alwaysEnable && (
-            <SaveButton label={saveButtonLabel} icon={saveButtonIcon} />
-        )}
-        {saveButtonLabel && saveButtonIcon && alwaysEnable && (
-            <SaveButton label={saveButtonLabel} icon={saveButtonIcon} alwaysEnable />
-        )}
-        {!saveButtonLabel && alwaysEnable && <SaveButton alwaysEnable />}
-        {!saveButtonLabel && !alwaysEnable && <SaveButton />}
+        {/* alwaysEnable overrides disabled in the SaveButton, so it must be switched off while disabled */}
+        <SaveButton
+            label={saveButtonLabel || undefined}
+            icon={saveButtonIcon ?? undefined}
+            alwaysEnable={alwaysEnable && !disabled}
+            disabled={disabled}
+        />
     </Toolbar>
 );

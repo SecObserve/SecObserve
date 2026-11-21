@@ -16,7 +16,7 @@ const ProductCreateDialog = ({ productGroupId }: ProductCreateDialogProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
     const handleOpen = () => setOpen(true);
     const handleCancel = () => setOpen(false);
     const handleClose = (event: object, reason: string) => {
@@ -51,7 +51,10 @@ const ProductCreateDialog = ({ productGroupId }: ProductCreateDialogProps) => {
                 <DialogTitle>Add product</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="product">
-                        <SimpleForm onSubmit={createProduct} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                        <SimpleForm
+                            onSubmit={createProduct}
+                            toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                        >
                             <ProductCreateEditComponent
                                 initialDescription=""
                                 setDescription={setDescription}

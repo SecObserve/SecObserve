@@ -55,11 +55,13 @@ const SendTest = ({ webhook }: { webhook: Webhook }) => {
 
 const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [secret, setSecret] = useState<string | null>(null);
     const notify = useNotify();
     const refresh = useRefresh();
 
     const handleConfirm = () => {
+        setSaving(true);
         httpClient(API() + `${webhook.id}/rotate_secret/`, { method: "POST" })
             .then(({ json }) => {
                 setOpen(false);
@@ -68,7 +70,8 @@ const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
             .catch((error) => {
                 setOpen(false);
                 notify(error.message, { type: "warning" });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
@@ -77,6 +80,7 @@ const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
                 Rotate secret
             </Button>
             <Confirm
+                loading={saving}
                 isOpen={open}
                 title="Rotate secret"
                 content="The current secret stops working immediately. Receivers must be updated with the new secret."

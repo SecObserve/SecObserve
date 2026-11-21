@@ -10,7 +10,7 @@ import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/theme
 
 const ProductAuthorizationGroupMemberEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -56,7 +56,7 @@ const ProductAuthorizationGroupMemberEdit = () => {
                 <DialogContent>
                     <SimpleForm
                         onSubmit={product_authorization_group_member_update}
-                        toolbar={<ToolbarCancelSave onClick={handleCancel} />}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
                     >
                         <TextInputWide source="authorization_group_data.name" label="Authorization group" disabled />
                         <AutocompleteInputWide source="role" choices={ROLE_CHOICES} validate={validate_required} />

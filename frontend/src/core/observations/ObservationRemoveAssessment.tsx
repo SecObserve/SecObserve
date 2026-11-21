@@ -11,6 +11,7 @@ const ObservationRemoveAssessment = () => {
     const dialogRef = useRef<HTMLDivElement>(null);
     const [comment, setComment] = useState("");
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -32,6 +33,7 @@ const ObservationRemoveAssessment = () => {
             comment: comment,
         };
 
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/observations/" + data.id + "/remove_assessment/", {
             method: "PATCH",
             body: JSON.stringify(patch),
@@ -47,7 +49,8 @@ const ObservationRemoveAssessment = () => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
@@ -58,7 +61,7 @@ const ObservationRemoveAssessment = () => {
                 <DialogContent>
                     <SimpleForm
                         onSubmit={observationUpdate}
-                        toolbar={<ToolbarCancelSave onClick={handleCancel} alwaysEnable={true} />}
+                        toolbar={<ToolbarCancelSave disabled={saving} onClick={handleCancel} alwaysEnable={true} />}
                     >
                         <MarkdownEdit
                             initialValue=""

@@ -9,7 +9,7 @@ type APIConfigurationDeleteProps = {
 
 const APIConfigurationDelete = (props: APIConfigurationDeleteProps) => {
     const [open, setOpen] = useState(false);
-    const [deleteOne] = useDelete();
+    const [deleteOne, { isPending }] = useDelete();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
@@ -38,6 +38,7 @@ const APIConfigurationDelete = (props: APIConfigurationDeleteProps) => {
         <>
             <RemoveButton title="Delete" onClick={handleClick} />
             <Confirm
+                loading={isPending}
                 isOpen={open}
                 title="Delete API configuration"
                 content={"Are you sure you want to delete the API configuration " + props.api_configuration.name + "?"}

@@ -17,6 +17,7 @@ type LicensePolicyCopyProps = {
 const LicensePolicyCopy = ({ license_policy }: LicensePolicyCopyProps) => {
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -29,6 +30,7 @@ const LicensePolicyCopy = ({ license_policy }: LicensePolicyCopyProps) => {
     const copyLicensePolicy = (data: any) => {
         const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/license_policies/" + license_policy.id + "/copy/";
         const body = JSON.stringify({ name: data.new_name });
+        setSaving(true);
         httpClient(url, {
             method: "POST",
             body: body,
@@ -40,7 +42,8 @@ const LicensePolicyCopy = ({ license_policy }: LicensePolicyCopyProps) => {
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
@@ -54,6 +57,7 @@ const LicensePolicyCopy = ({ license_policy }: LicensePolicyCopyProps) => {
                             onSubmit={copyLicensePolicy}
                             toolbar={
                                 <ToolbarCancelSave
+                                    disabled={saving}
                                     onClick={handleCancel}
                                     saveButtonLabel="Copy"
                                     saveButtonIcon={<LibraryAddIcon />}

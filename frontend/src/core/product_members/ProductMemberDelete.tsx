@@ -9,7 +9,7 @@ type ProductMemberDeleteProps = {
 
 const ProductMemberDelete = (props: ProductMemberDeleteProps) => {
     const [open, setOpen] = useState(false);
-    const [deleteOne] = useDelete();
+    const [deleteOne, { isPending }] = useDelete();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
@@ -40,6 +40,7 @@ const ProductMemberDelete = (props: ProductMemberDeleteProps) => {
         <>
             <RemoveButton title="Remove" onClick={handleClick} />
             <Confirm
+                loading={isPending}
                 isOpen={open}
                 title="Remove user member"
                 content={

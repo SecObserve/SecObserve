@@ -9,11 +9,13 @@ const JWTSecretReset = () => {
     const notify = useNotify();
 
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
     const handleJWTSecretReset = async () => {
         const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/jwt_secret/reset/";
+        setSaving(true);
         httpClient(url, {
             method: "POST",
         })
@@ -27,7 +29,8 @@ const JWTSecretReset = () => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     const body = `Are you sure you want to reset the JWT secret?
@@ -37,6 +40,7 @@ const JWTSecretReset = () => {
         <>
             <RemoveButton title="Reset JWT secret" onClick={handleOpen} />
             <Confirm
+                loading={saving}
                 isOpen={open}
                 title="Reset JWT secret"
                 content={<Typography sx={{ whiteSpace: "pre-line" }}>{body}</Typography>}

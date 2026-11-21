@@ -10,7 +10,7 @@ import { AutocompleteInputWide, TextInputWide } from "../../commons/layout/theme
 
 const ProductMemberEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -55,7 +55,10 @@ const ProductMemberEdit = () => {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Edit user member</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={product_member_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={product_member_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <TextInputWide source="user_data.full_name" label="User" disabled />
                         <AutocompleteInputWide source="role" choices={ROLE_CHOICES} validate={validate_required} />
                     </SimpleForm>

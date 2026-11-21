@@ -36,7 +36,7 @@ const ApiConfigurationCreate = ({ id }: ApiConfigurationCreateProps) => {
     const refresh = useRefresh();
     const notify = useNotify();
     const dataProvider = useDataProvider();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
 
     useEffect(() => {
         // Fetch the list of parsers from the backend
@@ -193,7 +193,7 @@ const ApiConfigurationCreate = ({ id }: ApiConfigurationCreateProps) => {
                     <CreateBase resource="api_configurations">
                         <SimpleForm
                             onSubmit={createApiConfiguration}
-                            toolbar={<ToolbarCancelSave onClick={handleCancel} />}
+                            toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
                         >
                             <TextInputWide autoFocus source="name" validate={validate_required_255} />
                             <ReferenceInput

@@ -11,6 +11,7 @@ type LicenseGroupLicenseRemoveProps = {
 
 const LicenseGroupLicenseRemove = ({ license_group, license }: LicenseGroupLicenseRemoveProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
@@ -19,6 +20,7 @@ const LicenseGroupLicenseRemove = ({ license_group, license }: LicenseGroupLicen
     const removeLicense = async () => {
         const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/license_groups/" + license_group.id + "/remove_license/";
         const body = JSON.stringify({ license: license.id });
+        setSaving(true);
         httpClient(url, {
             method: "POST",
             body: body,
@@ -30,13 +32,15 @@ const LicenseGroupLicenseRemove = ({ license_group, license }: LicenseGroupLicen
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
         <>
             <RemoveButton title="Remove" onClick={handleClick} />
             <Confirm
+                loading={saving}
                 isOpen={open}
                 title="Remove user"
                 content={"Are you sure you want to remove the license " + license.spdx_id + "?"}

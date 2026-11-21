@@ -8,7 +8,7 @@ import { WebhookFields } from "./functions";
 
 const WebhookEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
 
@@ -50,7 +50,10 @@ const WebhookEdit = () => {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Edit webhook</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={webhookUpdate} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={webhookUpdate}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <WebhookFields />
                     </SimpleForm>
                 </DialogContent>

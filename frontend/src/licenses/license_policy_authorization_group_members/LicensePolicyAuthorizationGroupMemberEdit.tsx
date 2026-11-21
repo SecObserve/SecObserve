@@ -8,7 +8,7 @@ import { TextInputWide } from "../../commons/layout/themes";
 
 const LicensePolicyAuthorizationGroupMemberEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -53,7 +53,10 @@ const LicensePolicyAuthorizationGroupMemberEdit = () => {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Edit authorization group</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={member_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={member_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <TextInputWide source="authorization_group_data.name" label="Authorization group" disabled />
                         <BooleanInput source="is_manager" label="Manager" />
                     </SimpleForm>

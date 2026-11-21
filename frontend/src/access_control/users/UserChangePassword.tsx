@@ -12,6 +12,7 @@ import { httpClient } from "../../commons/ra-data-django-rest-framework";
 const UserChangePassword = () => {
     const refresh = useRefresh();
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const notify = useNotify();
     const [passwordRules, setPasswordRules] = useState("");
 
@@ -34,6 +35,7 @@ const UserChangePassword = () => {
             new_password_2: data.new_password_2,
         };
 
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/users/" + data.id + "/change_password/", {
             method: "PATCH",
             body: JSON.stringify(patch),
@@ -49,7 +51,8 @@ const UserChangePassword = () => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     const handleClose = (event: object, reason: string) => {
@@ -70,7 +73,13 @@ const UserChangePassword = () => {
                         <DialogContent>
                             <SimpleForm
                                 onSubmit={changePassword}
-                                toolbar={<ToolbarCancelSave onClick={handleCancel} saveButtonLabel="Change" />}
+                                toolbar={
+                                    <ToolbarCancelSave
+                                        disabled={saving}
+                                        onClick={handleCancel}
+                                        saveButtonLabel="Change"
+                                    />
+                                }
                             >
                                 <PasswordInputWide
                                     source="current_password"

@@ -12,6 +12,7 @@ const LicenseGroupAuthorizationGroupMemberRemove = ({
     license_group_authorization_group_member,
 }: LicenseGroupAuthorizationGroupMemberRemoveProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
@@ -23,6 +24,7 @@ const LicenseGroupAuthorizationGroupMemberRemove = ({
             "/license_group_authorization_group_members/" +
             license_group_authorization_group_member.id +
             "/";
+        setSaving(true);
         httpClient(url, {
             method: "DELETE",
         })
@@ -33,13 +35,15 @@ const LicenseGroupAuthorizationGroupMemberRemove = ({
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
         <>
             <RemoveButton title="Remove" onClick={handleClick} />
             <Confirm
+                loading={saving}
                 isOpen={open}
                 title="Remove authorization group"
                 content={

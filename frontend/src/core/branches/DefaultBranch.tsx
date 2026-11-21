@@ -14,6 +14,7 @@ const DefaultBranch = ({ branch }: DefaultBranchProps) => {
     const refresh = useRefresh();
 
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
@@ -22,6 +23,7 @@ const DefaultBranch = ({ branch }: DefaultBranchProps) => {
             is_default_branch: true,
         };
         const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/branches/" + branch.id + "/";
+        setSaving(true);
         httpClient(url, {
             method: "PATCH",
             body: JSON.stringify(patch),
@@ -37,13 +39,15 @@ const DefaultBranch = ({ branch }: DefaultBranchProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
         <>
             <EditButton title="Default" onClick={handleOpen} icon={<VisibilityIcon />} />
             <Confirm
+                loading={saving}
                 isOpen={open}
                 title="Set default branch / version"
                 content={"Are you sure you want to set branch / version " + branch.name + " as default?"}
