@@ -22,7 +22,7 @@ import ListExportMenu from "../../commons/custom_fields/ListExportMenu";
 import { SeverityField } from "../../commons/custom_fields/SeverityField";
 import { has_attribute, humanReadableDate } from "../../commons/functions";
 import ListHeader from "../../commons/layout/ListHeader";
-import { OBSERVATION_STATUS_ACTIVE, Observation } from "../types";
+import { OBSERVATION_STATUS_ACTIVE, Observation, Product } from "../types";
 import ObservationBulkAssessment from "./ObservationBulkAssessment";
 import ObservationExpand from "./ObservationExpand";
 import { ObservationFilterBar } from "./ObservationFilterBar";
@@ -31,11 +31,20 @@ import { IDENTIFIER_OBSERVATION_LIST, setListIdentifier } from "./functions";
 const BulkActionButtons = () => <ObservationBulkAssessment product={null} storeKey="observations.list" />;
 
 type ObservationDatagridProps = {
-    bulkActionButtons: ReactElement;
+    bulkActionButtons: ReactElement | false;
+    // With a product, the columns for product and product group are hidden and the branch is the first column
+    product?: Product;
     hideProductGroup?: boolean;
+    // All observations of a component have the same component
+    hideComponent?: boolean;
 };
 
-export const ObservationDatagrid = ({ bulkActionButtons, hideProductGroup }: ObservationDatagridProps) => {
+export const ObservationDatagrid = ({
+    bulkActionButtons,
+    product,
+    hideProductGroup,
+    hideComponent,
+}: ObservationDatagridProps) => {
     const isColumnVisible = useObservationColumnVisibility();
 
     return (
@@ -46,9 +55,12 @@ export const ObservationDatagrid = ({ bulkActionButtons, hideProductGroup }: Obs
                     sx={{ width: "100%" }}
                     rowClick="show"
                     bulkActionButtons={bulkActionButtons}
-                    expand={<ObservationExpand showComponent={true} />}
+                    expand={<ObservationExpand showComponent={!hideComponent} />}
                     expandSingle
                 >
+                    {product && has_attribute("branch_name", data, sort) && (
+                        <TextField source="branch_name" label="Branch / Version" />
+                    )}
                     <TextField source="title" />
                     <SeverityField label="Severity" source="current_severity" />
                     <ChipField source="current_status" label="Status" />
@@ -56,17 +68,17 @@ export const ObservationDatagrid = ({ bulkActionButtons, hideProductGroup }: Obs
                         <ChipField source="current_priority" label="Priority" />
                     )}
                     {has_attribute("epss_score", data, sort) && <NumberField source="epss_score" label="EPSS" />}
-                    <TextField source="product_data.name" label="Product" />
-                    {!hideProductGroup && has_attribute("product_data.product_group_name", data, sort) && (
+                    {!product && <TextField source="product_data.name" label="Product" />}
+                    {!product && !hideProductGroup && has_attribute("product_data.product_group_name", data, sort) && (
                         <TextField source="product_data.product_group_name" label="Group" />
                     )}
-                    {has_attribute("branch_name", data, sort) && (
+                    {!product && has_attribute("branch_name", data, sort) && (
                         <TextField source="branch_name" label="Branch / Version" />
                     )}
                     {has_attribute("origin_service_name", data, sort) && (
                         <TextField source="origin_service_name" label="Service" />
                     )}
-                    {has_attribute("origin_component_name_version", data, sort) && (
+                    {!hideComponent && has_attribute("origin_component_name_version", data, sort) && (
                         <TextField
                             source="origin_component_name_version"
                             label="Component"
@@ -117,7 +129,7 @@ export const ObservationDatagrid = ({ bulkActionButtons, hideProductGroup }: Obs
                             }
                         />
                     )}
-                    {isColumnVisible("has_potential_duplicates") && (
+                    {isColumnVisible("has_potential_duplicates") && (!product || product.has_potential_duplicates) && (
                         <BooleanField source="has_potential_duplicates" label="Dupl." textAlign="center" />
                     )}
                     {isColumnVisible("update_impact_score") && has_attribute("update_impact_score", data, sort) && (

@@ -33,7 +33,13 @@ const TRIAGE = "Triage";
 
 // Without a product, all filters are offered; with a product only those for the data the product has.
 // product_filters replace the filters for product and product group, e.g. in the observations of a product group.
-export function observationFilters(product?: Product, review = false, product_filters?: ReactElement[]) {
+// hide_component leaves out the filters for the component, e.g. in the observations of a component.
+export function observationFilters(
+    product?: Product,
+    review = false,
+    product_filters?: ReactElement[],
+    hide_component = false
+) {
     const primary: ReactElement[] = [];
     const secondary: SecondaryFilter[] = [];
 
@@ -86,7 +92,7 @@ export function observationFilters(product?: Product, review = false, product_fi
     );
 
     secondary.push(
-        ...originFilters(product),
+        ...originFilters(product, hide_component),
         { column: SCAN, input: <TextInput source="scanner" label="Scanner" /> },
         { column: SCAN, input: <TextInput source="upload_filename" label="Filename" /> },
         { column: SCAN, input: <TextInput source="api_configuration_name" label="API configuration" /> }
@@ -142,7 +148,7 @@ export function observationFilters(product?: Product, review = false, product_fi
 
 // The filters for the origin of observations, also used by the list of assessments to be approved.
 // Without a product, all are offered; with a product only those for the data the product has.
-export function originFilters(product?: Product): SecondaryFilter[] {
+export function originFilters(product?: Product, hide_component = false): SecondaryFilter[] {
     const filters: SecondaryFilter[] = [];
 
     if (!product) {
@@ -155,7 +161,7 @@ export function originFilters(product?: Product): SecondaryFilter[] {
             reference: "services",
         });
     }
-    if (!product || product.has_component) {
+    if (!hide_component && (!product || product.has_component)) {
         filters.push(
             { column: ORIGIN, input: <TextInput source="origin_component_name_version" label="Component" /> },
             {
@@ -225,11 +231,18 @@ interface ObservationFilterBarProps {
     product?: Product;
     review?: boolean;
     product_filters?: ReactElement[];
+    hideComponent?: boolean;
     saveQuery?: boolean;
 }
 
-export const ObservationFilterBar = ({ product, review, product_filters, saveQuery }: ObservationFilterBarProps) => {
-    const { primary, secondary } = observationFilters(product, review, product_filters);
+export const ObservationFilterBar = ({
+    product,
+    review,
+    product_filters,
+    hideComponent,
+    saveQuery,
+}: ObservationFilterBarProps) => {
+    const { primary, secondary } = observationFilters(product, review, product_filters, hideComponent);
     return (
         <FilterBar
             filters={primary}

@@ -14,7 +14,7 @@ import {
 import license_components from "../../licenses/license_components";
 import ComponentLicenseComponentList from "../../licenses/license_components/ComponentLicenseComponentList";
 import observations from "../observations";
-import ObservationsComponentList from "../observations/ObservationComponentList";
+import ObservationsEmbeddedList from "../observations/ObservationEmbeddedList";
 import products from "../products";
 import ProductEmbeddedList from "../products/ProductEmbeddedList";
 import ComponentShowComponent from "./ComponentShowComponent";
@@ -68,7 +68,7 @@ const ComponentTabs = ({ component }: ComponentTabsProps) => {
                         label={component?.has_active_observations ? "Active Observations" : "Observations"}
                         icon={<observations.icon />}
                     >
-                        <ObservationsComponentList component={component} />
+                        <ObservationsEmbeddedList component={component} />
                     </Tab>
                 )}
                 {component?.has_licenses && (
