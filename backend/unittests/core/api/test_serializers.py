@@ -23,6 +23,7 @@ from application.core.api.serializers_product import (
     ProductGroupSerializer,
     ProductMemberSerializer,
     ProductSerializer,
+    ServiceSerializer,
 )
 from application.core.models import (
     Branch,
@@ -30,6 +31,7 @@ from application.core.models import (
     Observation_Log,
     Product,
     Product_Authorization_Group_Member,
+    Service,
 )
 from application.core.types import Assessment_Status, Severity, Status
 from application.import_observations.models import Parser
@@ -1312,3 +1314,29 @@ class TestObservationCreateSerializerWebhook(BaseTestCase):
         self._create(Status.STATUS_NOT_AFFECTED)
 
         mock_emit.assert_not_called()
+
+
+class TestBranchServiceProductChange(BaseTestCase):
+    def test_validate_branch_product_change(self):
+        branch = Branch(product=Product(name="product_1"), name="branch")
+        with self.assertRaises(ValidationError) as e:
+            BranchSerializer(branch).validate_product(Product(name="product_2"))
+
+        self.assertEqual("[ErrorDetail(string='Product cannot be changed', code='invalid')]", str(e.exception))
+
+    def test_validate_branch_product_unchanged(self):
+        product = Product(name="product_1")
+        branch = Branch(product=product, name="branch")
+        self.assertEqual(product, BranchSerializer(branch).validate_product(product))
+
+    def test_validate_service_product_change(self):
+        service = Service(product=Product(name="product_1"), name="service")
+        with self.assertRaises(ValidationError) as e:
+            ServiceSerializer(service).validate_product(Product(name="product_2"))
+
+        self.assertEqual("[ErrorDetail(string='Product cannot be changed', code='invalid')]", str(e.exception))
+
+    def test_validate_service_product_unchanged(self):
+        product = Product(name="product_1")
+        service = Service(product=product, name="service")
+        self.assertEqual(product, ServiceSerializer(service).validate_product(product))

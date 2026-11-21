@@ -193,6 +193,23 @@ class TestAuthorizationLicensePolicyItems(TestAuthorizationBase):
             )
         )
 
+        expected_data = "{'message': 'Non field errors: License policy cannot be changed'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/license_policy_items/1002/",
+                {
+                    "license_policy": 1000,
+                    "non_spdx_license": "Two non-spdx licenses",
+                    "evaluation_result": "Allowed",
+                },
+                400,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(
             APITest(

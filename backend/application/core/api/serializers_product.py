@@ -913,6 +913,13 @@ class BranchSerializer(ModelSerializer):
 
         return super().validate(attrs)
 
+    def validate_product(self, value: Product) -> Product:
+        self.instance: Branch
+        if self.instance and self.instance.product != value:
+            raise ValidationError("Product cannot be changed")
+
+        return value
+
 
 class BranchNameSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
@@ -945,6 +952,13 @@ class ServiceSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
+
+    def validate_product(self, value: Product) -> Product:
+        self.instance: Service
+        if self.instance and self.instance.product != value:
+            raise ValidationError("Product cannot be changed")
+
+        return value
 
 
 class ServiceNameSerializer(ModelSerializer):

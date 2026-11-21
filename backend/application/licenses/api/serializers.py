@@ -547,12 +547,16 @@ class LicensePolicyItemSerializer(ModelSerializer):
 
     def validate(self, attrs: dict) -> dict:
         self.instance: License_Policy_Item
+        data_license_policy: Optional[License_Policy] = attrs.get("license_policy")
         data_license_group = attrs.get("license_group")
         data_license = attrs.get("license")
         data_license_expression = attrs.get("license_expression", "")
         data_non_spdx_license = attrs.get("non_spdx_license", "")
 
         if self.instance:
+            if data_license_policy and data_license_policy != self.instance.license_policy:
+                raise ValidationError("License policy cannot be changed")
+
             self.instance.license_group = data_license_group
             self.instance.license = data_license
             self.instance.license_expression = data_license_expression

@@ -13,6 +13,7 @@ from application.licenses.models import (
     License_Group,
     License_Group_Member,
     License_Policy,
+    License_Policy_Item,
     License_Policy_Member,
 )
 from unittests.base_test_case import BaseTestCase
@@ -149,5 +150,23 @@ class TestLicensePolicyItemSerializer(BaseTestCase):
 
         self.assertEqual(
             "[ErrorDetail(string='Only one of license group, license, license expression or unknown license must be set', code='invalid')]",
+            str(e.exception),
+        )
+
+    def test_validate_license_policy_change(self):
+        license_policy_item = License_Policy_Item(
+            license_policy=License_Policy(name="license_policy_1"), non_spdx_license="non_spdx_license"
+        )
+        license_policy_item_serializer = LicensePolicyItemSerializer(license_policy_item)
+        attrs = {
+            "license_policy": License_Policy(name="license_policy_2"),
+            "non_spdx_license": "non_spdx_license",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            license_policy_item_serializer.validate(attrs)
+
+        self.assertEqual(
+            "[ErrorDetail(string='License policy cannot be changed', code='invalid')]",
             str(e.exception),
         )
