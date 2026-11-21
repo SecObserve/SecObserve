@@ -292,3 +292,18 @@ def get_default_branch_filter() -> Q:
     return Q(branch__is_default_branch=True) | (
         Q(branch__isnull=True) & Q(product__repository_default_branch__isnull=True)
     )
+
+
+def get_component_usage_filter(component_id: int, default_branch_only: bool) -> Q:
+    license_components = License_Component.objects.filter(product=OuterRef("pk"), component_id=component_id)
+    # Observations stay after a component has been removed from a product, only active ones show current usage
+    active_observations = Observation.objects.filter(
+        product=OuterRef("pk"),
+        origin_component_id=component_id,
+        current_status__in=Status.STATUS_ACTIVE,
+    )
+    if default_branch_only:
+        license_components = license_components.filter(get_default_branch_filter())
+        active_observations = active_observations.filter(get_default_branch_filter())
+
+    return Exists(license_components) | Exists(active_observations)

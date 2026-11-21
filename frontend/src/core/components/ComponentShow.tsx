@@ -15,6 +15,8 @@ import license_components from "../../licenses/license_components";
 import ComponentLicenseComponentList from "../../licenses/license_components/ComponentLicenseComponentList";
 import observations from "../observations";
 import ObservationsComponentList from "../observations/ObservationComponentList";
+import products from "../products";
+import ProductEmbeddedList from "../products/ProductEmbeddedList";
 import ComponentShowComponent from "./ComponentShowComponent";
 
 const ShowActions = () => {
@@ -45,6 +47,7 @@ const ComponentTabs = ({ component }: ComponentTabsProps) => {
         if (current_component_id == null || Number(current_component_id) !== Number(component.id)) {
             localStorage.removeItem("RaStore.observations.component");
             localStorage.removeItem("RaStore.component_license_components.embedded");
+            localStorage.removeItem("RaStore.products.component");
             localStorage.setItem("componentshow.component", String(component.id));
         }
         setInitializedComponentId(component.id);
@@ -71,6 +74,11 @@ const ComponentTabs = ({ component }: ComponentTabsProps) => {
                 {component?.has_licenses && (
                     <Tab label="Licenses" icon={<license_components.icon />}>
                         <ComponentLicenseComponentList component={component} />
+                    </Tab>
+                )}
+                {(component?.has_active_observations || component?.has_licenses) && (
+                    <Tab label="Products" icon={<products.icon />}>
+                        <ProductEmbeddedList component={component} />
                     </Tab>
                 )}
             </TabbedShowLayout>
