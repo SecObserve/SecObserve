@@ -69,7 +69,8 @@ from application.core.services.security_gate import (
 from application.core.types import Assessment_Status, Status
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
-from application.licenses.models import License_Component
+from application.licenses.models import License_Component, License_Policy
+from application.licenses.queries.license_policy import get_license_policies
 from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
@@ -285,6 +286,13 @@ class ProductCoreSerializer(ModelSerializer):
             validated_data.pop("observation_notification_status_list")
 
         return validated_data
+
+    def validate_license_policy(self, license_policy: Optional[License_Policy]) -> Optional[License_Policy]:
+        if license_policy and (not self.instance or self.instance.license_policy != license_policy):
+            if not get_license_policies().filter(pk=license_policy.pk).exists():
+                raise ValidationError(f'Invalid pk "{license_policy.pk}" - object does not exist.')
+
+        return license_policy
 
 
 class ProductGroupListSerializer(ProductCoreSerializer):
@@ -627,6 +635,10 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
     def validate_product_group(self, product: Product) -> Product:
         if product and product.is_product_group is False:
             raise ValidationError("Product group must be a product group")
+
+        if product and (not self.instance or self.instance.product_group != product):
+            if not user_has_permission(product, Permissions.Product_Group_Edit):
+                raise ValidationError("You need the permission to edit the product group to add products to it")
 
         return product
 

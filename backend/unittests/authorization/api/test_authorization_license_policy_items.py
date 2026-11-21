@@ -210,6 +210,23 @@ class TestAuthorizationLicensePolicyItems(TestAuthorizationBase):
             )
         )
 
+        expected_data = "{'message': 'License group: Invalid pk \"1001\" - object does not exist.'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/license_policy_items/1002/",
+                {
+                    "license_group": 1001,
+                    "non_spdx_license": "",
+                    "evaluation_result": "Allowed",
+                },
+                400,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(
             APITest(

@@ -86,6 +86,63 @@ class TestAuthorizationProducts(TestAuthorizationBase):
             )
         )
 
+        expected_data = (
+            "{'message': 'Product group: You need the permission to edit the product group to add products to it'}"
+        )
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/products/1/",
+                {"product_group": 4},
+                400,
+                expected_data,
+            )
+        )
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/products/",
+                {"name": "product_in_foreign_group", "product_group": 3},
+                400,
+                expected_data,
+            )
+        )
+        # Unchanged product group is accepted without permission on the product group
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/products/1/",
+                {"product_group": 3},
+                200,
+                None,
+            )
+        )
+        self._test_api(
+            APITest(
+                "db_product_group_user",
+                "post",
+                "/api/products/",
+                {"name": "product_in_own_group", "product_group": 3},
+                201,
+                None,
+            )
+        )
+
+        expected_data = "{'message': 'License policy: Invalid pk \"1001\" - object does not exist.'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/products/1/",
+                {"license_policy": 1001},
+                400,
+                expected_data,
+            )
+        )
+
         post_data = None
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(

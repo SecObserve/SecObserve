@@ -187,6 +187,19 @@ class TestAuthorizationLicensePolicies(TestAuthorizationBase):
             )
         )
 
+        expected_data = "{'message': 'Parent: Invalid pk \"1001\" - object does not exist.'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/license_policies/1002/",
+                {"parent": 1001},
+                400,
+                expected_data,
+                no_second_user=True,
+            )
+        )
+
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(
             APITest(

@@ -42,6 +42,7 @@ from application.licenses.models import (
     License_Policy_Item,
     License_Policy_Member,
 )
+from application.licenses.queries.license_group import get_license_groups
 from application.licenses.queries.license_group_authorization_group_member import (
     get_license_group_authorization_group_member,
     get_license_group_authorization_group_members,
@@ -50,6 +51,7 @@ from application.licenses.queries.license_group_member import (
     get_license_group_member,
     get_license_group_members,
 )
+from application.licenses.queries.license_policy import get_license_policies
 from application.licenses.queries.license_policy_authorization_group_member import (
     get_license_policy_authorization_group_member,
     get_license_policy_authorization_group_members,
@@ -477,6 +479,14 @@ class LicensePolicySerializer(ModelSerializer):
         if value and value.parent:
             raise ValidationError("A child cannot be a parent itself")
 
+        self.instance: License_Policy
+        if (
+            value
+            and (not self.instance or self.instance.parent != value)
+            and not get_license_policies().filter(pk=value.pk).exists()
+        ):
+            raise ValidationError(f'Invalid pk "{value.pk}" - object does not exist.')
+
         return value
 
     def validate_ignore_component_type_list(self, value: list[str]) -> list[str]:
@@ -605,6 +615,16 @@ class LicensePolicyItemSerializer(ModelSerializer):
                 "Only one of license group, license, license expression or unknown license must be set"
             )
         return attrs
+
+    def validate_license_group(self, value: Optional[License_Group]) -> Optional[License_Group]:
+        if (
+            value
+            and (not self.instance or self.instance.license_group != value)
+            and not get_license_groups().filter(pk=value.pk).exists()
+        ):
+            raise ValidationError(f'Invalid pk "{value.pk}" - object does not exist.')
+
+        return value
 
     def validate_license_expression(self, value: str) -> str:
         if value:
