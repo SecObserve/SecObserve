@@ -13,7 +13,7 @@ from license_expression import (
 )
 
 from application.commons.services.functions import get_comma_separated_as_list
-from application.core.models import Branch, Product
+from application.core.models import Branch, Product, Service
 from application.licenses.models import (
     License_Component,
     License_Group,
@@ -31,6 +31,15 @@ class LicensePolicyEvaluationResult:
     from_parent: bool
     license_group_name: Optional[str] = None
     comment: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class LicenseComponentUpload:
+    """Identifies the license components of one upload within a product."""
+
+    branch: Optional[Branch]
+    origin_service: Optional[Service]
+    upload_filename: str
 
 
 def create_scancode_standard_policy() -> None:
@@ -154,7 +163,10 @@ def apply_license_policy(license_policy: License_Policy) -> None:
 
 
 def apply_license_policy_product(
-    spdx_cache: SPDXLicenseCache, product: Product, branch: Optional[Branch] = None
+    spdx_cache: SPDXLicenseCache,
+    product: Product,
+    branch: Optional[Branch] = None,
+    excluded_upload: Optional[LicenseComponentUpload] = None,
 ) -> None:
     license_policy = get_license_policy(product)
 
@@ -165,6 +177,14 @@ def apply_license_policy_product(
     )
     if branch:
         components = components.filter(branch=branch)
+    if excluded_upload:
+        # The branch is part of the exclusion, because without a branch the components
+        # of all branches are evaluated, not only the ones without a branch
+        components = components.exclude(
+            branch=excluded_upload.branch,
+            origin_service=excluded_upload.origin_service,
+            upload_filename=excluded_upload.upload_filename,
+        )
 
     evaluation_result_changed = False
 
@@ -189,12 +209,12 @@ def apply_license_policy_product(
             if evaluation_result_before != component.evaluation_result:
                 component.last_change = timezone.now()
                 evaluation_result_changed = True
+                updates.append(component)
 
-            updates.append(component)
-
-        License_Component.objects.bulk_update(
-            updates, ["evaluation_result", "numerical_evaluation_result", "last_change"]
-        )
+        if updates:
+            License_Component.objects.bulk_update(
+                updates, ["evaluation_result", "numerical_evaluation_result", "last_change"]
+            )
 
     if evaluation_result_changed:
         product.last_license_change = timezone.now()

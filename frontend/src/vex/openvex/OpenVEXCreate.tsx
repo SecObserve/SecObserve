@@ -65,11 +65,11 @@ const OpenVEXCreate = () => {
 
                     refresh();
                     setLoading(false);
+                    setOpen(false);
                     notify("OpenVEX document created", {
                         type: "success",
                     });
                 }
-                setOpen(false);
             })
             .catch(function (error) {
                 setLoading(false);
@@ -82,7 +82,7 @@ const OpenVEXCreate = () => {
     return (
         <Fragment>
             <AddButton title="Create OpenVEX document" onClick={handleOpen} />
-            <Dialog open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Create OpenVEX document</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="openvex">

@@ -15,7 +15,7 @@ const ServiceCreate = ({ product }: ServiceCreateProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
     const handleOpen = () => setOpen(true);
     const handleCancel = () => setOpen(false);
     const handleClose = (event: object, reason: string) => {
@@ -49,7 +49,10 @@ const ServiceCreate = ({ product }: ServiceCreateProps) => {
                 <DialogTitle>Add service</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="services">
-                        <SimpleForm onSubmit={create_service} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                        <SimpleForm
+                            onSubmit={create_service}
+                            toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                        >
                             <TextInputWide source="name" validate={validate_required_255} autoFocus />
                         </SimpleForm>
                     </CreateBase>

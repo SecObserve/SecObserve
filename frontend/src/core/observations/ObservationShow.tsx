@@ -71,14 +71,7 @@ const ShowActions = () => {
         filter = { current_status: OBSERVATION_STATUS_IN_REVIEW };
         storeKey = "observations.review";
     } else if (observation && localStorage.getItem(IDENTIFIER_OBSERVATION_COMPONENT_LIST) === "true") {
-        filter = {
-            product: observation.product,
-            branch: observation.branch,
-            origin_service: observation.origin_service,
-            origin_component_name_version: observation.origin_component_name_version,
-            origin_component_purl_type: observation.origin_component_purl_type,
-            current_status: OBSERVATION_STATUS_ACTIVE,
-        };
+        filter = { origin_component: observation.origin_component };
         storeKey = "observations.component";
     }
 

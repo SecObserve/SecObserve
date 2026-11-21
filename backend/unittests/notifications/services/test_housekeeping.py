@@ -1,11 +1,20 @@
+import uuid
+from datetime import datetime, timedelta
+from datetime import timezone as dt_timezone
 from unittest.mock import patch
 
 from django.core.management import call_command
+from django.test import override_settings
 
 from application.access_control.models import Authorization_Group, User
 from application.core.models import Product, Product_Authorization_Group_Member
-from application.notifications.models import Product_Notification
+from application.notifications.models import (
+    Product_Notification,
+    Webhook,
+    Webhook_Delivery,
+)
 from application.notifications.services.housekeeping import (
+    delete_old_webhook_deliveries,
     delete_orphaned_product_notifications,
 )
 from unittests.base_test_case import BaseTestCase
@@ -127,3 +136,20 @@ class TestDeleteOrphanedProductNotifications(BaseTestCase):
         self.assertTrue(Product_Notification.objects.filter(pk=kept.pk).exists())
         self.assertFalse(Product_Notification.objects.filter(pk=orphaned.pk).exists())
         self.assertFalse(Product_Notification.objects.filter(pk=other_orphaned.pk).exists())
+
+
+class TestDeleteOldWebhookDeliveries(BaseTestCase):
+    @override_settings(WEBHOOK_DELIVERY_RETENTION_DAYS=30)
+    @patch("application.notifications.services.housekeeping.timezone.now")
+    def test_deletes_only_deliveries_older_than_retention(self, mock_now):
+        mock_now.return_value = datetime(2026, 11, 2, 12, 0, tzinfo=dt_timezone.utc)
+        webhook = Webhook.objects.create(name="webhook", url="https://example.com/hook", secret="whsec_c2VjcmV0")
+        old, recent = (
+            Webhook_Delivery.objects.create(webhook=webhook, event_id=uuid.uuid4(), event_type="import.completed")
+            for _ in range(2)
+        )
+        Webhook_Delivery.objects.filter(pk=old.pk).update(created=mock_now.return_value - timedelta(days=31))
+        Webhook_Delivery.objects.filter(pk=recent.pk).update(created=mock_now.return_value - timedelta(days=29))
+
+        self.assertEqual(1, delete_old_webhook_deliveries())
+        self.assertEqual([recent.pk], list(Webhook_Delivery.objects.values_list("pk", flat=True)))

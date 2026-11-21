@@ -9,6 +9,7 @@ from django_filters import (
     FilterSet,
     ModelChoiceFilter,
     MultipleChoiceFilter,
+    NumberFilter,
     OrderingFilter,
 )
 from rest_framework.exceptions import ValidationError
@@ -33,6 +34,7 @@ from application.core.models import (
 )
 from application.core.queries.observation import filter_observations_full_text
 from application.core.queries.product import (
+    get_component_usage_filter,
     get_default_branch_filter,
     get_product_by_id,
 )
@@ -57,6 +59,11 @@ class ProductGroupFilter(FilterSet):
 class ProductFilter(FilterSet):
     name = CharFilter(field_name="name", lookup_expr="icontains")
     age = ChoiceFilter(field_name="age", method="get_age", choices=Age_Choices.AGE_CHOICES)
+    component = NumberFilter(field_name="component", method="get_component")
+    # Is evaluated in get_component, has no effect without component
+    component_default_branch_only = BooleanFilter(
+        field_name="component_default_branch_only", method=lambda queryset, name, value: queryset
+    )
 
     ordering = OrderingFilter(
         # tuple-mapping retains order
@@ -82,6 +89,16 @@ class ProductFilter(FilterSet):
             return queryset
 
         return queryset.filter(last_observation_change__gte=get_start_of_day(days))
+
+    def get_component(
+        self,
+        queryset: QuerySet,
+        name: Any,  # pylint: disable=unused-argument
+        value: Any,
+    ) -> QuerySet:
+        # field_name is used as a positional argument
+        default_branch_only = bool(self.form.cleaned_data.get("component_default_branch_only"))
+        return queryset.filter(get_component_usage_filter(int(value), default_branch_only))
 
     class Meta:
         model = Product
@@ -230,6 +247,7 @@ class ObservationFilter(FilterSet):
     age = ChoiceFilter(field_name="age", method="get_age", choices=Age_Choices.AGE_CHOICES)
     created = DateTimeFromToRangeFilter(field_name="created")
     last_observation_log = DateTimeFromToRangeFilter(field_name="last_observation_log")
+    import_last_seen = DateTimeFromToRangeFilter(field_name="import_last_seen")
     assessed = BooleanFilter(field_name="last_assessment", lookup_expr="isnull", exclude=True)
     last_assessment_status = ChoiceFilter(
         method="get_last_assessment_status",

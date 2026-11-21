@@ -17,6 +17,8 @@ The **Components** entry in the navigation shows the list of all components, fro
 
 Users see only components that are used in at least one product they have access to.
 
+The **Products** tab of a component lists the products that currently use it: products where it is a license component of a branch / version, or where it has active observations. Products with only inactive observations of the component are not shown, because observations are kept after a component has been removed. The switch **Default branch only** restricts the list to products that use the component in their default branch / version.
+
 The `Export` button exports the components of the list, with its filters and its sort order, to an Excel or CSV file.
 
 ## Identification of components

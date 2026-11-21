@@ -14,6 +14,10 @@ from application.notifications.services.send_notifications_observation_review im
 from application.notifications.services.send_notifications_observation_title import (
     send_observation_title_notification,
 )
+from application.notifications.services.webhook_events import (
+    emit_observation_event,
+)
+from application.notifications.types import Webhook_Event_Type
 from application.rules.models import Rule
 
 
@@ -75,6 +79,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     # makes sure that it has taken effect, an assessment that needs approval hasn't been applied yet
     if status == Status.STATUS_IN_REVIEW and observation.current_status == Status.STATUS_IN_REVIEW:
         send_observation_review_notification(observation)
+        emit_observation_event(Webhook_Event_Type.OBSERVATION_REVIEW_REQUESTED, observation)
 
     return observation_log
 

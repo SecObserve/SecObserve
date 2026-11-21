@@ -14,7 +14,7 @@ from application.commons.models import Settings
 from application.commons.services.log_message import format_log_message
 from application.core.models import Branch, Product
 from application.import_observations.models import Vulnerability_Check
-from application.import_observations.services.import_observations import (
+from application.import_observations.services.import_license_components import (
     process_license_components,
 )
 from application.notifications.services.tasks import handle_task_exception

@@ -16,7 +16,7 @@ const BranchCreate = ({ product }: BranchCreateProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
     const handleOpen = () => setOpen(true);
     const handleCancel = () => setOpen(false);
     const handleClose = (event: object, reason: string) => {
@@ -63,7 +63,10 @@ const BranchCreate = ({ product }: BranchCreateProps) => {
                 <DialogTitle>Add branch / version</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="branches">
-                        <SimpleForm onSubmit={create_branch} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                        <SimpleForm
+                            onSubmit={create_branch}
+                            toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                        >
                             <TextInputWide source="name" validate={validate_required_255} autoFocus />
                             <BooleanInput
                                 source="is_default_branch"

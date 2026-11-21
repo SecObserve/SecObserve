@@ -52,6 +52,7 @@ class VulnerableCodeParser(BaseParser):
                 origin_component_cpe=vc_component.component.component_cpe,
                 origin_component_cyclonedx_bom_link=vc_component.component.component_cyclonedx_bom_link,  # noqa: E501 pylint: disable=line-too-long
                 origin_component_dependencies=vc_component.component.component_dependencies,
+                origin_component_url=vc_component.component.component_url,
             )
             observations.append(observation)
 

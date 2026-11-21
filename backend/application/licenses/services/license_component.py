@@ -7,7 +7,7 @@ from rest_framework.exceptions import ValidationError
 
 from application.commons.services.functions import get_comma_separated_as_list
 from application.core.models import Component, Product
-from application.core.services.components import get_or_create_component
+from application.core.services.components import get_or_create_components
 from application.licenses.models import License_Component
 from application.licenses.services.concluded_license import update_concluded_license
 from application.licenses.services.license_policy import (
@@ -19,6 +19,19 @@ from application.licenses.services.spdx_license_cache import SPDXLicenseCache
 from application.licenses.types import (
     NO_LICENSE_INFORMATION,
     License_Policy_Evaluation_Result,
+)
+
+# Parsers can set these fields to None, but they are stored as empty strings
+STRING_FIELDS_NOT_NONE = (
+    "component_name_version",
+    "component_name",
+    "component_version",
+    "component_type",
+    "component_purl",
+    "component_cpe",
+    "component_dependencies",
+    "component_url",
+    "component_copyright",
 )
 
 
@@ -39,20 +52,9 @@ def _get_string_to_hash(license_component: License_Component) -> str:  # pylint:
 def prepare_license_component(component: License_Component, spdx_cache: SPDXLicenseCache) -> None:
     _prepare_name_version(component)
 
-    if component.component_name_version is None:
-        component.component_name_version = ""
-    if component.component_name is None:
-        component.component_name = ""
-    if component.component_version is None:
-        component.component_version = ""
-    if component.component_type is None:
-        component.component_type = ""
-    if component.component_purl is None:
-        component.component_purl = ""
-    if component.component_cpe is None:
-        component.component_cpe = ""
-    if component.component_dependencies is None:
-        component.component_dependencies = ""
+    for field_name in STRING_FIELDS_NOT_NONE:
+        if getattr(component, field_name) is None:
+            setattr(component, field_name, "")
 
     if component.component_purl:
         try:
@@ -65,23 +67,29 @@ def prepare_license_component(component: License_Component, spdx_cache: SPDXLice
     if component.component_purl_type is None:
         component.component_purl_type = ""
 
-    if not component.component:
-        core_component = Component(
-            name=component.component_name,
-            version=component.component_version,
-            name_version=component.component_name_version,
-            type=component.component_type,
-            purl=component.component_purl,
-            purl_type=component.component_purl_type,
-        )
-        component.component = get_or_create_component(core_component)
-
     _prepare_license(component, spdx_cache)
 
     if component.evaluation_result in [None, ""]:
         component.evaluation_result = License_Policy_Evaluation_Result.RESULT_UNKNOWN
 
     component.identity_hash = get_identity_hash(component)
+
+
+def set_core_components(license_components: list[License_Component]) -> None:
+    core_components = [
+        Component(
+            name=license_component.component_name,
+            version=license_component.component_version,
+            name_version=license_component.component_name_version,
+            type=license_component.component_type,
+            purl=license_component.component_purl,
+            purl_type=license_component.component_purl_type,
+        )
+        for license_component in license_components
+    ]
+    stored_components = get_or_create_components(core_components)
+    for license_component, stored_component in zip(license_components, stored_components):
+        license_component.component = stored_component
 
 
 def _prepare_name_version(component: License_Component) -> None:

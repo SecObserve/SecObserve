@@ -320,6 +320,8 @@ def _normalize_origin_component(observation: Observation) -> None:  # pylint: di
         observation.origin_component_cpe = ""
     if observation.origin_component_cyclonedx_bom_link is None:
         observation.origin_component_cyclonedx_bom_link = ""
+    if observation.origin_component_url is None:
+        observation.origin_component_url = ""
     if observation.origin_component_dependencies is None:
         observation.origin_component_dependencies = ""
 

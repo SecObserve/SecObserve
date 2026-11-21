@@ -16,6 +16,7 @@ export type LicenseGroupAuthorizationGroupMemberAddProps = {
 
 const LicenseGroupAuthorizationGroupMemberAdd = ({ id }: LicenseGroupAuthorizationGroupMemberAddProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -60,6 +61,7 @@ const LicenseGroupAuthorizationGroupMemberAdd = ({ id }: LicenseGroupAuthorizati
         const add_authorization_group = (data: any, close_dialog: boolean) => {
             const url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/license_group_authorization_group_members/";
             const body = JSON.stringify({ license_group: id, ...data });
+            setSaving(true);
             httpClient(url, {
                 method: "POST",
                 body: body,
@@ -75,14 +77,15 @@ const LicenseGroupAuthorizationGroupMemberAdd = ({ id }: LicenseGroupAuthorizati
                 })
                 .catch((error) => {
                     notify(error.message, { type: "warning" });
-                });
+                })
+                .finally(() => setSaving(false));
         };
 
         return (
             <Toolbar>
                 <CancelButton onClick={handleCancel} />
-                <SaveButton label="Save & Continue" type="button" onClick={handleSaveContinue} />
-                <SaveButton type="button" onClick={handleSaveClose} />
+                <SaveButton disabled={saving} label="Save & Continue" type="button" onClick={handleSaveContinue} />
+                <SaveButton disabled={saving} type="button" onClick={handleSaveClose} />
             </Toolbar>
         );
     };

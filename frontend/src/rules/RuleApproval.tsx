@@ -17,6 +17,7 @@ type RuleApprovalProps = {
 
 const RuleApproval = (props: RuleApprovalProps) => {
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const [decision, setDecision] = useState(RULE_STATUS_APPROVED);
     const refresh = useRefresh();
     const notify = useNotify();
@@ -27,11 +28,13 @@ const RuleApproval = (props: RuleApprovalProps) => {
             rejection_remark: data.rejection_remark,
         };
 
+        setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/" + props.class + "/" + props.rule_id + "/approval/", {
             method: "PATCH",
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Rule updated", {
                     type: "success",
@@ -41,9 +44,8 @@ const RuleApproval = (props: RuleApprovalProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
-
-        setOpen(false);
+            })
+            .finally(() => setSaving(false));
     };
 
     const handleClose = (event: object, reason: string) => {
@@ -62,7 +64,10 @@ const RuleApproval = (props: RuleApprovalProps) => {
                     &nbsp;&nbsp;Rule approval
                 </DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={saveApproval} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={saveApproval}
+                        toolbar={<ToolbarCancelSave disabled={saving} onClick={handleCancel} />}
+                    >
                         <AutocompleteInputMedium
                             source="approval_status"
                             choices={RULE_STATUS_CHOICES_APPROVAL}

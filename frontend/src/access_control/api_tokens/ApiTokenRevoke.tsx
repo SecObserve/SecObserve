@@ -27,6 +27,7 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
     const notify = useNotify();
 
     const [open, setOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
@@ -59,6 +60,7 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
             return;
         }
 
+        setSaving(true);
         httpClient(url, {
             method: method,
             body: type === "user" ? JSON.stringify(revoke_data) : null,
@@ -81,7 +83,8 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
@@ -96,10 +99,11 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
                             <Toolbar>
                                 <CancelButton onClick={handleClose} />
                                 <SaveButton
+                                    disabled={saving}
                                     label="Revoke"
                                     color="error"
                                     icon={<DeleteIcon />}
-                                    alwaysEnable={type === "product" || oidc_authentication}
+                                    alwaysEnable={!saving && (type === "product" || oidc_authentication)}
                                 />
                             </Toolbar>
                         }

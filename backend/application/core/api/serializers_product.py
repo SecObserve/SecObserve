@@ -49,6 +49,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.product import get_products
 from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
@@ -69,7 +70,8 @@ from application.core.services.security_gate import (
 from application.core.types import Assessment_Status, Status
 from application.import_observations.models import Api_Configuration
 from application.issue_tracker.types import Issue_Tracker
-from application.licenses.models import License_Component
+from application.licenses.models import License_Component, License_Policy
+from application.licenses.queries.license_policy import get_license_policies
 from application.rules.models import Rule
 from application.rules.types import Rule_Status
 
@@ -285,6 +287,13 @@ class ProductCoreSerializer(ModelSerializer):
             validated_data.pop("observation_notification_status_list")
 
         return validated_data
+
+    def validate_license_policy(self, license_policy: Optional[License_Policy]) -> Optional[License_Policy]:
+        if license_policy and (not self.instance or self.instance.license_policy != license_policy):
+            if not get_license_policies().filter(pk=license_policy.pk).exists():
+                raise ValidationError(f'Invalid pk "{license_policy.pk}" - object does not exist.')
+
+        return license_policy
 
 
 class ProductGroupListSerializer(ProductCoreSerializer):
@@ -624,9 +633,17 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         validated_data.pop("last_license_change", None)
         return super().update(instance, validated_data)
 
-    def validate_product_group(self, product: Product) -> Product:
-        if product and product.is_product_group is False:
+    def validate_product_group(self, product: Optional[Product]) -> Optional[Product]:
+        if not product:
+            return product
+
+        changed = not self.instance or self.instance.product_group != product
+        if changed and not get_products().filter(pk=product.pk).exists():
+            raise ValidationError(f'Invalid pk "{product.pk}" - object does not exist.')
+        if product.is_product_group is False:
             raise ValidationError("Product group must be a product group")
+        if changed and not user_has_permission(product, Permissions.Product_Group_Edit):
+            raise ValidationError("You need the permission to edit the product group to add products to it")
 
         return product
 
@@ -913,6 +930,12 @@ class BranchSerializer(ModelSerializer):
 
         return super().validate(attrs)
 
+    def validate_product(self, value: Product) -> Product:
+        if self.instance and self.instance.product != value:
+            raise ValidationError("Product cannot be changed")
+
+        return value
+
 
 class BranchNameSerializer(ModelSerializer):
     name_with_product = SerializerMethodField()
@@ -945,6 +968,12 @@ class ServiceSerializer(ModelSerializer):
 
     def get_name_with_product(self, obj: Service) -> str:
         return f"{obj.name} ({obj.product.name})"
+
+    def validate_product(self, value: Product) -> Product:
+        if self.instance and self.instance.product != value:
+            raise ValidationError("Product cannot be changed")
+
+        return value
 
 
 class ServiceNameSerializer(ModelSerializer):

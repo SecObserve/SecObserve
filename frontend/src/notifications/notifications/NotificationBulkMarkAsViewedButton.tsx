@@ -40,9 +40,7 @@ const NotificationBulkMarkAsViewedButton = () => {
             })
             .catch((error) => {
                 refresh();
-                setOpen(false);
                 setLoading(false);
-                unselectAll();
                 notify(error.message, {
                     type: "warning",
                 });

@@ -8,7 +8,7 @@ import { TextInputWide } from "../../commons/layout/themes";
 
 const LicenseGroupMemberEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -32,6 +32,7 @@ const LicenseGroupMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("License group member updated", {
                         type: "success",
@@ -44,7 +45,6 @@ const LicenseGroupMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (
@@ -53,7 +53,10 @@ const LicenseGroupMemberEdit = () => {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Edit user</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={member_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={member_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <TextInputWide source="user_data.full_name" label="User" disabled />
                         <BooleanInput source="is_manager" label="Manager" />
                     </SimpleForm>

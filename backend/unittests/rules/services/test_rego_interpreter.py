@@ -57,11 +57,9 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         self.interpreter = RegoInterpreter("package rule")
         self.mock_bundle = self.interpreter.rego_bundle
 
-    @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_success(self, mock_interpreter_cls, mock_input_cls):
+    def test_query_success(self, mock_interpreter_cls):
         mock_input = MagicMock()
-        mock_input_cls.return_value = mock_input
 
         mock_rego_run = MagicMock()
         mock_interpreter_cls.return_value = mock_rego_run
@@ -75,41 +73,15 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         mock_output.results = [mock_node]
         mock_rego_run.query_bundle.return_value = mock_output
 
-        data = {"title": "test"}
-        result = self.interpreter.query(data)
+        result = self.interpreter.query(mock_input)
 
         self.assertEqual(result, expected_result)
-        mock_input_cls.assert_called_once_with(data)
         mock_rego_run.set_input.assert_called_once_with(mock_input)
         mock_rego_run.query_bundle.assert_called_once_with(self.mock_bundle)
         mock_expression.get.assert_called_once_with("rule")
 
-    @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_with_none_data(self, mock_interpreter_cls, mock_input_cls):
-        mock_input = MagicMock()
-        mock_input_cls.return_value = mock_input
-
-        mock_rego_run = MagicMock()
-        mock_interpreter_cls.return_value = mock_rego_run
-
-        expected_result = {"severity": "Low"}
-        mock_expression = MagicMock()
-        mock_expression.get.return_value = expected_result
-        mock_node = MagicMock()
-        mock_node.expressions = [mock_expression]
-        mock_output = MagicMock()
-        mock_output.results = [mock_node]
-        mock_rego_run.query_bundle.return_value = mock_output
-
-        result = self.interpreter.query()
-
-        self.assertEqual(result, expected_result)
-        mock_input_cls.assert_called_once_with(None)
-
-    @patch("application.rules.services.rego_interpreter.Input")
-    @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_no_results(self, mock_interpreter_cls, mock_input_cls):
+    def test_query_no_results(self, mock_interpreter_cls):
         mock_rego_run = MagicMock()
         mock_interpreter_cls.return_value = mock_rego_run
 
@@ -118,13 +90,12 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         mock_rego_run.query_bundle.return_value = mock_output
 
         with self.assertRaises(RegoException) as context:
-            self.interpreter.query({"title": "test"})
+            self.interpreter.query(MagicMock())
 
         self.assertEqual(str(context.exception), "[ErrorDetail(string='Rego output has no results', code='invalid')]")
 
-    @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_no_results_none(self, mock_interpreter_cls, mock_input_cls):
+    def test_query_no_results_none(self, mock_interpreter_cls):
         mock_rego_run = MagicMock()
         mock_interpreter_cls.return_value = mock_rego_run
 
@@ -133,13 +104,12 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         mock_rego_run.query_bundle.return_value = mock_output
 
         with self.assertRaises(RegoException) as context:
-            self.interpreter.query({"title": "test"})
+            self.interpreter.query(MagicMock())
 
         self.assertEqual(str(context.exception), "[ErrorDetail(string='Rego output has no results', code='invalid')]")
 
-    @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_no_expressions(self, mock_interpreter_cls, mock_input_cls):
+    def test_query_no_expressions(self, mock_interpreter_cls):
         mock_rego_run = MagicMock()
         mock_interpreter_cls.return_value = mock_rego_run
 
@@ -150,15 +120,14 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         mock_rego_run.query_bundle.return_value = mock_output
 
         with self.assertRaises(RegoException) as context:
-            self.interpreter.query({"title": "test"})
+            self.interpreter.query(MagicMock())
 
         self.assertEqual(
             str(context.exception), "[ErrorDetail(string='Rego results have no expressions', code='invalid')]"
         )
 
-    @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_no_rule_element(self, mock_interpreter_cls, mock_input_cls):
+    def test_query_no_rule_element(self, mock_interpreter_cls):
         mock_rego_run = MagicMock()
         mock_interpreter_cls.return_value = mock_rego_run
 
@@ -171,15 +140,14 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         mock_rego_run.query_bundle.return_value = mock_output
 
         with self.assertRaises(RegoException) as context:
-            self.interpreter.query({"title": "test"})
+            self.interpreter.query(MagicMock())
 
         self.assertEqual(
             str(context.exception), "[ErrorDetail(string=\"Rego expressions have no 'rule' element\", code='invalid')]"
         )
 
-    @patch("application.rules.services.rego_interpreter.Input")
     @patch("application.rules.services.rego_interpreter.Interpreter")
-    def test_query_rego_error(self, mock_interpreter_cls, mock_input_cls):
+    def test_query_rego_error(self, mock_interpreter_cls):
         from regopy.rego_shared import RegoError
 
         mock_rego_run = MagicMock()
@@ -187,7 +155,7 @@ class TestRegoInterpreterQuery(unittest.TestCase):
         mock_rego_run.query_bundle.side_effect = RegoError("query failed")
 
         with self.assertRaises(RegoException) as context:
-            self.interpreter.query({"title": "test"})
+            self.interpreter.query(MagicMock())
 
         self.assertIn("Error while querying rego module", str(context.exception))
         self.assertIn("query failed", str(context.exception))

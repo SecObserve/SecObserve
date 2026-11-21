@@ -10,7 +10,9 @@ release:
   namespace: test-namespace
 
 tests:
-  - it: renders the single Pod workload, the Huey PVC and one Service by default
+  - it: renders the single Pod workload, the Huey PVC and one Service with the SQLite engine
+    set:
+      database.engine: django.db.backends.sqlite3
     asserts:
       - hasDocuments:
           count: 1
@@ -18,6 +20,7 @@ tests:
   - it: renders neither the single Pod workload nor the Huey PVC for the ha architecture
     set:
       architecture: ha
+      database.engine: django.db.backends.sqlite3
     templates:
       - templates/statefulset.yaml
       - templates/pvc.yaml

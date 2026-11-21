@@ -56,7 +56,6 @@ const LicensePolicyApply = ({ license_policy, product }: LicensePolicyApplyProps
                 })
                 .catch((error) => {
                     refresh();
-                    setOpen(false);
                     setLoading(false);
                     notify(error.message, {
                         type: "warning",

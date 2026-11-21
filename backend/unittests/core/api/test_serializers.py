@@ -4,10 +4,11 @@ from unittest.mock import Mock, call, patch
 from django.utils import timezone
 from rest_framework.serializers import ValidationError
 
-from application.access_control.models import Authorization_Group
+from application.access_control.models import Authorization_Group, User
 from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.models import Settings
 from application.core.api.serializers_observation import (
+    ObservationCreateSerializer,
     ObservationLogApprovalBaseSerializer,
     ObservationLogApprovalSerializer,
     ObservationLogBulkApprovalSerializer,
@@ -22,6 +23,7 @@ from application.core.api.serializers_product import (
     ProductGroupSerializer,
     ProductMemberSerializer,
     ProductSerializer,
+    ServiceSerializer,
 )
 from application.core.models import (
     Branch,
@@ -29,10 +31,13 @@ from application.core.models import (
     Observation_Log,
     Product,
     Product_Authorization_Group_Member,
+    Service,
 )
 from application.core.types import Assessment_Status, Severity, Status
 from application.import_observations.models import Parser
 from application.import_observations.types import Parser_Source, Parser_Type
+from application.licenses.models import License_Policy
+from application.notifications.types import Webhook_Event_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -1271,3 +1276,182 @@ class TestObservationUpdateSerializer(BaseTestCase):
         product.refresh_from_db()
         self.assertEqual(0, Observation_Log.objects.filter(observation=observation).count())
         self.assertGreater(product.last_observation_change, last_change)
+
+
+class TestObservationCreateSerializerWebhook(BaseTestCase):
+    def _create(self, parser_status: str) -> Observation:
+        product = Product.objects.create(name="product")
+        parser, _ = Parser.objects.get_or_create(
+            name="Manual", defaults={"type": Parser_Type.TYPE_MANUAL, "source": Parser_Source.SOURCE_MANUAL}
+        )
+        return ObservationCreateSerializer().create(
+            {
+                "product": product,
+                "title": "observation",
+                "parser": parser,
+                "parser_severity": Severity.SEVERITY_HIGH,
+                "parser_status": parser_status,
+                "import_last_seen": timezone.now(),
+            }
+        )
+
+    @patch("application.core.services.observation_log.get_current_user")
+    @patch("application.core.api.serializers_observation.push_observation_to_issue_tracker")
+    @patch("application.core.api.serializers_observation.check_security_gate_observation")
+    @patch("application.core.api.serializers_observation.emit_observation_event")
+    def test_active_observation_emits_created(self, mock_emit, _gate, _tracker, mock_user):
+        mock_user.return_value = User.objects.create(username="author")
+        observation = self._create(Status.STATUS_OPEN)
+
+        mock_emit.assert_called_once_with(Webhook_Event_Type.OBSERVATION_CREATED, observation)
+        self.assertEqual(Severity.NUMERICAL_SEVERITIES[Severity.SEVERITY_HIGH], observation.numerical_severity)
+
+    @patch("application.core.services.observation_log.get_current_user")
+    @patch("application.core.api.serializers_observation.push_observation_to_issue_tracker")
+    @patch("application.core.api.serializers_observation.check_security_gate_observation")
+    @patch("application.core.api.serializers_observation.emit_observation_event")
+    def test_not_affected_observation_does_not_emit(self, mock_emit, _gate, _tracker, mock_user):
+        mock_user.return_value = User.objects.create(username="author")
+        self._create(Status.STATUS_NOT_AFFECTED)
+
+        mock_emit.assert_not_called()
+
+
+class TestBranchServiceProductChange(BaseTestCase):
+    def test_validate_branch_product_change(self):
+        branch = Branch(product=Product(name="product_1"), name="branch")
+        with self.assertRaises(ValidationError) as e:
+            BranchSerializer(branch).validate_product(Product(name="product_2"))
+
+        self.assertEqual("[ErrorDetail(string='Product cannot be changed', code='invalid')]", str(e.exception))
+
+    def test_validate_branch_product_unchanged(self):
+        product = Product(name="product_1")
+        branch = Branch(product=product, name="branch")
+        self.assertEqual(product, BranchSerializer(branch).validate_product(product))
+
+    def test_validate_service_product_change(self):
+        service = Service(product=Product(name="product_1"), name="service")
+        with self.assertRaises(ValidationError) as e:
+            ServiceSerializer(service).validate_product(Product(name="product_2"))
+
+        self.assertEqual("[ErrorDetail(string='Product cannot be changed', code='invalid')]", str(e.exception))
+
+    def test_validate_service_product_unchanged(self):
+        product = Product(name="product_1")
+        service = Service(product=product, name="service")
+        self.assertEqual(product, ServiceSerializer(service).validate_product(product))
+
+
+class TestProductForeignKeyValidation(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.product_group = Product(name="product_group", is_product_group=True)
+        self.license_policy = License_Policy(name="license_policy")
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_not_visible(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(self.product_group)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+        mock_user_has_permission.assert_not_called()
+
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_not_visible_no_product_group(self, mock_get_products):
+        mock_get_products.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(Product(name="product"))
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_no_product_group(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(Product(name="product"))
+
+        self.assertEqual(
+            "[ErrorDetail(string='Product group must be a product group', code='invalid')]",
+            str(e.exception),
+        )
+        mock_user_has_permission.assert_not_called()
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_no_permission(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
+        mock_user_has_permission.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(self.product_group)
+
+        self.assertEqual(
+            "[ErrorDetail(string='You need the permission to edit the product group to add products to it', code='invalid')]",
+            str(e.exception),
+        )
+        mock_user_has_permission.assert_called_with(self.product_group, Permissions.Product_Group_Edit)
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_permission(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
+        mock_user_has_permission.return_value = True
+
+        self.assertEqual(self.product_group, ProductSerializer().validate_product_group(self.product_group))
+        mock_user_has_permission.assert_called_with(self.product_group, Permissions.Product_Group_Edit)
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_unchanged(self, mock_get_products, mock_user_has_permission):
+        product = Product(name="product", product_group=self.product_group)
+
+        self.assertEqual(self.product_group, ProductSerializer(product).validate_product_group(self.product_group))
+        mock_get_products.assert_not_called()
+        mock_user_has_permission.assert_not_called()
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_none(self, mock_get_products, mock_user_has_permission):
+        product = Product(name="product", product_group=self.product_group)
+
+        self.assertIsNone(ProductSerializer(product).validate_product_group(None))
+        mock_get_products.assert_not_called()
+        mock_user_has_permission.assert_not_called()
+
+    @patch("application.core.api.serializers_product.get_license_policies")
+    def test_validate_license_policy_not_visible(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_license_policy(self.license_policy)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.core.api.serializers_product.get_license_policies")
+    def test_validate_license_policy_visible(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+
+        self.assertEqual(self.license_policy, ProductGroupSerializer().validate_license_policy(self.license_policy))
+
+    @patch("application.core.api.serializers_product.get_license_policies")
+    def test_validate_license_policy_unchanged(self, mock_get_license_policies):
+        product = Product(name="product", license_policy=self.license_policy)
+
+        self.assertEqual(self.license_policy, ProductSerializer(product).validate_license_policy(self.license_policy))
+        mock_get_license_policies.assert_not_called()

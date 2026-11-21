@@ -13,6 +13,7 @@ from django.db.models import (
     ForeignKey,
     Index,
     IntegerField,
+    JSONField,
     Manager,
     ManyToManyField,
     Model,
@@ -36,6 +37,17 @@ class License(Model):
     reference = TextField(max_length=2048, blank=True)
     is_osi_approved = BooleanField(null=True)
     is_deprecated = BooleanField(null=True)
+    scancode_key = CharField(max_length=255, blank=True)
+    scancode_category = CharField(max_length=64, blank=True)
+    scancode_owner = CharField(max_length=255, blank=True)
+    scancode_homepage_url = CharField(max_length=2048, blank=True)
+    scancode_faq_url = CharField(max_length=2048, blank=True)
+    scancode_text_urls = JSONField(default=list, blank=True)
+    choosealicense_key = CharField(max_length=64, blank=True)
+    choosealicense_description = TextField(max_length=2048, blank=True)
+    choosealicense_permissions = JSONField(default=list, blank=True)
+    choosealicense_conditions = JSONField(default=list, blank=True)
+    choosealicense_limitations = JSONField(default=list, blank=True)
 
     class Meta:
         indexes = [Index(fields=["name"])]
@@ -117,6 +129,8 @@ class License_Component(Model, DirtyFieldsMixin):
     component_cpe = CharField(max_length=255, blank=True)
     component_dependencies = TextField(max_length=32768, blank=True)
     component_cyclonedx_bom_link = CharField(max_length=512, blank=True)
+    component_url = CharField(max_length=2048, blank=True)
+    component_copyright = TextField(max_length=4096, blank=True)
 
     imported_declared_license_name = CharField(max_length=255, blank=True, default=NO_LICENSE_INFORMATION)
     imported_declared_spdx_license = ForeignKey(

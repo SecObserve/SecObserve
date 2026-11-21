@@ -201,6 +201,7 @@ class LicenseComponentEvidenceFilter(FilterSet):
 class LicenseFilter(FilterSet):
     spdx_id = CharFilter(field_name="spdx_id", lookup_expr="icontains")
     name = CharFilter(field_name="name", lookup_expr="icontains")
+    scancode_category = CharFilter(field_name="scancode_category")
     exclude_license_group = NumberFilter(field_name="exclude_license_group", method="get_exclude_license_group")
     exclude_license_policy = NumberFilter(field_name="exclude_license_policy", method="get_exclude_license_policy")
     license_groups = ModelMultipleChoiceFilter(queryset=License.objects.none())
@@ -226,6 +227,7 @@ class LicenseFilter(FilterSet):
             ("name", "name"),
             ("is_osi_approved", "is_osi_approved"),
             ("is_deprecated", "is_deprecated"),
+            ("scancode_category", "scancode_category"),
         )
     )
 
@@ -235,7 +237,7 @@ class LicenseFilter(FilterSet):
 
     class Meta:
         model = License
-        fields = ["spdx_id", "name", "is_osi_approved", "is_deprecated", "license_groups"]
+        fields = ["spdx_id", "name", "is_osi_approved", "is_deprecated", "scancode_category", "license_groups"]
 
 
 class LicenseGroupFilter(FilterSet):

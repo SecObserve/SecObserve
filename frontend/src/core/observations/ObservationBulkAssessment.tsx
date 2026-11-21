@@ -99,9 +99,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
             })
             .catch((error) => {
                 refresh();
-                setOpen(false);
                 setLoading(false);
-                unselectAll();
                 notify(error.message, {
                     type: "warning",
                 });
@@ -118,7 +116,7 @@ const ObservationBulkAssessment = ({ product, storeKey }: ObservationBulkAssessm
     return (
         <Fragment>
             <SmallButton title="Assessment" onClick={handleOpen} icon={<PlaylistAddCheckIcon />} />
-            <Dialog ref={dialogRef} open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog ref={dialogRef} open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Bulk Observation Assessment</DialogTitle>
                 <DialogContent>
                     <SimpleForm

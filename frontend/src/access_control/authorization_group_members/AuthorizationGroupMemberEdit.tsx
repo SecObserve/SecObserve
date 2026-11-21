@@ -8,7 +8,7 @@ import { TextInputWide } from "../../commons/layout/themes";
 
 const ProductMemberEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -32,6 +32,7 @@ const ProductMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("User member updated", {
                         type: "success",
@@ -44,7 +45,6 @@ const ProductMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (
@@ -53,7 +53,10 @@ const ProductMemberEdit = () => {
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Edit user</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={member_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={member_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <TextInputWide source="user_data.full_name" label="User" disabled />
                         <BooleanInput source="is_manager" label="Manager" />
                     </SimpleForm>

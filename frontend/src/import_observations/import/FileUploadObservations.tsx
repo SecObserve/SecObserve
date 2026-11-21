@@ -82,12 +82,12 @@ const FileUploadObservations = () => {
         }
 
         setLoading(false);
-        setOpen(false);
         refresh();
 
         if (upload_error) {
             notify("Error '" + error_message + "' while processing '" + error_sbom + "'", { type: "warning" });
         } else {
+            setOpen(false);
             const message =
                 new_observations +
                 " new observations\n" +
@@ -109,7 +109,7 @@ const FileUploadObservations = () => {
                 onClick={handleOpen}
                 icon={<UploadIcon sx={{ color: getIconAndFontColor() }} />}
             />
-            <Dialog open={open && !loading} onClose={handleClose}>
+            <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Upload observations from files</DialogTitle>
                 <DialogContent>
                     <SimpleForm

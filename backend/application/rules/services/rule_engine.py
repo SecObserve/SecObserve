@@ -5,9 +5,11 @@ from typing import Any, Optional
 
 import jsonpickle
 from jsonpickle.backend import JSONBackend
+from regopy import Input
 
 from application.access_control.services.current_user import get_current_user
 from application.commons.models import Settings
+from application.commons.services.request_cache import cache_for_request
 from application.core.models import Observation, Product
 from application.core.services.observation import (
     get_current_priority,
@@ -86,7 +88,7 @@ class Rule_Engine:
         self.rego_interpreters: dict[Any, RegoInterpreter] = {}
         for rule in self.rules:
             if rule.type == Rule_Type.RULE_TYPE_REGO:
-                self.rego_interpreters[rule.pk] = RegoInterpreter(rule.rego_module)
+                self.rego_interpreters[rule.pk] = _compile_rego_module(rule.rego_module)
 
     def apply_rules_for_observation(self, observation: Observation) -> None:
         observation_before = copy(observation)
@@ -123,9 +125,15 @@ class Rule_Engine:
             )
 
         rule_rego_found = False
+        # One input for all Rego rules, a Rego rule without a result doesn't change the observation
+        rego_input: Optional[Input] = None
         for rule in self.rules:
-            if rule.type == Rule_Type.RULE_TYPE_REGO:
-                rule_rego_found = self.check_rule_for_observation(rule, observation, observation_before)
+            if rule.type == Rule_Type.RULE_TYPE_REGO and _is_in_rule_scope(rule, observation):
+                if rego_input is None:
+                    rego_input = _build_rego_input(observation)
+                rule_rego_found = self.check_rule_for_observation(
+                    rule, observation, observation_before, rego_input=rego_input
+                )
                 if rule_rego_found:
                     break
 
@@ -168,12 +176,13 @@ class Rule_Engine:
         observation: Observation,
         observation_before: Optional[Observation],
         simulation: Optional[bool] = False,
+        rego_input: Optional[Input] = None,
     ) -> bool:
         if simulation:
             if rule.type == Rule_Type.RULE_TYPE_FIELDS:
                 return self._check_rule_fields(rule, observation, observation_before, True)
             if rule.type == Rule_Type.RULE_TYPE_REGO:
-                return self._check_rule_rego(rule, observation, observation_before, True)
+                return self._check_rule_rego(rule, observation, observation_before, True, rego_input)
             return False
 
         if observation_before is None:
@@ -207,7 +216,7 @@ class Rule_Engine:
 
         rego_found = False
         if rule.type == Rule_Type.RULE_TYPE_REGO:
-            rego_found = self._check_rule_rego(rule, observation, observation_before, simulation)
+            rego_found = self._check_rule_rego(rule, observation, observation_before, simulation, rego_input)
 
         # Write observation and observation and push to issue tracker log if status or severity has been changed
         if rego_found and (  # pylint: disable=too-many-boolean-expressions
@@ -304,40 +313,16 @@ class Rule_Engine:
         observation: Observation,
         observation_before: Optional[Observation],
         simulation: Optional[bool] = False,
+        rego_input: Optional[Input] = None,
     ) -> bool:
-        if (rule.parser_id and observation.parser_id != rule.parser_id) or (
-            rule.scanner_prefix and not observation.scanner.lower().startswith(rule.scanner_prefix.lower())
-        ):
+        if not _is_in_rule_scope(rule, observation):
             return False
 
-        jsonpickle_backend = JSONBackend()
-        jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
-        jsonpickle_backend.set_preferred_backend("simplejson")
-
-        # Only the database fields are given to the rule. The instance carries Django internals as well, e.g. the
-        # related objects in _state or prefetched related objects. jsonpickle would serialize them completely,
-        # for prefetched references and evidences this can mean several MB per observation.
-        observation_state = {
-            field.attname: getattr(observation, field.attname) for field in Observation._meta.concrete_fields
-        }
-        observation_dict = json.loads(
-            jsonpickle.dumps(
-                observation_state,
-                unpicklable=False,
-                use_decimal=True,
-                backend=jsonpickle_backend,
-            )
-        )
-        observation_dict = {k: v for k, v in observation_dict.items() if v is not None and v != ""}
-
-        observation_dict["product_name"] = observation.product.name
-        if observation.branch:
-            observation_dict["branch_name"] = observation.branch.name
-        if observation.origin_service:
-            observation_dict["origin_service_name"] = observation.origin_service.name
+        if rego_input is None:
+            rego_input = _build_rego_input(observation)
 
         rego_interpreter = self._get_rego_interpreter(rule)
-        result = rego_interpreter.query(observation_dict)
+        result = rego_interpreter.query(rego_input)
 
         new_priority = result.get("priority")
         new_status = result.get("status")
@@ -386,10 +371,52 @@ class Rule_Engine:
     def _get_rego_interpreter(self, rule: Rule) -> RegoInterpreter:
         rego_interpreter = self.rego_interpreters.get(rule.pk)
         if rego_interpreter is None:
-            rego_interpreter = RegoInterpreter(rule.rego_module)
+            rego_interpreter = _compile_rego_module(rule.rego_module)
             self.rego_interpreters[rule.pk] = rego_interpreter
 
         return rego_interpreter
+
+
+# General rules are part of every product's Rule_Engine, compile each module once per request or background task
+@cache_for_request
+def _compile_rego_module(rego_module: str) -> RegoInterpreter:
+    return RegoInterpreter(rego_module)
+
+
+def _is_in_rule_scope(rule: Rule, observation: Observation) -> bool:
+    if rule.parser_id and observation.parser_id != rule.parser_id:
+        return False
+    return not rule.scanner_prefix or observation.scanner.lower().startswith(rule.scanner_prefix.lower())
+
+
+def _build_rego_input(observation: Observation) -> Input:
+    jsonpickle_backend = JSONBackend()
+    jsonpickle_backend.set_encoder_options("simplejson", use_decimal=True, sort_keys=True)
+    jsonpickle_backend.set_preferred_backend("simplejson")
+
+    # Only the database fields are given to the rule. The instance carries Django internals as well, e.g. the
+    # related objects in _state or prefetched related objects. jsonpickle would serialize them completely,
+    # for prefetched references and evidences this can mean several MB per observation.
+    observation_state = {
+        field.attname: getattr(observation, field.attname) for field in Observation._meta.concrete_fields
+    }
+    observation_dict = json.loads(
+        jsonpickle.dumps(
+            observation_state,
+            unpicklable=False,
+            use_decimal=True,
+            backend=jsonpickle_backend,
+        )
+    )
+    observation_dict = {k: v for k, v in observation_dict.items() if v is not None and v != ""}
+
+    observation_dict["product_name"] = observation.product.name
+    if observation.branch:
+        observation_dict["branch_name"] = observation.branch.name
+    if observation.origin_service:
+        observation_dict["origin_service_name"] = observation.origin_service.name
+
+    return Input(observation_dict)
 
 
 def _check_regex(pattern: str, value: str) -> bool:

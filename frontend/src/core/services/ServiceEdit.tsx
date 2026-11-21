@@ -9,7 +9,7 @@ import { TextInputWide } from "../../commons/layout/themes";
 
 const ServiceEdit = () => {
     const [open, setOpen] = useState(false);
-    const [update] = useUpdate();
+    const [update, { isPending }] = useUpdate();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleOpen = () => setOpen(true);
@@ -52,7 +52,10 @@ const ServiceEdit = () => {
             <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Edit service</DialogTitle>
                 <DialogContent>
-                    <SimpleForm onSubmit={service_update} toolbar={<ToolbarCancelSave onClick={handleCancel} />}>
+                    <SimpleForm
+                        onSubmit={service_update}
+                        toolbar={<ToolbarCancelSave disabled={isPending} onClick={handleCancel} />}
+                    >
                         <TextInputWide source="name" validate={validate_required_255} autoFocus />
                     </SimpleForm>
                 </DialogContent>

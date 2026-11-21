@@ -32,6 +32,8 @@ def get_license_components(results: dict[str, Any]) -> tuple[list[License_Compon
             component_version=package.get("version") or "",
             component_purl=_get_component_purl(package.get("purl") or "", apk_purl_namespace),
             component_dependencies=_get_component_dependencies(package_uid, packages, dependencies),
+            component_url=_get_component_url(package),
+            component_copyright=(package.get("copyright") or "").strip(),
         )
 
         declared_license = package.get("declared_license_expression_spdx") or package.get("declared_license_expression")
@@ -161,6 +163,16 @@ def _get_component_purl(purl: str, apk_purl_namespace: str) -> str:
     return purl
 
 
+def _get_component_url(package: dict[str, Any]) -> str:
+    # The homepage of the project is preferred, the page of the package in its repository (e.g. npm or PyPI)
+    # is the fallback for packages without one.
+    for key in ("homepage_url", "repository_homepage_url"):
+        url = package.get(key)
+        if url:
+            return url
+    return ""
+
+
 def _get_component_dependencies(
     package_uid: str, packages: dict[str, dict[str, Any]], dependency_dict: dict[str, list[str]]
 ) -> str:
@@ -235,9 +247,12 @@ def _release_ubuntu(version_parts: list[str]) -> Optional[str]:
 OSV_LINUX_DISTRIBUTIONS: dict[str, tuple[str, Optional[Callable[[list[str]], Optional[str]]]]] = {
     "almalinux": (OSVLinuxDistribution.DISTRIBUTION_ALMALINUX, _release_major),
     "alpine": (OSVLinuxDistribution.DISTRIBUTION_ALPINE, _release_alpine),
+    "azurelinux": (OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, _release_major),
     "chainguard": (OSVLinuxDistribution.DISTRIBUTION_CHAINGUARD, None),
     "debian": (OSVLinuxDistribution.DISTRIBUTION_DEBIAN, _release_major),
     "mageia": (OSVLinuxDistribution.DISTRIBUTION_MAGEIA, _release_major),
+    # Azure Linux 2 was named CBL-Mariner
+    "mariner": (OSVLinuxDistribution.DISTRIBUTION_AZURE_LINUX, _release_major),
     "opensuse": (OSVLinuxDistribution.DISTRIBUTION_OPENSUSE, None),
     "opensuse-leap": (OSVLinuxDistribution.DISTRIBUTION_OPENSUSE, None),
     "opensuse-tumbleweed": (OSVLinuxDistribution.DISTRIBUTION_OPENSUSE, None),

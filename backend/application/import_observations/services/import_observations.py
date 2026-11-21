@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Optional, Tuple
 
 from django.core.files.base import File
-from django.db import connection, transaction
+from django.db import transaction
 from django.db.models.functions import MD5
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
@@ -60,6 +60,9 @@ from application.import_observations.parsers.base_parser import (
     BaseAPIParser,
     BaseFileParser,
 )
+from application.import_observations.services.import_license_components import (
+    process_license_components,
+)
 from application.import_observations.services.parser_detector import (
     detect_parser,
     instanciate_parser,
@@ -67,25 +70,16 @@ from application.import_observations.services.parser_detector import (
 from application.issue_tracker.services.issue_tracker import (
     push_observations_to_issue_tracker,
 )
-from application.licenses.models import (
-    License_Component,
-    License_Component_Evidence,
+from application.notifications.services.webhook_events import (
+    emit_import_event,
+    emit_observation_event,
+    get_subscribed_webhooks,
 )
-from application.licenses.services.concluded_license import ConcludeLicenseApplicator
-from application.licenses.services.license_component import (
-    prepare_license_component,
-    set_effective_license,
-)
-from application.licenses.services.license_policy import apply_license_policy_product
-from application.licenses.services.licenselynx import apply_licenselynx
-from application.licenses.services.spdx_license_cache import SPDXLicenseCache
-from application.licenses.types import NO_LICENSE_INFORMATION
+from application.notifications.types import Webhook_Event_Type
 from application.rules.services.rule_engine import Rule_Engine
 from application.vex.services.vex_engine import VEX_Engine
 
 logger = logging.getLogger("secobserve.import_observations")
-
-SBOM_BULK_BATCH_SIZE = 100
 
 
 @dataclass
@@ -292,7 +286,7 @@ def api_check_connection(
     return format_valid, errors
 
 
-def _process_data(  # pylint: disable=too-many-statements
+def _process_data(  # pylint: disable=too-many-statements disable=too-many-locals
     import_parameters: ImportParameters, settings: Settings
 ) -> Tuple[int, int, int]:
     observations_before_query = get_observations_for_vulnerability_check(
@@ -342,6 +336,7 @@ def _process_data(  # pylint: disable=too-many-statements
     ]
     epss_scores = get_epss_scores_by_cves(cves)
     exploit_informations = get_exploit_information_by_cves(cves)
+    created_webhooks = get_subscribed_webhooks(Webhook_Event_Type.OBSERVATION_CREATED, import_parameters.product)
 
     for imported_observation in import_parameters.imported_observations:
         # Set additional data in newly uploaded observation
@@ -395,6 +390,9 @@ def _process_data(  # pylint: disable=too-many-statements
 
                     if imported_observation.current_status in Status.STATUS_ACTIVE:
                         observations_new += 1
+                        emit_observation_event(
+                            Webhook_Event_Type.OBSERVATION_CREATED, imported_observation, created_webhooks
+                        )
 
                     # Add identity_hash to set of observations in this run to detect duplicates in this run
                     observations_this_run.add(imported_observation.identity_hash)
@@ -419,233 +417,18 @@ def _process_data(  # pylint: disable=too-many-statements
     push_observations_to_issue_tracker(import_parameters.product, vulnerability_check_observations)
     find_potential_duplicates(import_parameters.product, import_parameters.branch, import_parameters.service)
 
-    return observations_new, observations_updated, len(observations_resolved)
-
-
-def process_license_components(  # pylint: disable=too-many-statements disable=too-many-locals disable=too-many-branches
-    license_components: list[License_Component],
-    scanner: str,
-    vulnerability_check: Vulnerability_Check,
-) -> Tuple[int, int, int]:
-    existing_components = License_Component.objects.filter(
-        product=vulnerability_check.product,
-        branch=vulnerability_check.branch,
-        origin_service=vulnerability_check.service,
-        upload_filename=vulnerability_check.filename,
-    ).select_related("effective_spdx_license")
-
-    existing_component: Optional[License_Component] = None
-    existing_components_dict: dict[str, License_Component] = {}
-    existing_component_ids: list[int] = []
-    for existing_component in existing_components:
-        existing_components_dict[existing_component.identity_hash] = existing_component
-        existing_component_ids.append(existing_component.pk)
-
-    License_Component_Evidence.objects.filter(license_component__in=existing_component_ids).delete()
-
-    components_new = []
-    components_updated = []
-
-    spdx_cache = SPDXLicenseCache()
-    concluded_license_applicator = ConcludeLicenseApplicator(vulnerability_check.product)
-
-    license_component_evidences = []
-    processed_hashes = set()
-
-    for unsaved_component in license_components:
-        prepare_license_component(unsaved_component, spdx_cache)
-
-        if unsaved_component.identity_hash in processed_hashes:
-            continue
-
-        existing_component = existing_components_dict.get(unsaved_component.identity_hash)
-        if existing_component:
-            effective_spdx_license_before = existing_component.effective_spdx_license
-            effective_non_spdx_license_before = existing_component.effective_non_spdx_license
-            effective_license_expression_before = existing_component.effective_license_expression
-            effective_multiple_licenses_before = existing_component.effective_multiple_licenses
-            evaluation_result_before = existing_component.evaluation_result
-            existing_component.component_type = unsaved_component.component_type
-            existing_component.component_purl = unsaved_component.component_purl
-            existing_component.component_purl_type = unsaved_component.component_purl_type
-            existing_component.component_cpe = unsaved_component.component_cpe
-            existing_component.component_dependencies = unsaved_component.component_dependencies
-            existing_component.component_cyclonedx_bom_link = unsaved_component.component_cyclonedx_bom_link
-            existing_component.imported_declared_license_name = unsaved_component.imported_declared_license_name
-            existing_component.imported_declared_spdx_license = unsaved_component.imported_declared_spdx_license
-            existing_component.imported_declared_non_spdx_license = unsaved_component.imported_declared_non_spdx_license
-            existing_component.imported_declared_license_expression = (
-                unsaved_component.imported_declared_license_expression
-            )
-            existing_component.imported_declared_multiple_licenses = (
-                unsaved_component.imported_declared_multiple_licenses
-            )
-            existing_component.imported_concluded_license_name = unsaved_component.imported_concluded_license_name
-            existing_component.imported_concluded_spdx_license = unsaved_component.imported_concluded_spdx_license
-            existing_component.imported_concluded_non_spdx_license = (
-                unsaved_component.imported_concluded_non_spdx_license
-            )
-            existing_component.imported_concluded_license_expression = (
-                unsaved_component.imported_concluded_license_expression
-            )
-            existing_component.imported_concluded_multiple_licenses = (
-                unsaved_component.imported_concluded_multiple_licenses
-            )
-
-            existing_component.import_last_seen = timezone.now()
-            if (
-                effective_spdx_license_before != existing_component.effective_spdx_license
-                or effective_non_spdx_license_before != existing_component.effective_non_spdx_license
-                or effective_license_expression_before != existing_component.effective_license_expression
-                or effective_multiple_licenses_before != existing_component.effective_multiple_licenses
-                or evaluation_result_before != existing_component.evaluation_result
-            ):
-                existing_component.last_change = timezone.now()
-
-            set_effective_license(existing_component)
-            if (
-                not existing_component.manual_concluded_license_name
-                or existing_component.manual_concluded_license_name == NO_LICENSE_INFORMATION
-            ):
-                concluded_license_applicator.apply_concluded_license(existing_component)
-                set_effective_license(existing_component)
-
-            apply_licenselynx(existing_component, spdx_cache)
-
-            clip_fields("licenses", "License_Component", existing_component)
-            components_updated.append(existing_component)
-
-            license_component_evidences += _process_license_evidences(unsaved_component, existing_component)
-
-            existing_components_dict.pop(unsaved_component.identity_hash)
-        else:
-            unsaved_component.product = vulnerability_check.product
-            unsaved_component.branch = vulnerability_check.branch
-            unsaved_component.origin_service = vulnerability_check.service
-            unsaved_component.upload_filename = vulnerability_check.filename
-
-            unsaved_component.import_last_seen = timezone.now()
-            unsaved_component.last_change = timezone.now()
-
-            set_effective_license(unsaved_component)
-            concluded_license_applicator.apply_concluded_license(unsaved_component)
-            set_effective_license(unsaved_component)
-
-            apply_licenselynx(unsaved_component, spdx_cache)
-
-            clip_fields("licenses", "License_Component", unsaved_component)
-            components_new.append(unsaved_component)
-
-        processed_hashes.add(unsaved_component.identity_hash)
-
-    License_Component.objects.bulk_update(
-        components_updated,
-        [
-            "component_type",
-            "component_purl",
-            "component_purl_type",
-            "component_cpe",
-            "component_dependencies",
-            "component_cyclonedx_bom_link",
-            "imported_declared_license_name",
-            "imported_declared_spdx_license",
-            "imported_declared_license_expression",
-            "imported_declared_non_spdx_license",
-            "imported_declared_multiple_licenses",
-            "imported_concluded_license_name",
-            "imported_concluded_spdx_license",
-            "imported_concluded_license_expression",
-            "imported_concluded_non_spdx_license",
-            "imported_concluded_multiple_licenses",
-            "manual_concluded_license_name",
-            "manual_concluded_spdx_license",
-            "manual_concluded_license_expression",
-            "manual_concluded_non_spdx_license",
-            "manual_concluded_comment",
-            "effective_license_name",
-            "effective_spdx_license",
-            "effective_license_expression",
-            "effective_non_spdx_license",
-            "effective_multiple_licenses",
-            "evaluation_result",
-            "numerical_evaluation_result",
-            "import_last_seen",
-            "last_change",
-        ],
-        SBOM_BULK_BATCH_SIZE,
+    numbers = (observations_new, observations_updated, len(observations_resolved))
+    emit_import_event(
+        product=import_parameters.product,
+        branch=import_parameters.branch,
+        service=import_parameters.service,
+        parser_name=import_parameters.parser.name,
+        filename=import_parameters.filename,
+        api_configuration_name=import_parameters.api_configuration_name,
+        numbers=numbers,
     )
 
-    inserted_components = License_Component.objects.bulk_create(components_new, SBOM_BULK_BATCH_SIZE)
-
-    if connection.vendor == "mysql":
-        # MySQL doesn't support RETURNING, so bulk_create returns objects without PKs.
-        # Re-fetch by identity_hash to get real PKs before creating evidences.
-        components_needing_evidences = [c for c in components_new if c.unsaved_evidences]
-        if components_needing_evidences:
-            inserted_hashes = [c.identity_hash for c in components_needing_evidences]
-            inserted_by_hash = {
-                c.identity_hash: c
-                for c in License_Component.objects.filter(
-                    identity_hash__in=inserted_hashes,
-                    product=vulnerability_check.product,
-                    branch=vulnerability_check.branch,
-                    origin_service=vulnerability_check.service,
-                    upload_filename=vulnerability_check.filename,
-                )
-            }
-            for component in components_needing_evidences:
-                db_component = inserted_by_hash.get(component.identity_hash)
-                if db_component:
-                    license_component_evidences += _process_license_evidences(component, db_component)
-    else:
-        for inserted_component in inserted_components:
-            license_component_evidences += _process_license_evidences(inserted_component, inserted_component)
-
-    License_Component_Evidence.objects.bulk_create(license_component_evidences, SBOM_BULK_BATCH_SIZE)
-
-    components_deleted = len(existing_components_dict)
-    license_component_ids: list[int] = []
-    for existing_component in existing_components_dict.values():
-        license_component_ids.append(existing_component.pk)
-    License_Component.objects.filter(pk__in=license_component_ids).delete()
-
-    if len(components_new) == 0 and len(components_updated) == 0 and components_deleted == 0:
-        vulnerability_check.last_import_licenses_new = None
-        vulnerability_check.last_import_licenses_updated = None
-        vulnerability_check.last_import_licenses_deleted = None
-    else:
-        vulnerability_check.last_import_licenses_new = len(components_new)
-        vulnerability_check.last_import_licenses_updated = len(components_updated)
-        vulnerability_check.last_import_licenses_deleted = components_deleted
-
-        vulnerability_check.product.last_license_change = timezone.now()
-        vulnerability_check.product.save()
-
-    if scanner:
-        vulnerability_check.scanner = scanner
-    vulnerability_check.save()
-
-    apply_license_policy_product(spdx_cache, vulnerability_check.product, vulnerability_check.branch)
-
-    return len(components_new), len(components_updated), components_deleted
-
-
-def _process_license_evidences(
-    source_component: License_Component, target_component: License_Component
-) -> list[License_Component_Evidence]:
-    license_component_evidences = []
-
-    if source_component.unsaved_evidences:
-        for unsaved_evidence in source_component.unsaved_evidences:
-            evidence = License_Component_Evidence(
-                license_component=target_component,
-                name=unsaved_evidence[0],
-                evidence=unsaved_evidence[1],
-            )
-            clip_fields("licenses", "License_Component_Evidence", evidence)
-            license_component_evidences.append(evidence)
-
-    return license_component_evidences
+    return numbers
 
 
 def _prepare_imported_observation(import_parameters: ImportParameters, imported_observation: Observation) -> None:
@@ -698,6 +481,7 @@ def _process_current_observation(
 
     observation_before.origin_component_type = imported_observation.origin_component_type
     observation_before.origin_component_dependencies = imported_observation.origin_component_dependencies
+    observation_before.origin_component_url = imported_observation.origin_component_url
 
     previous_severity = observation_before.current_severity
     observation_before.parser_severity = imported_observation.parser_severity

@@ -63,6 +63,21 @@ const LicenseComponentShowComponent = ({ component, icon }: LicenseComponentShow
                             <TextField source="component_cpe" label="CPE" />
                         </Labeled>
                     )}
+                    {component.component_url && component.component_url != "" && (
+                        <Labeled>
+                            <TextUrlField
+                                label="URL"
+                                text={component.component_url}
+                                url={component.component_url}
+                                new_tab={true}
+                            />
+                        </Labeled>
+                    )}
+                    {component.component_copyright && component.component_copyright != "" && (
+                        <Labeled>
+                            <TextField source="component_copyright" label="Copyright" sx={{ whiteSpace: "pre-line" }} />
+                        </Labeled>
+                    )}
                     {feature_vex_enabled() && component.component_cyclonedx_bom_link != "" && (
                         <Labeled>
                             <TextField source="component_cyclonedx_bom_link" label="CycloneDX BOM Link" />

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from application.core.services.observation_log import create_observation_log
 from application.core.types import Assessment_Status, Status
+from application.notifications.types import Webhook_Event_Type
 from unittests.base_test_case import BaseTestCase
 
 
@@ -71,6 +72,7 @@ class TestObservationLog(BaseTestCase):
             "send_observation": patch("application.core.services.observation_log.send_observation_notification"),
             "send_title": patch("application.core.services.observation_log.send_observation_title_notification"),
             "send_review": patch("application.core.services.observation_log.send_observation_review_notification"),
+            "emit": patch("application.core.services.observation_log.emit_observation_event"),
         }
 
         mocks = {}
@@ -79,6 +81,8 @@ class TestObservationLog(BaseTestCase):
             self.addCleanup(patcher.stop)
 
         mocks["current_user"].return_value = self.user_internal
+
+        self.mock_emit = mocks["emit"]
 
         return mocks["send_review"]
 
@@ -103,6 +107,7 @@ class TestObservationLog(BaseTestCase):
         self._create_observation_log(Status.STATUS_IN_REVIEW)
 
         mock_send_review.assert_called_once_with(self.observation_1)
+        self.mock_emit.assert_called_once_with(Webhook_Event_Type.OBSERVATION_REVIEW_REQUESTED, self.observation_1)
 
     def test_create_observation_log_set_to_another_status(self):
         mock_send_review = self._patch_for_review()
@@ -111,6 +116,7 @@ class TestObservationLog(BaseTestCase):
         self._create_observation_log(Status.STATUS_OPEN)
 
         mock_send_review.assert_not_called()
+        self.mock_emit.assert_not_called()
 
     def test_create_observation_log_in_review_not_applied_yet(self):
         # an assessment that needs approval logs its status without applying it
@@ -120,6 +126,7 @@ class TestObservationLog(BaseTestCase):
         self._create_observation_log(Status.STATUS_IN_REVIEW)
 
         mock_send_review.assert_not_called()
+        self.mock_emit.assert_not_called()
 
     def test_create_observation_log_still_in_review(self):
         # the status of the log is empty while it has not been changed
@@ -129,3 +136,4 @@ class TestObservationLog(BaseTestCase):
         self._create_observation_log("")
 
         mock_send_review.assert_not_called()
+        self.mock_emit.assert_not_called()

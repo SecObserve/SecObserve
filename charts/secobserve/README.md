@@ -2,9 +2,9 @@
 
 ## Installing the chart
 
-The chart can be installed from the OCI repository using `helm install secobserve --version 1.3.7 oci://ghcr.io/SecObserve/charts/secobserve`.
+The chart can be installed from the OCI repository using `helm install secobserve --version 1.3.8 oci://ghcr.io/SecObserve/charts/secobserve`.
 
-![Version: 1.3.7](https://img.shields.io/badge/Version-1.3.7-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.65.0](https://img.shields.io/badge/AppVersion-1.65.0-informational?style=flat-square)
+![Version: 1.3.8](https://img.shields.io/badge/Version-1.3.8-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.66.0](https://img.shields.io/badge/AppVersion-1.66.0-informational?style=flat-square)
 
 A Helm chart to deploy SecObserve, an open-source vulnerability and license management system
 designed for software development teams and cloud-native environments.
@@ -35,6 +35,8 @@ across their software projects, enhancing visibility and improving DevSecOps wor
 With the default `architecture: single`, all roles run in one Pod and the chart supports exactly one application replica. The Huey queue of a SQLite installation is persisted in a dedicated PersistentVolumeClaim.
 
 Set `architecture: ha` to split the backend into separate workloads: an `init` Job, a scalable `api` Deployment, a `background` Deployment running the Huey consumer, and a separate `frontend` Deployment. `backend.background.replicaCount` is limited to 1, because the Huey scheduler is enabled on every consumer and the flushes on consumer startup clear the locks and in-flight entries of the whole queue. The PersistentVolumeClaim is not created for this architecture.
+
+With an external database (`postgresql.enabled=false`) that already exists before `helm install`, the `init` Job runs before the other resources, so `helm install --wait` works. With the bundled PostgreSQL chart it runs after them, because the database is created by the install itself, so install the `ha` architecture without `--wait`.
 
 The `background` container has a liveness probe that restarts it when a task has been running for longer than `HUEY_TASK_MAX_RUNTIME_HOURS` (default 12), for example because its worker thread is blocked on a dead database connection. Set `HUEY_TASK_MAX_RUNTIME_HOURS` in `backend.env` above the longest regular runtime of a task, or disable the probe with `backend.background.livenessProbe.enabled=false`. The `single` architecture has no such probe, because the consumer shares its container with the API.
 
@@ -70,6 +72,24 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 			<td>additional init containers to add to the SecObserve Pod</td>
 		</tr>
 		<tr>
+			<td>hostAliases</td>
+			<td>list</td>
+			<td><pre lang="json">
+[]
+</pre>
+</td>
+			<td>entries added to /etc/hosts of every Pod</td>
+		</tr>
+		<tr>
+			<td>imagePullSecrets</td>
+			<td>list</td>
+			<td><pre lang="json">
+[]
+</pre>
+</td>
+			<td>secrets used to pull images from private registries</td>
+		</tr>
+		<tr>
 			<td>labels</td>
 			<td>object</td>
 			<td><pre lang="json">
@@ -95,6 +115,24 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 </pre>
 </td>
 			<td>annotations to add to the SecObserve Pod</td>
+		</tr>
+		<tr>
+			<td>podDisruptionBudget.enabled</td>
+			<td>bool</td>
+			<td><pre lang="json">
+false
+</pre>
+</td>
+			<td>create a PodDisruptionBudget for the api and frontend Deployments, only used when architecture is ha</td>
+		</tr>
+		<tr>
+			<td>podDisruptionBudget.maxUnavailable</td>
+			<td>int</td>
+			<td><pre lang="json">
+1
+</pre>
+</td>
+			<td>maximum number of unavailable Pods of each Deployment</td>
 		</tr>
 		<tr>
 			<td>replicaCount</td>
@@ -126,6 +164,15 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 </pre>
 </td>
 			<td>Toleration labels for pod assignment</td>
+		</tr>
+		<tr>
+			<td>topologySpreadConstraints</td>
+			<td>list</td>
+			<td><pre lang="json">
+[]
+</pre>
+</td>
+			<td>topology spread constraints for every Pod; add app.kubernetes.io/component to matchLabelKeys to spread each component on its own</td>
 		</tr>
 	</tbody>
 </table>
@@ -186,6 +233,15 @@ Application and bundled PostgreSQL resource names are derived from the Helm rele
 			<td>number of API replicas, only used when `architecture` is `ha`</td>
 		</tr>
 		<tr>
+			<td>backend.api.resources</td>
+			<td>object</td>
+			<td><pre lang="json">
+{}
+</pre>
+</td>
+			<td>resource requirements of the api containers, only used when architecture is ha; backend.resources when empty</td>
+		</tr>
+		<tr>
 			<td>backend.background.livenessProbe.enabled</td>
 			<td>bool</td>
 			<td><pre lang="json">
@@ -238,6 +294,15 @@ true
 </pre>
 </td>
 			<td>number of background replicas, only used when `architecture` is `ha`. Pinned to 1: the Huey scheduler is always enabled and the startup flushes clear the locks of the whole queue, so a second consumer is not safe yet.</td>
+		</tr>
+		<tr>
+			<td>backend.background.resources</td>
+			<td>object</td>
+			<td><pre lang="json">
+{}
+</pre>
+</td>
+			<td>resource requirements of the background containers, only used when architecture is ha; backend.resources when empty</td>
 		</tr>
 		<tr>
 			<td>backend.env[0]</td>
@@ -409,6 +474,7 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
+  "digest": "",
   "pullPolicy": "IfNotPresent",
   "registry": "ghcr.io",
   "repository": "secobserve/secobserve-backend",
@@ -417,6 +483,15 @@ true
 </pre>
 </td>
 			<td>image registry</td>
+		</tr>
+		<tr>
+			<td>backend.image.digest</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>image digest; takes precedence over tag when set</td>
 		</tr>
 		<tr>
 			<td>backend.image.pullPolicy</td>
@@ -453,6 +528,15 @@ null
 </pre>
 </td>
 			<td>number of retries for the init Job, only used when `architecture` is `ha`</td>
+		</tr>
+		<tr>
+			<td>backend.init.resources</td>
+			<td>object</td>
+			<td><pre lang="json">
+{}
+</pre>
+</td>
+			<td>resource requirements of the init Job container, only used when architecture is ha; backend.resources when empty</td>
 		</tr>
 		<tr>
 			<td>backend.resources</td>
@@ -682,12 +766,12 @@ true
 		</tr>
 		<tr>
 			<td>dbchecker.port</td>
-			<td>int</td>
+			<td>string</td>
 			<td><pre lang="json">
-5432
+""
 </pre>
 </td>
-			<td>database port checked by the init container</td>
+			<td>database port override; inferred from database.port when empty</td>
 		</tr>
 		<tr>
 			<td>dbchecker.resources</td>
@@ -816,6 +900,15 @@ true
 </pre>
 </td>
 			<td>OIDC prompt</td>
+		</tr>
+		<tr>
+			<td>frontend.image.digest</td>
+			<td>string</td>
+			<td><pre lang="json">
+""
+</pre>
+</td>
+			<td>image digest; takes precedence over tag when set</td>
 		</tr>
 		<tr>
 			<td>frontend.image.pullPolicy</td>
@@ -960,7 +1053,7 @@ null
 true
 </pre>
 </td>
-			<td>persist the Huey SQLite queue across backend container and Pod restarts</td>
+			<td>persist the Huey queue across Pod restarts, only used when the database engine is SQLite</td>
 		</tr>
 		<tr>
 			<td>huey.persistence.existingClaim</td>
@@ -1005,7 +1098,6 @@ true
 			<td>object</td>
 			<td><pre lang="json">
 {
-  "kubernetes.io/ingress.class": "nginx",
   "nginx.ingress.kubernetes.io/proxy-read-timeout": "600",
   "nginx.ingress.kubernetes.io/proxy-send-timeout": "600",
   "nginx.ingress.kubernetes.io/ssl-redirect": "true"

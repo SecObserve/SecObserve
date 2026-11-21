@@ -19,7 +19,7 @@ const ProductMemberAdd = ({ id }: ProductMemberAddProps) => {
     const [open, setOpen] = useState(false);
     const refresh = useRefresh();
     const notify = useNotify();
-    const [create] = useCreate();
+    const [create, { isPending }] = useCreate();
     const handleOpen = () => setOpen(true);
     const handleCancel = () => {
         resetState();
@@ -84,8 +84,8 @@ const ProductMemberAdd = ({ id }: ProductMemberAddProps) => {
         return (
             <Toolbar>
                 <CancelButton onClick={handleCancel} />
-                <SaveButton label="Save & Continue" type="button" onClick={handleSaveContinue} />
-                <SaveButton type="button" onClick={handleSaveClose} />
+                <SaveButton disabled={isPending} label="Save & Continue" type="button" onClick={handleSaveContinue} />
+                <SaveButton disabled={isPending} type="button" onClick={handleSaveClose} />
             </Toolbar>
         );
     };

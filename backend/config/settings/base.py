@@ -2,6 +2,7 @@
 Base settings to build other settings files upon.
 """
 
+import ipaddress
 import re
 from pathlib import Path
 from socket import gethostbyname, gethostname
@@ -472,6 +473,11 @@ HUEY_WORKERS = env.int("HUEY_WORKERS", 3)
 if HUEY_WORKERS < 1:
     raise ValueError("HUEY_WORKERS must be at least 1")
 
+# Threads share one CPU core, processes use one core each but need more memory
+HUEY_WORKER_TYPE = env.str("HUEY_WORKER_TYPE", "thread")
+if HUEY_WORKER_TYPE not in ["thread", "process"]:
+    raise ValueError("HUEY_WORKER_TYPE must be thread or process")
+
 # The deprecated variable still wins; without TIME_ZONE the schedules stay in UTC instead of moving to its CET default
 BACKGROUND_TASKS_TIME_ZONE = env_time_zone("BACKGROUND_TASKS_TIME_ZONE", env.str("TIME_ZONE", default="UTC"))
 
@@ -485,7 +491,7 @@ HUEY = {
     "utc": True,  # Use UTC for all times internally.
     "consumer": {
         "workers": HUEY_WORKERS,  # Number of worker threads/processes.
-        "worker_type": "thread",
+        "worker_type": HUEY_WORKER_TYPE,
         "initial_delay": 0.1,  # Smallest polling interval, same as -d.
         "backoff": 1.15,  # Exponential backoff using this rate, -b.
         "max_delay": 10.0,  # Max possible polling interval, -m.
@@ -508,6 +514,25 @@ if OSV_SCAN_RETRIES < 0:
 OSV_SCAN_RETRY_DELAY = env.int("OSV_SCAN_RETRY_DELAY", 300)
 if OSV_SCAN_RETRY_DELAY < 0:
     raise ValueError("OSV_SCAN_RETRY_DELAY must not be negative")
+
+# Outbound webhooks
+WEBHOOK_RETRY_DELAYS = env.list("WEBHOOK_RETRY_DELAYS", cast=int, default=[60, 300, 1800, 7200, 21600])
+if not WEBHOOK_RETRY_DELAYS or any(delay < 1 for delay in WEBHOOK_RETRY_DELAYS):
+    raise ValueError("WEBHOOK_RETRY_DELAYS must be a non-empty list of positive integers")
+WEBHOOK_TIMEOUT = env.int("WEBHOOK_TIMEOUT", 10)
+if WEBHOOK_TIMEOUT < 1:
+    raise ValueError("WEBHOOK_TIMEOUT must be at least 1")
+WEBHOOK_FAILURE_ALERT_THRESHOLD = env.int("WEBHOOK_FAILURE_ALERT_THRESHOLD", 5)
+if WEBHOOK_FAILURE_ALERT_THRESHOLD < 1:
+    raise ValueError("WEBHOOK_FAILURE_ALERT_THRESHOLD must be at least 1")
+WEBHOOK_DELIVERY_RETENTION_DAYS = env.int("WEBHOOK_DELIVERY_RETENTION_DAYS", 30)
+if WEBHOOK_DELIVERY_RETENTION_DAYS < 1:
+    raise ValueError("WEBHOOK_DELIVERY_RETENTION_DAYS must be at least 1")
+WEBHOOK_ALLOWED_NETWORKS = [
+    ipaddress.ip_network(network.strip(), strict=False)
+    for network in env.list("WEBHOOK_ALLOWED_NETWORKS", default=[])
+    if network.strip()
+]
 
 HUEY_STATS = {
     "database": huey_stats_database,

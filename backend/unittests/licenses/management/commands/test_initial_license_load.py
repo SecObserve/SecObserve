@@ -8,6 +8,7 @@ from django.core.management import call_command
 class TestInitialLicenseLoadCommand(TestCase):
     """Unit tests for the `initial_license_load` management command."""
 
+    @patch("application.licenses.management.commands.initial_license_load.task_import_license_details")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
     @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
@@ -24,6 +25,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_create_policy,
         mock_import_scancode,
         mock_import_licenses,
+        mock_task_import_license_details,
     ):
         """
         Verify that when there are no licenses, license groups or policies
@@ -40,8 +42,9 @@ class TestInitialLicenseLoadCommand(TestCase):
 
         # Import helpers should have been called exactly once
         mock_import_licenses.assert_called_once_with()
-        mock_import_scancode.assert_called_once_with()
+        mock_import_scancode.assert_called_once_with(enrich_licenses=False)
         mock_create_policy.assert_called_once_with()
+        mock_task_import_license_details.assert_called_once_with()
 
         # Verify that the logger received the expected INFO messages
         expected_calls = [
@@ -49,6 +52,7 @@ class TestInitialLicenseLoadCommand(TestCase):
             call("... licenses imported from SPDX"),
             call("... license groups imported from ScanCode LicenseDB"),
             call("... standard license policy created"),
+            call("... import of license details started in the background"),
         ]
 
         # Note: The logger was patched, so we check that `info` was called with the
@@ -58,6 +62,8 @@ class TestInitialLicenseLoadCommand(TestCase):
         # No errors should have been logged
         mock_logger.error.assert_not_called()
 
+    @patch("application.licenses.management.commands.initial_license_load._license_details_missing", return_value=False)
+    @patch("application.licenses.management.commands.initial_license_load.task_import_license_details")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
     @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
@@ -74,6 +80,8 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_create_policy,
         mock_import_scancode,
         mock_import_licenses,
+        mock_task_import_license_details,
+        mock_license_details_missing,
     ):
         """
         When any of the existence checks return True, the command should exit
@@ -90,11 +98,13 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_import_licenses.assert_not_called()
         mock_import_scancode.assert_not_called()
         mock_create_policy.assert_not_called()
+        mock_task_import_license_details.assert_not_called()
 
         # No INFO or ERROR logs should have been written
         mock_logger.info.assert_not_called()
         mock_logger.error.assert_not_called()
 
+    @patch("application.licenses.management.commands.initial_license_load.task_import_license_details")
     @patch("application.licenses.management.commands.initial_license_load.import_licenses")
     @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
     @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
@@ -111,6 +121,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         mock_create_policy,
         mock_import_scancode,
         mock_import_licenses,
+        mock_task_import_license_details,
     ):
         """
         If `import_licenses` raises an exception, the exception message and stack
@@ -132,6 +143,7 @@ class TestInitialLicenseLoadCommand(TestCase):
         # The remaining helpers should not be called
         mock_import_scancode.assert_not_called()
         mock_create_policy.assert_not_called()
+        mock_task_import_license_details.assert_not_called()
 
         # Verify that the logger received the expected INFO messages
         expected_calls = [call("Importing licenses, license groups and license policies ...")]
@@ -144,3 +156,41 @@ class TestInitialLicenseLoadCommand(TestCase):
         # (traceback format is implementation‑specific, we just ensure it was called)
         mock_logger.error.assert_any_call("Import failed")
         # mock_logger.error.assert_any_call(traceback.format_exc())
+
+    @patch("application.licenses.management.commands.initial_license_load._license_details_missing", return_value=True)
+    @patch("application.licenses.management.commands.initial_license_load.task_import_license_details")
+    @patch("application.licenses.management.commands.initial_license_load.import_licenses")
+    @patch("application.licenses.management.commands.initial_license_load.import_scancode_licensedb")
+    @patch("application.licenses.management.commands.initial_license_load.create_scancode_standard_policy")
+    @patch(
+        "application.licenses.management.commands.initial_license_load.License_Group.objects.exists", return_value=True
+    )
+    @patch("application.licenses.management.commands.initial_license_load.License.objects.exists", return_value=True)
+    @patch(
+        "application.licenses.management.commands.initial_license_load.License_Policy.objects.exists", return_value=True
+    )
+    @patch("application.licenses.management.commands.initial_license_load.logger")
+    def test_handle_license_details_missing(
+        self,
+        mock_logger,
+        mock_license_policy_exists,
+        mock_license_group_exists,
+        mock_license_exists,
+        mock_create_policy,
+        mock_import_scancode,
+        mock_import_licenses,
+        mock_task_import_license_details,
+        mock_license_details_missing,
+    ):
+        """
+        When licenses exist, but no license details, e.g. after an upgrade,
+        only the import of the license details is started in the background.
+        """
+        call_command("initial_license_load")
+
+        mock_task_import_license_details.assert_called_once_with()
+        mock_logger.info.assert_called_once_with("Import of license details started in the background")
+        mock_import_scancode.assert_not_called()
+        mock_import_licenses.assert_not_called()
+        mock_create_policy.assert_not_called()
+        mock_logger.error.assert_not_called()

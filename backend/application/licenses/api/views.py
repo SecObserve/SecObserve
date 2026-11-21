@@ -69,6 +69,7 @@ from application.licenses.api.serializers import (
     LicensePolicyListSerializer,
     LicensePolicyMemberSerializer,
     LicensePolicySerializer,
+    LicenseScancodeCategoriesSerializer,
     LicenseSerializer,
 )
 from application.licenses.models import (
@@ -85,7 +86,10 @@ from application.licenses.models import (
     License_Policy_Member,
 )
 from application.licenses.queries.concluded_license import get_concluded_licenses
-from application.licenses.queries.license import get_license
+from application.licenses.queries.license import (
+    get_license,
+    get_scancode_categories,
+)
 from application.licenses.queries.license_component import (
     get_license_component,
     get_license_component_licenses,
@@ -150,7 +154,7 @@ class ConcludedLicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin
     serializer_class = ConcludedLicenseSerializer
     filterset_class = ConcludedLicenseFilter
     queryset = Concluded_License.objects.none()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasConcludedLicensePermission]
 
     def get_queryset(self) -> QuerySet[Concluded_License]:
@@ -363,6 +367,17 @@ class LicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
             return LicenseListSerializer
         return super().get_serializer_class()
 
+    @extend_schema(
+        methods=["GET"],
+        responses={HTTP_200_OK: LicenseScancodeCategoriesSerializer},
+        parameters=[OpenApiParameter(name="license_groups", type=int)],
+    )
+    @action(detail=False, methods=["get"])
+    def scancode_categories(self, request: Request) -> Response:  # pylint: disable=unused-argument
+        categories = get_scancode_categories(self.filter_queryset(self.get_queryset()))
+        response_serializer = LicenseScancodeCategoriesSerializer({"scancode_categories": categories})
+        return Response(response_serializer.data, status=HTTP_200_OK)
+
 
 class LicenseGroupViewSet(ModelViewSet):
     serializer_class = LicenseGroupSerializer
@@ -482,7 +497,7 @@ class LicenseGroupMemberViewSet(ModelViewSet):
     serializer_class = LicenseGroupMemberSerializer
     filterset_class = LicenseGroupMemberFilter
     queryset = License_Group_Member.objects.none()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasLicenseGroupMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Group_Member]:
@@ -493,7 +508,7 @@ class LicenseGroupAuthorizationGroupMemberViewSet(ModelViewSet):
     serializer_class = LicenseGroupAuthorizationGroupMemberSerializer
     filterset_class = LicenseGroupAuthorizationGroupFilter
     queryset = License_Group_Authorization_Group_Member.objects.none()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasLicenseGroupAuthenticationGroupMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Group_Authorization_Group_Member]:
@@ -643,7 +658,7 @@ class LicensePolicyItemViewSet(ModelViewSet):
     serializer_class = LicensePolicyItemSerializer
     filterset_class = LicensePolicyItemFilter
     queryset = License_Policy_Item.objects.none()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasLicensePolicyItemMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Policy_Item]:
@@ -659,7 +674,7 @@ class LicensePolicyMemberViewSet(ModelViewSet):
     serializer_class = LicensePolicyMemberSerializer
     filterset_class = LicensePolicyMemberFilter
     queryset = License_Policy_Member.objects.none()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasLicensePolicyItemMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Policy_Member]:
@@ -670,7 +685,7 @@ class LicensePolicyAuthorizationGroupMemberViewSet(ModelViewSet):
     serializer_class = LicensePolicyAuthorizationGroupMemberSerializer
     filterset_class = LicensePolicyAuthorizationGroupFilter
     queryset = License_Policy_Authorization_Group_Member.objects.none()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, UserHasLicensePolicyAuthorizationGroupMemberPermission]
 
     def get_queryset(self) -> QuerySet[License_Policy_Authorization_Group_Member]:
