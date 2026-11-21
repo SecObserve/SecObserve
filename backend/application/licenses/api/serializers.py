@@ -475,10 +475,7 @@ class LicensePolicySerializer(ModelSerializer):
 
         return value
 
-    def validate_parent(self, value: License_Policy) -> License_Policy:
-        if value and value.parent:
-            raise ValidationError("A child cannot be a parent itself")
-
+    def validate_parent(self, value: Optional[License_Policy]) -> Optional[License_Policy]:
         self.instance: License_Policy
         if (
             value
@@ -486,6 +483,9 @@ class LicensePolicySerializer(ModelSerializer):
             and not get_license_policies().filter(pk=value.pk).exists()
         ):
             raise ValidationError(f'Invalid pk "{value.pk}" - object does not exist.')
+
+        if value and value.parent:
+            raise ValidationError("A child cannot be a parent itself")
 
         return value
 

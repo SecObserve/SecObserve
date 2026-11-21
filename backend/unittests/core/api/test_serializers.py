@@ -1350,7 +1350,49 @@ class TestProductForeignKeyValidation(BaseTestCase):
         self.license_policy = License_Policy(name="license_policy")
 
     @patch("application.core.api.serializers_product.user_has_permission")
-    def test_validate_product_group_no_permission(self, mock_user_has_permission):
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_not_visible(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(self.product_group)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+        mock_user_has_permission.assert_not_called()
+
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_not_visible_no_product_group(self, mock_get_products):
+        mock_get_products.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(Product(name="product"))
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_no_product_group(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
+
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer().validate_product_group(Product(name="product"))
+
+        self.assertEqual(
+            "[ErrorDetail(string='Product group must be a product group', code='invalid')]",
+            str(e.exception),
+        )
+        mock_user_has_permission.assert_not_called()
+
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_no_permission(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
         mock_user_has_permission.return_value = False
 
         with self.assertRaises(ValidationError) as e:
@@ -1363,24 +1405,30 @@ class TestProductForeignKeyValidation(BaseTestCase):
         mock_user_has_permission.assert_called_with(self.product_group, Permissions.Product_Group_Edit)
 
     @patch("application.core.api.serializers_product.user_has_permission")
-    def test_validate_product_group_permission(self, mock_user_has_permission):
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_permission(self, mock_get_products, mock_user_has_permission):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
         mock_user_has_permission.return_value = True
 
         self.assertEqual(self.product_group, ProductSerializer().validate_product_group(self.product_group))
         mock_user_has_permission.assert_called_with(self.product_group, Permissions.Product_Group_Edit)
 
     @patch("application.core.api.serializers_product.user_has_permission")
-    def test_validate_product_group_unchanged(self, mock_user_has_permission):
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_unchanged(self, mock_get_products, mock_user_has_permission):
         product = Product(name="product", product_group=self.product_group)
 
         self.assertEqual(self.product_group, ProductSerializer(product).validate_product_group(self.product_group))
+        mock_get_products.assert_not_called()
         mock_user_has_permission.assert_not_called()
 
     @patch("application.core.api.serializers_product.user_has_permission")
-    def test_validate_product_group_none(self, mock_user_has_permission):
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_none(self, mock_get_products, mock_user_has_permission):
         product = Product(name="product", product_group=self.product_group)
 
         self.assertIsNone(ProductSerializer(product).validate_product_group(None))
+        mock_get_products.assert_not_called()
         mock_user_has_permission.assert_not_called()
 
     @patch("application.core.api.serializers_product.get_license_policies")

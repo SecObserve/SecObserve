@@ -227,6 +227,30 @@ class TestLicensePolicyParent(BaseTestCase):
         )
 
     @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_not_visible_child(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer().validate_parent(License_Policy(name="child", parent=self.parent))
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_child(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer().validate_parent(License_Policy(name="child", parent=self.parent))
+
+        self.assertEqual(
+            "[ErrorDetail(string='A child cannot be a parent itself', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
     def test_validate_parent_visible(self, mock_get_license_policies):
         mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
 

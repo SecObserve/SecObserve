@@ -86,9 +86,7 @@ class TestAuthorizationProducts(TestAuthorizationBase):
             )
         )
 
-        expected_data = (
-            "{'message': 'Product group: You need the permission to edit the product group to add products to it'}"
-        )
+        expected_data = "{'message': 'Product group: Invalid pk \"4\" - object does not exist.'}"
         self._test_api(
             APITest(
                 "db_internal_write",
@@ -99,12 +97,24 @@ class TestAuthorizationProducts(TestAuthorizationBase):
                 expected_data,
             )
         )
+        expected_data = "{'message': 'Product group: Invalid pk \"3\" - object does not exist.'}"
         self._test_api(
             APITest(
                 "db_internal_write",
                 "post",
                 "/api/products/",
                 {"name": "product_in_foreign_group", "product_group": 3},
+                400,
+                expected_data,
+            )
+        )
+        expected_data = "{'message': 'Product group: Invalid pk \"2\" - object does not exist.'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/products/",
+                {"name": "product_in_foreign_product", "product_group": 2},
                 400,
                 expected_data,
             )

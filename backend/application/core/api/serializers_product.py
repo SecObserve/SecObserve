@@ -49,6 +49,7 @@ from application.core.models import (
     Product_Member,
     Service,
 )
+from application.core.queries.product import get_products
 from application.core.queries.product_member import (
     get_product_authorization_group_member,
     get_product_member,
@@ -632,13 +633,17 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
         validated_data.pop("last_license_change", None)
         return super().update(instance, validated_data)
 
-    def validate_product_group(self, product: Product) -> Product:
-        if product and product.is_product_group is False:
-            raise ValidationError("Product group must be a product group")
+    def validate_product_group(self, product: Optional[Product]) -> Optional[Product]:
+        if not product:
+            return product
 
-        if product and (not self.instance or self.instance.product_group != product):
-            if not user_has_permission(product, Permissions.Product_Group_Edit):
-                raise ValidationError("You need the permission to edit the product group to add products to it")
+        changed = not self.instance or self.instance.product_group != product
+        if changed and not get_products().filter(pk=product.pk).exists():
+            raise ValidationError(f'Invalid pk "{product.pk}" - object does not exist.')
+        if product.is_product_group is False:
+            raise ValidationError("Product group must be a product group")
+        if changed and not user_has_permission(product, Permissions.Product_Group_Edit):
+            raise ValidationError("You need the permission to edit the product group to add products to it")
 
         return product
 
@@ -926,7 +931,6 @@ class BranchSerializer(ModelSerializer):
         return super().validate(attrs)
 
     def validate_product(self, value: Product) -> Product:
-        self.instance: Branch
         if self.instance and self.instance.product != value:
             raise ValidationError("Product cannot be changed")
 
@@ -966,7 +970,6 @@ class ServiceSerializer(ModelSerializer):
         return f"{obj.name} ({obj.product.name})"
 
     def validate_product(self, value: Product) -> Product:
-        self.instance: Service
         if self.instance and self.instance.product != value:
             raise ValidationError("Product cannot be changed")
 

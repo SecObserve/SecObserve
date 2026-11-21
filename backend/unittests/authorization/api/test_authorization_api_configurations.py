@@ -106,6 +106,50 @@ class TestAuthorizationApiConfigurations(TestAuthorizationBase):
             )
         )
 
+        expected_data = "{'message': 'Automatic import branch: Branch does not belong to the same product as the API Configuration'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/api_configurations/",
+                post_data | {"name": "foreign_branch", "automatic_import_branch": 3},
+                400,
+                expected_data,
+            )
+        )
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/api_configurations/1/",
+                {"automatic_import_branch": 3},
+                400,
+                expected_data,
+            )
+        )
+
+        expected_data = "{'message': 'Automatic import service: Service does not belong to the same product as the API Configuration'}"
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/api_configurations/",
+                post_data | {"name": "foreign_service", "automatic_import_service": 3},
+                400,
+                expected_data,
+            )
+        )
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "patch",
+                "/api/api_configurations/1/",
+                {"automatic_import_service": 3},
+                400,
+                expected_data,
+            )
+        )
+
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(
             APITest(
