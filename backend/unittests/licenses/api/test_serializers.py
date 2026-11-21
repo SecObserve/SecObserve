@@ -262,3 +262,39 @@ class TestLicensePolicyParent(BaseTestCase):
 
         self.assertEqual(self.parent, LicensePolicySerializer(license_policy).validate_parent(self.parent))
         mock_get_license_policies.assert_not_called()
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_self(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+        license_policy = License_Policy.objects.create(name="self_parent")
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer(license_policy).validate_parent(license_policy)
+
+        self.assertEqual(
+            "[ErrorDetail(string='A license policy cannot be its own parent', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_has_children(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+        parent = License_Policy.objects.create(name="new_parent")
+        license_policy = License_Policy.objects.create(name="has_children")
+        License_Policy.objects.create(name="child", parent=license_policy)
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer(license_policy).validate_parent(parent)
+
+        self.assertEqual(
+            "[ErrorDetail(string='A parent cannot be a child itself', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_no_children(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+        parent = License_Policy.objects.create(name="new_parent")
+        license_policy = License_Policy.objects.create(name="no_children")
+
+        self.assertEqual(parent, LicensePolicySerializer(license_policy).validate_parent(parent))
