@@ -86,6 +86,19 @@ class TestAuthorizationObservations(TestAuthorizationBase):
                 expected_data,
             )
         )
+        expected_data = (
+            "{'message': 'Non field errors: Service does not belong to the same product as the observation'}"
+        )
+        self._test_api(
+            APITest(
+                "db_internal_write",
+                "post",
+                "/api/observations/",
+                post_data | {"title": "foreign_service", "parser_severity": "High", "origin_service": 3},
+                400,
+                expected_data,
+            )
+        )
 
         expected_data = "{'message': 'You do not have permission to perform this action.'}"
         self._test_api(

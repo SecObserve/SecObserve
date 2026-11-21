@@ -7,12 +7,14 @@ from application.licenses.api.serializers import (
     LicenseListSerializer,
     LicensePolicyItemSerializer,
     LicensePolicyMemberSerializer,
+    LicensePolicySerializer,
 )
 from application.licenses.models import (
     License,
     License_Group,
     License_Group_Member,
     License_Policy,
+    License_Policy_Item,
     License_Policy_Member,
 )
 from unittests.base_test_case import BaseTestCase
@@ -151,3 +153,161 @@ class TestLicensePolicyItemSerializer(BaseTestCase):
             "[ErrorDetail(string='Only one of license group, license, license expression or unknown license must be set', code='invalid')]",
             str(e.exception),
         )
+
+    def test_validate_license_policy_change(self):
+        license_policy_item = License_Policy_Item(
+            license_policy=License_Policy(name="license_policy_1"), non_spdx_license="non_spdx_license"
+        )
+        license_policy_item_serializer = LicensePolicyItemSerializer(license_policy_item)
+        attrs = {
+            "license_policy": License_Policy(name="license_policy_2"),
+            "non_spdx_license": "non_spdx_license",
+        }
+
+        with self.assertRaises(ValidationError) as e:
+            license_policy_item_serializer.validate(attrs)
+
+        self.assertEqual(
+            "[ErrorDetail(string='License policy cannot be changed', code='invalid')]",
+            str(e.exception),
+        )
+
+
+class TestLicensePolicyItemLicenseGroup(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.license_group = License_Group(name="license_group")
+
+    @patch("application.licenses.api.serializers.get_license_groups")
+    def test_validate_license_group_not_visible(self, mock_get_license_groups):
+        mock_get_license_groups.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicyItemSerializer().validate_license_group(self.license_group)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_groups")
+    def test_validate_license_group_visible(self, mock_get_license_groups):
+        mock_get_license_groups.return_value.filter.return_value.exists.return_value = True
+
+        self.assertEqual(self.license_group, LicensePolicyItemSerializer().validate_license_group(self.license_group))
+
+    @patch("application.licenses.api.serializers.get_license_groups")
+    def test_validate_license_group_unchanged(self, mock_get_license_groups):
+        license_policy_item = License_Policy_Item(
+            license_policy=License_Policy(name="license_policy"), license_group=self.license_group
+        )
+
+        self.assertEqual(
+            self.license_group,
+            LicensePolicyItemSerializer(license_policy_item).validate_license_group(self.license_group),
+        )
+        mock_get_license_groups.assert_not_called()
+
+
+class TestLicensePolicyParent(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.parent = License_Policy(name="parent")
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_not_visible(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer().validate_parent(self.parent)
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_not_visible_child(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = False
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer().validate_parent(License_Policy(name="child", parent=self.parent))
+
+        self.assertEqual(
+            "[ErrorDetail(string='Invalid pk \"None\" - object does not exist.', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_child(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer().validate_parent(License_Policy(name="child", parent=self.parent))
+
+        self.assertEqual(
+            "[ErrorDetail(string='A child cannot be a parent itself', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_visible(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+
+        self.assertEqual(self.parent, LicensePolicySerializer().validate_parent(self.parent))
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_unchanged(self, mock_get_license_policies):
+        license_policy = License_Policy(name="child", parent=self.parent)
+
+        self.assertEqual(self.parent, LicensePolicySerializer(license_policy).validate_parent(self.parent))
+        mock_get_license_policies.assert_not_called()
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_self(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+        license_policy = License_Policy.objects.create(name="self_parent")
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer(license_policy).validate_parent(license_policy)
+
+        self.assertEqual(
+            "[ErrorDetail(string='A license policy cannot be its own parent', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_self_with_parent(self, mock_get_license_policies):
+        license_policy = License_Policy(name="self_parent", parent=self.parent)
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer(license_policy).validate_parent(license_policy)
+
+        self.assertEqual(
+            "[ErrorDetail(string='A license policy cannot be its own parent', code='invalid')]",
+            str(e.exception),
+        )
+        mock_get_license_policies.assert_not_called()
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_has_children(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+        parent = License_Policy.objects.create(name="new_parent")
+        license_policy = License_Policy.objects.create(name="has_children")
+        License_Policy.objects.create(name="child", parent=license_policy)
+
+        with self.assertRaises(ValidationError) as e:
+            LicensePolicySerializer(license_policy).validate_parent(parent)
+
+        self.assertEqual(
+            "[ErrorDetail(string='A parent cannot be a child itself', code='invalid')]",
+            str(e.exception),
+        )
+
+    @patch("application.licenses.api.serializers.get_license_policies")
+    def test_validate_parent_no_children(self, mock_get_license_policies):
+        mock_get_license_policies.return_value.filter.return_value.exists.return_value = True
+        parent = License_Policy.objects.create(name="new_parent")
+        license_policy = License_Policy.objects.create(name="no_children")
+
+        self.assertEqual(parent, LicensePolicySerializer(license_policy).validate_parent(parent))

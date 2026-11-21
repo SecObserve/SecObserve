@@ -42,6 +42,7 @@ from application.licenses.models import (
     License_Policy_Item,
     License_Policy_Member,
 )
+from application.licenses.queries.license_group import get_license_groups
 from application.licenses.queries.license_group_authorization_group_member import (
     get_license_group_authorization_group_member,
     get_license_group_authorization_group_members,
@@ -50,6 +51,7 @@ from application.licenses.queries.license_group_member import (
     get_license_group_member,
     get_license_group_members,
 )
+from application.licenses.queries.license_policy import get_license_policies
 from application.licenses.queries.license_policy_authorization_group_member import (
     get_license_policy_authorization_group_member,
     get_license_policy_authorization_group_members,
@@ -473,9 +475,24 @@ class LicensePolicySerializer(ModelSerializer):
 
         return value
 
-    def validate_parent(self, value: License_Policy) -> License_Policy:
+    def validate_parent(self, value: Optional[License_Policy]) -> Optional[License_Policy]:
+        self.instance: License_Policy
+        if value and self.instance and value == self.instance:
+            raise ValidationError("A license policy cannot be its own parent")
+
+        if (
+            value
+            and (not self.instance or self.instance.parent != value)
+            and not get_license_policies().filter(pk=value.pk).exists()
+        ):
+            raise ValidationError(f'Invalid pk "{value.pk}" - object does not exist.')
+
         if value and value.parent:
             raise ValidationError("A child cannot be a parent itself")
+
+        if value and self.instance and value != self.instance.parent:
+            if self.instance.children.exists():
+                raise ValidationError("A parent cannot be a child itself")
 
         return value
 
@@ -512,17 +529,6 @@ class LicensePolicySerializer(ModelSerializer):
 
         return validated_data
 
-    def update(self, instance: License_Policy, validated_data: dict) -> License_Policy:
-        parent = validated_data.get("parent")
-        instance_has_children = instance.children.exists()
-        if parent:
-            if instance_has_children:
-                raise ValidationError("A parent cannot have a parent itself")
-            if instance == parent:
-                raise ValidationError("A license policy cannot be parent of itself")
-
-        return super().update(instance, validated_data)
-
 
 class LicensePolicyItemSerializer(ModelSerializer):
     license_spdx_id = SerializerMethodField()
@@ -547,12 +553,16 @@ class LicensePolicyItemSerializer(ModelSerializer):
 
     def validate(self, attrs: dict) -> dict:
         self.instance: License_Policy_Item
+        data_license_policy: Optional[License_Policy] = attrs.get("license_policy")
         data_license_group = attrs.get("license_group")
         data_license = attrs.get("license")
         data_license_expression = attrs.get("license_expression", "")
         data_non_spdx_license = attrs.get("non_spdx_license", "")
 
         if self.instance:
+            if data_license_policy and data_license_policy != self.instance.license_policy:
+                raise ValidationError("License policy cannot be changed")
+
             self.instance.license_group = data_license_group
             self.instance.license = data_license
             self.instance.license_expression = data_license_expression
@@ -601,6 +611,16 @@ class LicensePolicyItemSerializer(ModelSerializer):
                 "Only one of license group, license, license expression or unknown license must be set"
             )
         return attrs
+
+    def validate_license_group(self, value: Optional[License_Group]) -> Optional[License_Group]:
+        if (
+            value
+            and (not self.instance or self.instance.license_group != value)
+            and not get_license_groups().filter(pk=value.pk).exists()
+        ):
+            raise ValidationError(f'Invalid pk "{value.pk}" - object does not exist.')
+
+        return value
 
     def validate_license_expression(self, value: str) -> str:
         if value:
