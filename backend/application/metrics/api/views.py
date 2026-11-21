@@ -156,10 +156,12 @@ class ProductMetricsStatusView(APIView):
 
         status = Product_Metrics_Status.load()
         return Response(
-            {
-                "last_calculated": status.last_calculated,
-                "calculation_interval": settings.background_product_metrics_interval_minutes,
-            }
+            ProductMetricsStatusSerializer(
+                {
+                    "last_calculated": status.last_calculated,
+                    "calculation_interval": settings.background_product_metrics_interval_minutes,
+                }
+            ).data
         )
 
 
