@@ -270,7 +270,7 @@ class ObservationLogViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
     serializer_class = ObservationLogSerializer
     filterset_class = ObservationLogFilter
     queryset = Observation_Log.objects.all()
-    filter_backends = [SearchFilter, DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend]
 
     def get_serializer_class(
         self,
