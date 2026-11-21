@@ -34,14 +34,13 @@ const LicensePolicyItemRemove = ({ license_policy_item }: LicensePolicyItemRemov
             method: "DELETE",
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Item removed", { type: "success" });
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
             });
-
-        setOpen(false);
     };
 
     return (

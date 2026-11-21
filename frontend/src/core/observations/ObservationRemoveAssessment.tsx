@@ -37,6 +37,7 @@ const ObservationRemoveAssessment = () => {
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Observation updated", {
                     type: "success",
@@ -47,8 +48,6 @@ const ObservationRemoveAssessment = () => {
                     type: "warning",
                 });
             });
-
-        setOpen(false);
     };
 
     return (

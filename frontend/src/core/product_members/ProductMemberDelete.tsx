@@ -21,6 +21,7 @@ const ProductMemberDelete = (props: ProductMemberDeleteProps) => {
             { id: props.product_member.id },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("User member deleted", {
                         type: "success",
@@ -33,7 +34,6 @@ const ProductMemberDelete = (props: ProductMemberDeleteProps) => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

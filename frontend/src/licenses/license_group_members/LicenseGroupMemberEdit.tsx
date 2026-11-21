@@ -32,6 +32,7 @@ const LicenseGroupMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("License group member updated", {
                         type: "success",
@@ -44,7 +45,6 @@ const LicenseGroupMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

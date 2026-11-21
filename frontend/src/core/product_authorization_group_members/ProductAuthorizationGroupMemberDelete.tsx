@@ -21,6 +21,7 @@ const ProductAuthorizationGroupMemberDelete = (props: ProductAuthorizationGroupM
             { id: props.product_authorization_group_member.id },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("Authorization group member deleted", {
                         type: "success",
@@ -33,7 +34,6 @@ const ProductAuthorizationGroupMemberDelete = (props: ProductAuthorizationGroupM
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

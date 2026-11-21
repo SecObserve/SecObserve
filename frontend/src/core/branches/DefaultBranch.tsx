@@ -27,6 +27,7 @@ const DefaultBranch = ({ branch }: DefaultBranchProps) => {
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Default branch / version set", {
                     type: "success",
@@ -37,8 +38,6 @@ const DefaultBranch = ({ branch }: DefaultBranchProps) => {
                     type: "warning",
                 });
             });
-
-        setOpen(false);
     };
 
     return (

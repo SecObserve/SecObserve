@@ -96,6 +96,7 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
             { data: data },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("Authorization group member added", { type: "success" });
                 },
@@ -104,7 +105,6 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

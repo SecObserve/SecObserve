@@ -70,6 +70,7 @@ const ObservationAssessment = () => {
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Observation updated", {
                     type: "success",
@@ -80,8 +81,6 @@ const ObservationAssessment = () => {
                     type: "warning",
                 });
             });
-
-        setOpen(false);
     };
 
     const handleClose = (event: object, reason: string) => {

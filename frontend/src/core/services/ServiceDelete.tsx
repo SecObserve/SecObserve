@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Confirm, useDelete, useNotify, useRefresh } from "react-admin";
 
 import RemoveButton from "../../commons/custom_fields/RemoveButton";
+import { Spinner } from "../../commons/custom_fields/Spinner";
 import { feature_scancodeio_integration } from "../../commons/functions";
 
 type ServiceDeleteProps = {
@@ -10,37 +11,36 @@ type ServiceDeleteProps = {
 
 const ServiceDelete = (props: ServiceDeleteProps) => {
     const [open, setOpen] = useState(false);
-    const [deleted, setDeleted] = useState(false);
-    const [error_shown, setErrorShown] = useState(false);
-    const [deleteOne, { error }] = useDelete();
+    const [deleteOne, { isPending }] = useDelete();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
     const handleDialogClose = () => setOpen(false);
 
     const handleConfirm = async () => {
-        deleteOne("services", { id: props.service.id });
-        setDeleted(true);
-        refresh();
-        setOpen(false);
+        deleteOne(
+            "services",
+            { id: props.service.id },
+            {
+                onSuccess: () => {
+                    setOpen(false);
+                    refresh();
+                    notify("Service deleted");
+                },
+                onError: (error: any) => {
+                    notify("Service could not be deleted: " + error.message, {
+                        type: "warning",
+                    });
+                },
+            }
+        );
     };
-
-    if (error && !error_shown) {
-        setErrorShown(true);
-        setDeleted(false);
-        notify("Service could not be deleted: " + error, {
-            type: "warning",
-        });
-    } else if (deleted) {
-        setDeleted(false);
-        notify("Service deleted");
-    }
 
     return (
         <>
             <RemoveButton title="Delete" onClick={handleClick} />
             <Confirm
-                isOpen={open}
+                isOpen={open && !isPending}
                 title="Delete service"
                 content={
                     "Are you sure you want to delete the service " +
@@ -53,6 +53,7 @@ const ServiceDelete = (props: ServiceDeleteProps) => {
                 onConfirm={handleConfirm}
                 onClose={handleDialogClose}
             />
+            <Spinner open={open && isPending} />
         </>
     );
 };

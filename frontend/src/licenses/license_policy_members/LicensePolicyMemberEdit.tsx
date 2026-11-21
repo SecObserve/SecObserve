@@ -32,6 +32,7 @@ const LicensePolicyMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("License policy member updated", {
                         type: "success",
@@ -44,7 +45,6 @@ const LicensePolicyMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

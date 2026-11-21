@@ -27,14 +27,13 @@ const LicensePolicyAuthorizationGroupMemberRemove = ({
             method: "DELETE",
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Authorization group removed", { type: "success" });
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
             });
-
-        setOpen(false);
     };
 
     return (

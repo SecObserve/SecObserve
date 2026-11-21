@@ -22,14 +22,13 @@ const LicensePolicyMemberRemove = ({ license_policy_member }: LicensePolicyMembe
             method: "DELETE",
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("User removed", { type: "success" });
             })
             .catch((error) => {
                 notify(error.message, { type: "warning" });
             });
-
-        setOpen(false);
     };
 
     return (

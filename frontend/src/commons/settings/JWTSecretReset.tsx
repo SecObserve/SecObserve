@@ -18,6 +18,7 @@ const JWTSecretReset = () => {
             method: "POST",
         })
             .then(() => {
+                setOpen(false);
                 notify("JWT secret reset", {
                     type: "success",
                 });
@@ -27,8 +28,6 @@ const JWTSecretReset = () => {
                     type: "warning",
                 });
             });
-
-        setOpen(false);
     };
 
     const body = `Are you sure you want to reset the JWT secret?

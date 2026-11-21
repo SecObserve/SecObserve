@@ -96,6 +96,7 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Observation Log updated", {
                     type: "success",
@@ -106,8 +107,6 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                     type: "warning",
                 });
             });
-
-        setOpen(false);
     };
 
     const handleClose = (event: object, reason: string) => {

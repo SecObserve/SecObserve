@@ -9,31 +9,30 @@ type APIConfigurationDeleteProps = {
 
 const APIConfigurationDelete = (props: APIConfigurationDeleteProps) => {
     const [open, setOpen] = useState(false);
-    const [deleted, setDeleted] = useState(false);
-    const [error_shown, setErrorShown] = useState(false);
-    const [deleteOne, { error }] = useDelete();
+    const [deleteOne] = useDelete();
     const refresh = useRefresh();
     const notify = useNotify();
     const handleClick = () => setOpen(true);
     const handleDialogClose = () => setOpen(false);
 
     const handleConfirm = async () => {
-        deleteOne("api_configurations", { id: props.api_configuration.id });
-        setDeleted(true);
-        refresh();
-        setOpen(false);
+        deleteOne(
+            "api_configurations",
+            { id: props.api_configuration.id },
+            {
+                onSuccess: () => {
+                    setOpen(false);
+                    refresh();
+                    notify("API configuration deleted");
+                },
+                onError: (error: any) => {
+                    notify("API configuration could not be deleted: " + error.message, {
+                        type: "warning",
+                    });
+                },
+            }
+        );
     };
-
-    if (error && !error_shown) {
-        setErrorShown(true);
-        setDeleted(false);
-        notify("API configuration could not be deleted: " + error, {
-            type: "warning",
-        });
-    } else if (deleted) {
-        setDeleted(false);
-        notify("API configuration deleted");
-    }
 
     return (
         <>

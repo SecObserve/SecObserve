@@ -22,6 +22,7 @@ const WebhookDelete = ({ webhook, onDeleted }: WebhookDeleteProps) => {
             { id: webhook.id },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     notify("Webhook deleted");
                     refresh();
                     onDeleted?.();
@@ -31,7 +32,6 @@ const WebhookDelete = ({ webhook, onDeleted }: WebhookDeleteProps) => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

@@ -32,6 +32,7 @@ const RuleApproval = (props: RuleApprovalProps) => {
             body: JSON.stringify(patch),
         })
             .then(() => {
+                setOpen(false);
                 refresh();
                 notify("Rule updated", {
                     type: "success",
@@ -42,8 +43,6 @@ const RuleApproval = (props: RuleApprovalProps) => {
                     type: "warning",
                 });
             });
-
-        setOpen(false);
     };
 
     const handleClose = (event: object, reason: string) => {

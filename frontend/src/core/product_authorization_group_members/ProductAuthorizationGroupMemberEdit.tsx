@@ -33,6 +33,7 @@ const ProductAuthorizationGroupMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("Authorization group member updated", {
                         type: "success",
@@ -45,7 +46,6 @@ const ProductAuthorizationGroupMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

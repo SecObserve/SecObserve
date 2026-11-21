@@ -32,6 +32,7 @@ const LicensePolicyAuthorizationGroupMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("Authorization group member updated", {
                         type: "success",
@@ -44,7 +45,6 @@ const LicensePolicyAuthorizationGroupMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (

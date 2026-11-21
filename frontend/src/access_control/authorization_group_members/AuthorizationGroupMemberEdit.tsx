@@ -32,6 +32,7 @@ const ProductMemberEdit = () => {
             },
             {
                 onSuccess: () => {
+                    setOpen(false);
                     refresh();
                     notify("User member updated", {
                         type: "success",
@@ -44,7 +45,6 @@ const ProductMemberEdit = () => {
                 },
             }
         );
-        setOpen(false);
     };
 
     return (
