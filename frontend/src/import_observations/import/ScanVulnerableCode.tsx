@@ -68,7 +68,6 @@ const ScanVulnerableCode = ({ product }: ScanVulnerableCodeProps) => {
             })
             .catch((error) => {
                 setLoading(false);
-                setOpen(false);
                 notify(error.message, {
                     type: "warning",
                 });
@@ -82,7 +81,7 @@ const ScanVulnerableCode = ({ product }: ScanVulnerableCodeProps) => {
                 onClick={handleOpen}
                 icon={<UploadIcon sx={{ color: getIconAndFontColor() }} />}
             />
-            <Dialog open={open && !loading} onClose={handleClose}>
+            <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Scan vulnerabilities from VulnerableCode</DialogTitle>
                 <DialogContent>
                     <SimpleForm

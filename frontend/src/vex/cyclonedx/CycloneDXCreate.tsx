@@ -68,11 +68,11 @@ const CycloneDXCreate = () => {
 
                     refresh();
                     setLoading(false);
+                    setOpen(false);
                     notify("CycloneDX document created", {
                         type: "success",
                     });
                 }
-                setOpen(false);
             })
             .catch(function (error) {
                 setLoading(false);
@@ -85,7 +85,7 @@ const CycloneDXCreate = () => {
     return (
         <Fragment>
             <AddButton title="Create CycloneDX document" onClick={handleOpen} />
-            <Dialog open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Create CycloneDX document</DialogTitle>
                 <DialogContent>
                     <CreateBase resource="cyclonedx">

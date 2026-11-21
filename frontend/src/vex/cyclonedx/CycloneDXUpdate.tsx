@@ -50,11 +50,11 @@ const CycloneDXUpdate = () => {
 
                     refresh();
                     setLoading(false);
+                    setOpen(false);
                     notify("CycloneDX document updated", {
                         type: "success",
                     });
                 }
-                setOpen(false);
             })
             .catch(function (error) {
                 setLoading(false);
@@ -67,7 +67,7 @@ const CycloneDXUpdate = () => {
     return (
         <Fragment>
             <EditButton title="Update CycloneDX document" onClick={handleOpen} />
-            <Dialog open={open && !loading} onClose={handleClose} maxWidth={"lg"}>
+            <Dialog open={open} onClose={handleClose} maxWidth={"lg"}>
                 <DialogTitle>Update CycloneDX document</DialogTitle>
                 <DialogContent>
                     <SimpleForm

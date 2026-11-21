@@ -27,6 +27,7 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
     const notify = useNotify();
 
     const [roleOpen, setRoleOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
     const handleRoleOpen = () => setRoleOpen(true);
     const handleRoleClose = (event: object, reason: string) => {
         if (reason && reason == "backdropClick") return;
@@ -84,6 +85,7 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
             return;
         }
 
+        setSaving(true);
         httpClient(url, {
             method: "POST",
             body: JSON.stringify(create_data),
@@ -107,7 +109,8 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                 notify(error.message, {
                     type: "warning",
                 });
-            });
+            })
+            .finally(() => setSaving(false));
     };
 
     return (
@@ -120,6 +123,7 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                         onSubmit={handleApiTokenCreate}
                         toolbar={
                             <ToolbarCancelSave
+                                disabled={saving}
                                 onClick={handleRoleCancel}
                                 saveButtonLabel="Create"
                                 saveButtonIcon={<AddIcon />}

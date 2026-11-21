@@ -68,7 +68,6 @@ const RotateSecret = ({ webhook }: { webhook: Webhook }) => {
                 setSecret(json.secret);
             })
             .catch((error) => {
-                setOpen(false);
                 notify(error.message, { type: "warning" });
             })
             .finally(() => setSaving(false));

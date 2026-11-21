@@ -62,7 +62,6 @@ const ScanOSV = ({ product }: ScanOSVProps) => {
             })
             .catch((error) => {
                 setLoading(false);
-                setOpen(false);
                 notify(error.message, {
                     type: "warning",
                 });
@@ -76,7 +75,7 @@ const ScanOSV = ({ product }: ScanOSVProps) => {
                 onClick={handleOpen}
                 icon={<UploadIcon sx={{ color: getIconAndFontColor() }} />}
             />
-            <Dialog open={open && !loading} onClose={handleClose}>
+            <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Scan vulnerabilities from OSV</DialogTitle>
                 <DialogContent>
                     <SimpleForm

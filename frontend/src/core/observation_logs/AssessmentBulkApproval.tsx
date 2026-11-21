@@ -124,9 +124,7 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
             })
             .catch((error) => {
                 refresh();
-                setOpen(false);
                 setLoading(false);
-                unselectAll();
                 notify(error.message, {
                     type: "warning",
                 });
@@ -219,7 +217,7 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     return (
         <Fragment>
             <SmallButton title="Approval" onClick={handleOpen} icon={<ApprovalIcon />} />
-            <Dialog ref={dialogRef} open={open && !loading} onClose={handleClose} maxWidth="lg">
+            <Dialog ref={dialogRef} open={open} onClose={handleClose} maxWidth="lg">
                 <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
                     <ApprovalIcon />
                     &nbsp;&nbsp;Assessment approval

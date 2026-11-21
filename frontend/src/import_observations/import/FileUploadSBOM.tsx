@@ -71,12 +71,12 @@ const FileUploadSBOM = () => {
         }
 
         setLoading(false);
-        setOpen(false);
         refresh();
 
         if (upload_error) {
             notify("Error '" + error_message + "' while processing '" + error_sbom + "'", { type: "warning" });
         } else {
+            setOpen(false);
             const message =
                 new_license_components +
                 " new license components\n" +
@@ -98,7 +98,7 @@ const FileUploadSBOM = () => {
                 onClick={handleOpen}
                 icon={<UploadIcon sx={{ color: getIconAndFontColor() }} />}
             />
-            <Dialog open={open && !loading} onClose={handleClose}>
+            <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Upload SBOMs from files</DialogTitle>
                 <DialogContent>
                     <SimpleForm
