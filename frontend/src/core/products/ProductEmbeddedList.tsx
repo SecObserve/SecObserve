@@ -73,8 +73,10 @@ const ProductEmbeddedList = ({ product_group, license_policy, component }: Produ
     }
     localStorage.removeItem("productembeddedlist.product_group");
     localStorage.removeItem("productembeddedlist.license_policy");
+    localStorage.removeItem("productembeddedlist.component");
     if (product_group) localStorage.setItem("productembeddedlist.product_group", product_group.id);
     if (license_policy) localStorage.setItem("productembeddedlist.license_policy", license_policy.id);
+    if (component) localStorage.setItem("productembeddedlist.component", component.id);
 
     return (
         <ResourceContextProvider value="products">

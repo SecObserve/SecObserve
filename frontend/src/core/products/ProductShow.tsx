@@ -128,6 +128,11 @@ const ProductShow = () => {
         filter = { license_policy: Number(license_policy_id) };
         storeKey = "products.embedded";
     }
+    const component_id = localStorage.getItem("productembeddedlist.component");
+    if (component_id !== null) {
+        filter = { component: Number(component_id) };
+        storeKey = "products.component";
+    }
 
     return (
         // The key resets the branches of the filters when another product is shown

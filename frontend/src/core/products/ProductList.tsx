@@ -45,6 +45,7 @@ const ListActions = () => {
 const ProductList = () => {
     localStorage.removeItem("productembeddedlist.product_group");
     localStorage.removeItem("productembeddedlist.license_policy");
+    localStorage.removeItem("productembeddedlist.component");
 
     return (
         <Fragment>
