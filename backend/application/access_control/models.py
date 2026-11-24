@@ -52,6 +52,7 @@ class User(AbstractUser):
 
     oidc_groups_hash = CharField(max_length=64, blank=True)
     is_oidc_user = BooleanField(default=False)
+    is_service_account = BooleanField(default=False)
 
     notification_ms_teams_webhook = TextField(max_length=2048, blank=True)
     notification_slack_webhook = TextField(max_length=2048, blank=True)

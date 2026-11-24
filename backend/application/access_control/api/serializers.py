@@ -52,6 +52,7 @@ class UserListSerializer(ModelSerializer):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
@@ -76,6 +77,7 @@ class UserListSerializer(ModelSerializer):
             data.pop("is_active")
             data.pop("is_superuser")
             data.pop("is_external")
+            data.pop("is_service_account")
             data.pop("setting_theme")
             data.pop("setting_list_size")
             data.pop("setting_package_info_preference")
@@ -137,6 +139,7 @@ class UserSerializer(UserListSerializer):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
@@ -214,7 +217,20 @@ class UserUpdateSerializer(ModelSerializer):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
         ]
+
+    def validate_is_service_account(self, value: bool) -> bool:
+        if self.instance and value != self.instance.is_service_account:
+            raise ValidationError("Cannot be changed after the user has been created")
+        return value
+
+    def create(self, validated_data: dict[str, Any]) -> User:
+        user = super().create(validated_data)
+        if user.is_service_account:
+            user.set_unusable_password()
+            user.save()
+        return user
 
 
 class UserPasswordSerializer(Serializer):
