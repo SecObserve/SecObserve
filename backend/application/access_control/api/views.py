@@ -72,6 +72,7 @@ from application.access_control.queries.authorization_group_member import (
     get_authorization_group_members,
 )
 from application.access_control.queries.user import (
+    get_user_by_id,
     get_users,
     get_users_without_api_tokens,
 )
@@ -339,7 +340,8 @@ class UserAPITokenCreateView(APIView):
             token = create_user_api_token(user, name, expiration_date)
         except ValidationError as e:
             response = Response(status=status.HTTP_400_BAD_REQUEST)
-            logger.warning(format_log_message(message=str(e), username=user.username, response=response))
+            message = str(e) if user == caller else f"{e} (API token for {user.username})"
+            logger.warning(format_log_message(message=message, username=caller.username, response=response))
             raise
 
         response = Response({"token": token}, status=status.HTTP_201_CREATED)
@@ -424,7 +426,7 @@ def _get_authenticated_user(data: dict[str, Any]) -> User:
     password = data.get("password")
 
     user: User = django_authenticate(username=username, password=password)  # type: ignore[assignment]
-    if not user:
+    if not user or user.is_service_account:
         raise PermissionDenied("Invalid credentials")
 
     return user
@@ -462,7 +464,7 @@ def _get_token_owner(caller: User, user_id: Optional[int]) -> User:
     if not caller.is_superuser:
         raise PermissionDenied("Only superusers can manage API tokens of other users")
 
-    owner = User.objects.filter(pk=user_id).first()
+    owner = get_user_by_id(user_id)
     if owner is None:
         raise ValidationError("User does not exist")
     if not owner.is_service_account:

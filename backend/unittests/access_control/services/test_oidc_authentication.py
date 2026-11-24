@@ -6,6 +6,7 @@ import jwt
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from django.core.cache import cache
 from django.core.management import call_command
+from django.db import IntegrityError
 from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -657,6 +658,24 @@ class TestOIDCAuthentication(BaseTestCase):
             self.assertEqual("", user.oidc_groups_hash)
             user_save_mock.assert_called_once()
             synchronize_groups_mock.assert_called_with(user, payload)
+
+    def test_create_user_race_with_service_account(self):
+        User.objects.create_user(username="test_username", is_service_account=True)
+
+        payload = {
+            "preferred_username": "test_username",
+            "email": "e",
+            "given_name": "f",
+            "family_name": "l",
+            "name": "n",
+        }
+        with (
+            patch("application.access_control.services.oidc_authentication.User.save", side_effect=IntegrityError),
+            self.assertRaises(AuthenticationFailed) as e,
+        ):
+            OIDCAuthentication()._create_user("test_username", payload)
+
+        self.assertEqual("Service accounts cannot sign in with OpenID Connect", str(e.exception))
 
     @patch("application.access_control.services.oidc_authentication.User.save")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._synchronize_groups")

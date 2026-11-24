@@ -162,6 +162,8 @@ class OIDCAuthentication(BaseAuthentication):
             existing_user = get_user_by_username(username)
             if not existing_user:
                 raise e
+            if existing_user.is_service_account:
+                raise AuthenticationFailed("Service accounts cannot sign in with OpenID Connect") from e
             return existing_user
 
     def _check_user_change(self, user: User, payload: dict) -> User:
