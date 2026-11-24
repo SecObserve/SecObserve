@@ -75,6 +75,12 @@ The endpoints answer with HTTP status 403 and one of these codes in the body, if
 | `oidc_reauthentication_required` | The authentication is older than the configured maximum authentication age                |
 | `oidc_auth_time_missing`         | The id token has no `auth_time` claim, so the age of the authentication cannot be checked |
 
+###### Service accounts
+
+Superusers create and revoke the API tokens of a service account on its user page in the SecObserve frontend or with `user` (the id of the service account) in the body of both endpoints.
+The superuser proves their own identity as described above.
+Tokens of other users cannot be managed this way.
+
 
 ## Interactive API documentation
 
