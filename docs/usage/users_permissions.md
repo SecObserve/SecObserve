@@ -62,6 +62,8 @@ There are some general permissions based on the user's type:
 * Roles from memberships still count, the highest role wins.
 * Owner is not available as instance role.
 * Only service accounts can have an instance role.
+* A Maintainer instance role can also configure the designated approvers of every product, like a Maintainer of that product.
+* The instance role does not cover data without a product (general rules, imported VEX documents, VEX counters) and settings, they stay with superusers. It does not make the service account a member of the products, e.g. it receives no product notifications.
 * Otherwise a service account behaves like any other user: it is internal or external, can be a superuser if needed, and can be a member of products, product groups and authorization groups.
 
 ## Authorization groups

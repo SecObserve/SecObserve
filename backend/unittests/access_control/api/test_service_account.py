@@ -100,6 +100,7 @@ class TestInstanceRole(BaseTestCase):
         user = User.objects.create_user(username="regular2", password="x")
         response = self.client.patch(f"/api/users/{user.pk}/", {"instance_role": 1}, "json")
         self.assertEqual(400, response.status_code)
+        self.assertIn("Only service accounts can have an instance role", response.content.decode())
 
     def test_instance_role_owner_refused(self):
         response = self.client.post(
@@ -113,7 +114,11 @@ class TestInstanceRole(BaseTestCase):
         response = self.client.post(
             "/api/users/", {"username": "sa", "is_service_account": True, "instance_role": 9}, "json"
         )
+        self.assertEqual(400, response.status_code)
 
+        response = self.client.post(
+            "/api/users/", {"username": "sa0", "is_service_account": True, "instance_role": 0}, "json"
+        )
         self.assertEqual(400, response.status_code)
 
     def test_instance_role_change_and_clear(self):

@@ -46,7 +46,8 @@ def get_components() -> QuerySet[Component]:
         has_licenses=Exists(license_components),
     )
 
-    if not user.can_access_all_products:
+    # Unlike the product scoping above, the instance role hides orphans like a member of every product
+    if not user.is_superuser:
         components = components.filter(
             Q(has_active_observations=True) | Q(has_inactive_observations=True) | Q(has_licenses=True)
         )

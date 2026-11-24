@@ -2,10 +2,11 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.core.management import call_command
+from django.utils import timezone
 
 from application.access_control.models import User
 from application.authorization.services.roles_permissions import Roles
-from application.core.models import Product
+from application.core.models import Component, Product
 from application.core.queries.branch import get_branches
 from application.core.queries.component import get_components
 from application.core.queries.observation import (
@@ -36,15 +37,16 @@ from application.notifications.models import Notification
 from application.notifications.queries.notification import get_notifications
 from application.rules.queries.rule import get_product_rules
 from application.scancodeio.queries.scancodeio_project import get_scancodeio_projects
-from application.vex.models import CSAF
+from application.vex.models import CSAF, CycloneDX, OpenVEX
 from application.vex.queries.csaf import get_csafs
+from application.vex.queries.cyclonedx import get_cyclonedx_s
+from application.vex.queries.openvex import get_openvex_s
 from unittests.base_test_case import BaseTestCase
 
 CURRENT_USER = "application.access_control.services.current_user.get_current_request"
 
 LIST_FUNCTIONS = [
     get_branches,
-    get_components,
     get_observations,
     get_evidences,
     get_potential_duplicates,
@@ -111,26 +113,53 @@ class TestInstanceRoleQueries(BaseTestCase):
         with self._as(self.service_account):
             self.assertEqual([gate], list(get_notifications().filter(id__in=[exception.id, task.id, gate.id])))
 
+    def test_instance_role_components_hide_orphans(self):
+        orphan = Component.objects.get(pk=3)
+        with_observations = Component.objects.get(pk=1)
+        with self._as(self.admin):
+            self.assertIn(orphan, get_components())
+        with self._as(self.service_account):
+            components = get_components()
+            self.assertNotIn(orphan, components)
+            self.assertIn(with_observations, components)
+
     def test_instance_role_vex_without_product(self):
         product = Product.objects.first()
-        csafs = []
-        for index, (csaf_product, user) in enumerate(
-            [(product, self.admin), (None, self.admin), (None, self.service_account)]
-        ):
-            csafs.append(
-                CSAF.objects.create(
-                    user=user,
-                    product=csaf_product,
-                    document_id_prefix=f"prefix{index}",
-                    document_base_id=f"base{index}",
-                    version=1,
-                    title="title",
-                    tlp_label="WHITE",
-                    tracking_status="draft",
-                    publisher_name="name",
-                    publisher_category="vendor",
-                    publisher_namespace="https://example.com",
-                )
-            )
-        with self._as(self.service_account):
-            self.assertEqual([csafs[0], csafs[2]], list(get_csafs().filter(id__in=[c.id for c in csafs])))
+        now = timezone.now()
+        csaf_fields = {
+            "title": "title",
+            "tlp_label": "WHITE",
+            "tracking_status": "draft",
+            "publisher_name": "name",
+            "publisher_category": "vendor",
+            "publisher_namespace": "https://example.com",
+        }
+        cyclonedx_fields = {"first_issued": now, "last_updated": now}
+        openvex_fields = {
+            "id_namespace": "https://example.com",
+            "author": "author",
+            "timestamp": now,
+            "last_updated": now,
+        }
+        for model, query, fields in [
+            (CSAF, get_csafs, csaf_fields),
+            (CycloneDX, get_cyclonedx_s, cyclonedx_fields),
+            (OpenVEX, get_openvex_s, openvex_fields),
+        ]:
+            with self.subTest(model=model.__name__):
+                documents = [
+                    model.objects.create(
+                        user=user,
+                        product=document_product,
+                        document_id_prefix=f"prefix{index}",
+                        document_base_id=f"base{index}",
+                        version=1,
+                        **fields,
+                    )
+                    for index, (document_product, user) in enumerate(
+                        [(product, self.admin), (None, self.admin), (None, self.service_account)]
+                    )
+                ]
+                with self._as(self.service_account):
+                    visible = list(query().filter(id__in=[d.id for d in documents]))
+                self.assertEqual([documents[0], documents[2]], visible)
