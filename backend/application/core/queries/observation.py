@@ -36,7 +36,7 @@ def get_observations() -> QuerySet[Observation]:
 
     observations = Observation.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 
@@ -114,7 +114,7 @@ def get_evidences() -> QuerySet[Evidence]:
 
     evidences = Evidence.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)
         product_group_members = Product_Member.objects.filter(
             product=OuterRef("observation__product__product_group"), user=user
@@ -157,7 +157,7 @@ def get_potential_duplicates() -> QuerySet[Potential_Duplicate]:
 
     potential_duplicates = Potential_Duplicate.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("observation__product_id"), user=user)
         product_group_members = Product_Member.objects.filter(
             product=OuterRef("observation__product__product_group"), user=user
@@ -207,7 +207,7 @@ def get_observation_logs() -> QuerySet[Observation_Log]:
 
     observation_logs = Observation_Log.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         # Checking the authorization once per product instead of once per observation log is much faster,
         # because there are typically far more observation logs than products. Passing the product ids as
         # values instead of a subquery lets the database estimate how many observation logs will match.
