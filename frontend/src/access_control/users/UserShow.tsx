@@ -54,6 +54,7 @@ const ShowActions = () => {
                 )}
                 {user &&
                     !user.is_oidc_user &&
+                    !user.is_service_account &&
                     (is_superuser() || (current_user && user && JSON.parse(current_user).id == user.id)) && (
                         <UserChangePassword />
                     )}

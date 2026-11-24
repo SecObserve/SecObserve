@@ -406,7 +406,11 @@ class ApiTokenCreateRequestSerializer(Serializer):
     password = CharField(max_length=255, required=False, trim_whitespace=False)
     name = CharField(max_length=255, required=True)
     expiration_date = DateField(required=False, allow_null=True)
-    user = IntegerField(required=False, min_value=1)
+    user = IntegerField(
+        required=False,
+        min_value=1,
+        help_text="Id of a service account whose API token is managed, only for superusers",
+    )
 
     def validate_expiration_date(self, expiration_date: Optional[date]) -> Optional[date]:
         if expiration_date and expiration_date < date.today():
@@ -424,4 +428,8 @@ class ApiTokenRevokeRequestSerializer(Serializer):
     username = CharField(max_length=150, required=False)
     password = CharField(max_length=255, required=False, trim_whitespace=False)
     name = CharField(max_length=255, required=True)
-    user = IntegerField(required=False, min_value=1)
+    user = IntegerField(
+        required=False,
+        min_value=1,
+        help_text="Id of a service account whose API token is managed, only for superusers",
+    )

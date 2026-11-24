@@ -1032,6 +1032,45 @@ class TestServiceAccountAPIToken(BaseTestCase):
         self.assertEqual("Only superusers can manage API tokens of other users", response.data["message"])
         revoke_mock.assert_not_called()
 
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_superuser_cannot_revoke_token_of_human(self, revoke_mock):
+        response = APIClient().post(
+            reverse("revoke_user_api_token"), self._data(self.superuser, user=self.human.pk), "json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("API tokens can only be managed for service accounts", response.data["message"])
+        revoke_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_regular_user_unknown_user_is_forbidden(self, api_mock):
+        response = APIClient().post(reverse("create_user_api_token"), self._data(self.regular, user=999999), "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Only superusers can manage API tokens of other users", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_wrong_password_with_user_is_forbidden(self, api_mock):
+        data = self._data(self.superuser, user=self.sa.pk)
+        data["password"] = "wrong"
+        response = APIClient().post(reverse("create_user_api_token"), data, "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+        api_mock.assert_not_called()
+
+    def test_service_account_with_usable_password_cannot_sign_in(self):
+        self.sa.set_password(self.PASSWORD)
+        self.sa.save()
+
+        response = APIClient().post(
+            reverse("authenticate"), {"username": self.sa.username, "password": self.PASSWORD}, "json"
+        )
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Invalid credentials", response.data["message"])
+
     @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
     @patch("application.access_control.api.views.create_user_api_token")
     def test_oidc_superuser_creates_token_for_service_account(self, api_mock, oidc_mock):

@@ -47,7 +47,7 @@ There are some general permissions based on the user's type:
 | Manage Settings             | -        | -        | X         |
 | Reset JWT secret            | -        | -        | X         |
 
-**^1)^** Not for OIDC users
+**^1)^** Not for OIDC users and service accounts
 
 **^2)^** Only if the user is a manager of the authorization group
 
