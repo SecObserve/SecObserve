@@ -93,6 +93,8 @@ class OIDCAuthentication(BaseAuthentication):
             if not username:
                 raise AuthenticationFailed("No username found in JWT")
             user = get_user_by_username(username)
+            if user and user.is_service_account:
+                raise AuthenticationFailed("Service accounts cannot sign in with OpenID Connect")
             if user:
                 user = self._check_user_change(user, payload)
                 return user, payload

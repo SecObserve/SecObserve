@@ -261,6 +261,33 @@ class TestOIDCAuthentication(BaseTestCase):
     @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
     @patch("application.access_control.services.oidc_authentication.get_user_by_username")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._check_user_change")
+    def test_validate_jwt_service_account(
+        self,
+        check_user_change_mock,
+        get_user_mock,
+        get_signing_key_mock,
+        pyjwkclient_mock,
+        openid_configuration_mock,
+        jwt_mock,
+    ):
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK("test_key")
+        jwt_mock.return_value = {"preferred_username": "sa"}
+        get_user_mock.return_value = User(username="sa", is_service_account=True)
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            OIDCAuthentication()._validate_jwt("token")
+
+        self.assertEqual("Service accounts cannot sign in with OpenID Connect", str(e.exception.detail))
+        check_user_change_mock.assert_not_called()
+
+    @patch("application.access_control.services.oidc_authentication.decode")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.get_user_by_username")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._check_user_change")
     def test_validate_jwt_user_found(
         self,
         check_user_change_mock,
