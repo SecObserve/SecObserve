@@ -49,9 +49,7 @@ class TestServiceAccount(BaseTestCase):
     def test_update_same_value_allowed(self):
         user = self._create_service_account()
 
-        response = self.client.patch(
-            f"/api/users/{user.pk}/", {"is_service_account": True, "full_name": "x"}, "json"
-        )
+        response = self.client.patch(f"/api/users/{user.pk}/", {"is_service_account": True, "full_name": "x"}, "json")
 
         self.assertEqual(200, response.status_code)
 

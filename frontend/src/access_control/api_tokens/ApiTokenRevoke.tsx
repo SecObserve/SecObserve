@@ -34,6 +34,8 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
     // Users authenticated with OIDC have no password, their recent authentication
     // at the OIDC provider is the proof of identity instead.
     const oidc_authentication = type === "user" && oidc_signed_in();
+    const current_user = JSON.parse(localStorage.getItem("user") ?? "null");
+    const acting_for_other = type === "user" && user?.id !== current_user?.id;
     const [reauthenticationMessage, setReauthenticationMessage] = useState<string | null>(null);
 
     const handleApiTokenRevoke = async (data: any) => {
@@ -47,13 +49,11 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
         } else if (type === "user") {
             method = "POST";
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/authentication/revoke_user_api_token/";
-            revoke_data = oidc_authentication
-                ? { name: name }
-                : {
-                      username: user.username,
-                      password: data.password,
-                      name: name,
-                  };
+            revoke_data = {
+                ...(oidc_authentication ? {} : { username: current_user.username, password: data.password }),
+                ...(acting_for_other ? { user: user.id } : {}),
+                name: name,
+            };
         } else {
             notify("Type is not product or user", { type: "error" });
             setOpen(false);
@@ -112,7 +112,11 @@ const ApiTokenRevoke = ({ type, api_token_id, user, name }: ApiTokenRevokeProps)
                             Are you sure you want to revoke the {type} API token {name}?
                         </Typography>
                         {type === "user" && !oidc_authentication && (
-                            <PasswordInputWide source="password" label="Password" validate={validate_required_255} />
+                            <PasswordInputWide
+                                source="password"
+                                label={acting_for_other ? "Your password" : "Password"}
+                                validate={validate_required_255}
+                            />
                         )}
                     </SimpleForm>
                 </DialogContent>
