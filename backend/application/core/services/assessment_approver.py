@@ -127,5 +127,9 @@ def _get_highest_user_role(product: Product, user: User) -> int:
         if product_group_member:
             highest_role = max(highest_role, product_group_member.role)
 
-    highest_role = max(highest_role, get_highest_role_of_product_authorization_group_members_for_user(product, user))
+    highest_role = max(
+        highest_role,
+        get_highest_role_of_product_authorization_group_members_for_user(product, user),
+        user.instance_role or 0,
+    )
     return highest_role
