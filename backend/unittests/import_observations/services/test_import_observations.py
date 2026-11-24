@@ -21,7 +21,10 @@ from application.core.models import (
     Reference,
     Service,
 )
-from application.core.services.observation import get_current_severity
+from application.core.services.observation import (
+    get_current_severity,
+    normalize_observation_fields,
+)
 from application.core.types import Severity, Status
 from application.import_observations.models import (
     Api_Configuration,
@@ -516,6 +519,126 @@ class TestFileUploadObservations(BaseTestCase):
     @patch("application.import_observations.services.import_observations.find_potential_duplicates")
     @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
     @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_docker_image_tag_updated(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif", "registry.example.com/app:1.0")
+        observation_ids = list(Observation.objects.filter(product=product).order_by("id").values_list("pk", flat=True))
+        self.assertEqual(3, len(observation_ids))
+
+        numbers = self._import_file(product, "unittests/fixtures/data_1/bandit.sarif", "registry.example.com/app:2.0")
+
+        self.assertEqual((0, 2, 0), numbers[:3])
+        observations = Observation.objects.filter(product=product).order_by("id")
+        self.assertEqual(observation_ids, [observation.pk for observation in observations])
+        for observation in observations:
+            self.assertEqual("registry.example.com/app", observation.origin_docker_image_name)
+            self.assertEqual("2.0", observation.origin_docker_image_tag)
+            self.assertEqual("registry.example.com/app:2.0", observation.origin_docker_image_name_tag)
+            self.assertEqual("app:2.0", observation.origin_docker_image_name_tag_short)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    def test_file_upload_observations_docker_image_tag_updated_with_log(
+        self,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif", "registry.example.com/app:1.0")
+        self._import_file(product, "unittests/fixtures/data_2/bandit.sarif", "registry.example.com/app:2.0")
+
+        # The resolved observations keep the last image they have been found in,
+        # the one with the changed severity is saved by the observation log
+        self.assertEqual(
+            [(Status.STATUS_RESOLVED, "1.0"), (Status.STATUS_OPEN, "2.0"), (Status.STATUS_RESOLVED, "1.0")],
+            list(
+                Observation.objects.filter(product=product)
+                .order_by("id")
+                .values_list("current_status", "origin_docker_image_tag")
+            ),
+        )
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
+    @patch("application.import_observations.parsers.sarif.parser.SARIFParser.get_observations")
+    def test_file_upload_observations_docker_image_tag_changes_identity_hash(
+        self,
+        mock_get_observations,
+        mock_apply_vex_statements_for_observation,
+        mock_deduplicate_cross_scanner,
+        mock_find_potential_duplicates,
+        mock_apply_exploit_information,
+        mock_apply_epss,
+        mock_push_observations_to_issue_tracker,
+        mock_check_security_gate,
+        mock_get_current_request,
+    ):
+        mock_get_current_request.return_value = RequestMock(User.objects.get(id=1))
+        mock_deduplicate_cross_scanner.return_value = False
+        product = Product.objects.get(id=1)
+
+        def imported_observations(tag):
+            return [
+                Observation(
+                    title="docker_observation",
+                    parser_severity=Severity.SEVERITY_HIGH,
+                    origin_docker_image_name="registry.example.com/app",
+                    origin_docker_image_tag=tag,
+                )
+            ], "scanner"
+
+        mock_get_observations.side_effect = [imported_observations("1.0"), imported_observations("sha256:abc")]
+
+        self._import_file(product, "unittests/fixtures/data_1/bandit.sarif", "")
+        # A tag with a colon becomes part of the name when the observation is saved and changes its identity hash
+        numbers = self._import_file(product, "unittests/fixtures/data_1/bandit.sarif", "")
+
+        self.assertEqual((0, 1, 0), numbers[:3])
+        observation = Observation.objects.get(product=product)
+        self.assertEqual("registry.example.com/app:sha256:abc", observation.origin_docker_image_name_tag)
+
+    @patch("application.commons.services.global_request.get_current_request")
+    @patch("application.import_observations.services.import_observations.check_security_gate")
+    @patch("application.import_observations.services.import_observations.push_observations_to_issue_tracker")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.find_potential_duplicates")
+    @patch("application.import_observations.services.import_observations._deduplicate_cross_scanner")
+    @patch("application.vex.services.vex_engine.VEX_Engine.apply_vex_statements_for_observation")
     def test_file_upload_observations_product_timestamp_only(
         self,
         mock_apply_vex_statements_for_observation,
@@ -890,7 +1013,7 @@ class TestFileUploadObservations(BaseTestCase):
     def _product_updates(self, context):
         return [query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_product"')]
 
-    def _import_file(self, product, file_name):
+    def _import_file(self, product, file_name, docker_image_name_tag="test_docker_image_name_tag"):
         with open(file_name, "r") as file:
             return file_upload_observations(
                 FileUploadParameters(
@@ -898,7 +1021,7 @@ class TestFileUploadObservations(BaseTestCase):
                     branch=Branch.objects.get(id=1),
                     file=File(file),
                     service_name="test_service",
-                    docker_image_name_tag="test_docker_image_name_tag",
+                    docker_image_name_tag=docker_image_name_tag,
                     endpoint_url="test_endpoint_url",
                     kubernetes_cluster="test_kubernetes_cluster",
                     kubernetes_namespace="test_kubernetes_namespace",
@@ -2357,6 +2480,82 @@ class TestSaveChangedFields(BaseTestCase):
         self.assertEqual("https://new.example.com", Observation.objects.get(id=1).origin_component_url)
         mock_apply_epss.assert_called_once_with(observation_before, {})
         mock_apply_exploit_information.assert_called_once_with(observation_before, settings, {})
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_origin_fields_updated(self, mock_apply_epss, mock_apply_exploit_information):
+        observation = self._process_imported_observation(
+            origin_component_cpe="cpe:2.3:a:new:new:1.0:*:*:*:*:*:*:*",
+            origin_docker_image_digest="sha256:new",
+            origin_cloud_resource_type="new_resource_type",
+        )
+
+        self.assertEqual("cpe:2.3:a:new:new:1.0:*:*:*:*:*:*:*", observation.origin_component_cpe)
+        self.assertEqual("sha256:new", observation.origin_docker_image_digest)
+        self.assertEqual("new_resource_type", observation.origin_cloud_resource_type)
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_docker_image_tag_removed(self, mock_apply_epss, mock_apply_exploit_information):
+        observation = Observation.objects.get(id=1)
+        observation.origin_docker_image_name_tag = "registry.example.com/app:1.0"
+        observation.save()
+        self.assertEqual("1.0", observation.origin_docker_image_tag)
+
+        observation = self._process_imported_observation(
+            origin_docker_image_name="registry.example.com/app",
+            origin_docker_image_tag="",
+            origin_docker_image_name_tag="",
+        )
+
+        self.assertEqual("registry.example.com/app", observation.origin_docker_image_name)
+        self.assertEqual("", observation.origin_docker_image_tag)
+        self.assertEqual("registry.example.com/app", observation.origin_docker_image_name_tag)
+        self.assertEqual("app", observation.origin_docker_image_name_tag_short)
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_component_purl_updated(self, mock_apply_epss, mock_apply_exploit_information):
+        observation = Observation.objects.get(id=1)
+        observation.origin_component = None
+        observation.origin_component_name_version = "openssl:3.0.11"
+        observation.save()
+        component_without_purl = observation.origin_component
+        self.assertEqual("", component_without_purl.purl)
+
+        # The component belongs to the purl
+        purl = "pkg:deb/debian/openssl@3.0.11"
+        observation = self._process_imported_purl(f"{purl}?distro=debian-12.5")
+        self.assertEqual(f"{purl}?distro=debian-12.5", observation.origin_component_purl)
+        self.assertEqual("deb", observation.origin_component_purl_type)
+        self.assertEqual(purl, observation.origin_component.purl)
+        component_with_purl = observation.origin_component
+
+        # The qualifiers of the purl are not part of the component
+        observation = self._process_imported_purl(f"{purl}?distro=debian-12.6")
+        self.assertEqual(f"{purl}?distro=debian-12.6", observation.origin_component_purl)
+        self.assertEqual(component_with_purl, observation.origin_component)
+
+        observation = self._process_imported_purl("")
+        self.assertEqual("", observation.origin_component_purl)
+        self.assertEqual("", observation.origin_component_purl_type)
+        self.assertEqual(component_without_purl, observation.origin_component)
+
+    def _process_imported_purl(self, purl):
+        # The parsers set neither the component nor the type of the purl
+        return self._process_imported_observation(
+            origin_component=None, origin_component_purl=purl, origin_component_purl_type=""
+        )
+
+    def _process_imported_observation(self, **fields):
+        imported_observation = Observation.objects.get(id=1)
+        for name, value in fields.items():
+            setattr(imported_observation, name, value)
+        normalize_observation_fields(imported_observation)
+
+        _process_current_observation(imported_observation, Observation.objects.get(id=1), Settings.load(), {}, {})
+
+        return Observation.objects.get(id=1)
 
 
 class TestResolveUnimportedObservations(BaseTestCase):

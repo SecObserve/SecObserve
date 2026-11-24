@@ -374,10 +374,11 @@ def _process_data(  # pylint: disable=too-many-statements disable=too-many-local
                 if observation_before.current_status in Status.STATUS_ACTIVE:
                     observations_updated += 1
 
-                # Remove observation from list of current observations because it is still part of the check
-                observations_before.pop(observation_before.identity_hash)
+                # Remove observation from list of current observations because it is still part of the check,
+                # with the identity_hash it has been found with, saving it might have changed its own identity_hash
+                observations_before.pop(imported_observation.identity_hash)
                 # Add identity_hash to set of observations in this run to detect duplicates in this run
-                observations_this_run.add(observation_before.identity_hash)
+                observations_this_run.add(imported_observation.identity_hash)
                 vulnerability_check_observations.add(observation_before)
             else:
                 if not _deduplicate_cross_scanner(imported_observation, settings):
@@ -479,9 +480,7 @@ def _process_current_observation(
     observation_before.found = imported_observation.found
     observation_before.scanner = imported_observation.scanner
 
-    observation_before.origin_component_type = imported_observation.origin_component_type
-    observation_before.origin_component_dependencies = imported_observation.origin_component_dependencies
-    observation_before.origin_component_url = imported_observation.origin_component_url
+    _update_origins(imported_observation, observation_before)
 
     previous_severity = observation_before.current_severity
     observation_before.parser_severity = imported_observation.parser_severity
@@ -536,6 +535,24 @@ def _process_current_observation(
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
         )
+
+
+def _update_origins(imported_observation: Observation, observation_before: Observation) -> None:
+    # Only the fields of the origins that can change without changing the identity hash. The CycloneDX BOM link
+    # is left out, because VEX statements are matched by it and it changes with every newly generated SBOM.
+    observation_before.origin_component = imported_observation.origin_component
+    observation_before.origin_component_type = imported_observation.origin_component_type
+    observation_before.origin_component_purl = imported_observation.origin_component_purl
+    observation_before.origin_component_purl_type = imported_observation.origin_component_purl_type
+    observation_before.origin_component_cpe = imported_observation.origin_component_cpe
+    observation_before.origin_component_dependencies = imported_observation.origin_component_dependencies
+    observation_before.origin_component_url = imported_observation.origin_component_url
+
+    observation_before.origin_docker_image_name_tag = imported_observation.origin_docker_image_name_tag
+    observation_before.origin_docker_image_tag = imported_observation.origin_docker_image_tag
+    observation_before.origin_docker_image_digest = imported_observation.origin_docker_image_digest
+
+    observation_before.origin_cloud_resource_type = imported_observation.origin_cloud_resource_type
 
 
 def _get_field_values(observation: Observation) -> dict[str, Any]:
