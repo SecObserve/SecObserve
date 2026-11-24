@@ -951,3 +951,99 @@ class TestMySettings(BaseTestCase):
             "has_potential_duplicates,update_impact_score", self.user_internal.setting_hidden_observation_columns
         )
         save_mock.assert_called()
+
+
+class TestServiceAccountAPIToken(BaseTestCase):
+    PASSWORD = "not-so-secret-password"  # nosec B105
+    # eliminate false positive, the password is only used for a user in the test database
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.superuser = User.objects.create_user(
+            username="sa_superuser@example.com", password=self.PASSWORD, is_superuser=True
+        )
+        self.regular = User.objects.create_user(username="sa_regular@example.com", password=self.PASSWORD)
+        self.sa = User.objects.create_user(username="sa", is_service_account=True)
+        self.human = User.objects.create_user(username="human", password=self.PASSWORD)
+
+    def _data(self, caller: User, **extra):
+        return {"username": caller.username, "password": self.PASSWORD, "name": "api_token_name", **extra}
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_superuser_creates_token_for_service_account(self, api_mock):
+        api_mock.return_value = "api_token"
+        response = APIClient().post(
+            reverse("create_user_api_token"), self._data(self.superuser, user=self.sa.pk), "json"
+        )
+
+        self.assertEqual(201, response.status_code)
+        api_mock.assert_called_with(self.sa, "api_token_name", None)
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_superuser_cannot_create_token_for_human(self, api_mock):
+        response = APIClient().post(
+            reverse("create_user_api_token"), self._data(self.superuser, user=self.human.pk), "json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("API tokens can only be managed for service accounts", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_regular_user_cannot_create_token_for_service_account(self, api_mock):
+        response = APIClient().post(reverse("create_user_api_token"), self._data(self.regular, user=self.sa.pk), "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Only superusers can manage API tokens of other users", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_own_id_is_own_token(self, api_mock):
+        api_mock.return_value = "api_token"
+        response = APIClient().post(
+            reverse("create_user_api_token"), self._data(self.regular, user=self.regular.pk), "json"
+        )
+
+        self.assertEqual(201, response.status_code)
+        api_mock.assert_called_with(self.regular, "api_token_name", None)
+
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_unknown_user(self, api_mock):
+        response = APIClient().post(reverse("create_user_api_token"), self._data(self.superuser, user=999999), "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertEqual("User does not exist", response.data["message"])
+        api_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_superuser_revokes_token_of_service_account(self, revoke_mock):
+        response = APIClient().post(
+            reverse("revoke_user_api_token"), self._data(self.superuser, user=self.sa.pk), "json"
+        )
+
+        self.assertEqual(204, response.status_code)
+        revoke_mock.assert_called_with(self.sa, "api_token_name")
+
+    @patch("application.access_control.api.views.revoke_user_api_token")
+    def test_regular_user_cannot_revoke_token_of_service_account(self, revoke_mock):
+        response = APIClient().post(reverse("revoke_user_api_token"), self._data(self.regular, user=self.sa.pk), "json")
+
+        self.assertEqual(403, response.status_code)
+        self.assertEqual("Only superusers can manage API tokens of other users", response.data["message"])
+        revoke_mock.assert_not_called()
+
+    @patch("application.access_control.api.views.get_freshly_authenticated_oidc_user")
+    @patch("application.access_control.api.views.create_user_api_token")
+    def test_oidc_superuser_creates_token_for_service_account(self, api_mock, oidc_mock):
+        api_mock.return_value = "api_token"
+        oidc_mock.return_value = (self.superuser, {})
+
+        response = APIClient().post(
+            reverse("create_user_api_token"),
+            {"name": "api_token_name", "user": self.sa.pk},
+            "json",
+            HTTP_AUTHORIZATION="Bearer x",
+        )
+
+        self.assertEqual(201, response.status_code)
+        api_mock.assert_called_with(self.sa, "api_token_name", None)

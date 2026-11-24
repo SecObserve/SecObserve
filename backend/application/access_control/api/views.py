@@ -1,7 +1,7 @@
 import logging
 import unicodedata
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from django.contrib.auth import authenticate as django_authenticate
 from django.contrib.auth.models import AnonymousUser
@@ -318,7 +318,8 @@ class UserAPITokenCreateView(APIView):
         responses={status.HTTP_201_CREATED: ApiTokenCreateResponseSerializer},
         description="Either `username` and `password` or an OIDC token in the `Authorization` header "
         "are needed to authenticate the user. The OIDC authentication must not be older than the "
-        "maximum authentication age configured in the settings.",
+        "maximum authentication age configured in the settings. Superusers can pass `user` to manage "
+        "the API tokens of a service account.",
     )
     def post(self, request: Request) -> Response:
         request_serializer = ApiTokenCreateRequestSerializer(data=request.data)
@@ -326,10 +327,11 @@ class UserAPITokenCreateView(APIView):
             raise ValidationError(request_serializer.errors)
 
         try:
-            user = _get_api_token_user(request, request_serializer.validated_data)
+            caller = _get_api_token_user(request, request_serializer.validated_data)
         except OIDCReauthenticationRequired as e:
             return _reauthentication_response(e)
 
+        user = _get_token_owner(caller, request_serializer.validated_data.get("user"))
         name = request_serializer.validated_data.get("name")
         expiration_date = request_serializer.validated_data.get("expiration_date")
 
@@ -341,7 +343,8 @@ class UserAPITokenCreateView(APIView):
             raise
 
         response = Response({"token": token}, status=status.HTTP_201_CREATED)
-        logger.info(format_log_message(message="API token created", username=user.username, response=response))
+        message = "API token created" if user == caller else f"API token created for {user.username}"
+        logger.info(format_log_message(message=message, username=caller.username, response=response))
         return response
 
 
@@ -355,7 +358,8 @@ class UserAPITokenRevokeView(APIView):
         responses={status.HTTP_204_NO_CONTENT: None},
         description="Either `username` and `password` or an OIDC token in the `Authorization` header "
         "are needed to authenticate the user. The OIDC authentication must not be older than the "
-        "maximum authentication age configured in the settings.",
+        "maximum authentication age configured in the settings. Superusers can pass `user` to manage "
+        "the API tokens of a service account.",
     )
     def post(self, request: Request) -> Response:
         request_serializer = ApiTokenRevokeRequestSerializer(data=request.data)
@@ -363,16 +367,18 @@ class UserAPITokenRevokeView(APIView):
             raise ValidationError(request_serializer.errors)
 
         try:
-            user = _get_api_token_user(request, request_serializer.validated_data)
+            caller = _get_api_token_user(request, request_serializer.validated_data)
         except OIDCReauthenticationRequired as e:
             return _reauthentication_response(e)
 
+        user = _get_token_owner(caller, request_serializer.validated_data.get("user"))
         name = request_serializer.validated_data.get("name")
 
         revoke_user_api_token(user, name)
 
         response = Response(status=status.HTTP_204_NO_CONTENT)
-        logger.info(format_log_message(message="API token revoked", username=user.username, response=response))
+        message = "API token revoked" if user == caller else f"API token revoked for {user.username}"
+        logger.info(format_log_message(message=message, username=caller.username, response=response))
         return response
 
 
@@ -447,6 +453,22 @@ def _get_api_token_user(request: Request, data: dict[str, Any]) -> User:
     request.auth = payload
 
     return user
+
+
+def _get_token_owner(caller: User, user_id: Optional[int]) -> User:
+    if user_id is None or user_id == caller.pk:
+        return caller
+
+    if not caller.is_superuser:
+        raise PermissionDenied("Only superusers can manage API tokens of other users")
+
+    owner = User.objects.filter(pk=user_id).first()
+    if owner is None:
+        raise ValidationError("User does not exist")
+    if not owner.is_service_account:
+        raise ValidationError("API tokens can only be managed for service accounts")
+
+    return owner
 
 
 def _reauthentication_response(exception: OIDCReauthenticationRequired) -> Response:
