@@ -73,3 +73,59 @@ class TestServiceAccount(BaseTestCase):
 
         self.assertEqual(400, response.status_code)
         self.assertIn("User's password cannot be changed", response.content.decode())
+
+
+class TestInstanceRole(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.superuser = User.objects.create_user(username="admin_ir_test", password="x", is_superuser=True)
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.superuser)
+
+    def _create_service_account(self, **extra) -> User:
+        response = self.client.post("/api/users/", {"username": "sa", "is_service_account": True, **extra}, "json")
+        self.assertEqual(201, response.status_code, response.content)
+        return User.objects.get(username="sa")
+
+    def test_create_service_account_with_instance_role(self):
+        user = self._create_service_account(instance_role=1)
+
+        self.assertEqual(1, user.instance_role)
+
+    def test_instance_role_only_for_service_accounts(self):
+        response = self.client.post("/api/users/", {"username": "regular", "instance_role": 1}, "json")
+        self.assertEqual(400, response.status_code)
+        self.assertIn("Only service accounts can have an instance role", response.content.decode())
+
+        user = User.objects.create_user(username="regular2", password="x")
+        response = self.client.patch(f"/api/users/{user.pk}/", {"instance_role": 1}, "json")
+        self.assertEqual(400, response.status_code)
+
+    def test_instance_role_owner_refused(self):
+        response = self.client.post(
+            "/api/users/", {"username": "sa", "is_service_account": True, "instance_role": 5}, "json"
+        )
+
+        self.assertEqual(400, response.status_code)
+        self.assertIn("Owner cannot be an instance role", response.content.decode())
+
+    def test_instance_role_invalid_value(self):
+        response = self.client.post(
+            "/api/users/", {"username": "sa", "is_service_account": True, "instance_role": 9}, "json"
+        )
+
+        self.assertEqual(400, response.status_code)
+
+    def test_instance_role_change_and_clear(self):
+        user = self._create_service_account(instance_role=1)
+
+        for value in (3, None):
+            response = self.client.patch(f"/api/users/{user.pk}/", {"instance_role": value}, "json")
+            self.assertEqual(200, response.status_code, response.content)
+            user.refresh_from_db()
+            self.assertEqual(value, user.instance_role)
+
+    def test_can_access_all_products(self):
+        self.assertTrue(User(is_superuser=True).can_access_all_products)
+        self.assertTrue(User(instance_role=1).can_access_all_products)
+        self.assertFalse(User().can_access_all_products)

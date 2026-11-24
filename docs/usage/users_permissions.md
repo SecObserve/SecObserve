@@ -58,6 +58,10 @@ There are some general permissions based on the user's type:
 * The flag cannot be changed after the user has been created.
 * A service account has no password and cannot sign in with OIDC, it only uses API tokens.
 * Superusers create and revoke the API tokens of a service account, see [User API token](../integrations/rest_api.md#user-api-token).
+* A service account can get an instance role: one role (Reader, Upload, Writer or Maintainer) on every product and product group, including those created later.
+* Roles from memberships still count, the highest role wins.
+* Owner is not available as instance role.
+* Only service accounts can have an instance role.
 * Otherwise a service account behaves like any other user: it is internal or external, can be a superuser if needed, and can be a member of products, product groups and authorization groups.
 
 ## Authorization groups

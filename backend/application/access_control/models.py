@@ -53,6 +53,7 @@ class User(AbstractUser):
     oidc_groups_hash = CharField(max_length=64, blank=True)
     is_oidc_user = BooleanField(default=False)
     is_service_account = BooleanField(default=False)
+    instance_role = IntegerField(null=True, blank=True)
 
     notification_ms_teams_webhook = TextField(max_length=2048, blank=True)
     notification_slack_webhook = TextField(max_length=2048, blank=True)
@@ -60,6 +61,10 @@ class User(AbstractUser):
     notification_email_active = BooleanField(default=True)
     notification_ms_teams_active = BooleanField(default=False)
     notification_slack_active = BooleanField(default=False)
+
+    @property
+    def can_access_all_products(self) -> bool:
+        return self.is_superuser or self.instance_role is not None
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.first_name and self.last_name:
