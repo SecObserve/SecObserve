@@ -34,6 +34,7 @@ const UserCreate = () => {
                 <BooleanInput source="is_active" label="Active" defaultValue={true} />
                 <BooleanInput source="is_external" label="External" />
                 <BooleanInput source="is_superuser" label="Superuser" />
+                <BooleanInput source="is_service_account" label="Service account" />
             </SimpleForm>
         </Create>
     );

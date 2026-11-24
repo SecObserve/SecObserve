@@ -36,6 +36,7 @@ const UserEdit = () => {
                 <TextInputWide source="last_name" validate={validate_150} />
                 <TextInputWide source="email" validate={validate_255} />
                 <BooleanInput source="is_oidc_user" label="OIDC user" readOnly />
+                <BooleanInput source="is_service_account" label="Service account" readOnly />
 
                 <Divider flexItem sx={{ marginTop: 2, marginBottom: 2 }} />
                 <Typography variant="h6" sx={{ marginBottom: 2 }}>
