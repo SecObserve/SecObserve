@@ -6,6 +6,8 @@ export const ROLE_CHOICES = [
     { id: 5, name: "Owner" },
 ];
 
+export const INSTANCE_ROLE_CHOICES = ROLE_CHOICES.filter((role) => role.id !== 5);
+
 export const PERMISSION_PRODUCT_GROUP_VIEW = 1001;
 export const PERMISSION_PRODUCT_GROUP_EDIT = 1002;
 export const PERMISSION_PRODUCT_GROUP_DELETE = 1003;

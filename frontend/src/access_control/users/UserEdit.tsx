@@ -1,9 +1,19 @@
 import { Divider, Typography } from "@mui/material";
-import { BooleanInput, DeleteButton, Edit, SaveButton, SimpleForm, Toolbar } from "react-admin";
+import {
+    BooleanInput,
+    DeleteButton,
+    Edit,
+    FormDataConsumer,
+    SaveButton,
+    SelectInput,
+    SimpleForm,
+    Toolbar,
+} from "react-admin";
 
 import users from ".";
 import { validate_150, validate_255, validate_required_150 } from "../../commons/custom_validators";
 import { TextInputWide } from "../../commons/layout/themes";
+import { INSTANCE_ROLE_CHOICES } from "../types";
 
 const CustomToolbar = () => {
     return (
@@ -20,6 +30,10 @@ const UserEdit = () => {
         data.first_name ??= "";
         data.last_name ??= "";
         data.email ??= "";
+        // hidden inputs stay in the form state, so a regular user must not keep a chosen role
+        if (!data.is_service_account) {
+            data.instance_role = null;
+        }
         return data;
     };
 
@@ -45,6 +59,18 @@ const UserEdit = () => {
                 <BooleanInput source="is_active" label="Active" />
                 <BooleanInput source="is_external" label="External" />
                 <BooleanInput source="is_superuser" label="Superuser" />
+                <FormDataConsumer>
+                    {({ formData }) =>
+                        formData.is_service_account && (
+                            <SelectInput
+                                source="instance_role"
+                                label="Instance role"
+                                choices={INSTANCE_ROLE_CHOICES}
+                                emptyText="No instance role"
+                            />
+                        )
+                    }
+                </FormDataConsumer>
             </SimpleForm>
         </Edit>
     );
