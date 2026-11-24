@@ -104,11 +104,12 @@ class TestInstanceRoleQueries(BaseTestCase):
     def test_instance_role_notifications_exclude_exceptions(self):
         product = Product.objects.first()
         exception = Notification.objects.create(type=Notification.TYPE_EXCEPTION, name="exception", message="m")
+        task = Notification.objects.create(type=Notification.TYPE_TASK, name="task", message="m")
         gate = Notification.objects.create(
             type=Notification.TYPE_SECURITY_GATE, name="gate", message="m", product=product
         )
         with self._as(self.service_account):
-            self.assertEqual([gate], list(get_notifications().filter(id__in=[exception.id, gate.id])))
+            self.assertEqual([gate], list(get_notifications().filter(id__in=[exception.id, task.id, gate.id])))
 
     def test_instance_role_vex_without_product(self):
         product = Product.objects.first()
