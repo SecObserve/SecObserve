@@ -12,6 +12,7 @@ import { Fragment } from "react/jsx-runtime";
 
 import { PERMISSION_PRODUCT_API_TOKEN_REVOKE, ROLE_CHOICES } from "../../access_control/types";
 import { DateField } from "../../commons/custom_fields/DateField";
+import { is_superuser } from "../../commons/functions";
 import { getSettingListSize, getSettingRowsPerPage } from "../users/functions";
 import ApiTokenRevoke from "./ApiTokenRevoke";
 
@@ -59,7 +60,9 @@ const ApiTokenEmbeddedList = ({ type, product, user }: ApiTokenEmbeddedListProps
                                 <Fragment>
                                     {((type === "product" &&
                                         product?.permissions?.includes(PERMISSION_PRODUCT_API_TOKEN_REVOKE)) ||
-                                        (type === "user" && api_token.username === username)) && (
+                                        (type === "user" &&
+                                            (api_token.username === username ||
+                                                (is_superuser() && user.is_service_account)))) && (
                                         <ApiTokenRevoke
                                             type={type}
                                             api_token_id={api_token.id}

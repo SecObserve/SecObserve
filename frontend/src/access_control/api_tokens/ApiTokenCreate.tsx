@@ -41,6 +41,8 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
     // Users authenticated with OIDC have no password, their recent authentication
     // at the OIDC provider is the proof of identity instead.
     const oidc_authentication = type === "user" && oidc_signed_in();
+    const current_user = JSON.parse(localStorage.getItem("user") ?? "null");
+    const acting_for_other = type === "user" && user?.id !== current_user?.id;
     const [reauthenticationMessage, setReauthenticationMessage] = useState<string | null>(null);
 
     const [showApiTokenOpen, setShowApiTokenOpen] = useState(false);
@@ -68,17 +70,12 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
             };
         } else if (type === "user") {
             url = window.__RUNTIME_CONFIG__.API_BASE_URL + "/authentication/create_user_api_token/";
-            create_data = oidc_authentication
-                ? {
-                      name: data.api_token_name,
-                      expiration_date: data.expiration_date,
-                  }
-                : {
-                      username: user.username,
-                      password: data.password,
-                      name: data.api_token_name,
-                      expiration_date: data.expiration_date,
-                  };
+            create_data = {
+                ...(oidc_authentication ? {} : { username: current_user.username, password: data.password }),
+                ...(acting_for_other ? { user: user.id } : {}),
+                name: data.api_token_name,
+                expiration_date: data.expiration_date,
+            };
         } else {
             notify("Type is not product or user", { type: "error" });
             setRoleOpen(false);
@@ -134,7 +131,11 @@ const ApiTokenCreate = ({ type, product, user }: ApiTokenCreateProps) => {
                             <AutocompleteInputWide source="role" choices={ROLE_CHOICES} validate={validate_required} />
                         )}
                         {type === "user" && !oidc_authentication && (
-                            <PasswordInputWide source="password" label="Password" validate={validate_required_255} />
+                            <PasswordInputWide
+                                source="password"
+                                label={acting_for_other ? "Your password" : "Password"}
+                                validate={validate_required_255}
+                            />
                         )}
                         <TextInputWide label="API token name" source="api_token_name" validate={validate_required_32} />
                         <DateInput source="expiration_date" />

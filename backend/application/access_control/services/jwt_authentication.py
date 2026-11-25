@@ -64,6 +64,10 @@ class JWTAuthentication(BaseAuthentication):
         if not user.is_active:
             raise AuthenticationFailed("User is deactivated.")
 
+        # A JWT of a deleted or renamed user is still valid for a service account with the same username
+        if user.is_service_account:
+            raise AuthenticationFailed("Service accounts cannot sign in")
+
         return (user, None)
 
     def authenticate_header(self, request: Request) -> str:

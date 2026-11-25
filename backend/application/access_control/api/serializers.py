@@ -2,9 +2,11 @@ import re
 from datetime import date
 from typing import Any, Optional
 
+from django.contrib.auth.hashers import make_password
 from rest_framework.serializers import (
     CharField,
     DateField,
+    IntegerField,
     ModelSerializer,
     Serializer,
     SerializerMethodField,
@@ -52,6 +54,7 @@ class UserListSerializer(ModelSerializer):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
@@ -76,6 +79,7 @@ class UserListSerializer(ModelSerializer):
             data.pop("is_active")
             data.pop("is_superuser")
             data.pop("is_external")
+            data.pop("is_service_account")
             data.pop("setting_theme")
             data.pop("setting_list_size")
             data.pop("setting_package_info_preference")
@@ -137,6 +141,7 @@ class UserSerializer(UserListSerializer):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
@@ -214,7 +219,18 @@ class UserUpdateSerializer(ModelSerializer):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
         ]
+
+    def validate_is_service_account(self, value: bool) -> bool:
+        if self.instance and value != self.instance.is_service_account:
+            raise ValidationError("Cannot be changed after the user has been created")
+        return value
+
+    def create(self, validated_data: dict[str, Any]) -> User:
+        if validated_data.get("is_service_account"):
+            validated_data["password"] = make_password(None)
+        return super().create(validated_data)
 
 
 class UserPasswordSerializer(Serializer):
@@ -389,6 +405,11 @@ class ApiTokenCreateRequestSerializer(Serializer):
     password = CharField(max_length=255, required=False, trim_whitespace=False)
     name = CharField(max_length=255, required=True)
     expiration_date = DateField(required=False, allow_null=True)
+    user = IntegerField(
+        required=False,
+        min_value=1,
+        help_text="Id of a service account whose API token is managed, only for superusers",
+    )
 
     def validate_expiration_date(self, expiration_date: Optional[date]) -> Optional[date]:
         if expiration_date and expiration_date < date.today():
@@ -406,3 +427,8 @@ class ApiTokenRevokeRequestSerializer(Serializer):
     username = CharField(max_length=150, required=False)
     password = CharField(max_length=255, required=False, trim_whitespace=False)
     name = CharField(max_length=255, required=True)
+    user = IntegerField(
+        required=False,
+        min_value=1,
+        help_text="Id of a service account whose API token is managed, only for superusers",
+    )

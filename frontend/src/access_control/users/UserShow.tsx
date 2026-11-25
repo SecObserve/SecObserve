@@ -54,6 +54,7 @@ const ShowActions = () => {
                 )}
                 {user &&
                     !user.is_oidc_user &&
+                    !user.is_service_account &&
                     (is_superuser() || (current_user && user && JSON.parse(current_user).id == user.id)) && (
                         <UserChangePassword />
                     )}
@@ -70,6 +71,10 @@ const UserComponent = () => {
 
     const showFullInformation = (user: any) => {
         return is_superuser() || current_user_id == user.id;
+    };
+
+    const manageTokens = (user: any) => {
+        return current_user_id === user.id || (is_superuser() && user.is_service_account);
     };
 
     const userWidth = (user: any) => {
@@ -146,6 +151,9 @@ const UserComponent = () => {
                                         <Labeled label="Superuser">
                                             <BooleanField source="is_superuser" />
                                         </Labeled>
+                                        <Labeled label="Service account">
+                                            <BooleanField source="is_service_account" />
+                                        </Labeled>
                                     </Stack>
                                 </Paper>
                                 <Paper sx={{ marginBottom: 1, padding: 2, width: "100%", height: "100%" }}>
@@ -173,13 +181,13 @@ const UserComponent = () => {
                             </Stack>
                         )}
                     </Stack>
-                    {showFullInformation(user) && (user.has_api_tokens || current_user_id === user.id) && (
+                    {showFullInformation(user) && (user.has_api_tokens || manageTokens(user)) && (
                         <Accordion sx={{ marginBottom: 2, padding: 0 }} disableGutters>
                             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                                 <Typography variant="h6">API Token</Typography>
                             </AccordionSummary>
                             <AccordionDetails>
-                                {current_user_id === user.id && (
+                                {manageTokens(user) && (
                                     <Box sx={{ marginBottom: 2 }}>
                                         <ApiTokenCreate type="user" user={user} />
                                     </Box>

@@ -18,6 +18,7 @@ The user type can be set by flags in the user administration:
 * **Superusers** are the administrators of the system.
 * **External users** do not belong to the organization, e.g. customers or partners.
 * **Internal users** are all users who are not superusers or external users.
+* **Service accounts** are users for automation, see [Service accounts](#service-accounts).
 
 When a user logs in with an OIDC account for the first time, it can be automatically determined whether it is an internal or external user by their email address. The parameter `Internal users` in the [Settings](../getting_started/configuration.md#administration-in-secobserve) takes a comma-separated list of email of regular expression. If one regular expression matches the email address of the user, the user is considered an internal user. If no regular expression matches, the user is considered an external user.
 
@@ -46,10 +47,18 @@ There are some general permissions based on the user's type:
 | Manage Settings             | -        | -        | X         |
 | Reset JWT secret            | -        | -        | X         |
 
-**^1)^** Not for OIDC users
+**^1)^** Not for OIDC users and service accounts
 
 **^2)^** Only if the user is a manager of the authorization group
 
+
+## Service accounts
+
+* Superusers create a service account by switching on "Service account" when creating a user.
+* The flag cannot be changed after the user has been created.
+* A service account has no password and cannot sign in with OIDC, it only uses API tokens.
+* Superusers create and revoke the API tokens of a service account, see [User API token](../integrations/rest_api.md#user-api-token).
+* Otherwise a service account behaves like any other user: it is internal or external, can be a superuser if needed, and can be a member of products, product groups and authorization groups.
 
 ## Authorization groups
 

@@ -6,6 +6,7 @@ import jwt
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
 from django.core.cache import cache
 from django.core.management import call_command
+from django.db import IntegrityError
 from django.http import HttpRequest
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -254,6 +255,33 @@ class TestOIDCAuthentication(BaseTestCase):
             leeway=7,
         )
         create_user_mock.assert_called_once_with("test_username", {"preferred_username": "test_username"})
+
+    @patch("application.access_control.services.oidc_authentication.decode")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.__init__")
+    @patch("application.access_control.services.oidc_authentication.PyJWKClient.get_signing_key_from_jwt")
+    @patch("application.access_control.services.oidc_authentication.get_user_by_username")
+    @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._check_user_change")
+    def test_validate_jwt_service_account(
+        self,
+        check_user_change_mock,
+        get_user_mock,
+        get_signing_key_mock,
+        pyjwkclient_mock,
+        openid_configuration_mock,
+        jwt_mock,
+    ):
+        openid_configuration_mock.return_value = ("test_jwks_uri", "https://authority")
+        pyjwkclient_mock.return_value = None
+        get_signing_key_mock.return_value = MockPyJWK("test_key")
+        jwt_mock.return_value = {"preferred_username": "sa"}
+        get_user_mock.return_value = User(username="sa", is_service_account=True)
+
+        with self.assertRaises(AuthenticationFailed) as e:
+            OIDCAuthentication()._validate_jwt("token")
+
+        self.assertEqual("Service accounts cannot sign in with OpenID Connect", str(e.exception.detail))
+        check_user_change_mock.assert_not_called()
 
     @patch("application.access_control.services.oidc_authentication.decode")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._get_openid_configuration")
@@ -630,6 +658,24 @@ class TestOIDCAuthentication(BaseTestCase):
             self.assertEqual("", user.oidc_groups_hash)
             user_save_mock.assert_called_once()
             synchronize_groups_mock.assert_called_with(user, payload)
+
+    def test_create_user_race_with_service_account(self):
+        User.objects.create_user(username="test_username", is_service_account=True)
+
+        payload = {
+            "preferred_username": "test_username",
+            "email": "e",
+            "given_name": "f",
+            "family_name": "l",
+            "name": "n",
+        }
+        with (
+            patch("application.access_control.services.oidc_authentication.User.save", side_effect=IntegrityError),
+            self.assertRaises(AuthenticationFailed) as e,
+        ):
+            OIDCAuthentication()._create_user("test_username", payload)
+
+        self.assertEqual("Service accounts cannot sign in with OpenID Connect", str(e.exception))
 
     @patch("application.access_control.services.oidc_authentication.User.save")
     @patch("application.access_control.services.oidc_authentication.OIDCAuthentication._synchronize_groups")

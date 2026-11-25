@@ -28,6 +28,7 @@ function listFilters() {
             <NullableBooleanInput source="is_oidc_user" label="OIDC user" alwaysOn />,
             <NullableBooleanInput source="is_external" label="External" alwaysOn />,
             <NullableBooleanInput source="is_superuser" label="Superuser" alwaysOn />,
+            <NullableBooleanInput source="is_service_account" label="Service account" alwaysOn />,
         ];
     } else {
         return [<TextInput source="username" alwaysOn />, <TextInput source="full_name" alwaysOn />];
@@ -71,6 +72,9 @@ const UserEmbeddedList = () => {
                         {is_superuser() && <BooleanField source="is_oidc_user" label="OIDC user" textAlign="center" />}
                         {is_superuser() && <BooleanField source="is_external" label="External" textAlign="center" />}
                         {is_superuser() && <BooleanField source="is_superuser" label="Superuser" textAlign="center" />}
+                        {is_superuser() && (
+                            <BooleanField source="is_service_account" label="Service account" textAlign="center" />
+                        )}
                     </Datagrid>
                     <CustomPagination />
                 </div>
