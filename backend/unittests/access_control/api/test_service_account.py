@@ -1,6 +1,7 @@
 from rest_framework.test import APIClient
 
 from application.access_control.models import User
+from application.authorization.services.roles_permissions import Roles
 from unittests.base_test_case import BaseTestCase
 
 NOT_CHANGEABLE = "Cannot be changed after the user has been created"
@@ -169,5 +170,8 @@ class TestInstanceRole(BaseTestCase):
 
     def test_can_access_all_products(self):
         self.assertTrue(User(is_superuser=True).can_access_all_products)
-        self.assertTrue(User(instance_role=1).can_access_all_products)
+        for role in (Roles.Reader, Roles.Writer, Roles.Maintainer):
+            self.assertTrue(User(instance_role=role).can_access_all_products)
+        self.assertFalse(User(instance_role=Roles.Upload).can_access_all_products)
+        self.assertTrue(User(instance_role=Roles.Upload, is_superuser=True).can_access_all_products)
         self.assertFalse(User().can_access_all_products)

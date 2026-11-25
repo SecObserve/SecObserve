@@ -59,6 +59,7 @@ There are some general permissions based on the user's type:
 * A service account has no password and cannot sign in with OIDC, it only uses API tokens.
 * Superusers create and revoke the API tokens of a service account, see [User API token](../integrations/rest_api.md#user-api-token).
 * A service account can get an instance role: one role (Reader, Upload, Writer or Maintainer) on every product and product group, including those created later.
+* The Upload instance role can import observations into every product, but it does not show the data of the products.
 * Roles from memberships still count, the highest role wins.
 * Owner is not available as instance role.
 * Only service accounts can have an instance role.
@@ -89,6 +90,7 @@ While superusers have permission to view and edit all data, internal and externa
 | Import Observations      | -      | X      | X          | X     | X      |
 | Edit Product             | -      | -      | X          | X     | -      |
 | Delete Product           | -      | -      | -          | X     | -      |
+| Add Product to Product Group ^4)^ | -      | -      | -          | X     | -      |
 |                          |        |        |            |       |        |
 | View Observation         | X      | X      | X          | X     | -      |
 | Create Observation       | -      | X      | X          | X     | -      |
@@ -127,6 +129,8 @@ While superusers have permission to view and edit all data, internal and externa
 **^2)^** Maintainers are not allowed to manipulate Owners of that product
 
 **^3)^** Only for VEX documents (CSAF or OpenVEX) linked to a product. For VEX documents without a product, the user who created the VEX document is the owner of the document and can perform all actions on it.
+
+**^4)^** Additionally, the user needs the permission to edit the product group
 
 
 ## Management of users and authorization groups

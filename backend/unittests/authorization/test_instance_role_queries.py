@@ -3,10 +3,20 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.utils import timezone
+from rest_framework.test import APIClient
 
-from application.access_control.models import User
-from application.authorization.services.roles_permissions import Roles
-from application.core.models import Component, Product
+from application.access_control.models import Authorization_Group, User
+from application.authorization.services.authorization import (
+    get_highest_user_role,
+    user_has_permission,
+)
+from application.authorization.services.roles_permissions import Permissions, Roles
+from application.core.models import (
+    Component,
+    Product,
+    Product_Authorization_Group_Member,
+    Product_Member,
+)
 from application.core.queries.branch import get_branches
 from application.core.queries.component import get_components
 from application.core.queries.observation import (
@@ -36,6 +46,7 @@ from application.metrics.queries.product_metrics import get_product_metrics
 from application.notifications.models import Notification
 from application.notifications.queries.notification import get_notifications
 from application.rules.queries.rule import get_product_rules
+from application.scancodeio.models import ScanCodeIO_Project
 from application.scancodeio.queries.scancodeio_project import get_scancodeio_projects
 from application.vex.models import CSAF, CycloneDX, OpenVEX
 from application.vex.queries.csaf import get_csafs
@@ -76,7 +87,14 @@ class TestInstanceRoleQueries(BaseTestCase):
     @patch("application.core.signals.get_current_user")
     def setUpClass(cls, mock_user):
         mock_user.return_value = None
-        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        call_command(
+            "loaddata",
+            [
+                "unittests/fixtures/initial_license_data.json",
+                "unittests/fixtures/unittests_fixtures.json",
+                "unittests/fixtures/unittests_license_fixtures.json",
+            ],
+        )
         super().setUpClass()
 
     def setUp(self):
@@ -85,17 +103,67 @@ class TestInstanceRoleQueries(BaseTestCase):
         self.service_account = User.objects.create(
             username="sa_instance_role", is_service_account=True, instance_role=Roles.Reader
         )
+        # There are no fixtures for these models
+        Product_Authorization_Group_Member.objects.create(
+            product_id=1, authorization_group=Authorization_Group.objects.first(), role=Roles.Reader
+        )
+        ScanCodeIO_Project.objects.create(
+            product_id=1,
+            project_uuid="b7a3c1de-0000-4000-8000-000000000001",
+            project_name="project",
+            webhook_token_hash="hash",
+        )
 
     def _as(self, user):
         return patch(CURRENT_USER, return_value=SimpleNamespace(user=user))
+
+    def _pks(self, function):
+        return sorted(function().values_list("pk", flat=True))
 
     def test_instance_role_sees_what_superuser_sees(self):
         for function in LIST_FUNCTIONS:
             with self.subTest(function=function.__name__):
                 with self._as(self.admin):
-                    expected = function().count()
+                    expected = self._pks(function)
+                self.assertTrue(expected, "There must be data to compare")
                 with self._as(self.service_account):
-                    self.assertEqual(expected, function().count())
+                    self.assertEqual(expected, self._pks(function))
+
+    def test_upload_instance_role_sees_nothing_but_can_import(self):
+        self.service_account.instance_role = Roles.Upload
+        self.service_account.save()
+        product = Product.objects.get(pk=1)
+        Notification.objects.create(type=Notification.TYPE_SECURITY_GATE, name="gate", message="m", product=product)
+        functions = [*LIST_FUNCTIONS, get_components, get_notifications, get_csafs, get_cyclonedx_s, get_openvex_s]
+        for function in functions:
+            with self.subTest(function=function.__name__):
+                with self._as(self.admin):
+                    self.assertTrue(self._pks(function), "There must be data to hide")
+                with self._as(self.service_account):
+                    self.assertEqual([], self._pks(function))
+
+        self.assertTrue(user_has_permission(product, Permissions.Product_Import_Observations, self.service_account))
+
+    def test_upload_instance_role_sees_products_of_memberships(self):
+        self.service_account.instance_role = Roles.Upload
+        self.service_account.save()
+        Product_Member.objects.create(product_id=1, user=self.service_account, role=Roles.Reader)
+        with self._as(self.service_account):
+            self.assertEqual([1], self._pks(get_products))
+
+    def test_maintainer_instance_role_cannot_become_owner_with_product_group(self):
+        self.service_account.instance_role = Roles.Maintainer
+        self.service_account.save()
+        client = APIClient()
+        client.force_authenticate(user=self.service_account)
+
+        response = client.post("/api/product_groups/", {"name": "own group"}, "json")
+        self.assertEqual(201, response.status_code, response.content)
+        response = client.patch("/api/products/2/", {"product_group": response.data["id"]}, "json")
+
+        self.assertEqual(400, response.status_code)
+        self.assertIn("You need to be an Owner of the product", response.content.decode())
+        self.assertEqual(Roles.Maintainer, get_highest_user_role(Product.objects.get(pk=2), self.service_account))
 
     def test_service_account_without_instance_role_sees_nothing(self):
         self.service_account.instance_role = None

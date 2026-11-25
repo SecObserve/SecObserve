@@ -644,6 +644,9 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
             raise ValidationError("Product group must be a product group")
         if changed and not user_has_permission(product, Permissions.Product_Group_Edit):
             raise ValidationError("You need the permission to edit the product group to add products to it")
+        # Roles of the product group are inherited, a Maintainer could become Owner with an own product group
+        if changed and self.instance and get_highest_user_role(self.instance) != Roles.Owner:
+            raise ValidationError("You need to be an Owner of the product to add it to a product group")
 
         return product
 

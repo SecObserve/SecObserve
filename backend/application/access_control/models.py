@@ -24,6 +24,7 @@ from application.access_control.types import (
     PackageInfo,
     Theme,
 )
+from application.authorization.services.roles_permissions import Roles
 
 
 class RowsPerPageChoices(IntegerChoices):
@@ -64,7 +65,8 @@ class User(AbstractUser):
 
     @property
     def can_access_all_products(self) -> bool:
-        return self.is_superuser or self.instance_role is not None
+        # The Upload role can only import, it must not see any data
+        return self.is_superuser or self.instance_role not in (None, Roles.Upload)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.first_name and self.last_name:

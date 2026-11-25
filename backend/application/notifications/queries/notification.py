@@ -23,7 +23,7 @@ def get_notifications() -> QuerySet[Notification]:
 
     notifications = Notification.objects.all().order_by("-created")
 
-    if user.instance_role is not None and not user.is_superuser:
+    if user.can_access_all_products and not user.is_superuser:
         notifications = notifications.filter(product__isnull=False)
     elif not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)

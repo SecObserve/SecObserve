@@ -1413,6 +1413,28 @@ class TestProductForeignKeyValidation(BaseTestCase):
         self.assertEqual(self.product_group, ProductSerializer().validate_product_group(self.product_group))
         mock_user_has_permission.assert_called_with(self.product_group, Permissions.Product_Group_Edit)
 
+    @patch("application.core.api.serializers_product.get_highest_user_role")
+    @patch("application.core.api.serializers_product.user_has_permission")
+    @patch("application.core.api.serializers_product.get_products")
+    def test_validate_product_group_changed_only_by_owner(
+        self, mock_get_products, mock_user_has_permission, mock_get_highest_user_role
+    ):
+        mock_get_products.return_value.filter.return_value.exists.return_value = True
+        mock_user_has_permission.return_value = True
+        product = Product(name="product")
+
+        mock_get_highest_user_role.return_value = Roles.Maintainer
+        with self.assertRaises(ValidationError) as e:
+            ProductSerializer(product).validate_product_group(self.product_group)
+        self.assertEqual(
+            "[ErrorDetail(string='You need to be an Owner of the product to add it to a product group', code='invalid')]",
+            str(e.exception),
+        )
+
+        mock_get_highest_user_role.return_value = Roles.Owner
+        self.assertEqual(self.product_group, ProductSerializer(product).validate_product_group(self.product_group))
+        mock_get_highest_user_role.assert_called_with(product)
+
     @patch("application.core.api.serializers_product.user_has_permission")
     @patch("application.core.api.serializers_product.get_products")
     def test_validate_product_group_unchanged(self, mock_get_products, mock_user_has_permission):
