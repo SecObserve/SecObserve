@@ -63,9 +63,6 @@ from application.core.services.risk_acceptance_expiry import (
 )
 from application.core.services.security_gate import (
     SECURITY_GATE_FIELDS,
-    evaluate_security_gate,
-    get_security_gate_priority_thresholds,
-    get_security_gate_thresholds,
 )
 from application.core.types import Assessment_Status, Status
 from application.import_observations.models import Api_Configuration
@@ -644,6 +641,9 @@ class ProductSerializer(ProductListSerializer):  # pylint: disable=too-many-publ
             raise ValidationError("Product group must be a product group")
         if changed and not user_has_permission(product, Permissions.Product_Group_Edit):
             raise ValidationError("You need the permission to edit the product group to add products to it")
+        # Roles of the product group are inherited, a Maintainer could become Owner with an own product group
+        if changed and self.instance and get_highest_user_role(self.instance) != Roles.Owner:
+            raise ValidationError("You need to be an Owner of the product to add it to a product group")
 
         return product
 
@@ -883,108 +883,6 @@ class SecurityGateCountSerializer(Serializer):
     count = IntegerField()
     threshold = IntegerField()
     passed = BooleanField()
-
-
-class BranchSerializer(ModelSerializer):
-    name_with_product = SerializerMethodField()
-    active_critical_observation_count = IntegerField(read_only=True)
-    active_high_observation_count = IntegerField(read_only=True)
-    active_medium_observation_count = IntegerField(read_only=True)
-    active_low_observation_count = IntegerField(read_only=True)
-    active_none_observation_count = IntegerField(read_only=True)
-    active_unknown_observation_count = IntegerField(read_only=True)
-    forbidden_licenses_count = IntegerField(read_only=True)
-    review_required_licenses_count = IntegerField(read_only=True)
-    unknown_licenses_count = IntegerField(read_only=True)
-    allowed_licenses_count = IntegerField(read_only=True)
-    ignored_licenses_count = IntegerField(read_only=True)
-    security_gate_passed = SerializerMethodField()
-
-    def validate_purl(self, purl: str) -> str:
-        return validate_purl(purl)
-
-    def validate_cpe23(self, cpe23: str) -> str:
-        return validate_cpe23(cpe23)
-
-    def get_name_with_product(self, obj: Service) -> str:
-        return f"{obj.name} ({obj.product.name})"
-
-    def get_security_gate_passed(self, obj: Branch) -> Optional[bool]:
-        # Responses of create and update are not annotated with the observation counts
-        if getattr(obj, "active_critical_observation_count", None) is None:
-            return None
-
-        thresholds = get_security_gate_thresholds(obj.product)
-        if thresholds is None:
-            return None
-
-        return evaluate_security_gate(obj, thresholds, get_security_gate_priority_thresholds(obj.product))
-
-    class Meta:
-        model = Branch
-        fields = "__all__"
-
-    def validate(self, attrs: dict) -> dict:  # pylint: disable=too-many-branches
-        if attrs.get("osv_linux_release") and not attrs.get("osv_linux_distribution"):
-            raise ValidationError("osv_linux_release cannot be set without osv_linux_distribution")
-
-        return super().validate(attrs)
-
-    def validate_product(self, value: Product) -> Product:
-        if self.instance and self.instance.product != value:
-            raise ValidationError("Product cannot be changed")
-
-        return value
-
-
-class BranchNameSerializer(ModelSerializer):
-    name_with_product = SerializerMethodField()
-
-    class Meta:
-        model = Branch
-        fields = ["id", "name", "name_with_product"]
-
-    def get_name_with_product(self, obj: Branch) -> str:
-        return f"{obj.name} ({obj.product.name})"
-
-
-class ServiceSerializer(ModelSerializer):
-    name_with_product = SerializerMethodField()
-    active_critical_observation_count = IntegerField(read_only=True)
-    active_high_observation_count = IntegerField(read_only=True)
-    active_medium_observation_count = IntegerField(read_only=True)
-    active_low_observation_count = IntegerField(read_only=True)
-    active_none_observation_count = IntegerField(read_only=True)
-    active_unknown_observation_count = IntegerField(read_only=True)
-    forbidden_licenses_count = IntegerField(read_only=True)
-    review_required_licenses_count = IntegerField(read_only=True)
-    unknown_licenses_count = IntegerField(read_only=True)
-    allowed_licenses_count = IntegerField(read_only=True)
-    ignored_licenses_count = IntegerField(read_only=True)
-
-    class Meta:
-        model = Service
-        fields = "__all__"
-
-    def get_name_with_product(self, obj: Service) -> str:
-        return f"{obj.name} ({obj.product.name})"
-
-    def validate_product(self, value: Product) -> Product:
-        if self.instance and self.instance.product != value:
-            raise ValidationError("Product cannot be changed")
-
-        return value
-
-
-class ServiceNameSerializer(ModelSerializer):
-    name_with_product = SerializerMethodField()
-
-    class Meta:
-        model = Branch
-        fields = ["id", "name", "name_with_product"]
-
-    def get_name_with_product(self, obj: Service) -> str:
-        return f"{obj.name} ({obj.product.name})"
 
 
 def _get_all_licenses_count(product: Product) -> Optional[int]:

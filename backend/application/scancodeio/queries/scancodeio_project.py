@@ -38,7 +38,7 @@ def get_scancodeio_projects() -> QuerySet[ScanCodeIO_Project]:
 
     scancodeio_projects = ScanCodeIO_Project.objects.select_related("branch", "service").order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 

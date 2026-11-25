@@ -6,6 +6,7 @@ import {
     EditButton,
     Labeled,
     PrevNextButtons,
+    SelectField,
     Show,
     TextField,
     TopToolbar,
@@ -22,6 +23,7 @@ import UserProductNotificationEmbeddedList from "../../notifications/product_not
 import ApiTokenCreate from "../api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../api_tokens/ApiTokenEmbeddedList";
 import AuthorizationGroupEmbeddedList from "../authorization_groups/AuthorizationGroupEmbeddedList";
+import { ROLE_CHOICES } from "../types";
 import UserChangePassword from "./UserChangePassword";
 
 const ShowActions = () => {
@@ -154,6 +156,11 @@ const UserComponent = () => {
                                         <Labeled label="Service account">
                                             <BooleanField source="is_service_account" />
                                         </Labeled>
+                                        {user.instance_role && (
+                                            <Labeled label="Instance role">
+                                                <SelectField source="instance_role" choices={ROLE_CHOICES} />
+                                            </Labeled>
+                                        )}
                                     </Stack>
                                 </Paper>
                                 <Paper sx={{ marginBottom: 1, padding: 2, width: "100%", height: "100%" }}>

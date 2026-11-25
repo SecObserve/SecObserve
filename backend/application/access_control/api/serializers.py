@@ -25,7 +25,7 @@ from application.access_control.queries.authorization_group_member import (
 )
 from application.access_control.services.current_user import get_current_user
 from application.access_control.types import ObservationColumn
-from application.authorization.services.roles_permissions import Permissions
+from application.authorization.services.roles_permissions import Permissions, Roles
 from application.commons.services.functions import get_comma_separated_as_list
 from application.core.models import Product_Authorization_Group_Member, Product_Member
 from application.notifications.models import Product_Notification
@@ -55,6 +55,7 @@ class UserListSerializer(ModelSerializer):
             "is_superuser",
             "is_external",
             "is_service_account",
+            "instance_role",
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
@@ -80,6 +81,7 @@ class UserListSerializer(ModelSerializer):
             data.pop("is_superuser")
             data.pop("is_external")
             data.pop("is_service_account")
+            data.pop("instance_role")
             data.pop("setting_theme")
             data.pop("setting_list_size")
             data.pop("setting_package_info_preference")
@@ -142,6 +144,7 @@ class UserSerializer(UserListSerializer):
             "is_superuser",
             "is_external",
             "is_service_account",
+            "instance_role",
             "setting_theme",
             "setting_list_size",
             "setting_package_info_preference",
@@ -220,12 +223,27 @@ class UserUpdateSerializer(ModelSerializer):
             "is_superuser",
             "is_external",
             "is_service_account",
+            "instance_role",
         ]
 
     def validate_is_service_account(self, value: bool) -> bool:
         if self.instance and value != self.instance.is_service_account:
             raise ValidationError("Cannot be changed after the user has been created")
         return value
+
+    def validate(self, attrs: dict) -> dict:
+        instance_role = attrs.get("instance_role")
+        if instance_role is not None:
+            is_service_account = attrs.get(
+                "is_service_account", self.instance.is_service_account if self.instance else False
+            )
+            if not is_service_account:
+                raise ValidationError("Only service accounts can have an instance role")
+            if instance_role == Roles.Owner:
+                raise ValidationError("Owner cannot be an instance role")
+            if not Roles.has_value(instance_role):
+                raise ValidationError("Not a valid role")
+        return attrs
 
     def create(self, validated_data: dict[str, Any]) -> User:
         if validated_data.get("is_service_account"):

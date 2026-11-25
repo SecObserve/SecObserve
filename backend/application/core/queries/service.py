@@ -40,7 +40,7 @@ def get_services(with_annotations: bool = False) -> QuerySet[Service]:
     services = Service.objects.all().order_by("id")
     services = _add_annotations(services, with_annotations)
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 

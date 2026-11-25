@@ -76,7 +76,7 @@ def get_products(is_product_group: Optional[bool] = None) -> QuerySet[Product]:
 
     products = Product.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("pk"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product_group"), user=user)
 

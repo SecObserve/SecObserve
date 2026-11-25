@@ -469,6 +469,58 @@ class TestAuthorization(BaseTestCase):
         role = get_highest_user_role(product, user)
         self.assertEqual(Roles.Owner, role)
 
+    # --- instance role ---
+
+    @patch(
+        "application.authorization.services.authorization.get_highest_role_of_product_authorization_group_members_for_user"
+    )
+    @patch("application.authorization.services.authorization.get_product_member")
+    def test_get_highest_user_role_instance_role_only(self, mock_member, mock_group_role):
+        mock_member.return_value = None
+        mock_group_role.return_value = 0
+        user = User(id=2, username="sa", is_service_account=True, instance_role=Roles.Reader)
+        self.assertEqual(Roles.Reader, get_highest_user_role(self.product_1, user))
+
+    @patch(
+        "application.authorization.services.authorization.get_highest_role_of_product_authorization_group_members_for_user"
+    )
+    @patch("application.authorization.services.authorization.get_product_member")
+    def test_get_highest_user_role_membership_higher(self, mock_member, mock_group_role):
+        mock_member.return_value = Product_Member(role=Roles.Writer)
+        mock_group_role.return_value = 0
+        user = User(id=2, username="sa", is_service_account=True, instance_role=Roles.Reader)
+        self.assertEqual(Roles.Writer, get_highest_user_role(self.product_1, user))
+
+    @patch(
+        "application.authorization.services.authorization.get_highest_role_of_product_authorization_group_members_for_user"
+    )
+    @patch("application.authorization.services.authorization.get_product_member")
+    def test_get_highest_user_role_instance_role_higher(self, mock_member, mock_group_role):
+        mock_member.return_value = Product_Member(role=Roles.Reader)
+        mock_group_role.return_value = 0
+        user = User(id=2, username="sa", is_service_account=True, instance_role=Roles.Maintainer)
+        self.assertEqual(Roles.Maintainer, get_highest_user_role(self.product_1, user))
+
+    @patch("application.authorization.services.authorization.is_user_designated_assessment_approver")
+    @patch("application.authorization.services.authorization.assessment_approvers_configured")
+    @patch(
+        "application.authorization.services.authorization.get_highest_role_of_product_authorization_group_members_for_user"
+    )
+    @patch("application.authorization.services.authorization.get_product_member")
+    def test_user_has_permission_approval_instance_role_service_account(
+        self, mock_member, mock_group_role, mock_configured, mock_approver
+    ):
+        mock_member.return_value = None
+        mock_group_role.return_value = 0
+        mock_approver.return_value = False
+        user = User(id=2, username="sa", is_service_account=True, instance_role=Roles.Maintainer)
+
+        mock_configured.return_value = True
+        self.assertFalse(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, user))
+
+        mock_configured.return_value = False
+        self.assertTrue(user_has_permission(self.product_1, Permissions.Observation_Log_Approval, user))
+
 
 # ---------------------------------------------------------------
 # helper functions

@@ -21,7 +21,7 @@ def get_product_metrics() -> QuerySet[Product_Metrics]:
 
     product_metrics = Product_Metrics.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 

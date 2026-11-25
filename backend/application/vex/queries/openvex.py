@@ -16,7 +16,9 @@ def get_openvex_s() -> QuerySet[OpenVEX]:
 
     openvex_s = OpenVEX.objects.all().order_by("id")
 
-    if not user.is_superuser:
+    if user.can_access_all_products and not user.is_superuser:
+        openvex_s = openvex_s.filter(Q(product__isnull=False) | Q(user=user))
+    elif not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 

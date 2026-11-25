@@ -34,7 +34,7 @@ def get_components() -> QuerySet[Component]:
     # The products are resolved before the query is built: as a subquery the permission check
     # would be repeated in each of the subqueries below and would keep the database from using
     # the indexes of the product columns.
-    if not user.is_superuser:
+    if not user.can_access_all_products:
         product_ids = list(get_products(is_product_group=False).values_list("pk", flat=True))
         active_observations = active_observations.filter(product_id__in=product_ids)
         inactive_observations = inactive_observations.filter(product_id__in=product_ids)
@@ -46,6 +46,7 @@ def get_components() -> QuerySet[Component]:
         has_licenses=Exists(license_components),
     )
 
+    # Unlike the product scoping above, the instance role hides orphans like a member of every product
     if not user.is_superuser:
         components = components.filter(
             Q(has_active_observations=True) | Q(has_inactive_observations=True) | Q(has_licenses=True)

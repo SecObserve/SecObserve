@@ -23,7 +23,9 @@ def get_notifications() -> QuerySet[Notification]:
 
     notifications = Notification.objects.all().order_by("-created")
 
-    if not user.is_superuser:
+    if user.can_access_all_products and not user.is_superuser:
+        notifications = notifications.filter(product__isnull=False)
+    elif not user.is_superuser:
         product_members = Product_Member.objects.filter(product=OuterRef("product_id"), user=user)
         product_group_members = Product_Member.objects.filter(product=OuterRef("product__product_group"), user=user)
 
@@ -45,18 +47,18 @@ def get_notifications() -> QuerySet[Notification]:
         )
 
         notifications = notifications.filter(
-            (
-                Q(product__member=True)
-                | Q(product__product_group__member=True)
-                | Q(authorization_group_member=True)
-                | Q(product_group_authorization_group_member=True)
-            )
-            & (
-                Q(type=Notification.TYPE_SECURITY_GATE)
-                | Q(type=Notification.TYPE_TASK)
-                | Q(type=Notification.TYPE_OBSERVATION)
-                | Q(type=Notification.TYPE_OBSERVATION_TITLE)
-            )
+            Q(product__member=True)
+            | Q(product__product_group__member=True)
+            | Q(authorization_group_member=True)
+            | Q(product_group_authorization_group_member=True)
+        )
+
+    if not user.is_superuser:
+        notifications = notifications.filter(
+            Q(type=Notification.TYPE_SECURITY_GATE)
+            | Q(type=Notification.TYPE_TASK)
+            | Q(type=Notification.TYPE_OBSERVATION)
+            | Q(type=Notification.TYPE_OBSERVATION_TITLE)
         )
 
     return notifications

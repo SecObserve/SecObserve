@@ -56,9 +56,13 @@ from application.core.api.serializers_observation import (
     ObservationBulkDeleteSerializer,
     ObservationBulkMarkDuplicatesSerializer,
 )
-from application.core.api.serializers_product import (
+from application.core.api.serializers_others import (
     BranchNameSerializer,
     BranchSerializer,
+    ServiceNameSerializer,
+    ServiceSerializer,
+)
+from application.core.api.serializers_product import (
     ProductApiTokenSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductGroupListSerializer,
@@ -68,8 +72,6 @@ from application.core.api.serializers_product import (
     ProductNameSerializer,
     ProductSerializer,
     SecurityGateCountSerializer,
-    ServiceNameSerializer,
-    ServiceSerializer,
 )
 from application.core.models import (
     Branch,
