@@ -15,15 +15,14 @@ from application.core.api.serializers_observation import (
     ObservationUpdateSerializer,
     _get_origin_cloud_resource_url,
 )
+from application.core.api.serializers_others import BranchSerializer, ServiceSerializer
 from application.core.api.serializers_product import (
-    BranchSerializer,
     NestedProductListSerializer,
     NestedProductSerializer,
     ProductAuthorizationGroupMemberSerializer,
     ProductGroupSerializer,
     ProductMemberSerializer,
     ProductSerializer,
-    ServiceSerializer,
 )
 from application.core.models import (
     Branch,
