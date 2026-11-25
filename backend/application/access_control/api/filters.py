@@ -141,6 +141,7 @@ class UserFilter(FilterSet):
             ("is_active", "is_active"),
             ("is_superuser", "is_superuser"),
             ("is_external", "is_external"),
+            ("is_service_account", "is_service_account"),
         ),
     )
 
@@ -153,6 +154,7 @@ class UserFilter(FilterSet):
             "is_active",
             "is_superuser",
             "is_external",
+            "is_service_account",
         ]
 
     def __init__(
@@ -169,6 +171,7 @@ class UserFilter(FilterSet):
             self.filters.pop("is_active")
             self.filters.pop("is_superuser")
             self.filters.pop("is_external")
+            self.filters.pop("is_service_account")
             self.filters["ordering"] = OrderingFilter(
                 fields=(
                     ("username", "username"),

@@ -2,6 +2,7 @@ import re
 from datetime import date
 from typing import Any, Optional
 
+from django.contrib.auth.hashers import make_password
 from rest_framework.serializers import (
     CharField,
     DateField,
@@ -227,11 +228,9 @@ class UserUpdateSerializer(ModelSerializer):
         return value
 
     def create(self, validated_data: dict[str, Any]) -> User:
-        user = super().create(validated_data)
-        if user.is_service_account:
-            user.set_unusable_password()
-            user.save()
-        return user
+        if validated_data.get("is_service_account"):
+            validated_data["password"] = make_password(None)
+        return super().create(validated_data)
 
 
 class UserPasswordSerializer(Serializer):

@@ -6,7 +6,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 from rest_framework.exceptions import AuthenticationFailed
 
-from application.access_control.models import JWT_Secret
+from application.access_control.models import JWT_Secret, User
 from application.access_control.services.jwt_authentication import (
     JWTAuthentication,
     create_jwt,
@@ -136,6 +136,18 @@ class TestJWTAuthentication(BaseTestCase):
         self.assertEqual("User is deactivated.", str(e.exception))
 
         self.user_internal.is_active = True
+
+    def test_authenticate_service_account(self):
+        # JWT of a user, whose username has been reused for a service account
+        token = create_jwt(User(username="sa"))
+        User.objects.create_user(username="sa", is_service_account=True)
+
+        request = HttpRequest()
+        request.META["HTTP_AUTHORIZATION"] = f"JWT {token}".encode()
+        with self.assertRaises(AuthenticationFailed) as e:
+            JWTAuthentication().authenticate(request)
+
+        self.assertEqual("Service accounts cannot sign in", str(e.exception))
 
     @patch("application.access_control.services.jwt_authentication.JWTAuthentication._validate_jwt")
     def test_authenticate_successful(self, mock):
