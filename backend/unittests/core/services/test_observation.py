@@ -2,6 +2,10 @@ from copy import deepcopy
 from decimal import Decimal
 from unittest.mock import patch
 
+from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+
 from application.core.models import Component, Observation, Service
 from application.core.services.observation import (
     _get_string_to_hash,
@@ -9,8 +13,10 @@ from application.core.services.observation import (
     get_current_priority,
     get_current_severity,
     get_current_status,
+    get_field_values,
     get_identity_hash,
     normalize_observation_fields,
+    save_changed_fields,
 )
 from application.core.types import Severity, Status
 from unittests.base_test_case import BaseTestCase
@@ -729,3 +735,51 @@ def _get_excludes():
         "identity_hash",
         "observation_notified",
     ]
+
+
+class TestSaveChangedFields(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_unchanged_float_cvss_score_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss3_score = Decimal("9.8")
+        observation.cvss3_vector = ""
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = get_field_values(observation)
+        # Parsers deliver the score as float, e.g. from JSON
+        observation.cvss3_score = 9.8
+
+        with CaptureQueriesContext(connection) as context:
+            save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
+
+    def test_unchanged_cvss4_vector_not_saved(self):
+        observation = Observation.objects.get(id=1)
+        observation.cvss4_vector = "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
+        observation.save()
+
+        observation = Observation.objects.get(id=1)
+        values_before = get_field_values(observation)
+        # Calculates the score from the vector, like _process_current_observation does
+        get_current_severity(observation)
+
+        with CaptureQueriesContext(connection) as context:
+            save_changed_fields(observation, values_before)
+
+        observation_updates = [
+            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
+        ]
+        self.assertEqual([], observation_updates)
+        self.assertEqual(Decimal("9.3"), observation.cvss4_score)

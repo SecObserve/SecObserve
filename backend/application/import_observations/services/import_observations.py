@@ -536,6 +536,7 @@ def _process_current_observation(
             vex_remediations=None,
             assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
             risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
+            values_before=values_before,
         )
 
 

@@ -123,7 +123,7 @@ class Rule_Engine:
         ):
             _write_observation_log_no_rule(
                 observation,
-                get_field_values(observation_before),
+                observation_before,
                 observation_before.product_rule,
                 observation_before.general_rule,
             )
@@ -148,7 +148,7 @@ class Rule_Engine:
         ):
             _write_observation_log_no_rule(
                 observation,
-                get_field_values(observation_before),
+                observation_before,
                 observation_before.product_rule_rego,
                 observation_before.general_rule_rego,
             )
@@ -502,7 +502,7 @@ def _write_observation_log(
 
 def _write_observation_log_no_rule(
     observation: Observation,
-    values_before: dict[str, Any],
+    observation_before: Observation,
     previous_product_rule: Optional[Rule],
     previous_general_rule: Optional[Rule],
 ) -> None:
@@ -577,5 +577,5 @@ def _write_observation_log_no_rule(
         vex_remediations=log_vex_remediations,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
-        values_before=values_before,
+        values_before=get_field_values(observation_before),
     )

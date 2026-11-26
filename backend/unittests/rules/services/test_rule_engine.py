@@ -348,6 +348,32 @@ class TestRuleEngineRuleIds(BaseTestCase):
         self.assertEqual(Severity.SEVERITY_LOW, observation.current_severity)
         self.assertEqual(rule.pk, observation.general_rule_id)
 
+    def test_apply_rules_for_observation_rule_removed_saves_only_changed_fields(self):
+        rule = Rule.objects.create(
+            name="general_rule",
+            new_severity=Severity.SEVERITY_LOW,
+            approval_status=Rule_Status.RULE_STATUS_AUTO_APPROVED,
+        )
+        observation = Observation.objects.get(id=1)
+        observation.general_rule = rule
+        observation.rule_severity = Severity.SEVERITY_LOW
+        observation.current_severity = Severity.SEVERITY_LOW
+        observation.save()
+
+        observation = Observation.objects.select_related("product", "branch", "origin_service").get(id=1)
+        rule_engine = Rule_Engine(observation.product)
+        rule_engine.rules = []
+        # Concurrent change after the observation has been loaded must not be overwritten
+        Observation.objects.filter(id=1).update(recommendation="concurrent change")
+
+        rule_engine.apply_rules_for_observation(observation)
+
+        observation = Observation.objects.get(id=1)
+        self.assertEqual("concurrent change", observation.recommendation)
+        self.assertIsNone(observation.general_rule_id)
+        self.assertEqual("", observation.rule_severity)
+        self.assertNotEqual(Severity.SEVERITY_LOW, observation.current_severity)
+
 
 class TestRuleEngineRegoPerObservation(BaseTestCase):
     @classmethod
