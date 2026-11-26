@@ -8,7 +8,7 @@ from application.licenses.models import License_Component
 
 
 def export_license_components_excel(product: Product) -> Workbook:
-    license_components = _get_license_components(product)
+    license_components = _get_license_components(product).iterator(chunk_size=2000)
     return export_excel(license_components, "License Components", _get_excludes(), _get_foreign_keys())
 
 
@@ -27,7 +27,7 @@ def _get_license_components(product: Product) -> QuerySet:
         "numerical_evaluation_result", "effective_license_name", "component_name_version"
     )
 
-    return license_components
+    return license_components.select_related(*_get_foreign_keys())
 
 
 def _get_excludes() -> list[str]:
@@ -47,4 +47,12 @@ def _get_excludes() -> list[str]:
 
 
 def _get_foreign_keys() -> list[str]:
-    return ["branch", "declared_spdx_license", "concluded_spdx_license", "product", "origin_service"]
+    return [
+        "branch",
+        "imported_declared_spdx_license",
+        "imported_concluded_spdx_license",
+        "manual_concluded_spdx_license",
+        "effective_spdx_license",
+        "product",
+        "origin_service",
+    ]

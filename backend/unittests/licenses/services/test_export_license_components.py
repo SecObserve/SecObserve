@@ -1,10 +1,13 @@
 from datetime import datetime
-from io import StringIO
+from io import BytesIO, StringIO
 
 from defusedcsv import csv
 from django.core.management import call_command
+from openpyxl import load_workbook
 
+from application.commons.services.export import excel_response
 from application.core.models import Product
+from application.licenses.models import License, License_Component
 from application.licenses.services.export_license_components import (
     export_license_components_csv,
     export_license_components_excel,
@@ -29,8 +32,9 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
     def test_export_license_components_excel(self):
         product = Product.objects.get(pk=1)
 
-        workbook = export_license_components_excel(product)
-        worksheet = workbook["License Components"]
+        with self.assertNumQueries(1):
+            response = excel_response(export_license_components_excel(product), "license_components.xlsx")
+        worksheet = load_workbook(BytesIO(b"".join(response.streaming_content)))["License Components"]
 
         i = 0
         for row in worksheet.rows:
@@ -95,45 +99,45 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             "Upload filename",
             None,
             None,
-            "",
-            "",
-            "",
-            "",
+            None,
+            None,
+            None,
+            None,
             1,
             "internal_component",
             "internal_component:1.0.0",
-            "",
-            "",
-            "",
-            "",
+            None,
+            None,
+            None,
+            None,
             "1.0.0",
             datetime(2022, 12, 15, 17, 10, 35, 513000),
-            "",
+            None,
             "No license information",
-            "",
-            "",
+            None,
+            None,
             None,
             None,
             "Allowed",
             1,
             datetime(2022, 12, 15, 17, 10, 35, 513000),
-            "",
+            None,
             "No license information",
-            "",
-            "",
             None,
             None,
-            "",
+            None,
+            None,
+            None,
             "internal license",
-            "",
+            None,
             "internal license",
             None,
             None,
             datetime(2022, 12, 15, 17, 10, 35, 513000),
-            "",
-            "",
+            None,
+            None,
             "No license information",
-            "",
+            None,
             None,
             None,
             1,
@@ -141,15 +145,19 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
             None,
             "db_product_internal",
             1,
-            "",
+            None,
         ]
 
         self.assertEqual(expected_values, actual_values)
 
     def test_export_license_components_csv(self):
         product = Product.objects.get(pk=1)
+        License_Component.objects.filter(product=product).update(
+            effective_spdx_license=License.objects.get(spdx_id="MIT")
+        )
 
-        response = export_license_components_csv(product)
+        with self.assertNumQueries(1):
+            response = export_license_components_csv(product)
 
         self.assertEqual('attachment; filename="license_observations.csv"', response["Content-Disposition"])
         self.assertEqual("text/csv", response["Content-Type"])
@@ -158,3 +166,4 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         self.assertEqual(49, len(rows[0]))
         self.assertEqual("Component name version", rows[0][8])
         self.assertEqual("internal_component:1.0.0", rows[1][8])
+        self.assertEqual("MIT", rows[1][rows[0].index("Effective spdx license")])
