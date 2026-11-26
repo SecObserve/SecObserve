@@ -733,12 +733,13 @@ def _resolve_unimported_observations(
         if observation.parser_status == Status.STATUS_RESOLVED:
             continue
 
+        values_before = get_field_values(observation)
         old_status = get_current_status(observation)
         observation.parser_status = Status.STATUS_RESOLVED
         new_status = get_current_status(observation)
 
         if old_status == new_status:
-            observation.save()
+            save_changed_fields(observation, values_before)
         else:
             if old_status in Status.STATUS_ACTIVE:
                 observations_resolved.add(observation)
@@ -756,6 +757,7 @@ def _resolve_unimported_observations(
                 vex_remediations=None,
                 assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
                 risk_acceptance_expiry_date=None,
+                values_before=values_before,
             )
 
     return observations_resolved

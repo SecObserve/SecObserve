@@ -16,7 +16,7 @@ def expire_risk_acceptances() -> str:
         )
         if not assessment_removed:
             observation.parser_status = Status.STATUS_OPEN
-            observation.save()
+            observation.save(update_fields=["parser_status", "modified"])
             save_assessment(
                 observation=observation,
                 new_severity="",

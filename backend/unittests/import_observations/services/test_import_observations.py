@@ -2531,6 +2531,28 @@ class TestProcessCurrentObservation(BaseTestCase):
 
 
 class TestResolveUnimportedObservations(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_resolved_saves_only_changed_fields(self):
+        Observation.objects.filter(id=1).update(
+            parser_status=Status.STATUS_OPEN, assessment_status="", current_status=Status.STATUS_OPEN
+        )
+        observation = Observation.objects.get(id=1)
+        # Concurrent change after the observation has been loaded must not be overwritten
+        Observation.objects.filter(id=1).update(recommendation="concurrent change")
+
+        _resolve_unimported_observations({"hash": observation})
+
+        observation = Observation.objects.get(id=1)
+        self.assertEqual("concurrent change", observation.recommendation)
+        self.assertEqual(Status.STATUS_RESOLVED, observation.parser_status)
+        self.assertEqual(Status.STATUS_RESOLVED, observation.current_status)
+
     @patch("application.core.models.Observation.save")
     @patch("application.import_observations.services.import_observations.create_observation_log")
     def test_already_resolved(self, mock_create_observation_log, mock_save):

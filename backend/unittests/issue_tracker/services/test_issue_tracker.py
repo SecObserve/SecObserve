@@ -87,7 +87,7 @@ class TestIssueTracker(BaseTestCase):
 
         expected_calls = [call(observation.product), call().create_issue(observation)]
         mock.assert_has_calls(expected_calls, any_order=False)
-        observation_mock.assert_called_once()
+        observation_mock.assert_called_once_with(update_fields=["issue_tracker_issue_id", "modified"])
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     @patch("application.core.models.Observation.save")
@@ -147,7 +147,7 @@ class TestIssueTracker(BaseTestCase):
             call().close_issue(observation, issue),
         ]
         factory_mock.assert_has_calls(expected_calls, any_order=False)
-        observation_mock.assert_called_once()
+        observation_mock.assert_called_once_with(update_fields=["issue_tracker_issue_closed", "modified"])
 
     @patch("application.issue_tracker.services.issue_tracker.issue_tracker_factory")
     @patch("application.issue_tracker.services.issue_tracker.handle_task_exception")
@@ -202,7 +202,9 @@ class TestIssueTracker(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             push_observation_to_issue_tracker(observation, None)
 
-        self.assertEqual(observation_mock.call_count, 2)
+        self.assertEqual(
+            [call(update_fields=["issue_tracker_issue_id", "modified"])] * 2, observation_mock.call_args_list
+        )
         self.assertEqual(observation.issue_tracker_issue_id, factory_mock.return_value.create_issue.return_value)
         expected_calls = [
             call(observation.product),
@@ -278,7 +280,7 @@ class TestIssueTracker(BaseTestCase):
         with self.captureOnCommitCallbacks(execute=True):
             push_observation_to_issue_tracker(observation, None)
 
-        observation_mock.assert_called_once()
+        observation_mock.assert_called_once_with(update_fields=["issue_tracker_issue_closed", "modified"])
         expected_calls = [
             call(observation.product),
             call().get_issue(observation.product, "123"),

@@ -226,4 +226,4 @@ def set_potential_duplicate(observation: Observation) -> None:
         observation.has_potential_duplicates = False
 
     if initial_has_potential_duplicates != observation.has_potential_duplicates:
-        observation.save()
+        observation.save(update_fields=["has_potential_duplicates", "modified"])

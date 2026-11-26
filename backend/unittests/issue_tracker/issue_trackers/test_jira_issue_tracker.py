@@ -67,7 +67,7 @@ class TestJiraIssueTracker(BaseTestCase):
             issuetype="Vulnerability",
         )
         base_url_mock.assert_called_once()
-        save_mock.assert_called_once()
+        save_mock.assert_called_once_with(update_fields=["issue_tracker_jira_initial_status", "modified"])
         self.assertEqual("jira_issue_1", issue_id)
         self.assertEqual("Open", self.observation_1.issue_tracker_jira_initial_status)
         self.assertEqual(0, issue_tracker.jira._session.max_redirects)

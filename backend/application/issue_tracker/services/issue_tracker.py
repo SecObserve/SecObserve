@@ -44,7 +44,7 @@ def _push_observation_to_issue_tracker_background(observation: Observation, user
         # If the issue_tracker_issue_id is set but the issue does not exist, remove the id
         if observation.issue_tracker_issue_id and not issue:
             observation.issue_tracker_issue_id = ""
-            observation.save()
+            observation.save(update_fields=["issue_tracker_issue_id", "modified"])
 
         if observation.current_status in Status.STATUS_ACTIVE:
             if observation.product.issue_tracker_minimum_severity:
@@ -60,17 +60,17 @@ def _push_observation_to_issue_tracker_background(observation: Observation, user
                 else:
                     issue_id = issue_tracker.create_issue(observation)
                     observation.issue_tracker_issue_id = issue_id
-                    observation.save()
+                    observation.save(update_fields=["issue_tracker_issue_id", "modified"])
             else:
                 if issue and not observation.issue_tracker_issue_closed:
                     issue_tracker.close_issue(observation, issue)
                     observation.issue_tracker_issue_closed = True
-                    observation.save()
+                    observation.save(update_fields=["issue_tracker_issue_closed", "modified"])
         else:
             if issue:
                 issue_tracker.close_issue(observation, issue)
                 observation.issue_tracker_issue_closed = True
-                observation.save()
+                observation.save(update_fields=["issue_tracker_issue_closed", "modified"])
     except Exception as e:
         handle_task_exception(_get_notification_exception(e), user)
         raise
