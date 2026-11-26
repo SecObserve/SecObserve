@@ -93,10 +93,8 @@ def _excel_value(value: Any) -> Any:
     return _escape_formula(value)
 
 
-def export_csv_columns(
-    response: HttpResponse | IO[str], rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn]
-) -> None:
-    writer = csv.writer(response)  # nosemgrep
+def export_csv_columns(file: IO[str], rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn]) -> None:
+    writer = csv.writer(file)  # nosemgrep
     # defusedcsv is actually used but not detected by Semgrep
 
     writer.writerow([column.header for column in columns])

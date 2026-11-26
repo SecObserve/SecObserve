@@ -1,5 +1,5 @@
 from django.db.models import QuerySet
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
@@ -103,12 +103,9 @@ class ComponentViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
 
     @extend_schema(methods=["GET"], responses={200: None})
     @action(detail=False, methods=["get"])
-    def export_csv(self, request: Request) -> HttpResponse:
+    def export_csv(self, request: Request) -> FileResponse:
         components = self.filter_queryset(self.get_queryset())
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=components.csv"
-        export_components_csv(response, components)
-        return response
+        return export_components_csv(components)
 
 
 class ComponentNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
