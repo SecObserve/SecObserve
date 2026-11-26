@@ -2483,6 +2483,21 @@ class TestSaveChangedFields(BaseTestCase):
 
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_severity_changed_saves_only_changed_fields(self, mock_apply_epss, mock_apply_exploit_information):
+        imported_observation = Observation.objects.get(id=1)
+        imported_observation.parser_severity = Severity.SEVERITY_CRITICAL
+        observation_before = Observation.objects.get(id=1)
+        # Concurrent change after the observation has been loaded must not be overwritten
+        Observation.objects.filter(id=1).update(recommendation="concurrent change")
+
+        _process_current_observation(imported_observation, observation_before, Settings.load(), {}, {})
+
+        observation = Observation.objects.get(id=1)
+        self.assertEqual("concurrent change", observation.recommendation)
+        self.assertEqual(Severity.SEVERITY_CRITICAL, observation.current_severity)
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
     def test_origin_fields_updated(self, mock_apply_epss, mock_apply_exploit_information):
         observation = self._process_imported_observation(
             origin_component_cpe="cpe:2.3:a:new:new:1.0:*:*:*:*:*:*:*",
