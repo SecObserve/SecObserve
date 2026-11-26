@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.db.models import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse
 from openpyxl import Workbook
 
 from application.commons.services.export import export_csv, export_excel
@@ -11,18 +11,13 @@ from application.metrics.queries.product_metrics import get_product_metrics
 
 
 def export_product_metrics_excel(product: Optional[Product]) -> Workbook:
-    product_metrics = _get_product_metrics(product)
+    product_metrics = _get_product_metrics(product).iterator(chunk_size=2000)
     return export_excel(product_metrics, "Product Metrics", _get_excludes(), _get_foreign_keys())
 
 
-def export_product_metrics_csv(response: HttpResponse, product: Optional[Product]) -> None:
-    product_metrics = _get_product_metrics(product)
-    return export_csv(
-        response,
-        product_metrics,
-        _get_excludes(),
-        _get_foreign_keys(),
-    )
+def export_product_metrics_csv(product: Optional[Product]) -> FileResponse:
+    product_metrics = _get_product_metrics(product).iterator(chunk_size=2000)
+    return export_csv(product_metrics, _get_excludes(), _get_foreign_keys(), "product_metrics.csv")
 
 
 def _get_product_metrics(product: Optional[Product]) -> QuerySet[Product_Metrics]:
@@ -33,7 +28,7 @@ def _get_product_metrics(product: Optional[Product]) -> QuerySet[Product_Metrics
         else:
             product_metrics = product_metrics.filter(product=product)
     product_metrics = product_metrics.order_by("product__name", "date")
-    return product_metrics
+    return product_metrics.select_related(*_get_foreign_keys())
 
 
 def _get_excludes() -> list[str]:

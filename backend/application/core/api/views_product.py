@@ -1,10 +1,9 @@
 import logging
 import re
-from tempfile import NamedTemporaryFile
 from typing import Any, cast
 
 from django.db.models import QuerySet
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
@@ -307,7 +306,7 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
         ],
     )
     @action(detail=True, methods=["get"])
-    def export_observations_csv(self, request: Request, pk: int) -> HttpResponse:
+    def export_observations_csv(self, request: Request, pk: int) -> FileResponse:
         product = self.__get_product(pk)
 
         statuses = self.request.query_params.getlist("status")
@@ -315,46 +314,21 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
             if status and (status, status) not in Status.STATUS_CHOICES:
                 raise ValidationError(f"Status {status} is not a valid choice")
 
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=observations.csv"
-
-        export_observations_csv_for_product(response, product, statuses)
-
-        return response
+        return export_observations_csv_for_product(product, statuses)
 
     @action(detail=True, methods=["get"])
-    def export_license_components_excel(self, request: Request, pk: int) -> HttpResponse:
+    def export_license_components_excel(self, request: Request, pk: int) -> FileResponse:
         product = self.__get_product(pk)
-
-        workbook = export_license_components_excel(product)
-        with NamedTemporaryFile() as tmp:
-            workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
-            # export works fine without .flush()
-            tmp.seek(0)
-            stream = tmp.read()
-
-        response = HttpResponse(
-            content=stream,
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        response["Content-Disposition"] = "attachment; filename=license_components.xlsx"
-
-        return response
+        return excel_response(export_license_components_excel(product), "license_components.xlsx")
 
     @extend_schema(
         methods=["GET"],
         responses={200: None},
     )
     @action(detail=True, methods=["get"])
-    def export_license_components_csv(self, request: Request, pk: int) -> HttpResponse:
+    def export_license_components_csv(self, request: Request, pk: int) -> FileResponse:
         product = self.__get_product(pk)
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=license_observations.csv"
-
-        export_license_components_csv(response, product)
-
-        return response
+        return export_license_components_csv(product)
 
     @extend_schema(
         methods=["POST"],

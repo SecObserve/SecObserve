@@ -2,7 +2,6 @@ from io import StringIO
 from unittest.mock import patch
 
 from defusedcsv import csv
-from django.http import HttpResponse
 
 from application.commons.models import Settings
 from application.core.models import Component
@@ -32,10 +31,11 @@ class TestExportComponents(BaseTestCase):
             purl_namespace="org.yaml",
         )
 
-        response = HttpResponse()
-        export_components_csv(response, get_components().filter(pk=component.pk))
+        response = export_components_csv(get_components().filter(pk=component.pk))
 
-        rows = list(csv.reader(StringIO(response.content.decode())))
+        self.assertEqual('attachment; filename="components.csv"', response["Content-Disposition"])
+        self.assertEqual("text/csv", response["Content-Type"])
+        rows = list(csv.reader(StringIO(b"".join(response.streaming_content).decode("utf-8"), newline="")))
         self.assertEqual([column.header for column in COLUMNS], rows[0])
         self.assertEqual(
             {

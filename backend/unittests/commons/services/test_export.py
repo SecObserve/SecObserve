@@ -1,12 +1,14 @@
 from datetime import datetime, timezone
+from io import BytesIO
 from types import SimpleNamespace
 from unittest import TestCase
 
-from django.http import HttpResponse
 from django.test import SimpleTestCase, override_settings
+from openpyxl import load_workbook
 
 from application.commons.services.export import (
     _escape_formula,
+    excel_response,
     export_csv,
     export_excel,
 )
@@ -56,11 +58,13 @@ class TestEscapeFormula(TestCase):
 class TestExportTimeZone(SimpleTestCase):
     @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
     def test_csv_local_time(self):
-        response = HttpResponse(content_type="text/csv")
+        response = export_csv(
+            [SimpleNamespace(created=datetime(2026, 10, 3, 20, 30, tzinfo=timezone.utc))], [], [], "test.csv"
+        )
 
-        export_csv(response, [SimpleNamespace(created=datetime(2026, 10, 3, 20, 30, tzinfo=timezone.utc))], [], [])
-
-        self.assertEqual("Created\r\n2026-10-04 03:30:00+07:00\r\n", response.content.decode())
+        self.assertEqual('attachment; filename="test.csv"', response["Content-Disposition"])
+        self.assertEqual("text/csv", response["Content-Type"])
+        self.assertEqual("Created\r\n2026-10-04 03:30:00+07:00\r\n", b"".join(response.streaming_content).decode())
 
     @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
     def test_excel_local_time(self):
@@ -68,4 +72,6 @@ class TestExportTimeZone(SimpleTestCase):
             [SimpleNamespace(created=datetime(2026, 10, 3, 20, 30, tzinfo=timezone.utc))], "Test", [], []
         )
 
-        self.assertEqual([("Created",), (datetime(2026, 10, 4, 3, 30),)], list(workbook.active.values))
+        response = excel_response(workbook, "test.xlsx")
+        worksheet = load_workbook(BytesIO(b"".join(response.streaming_content))).active
+        self.assertEqual([("Created",), (datetime(2026, 10, 4, 3, 30),)], list(worksheet.values))

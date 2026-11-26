@@ -1,12 +1,12 @@
 from typing import Iterator
 
 from django.db.models.query import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse
 from openpyxl import Workbook
 
 from application.commons.services.export import (
     ExportColumn,
-    export_csv_columns,
+    csv_response,
     export_excel_columns,
     frontend_url,
 )
@@ -34,8 +34,8 @@ def export_components_excel(components: QuerySet) -> Workbook:
     return export_excel_columns(_get_rows(components), "Components", COLUMNS)
 
 
-def export_components_csv(response: HttpResponse, components: QuerySet) -> None:
-    export_csv_columns(response, _get_rows(components), COLUMNS)
+def export_components_csv(components: QuerySet) -> FileResponse:
+    return csv_response(_get_rows(components), COLUMNS, "components.csv")
 
 
 def _get_rows(components: QuerySet) -> Iterator[tuple]:

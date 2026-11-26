@@ -1,8 +1,7 @@
 import csv
-from tempfile import NamedTemporaryFile
 from typing import Optional
 
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
@@ -15,6 +14,7 @@ from rest_framework.views import APIView
 from application.authorization.services.authorization import user_has_permission_or_403
 from application.authorization.services.roles_permissions import Permissions
 from application.commons.models import Settings
+from application.commons.services.export import excel_response
 from application.core.models import Product
 from application.core.queries.product import get_product_by_id
 from application.core.types import Severity
@@ -68,24 +68,9 @@ class ProductMetricsExportExcelView(APIView):
         },
     )
     @action(detail=False, methods=["get"])
-    def get(self, request: Request) -> HttpResponse:
+    def get(self, request: Request) -> FileResponse:
         product = _get_and_check_product(request)
-
-        workbook = export_product_metrics_excel(product)
-
-        with NamedTemporaryFile() as tmp:
-            workbook.save(tmp.name)  # nosemgrep: python.lang.correctness.tempfile.flush.tempfile-without-flush
-            # export works fine without .flush()
-            tmp.seek(0)
-            stream = tmp.read()
-
-        response = HttpResponse(
-            content=stream,
-            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
-        response["Content-Disposition"] = "attachment; filename=product_metrics.xlsx"
-
-        return response
+        return excel_response(export_product_metrics_excel(product), "product_metrics.xlsx")
 
 
 class ProductMetricsExportCsvView(APIView):
@@ -95,15 +80,9 @@ class ProductMetricsExportCsvView(APIView):
         responses={(HTTP_200_OK, "text/csv"): OpenApiTypes.BINARY},
     )
     @action(detail=False, methods=["get"])
-    def get(self, request: Request) -> HttpResponse:
+    def get(self, request: Request) -> FileResponse:
         product = _get_and_check_product(request)
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=product_metrics.csv"
-
-        export_product_metrics_csv(response, product)
-
-        return response
+        return export_product_metrics_csv(product)
 
 
 class ProductMetricsExportCodeChartaView(APIView):
