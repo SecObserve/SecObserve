@@ -21,7 +21,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import SearchFilter
-from rest_framework.mixins import ListModelMixin
+from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -49,8 +49,10 @@ from application.access_control.api.serializers import (
     AuthenticationRequestSerializer,
     AuthenticationResponseSerializer,
     AuthorizationGroupMemberSerializer,
+    AuthorizationGroupNameSerializer,
     AuthorizationGroupSerializer,
     UserListSerializer,
+    UserNameSerializer,
     UserPasswordSerializer,
     UserPasswortRulesSerializer,
     UserSerializer,
@@ -275,6 +277,31 @@ class UserViewSet(ModelViewSet):
             validators.append(NumericPasswordValidator())
 
         return validators
+
+
+class UserNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
+    serializer_class = UserNameSerializer
+    filterset_class = UserFilter
+    queryset = User.objects.none()
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    search_fields = ["full_name", "username"]
+
+    def get_queryset(self) -> QuerySet[User]:
+        if self.action == "list":
+            return get_users_without_api_tokens()
+
+        return get_users()
+
+
+class AuthorizationGroupNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
+    serializer_class = AuthorizationGroupNameSerializer
+    filterset_class = AuthorizationGroupFilter
+    queryset = Authorization_Group.objects.none()
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    search_fields = ["name"]
+
+    def get_queryset(self) -> QuerySet[Authorization_Group]:
+        return get_authorization_groups()
 
 
 class AuthorizationGroupViewSet(ModelViewSet):

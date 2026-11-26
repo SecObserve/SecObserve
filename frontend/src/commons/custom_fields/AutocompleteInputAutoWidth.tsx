@@ -1,5 +1,6 @@
 import { AutocompleteInput, AutocompleteInputProps, RaRecord, useChoicesContext } from "react-admin";
 
+import { useLoadMoreOnScroll } from "./AutocompleteInputLoadMore";
 import { useAutoWidth } from "./autoWidth";
 
 const selectedText = (record: RaRecord | undefined, optionText: AutocompleteInputProps["optionText"]): string => {
@@ -21,12 +22,16 @@ export const AutocompleteInputAutoWidth = (props: AutocompleteInputProps) => {
         selectedText(selectedChoices?.[0], props.optionText) || (typeof props.label === "string" ? props.label : "");
     // 86px: padding of the small outlined input (6 + 8 + 4), the clear and the popup button (65) and room for the cursor
     const width = useAutoWidth(text, 86);
+    const onScroll = useLoadMoreOnScroll();
     return (
         <AutocompleteInput
             {...props}
             sx={{ width: width }}
             // the options keep the width of their text instead of wrapping in a narrow input
-            slotProps={{ popper: { placement: "bottom-start", sx: { minWidth: "fit-content" } } }}
+            slotProps={{
+                popper: { placement: "bottom-start", sx: { minWidth: "fit-content" } },
+                listbox: { onScroll: onScroll },
+            }}
         />
     );
 };

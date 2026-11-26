@@ -97,6 +97,7 @@ const ConcludedLicense = () => {
                         <ReferenceInput
                             source="manual_concluded_spdx_license"
                             reference="licenses"
+                            queryOptions={{ meta: { api_resource: "license_names" } }}
                             sort={{ field: "spdx_id", order: "ASC" }}
                         >
                             <AutocompleteInputExtraWide label="Concluded SPDX License" optionText="spdx_id_name" />

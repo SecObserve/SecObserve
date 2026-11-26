@@ -102,6 +102,7 @@ const LicensePolicyMemberAdd = ({ id }: LicensePolicyMemberAddProps) => {
                             <ReferenceInput
                                 source="user"
                                 reference="users"
+                                queryOptions={{ meta: { api_resource: "user_names" } }}
                                 label="User"
                                 filter={{ exclude_license_policy: id }}
                                 sort={{ field: "full_name", order: "ASC" }}

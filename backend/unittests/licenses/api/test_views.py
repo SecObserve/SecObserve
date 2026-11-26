@@ -103,3 +103,22 @@ class TestLicenseScancodeCategories(BaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual({"scancode_categories": ["Copyleft"]}, response.data)
+
+
+class TestLicenseNames(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create(username="test_license_names@example.com")
+        self.license = License.objects.create(spdx_id="Test-Name-1", name="Test Name 1")
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_license_names(self, mock_authenticate):
+        mock_authenticate.return_value = self.user, None
+
+        response = APIClient().get("/api/license_names/?spdx_id=Test-Name-1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [{"id": self.license.pk, "spdx_id": "Test-Name-1", "spdx_id_name": "Test-Name-1 / Test Name 1"}],
+            response.data["results"],
+        )

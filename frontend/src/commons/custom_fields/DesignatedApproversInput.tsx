@@ -18,6 +18,7 @@ export const DesignatedApproversInput = ({ approver_filter, helperText }: Design
         filter: approver_filter,
         sort: { field: "full_name", order: "ASC" },
         pagination: { page: 1, perPage: 100 },
+        meta: { api_resource: "user_names" },
     });
 
     return (

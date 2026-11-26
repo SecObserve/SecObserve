@@ -91,7 +91,13 @@ function approvalFilters(product: any, is_product_group: boolean) {
         primary.push(<TextInputAutoWidth source="branch_name" label="Branch / Version" alwaysOn />);
     }
     primary.push(
-        <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
+        <ReferenceInput
+            source="user"
+            reference="users"
+            queryOptions={{ meta: { api_resource: "user_names" } }}
+            sort={{ field: "full_name", order: "ASC" }}
+            alwaysOn
+        >
             <AutocompleteInputAutoWidth optionText={getUserOptionText} />
         </ReferenceInput>,
         <AutocompleteInput source="severity" label="Severity" choices={OBSERVATION_SEVERITY_CHOICES} alwaysOn />,

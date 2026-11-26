@@ -100,6 +100,7 @@ const LicensePolicyAuthorizationGroupMemberAdd = ({ id }: LicensePolicyAuthoriza
                         <ReferenceInput
                             source="authorization_group"
                             reference="authorization_groups"
+                            queryOptions={{ meta: { api_resource: "authorization_group_names" } }}
                             label="Authorization group"
                             filter={{ exclude_license_policy: id }}
                             sort={{ field: "name", order: "ASC" }}

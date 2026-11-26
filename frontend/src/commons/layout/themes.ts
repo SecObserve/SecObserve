@@ -1,12 +1,14 @@
 import { styled } from "@mui/system";
-import { AutocompleteArrayInput, AutocompleteInput, PasswordInput, TextInput, defaultTheme } from "react-admin";
+import { AutocompleteArrayInput, PasswordInput, TextInput, defaultTheme } from "react-admin";
 import { tss } from "tss-react";
 
-export const AutocompleteInputExtraWide = styled(AutocompleteInput)({
+import { AutocompleteInputLoadMore } from "../custom_fields/AutocompleteInputLoadMore";
+
+export const AutocompleteInputExtraWide = styled(AutocompleteInputLoadMore)({
     width: "45em",
 });
 
-export const AutocompleteInputWide = styled(AutocompleteInput)({
+export const AutocompleteInputWide = styled(AutocompleteInputLoadMore)({
     width: "30em",
 });
 
@@ -14,7 +16,7 @@ export const AutocompleteArrayInputWide = styled(AutocompleteArrayInput)({
     width: "30em",
 });
 
-export const AutocompleteInputMedium = styled(AutocompleteInput)({
+export const AutocompleteInputMedium = styled(AutocompleteInputLoadMore)({
     width: "15em",
 });
 

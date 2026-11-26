@@ -27,6 +27,7 @@ const listFilters = [
     <ReferenceInput
         source="manual_concluded_spdx_license"
         reference="licenses"
+        queryOptions={{ meta: { api_resource: "license_names" } }}
         sort={{ field: "spdx_id", order: "ASC" }}
         alwaysOn
     >
@@ -34,7 +35,13 @@ const listFilters = [
     </ReferenceInput>,
     <TextInput source="manual_concluded_license_expression" label="License expression" alwaysOn />,
     <TextInput source="manual_concluded_non_spdx_license" label="Non-SPDX license" alwaysOn />,
-    <ReferenceInput source="user" reference="users" sort={{ field: "full_name", order: "ASC" }} alwaysOn>
+    <ReferenceInput
+        source="user"
+        reference="users"
+        queryOptions={{ meta: { api_resource: "user_names" } }}
+        sort={{ field: "full_name", order: "ASC" }}
+        alwaysOn
+    >
         <AutocompleteInputMedium optionText={getUserOptionText} />
     </ReferenceInput>,
     <AutocompleteInputMedium source="age" choices={AGE_CHOICES} alwaysOn />,

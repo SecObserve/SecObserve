@@ -3,7 +3,9 @@ from rest_framework.routers import SimpleRouter
 from application.access_control.api.views import (
     ApiTokenViewSet,
     AuthorizationGroupMemberViewSet,
+    AuthorizationGroupNameViewSet,
     AuthorizationGroupViewSet,
+    UserNameViewSet,
     UserViewSet,
 )
 from application.background_tasks.api.views import PeriodicTaskViewSet
@@ -44,6 +46,7 @@ from application.licenses.api.views import (
     LicenseGroupAuthorizationGroupMemberViewSet,
     LicenseGroupMemberViewSet,
     LicenseGroupViewSet,
+    LicenseNameViewSet,
     LicensePolicyAuthorizationGroupMemberViewSet,
     LicensePolicyItemViewSet,
     LicensePolicyMemberViewSet,
@@ -76,7 +79,9 @@ from application.vex.api.views import (
 router = SimpleRouter()
 
 router.register("users", UserViewSet, basename="users")
+router.register("user_names", UserNameViewSet, basename="user_names")
 router.register("authorization_groups", AuthorizationGroupViewSet, basename="authorization_groups")
+router.register("authorization_group_names", AuthorizationGroupNameViewSet, basename="authorization_group_names")
 router.register(
     "authorization_group_members",
     AuthorizationGroupMemberViewSet,
@@ -149,6 +154,7 @@ router.register(
     basename="license_component_evidences",
 )
 router.register("licenses", LicenseViewSet, basename="licenses")
+router.register("license_names", LicenseNameViewSet, basename="license_names")
 router.register("license_groups", LicenseGroupViewSet, basename="license_groups")
 router.register("license_group_members", LicenseGroupMemberViewSet, basename="license_group_members")
 router.register(
