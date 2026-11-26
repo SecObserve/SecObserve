@@ -1,5 +1,5 @@
 from django.db.models import QuerySet
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
@@ -240,12 +240,9 @@ class ObservationViewSet(ModelViewSet):
         parameters=[],
     )
     @action(detail=False, methods=["get"])
-    def export_csv(self, request: Request) -> HttpResponse:
+    def export_csv(self, request: Request) -> FileResponse:
         queryset = self._filter_queryset(request)
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=observations.csv"
-        export_observations_csv(response, queryset)
-        return response
+        return export_observations_csv(queryset)
 
     def _filter_queryset(self, request: Request) -> QuerySet:
         queryset = self.get_queryset()

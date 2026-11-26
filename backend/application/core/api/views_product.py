@@ -307,7 +307,7 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
         ],
     )
     @action(detail=True, methods=["get"])
-    def export_observations_csv(self, request: Request, pk: int) -> HttpResponse:
+    def export_observations_csv(self, request: Request, pk: int) -> FileResponse:
         product = self.__get_product(pk)
 
         statuses = self.request.query_params.getlist("status")
@@ -315,12 +315,7 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
             if status and (status, status) not in Status.STATUS_CHOICES:
                 raise ValidationError(f"Status {status} is not a valid choice")
 
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=observations.csv"
-
-        export_observations_csv_for_product(response, product, statuses)
-
-        return response
+        return export_observations_csv_for_product(product, statuses)
 
     @action(detail=True, methods=["get"])
     def export_license_components_excel(self, request: Request, pk: int) -> HttpResponse:

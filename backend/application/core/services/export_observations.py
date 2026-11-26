@@ -2,12 +2,12 @@ from typing import Iterator, Optional
 
 from django.db.models import OuterRef, Q, Subquery
 from django.db.models.query import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse
 from openpyxl import Workbook
 
 from application.commons.services.export import (
     ExportColumn,
-    export_csv_columns,
+    csv_response,
     export_excel_columns,
     frontend_url,
 )
@@ -140,12 +140,12 @@ def export_observations_excel_for_product(product: Product, status: Optional[lis
     return export_observations_excel(_get_observations(product, status))
 
 
-def export_observations_csv(response: HttpResponse, observations: QuerySet) -> None:
-    export_csv_columns(response, _get_rows(observations), COLUMNS)
+def export_observations_csv(observations: QuerySet) -> FileResponse:
+    return csv_response(_get_rows(observations), COLUMNS, "observations.csv")
 
 
-def export_observations_csv_for_product(response: HttpResponse, product: Product, status: Optional[list[str]]) -> None:
-    export_observations_csv(response, _get_observations(product, status))
+def export_observations_csv_for_product(product: Product, status: Optional[list[str]]) -> FileResponse:
+    return export_observations_csv(_get_observations(product, status))
 
 
 def _get_rows(observations: QuerySet) -> Iterator[tuple]:

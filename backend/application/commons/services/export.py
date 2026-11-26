@@ -1,9 +1,10 @@
+import io
 import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from tempfile import TemporaryFile
-from typing import Any, Iterable, Optional, Sequence
+from typing import IO, Any, Iterable, Optional, Sequence
 
 import jsonpickle
 from defusedcsv import csv
@@ -92,7 +93,9 @@ def _excel_value(value: Any) -> Any:
     return _escape_formula(value)
 
 
-def export_csv_columns(response: HttpResponse, rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn]) -> None:
+def export_csv_columns(
+    response: HttpResponse | IO[str], rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn]
+) -> None:
     writer = csv.writer(response)  # nosemgrep
     # defusedcsv is actually used but not detected by Semgrep
 
@@ -108,6 +111,18 @@ def _csv_value(value: Any) -> Any:
     if isinstance(value, str):
         return value.replace("\n", " NEWLINE ").replace("\r", "")
     return value
+
+
+def csv_response(rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn], filename: str) -> FileResponse:
+    # Writing to a temporary file instead of an HttpResponse keeps large exports out of memory.
+    # The file must be binary, FileResponse stops reading at b"".
+    file = TemporaryFile()  # pylint: disable=consider-using-with
+    text = io.TextIOWrapper(file, encoding="utf-8", newline="")
+    export_csv_columns(text, rows, columns)
+    text.flush()
+    text.detach()
+    file.seek(0)
+    return FileResponse(file, as_attachment=True, filename=filename, content_type="text/csv")
 
 
 def excel_response(workbook: Workbook, filename: str) -> FileResponse:

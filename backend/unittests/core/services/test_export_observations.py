@@ -3,7 +3,6 @@ from io import BytesIO, StringIO
 from unittest.mock import patch
 
 from defusedcsv import csv
-from django.http import HttpResponse
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from rest_framework.test import APIClient
@@ -80,7 +79,9 @@ class TestExportObservations(BaseTestCase):
         return worksheet, [list(row) for row in worksheet.iter_rows(values_only=True)]
 
     def _csv_rows(self, response):
-        return list(csv.reader(StringIO(response.content.decode("utf-8"))))
+        self.assertEqual('attachment; filename="observations.csv"', response["Content-Disposition"])
+        self.assertEqual("text/csv", response["Content-Type"])
+        return list(csv.reader(StringIO(b"".join(response.streaming_content).decode("utf-8"), newline="")))
 
     def _value(self, row, header):
         return row[HEADERS.index(header)]
@@ -145,9 +146,8 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual([HEADERS], rows)
 
     def test_csv_product_group(self):
-        response = HttpResponse(content_type="text/csv")
         with self.assertNumQueries(2):
-            export_observations_csv_for_product(response, self.product_group, None)
+            response = export_observations_csv_for_product(self.product_group, None)
         rows = self._csv_rows(response)
 
         self.assertEqual(HEADERS, rows[0])
@@ -162,8 +162,7 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual("2026-09-28 12:30:00+02:00", self._value(critical, "Last seen"))
 
     def test_csv_empty(self):
-        response = HttpResponse(content_type="text/csv")
-        export_observations_csv_for_product(response, self.product_a, ["Duplicate"])
+        response = export_observations_csv_for_product(self.product_a, ["Duplicate"])
 
         self.assertEqual([HEADERS], self._csv_rows(response))
 
@@ -171,9 +170,8 @@ class TestExportObservations(BaseTestCase):
         user = User.objects.create(username="user_export@example.com")
         Product_Member.objects.create(product=self.product_group, user=user, role=1)
 
-        response = HttpResponse(content_type="text/csv")
         with patch("application.core.queries.observation.get_current_user", return_value=user):
-            export_observations_csv(response, get_observations())
+            response = export_observations_csv(get_observations())
         rows = self._csv_rows(response)
 
         self.assertEqual(HEADERS, rows[0])
@@ -189,3 +187,16 @@ class TestExportObservations(BaseTestCase):
         self.assertEqual('attachment; filename="observations.xlsx"', response["Content-Disposition"])
         worksheet = load_workbook(BytesIO(b"".join(response.streaming_content))).active
         self.assertEqual(4, worksheet.max_row)
+
+    @patch("application.access_control.services.api_token_authentication.APITokenAuthentication.authenticate")
+    def test_api_export_csv(self, mock_authenticate):
+        mock_authenticate.return_value = User.objects.create(username="admin_export", is_superuser=True), None
+        self.observation_other.title = "größer"
+        self.observation_other.save()
+
+        response = APIClient().get(f"/api/products/{self.product_group.pk}/export_observations_csv/")
+
+        self.assertEqual(200, response.status_code)
+        rows = self._csv_rows(response)
+        self.assertEqual(4, len(rows))
+        self.assertEqual("größer", self._value(rows[3], "Title"))
