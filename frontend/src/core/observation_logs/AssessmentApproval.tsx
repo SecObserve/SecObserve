@@ -6,7 +6,7 @@ import { ArrayInput, RaRecord, SimpleForm, SimpleFormIterator, Validator, useNot
 import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
-import { validate_required, validate_required_255 } from "../../commons/custom_validators";
+import { validate_required } from "../../commons/custom_validators";
 import {
     justificationIsEnabledForStatus,
     remediationsAreEnabledForStatus,
@@ -70,6 +70,7 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
     const [saving, setSaving] = useState(false);
     const [decision, setDecision] = useState(ASSESSMENT_STATUS_APPROVED);
     const [comment, setComment] = useState(observation_log.comment);
+    const [rejectionRemark, setRejectionRemark] = useState("");
     const justificationEnabled = justificationIsEnabledForStatus(approvalStatus(observation_log));
     const remediationsEnabled = remediationsAreEnabledForStatus(approvalStatus(observation_log));
     const refresh = useRefresh();
@@ -80,7 +81,11 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
             assessment_status: data.assessment_status,
         };
         if (data.assessment_status === ASSESSMENT_STATUS_REJECTED) {
-            patch.rejection_remark = data.rejection_remark;
+            if (!rejectionRemark.trim()) {
+                notify("Remark for rejection is required", { type: "warning" });
+                return;
+            }
+            patch.rejection_remark = rejectionRemark;
         }
         if (data.assessment_status === ASSESSMENT_STATUS_APPROVED_WITH_EDITS) {
             patch.observation_log_comment = comment;
@@ -117,7 +122,10 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
         setOpen(false);
     };
     const handleCancel = () => setOpen(false);
-    const handleOpen = () => setOpen(true);
+    const handleOpen = () => {
+        setRejectionRemark("");
+        setOpen(true);
+    };
 
     return (
         <Fragment>
@@ -140,10 +148,12 @@ const AssessmentApproval = ({ observation_log }: AssessmentApprovalProps) => {
                             onChange={(e) => setDecision(e)}
                         />
                         {decision == ASSESSMENT_STATUS_REJECTED && (
-                            <TextInputWide
-                                source="rejection_remark"
-                                validate={validate_required_255}
-                                label="Remark for rejection"
+                            <MarkdownEdit
+                                initialValue={rejectionRemark}
+                                setValue={setRejectionRemark}
+                                label="Remark for rejection *"
+                                overlayContainer={dialogRef.current ?? null}
+                                maxLength={4096}
                             />
                         )}
                         {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS && justificationEnabled && (

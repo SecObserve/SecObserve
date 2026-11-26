@@ -1,12 +1,13 @@
 import ApprovalIcon from "@mui/icons-material/Approval";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
-import { Fragment, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { SimpleForm, useNotify, useRefresh } from "react-admin";
 
+import MarkdownEdit from "../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../commons/custom_fields/SmallButton";
 import { ToolbarCancelSave } from "../commons/custom_fields/ToolbarCancelSave";
-import { validate_required, validate_required_255 } from "../commons/custom_validators";
-import { AutocompleteInputMedium, TextInputWide } from "../commons/layout/themes";
+import { validate_required } from "../commons/custom_validators";
+import { AutocompleteInputMedium } from "../commons/layout/themes";
 import { httpClient } from "../commons/ra-data-django-rest-framework";
 import { RULE_STATUS_APPROVED, RULE_STATUS_CHOICES_APPROVAL, RULE_STATUS_REJECTED } from "./types";
 
@@ -16,17 +17,25 @@ type RuleApprovalProps = {
 };
 
 const RuleApproval = (props: RuleApprovalProps) => {
+    const dialogRef = useRef<HTMLDivElement>(null);
     const [open, setOpen] = useState(false);
     const [saving, setSaving] = useState(false);
     const [decision, setDecision] = useState(RULE_STATUS_APPROVED);
+    const [rejectionRemark, setRejectionRemark] = useState("");
     const refresh = useRefresh();
     const notify = useNotify();
 
     const saveApproval = async (data: any) => {
-        const patch = {
+        const patch: Record<string, string> = {
             approval_status: data.approval_status,
-            rejection_remark: data.rejection_remark,
         };
+        if (data.approval_status === RULE_STATUS_REJECTED) {
+            if (!rejectionRemark.trim()) {
+                notify("Remark for rejection is required", { type: "warning" });
+                return;
+            }
+            patch.rejection_remark = rejectionRemark;
+        }
 
         setSaving(true);
         httpClient(window.__RUNTIME_CONFIG__.API_BASE_URL + "/" + props.class + "/" + props.rule_id + "/approval/", {
@@ -53,12 +62,15 @@ const RuleApproval = (props: RuleApprovalProps) => {
         setOpen(false);
     };
     const handleCancel = () => setOpen(false);
-    const handleOpen = () => setOpen(true);
+    const handleOpen = () => {
+        setRejectionRemark("");
+        setOpen(true);
+    };
 
     return (
         <Fragment>
             <SmallButton title="Approval" onClick={handleOpen} icon={<ApprovalIcon />} />
-            <Dialog open={open} onClose={handleClose}>
+            <Dialog ref={dialogRef} open={open} onClose={handleClose} maxWidth="lg">
                 <DialogTitle sx={{ display: "flex", alignItems: "center" }}>
                     <ApprovalIcon />
                     &nbsp;&nbsp;Rule approval
@@ -76,10 +88,12 @@ const RuleApproval = (props: RuleApprovalProps) => {
                             onChange={(e) => setDecision(e)}
                         />
                         {decision === RULE_STATUS_REJECTED && (
-                            <TextInputWide
-                                source="rejection_remark"
-                                validate={validate_required_255}
-                                label="Remark for rejection"
+                            <MarkdownEdit
+                                initialValue={rejectionRemark}
+                                setValue={setRejectionRemark}
+                                label="Remark for rejection *"
+                                overlayContainer={dialogRef.current ?? null}
+                                maxLength={4096}
                             />
                         )}
                     </SimpleForm>
