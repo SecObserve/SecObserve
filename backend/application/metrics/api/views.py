@@ -2,7 +2,7 @@ import csv
 from tempfile import NamedTemporaryFile
 from typing import Optional
 
-from django.http import HttpResponse
+from django.http import FileResponse, HttpResponse
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
@@ -95,15 +95,9 @@ class ProductMetricsExportCsvView(APIView):
         responses={(HTTP_200_OK, "text/csv"): OpenApiTypes.BINARY},
     )
     @action(detail=False, methods=["get"])
-    def get(self, request: Request) -> HttpResponse:
+    def get(self, request: Request) -> FileResponse:
         product = _get_and_check_product(request)
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=product_metrics.csv"
-
-        export_product_metrics_csv(response, product)
-
-        return response
+        return export_product_metrics_csv(product)
 
 
 class ProductMetricsExportCodeChartaView(APIView):

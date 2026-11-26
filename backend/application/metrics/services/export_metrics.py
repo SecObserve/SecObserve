@@ -1,7 +1,7 @@
 from typing import Optional
 
 from django.db.models import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse
 from openpyxl import Workbook
 
 from application.commons.services.export import export_csv, export_excel
@@ -15,14 +15,9 @@ def export_product_metrics_excel(product: Optional[Product]) -> Workbook:
     return export_excel(product_metrics, "Product Metrics", _get_excludes(), _get_foreign_keys())
 
 
-def export_product_metrics_csv(response: HttpResponse, product: Optional[Product]) -> None:
-    product_metrics = _get_product_metrics(product)
-    return export_csv(
-        response,
-        product_metrics,
-        _get_excludes(),
-        _get_foreign_keys(),
-    )
+def export_product_metrics_csv(product: Optional[Product]) -> FileResponse:
+    product_metrics = _get_product_metrics(product).iterator(chunk_size=2000)
+    return export_csv(product_metrics, _get_excludes(), _get_foreign_keys(), "product_metrics.csv")
 
 
 def _get_product_metrics(product: Optional[Product]) -> QuerySet[Product_Metrics]:

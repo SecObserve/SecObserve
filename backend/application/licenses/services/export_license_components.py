@@ -1,5 +1,5 @@
 from django.db.models.query import QuerySet
-from django.http import HttpResponse
+from django.http import FileResponse
 from openpyxl import Workbook
 
 from application.commons.services.export import export_csv, export_excel
@@ -12,9 +12,9 @@ def export_license_components_excel(product: Product) -> Workbook:
     return export_excel(license_components, "License Components", _get_excludes(), _get_foreign_keys())
 
 
-def export_license_components_csv(response: HttpResponse, product: Product) -> None:
-    license_components = _get_license_components(product)
-    export_csv(response, license_components, _get_excludes(), _get_foreign_keys())
+def export_license_components_csv(product: Product) -> FileResponse:
+    license_components = _get_license_components(product).iterator(chunk_size=2000)
+    return export_csv(license_components, _get_excludes(), _get_foreign_keys(), "license_observations.csv")
 
 
 def _get_license_components(product: Product) -> QuerySet:

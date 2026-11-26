@@ -4,14 +4,14 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from tempfile import TemporaryFile
-from typing import IO, Any, Iterable, Optional, Sequence
+from typing import IO, Any, Callable, Iterable, Optional, Sequence
 
 import jsonpickle
 from defusedcsv import csv
 from django.db.models import CharField, Value
 from django.db.models.functions import Cast, Concat
 from django.db.models.query import QuerySet
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 from django.utils import timezone
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
@@ -112,11 +112,15 @@ def _csv_value(value: Any) -> Any:
 
 
 def csv_response(rows: Iterable[Sequence[Any]], columns: Sequence[ExportColumn], filename: str) -> FileResponse:
+    return _csv_file_response(lambda file: export_csv_columns(file, rows, columns), filename)
+
+
+def _csv_file_response(write: Callable[[IO[str]], None], filename: str) -> FileResponse:
     # Writing to a temporary file instead of an HttpResponse keeps large exports out of memory.
     # The file must be binary, FileResponse stops reading at b"".
     file = TemporaryFile()  # pylint: disable=consider-using-with
     text = io.TextIOWrapper(file, encoding="utf-8", newline="")
-    export_csv_columns(text, rows, columns)
+    write(text)
     text.flush()
     text.detach()
     file.seek(0)
@@ -180,13 +184,12 @@ def export_excel(objects: QuerySet, title: str, excludes: list[str], foreign_key
     return workbook
 
 
-def export_csv(
-    response: HttpResponse,
-    objects: QuerySet,
-    excludes: list[str],
-    foreign_keys: list[str],
-) -> None:
-    writer = csv.writer(response)  # nosemgrep
+def export_csv(objects: Iterable[Any], excludes: list[str], foreign_keys: list[str], filename: str) -> FileResponse:
+    return _csv_file_response(lambda file: _write_csv(file, objects, excludes, foreign_keys), filename)
+
+
+def _write_csv(file: IO[str], objects: Iterable[Any], excludes: list[str], foreign_keys: list[str]) -> None:
+    writer = csv.writer(file)  # nosemgrep
     # defusedcsv is actually used but not detected by Semgrep
 
     first_row = True

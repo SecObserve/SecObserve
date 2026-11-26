@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest import TestCase
 
-from django.http import HttpResponse
 from django.test import SimpleTestCase, override_settings
 
 from application.commons.services.export import (
@@ -56,11 +55,13 @@ class TestEscapeFormula(TestCase):
 class TestExportTimeZone(SimpleTestCase):
     @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
     def test_csv_local_time(self):
-        response = HttpResponse(content_type="text/csv")
+        response = export_csv(
+            [SimpleNamespace(created=datetime(2026, 10, 3, 20, 30, tzinfo=timezone.utc))], [], [], "test.csv"
+        )
 
-        export_csv(response, [SimpleNamespace(created=datetime(2026, 10, 3, 20, 30, tzinfo=timezone.utc))], [], [])
-
-        self.assertEqual("Created\r\n2026-10-04 03:30:00+07:00\r\n", response.content.decode())
+        self.assertEqual('attachment; filename="test.csv"', response["Content-Disposition"])
+        self.assertEqual("text/csv", response["Content-Type"])
+        self.assertEqual("Created\r\n2026-10-04 03:30:00+07:00\r\n", b"".join(response.streaming_content).decode())
 
     @override_settings(TIME_ZONE="Asia/Ho_Chi_Minh")
     def test_excel_local_time(self):

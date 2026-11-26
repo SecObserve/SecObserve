@@ -341,15 +341,9 @@ class ProductViewSet(ProductCountAnnotationsMixin, ProductDeletionActionsMixin, 
         responses={200: None},
     )
     @action(detail=True, methods=["get"])
-    def export_license_components_csv(self, request: Request, pk: int) -> HttpResponse:
+    def export_license_components_csv(self, request: Request, pk: int) -> FileResponse:
         product = self.__get_product(pk)
-
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename=license_observations.csv"
-
-        export_license_components_csv(response, product)
-
-        return response
+        return export_license_components_csv(product)
 
     @extend_schema(
         methods=["POST"],

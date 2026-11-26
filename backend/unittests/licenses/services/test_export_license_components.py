@@ -1,9 +1,12 @@
 from datetime import datetime
+from io import StringIO
 
+from defusedcsv import csv
 from django.core.management import call_command
 
 from application.core.models import Product
 from application.licenses.services.export_license_components import (
+    export_license_components_csv,
     export_license_components_excel,
 )
 from unittests.base_test_case import BaseTestCase
@@ -142,3 +145,16 @@ class TestLicenseGroupMemberSerializer(BaseTestCase):
         ]
 
         self.assertEqual(expected_values, actual_values)
+
+    def test_export_license_components_csv(self):
+        product = Product.objects.get(pk=1)
+
+        response = export_license_components_csv(product)
+
+        self.assertEqual('attachment; filename="license_observations.csv"', response["Content-Disposition"])
+        self.assertEqual("text/csv", response["Content-Type"])
+        rows = list(csv.reader(StringIO(b"".join(response.streaming_content).decode("utf-8"), newline="")))
+        self.assertEqual(2, len(rows))
+        self.assertEqual(49, len(rows[0]))
+        self.assertEqual("Component name version", rows[0][8])
+        self.assertEqual("internal_component:1.0.0", rows[1][8])
