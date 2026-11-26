@@ -17,6 +17,7 @@ from application.core.services.observation import (
     get_current_status,
     get_current_vex_justification,
     get_current_vex_remediations,
+    get_field_values,
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
@@ -121,7 +122,10 @@ class Rule_Engine:
             or observation_before.product_rule_id != observation.product_rule_id
         ):
             _write_observation_log_no_rule(
-                observation, observation_before.product_rule, observation_before.general_rule
+                observation,
+                get_field_values(observation_before),
+                observation_before.product_rule,
+                observation_before.general_rule,
             )
 
         rule_rego_found = False
@@ -143,7 +147,10 @@ class Rule_Engine:
             or observation_before.product_rule_rego_id != observation.product_rule_rego_id
         ):
             _write_observation_log_no_rule(
-                observation, observation_before.product_rule_rego, observation_before.general_rule_rego
+                observation,
+                get_field_values(observation_before),
+                observation_before.product_rule_rego,
+                observation_before.general_rule_rego,
             )
 
     def apply_all_rules_for_product(self) -> None:
@@ -489,11 +496,13 @@ def _write_observation_log(
         general_rule_rego=general_rule_rego,
         product_rule=product_rule,
         product_rule_rego=product_rule_rego,
+        values_before=get_field_values(observation_before),
     )
 
 
 def _write_observation_log_no_rule(
     observation: Observation,
+    values_before: dict[str, Any],
     previous_product_rule: Optional[Rule],
     previous_general_rule: Optional[Rule],
 ) -> None:
@@ -568,4 +577,5 @@ def _write_observation_log_no_rule(
         vex_remediations=log_vex_remediations,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=log_risk_acceptance_expiry_date,
+        values_before=values_before,
     )

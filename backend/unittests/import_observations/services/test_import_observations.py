@@ -23,7 +23,9 @@ from application.core.models import (
 )
 from application.core.services.observation import (
     get_current_severity,
+    get_field_values,
     normalize_observation_fields,
+    save_changed_fields,
 )
 from application.core.types import Severity, Status
 from application.import_observations.models import (
@@ -41,10 +43,8 @@ from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
     _deduplicate_cross_scanner,
-    _get_field_values,
     _process_current_observation,
     _resolve_unimported_observations,
-    _save_changed_fields,
     api_import_observations,
     file_upload_observations,
 )
@@ -2435,12 +2435,12 @@ class TestSaveChangedFields(BaseTestCase):
         observation.save()
 
         observation = Observation.objects.get(id=1)
-        values_before = _get_field_values(observation)
+        values_before = get_field_values(observation)
         # Parsers deliver the score as float, e.g. from JSON
         observation.cvss3_score = 9.8
 
         with CaptureQueriesContext(connection) as context:
-            _save_changed_fields(observation, values_before)
+            save_changed_fields(observation, values_before)
 
         observation_updates = [
             query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
@@ -2454,12 +2454,12 @@ class TestSaveChangedFields(BaseTestCase):
         observation.save()
 
         observation = Observation.objects.get(id=1)
-        values_before = _get_field_values(observation)
+        values_before = get_field_values(observation)
         # Calculates the score from the vector, like _process_current_observation does
         get_current_severity(observation)
 
         with CaptureQueriesContext(connection) as context:
-            _save_changed_fields(observation, values_before)
+            save_changed_fields(observation, values_before)
 
         observation_updates = [
             query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')

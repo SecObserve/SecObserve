@@ -2,7 +2,7 @@ import hashlib
 import logging
 import re
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urlparse
 
 from cvss import CVSS3, CVSS4, CVSSError
@@ -651,3 +651,22 @@ def set_product_flags(observation: Observation) -> None:
 
     if product_changed:
         observation.product.save()
+
+
+def get_field_values(observation: Observation) -> dict[str, Any]:
+    return {field.attname: getattr(observation, field.attname) for field in Observation._meta.concrete_fields}
+
+
+def save_changed_fields(observation: Observation, values_before: dict[str, Any]) -> None:
+    # The pre_save signal normalizes the observation, but update_fields is already fixed by then.
+    # Normalizing beforehand makes sure that changed derived fields are written as well.
+    normalize_observation_fields(observation)
+    observation.identity_hash = get_identity_hash(observation)
+
+    values_after = get_field_values(observation)
+    changed_fields = [name for name, value in values_after.items() if values_before[name] != value]
+    # import_last_seen changes with every import, modified shall only be set for real changes
+    if any(name != "import_last_seen" for name in changed_fields):
+        changed_fields.append("modified")
+
+    observation.save(update_fields=changed_fields)

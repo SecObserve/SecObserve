@@ -2,7 +2,7 @@ import hashlib
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 from django.core.files.base import File
 from django.db import transaction
@@ -29,8 +29,10 @@ from application.core.services.assessment import (
 from application.core.services.observation import (
     get_current_severity,
     get_current_status,
+    get_field_values,
     get_identity_hash,
     normalize_observation_fields,
+    save_changed_fields,
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.potential_duplicates import find_potential_duplicates
@@ -463,7 +465,7 @@ def _process_current_observation(
     epss_scores: dict[str, EPSS_Score],
     exploit_informations: dict[str, Exploit_Information],
 ) -> None:
-    values_before = _get_field_values(observation_before)
+    values_before = get_field_values(observation_before)
 
     # Set data in the current observation from the new observation
     observation_before.title = imported_observation.title
@@ -516,7 +518,7 @@ def _process_current_observation(
         previous_status == observation_before.current_status
         and previous_severity == observation_before.current_severity
     ):
-        _save_changed_fields(observation_before, values_before)
+        save_changed_fields(observation_before, values_before)
     else:
         status = observation_before.current_status if previous_status != observation_before.current_status else ""
         severity = (
@@ -553,25 +555,6 @@ def _update_origins(imported_observation: Observation, observation_before: Obser
     observation_before.origin_docker_image_digest = imported_observation.origin_docker_image_digest
 
     observation_before.origin_cloud_resource_type = imported_observation.origin_cloud_resource_type
-
-
-def _get_field_values(observation: Observation) -> dict[str, Any]:
-    return {field.attname: getattr(observation, field.attname) for field in Observation._meta.concrete_fields}
-
-
-def _save_changed_fields(observation: Observation, values_before: dict[str, Any]) -> None:
-    # The pre_save signal normalizes the observation, but update_fields is already fixed by then.
-    # Normalizing beforehand makes sure that changed derived fields are written as well.
-    normalize_observation_fields(observation)
-    observation.identity_hash = get_identity_hash(observation)
-
-    values_after = _get_field_values(observation)
-    changed_fields = [name for name, value in values_after.items() if values_before[name] != value]
-    # import_last_seen changes with every import, modified shall only be set for real changes
-    if any(name != "import_last_seen" for name in changed_fields):
-        changed_fields.append("modified")
-
-    observation.save(update_fields=changed_fields)
 
 
 def _process_new_observation(
