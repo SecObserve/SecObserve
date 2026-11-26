@@ -133,6 +133,7 @@ const LicensePolicyItemAdd = ({ id }: LicensePolicyItemAddProps) => {
                             <ReferenceInput
                                 source="license"
                                 reference="licenses"
+                                queryOptions={{ meta: { api_resource: "license_names" } }}
                                 filter={{ exclude_license_policy: id }}
                                 sort={{ field: "spdx_id", order: "ASC" }}
                             >

@@ -325,3 +325,16 @@ class TestAuthorizationUsers(TestAuthorizationBase):
                 no_second_user=True,
             )
         )
+
+    def test_authorization_user_names(self):
+        expected_data = "{'count': 5, 'next': None, 'previous': None, 'results': [{'id': 1, 'username': 'db_admin', 'full_name': 'db_admin'}, {'id': 2, 'username': 'db_internal_write', 'full_name': 'db_internal_write'}, {'id': 3, 'username': 'db_internal_read', 'full_name': 'db_internal_read'}, {'id': 4, 'username': 'db_external', 'full_name': 'db_external'}, {'id': 6, 'username': 'db_product_group_user', 'full_name': 'db_product_group_user'}]}"
+        self._test_api(APITest("db_admin", "get", "/api/user_names/", None, 200, expected_data))
+
+        expected_data = "{'count': 2, 'next': None, 'previous': None, 'results': [{'id': 3, 'username': 'db_internal_read', 'full_name': 'db_internal_read'}, {'id': 4, 'username': 'db_external', 'full_name': 'db_external'}]}"
+        self._test_api(APITest("db_external", "get", "/api/user_names/", None, 200, expected_data))
+
+        expected_data = "{'id': 3, 'username': 'db_internal_read', 'full_name': 'db_internal_read'}"
+        self._test_api(APITest("db_external", "get", "/api/user_names/3/", None, 200, expected_data))
+
+        expected_data = "{'message': 'No User matches the given query.'}"
+        self._test_api(APITest("db_external", "get", "/api/user_names/2/", None, 404, expected_data))

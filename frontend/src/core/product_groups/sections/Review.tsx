@@ -34,6 +34,7 @@ export const ReviewInputs = () => {
                             <ReferenceArrayInput
                                 source="assessment_approver_authorization_groups"
                                 reference="authorization_groups"
+                                queryOptions={{ meta: { api_resource: "authorization_group_names" } }}
                                 filter={approver_filter}
                                 sort={{ field: "name", order: "ASC" }}
                             >

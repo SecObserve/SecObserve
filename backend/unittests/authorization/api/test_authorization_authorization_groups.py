@@ -217,3 +217,20 @@ class TestAuthorizationAuthorizationGroups(TestAuthorizationBase):
                 no_second_user=True,
             )
         )
+
+    def test_authorization_authorization_group_names(self):
+        prepare_authorization_groups()
+
+        expected_data = "{'count': 5, 'next': None, 'previous': None, 'results': [{'id': 4, 'name': 'db_group_internal_write'}, {'id': 5, 'name': 'db_group_internal_read'}, {'id': 6, 'name': 'db_group_external'}, {'id': 7, 'name': 'db_group_product_group'}, {'id': 8, 'name': 'db_group_unused'}]}"
+        self._test_api(APITest("db_admin", "get", "/api/authorization_group_names/", None, 200, expected_data))
+
+        expected_data = (
+            "{'count': 1, 'next': None, 'previous': None, 'results': [{'id': 6, 'name': 'db_group_external'}]}"
+        )
+        self._test_api(APITest("db_external", "get", "/api/authorization_group_names/", None, 200, expected_data))
+
+        expected_data = "{'id': 6, 'name': 'db_group_external'}"
+        self._test_api(APITest("db_external", "get", "/api/authorization_group_names/6/", None, 200, expected_data))
+
+        expected_data = "{'message': 'No Authorization_Group matches the given query.'}"
+        self._test_api(APITest("db_external", "get", "/api/authorization_group_names/4/", None, 404, expected_data))

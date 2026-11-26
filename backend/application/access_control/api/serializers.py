@@ -37,8 +37,21 @@ class NestedAuthorizationGroupSerializer(ModelSerializer):
         exclude = ["users"]
 
 
-class UserListSerializer(ModelSerializer):
+class UserNameSerializer(ModelSerializer):
     full_name = SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "full_name"]
+
+    def get_full_name(self, obj: User) -> str:
+        if not obj.is_active:
+            return f"{obj.full_name} (inactive)"
+
+        return obj.full_name
+
+
+class UserListSerializer(UserNameSerializer):
     permissions = SerializerMethodField()
     has_password = SerializerMethodField()
 
@@ -95,12 +108,6 @@ class UserListSerializer(ModelSerializer):
             data.pop("has_password")
 
         return data
-
-    def get_full_name(self, obj: User) -> str:
-        if not obj.is_active:
-            return f"{obj.full_name} (inactive)"
-
-        return obj.full_name
 
     def get_permissions(self, obj: User) -> list[Permissions]:
         return _get_user_permissions(obj)
@@ -287,6 +294,12 @@ class AuthorizationGroupSerializer(ModelSerializer):
     def get_is_manager(self, obj: Authorization_Group) -> bool:
         user = get_current_user()
         return Authorization_Group_Member.objects.filter(authorization_group=obj, user=user, is_manager=True).exists()
+
+
+class AuthorizationGroupNameSerializer(ModelSerializer):
+    class Meta:
+        model = Authorization_Group
+        fields = ["id", "name"]
 
 
 class AuthorizationGroupListSerializer(ModelSerializer):

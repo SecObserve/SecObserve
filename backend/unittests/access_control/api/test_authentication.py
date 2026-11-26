@@ -304,6 +304,8 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["get"], "/api/licenses/")
         self._check_authentication(["get"], "/api/licenses/scancode_categories/")
         self._check_authentication(["get"], "/api/licenses/1/")
+        self._check_authentication(["get"], "/api/license_names/")
+        self._check_authentication(["get"], "/api/license_names/1/")
 
         self._check_authentication(["get"], "/api/license_components/")
         self._check_authentication(["get"], "/api/license_components/1/")
@@ -361,6 +363,10 @@ class TestAuthentication(BaseTestCase):
         self._check_authentication(["get"], "/api/users/me/")
         self._check_authentication(["get"], "/api/users/")
         self._check_authentication(["get"], "/api/users/1/")
+        self._check_authentication(["get"], "/api/user_names/")
+        self._check_authentication(["get"], "/api/user_names/1/")
+        self._check_authentication(["get"], "/api/authorization_group_names/")
+        self._check_authentication(["get"], "/api/authorization_group_names/1/")
         self._check_authentication(["patch"], "/api/users/my_settings/")
 
     def test_settings(self):

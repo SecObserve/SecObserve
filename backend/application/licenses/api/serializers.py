@@ -63,9 +63,18 @@ from application.licenses.queries.license_policy_member import (
 )
 
 
-class LicenseListSerializer(ModelSerializer):
+class LicenseNameSerializer(ModelSerializer):
     spdx_id_name = SerializerMethodField()
 
+    class Meta:
+        model = License
+        fields = ["id", "spdx_id", "spdx_id_name"]
+
+    def get_spdx_id_name(self, obj: License) -> str:
+        return f"{obj.spdx_id} / {obj.name}"
+
+
+class LicenseListSerializer(LicenseNameSerializer):
     class Meta:
         model = License
         # Details are only needed when showing a single license
@@ -79,9 +88,6 @@ class LicenseListSerializer(ModelSerializer):
             "choosealicense_conditions",
             "choosealicense_limitations",
         ]
-
-    def get_spdx_id_name(self, obj: License) -> str:
-        return f"{obj.spdx_id} / {obj.name}"
 
 
 class LicenseSerializer(LicenseListSerializer):

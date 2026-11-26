@@ -87,6 +87,7 @@ const LicenseGroupLicenseAdd = ({ id }: LicenseGroupLicenseAddProps) => {
                         <ReferenceInput
                             source="license"
                             reference="licenses"
+                            queryOptions={{ meta: { api_resource: "license_names" } }}
                             filter={{ exclude_license_group: id }}
                             sort={{ field: "spdx_id", order: "ASC" }}
                         >

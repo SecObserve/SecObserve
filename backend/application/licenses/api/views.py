@@ -63,6 +63,7 @@ from application.licenses.api.serializers import (
     LicenseGroupMemberSerializer,
     LicenseGroupSerializer,
     LicenseListSerializer,
+    LicenseNameSerializer,
     LicensePolicyAuthorizationGroupMemberSerializer,
     LicensePolicyCopySerializer,
     LicensePolicyItemSerializer,
@@ -377,6 +378,14 @@ class LicenseViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
         categories = get_scancode_categories(self.filter_queryset(self.get_queryset()))
         response_serializer = LicenseScancodeCategoriesSerializer({"scancode_categories": categories})
         return Response(response_serializer.data, status=HTTP_200_OK)
+
+
+class LicenseNameViewSet(GenericViewSet, ListModelMixin, RetrieveModelMixin):
+    serializer_class = LicenseNameSerializer
+    filterset_class = LicenseFilter
+    queryset = License.objects.all()
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+    search_fields = ["spdx_id", "name"]
 
 
 class LicenseGroupViewSet(ModelViewSet):

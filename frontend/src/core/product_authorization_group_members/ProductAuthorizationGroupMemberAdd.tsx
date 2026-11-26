@@ -117,6 +117,7 @@ const ProductAuthorizationGroupMemberAdd = ({ id }: ProductAuthorizationGroupMem
                         <ReferenceInput
                             source="authorization_group"
                             reference="authorization_groups"
+                            queryOptions={{ meta: { api_resource: "authorization_group_names" } }}
                             label="Authorization group"
                             filter={{ exclude_product: id }}
                             sort={{ field: "name", order: "ASC" }}
