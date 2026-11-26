@@ -17,7 +17,7 @@ import MarkdownEdit from "../../commons/custom_fields/MarkdownEdit";
 import SmallButton from "../../commons/custom_fields/SmallButton";
 import { Spinner } from "../../commons/custom_fields/Spinner";
 import { ToolbarCancelSave } from "../../commons/custom_fields/ToolbarCancelSave";
-import { validate_required, validate_required_255 } from "../../commons/custom_validators";
+import { validate_required } from "../../commons/custom_validators";
 import { justificationIsEnabledForStatus, remediationsAreEnabledForStatus } from "../../commons/functions";
 import { AutocompleteInputMedium, TextInputWide } from "../../commons/layout/themes";
 import { httpClient } from "../../commons/ra-data-django-rest-framework";
@@ -99,6 +99,7 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const sameJustification = allLoaded && allEqual(selectedRecords, (record) => record.vex_justification ?? "");
     const sameRemediations = allLoaded && allEqual(selectedRecords, remediationsKey);
     const [comment, setComment] = useState("");
+    const [rejectionRemark, setRejectionRemark] = useState("");
 
     // Only offered when every selected assessment has a status the value applies to
     const justificationEnabled =
@@ -137,7 +138,11 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
             observation_logs: selectedIds,
         };
         if (data.assessment_status === ASSESSMENT_STATUS_REJECTED) {
-            post_data.rejection_remark = data.rejection_remark;
+            if (!rejectionRemark.trim()) {
+                notify("Remark for rejection is required", { type: "warning" });
+                return;
+            }
+            post_data.rejection_remark = rejectionRemark;
         }
         if (data.assessment_status !== ASSESSMENT_STATUS_APPROVED_WITH_EDITS) {
             send(post_data);
@@ -201,6 +206,7 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
     const handleOpen = () => {
         setDecision(ASSESSMENT_STATUS_APPROVED);
         setComment(sameComment ? (first?.comment ?? "") : "");
+        setRejectionRemark("");
         setOpen(true);
     };
 
@@ -242,10 +248,12 @@ const AssessmentBulkApproval = ({ storeKey }: AssessmentBulkApprovalProps) => {
                             onChange={(e) => setDecision(e)}
                         />
                         {decision == ASSESSMENT_STATUS_REJECTED && (
-                            <TextInputWide
-                                source="rejection_remark"
-                                validate={validate_required_255}
-                                label="Remark for rejection"
+                            <MarkdownEdit
+                                initialValue={rejectionRemark}
+                                setValue={setRejectionRemark}
+                                label="Remark for rejection *"
+                                overlayContainer={dialogRef.current ?? null}
+                                maxLength={4096}
                             />
                         )}
                         {decision == ASSESSMENT_STATUS_APPROVED_WITH_EDITS &&

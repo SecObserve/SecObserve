@@ -358,8 +358,8 @@ export const RuleShowComponent = ({ rule }: any) => {
                             </Labeled>
                         )}
                         {rule.rejection_remark && (
-                            <Labeled label="Rejection remark">
-                                <TextField source="rejection_remark" />
+                            <Labeled>
+                                <MarkdownField content={rule.rejection_remark} label="Rejection remark" />
                             </Labeled>
                         )}
                     </Stack>

@@ -271,8 +271,11 @@ export const ObservationLogComponent = () => {
                                     </Labeled>
                                 )}
                                 {observation_log.rejection_remark && (
-                                    <Labeled label="Rejection remark">
-                                        <TextField source="rejection_remark" />
+                                    <Labeled>
+                                        <MarkdownField
+                                            content={observation_log.rejection_remark}
+                                            label="Rejection remark"
+                                        />
                                     </Labeled>
                                 )}
                             </Stack>
