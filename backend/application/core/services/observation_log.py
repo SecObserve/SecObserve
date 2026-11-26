@@ -1,9 +1,10 @@
 from datetime import date
-from typing import Optional
+from typing import Any, Optional
 
 from application.access_control.models import User
 from application.access_control.services.current_user import get_current_user
 from application.core.models import Observation, Observation_Log
+from application.core.services.observation import save_changed_fields
 from application.core.types import Assessment_Status, Status
 from application.notifications.services.send_notifications_observation import (
     send_observation_notification,
@@ -38,6 +39,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     general_rule_rego: Optional[Rule] = None,
     product_rule: Optional[Rule] = None,
     product_rule_rego: Optional[Rule] = None,
+    values_before: Optional[dict[str, Any]] = None,
 ) -> Observation_Log:
     observation_log = Observation_Log(
         observation=observation,
@@ -61,7 +63,10 @@ def create_observation_log(  # pylint: disable=too-many-arguments
     observation_log.save()
 
     observation.last_observation_log = observation_log.created
-    observation.save()
+    if values_before is None:
+        observation.save()
+    else:
+        save_changed_fields(observation, values_before)
 
     observation.product.last_observation_change = observation_log.created
     if not observation.product.defer_observation_change:

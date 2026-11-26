@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-from decimal import Decimal
 from unittest.mock import call, patch
 
 from django.core.files.base import File
@@ -22,7 +21,6 @@ from application.core.models import (
     Service,
 )
 from application.core.services.observation import (
-    get_current_severity,
     normalize_observation_fields,
 )
 from application.core.types import Severity, Status
@@ -41,10 +39,8 @@ from application.import_observations.services.import_observations import (
     ApiImportParameters,
     FileUploadParameters,
     _deduplicate_cross_scanner,
-    _get_field_values,
     _process_current_observation,
     _resolve_unimported_observations,
-    _save_changed_fields,
     api_import_observations,
     file_upload_observations,
 )
@@ -2420,52 +2416,13 @@ class TestDeduplicateCrossScanner(BaseTestCase):
         mock_filter_instance.exclude.assert_called_once()
 
 
-class TestSaveChangedFields(BaseTestCase):
+class TestProcessCurrentObservation(BaseTestCase):
     @classmethod
     @patch("application.core.signals.get_current_user")
     def setUpClass(cls, mock_user):
         mock_user.return_value = None
         call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
         super().setUpClass()
-
-    def test_unchanged_float_cvss_score_not_saved(self):
-        observation = Observation.objects.get(id=1)
-        observation.cvss3_score = Decimal("9.8")
-        observation.cvss3_vector = ""
-        observation.save()
-
-        observation = Observation.objects.get(id=1)
-        values_before = _get_field_values(observation)
-        # Parsers deliver the score as float, e.g. from JSON
-        observation.cvss3_score = 9.8
-
-        with CaptureQueriesContext(connection) as context:
-            _save_changed_fields(observation, values_before)
-
-        observation_updates = [
-            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
-        ]
-        self.assertEqual([], observation_updates)
-        self.assertEqual(Decimal("9.8"), observation.cvss3_score)
-
-    def test_unchanged_cvss4_vector_not_saved(self):
-        observation = Observation.objects.get(id=1)
-        observation.cvss4_vector = "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N"
-        observation.save()
-
-        observation = Observation.objects.get(id=1)
-        values_before = _get_field_values(observation)
-        # Calculates the score from the vector, like _process_current_observation does
-        get_current_severity(observation)
-
-        with CaptureQueriesContext(connection) as context:
-            _save_changed_fields(observation, values_before)
-
-        observation_updates = [
-            query["sql"] for query in context.captured_queries if query["sql"].startswith('UPDATE "core_observation"')
-        ]
-        self.assertEqual([], observation_updates)
-        self.assertEqual(Decimal("9.3"), observation.cvss4_score)
 
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.apply_epss")
@@ -2480,6 +2437,21 @@ class TestSaveChangedFields(BaseTestCase):
         self.assertEqual("https://new.example.com", Observation.objects.get(id=1).origin_component_url)
         mock_apply_epss.assert_called_once_with(observation_before, {})
         mock_apply_exploit_information.assert_called_once_with(observation_before, settings, {})
+
+    @patch("application.import_observations.services.import_observations.apply_exploit_information")
+    @patch("application.import_observations.services.import_observations.apply_epss")
+    def test_severity_changed_saves_only_changed_fields(self, mock_apply_epss, mock_apply_exploit_information):
+        imported_observation = Observation.objects.get(id=1)
+        imported_observation.parser_severity = Severity.SEVERITY_CRITICAL
+        observation_before = Observation.objects.get(id=1)
+        # Concurrent change after the observation has been loaded must not be overwritten
+        Observation.objects.filter(id=1).update(recommendation="concurrent change")
+
+        _process_current_observation(imported_observation, observation_before, Settings.load(), {}, {})
+
+        observation = Observation.objects.get(id=1)
+        self.assertEqual("concurrent change", observation.recommendation)
+        self.assertEqual(Severity.SEVERITY_CRITICAL, observation.current_severity)
 
     @patch("application.import_observations.services.import_observations.apply_exploit_information")
     @patch("application.import_observations.services.import_observations.apply_epss")
@@ -2559,6 +2531,28 @@ class TestSaveChangedFields(BaseTestCase):
 
 
 class TestResolveUnimportedObservations(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def test_resolved_saves_only_changed_fields(self):
+        Observation.objects.filter(id=1).update(
+            parser_status=Status.STATUS_OPEN, assessment_status="", current_status=Status.STATUS_OPEN
+        )
+        observation = Observation.objects.get(id=1)
+        # Concurrent change after the observation has been loaded must not be overwritten
+        Observation.objects.filter(id=1).update(recommendation="concurrent change")
+
+        _resolve_unimported_observations({"hash": observation})
+
+        observation = Observation.objects.get(id=1)
+        self.assertEqual("concurrent change", observation.recommendation)
+        self.assertEqual(Status.STATUS_RESOLVED, observation.parser_status)
+        self.assertEqual(Status.STATUS_RESOLVED, observation.current_status)
+
     @patch("application.core.models.Observation.save")
     @patch("application.import_observations.services.import_observations.create_observation_log")
     def test_already_resolved(self, mock_create_observation_log, mock_save):

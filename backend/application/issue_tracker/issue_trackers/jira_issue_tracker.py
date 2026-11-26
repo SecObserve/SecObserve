@@ -38,7 +38,7 @@ class JiraIssueTracker(BaseIssueTracker):
         )
 
         observation.issue_tracker_jira_initial_status = str(jira_issue.fields.status)
-        observation.save()
+        observation.save(update_fields=["issue_tracker_jira_initial_status", "modified"])
 
         return jira_issue.key
 

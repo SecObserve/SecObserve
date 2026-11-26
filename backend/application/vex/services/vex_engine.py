@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from packageurl import PackageURL
 
@@ -9,6 +9,7 @@ from application.core.services.observation import (
     get_current_status,
     get_current_vex_justification,
     get_current_vex_remediations,
+    get_field_values,
 )
 from application.core.services.observation_log import create_observation_log
 from application.core.services.risk_acceptance_expiry import (
@@ -47,6 +48,7 @@ class VEX_Engine:
         if not settings.feature_vex:
             return
 
+        values_before = get_field_values(observation)
         previous_vex_statement = observation.vex_statement if observation.vex_statement else None
         observation.vex_statement = None
 
@@ -57,7 +59,7 @@ class VEX_Engine:
             )
             for bom_vex_statement in bom_vex_statements:
                 vex_statement_found = _apply_vex_statement_for_observation(
-                    bom_vex_statement, observation, previous_vex_statement
+                    bom_vex_statement, observation, previous_vex_statement, values_before
                 )
                 if vex_statement_found:
                     break
@@ -65,7 +67,7 @@ class VEX_Engine:
         if not vex_statement_found:
             for vex_statement in self.vex_statements:
                 vex_statement_found = _apply_vex_statement_for_observation(
-                    vex_statement, observation, previous_vex_statement
+                    vex_statement, observation, previous_vex_statement, values_before
                 )
                 if vex_statement_found:
                     break
@@ -78,25 +80,28 @@ class VEX_Engine:
                 )
                 for component_vex_statement in component_vex_statements:
                     vex_statement_found = _apply_vex_statement_for_observation(
-                        component_vex_statement, observation, previous_vex_statement
+                        component_vex_statement, observation, previous_vex_statement, values_before
                     )
                     if vex_statement_found:
                         break
 
         # Write observation and observation log if no vex_statement was found but there was one before
         if not vex_statement_found and (previous_vex_statement != observation.vex_statement or observation.vex_status):
-            write_observation_log_no_vex_statement(observation, previous_vex_statement)
+            write_observation_log_no_vex_statement(observation, previous_vex_statement, values_before)
 
 
 def _apply_vex_statement_for_observation(
     vex_statement: VEX_Statement,
     observation: Observation,
     previous_vex_statement: Optional[VEX_Statement],
+    values_before: Optional[dict[str, Any]] = None,
 ) -> bool:
     if vex_statement.vulnerability_id == observation.vulnerability_id and (
         _match_purls(vex_statement, observation)
         or (vex_statement.component_cyclonedx_bom_link and _match_cyclonedx_bom_links(vex_statement, observation))
     ):
+        if values_before is None:
+            values_before = get_field_values(observation)
         previous_current_status = observation.current_status
         previous_vex_status = observation.vex_status
         observation.vex_status = _get_secobserve_status(vex_statement.status)
@@ -125,6 +130,7 @@ def _apply_vex_statement_for_observation(
                 vex_statement,
                 previous_current_status,
                 previous_current_vex_justification,
+                values_before,
             )
             push_observation_to_issue_tracker(observation, get_current_user())
         return True
@@ -227,6 +233,7 @@ def _write_observation_log(
     vex_statement: VEX_Statement,
     previous_status: str,
     previous_vex_justification: str,
+    values_before: dict[str, Any],
 ) -> None:
     if previous_status != observation.current_status:
         status = observation.current_status
@@ -258,13 +265,18 @@ def _write_observation_log(
         vex_remediations=None,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
+        values_before=values_before,
     )
 
 
 def write_observation_log_no_vex_statement(
     observation: Observation,
     previous_vex_statement: Optional[VEX_Statement],
+    values_before: Optional[dict[str, Any]] = None,
 ) -> None:
+    if values_before is None:
+        values_before = get_field_values(observation)
+
     observation.vex_status = ""
     previous_status = observation.current_status
     observation.current_status = get_current_status(observation)
@@ -312,6 +324,7 @@ def write_observation_log_no_vex_statement(
         vex_remediations=log_vex_remediations,
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=risk_acceptance_expiry_date,
+        values_before=values_before,
     )
 
 

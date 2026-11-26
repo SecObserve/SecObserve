@@ -1,7 +1,15 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import ANY, MagicMock, call, patch
 
+from django.core.management import call_command
+from django.utils import timezone
+
+from application.core.models import Observation
+from application.core.types import Status
+from application.vex.models import VEX_Document, VEX_Statement
 from application.vex.services.vex_engine import VEX_Engine
+from application.vex.types import VEX_Document_Type, VEX_Status
+from unittests.base_test_case import BaseTestCase
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -199,7 +207,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
         engine.apply_vex_statements_for_observation(obs)
 
         # _apply must have been called exactly once (with the BOM statement)
-        mock_apply.assert_called_once_with(bom_stmt, obs, None)
+        mock_apply.assert_called_once_with(bom_stmt, obs, None, ANY)
         # No "no statement" log because a match was found
         mock_log.assert_not_called()
         # observation.vex_statement should be cleared then re-set by the engine
@@ -219,7 +227,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
 
         engine.apply_vex_statements_for_observation(obs)
 
-        mock_apply.assert_called_once_with(bom_stmt1, obs, None)
+        mock_apply.assert_called_once_with(bom_stmt1, obs, None, ANY)
 
     # ------------------------------------------------------------------
     # Product-level statements path
@@ -241,7 +249,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
 
         engine.apply_vex_statements_for_observation(obs)
 
-        mock_apply.assert_called_once_with(prod_stmt, obs, None)
+        mock_apply.assert_called_once_with(prod_stmt, obs, None, ANY)
         mock_log.assert_not_called()
 
     @patch(f"{MODULE}.write_observation_log_no_vex_statement")
@@ -260,7 +268,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
 
         engine.apply_vex_statements_for_observation(obs)
 
-        mock_apply.assert_called_once_with(stmt1, obs, None)
+        mock_apply.assert_called_once_with(stmt1, obs, None, ANY)
 
     # ------------------------------------------------------------------
     # Component-PURL fallback path
@@ -292,7 +300,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
         mock_vex_statement_cls.objects.filter.assert_called_once_with(
             product_purl__startswith="pkg:pypi/flask", component_purl=""
         )
-        mock_apply.assert_called_once_with(comp_stmt, obs, None)
+        mock_apply.assert_called_once_with(comp_stmt, obs, None, ANY)
         mock_log.assert_not_called()
 
     @patch(f"{MODULE}.write_observation_log_no_vex_statement")
@@ -365,7 +373,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
 
         engine.apply_vex_statements_for_observation(obs)
 
-        mock_log.assert_called_once_with(obs, previous_stmt)
+        mock_log.assert_called_once_with(obs, previous_stmt, ANY)
 
     @patch(f"{MODULE}.write_observation_log_no_vex_statement")
     @patch(f"{MODULE}._apply_vex_statement_for_observation", return_value=False)
@@ -386,7 +394,7 @@ class TestApplyVEXStatementsForObservation(TestCase):
 
         engine.apply_vex_statements_for_observation(obs)
 
-        mock_log.assert_called_once_with(obs, None)
+        mock_log.assert_called_once_with(obs, None, ANY)
 
     @patch(f"{MODULE}.write_observation_log_no_vex_statement")
     @patch(f"{MODULE}._apply_vex_statement_for_observation", return_value=False)
@@ -450,6 +458,66 @@ class TestApplyVEXStatementsForObservation(TestCase):
         engine.apply_vex_statements_for_observation(obs)
 
         # _apply must receive the captured previous statement
-        mock_apply.assert_called_once_with(prod_stmt, obs, previous_stmt)
+        mock_apply.assert_called_once_with(prod_stmt, obs, previous_stmt, ANY)
         # And so must the log helper
-        mock_log.assert_called_once_with(obs, previous_stmt)
+        mock_log.assert_called_once_with(obs, previous_stmt, ANY)
+
+
+class TestVEXEngineSavesOnlyChangedFields(BaseTestCase):
+    @classmethod
+    @patch("application.core.signals.get_current_user")
+    def setUpClass(cls, mock_user):
+        mock_user.return_value = None
+        call_command("loaddata", "unittests/fixtures/unittests_fixtures.json")
+        super().setUpClass()
+
+    def setUp(self):
+        super().setUp()
+        settings_patcher = patch("application.vex.services.vex_engine.Settings")
+        settings_patcher.start().load.return_value = _make_settings()
+        self.addCleanup(settings_patcher.stop)
+
+        document = VEX_Document.objects.create(
+            type=VEX_Document_Type.VEX_DOCUMENT_TYPE_OPENVEX,
+            document_id="document_id",
+            version="1",
+            current_release_date=timezone.now(),
+            initial_release_date=timezone.now(),
+            author="author",
+        )
+        self.vex_statement = VEX_Statement.objects.create(
+            document=document,
+            vulnerability_id="CVE-2024-0001",
+            status=VEX_Status.VEX_STATUS_NOT_AFFECTED,
+            component_cyclonedx_bom_link="urn:cdx:bom/1#component",
+        )
+        Observation.objects.filter(id=1).update(
+            vulnerability_id="CVE-2024-0001",
+            origin_component_cyclonedx_bom_link="urn:cdx:bom/1#component",
+        )
+
+    def _apply_with_concurrent_change(self) -> Observation:
+        observation = Observation.objects.select_related("product").get(id=1)
+        # Concurrent change after the observation has been loaded must not be overwritten
+        Observation.objects.filter(id=1).update(title="concurrent change")
+
+        VEX_Engine(observation.product, None).apply_vex_statements_for_observation(observation)
+
+        return Observation.objects.get(id=1)
+
+    def test_vex_statement_applied_saves_only_changed_fields(self):
+        observation = self._apply_with_concurrent_change()
+
+        self.assertEqual("concurrent change", observation.title)
+        self.assertEqual(self.vex_statement.pk, observation.vex_statement_id)
+        self.assertEqual(Status.STATUS_NOT_AFFECTED, observation.vex_status)
+
+    def test_vex_statement_removed_saves_only_changed_fields(self):
+        Observation.objects.filter(id=1).update(vex_statement=self.vex_statement, vex_status=Status.STATUS_NOT_AFFECTED)
+        VEX_Statement.objects.filter(pk=self.vex_statement.pk).update(vulnerability_id="CVE-2024-0002")
+
+        observation = self._apply_with_concurrent_change()
+
+        self.assertEqual("concurrent change", observation.title)
+        self.assertIsNone(observation.vex_statement_id)
+        self.assertEqual("", observation.vex_status)

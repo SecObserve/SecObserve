@@ -55,7 +55,7 @@ class TestSetPotentialDuplicate(BaseTestCase):
         set_potential_duplicate(self.observation)
 
         self.assertFalse(self.observation.has_potential_duplicates)
-        save_mock.assert_called_once()
+        save_mock.assert_called_once_with(update_fields=["has_potential_duplicates", "modified"])
 
     @patch("application.core.models.Potential_Duplicate.objects.filter")
     @patch("application.core.models.Observation.save")
@@ -74,7 +74,7 @@ class TestSetPotentialDuplicate(BaseTestCase):
         set_potential_duplicate(self.observation)
 
         self.assertFalse(self.observation.has_potential_duplicates)
-        save_mock.assert_called_once()
+        save_mock.assert_called_once_with(update_fields=["has_potential_duplicates", "modified"])
 
     def test_find_potential_duplicates_components(self):
         # Register parsers
