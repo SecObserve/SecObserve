@@ -12,6 +12,7 @@ from application.access_control.models import (
     Authorization_Group_Member,
     User,
 )
+from application.audit_trail.models import Product_Audit_Event
 from application.authorization.services.roles_permissions import Roles
 from application.core.models import (
     Observation,
@@ -490,6 +491,11 @@ class TestAssessmentWebhookEvents(BaseTestCase):
             [(Webhook_Event_Type.ASSESSMENT_APPROVAL_DECIDED, Assessment_Status.ASSESSMENT_STATUS_REJECTED)], statuses
         )
         mock_emit_obs.assert_not_called()
+        audit_event = Product_Audit_Event.objects.get(object_type="Assessment")
+        self.assertEqual(self.log.observation.product_id, audit_event.product_id)
+        self.assertEqual(self.log.observation.pk, audit_event.object_id)
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_REJECTED, audit_event.action)
+        self.assertEqual({"rejection_remark": {"old": "", "new": "not ok"}}, audit_event.changes)
 
     @patch("application.core.services.assessment.propagate_assessment")
     @patch("application.core.services.assessment.push_observation_to_issue_tracker")
@@ -507,6 +513,34 @@ class TestAssessmentWebhookEvents(BaseTestCase):
 
         mock_emit.assert_called_once_with(Webhook_Event_Type.ASSESSMENT_APPROVAL_DECIDED, self.log)
         mock_emit_obs.assert_called_once_with(Webhook_Event_Type.OBSERVATION_REVIEW_REQUESTED, self.log.observation)
+
+    @patch("application.core.services.assessment.propagate_assessment")
+    @patch("application.core.services.assessment.push_observation_to_issue_tracker")
+    @patch("application.core.services.assessment.check_security_gate")
+    @patch("application.core.services.assessment.emit_observation_event")
+    @patch("application.core.services.assessment.emit_assessment_event")
+    @patch("application.core.services.assessment.send_assessment_approval_receipt_notification")
+    @patch("application.core.services.assessment.get_current_user")
+    def test_approval_with_edits_records_edits(self, mock_user, *_mocks) -> None:
+        mock_user.return_value = self.approver
+        self.log.vex_justification = "component_not_present"
+        self.log.save()
+
+        # The VEX justification is unchanged, so it is not an edit
+        assessment_approval(
+            self.log,
+            Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS,
+            None,
+            "edited comment",
+            "component_not_present",
+            None,
+        )
+
+        self.log.refresh_from_db()
+        self.assertEqual("edited comment", self.log.comment)
+        audit_event = Product_Audit_Event.objects.get(object_type="Assessment")
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS, audit_event.action)
+        self.assertEqual({"comment": {"old": "Set by parser", "new": "edited comment"}}, audit_event.changes)
 
 
 class TestSaveAssessmentExpiryDateApproval(BaseTestCase):

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { DashboardMenuItem, MenuItemLink, MenuProps, useSidebarState } from "react-admin";
 
 import administration from "../../access_control/access_control_administration";
+import audit_trail from "../../audit_trail";
 import background_tasks_administration from "../../background_tasks/background_tasks_administration";
 import components from "../../core/components";
 import observations from "../../core/observations";
@@ -26,7 +27,13 @@ import openvex from "../../vex/openvex";
 import vex_counters from "../../vex/vex_counters";
 import vex_documents from "../../vex/vex_documents";
 import { IntervalHooks } from "../IntervalHooks";
-import { feature_license_management, feature_vex_enabled, is_superuser, useSettingsSnapshot } from "../functions";
+import {
+    feature_audit_trail,
+    feature_license_management,
+    feature_vex_enabled,
+    is_superuser,
+    useSettingsSnapshot,
+} from "../functions";
 import settings from "../settings";
 import SubMenu from "./SubMenu";
 
@@ -189,6 +196,15 @@ const Menu = ({ dense = false }: MenuProps) => {
                         state={{ _scrollToTop: true }}
                         primaryText="Background Tasks"
                         leftIcon={<background_tasks_administration.icon />}
+                        dense={dense}
+                    />
+                )}
+                {is_superuser() && feature_audit_trail() && (
+                    <MenuItemLink
+                        to="/product_audit_events"
+                        state={{ _scrollToTop: true }}
+                        primaryText="Audit Trail"
+                        leftIcon={<audit_trail.icon />}
                         dense={dense}
                     />
                 )}

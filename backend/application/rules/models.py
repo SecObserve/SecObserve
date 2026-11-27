@@ -1,5 +1,6 @@
 from typing import Any
 
+from dirtyfields import DirtyFieldsMixin
 from django.db.models import (
     CASCADE,
     PROTECT,
@@ -21,7 +22,7 @@ from application.core.types import Severity, Status, VEX_Justification
 from application.rules.types import Rule_Status, Rule_Type
 
 
-class Rule(Model):
+class Rule(Model, DirtyFieldsMixin):
     name = CharField(max_length=255)
     description = TextField(max_length=2048, blank=True)
     product = ForeignKey(Product, blank=True, null=True, on_delete=CASCADE)

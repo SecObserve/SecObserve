@@ -1,3 +1,4 @@
+from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
@@ -37,7 +38,7 @@ class Parser(Model):
         return self.name
 
 
-class Api_Configuration(Model):
+class Api_Configuration(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE)
     name = CharField(max_length=255)
     parser = ForeignKey(Parser, on_delete=PROTECT)

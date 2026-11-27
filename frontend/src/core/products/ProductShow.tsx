@@ -30,6 +30,7 @@ import {
     PERMISSION_BRANCH_CREATE,
     PERMISSION_OBSERVATION_CREATE,
     PERMISSION_PRODUCT_API_TOKEN_CREATE,
+    PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW,
     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE,
     PERMISSION_PRODUCT_EDIT,
     PERMISSION_PRODUCT_IMPORT_OBSERVATIONS,
@@ -39,7 +40,13 @@ import {
     PERMISSION_SERVICE_CREATE,
     PERMISSION_WEBHOOK_CREATE,
 } from "../../access_control/types";
-import { feature_license_management, feature_scancodeio_integration } from "../../commons/functions";
+import audit_trail from "../../audit_trail";
+import ProductAuditEventEmbeddedList from "../../audit_trail/ProductAuditEventEmbeddedList";
+import {
+    feature_audit_trail,
+    feature_license_management,
+    feature_scancodeio_integration,
+} from "../../commons/functions";
 import TabsWithSubMenu from "../../commons/layout/TabsWithSubMenu";
 import { useStyles } from "../../commons/layout/themes";
 import observations from "../../core/observations";
@@ -82,7 +89,16 @@ import ProductHeader from "./ProductHeader";
 import ProductReviews from "./ProductReviews";
 import ProductShowProduct from "./ProductShowProduct";
 
-const SETTINGS_PATHS = ["settings", "rules", "api_configurations", "members", "api_token", "notifications", "webhooks"];
+const SETTINGS_PATHS = [
+    "settings",
+    "rules",
+    "api_configurations",
+    "members",
+    "api_token",
+    "notifications",
+    "webhooks",
+    "audit_trail",
+];
 
 type ShowActionsProps = {
     filter: any;
@@ -314,6 +330,12 @@ const ProductShow = () => {
                                     )}
                                     <WebhookEmbeddedList product={product} />
                                 </Tab>
+                                {feature_audit_trail() &&
+                                    product?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW) && (
+                                        <Tab label="Audit Trail" path="audit_trail" icon={<audit_trail.icon />}>
+                                            <ProductAuditEventEmbeddedList product={product} />
+                                        </Tab>
+                                    )}
                             </TabbedShowLayout>
                         )}
                     />

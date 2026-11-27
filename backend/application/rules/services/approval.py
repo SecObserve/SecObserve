@@ -4,6 +4,8 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from application.access_control.services.current_user import get_current_user
+from application.audit_trail.services.audit_trail import create_approval_audit_event
+from application.audit_trail.types import Audit_Object_Type
 from application.notifications.services.send_notifications_product_rule_approval import (
     send_product_rule_approval_receipt_notification,
 )
@@ -26,6 +28,11 @@ def rule_approval(rule: Rule, approval_status: str, rejection_remark: Optional[s
     rule.rejection_remark = rejection_remark if rejection_remark else ""
     rule.approval_date = timezone.now()
     rule.save()
+
+    if rule.product:
+        create_approval_audit_event(
+            rule.product, Audit_Object_Type.PRODUCT_RULE, rule.pk, rule.name, approval_status, rejection_remark
+        )
 
     send_product_rule_approval_receipt_notification(rule)
     emit_rule_event(Webhook_Event_Type.RULE_APPROVAL_DECIDED, rule)

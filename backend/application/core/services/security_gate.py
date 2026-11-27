@@ -92,7 +92,8 @@ def check_security_gates(products: QuerySet[Product]) -> None:
 def _update_security_gate(product: Product, new_security_gate_passed: Optional[bool]) -> None:
     if product.security_gate_passed != new_security_gate_passed:
         product.security_gate_passed = new_security_gate_passed
-        product.save()
+        # Only this field, the product might be in the middle of saving other changes (audit trail)
+        product.save(update_fields=["security_gate_passed"])
         send_product_security_gate_notification(product)
         emit_security_gate_event(product)
 

@@ -71,3 +71,39 @@ class TestRuleEngine(BaseTestCase):
         self.assertEqual(
             [(Webhook_Event_Type.RULE_APPROVAL_DECIDED, Rule_Status.RULE_STATUS_REJECTED, self.user_external)], seen
         )
+
+    @patch("application.rules.services.approval.create_approval_audit_event")
+    @patch("application.rules.services.approval.emit_rule_event")
+    @patch("application.rules.services.approval.send_product_rule_approval_receipt_notification")
+    @patch("application.rules.services.approval.get_current_user")
+    @patch("application.rules.models.Rule.save")
+    def test_rule_approval_audit_event(self, _save_mock, get_current_user_mock, _receipt, _emit, audit_mock):
+        get_current_user_mock.return_value = self.user_external
+        rule = Rule(
+            pk=5,
+            name="rule",
+            product=self.product_1,
+            approval_status=Rule_Status.RULE_STATUS_NEEDS_APPROVAL,
+            user=self.user_internal,
+        )
+
+        rule_approval(rule, Rule_Status.RULE_STATUS_APPROVED, "")
+
+        audit_mock.assert_called_once_with(
+            self.product_1, "Product rule", 5, "rule", Rule_Status.RULE_STATUS_APPROVED, ""
+        )
+
+    @patch("application.rules.services.approval.create_approval_audit_event")
+    @patch("application.rules.services.approval.emit_rule_event")
+    @patch("application.rules.services.approval.send_product_rule_approval_receipt_notification")
+    @patch("application.rules.services.approval.get_current_user")
+    @patch("application.rules.models.Rule.save")
+    def test_rule_approval_general_rule_no_audit_event(
+        self, _save_mock, get_current_user_mock, _receipt, _emit, audit_mock
+    ):
+        get_current_user_mock.return_value = self.user_external
+        rule = Rule(approval_status=Rule_Status.RULE_STATUS_NEEDS_APPROVAL, user=self.user_internal)
+
+        rule_approval(rule, Rule_Status.RULE_STATUS_APPROVED, "")
+
+        audit_mock.assert_not_called()

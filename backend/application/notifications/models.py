@@ -1,3 +1,4 @@
+from dirtyfields import DirtyFieldsMixin
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import (
     CASCADE,
@@ -98,7 +99,7 @@ class Observation_Title_Notified(Model):
     priority = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)], null=True)
 
 
-class Webhook(Model):
+class Webhook(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE, null=True)
     name = CharField(max_length=255)
     url = CharField(max_length=2048)

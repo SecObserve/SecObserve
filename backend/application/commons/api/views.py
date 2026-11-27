@@ -75,6 +75,8 @@ class StatusSettingsView(APIView):
                 features.append("feature_exploit_information")
             if settings.feature_show_product_header_chips:
                 features.append("feature_show_product_header_chips")
+            if settings.feature_audit_trail:
+                features.append("feature_audit_trail")
             if is_full_text_search_available():
                 features.append("feature_full_text_search")
 

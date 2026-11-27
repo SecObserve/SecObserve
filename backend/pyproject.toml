@@ -193,7 +193,7 @@ layers = [
     "application.background_tasks : application.scancodeio",
     "application.import_observations",
     "application.vex | application.epss | application.metrics",
-    "application.core : application.issue_tracker : application.licenses : application.notifications : application.rules",
+    "application.core : application.audit_trail : application.issue_tracker : application.licenses : application.notifications : application.rules",
     "application.access_control : application.authorization",
     "application.commons",
 ]
@@ -230,6 +230,7 @@ layers = [
 containers = [
     "application.access_control",
     "application.authorization",
+    "application.audit_trail",
     "application.background_tasks",
     "application.commons",
     "application.core",
