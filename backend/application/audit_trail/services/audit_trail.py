@@ -21,6 +21,7 @@ def create_audit_event(  # pylint: disable=too-many-arguments, too-many-position
     Product_Audit_Event.objects.create(
         product_id=product.pk,
         product_name=product.name,
+        is_product_group=product.is_product_group,
         user=user,
         user_full_name=user.full_name if user else "",
         object_type=object_type,
@@ -31,10 +32,13 @@ def create_audit_event(  # pylint: disable=too-many-arguments, too-many-position
     )
 
 
-def get_changes(instance: Any, ignored_fields: set[str], masked_fields: set[str]) -> dict:
+def get_changes(
+    instance: Any, ignored_fields: set[str], masked_fields: set[str], update_fields: Optional[frozenset[str]] = None
+) -> dict:
     changes = {}
     for field_name, values in instance.get_dirty_fields(check_relationship=True, verbose=True).items():
-        if field_name in ignored_fields:
+        # Dirty fields not in update_fields have not been saved
+        if field_name in ignored_fields or (update_fields is not None and field_name not in update_fields):
             continue
         if field_name in masked_fields:
             changes[field_name] = {"old": MASKED_VALUE, "new": MASKED_VALUE}

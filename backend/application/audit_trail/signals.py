@@ -68,7 +68,7 @@ TRACKED_MODELS = {
     "notifications.Webhook": Tracked_Model(
         object_type=Audit_Object_Type.WEBHOOK,
         get_name=lambda instance: instance.name,
-        ignored_fields={"consecutive_failures", "next_attempt_at", "created", "user"},
+        ignored_fields={"consecutive_failures", "next_attempt_at", "user"},
         masked_fields={"secret", "url"},
     ),
 }
@@ -84,7 +84,14 @@ def connect_signals() -> None:
         m2m_changed.connect(audit_approvers_changed, sender=f"core.Product_{approver_field}")
 
 
-def audit_post_save(sender: Any, instance: Any, created: bool, raw: bool = False, **kwargs: Any) -> None:
+def audit_post_save(  # pylint: disable=too-many-arguments
+    sender: Any,
+    instance: Any,
+    created: bool,
+    raw: bool = False,
+    update_fields: Optional[frozenset[str]] = None,
+    **kwargs: Any,
+) -> None:
     # Fixtures are loaded raw
     if raw:
         return
@@ -102,7 +109,7 @@ def audit_post_save(sender: Any, instance: Any, created: bool, raw: bool = False
     if not hasattr(instance, "get_dirty_fields"):
         return
 
-    changes = get_changes(instance, tracked_model.ignored_fields, tracked_model.masked_fields)
+    changes = get_changes(instance, tracked_model.ignored_fields, tracked_model.masked_fields, update_fields)
     if changes:
         _create_audit_event(tracked_model, product, instance, Audit_Action.CHANGED, changes)
 

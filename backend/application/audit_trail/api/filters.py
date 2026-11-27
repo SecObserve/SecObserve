@@ -22,4 +22,4 @@ class ProductAuditEventFilter(FilterSet):
 
     class Meta:
         model = Product_Audit_Event
-        fields = ["user", "object_type", "object_id", "action"]
+        fields = ["is_product_group", "user", "object_type", "object_id", "action"]

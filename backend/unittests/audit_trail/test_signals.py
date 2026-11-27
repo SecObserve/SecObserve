@@ -67,6 +67,19 @@ class TestAuditTrailSignals(BaseTestCase):
         self.assertEqual(self.user, event.user)
         self.assertEqual("Audit User", event.user_full_name)
 
+    @patch("application.core.services.security_gate.emit_security_gate_event")
+    @patch("application.core.services.security_gate.send_product_security_gate_notification")
+    def test_security_gate_recorded_once(self, *_mocks) -> None:
+        # The security gate is recalculated and saved while the product is being saved
+        self.product.security_gate_active = True
+        for severity in ("critical", "high", "medium", "low", "none", "unknown"):
+            setattr(self.product, f"security_gate_threshold_{severity}", 0)
+        self.product.save()
+
+        self.product.refresh_from_db()
+        self.assertTrue(self.product.security_gate_passed)
+        self.assertEqual(["Created", "Changed"], [event[2] for event in self._events()])
+
     def test_branch_lifecycle(self) -> None:
         branch = Branch.objects.create(product=self.product, name="main", is_default_branch=True)
         branch.last_import = timezone.now()
@@ -188,6 +201,15 @@ class TestAuditTrailSignals(BaseTestCase):
         self.assertTrue(
             Product_Audit_Event.objects.filter(product_id=product_group_id, object_name="audit_group", action="Deleted")
         )
+        self.assertEqual(
+            {True},
+            set(
+                Product_Audit_Event.objects.filter(product_id=product_group_id).values_list(
+                    "is_product_group", flat=True
+                )
+            ),
+        )
+        self.assertFalse(Product_Audit_Event.objects.filter(product_id=self.product.pk, is_product_group=True))
 
     def test_assessment_approvers(self) -> None:
         group = Authorization_Group.objects.create(name="approvers")
