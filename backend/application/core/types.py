@@ -116,6 +116,7 @@ class Observation_Log_Comment:
     COMMENT_PREFIX_UPDATED_BY_PRODUCT_RULE = "Updated by product rule "
     COMMENT_PREFIX_UPDATED_BY_GENERAL_RULE = "Updated by general rule "
     COMMENT_PREFIX_UPDATED_BY_VEX_STATEMENT = "Updated by VEX statement from "
+    COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT = "CVSS vector set from cvss-bt: "
 
     COMMENT_PREFIX_REMOVED_PRODUCT_RULE = "Removed product "
     COMMENT_PREFIX_REMOVED_GENERAL_RULE = "Removed general "
@@ -146,6 +147,7 @@ class Observation_Log_Comment:
         COMMENT_PREFIX_REMOVED_GENERAL_RULE + "fields rule ",
         COMMENT_PREFIX_REMOVED_GENERAL_RULE + "rego rule ",
         COMMENT_PREFIX_REMOVED_VEX_STATEMENT,
+        COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT,
     ]
 
 

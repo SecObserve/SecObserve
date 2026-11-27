@@ -50,7 +50,11 @@ from application.epss.queries.epss_score import get_epss_scores_by_cves
 from application.epss.queries.exploit_information import (
     get_exploit_information_by_cves,
 )
-from application.epss.services.cvss_bt import apply_exploit_information
+from application.epss.services.cvss_bt import (
+    apply_exploit_information,
+    get_cvss_bt_vector,
+    save_cvss_bt_observation_log,
+)
 from application.epss.services.epss import apply_epss
 from application.import_observations.exceptions import ParserError
 from application.import_observations.models import (
@@ -510,7 +514,10 @@ def _process_current_observation(
     observation_before.update_impact_score = imported_observation.update_impact_score
 
     apply_epss(observation_before, epss_scores)
+    cvss3_vector_before = observation_before.cvss3_vector
+    cvss4_vector_before = observation_before.cvss4_vector
     apply_exploit_information(observation_before, settings, exploit_informations)
+    cvss_bt_vector = get_cvss_bt_vector(observation_before, cvss3_vector_before, cvss4_vector_before)
     observation_before.import_last_seen = timezone.now()
 
     # Write observation log if status or severity has been changed, it saves the observation as well
@@ -538,6 +545,11 @@ def _process_current_observation(
             risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
             values_before=values_before,
         )
+
+    # Without a vector from the parser, cvss-bt sets the stored vector again with every import
+    if cvss_bt_vector and cvss_bt_vector not in (values_before["cvss3_vector"], values_before["cvss4_vector"]):
+        # The log entry of the parser contains the changed severity
+        save_cvss_bt_observation_log(observation_before, cvss_bt_vector, "")
 
 
 def _update_origins(imported_observation: Observation, observation_before: Observation) -> None:
@@ -579,6 +591,9 @@ def _process_new_observation(
 
     # Observation has not been imported before, so it is a new one
     apply_epss(imported_observation, epss_scores)
+    cvss3_vector_before = imported_observation.cvss3_vector
+    cvss4_vector_before = imported_observation.cvss4_vector
+    severity_before = imported_observation.current_severity
     apply_exploit_information(imported_observation, settings, exploit_informations)
     imported_observation.save()
 
@@ -588,7 +603,8 @@ def _process_new_observation(
 
     create_observation_log(
         observation=imported_observation,
-        severity=imported_observation.current_severity,
+        # The severity from the parser, a change by cvss-bt gets its own log entry
+        severity=severity_before,
         status=imported_observation.current_status,
         priority=None,
         priority_changed=False,
@@ -598,6 +614,13 @@ def _process_new_observation(
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
+
+    cvss_bt_vector = get_cvss_bt_vector(imported_observation, cvss3_vector_before, cvss4_vector_before)
+    if cvss_bt_vector:
+        severity = (
+            imported_observation.current_severity if imported_observation.current_severity != severity_before else ""
+        )
+        save_cvss_bt_observation_log(imported_observation, cvss_bt_vector, severity)
 
 
 def _get_references_and_evidences(

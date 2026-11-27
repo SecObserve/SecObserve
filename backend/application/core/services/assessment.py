@@ -434,6 +434,7 @@ def _get_manual_assessment_logs() -> QuerySet[Observation_Log]:
         )
         .exclude(~Q(assessment_status=Assessment_Status.ASSESSMENT_STATUS_REMOVED), severity="", status="")
         .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
+        .exclude(comment__startswith=Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT)
     )
 
 

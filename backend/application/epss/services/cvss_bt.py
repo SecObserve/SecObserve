@@ -7,10 +7,16 @@ from cvss import CVSS3, CVSS4
 from cvss.exceptions import CVSSError
 from django.utils import timezone
 
+from application.access_control.models import User
 from application.commons.models import Settings
-from application.core.models import Observation, Product
+from application.core.models import Observation, Observation_Log, Product
 from application.core.services.observation import get_current_severity
-from application.core.types import Severity
+from application.core.services.observation_log import get_observation_log_user
+from application.core.types import (
+    Assessment_Status,
+    Observation_Log_Comment,
+    Severity,
+)
 from application.epss.models import Exploit_Information
 from application.epss.queries.exploit_information import (
     get_exploit_information_by_cve,
@@ -20,9 +26,12 @@ from application.epss.services.epss import batched_cve_observations
 
 logger = logging.getLogger("secobserve.epss")
 
-# Fields read and written by apply_exploit_information(), including get_current_severity(), and the product to mark
+# Fields read and written by apply_exploit_information(), including get_current_severity(), the product to mark
+# and the fields of the observation log
 EXPLOIT_INFORMATION_FIELDS = (
     "product",
+    "vex_statement",
+    "last_observation_log",
     "vulnerability_id",
     "cvss3_score",
     "cvss3_vector",
@@ -157,12 +166,28 @@ def apply_exploit_information_observations(settings: Settings) -> list[int]:
         exploit_informations = get_exploit_information_by_cves(
             observation.vulnerability_id for observation in observations
         )
-        updates = [
-            observation
-            for observation in observations
-            if apply_exploit_information(observation, settings, exploit_informations)
-        ]
+        updates = []
+        observation_logs = []
+        user = None
+        for observation in observations:
+            cvss3_vector_before = observation.cvss3_vector
+            cvss4_vector_before = observation.cvss4_vector
+            severity_before = observation.current_severity
+            if not apply_exploit_information(observation, settings, exploit_informations):
+                continue
+
+            updates.append(observation)
+            vector = get_cvss_bt_vector(observation, cvss3_vector_before, cvss4_vector_before)
+            if vector:
+                if user is None:
+                    user = get_observation_log_user()
+                severity = observation.current_severity if observation.current_severity != severity_before else ""
+                observation_logs.append(create_cvss_bt_observation_log(observation, vector, severity, user))
         changed += [observation.pk for observation in updates]
+
+        Observation_Log.objects.bulk_create(observation_logs)
+        for observation_log in observation_logs:
+            observation_log.observation.last_observation_log = observation_log.created
 
         Observation.objects.bulk_update(
             updates,
@@ -174,6 +199,7 @@ def apply_exploit_information_observations(settings: Settings) -> list[int]:
                 "cve_found_in",
                 "current_severity",
                 "numerical_severity",
+                "last_observation_log",
             ],
         )
         # bulk_update bypasses the observation log, which marks the product as changed
@@ -182,6 +208,35 @@ def apply_exploit_information_observations(settings: Settings) -> list[int]:
         )
 
     return changed
+
+
+def get_cvss_bt_vector(observation: Observation, cvss3_vector_before: str, cvss4_vector_before: str) -> str:
+    # cvss-bt has only one base vector, so it sets at most one of them
+    if observation.cvss3_vector != cvss3_vector_before:
+        return observation.cvss3_vector
+    if observation.cvss4_vector != cvss4_vector_before:
+        return observation.cvss4_vector
+    return ""
+
+
+def create_cvss_bt_observation_log(
+    observation: Observation, vector: str, severity: str, user: Optional[User]
+) -> Observation_Log:
+    return Observation_Log(
+        observation=observation,
+        user=user,
+        severity=severity,
+        comment=f"{Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT}{vector}",
+        vex_statement_id=observation.vex_statement_id,
+        assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+    )
+
+
+def save_cvss_bt_observation_log(observation: Observation, vector: str, severity: str) -> None:
+    observation_log = create_cvss_bt_observation_log(observation, vector, severity, get_observation_log_user())
+    observation_log.save()
+    observation.last_observation_log = observation_log.created
+    observation.save(update_fields=["last_observation_log"])
 
 
 def apply_exploit_information(

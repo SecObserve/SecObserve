@@ -6,8 +6,12 @@ from unittest.mock import patch
 from django.utils import timezone
 
 from application.commons.models import Settings
-from application.core.models import Observation, Product
-from application.core.types import Severity
+from application.core.models import Observation, Observation_Log, Product
+from application.core.types import (
+    Assessment_Status,
+    Observation_Log_Comment,
+    Severity,
+)
 from application.epss.models import Exploit_Information
 from application.epss.services.cvss_bt import (
     apply_exploit_information_observations,
@@ -19,6 +23,10 @@ from unittests.base_test_case import BaseTestCase
 
 
 class TestCVSS_BT(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        # Without a current user, the observation logs are written for the first superuser
+        self.user_admin.save()
 
     @patch("requests.get")
     @patch("epss.services.cvss_bt.timezone.now")
@@ -246,9 +254,10 @@ class TestCVSS_BT(BaseTestCase):
 
         settings = Settings.load()
 
-        # Observations, their exploit information, the update, the change timestamp of the products and the
-        # empty next batch. A field missing in EXPLOIT_INFORMATION_FIELDS would add one query per observation.
-        with self.assertNumQueries(5):
+        # Observations, their exploit information, the user and the creation of the observation logs, the update,
+        # the change timestamp of the products and the empty next batch. A field missing in
+        # EXPLOIT_INFORMATION_FIELDS would add one query per observation.
+        with self.assertNumQueries(7):
             changed = apply_exploit_information_observations(settings)
 
         self.assertEqual(sorted(Observation.objects.filter(product=product).values_list("pk", flat=True)), changed)
@@ -258,6 +267,41 @@ class TestCVSS_BT(BaseTestCase):
             self.assertEqual(7.5, observation.cvss3_score)
             self.assertEqual(Severity.SEVERITY_HIGH, observation.current_severity)
             self.assertEqual(Severity.NUMERICAL_SEVERITIES[Severity.SEVERITY_HIGH], observation.numerical_severity)
+            observation_log = Observation_Log.objects.get(observation=observation)
+            self.assertEqual(
+                f"{Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT}"
+                + "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+                observation_log.comment,
+            )
+            self.assertEqual(Severity.SEVERITY_HIGH, observation_log.severity)
+            self.assertEqual("", observation_log.status)
+            self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED, observation_log.assessment_status)
+            self.assertEqual(observation_log.created, observation.last_observation_log)
+
+    def test_apply_exploit_information_observations_vector_not_set_without_log(self) -> None:
+        parser = Parser.objects.create(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)
+        product = Product.objects.create(name="CVSS_BT vector not set")
+        observation = Observation.objects.create(
+            title="observation",
+            vulnerability_id="CVE-2025-0001",
+            cvss3_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            parser_severity=Severity.SEVERITY_UNKNOWN,
+            product=product,
+            import_last_seen=timezone.now(),
+            parser=parser,
+        )
+        Exploit_Information.objects.create(
+            cve="CVE-2025-0001", base_cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H", cisa_kev=True
+        )
+        settings = Settings.load()
+        settings.feature_exploit_information = True
+
+        changed = apply_exploit_information_observations(settings)
+
+        self.assertIn(observation.pk, changed)
+        observation.refresh_from_db()
+        self.assertEqual("CISA KEV", observation.cve_found_in)
+        self.assertFalse(Observation_Log.objects.filter(observation=observation).exists())
 
     def test_apply_exploit_information_observations_marks_products_as_changed(self) -> None:
         parser = Parser.objects.create(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)

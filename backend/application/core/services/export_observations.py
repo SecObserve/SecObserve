@@ -166,6 +166,7 @@ def _newest_comment() -> Subquery:
         .filter(Q(severity="") | Q(severity=OuterRef("current_severity")))
         .filter(Q(status="") | Q(status=OuterRef("current_status")))
         .exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
+        .exclude(comment__startswith=Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT)
         .order_by("-created", "-id")
         .values("comment")[:1]
     )

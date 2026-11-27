@@ -225,9 +225,10 @@ def get_current_observation_log(observation: Observation) -> Optional[Observatio
 
 
 def get_modifying_observation_logs() -> QuerySet[Observation_Log]:
+    # The severity set by cvss-bt must not replace the justification of an assessment in VEX documents
     return Observation_Log.objects.filter(
         ~Q(status="") | ~Q(severity="") | ~Q(vex_justification="") | ~Q(vex_remediations__isnull=True)
-    )
+    ).exclude(comment__startswith=Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT)
 
 
 def get_current_modifying_observation_log(observation: Observation) -> Optional[Observation_Log]:

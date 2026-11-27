@@ -7,6 +7,7 @@ from django.core.files.base import File
 from django.core.management import call_command
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from application.access_control.models import User
@@ -23,7 +24,13 @@ from application.core.models import (
 from application.core.services.observation import (
     normalize_observation_fields,
 )
-from application.core.types import Severity, Status
+from application.core.types import (
+    Assessment_Status,
+    Observation_Log_Comment,
+    Severity,
+    Status,
+)
+from application.epss.models import Exploit_Information
 from application.import_observations.models import (
     Api_Configuration,
     Parser,
@@ -40,6 +47,7 @@ from application.import_observations.services.import_observations import (
     FileUploadParameters,
     _deduplicate_cross_scanner,
     _process_current_observation,
+    _process_new_observation,
     _resolve_unimported_observations,
     api_import_observations,
     file_upload_observations,
@@ -60,6 +68,7 @@ from application.rules.models import Rule
 from unittests.base_test_case import BaseTestCase
 
 LICENSES_FILE = "unittests/import_observations/parsers/cyclone_dx/files/licenses_1.json"
+CVSS_BT_VECTOR = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
 
 
 class TestFileUploadObservations(BaseTestCase):
@@ -2528,6 +2537,99 @@ class TestProcessCurrentObservation(BaseTestCase):
         _process_current_observation(imported_observation, Observation.objects.get(id=1), Settings.load(), {}, {})
 
         return Observation.objects.get(id=1)
+
+    def test_cvss_bt_vector_set_with_log(self):
+        observation_logs = self._process_cvss_bt(stored_cvss3_vector="")
+
+        self.assertEqual(1, len(observation_logs))
+        self.assertEqual(
+            f"{Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT}{CVSS_BT_VECTOR}",
+            observation_logs[0].comment,
+        )
+        self.assertEqual("", observation_logs[0].severity)
+        self.assertEqual(Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED, observation_logs[0].assessment_status)
+        observation = Observation.objects.get(id=1)
+        self.assertEqual(CVSS_BT_VECTOR, observation.cvss3_vector)
+        self.assertEqual(observation_logs[0].created, observation.last_observation_log)
+
+    def test_cvss_bt_vector_already_stored_without_log(self):
+        observation_logs = self._process_cvss_bt(stored_cvss3_vector=CVSS_BT_VECTOR)
+
+        self.assertEqual(0, len(observation_logs))
+        self.assertEqual(CVSS_BT_VECTOR, Observation.objects.get(id=1).cvss3_vector)
+
+    def test_new_observation_cvss_bt_vector_set_with_log(self):
+        observation_logs = self._process_new_cvss_bt(Severity.SEVERITY_UNKNOWN)
+
+        self.assertEqual(
+            [
+                (Observation_Log_Comment.COMMENT_SET_BY_PARSER, Severity.SEVERITY_UNKNOWN),
+                (
+                    f"{Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT}{CVSS_BT_VECTOR}",
+                    Severity.SEVERITY_HIGH,
+                ),
+            ],
+            observation_logs,
+        )
+
+    def test_new_observation_cvss_bt_severity_unchanged(self):
+        observation_logs = self._process_new_cvss_bt(Severity.SEVERITY_MEDIUM)
+
+        self.assertEqual(
+            [
+                (Observation_Log_Comment.COMMENT_SET_BY_PARSER, Severity.SEVERITY_MEDIUM),
+                (f"{Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT}{CVSS_BT_VECTOR}", ""),
+            ],
+            observation_logs,
+        )
+
+    def _process_new_cvss_bt(self, parser_severity):
+        imported_observation = Observation(
+            title="cvss-bt",
+            vulnerability_id="CVE-2025-0001",
+            parser_severity=parser_severity,
+            product_id=1,
+            parser_id=1,
+            import_last_seen=timezone.now(),
+        )
+
+        _process_new_observation(
+            imported_observation, self._cvss_bt_settings(), {}, self._cvss_bt_exploit_informations()
+        )
+
+        return list(
+            Observation_Log.objects.filter(observation=imported_observation)
+            .order_by("id")
+            .values_list("comment", "severity")
+        )
+
+    def _process_cvss_bt(self, stored_cvss3_vector):
+        Observation.objects.filter(id=1).update(vulnerability_id="CVE-2025-0001", cvss3_vector=stored_cvss3_vector)
+        imported_observation = Observation.objects.get(id=1)
+        # The parser delivers no vector
+        imported_observation.cvss3_vector = ""
+
+        _process_current_observation(
+            imported_observation,
+            Observation.objects.get(id=1),
+            self._cvss_bt_settings(),
+            {},
+            self._cvss_bt_exploit_informations(),
+        )
+
+        return list(
+            Observation_Log.objects.filter(
+                observation_id=1, comment__startswith=Observation_Log_Comment.COMMENT_PREFIX_CVSS_VECTOR_SET_BY_CVSS_BT
+            )
+        )
+
+    def _cvss_bt_settings(self):
+        settings = Settings.load()
+        settings.feature_exploit_information = True
+        return settings
+
+    def _cvss_bt_exploit_informations(self):
+        return {"CVE-2025-0001": Exploit_Information(cve="CVE-2025-0001", base_cvss_vector=CVSS_BT_VECTOR)}
 
 
 class TestResolveUnimportedObservations(BaseTestCase):

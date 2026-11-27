@@ -43,7 +43,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
 ) -> Observation_Log:
     observation_log = Observation_Log(
         observation=observation,
-        user=_get_user(),
+        user=get_observation_log_user(),
         severity=severity,
         status=status,
         priority=priority,
@@ -90,7 +90,7 @@ def create_observation_log(  # pylint: disable=too-many-arguments
 
 
 # Needed because create_observation_log is called from a background task
-def _get_user() -> Optional[User]:
+def get_observation_log_user() -> Optional[User]:
     user = get_current_user()
     if not user:
         user = User.objects.filter(is_superuser=True).first()
