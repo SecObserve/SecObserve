@@ -76,6 +76,12 @@ class TestVexObservationPrefetch(TestCase):
                 observation=observation, user=user, vex_justification="component_not_present", comment="latest"
             )
             Observation_Log.objects.create(observation=observation, user=user, comment="newer non-modifying log")
+            Observation_Log.objects.create(
+                observation=observation, user=user, severity="High", comment="CVSS vector updated by cvss-bt"
+            )
+            Observation_Log.objects.create(
+                observation=observation, user=user, status="Open", comment="Updated by parser"
+            )
             expected[observation.pk] = latest.pk
         expected[observations[2].pk] = None
         hidden = Product.objects.create(name="hidden")

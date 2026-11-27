@@ -225,9 +225,10 @@ def get_current_observation_log(observation: Observation) -> Optional[Observatio
 
 
 def get_modifying_observation_logs() -> QuerySet[Observation_Log]:
+    # Automated logs carry no assessment, their comments must not end up in VEX documents
     return Observation_Log.objects.filter(
         ~Q(status="") | ~Q(severity="") | ~Q(vex_justification="") | ~Q(vex_remediations__isnull=True)
-    )
+    ).exclude(comment__in=Observation_Log_Comment.AUTOMATED_COMMENTS)
 
 
 def get_current_modifying_observation_log(observation: Observation) -> Optional[Observation_Log]:

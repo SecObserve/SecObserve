@@ -23,7 +23,8 @@ from application.core.models import (
 from application.core.services.observation import (
     normalize_observation_fields,
 )
-from application.core.types import Severity, Status
+from application.core.types import Observation_Log_Comment, Severity, Status
+from application.epss.models import Exploit_Information
 from application.import_observations.models import (
     Api_Configuration,
     Parser,
@@ -40,6 +41,7 @@ from application.import_observations.services.import_observations import (
     FileUploadParameters,
     _deduplicate_cross_scanner,
     _process_current_observation,
+    _process_new_observation,
     _resolve_unimported_observations,
     api_import_observations,
     file_upload_observations,
@@ -2512,6 +2514,89 @@ class TestProcessCurrentObservation(BaseTestCase):
         self.assertEqual("", observation.origin_component_purl)
         self.assertEqual("", observation.origin_component_purl_type)
         self.assertEqual(component_without_purl, observation.origin_component)
+
+    def test_exploit_information_severity_separate_log_new_observation(self):
+        observation = Observation.objects.get(id=1)
+        observation.pk = None
+        observation.vulnerability_id = "CVE-2024-0001"
+        observation.parser_severity = Severity.SEVERITY_UNKNOWN
+
+        _process_new_observation(observation, Settings.load(), {}, self._exploit_informations())
+
+        self.assertEqual(
+            [
+                (Observation_Log_Comment.COMMENT_SET_BY_PARSER, Severity.SEVERITY_UNKNOWN),
+                (Observation_Log_Comment.COMMENT_CVSS_UPDATED_BY_CVSS_BT, Severity.SEVERITY_CRITICAL),
+            ],
+            self._logs(observation),
+        )
+        self.assertEqual(Severity.SEVERITY_CRITICAL, Observation.objects.get(pk=observation.pk).current_severity)
+
+    def test_exploit_information_severity_separate_log_current_observation(self):
+        self._set_observation_before(Severity.SEVERITY_UNKNOWN, Severity.SEVERITY_UNKNOWN, "")
+
+        observation = self._process_with_exploit_information(Severity.SEVERITY_UNKNOWN)
+
+        self.assertEqual(
+            [(Observation_Log_Comment.COMMENT_CVSS_UPDATED_BY_CVSS_BT, Severity.SEVERITY_CRITICAL)],
+            self._logs(observation),
+        )
+        self.assertEqual(Severity.SEVERITY_CRITICAL, observation.current_severity)
+
+    def test_exploit_information_severity_parser_and_exploit_information_logs(self):
+        self._set_observation_before(Severity.SEVERITY_MEDIUM, Severity.SEVERITY_MEDIUM, "")
+
+        observation = self._process_with_exploit_information(Severity.SEVERITY_UNKNOWN)
+
+        self.assertEqual(
+            [
+                (Observation_Log_Comment.COMMENT_UPDATED_BY_PARSER, Severity.SEVERITY_UNKNOWN),
+                (Observation_Log_Comment.COMMENT_CVSS_UPDATED_BY_CVSS_BT, Severity.SEVERITY_CRITICAL),
+            ],
+            self._logs(observation),
+        )
+
+    def test_exploit_information_vector_restored_without_log(self):
+        # The previous import has set the vector from exploit information, the parser delivers none
+        self._set_observation_before(Severity.SEVERITY_UNKNOWN, Severity.SEVERITY_CRITICAL, self.CVSS3_VECTOR)
+
+        observation = self._process_with_exploit_information(Severity.SEVERITY_UNKNOWN)
+
+        self.assertEqual([], self._logs(observation))
+        self.assertEqual(self.CVSS3_VECTOR, observation.cvss3_vector)
+        self.assertEqual(Severity.SEVERITY_CRITICAL, observation.current_severity)
+
+    CVSS3_VECTOR = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+
+    def _exploit_informations(self):
+        return {"CVE-2024-0001": Exploit_Information(cve="CVE-2024-0001", base_cvss_vector=self.CVSS3_VECTOR)}
+
+    def _set_observation_before(self, parser_severity, current_severity, cvss3_vector):
+        Observation.objects.filter(id=1).update(
+            vulnerability_id="CVE-2024-0001",
+            parser_severity=parser_severity,
+            current_severity=current_severity,
+            cvss3_vector=cvss3_vector,
+            cvss3_score=9.8 if cvss3_vector else None,
+        )
+        Observation_Log.objects.filter(observation_id=1).delete()
+
+    def _process_with_exploit_information(self, parser_severity):
+        imported_observation = Observation.objects.get(id=1)
+        imported_observation.parser_severity = parser_severity
+        imported_observation.cvss3_vector = ""
+        imported_observation.cvss3_score = None
+
+        _process_current_observation(
+            imported_observation, Observation.objects.get(id=1), Settings.load(), {}, self._exploit_informations()
+        )
+
+        return Observation.objects.get(id=1)
+
+    def _logs(self, observation):
+        return list(
+            Observation_Log.objects.filter(observation=observation).order_by("id").values_list("comment", "severity")
+        )
 
     def _process_imported_purl(self, purl):
         # The parsers set neither the component nor the type of the purl

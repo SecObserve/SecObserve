@@ -5,9 +5,10 @@ from unittest.mock import patch
 
 from django.utils import timezone
 
+from application.access_control.models import User
 from application.commons.models import Settings
-from application.core.models import Observation, Product
-from application.core.types import Severity
+from application.core.models import Observation, Observation_Log, Product
+from application.core.types import Observation_Log_Comment, Severity
 from application.epss.models import Exploit_Information
 from application.epss.services.cvss_bt import (
     apply_exploit_information_observations,
@@ -19,6 +20,10 @@ from unittests.base_test_case import BaseTestCase
 
 
 class TestCVSS_BT(BaseTestCase):
+    def setUp(self) -> None:
+        # Observation logs written by the background job fall back to the first superuser
+        User.objects.create(username="cvss_bt_superuser", is_superuser=True)
+        super().setUp()
 
     @patch("requests.get")
     @patch("epss.services.cvss_bt.timezone.now")
@@ -233,7 +238,8 @@ class TestCVSS_BT(BaseTestCase):
             Observation(
                 title=f"observation {number}",
                 vulnerability_id=f"CVE-2025-010{number}",
-                parser_severity=Severity.SEVERITY_UNKNOWN,
+                # A changed severity writes an observation log, which needs queries per observation
+                parser_severity=Severity.SEVERITY_HIGH,
                 product=product,
                 import_last_seen=timezone.now(),
                 parser=parser,
@@ -287,6 +293,69 @@ class TestCVSS_BT(BaseTestCase):
         self.assertGreater(product_changed.last_observation_change, last_change)
         product_unchanged.refresh_from_db()
         self.assertEqual(last_change, product_unchanged.last_observation_change)
+
+    def test_apply_exploit_information_observations_only_without_cvss_vector(self) -> None:
+        parser = Parser.objects.create(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)
+        product = Product.objects.create(name="CVSS_BT Test")
+        cvss3_vector = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+        cvss4_vector = "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N"
+        # The observation has one CVSS version, cvss-bt has the other one
+        for cve, observation_vectors, exploit_vector in (
+            ("CVE-2025-0001", {"cvss4_vector": cvss4_vector}, cvss3_vector),
+            ("CVE-2025-0002", {"cvss3_vector": cvss3_vector}, cvss4_vector),
+        ):
+            Observation.objects.create(
+                title=cve,
+                vulnerability_id=cve,
+                product=product,
+                import_last_seen=timezone.now(),
+                parser=parser,
+                **observation_vectors,
+            )
+            Exploit_Information.objects.create(cve=cve, base_cvss_vector=exploit_vector, cisa_kev=True)
+
+        apply_exploit_information_observations(Settings.load())
+
+        observation = Observation.objects.get(title="CVE-2025-0001")
+        self.assertEqual("CISA KEV", observation.cve_found_in)
+        self.assertEqual("", observation.cvss3_vector)
+        self.assertEqual(cvss4_vector, observation.cvss4_vector)
+        observation = Observation.objects.get(title="CVE-2025-0002")
+        self.assertEqual("CISA KEV", observation.cve_found_in)
+        self.assertEqual(cvss3_vector, observation.cvss3_vector)
+        self.assertEqual("", observation.cvss4_vector)
+
+    def test_apply_exploit_information_observations_log_for_changed_severity(self) -> None:
+        parser = Parser.objects.create(name="Parser", type=Parser_Type.TYPE_OTHER, source=Parser_Source.SOURCE_OTHER)
+        product = Product.objects.create(name="CVSS_BT Test")
+        for cve, parser_severity in (
+            ("CVE-2025-0001", Severity.SEVERITY_UNKNOWN),
+            ("CVE-2025-0002", Severity.SEVERITY_LOW),
+        ):
+            Observation.objects.create(
+                title=cve,
+                vulnerability_id=cve,
+                parser_severity=parser_severity,
+                product=product,
+                import_last_seen=timezone.now(),
+                parser=parser,
+            )
+            Exploit_Information.objects.create(
+                cve=cve, base_cvss_vector="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", cisa_kev=True
+            )
+        Observation_Log.objects.filter(observation__product=product).delete()
+
+        apply_exploit_information_observations(Settings.load())
+
+        observation = Observation.objects.get(title="CVE-2025-0001")
+        self.assertEqual(
+            [(Observation_Log_Comment.COMMENT_CVSS_UPDATED_BY_CVSS_BT, Severity.SEVERITY_CRITICAL)],
+            list(observation.observation_logs.values_list("comment", "severity")),
+        )
+        self.assertEqual(observation.observation_logs.get().created, observation.last_observation_log)
+        observation = Observation.objects.get(title="CVE-2025-0002")
+        self.assertEqual("CISA KEV", observation.cve_found_in)
+        self.assertFalse(observation.observation_logs.exists())
 
 
 class MockResponse:

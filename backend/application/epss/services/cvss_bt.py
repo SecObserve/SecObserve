@@ -1,6 +1,6 @@
 import csv
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 from cvss import CVSS3, CVSS4
@@ -9,8 +9,12 @@ from django.utils import timezone
 
 from application.commons.models import Settings
 from application.core.models import Observation, Product
-from application.core.services.observation import get_current_severity
-from application.core.types import Severity
+from application.core.services.observation import (
+    get_current_severity,
+    get_field_values,
+)
+from application.core.services.observation_log import create_observation_log
+from application.core.types import Assessment_Status, Observation_Log_Comment, Severity
 from application.epss.models import Exploit_Information
 from application.epss.queries.exploit_information import (
     get_exploit_information_by_cve,
@@ -157,11 +161,14 @@ def apply_exploit_information_observations(settings: Settings) -> list[int]:
         exploit_informations = get_exploit_information_by_cves(
             observation.vulnerability_id for observation in observations
         )
-        updates = [
-            observation
-            for observation in observations
-            if apply_exploit_information(observation, settings, exploit_informations)
-        ]
+        updates = []
+        severity_changed = []
+        for observation in observations:
+            previous_severity = observation.current_severity
+            if apply_exploit_information(observation, settings, exploit_informations):
+                updates.append(observation)
+                if observation.current_severity != previous_severity:
+                    severity_changed.append(observation.pk)
         changed += [observation.pk for observation in updates]
 
         Observation.objects.bulk_update(
@@ -181,7 +188,28 @@ def apply_exploit_information_observations(settings: Settings) -> list[int]:
             last_observation_change=timezone.now()
         )
 
+        # The observations have been loaded with only a few fields, the log needs complete ones.
+        # Severity changes are rare, an empty list runs no query.
+        for observation in Observation.objects.filter(pk__in=severity_changed).select_related("product"):
+            write_exploit_information_log(observation, get_field_values(observation))
+
     return changed
+
+
+def write_exploit_information_log(observation: Observation, values_before: dict[str, Any]) -> None:
+    create_observation_log(
+        observation=observation,
+        severity=observation.current_severity,
+        status="",
+        priority=None,
+        priority_changed=False,
+        comment=Observation_Log_Comment.COMMENT_CVSS_UPDATED_BY_CVSS_BT,
+        vex_justification="",
+        vex_remediations=None,
+        assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
+        risk_acceptance_expiry_date=None,
+        values_before=values_before,
+    )
 
 
 def apply_exploit_information(
@@ -205,21 +233,22 @@ def apply_exploit_information(
         cvss4_vector_before = observation.cvss4_vector
         cve_found_in_before = observation.cve_found_in
 
-        if not observation.cvss3_vector and exploit_information.base_cvss_vector.startswith("CVSS:3"):
-            try:
-                cvss = CVSS3(exploit_information.base_cvss_vector)
-                observation.cvss3_vector = exploit_information.base_cvss_vector
-                observation.cvss3_score = cvss.base_score
-            except CVSSError:
-                pass
-
-        if not observation.cvss4_vector and exploit_information.base_cvss_vector.startswith("CVSS:4"):
-            try:
-                cvss = CVSS4(exploit_information.base_cvss_vector)
-                observation.cvss4_vector = exploit_information.base_cvss_vector
-                observation.cvss4_score = cvss.base_score
-            except CVSSError:
-                pass
+        # A vector from cvss-bt only complements observations without any CVSS vector
+        if not observation.cvss3_vector and not observation.cvss4_vector:
+            if exploit_information.base_cvss_vector.startswith("CVSS:3"):
+                try:
+                    cvss = CVSS3(exploit_information.base_cvss_vector)
+                    observation.cvss3_vector = exploit_information.base_cvss_vector
+                    observation.cvss3_score = cvss.base_score
+                except CVSSError:
+                    pass
+            elif exploit_information.base_cvss_vector.startswith("CVSS:4"):
+                try:
+                    cvss = CVSS4(exploit_information.base_cvss_vector)
+                    observation.cvss4_vector = exploit_information.base_cvss_vector
+                    observation.cvss4_score = cvss.base_score
+                except CVSSError:
+                    pass
 
         _add_cve_found_in(observation, exploit_information)
 

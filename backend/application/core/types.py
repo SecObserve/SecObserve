@@ -100,6 +100,7 @@ class Observation_Log_Comment:
     COMMENT_SET_BY_PARSER = "Set by parser"
     COMMENT_UPDATED_BY_PARSER = "Updated by parser"
     COMMENT_NOT_FOUND_IN_LATEST_SCAN = "Observation not found in latest scan"
+    COMMENT_CVSS_UPDATED_BY_CVSS_BT = "CVSS vector updated by cvss-bt"
 
     # Comments written automatically during import. They carry no human assessment and must not be
     # used as a VEX justification or impact statement.
@@ -107,6 +108,7 @@ class Observation_Log_Comment:
         COMMENT_SET_BY_PARSER,
         COMMENT_UPDATED_BY_PARSER,
         COMMENT_NOT_FOUND_IN_LATEST_SCAN,
+        COMMENT_CVSS_UPDATED_BY_CVSS_BT,
     ]
 
     COMMENT_CREATED_MANUALLY = "Observation created manually"
