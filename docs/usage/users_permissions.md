@@ -133,7 +133,7 @@ While superusers have permission to view and edit all data, internal and externa
 
 **^4)^** Additionally, the user needs the permission to edit the product group
 
-**^5)^** Superusers can also see the audit trail of deleted products
+**^5)^** Superusers can also see the audit trail of deleted products. Events from before the audit trail was introduced exist only for approvals of assessments and product rules, for product rules only the latest approval.
 
 
 ## Management of users and authorization groups

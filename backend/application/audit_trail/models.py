@@ -11,6 +11,7 @@ from django.db.models import (
     JSONField,
     Model,
 )
+from django.utils import timezone
 
 from application.access_control.models import User
 from application.audit_trail.types import Audit_Object_Type
@@ -22,7 +23,7 @@ class Product_Audit_Event(Model):
     product_name = CharField(max_length=255)
     # Kept for deleted products, is_product_group of a product never changes
     is_product_group = BooleanField(default=False)
-    created = DateTimeField(auto_now_add=True)
+    created = DateTimeField(default=timezone.now)
     # API token users are deleted when the token is revoked, the full name is kept
     user = ForeignKey(User, on_delete=SET_NULL, null=True, related_name="+")
     user_full_name = CharField(max_length=301, blank=True)

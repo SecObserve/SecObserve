@@ -2,6 +2,7 @@
 
 import django.core.serializers.json
 import django.db.models.deletion
+import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
 
@@ -22,7 +23,7 @@ class Migration(migrations.Migration):
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("product_name", models.CharField(max_length=255)),
                 ("is_product_group", models.BooleanField(default=False)),
-                ("created", models.DateTimeField(auto_now_add=True)),
+                ("created", models.DateTimeField(default=django.utils.timezone.now)),
                 ("user_full_name", models.CharField(blank=True, max_length=301)),
                 (
                     "object_type",
