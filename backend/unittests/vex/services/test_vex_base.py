@@ -80,10 +80,13 @@ class TestVexObservationPrefetch(TestCase):
                 observation=observation, user=user, severity="High", comment="CVSS vector updated by cvss-bt"
             )
             Observation_Log.objects.create(
-                observation=observation, user=user, status="Open", comment="Updated by parser"
+                observation=observation, user=user, severity="Low", comment="Updated by parser"
             )
             expected[observation.pk] = latest.pk
-        expected[observations[2].pk] = None
+        # An automated log that changes the status is still the modifying log
+        expected[observations[2].pk] = Observation_Log.objects.create(
+            observation=observations[2], user=user, status="Resolved", comment="Observation not found in latest scan"
+        ).pk
         hidden = Product.objects.create(name="hidden")
         Observation.objects.create(
             product=hidden,

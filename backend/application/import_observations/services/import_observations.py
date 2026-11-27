@@ -588,6 +588,8 @@ def _process_new_observation(
 
     # Observation has not been imported before, so it is a new one
     apply_epss(imported_observation, epss_scores)
+    parser_severity = imported_observation.current_severity
+    apply_exploit_information(imported_observation, settings, exploit_informations)
     imported_observation.save()
 
     # The observation has just been created, so there are no references and evidences to compare with
@@ -596,7 +598,7 @@ def _process_new_observation(
 
     create_observation_log(
         observation=imported_observation,
-        severity=imported_observation.current_severity,
+        severity=parser_severity,
         status=imported_observation.current_status,
         priority=None,
         priority_changed=False,
@@ -607,14 +609,9 @@ def _process_new_observation(
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
 
-    # Applied after the parser's log, to show a severity changed by a CVSS vector from exploit information separately
-    values_before = get_field_values(imported_observation)
-    previous_severity = imported_observation.current_severity
-    if apply_exploit_information(imported_observation, settings, exploit_informations):
-        if imported_observation.current_severity != previous_severity:
-            write_exploit_information_log(imported_observation, values_before)
-        else:
-            save_changed_fields(imported_observation, values_before)
+    # A severity changed by a CVSS vector from exploit information is shown in a separate log
+    if imported_observation.current_severity != parser_severity:
+        write_exploit_information_log(imported_observation, get_field_values(imported_observation))
 
 
 def _get_references_and_evidences(
