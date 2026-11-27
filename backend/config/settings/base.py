@@ -137,6 +137,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "application.access_control",
+    "application.audit_trail",
     "application.background_tasks",
     "application.commons",
     "application.constance",

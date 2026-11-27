@@ -439,11 +439,11 @@ class TestGetProductMetricsTimeline(BaseTestCase):
     @patch("application.metrics.queries.product_metrics.get_current_user")
     def test_age_starts_at_local_date(self, mock_user, mock_now):
         mock_user.return_value = self.superuser
+        # Already 2025-06-15 in TIME_ZONE, but still 2025-06-14 in UTC
+        mock_now.return_value = datetime(2025, 6, 14, 20, 0, tzinfo=dt_timezone.utc)
         product = Product.objects.create(name="time zone")
         for day in (7, 8):
             Product_Metrics.objects.create(product=product, date=date(2025, 6, day))
-        # Already 2025-06-15 in TIME_ZONE, but still 2025-06-14 in UTC
-        mock_now.return_value = datetime(2025, 6, 14, 20, 0, tzinfo=dt_timezone.utc)
 
         result = get_product_metrics_timeline(product, "Past 7 days")
 

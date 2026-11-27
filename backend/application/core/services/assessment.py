@@ -8,6 +8,8 @@ from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
 from application.access_control.services.current_user import get_current_user
+from application.audit_trail.services.audit_trail import create_approval_audit_event
+from application.audit_trail.types import Audit_Object_Type
 from application.core.models import Branch, Observation, Observation_Log, Product
 from application.core.services.assessment_approver import (
     user_is_allowed_assessment_approver,
@@ -381,6 +383,15 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     observation_log.approval_date = timezone.now()
     observation_log.assessment_status = assessment_status
     observation_log.save()
+
+    create_approval_audit_event(
+        product,
+        Audit_Object_Type.ASSESSMENT,
+        observation_log.observation.pk,
+        observation_log.observation.title,
+        assessment_status,
+        rejection_remark,
+    )
 
     send_assessment_approval_receipt_notification(observation_log)
     emit_assessment_event(Webhook_Event_Type.ASSESSMENT_APPROVAL_DECIDED, observation_log)

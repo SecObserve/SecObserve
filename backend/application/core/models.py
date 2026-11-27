@@ -237,7 +237,7 @@ class Branch(Model, DirtyFieldsMixin):
         return self.name
 
 
-class Service(Model):
+class Service(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE)
     name = CharField(max_length=255)
 
@@ -254,7 +254,7 @@ class Service(Model):
         return self.name
 
 
-class Product_Member(Model):
+class Product_Member(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE)
     user = ForeignKey(User, on_delete=CASCADE)
     role = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
@@ -269,7 +269,7 @@ class Product_Member(Model):
         return f"{self.product} / {self.user}"
 
 
-class Product_Authorization_Group_Member(Model):
+class Product_Authorization_Group_Member(Model, DirtyFieldsMixin):
     product = ForeignKey(Product, on_delete=CASCADE)
     authorization_group = ForeignKey(Authorization_Group, on_delete=CASCADE)
     role = IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])

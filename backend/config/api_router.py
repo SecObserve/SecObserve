@@ -8,6 +8,7 @@ from application.access_control.api.views import (
     UserNameViewSet,
     UserViewSet,
 )
+from application.audit_trail.api.views import ProductAuditEventViewSet
 from application.background_tasks.api.views import PeriodicTaskViewSet
 from application.core.api.views_observation import (
     EvidenceViewSet,
@@ -99,6 +100,7 @@ router.register(
     ProductAuthorizationGroupMemberViewSet,
     basename="product_authorization_group_members",
 )
+router.register("product_audit_events", ProductAuditEventViewSet, basename="product_audit_events")
 router.register("branches", BranchViewSet, basename="branches")
 router.register("branch_names", BranchNameViewSet, basename="branch_names")
 router.register("services", ServiceViewSet, basename="services")
