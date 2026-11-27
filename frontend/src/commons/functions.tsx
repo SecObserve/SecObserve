@@ -497,6 +497,16 @@ export const feature_show_product_header_chips = () => {
     }
 };
 
+export const feature_audit_trail = () => {
+    try {
+        const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");
+        const features = settings.features ?? [];
+        return features.indexOf("feature_audit_trail") !== -1;
+    } catch {
+        return false;
+    }
+};
+
 export const feature_full_text_search = () => {
     try {
         const settings = JSON.parse(localStorage.getItem("settings") ?? "{}");

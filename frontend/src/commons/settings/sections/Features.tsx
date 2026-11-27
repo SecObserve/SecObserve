@@ -205,6 +205,7 @@ export const FeaturesInputs = () => (
                         label="Enable cross scanner deduplication"
                     />
                     <BooleanInput source="feature_show_product_header_chips" label="Show chips in Product header" />
+                    <BooleanInput source="feature_audit_trail" label="Enable audit trail" />
                 </Stack>
             </Grid>
             <Grid size={3}>
@@ -374,6 +375,9 @@ export const FeaturesFields = () => {
                         </Labeled>
                         <Labeled label="Show chips in Product header">
                             <BooleanField source="feature_show_product_header_chips" />
+                        </Labeled>
+                        <Labeled label="Enable audit trail">
+                            <BooleanField source="feature_audit_trail" />
                         </Labeled>
                     </Stack>
                 </Grid>

@@ -42,7 +42,11 @@ import {
 } from "../../access_control/types";
 import audit_trail from "../../audit_trail";
 import ProductAuditEventEmbeddedList from "../../audit_trail/ProductAuditEventEmbeddedList";
-import { feature_license_management, feature_scancodeio_integration } from "../../commons/functions";
+import {
+    feature_audit_trail,
+    feature_license_management,
+    feature_scancodeio_integration,
+} from "../../commons/functions";
 import TabsWithSubMenu from "../../commons/layout/TabsWithSubMenu";
 import { useStyles } from "../../commons/layout/themes";
 import observations from "../../core/observations";
@@ -326,11 +330,12 @@ const ProductShow = () => {
                                     )}
                                     <WebhookEmbeddedList product={product} />
                                 </Tab>
-                                {product?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW) && (
-                                    <Tab label="Audit Trail" path="audit_trail" icon={<audit_trail.icon />}>
-                                        <ProductAuditEventEmbeddedList product={product} />
-                                    </Tab>
-                                )}
+                                {feature_audit_trail() &&
+                                    product?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW) && (
+                                        <Tab label="Audit Trail" path="audit_trail" icon={<audit_trail.icon />}>
+                                            <ProductAuditEventEmbeddedList product={product} />
+                                        </Tab>
+                                    )}
                             </TabbedShowLayout>
                         )}
                     />

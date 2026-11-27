@@ -6,6 +6,7 @@ from django.utils import timezone
 from application.access_control.models import Authorization_Group, User
 from application.audit_trail.models import Product_Audit_Event
 from application.authorization.services.roles_permissions import Roles
+from application.commons.models import Settings
 from application.core.models import (
     Branch,
     Product,
@@ -66,6 +67,15 @@ class TestAuditTrailSignals(BaseTestCase):
         event = Product_Audit_Event.objects.first()
         self.assertEqual(self.user, event.user)
         self.assertEqual("Audit User", event.user_full_name)
+
+    def test_feature_switched_off(self) -> None:
+        settings = Settings.load()
+        settings.feature_audit_trail = False
+        settings.save()
+
+        Branch.objects.create(product=self.product, name="main")
+
+        self.assertEqual(1, Product_Audit_Event.objects.count())
 
     def test_long_values_are_cut(self) -> None:
         self.product.description = "a" * 300

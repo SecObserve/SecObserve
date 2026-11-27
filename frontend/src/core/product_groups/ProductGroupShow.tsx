@@ -31,6 +31,7 @@ import {
 } from "../../access_control/types";
 import audit_trail from "../../audit_trail";
 import ProductAuditEventEmbeddedList from "../../audit_trail/ProductAuditEventEmbeddedList";
+import { feature_audit_trail } from "../../commons/functions";
 import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
 import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
@@ -181,11 +182,12 @@ const ProductGroupShow = () => {
                                 )}
                                 <WebhookEmbeddedList product={product_group} />
                             </Tab>
-                            {product_group?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW) && (
-                                <Tab label="Audit Trail" path="audit_trail" icon={<audit_trail.icon />}>
-                                    <ProductAuditEventEmbeddedList product={product_group} />
-                                </Tab>
-                            )}
+                            {feature_audit_trail() &&
+                                product_group?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW) && (
+                                    <Tab label="Audit Trail" path="audit_trail" icon={<audit_trail.icon />}>
+                                        <ProductAuditEventEmbeddedList product={product_group} />
+                                    </Tab>
+                                )}
                         </TabbedShowLayout>
                     )}
                 />

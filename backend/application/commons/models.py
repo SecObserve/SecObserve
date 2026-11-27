@@ -300,6 +300,7 @@ class Settings(Model, DirtyFieldsMixin):
 
     feature_cross_scanner_deduplication = BooleanField(default=False)
     feature_show_product_header_chips = BooleanField(default=False)
+    feature_audit_trail = BooleanField(default=True, help_text="Enable audit trail for products")
     # Only set by the management command full_text_search, which creates and drops the indexes as well
     feature_full_text_search = BooleanField(default=False)
 

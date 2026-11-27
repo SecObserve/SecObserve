@@ -4,6 +4,7 @@ from django.db.models import Field
 
 from application.access_control.services.current_user import get_current_user
 from application.audit_trail.models import Product_Audit_Event
+from application.commons.models import Settings
 from application.core.models import Product
 
 MASKED_VALUE = "***"
@@ -18,6 +19,9 @@ def create_audit_event(  # pylint: disable=too-many-arguments, too-many-position
     action: str,
     changes: Optional[dict] = None,
 ) -> None:
+    if not Settings.load().feature_audit_trail:
+        return
+
     if changes:
         changes = {field: {key: _cut(value) for key, value in values.items()} for field, values in changes.items()}
     user = get_current_user()
