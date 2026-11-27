@@ -233,23 +233,7 @@ def apply_exploit_information(
         cvss4_vector_before = observation.cvss4_vector
         cve_found_in_before = observation.cve_found_in
 
-        # A vector from cvss-bt only complements observations without any CVSS vector
-        if not observation.cvss3_vector and not observation.cvss4_vector:
-            if exploit_information.base_cvss_vector.startswith("CVSS:3"):
-                try:
-                    cvss = CVSS3(exploit_information.base_cvss_vector)
-                    observation.cvss3_vector = exploit_information.base_cvss_vector
-                    observation.cvss3_score = cvss.base_score
-                except CVSSError:
-                    pass
-            elif exploit_information.base_cvss_vector.startswith("CVSS:4"):
-                try:
-                    cvss = CVSS4(exploit_information.base_cvss_vector)
-                    observation.cvss4_vector = exploit_information.base_cvss_vector
-                    observation.cvss4_score = cvss.base_score
-                except CVSSError:
-                    pass
-
+        _add_cvss_vector(observation, exploit_information)
         _add_cve_found_in(observation, exploit_information)
 
         if (
@@ -273,6 +257,27 @@ def apply_exploit_information(
             return True
 
         return False
+
+
+def _add_cvss_vector(observation: Observation, exploit_information: Exploit_Information) -> None:
+    # A vector from cvss-bt only complements observations without any CVSS vector
+    if observation.cvss3_vector or observation.cvss4_vector:
+        return
+
+    if exploit_information.base_cvss_vector.startswith("CVSS:3"):
+        try:
+            cvss = CVSS3(exploit_information.base_cvss_vector)
+            observation.cvss3_vector = exploit_information.base_cvss_vector
+            observation.cvss3_score = cvss.base_score
+        except CVSSError:
+            pass
+    elif exploit_information.base_cvss_vector.startswith("CVSS:4"):
+        try:
+            cvss = CVSS4(exploit_information.base_cvss_vector)
+            observation.cvss4_vector = exploit_information.base_cvss_vector
+            observation.cvss4_score = cvss.base_score
+        except CVSSError:
+            pass
 
 
 def _add_cve_found_in(observation: Observation, exploit_information: Exploit_Information) -> None:
