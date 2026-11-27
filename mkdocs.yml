@@ -87,6 +87,7 @@ nav:
     - Components: usage/components.md
     - Users, groups and permissions: usage/users_permissions.md
     - Notifications: usage/notifications.md
+    - Audit trail: usage/audit_trail.md
   - Integrations:
     - Overview: integrations/overview.md
     - Supported scanners: integrations/supported_scanners.md

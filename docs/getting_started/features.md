@@ -56,6 +56,7 @@
 | [Internal, external and admin users](../usage/users_permissions.md#user-types) | :material-plus-circle-outline: |
 | [Authorization groups](../usage/users_permissions.md#authorization-groups) | :material-plus-circle-outline: |
 | [Role-based access control](../usage/users_permissions.md#roles-and-permissions) | :material-plus-circle-outline: |
+| [Audit trail for changes of products and approvals](../usage/audit_trail.md) | :material-plus-circle-outline: |
 
 ## Installation and Upgrading
 
