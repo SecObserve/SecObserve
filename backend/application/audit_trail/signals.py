@@ -103,6 +103,8 @@ def audit_post_save(  # pylint: disable=too-many-arguments
 
     if created:
         _create_audit_event(tracked_model, product, instance, Audit_Action.CREATED)
+        if isinstance(instance, Product):
+            _create_product_group_event(instance.product_group_id, instance, "added")
         return
 
     # ScanCode.io projects are only created and deleted
@@ -112,6 +114,10 @@ def audit_post_save(  # pylint: disable=too-many-arguments
     changes = get_changes(instance, tracked_model.ignored_fields, tracked_model.masked_fields, update_fields)
     if changes:
         _create_audit_event(tracked_model, product, instance, Audit_Action.CHANGED, changes)
+        if isinstance(instance, Product) and "product_group" in changes:
+            old_product_group_id = instance.get_dirty_fields(check_relationship=True)["product_group"]
+            _create_product_group_event(old_product_group_id, instance, "removed")
+            _create_product_group_event(instance.product_group_id, instance, "added")
 
 
 def audit_post_delete(sender: Any, instance: Any, origin: Any = None, **kwargs: Any) -> None:
@@ -123,6 +129,10 @@ def audit_post_delete(sender: Any, instance: Any, origin: Any = None, **kwargs: 
     product = tracked_model.get_product(instance)
     if product:
         _create_audit_event(tracked_model, product, instance, Audit_Action.DELETED)
+
+    # Not when the product group itself is being deleted
+    if isinstance(instance, Product) and not (isinstance(origin, Product) and origin.pk == instance.product_group_id):
+        _create_product_group_event(instance.product_group_id, instance, "removed")
 
 
 def audit_approvers_changed(  # pylint: disable=too-many-arguments
@@ -141,6 +151,18 @@ def audit_approvers_changed(  # pylint: disable=too-many-arguments
         Audit_Action.CHANGED,
         {approver_field: {change_type: names}},
     )
+
+
+def _create_product_group_event(product_group_id: Optional[int], product: Product, change_type: str) -> None:
+    product_group = Product.objects.filter(pk=product_group_id).first() if product_group_id else None
+    if product_group:
+        _create_audit_event(
+            TRACKED_MODELS["core.Product"],
+            product_group,
+            product_group,
+            Audit_Action.CHANGED,
+            {"products": {change_type: [product.name]}},
+        )
 
 
 def _get_tracked_model(sender: Any) -> Tracked_Model:

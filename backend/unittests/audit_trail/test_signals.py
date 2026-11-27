@@ -198,8 +198,18 @@ class TestAuditTrailSignals(BaseTestCase):
         product_group.delete()
 
         self.assertEqual(("Product", "audit_product", "Deleted", None), self._events()[-1])
-        self.assertTrue(
-            Product_Audit_Event.objects.filter(product_id=product_group_id, object_name="audit_group", action="Deleted")
+        # No "removed" event for the product, the group is deleted as a whole
+        self.assertEqual(
+            [
+                ("audit_group", "Created", None),
+                ("audit_group", "Changed", {"products": {"added": ["audit_product"]}}),
+                ("audit_group", "Deleted", None),
+            ],
+            list(
+                Product_Audit_Event.objects.filter(product_id=product_group_id)
+                .order_by("id")
+                .values_list("object_name", "action", "changes")
+            ),
         )
         self.assertEqual(
             {True},
@@ -210,6 +220,29 @@ class TestAuditTrailSignals(BaseTestCase):
             ),
         )
         self.assertFalse(Product_Audit_Event.objects.filter(product_id=self.product.pk, is_product_group=True))
+
+    def test_product_group_membership(self) -> None:
+        group_a = Product.objects.create(name="group_a", is_product_group=True)
+        group_b = Product.objects.create(name="group_b", is_product_group=True)
+
+        product = Product.objects.create(name="member", product_group=group_a)
+        product.product_group = group_b
+        product.save()
+        product.delete()
+
+        def group_changes(group: Product) -> list:
+            return list(
+                Product_Audit_Event.objects.filter(product_id=group.pk, action="Changed")
+                .order_by("id")
+                .values_list("changes", flat=True)
+            )
+
+        self.assertEqual(
+            [{"products": {"added": ["member"]}}, {"products": {"removed": ["member"]}}], group_changes(group_a)
+        )
+        self.assertEqual(
+            [{"products": {"added": ["member"]}}, {"products": {"removed": ["member"]}}], group_changes(group_b)
+        )
 
     def test_assessment_approvers(self) -> None:
         group = Authorization_Group.objects.create(name="approvers")
