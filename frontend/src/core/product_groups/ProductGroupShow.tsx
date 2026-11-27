@@ -21,6 +21,7 @@ import ApiTokenCreate from "../../access_control/api_tokens/ApiTokenCreate";
 import ApiTokenEmbeddedList from "../../access_control/api_tokens/ApiTokenEmbeddedList";
 import {
     PERMISSION_PRODUCT_API_TOKEN_CREATE,
+    PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW,
     PERMISSION_PRODUCT_AUTHORIZATION_GROUP_MEMBER_CREATE,
     PERMISSION_PRODUCT_GROUP_EDIT,
     PERMISSION_PRODUCT_MEMBER_CREATE,
@@ -28,6 +29,8 @@ import {
     PERMISSION_PRODUCT_RULE_CREATE,
     PERMISSION_WEBHOOK_CREATE,
 } from "../../access_control/types";
+import audit_trail from "../../audit_trail";
+import ProductAuditEventEmbeddedList from "../../audit_trail/ProductAuditEventEmbeddedList";
 import MetricsHeader from "../../metrics/MetricsHeader";
 import MetricsSeveritiesCurrent from "../../metrics/MetricsSeveritiesCurrent";
 import MetricsSeveritiesTimeline from "../../metrics/MetricsSeveritiesTimeLine";
@@ -178,6 +181,11 @@ const ProductGroupShow = () => {
                                 )}
                                 <WebhookEmbeddedList product={product_group} />
                             </Tab>
+                            {product_group?.permissions?.includes(PERMISSION_PRODUCT_AUDIT_TRAIL_VIEW) && (
+                                <Tab label="Audit Trail" path="audit_trail" icon={<audit_trail.icon />}>
+                                    <ProductAuditEventEmbeddedList product={product_group} />
+                                </Tab>
+                            )}
                         </TabbedShowLayout>
                     )}
                 />

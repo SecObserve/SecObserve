@@ -12,6 +12,7 @@ import { Login } from "./access_control/login";
 import users from "./access_control/users";
 import UserSettings from "./access_control/users/UserSettings";
 import { getTheme } from "./access_control/users/functions";
+import audit_trail from "./audit_trail";
 import BackgroundTasksAdministration from "./background_tasks/background_tasks_administration/BackgroundTasksAdministration";
 import periodic_tasks from "./background_tasks/periodic_tasks";
 import { Layout } from "./commons/layout";
@@ -164,6 +165,12 @@ const AdminApp = () => {
                 recordRepresentation={(record) => `${trim_string(record.name)}`}
             />
             <Resource name="webhook_deliveries" />
+            <Resource
+                name="product_audit_events"
+                {...audit_trail} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
+                // nosemgrep because the props are well defined in the import
+                options={{ label: "Audit Trail" }}
+            />
             <Resource
                 name="product_rules"
                 {...product_rules} // nosemgrep: typescript.react.best-practice.react-props-spreading.react-props-spreading
