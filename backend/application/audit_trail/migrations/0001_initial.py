@@ -51,6 +51,7 @@ class Migration(migrations.Migration):
                     "product",
                     models.ForeignKey(
                         db_constraint=False,
+                        db_index=False,
                         on_delete=django.db.models.deletion.DO_NOTHING,
                         related_name="+",
                         to="core.product",

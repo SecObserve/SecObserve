@@ -18,8 +18,8 @@ from application.audit_trail.types import Audit_Object_Type
 
 
 class Product_Audit_Event(Model):
-    # No DB constraint, the events must outlive the product
-    product = ForeignKey("core.Product", on_delete=DO_NOTHING, db_constraint=False, related_name="+")
+    # No DB constraint, the events must outlive the product. No own index, Meta.indexes starts with the product.
+    product = ForeignKey("core.Product", on_delete=DO_NOTHING, db_constraint=False, db_index=False, related_name="+")
     product_name = CharField(max_length=255)
     # Kept for deleted products, is_product_group of a product never changes
     is_product_group = BooleanField(default=False)
