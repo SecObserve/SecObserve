@@ -50,7 +50,7 @@ class TestAuditTrailSignals(BaseTestCase):
 
         self.assertEqual(
             [
-                ("Product", "audit_product", "Created", None),
+                ("Product", "audit_product", "Created", {"name": {"new": "audit_product"}}),
                 (
                     "Product",
                     "audit_product",
@@ -66,6 +66,12 @@ class TestAuditTrailSignals(BaseTestCase):
         event = Product_Audit_Event.objects.first()
         self.assertEqual(self.user, event.user)
         self.assertEqual("Audit User", event.user_full_name)
+
+    def test_long_values_are_cut(self) -> None:
+        self.product.description = "a" * 300
+        self.product.save()
+
+        self.assertEqual({"description": {"old": "", "new": "a" * 255 + " ..."}}, self._events()[-1][3])
 
     @patch("application.core.services.security_gate.emit_security_gate_event")
     @patch("application.core.services.security_gate.send_product_security_gate_notification")
@@ -90,8 +96,8 @@ class TestAuditTrailSignals(BaseTestCase):
 
         self.assertEqual(
             [
-                ("Product", "audit_product", "Created", None),
-                ("Branch", "main", "Created", None),
+                ("Product", "audit_product", "Created", {"name": {"new": "audit_product"}}),
+                ("Branch", "main", "Created", {"name": {"new": "main"}}),
                 ("Product", "audit_product", "Changed", {"repository_default_branch": {"old": None, "new": "main"}}),
                 ("Branch", "develop", "Changed", {"name": {"old": "main", "new": "develop"}}),
                 ("Branch", "develop", "Deleted", None),
@@ -113,9 +119,19 @@ class TestAuditTrailSignals(BaseTestCase):
 
         self.assertEqual(
             [
-                ("Product member", "audit_user", "Created", None),
+                (
+                    "Product member",
+                    "audit_user",
+                    "Created",
+                    {"user": {"new": "audit_user"}, "role": {"new": Roles.Reader}},
+                ),
                 ("Product member", "audit_user", "Changed", {"role": {"old": Roles.Reader, "new": Roles.Owner}}),
-                ("Product authorization group member", "audit_group", "Created", None),
+                (
+                    "Product authorization group member",
+                    "audit_group",
+                    "Created",
+                    {"authorization_group": {"new": "audit_group"}, "role": {"new": Roles.Writer}},
+                ),
                 ("Product authorization group member", "audit_group", "Deleted", None),
                 ("Product member", "audit_user", "Deleted", None),
             ],
@@ -140,19 +156,44 @@ class TestAuditTrailSignals(BaseTestCase):
         )
         webhook.consecutive_failures = 3
         webhook.save()
+        project_uuid = uuid4()
         ScanCodeIO_Project.objects.create(
-            product=self.product, project_uuid=uuid4(), project_name="scancode", webhook_token_hash="hash"
+            product=self.product, project_uuid=project_uuid, project_name="scancode", webhook_token_hash="hash"
         )
 
         self.assertEqual(
             [
-                ("Service", "service", "Created", None),
-                ("Product rule", "rule", "Created", None),
+                ("Service", "service", "Created", {"name": {"new": "service"}}),
+                ("Product rule", "rule", "Created", {"name": {"new": "rule"}, "title": {"new": "title"}}),
                 ("Product rule", "rule", "Changed", {"title": {"old": "title", "new": "new title"}}),
-                ("API configuration", "api", "Created", None),
+                (
+                    "API configuration",
+                    "api",
+                    "Created",
+                    {"name": {"new": "api"}, "parser": {"new": "audit_parser"}, "base_url": {"new": "https://a"}},
+                ),
                 ("API configuration", "api", "Changed", {"api_key": {"old": "***", "new": "***"}}),
-                ("Webhook", "webhook", "Created", None),
-                ("ScanCode.io project", "scancode", "Created", None),
+                (
+                    "Webhook",
+                    "webhook",
+                    "Created",
+                    {
+                        "name": {"new": "webhook"},
+                        "url": {"new": "***"},
+                        "secret": {"new": "***"},
+                        "event_types": {"new": "observation.created"},
+                    },
+                ),
+                (
+                    "ScanCode.io project",
+                    "scancode",
+                    "Created",
+                    {
+                        "project_uuid": {"new": str(project_uuid)},
+                        "project_name": {"new": "scancode"},
+                        "webhook_token_hash": {"new": "***"},
+                    },
+                ),
             ],
             self._events()[1:],
         )
@@ -201,7 +242,7 @@ class TestAuditTrailSignals(BaseTestCase):
         # No "removed" event for the product, the group is deleted as a whole
         self.assertEqual(
             [
-                ("audit_group", "Created", None),
+                ("audit_group", "Created", {"name": {"new": "audit_group"}, "is_product_group": {"new": True}}),
                 ("audit_group", "Changed", {"products": {"added": ["audit_product"]}}),
                 ("audit_group", "Deleted", None),
             ],

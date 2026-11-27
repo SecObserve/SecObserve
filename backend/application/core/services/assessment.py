@@ -332,13 +332,16 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
     if not user_is_allowed_assessment_approver(product, approval_user):
         raise ValidationError("User is not an allowed approver for this product")
 
+    edits = {}
     if assessment_status == Assessment_Status.ASSESSMENT_STATUS_APPROVED_WITH_EDITS:
-        if observation_log_comment:
-            observation_log.comment = observation_log_comment
-        if observation_log_vex_justification:
-            observation_log.vex_justification = observation_log_vex_justification
-        if observation_log_vex_remediations:
-            observation_log.vex_remediations = observation_log_vex_remediations
+        for field_name, value in (
+            ("comment", observation_log_comment),
+            ("vex_justification", observation_log_vex_justification),
+            ("vex_remediations", observation_log_vex_remediations),
+        ):
+            if value and value != getattr(observation_log, field_name):
+                edits[field_name] = {"old": getattr(observation_log, field_name), "new": value}
+                setattr(observation_log, field_name, value)
         observation_log.save()
 
     if assessment_status in (
@@ -391,6 +394,7 @@ def assessment_approval(  # pylint: disable=too-many-positional-arguments
         observation_log.observation.title,
         assessment_status,
         rejection_remark,
+        edits,
     )
 
     send_assessment_approval_receipt_notification(observation_log)

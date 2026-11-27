@@ -7,6 +7,7 @@ from django.db.models.signals import m2m_changed, post_delete, post_save
 from application.audit_trail.services.audit_trail import (
     create_audit_event,
     get_changes,
+    get_created_values,
 )
 from application.audit_trail.types import Audit_Action, Audit_Object_Type
 from application.core.models import Product
@@ -64,7 +65,9 @@ TRACKED_MODELS = {
         get_name=lambda instance: instance.name,
         masked_fields={"api_key", "basic_auth_password"},
     ),
-    "scancodeio.ScanCodeIO_Project": Tracked_Model(object_type=Audit_Object_Type.SCANCODEIO_PROJECT),
+    "scancodeio.ScanCodeIO_Project": Tracked_Model(
+        object_type=Audit_Object_Type.SCANCODEIO_PROJECT, masked_fields={"webhook_token_hash"}
+    ),
     "notifications.Webhook": Tracked_Model(
         object_type=Audit_Object_Type.WEBHOOK,
         get_name=lambda instance: instance.name,
@@ -102,7 +105,8 @@ def audit_post_save(  # pylint: disable=too-many-arguments
         return
 
     if created:
-        _create_audit_event(tracked_model, product, instance, Audit_Action.CREATED)
+        values = get_created_values(instance, tracked_model.ignored_fields, tracked_model.masked_fields)
+        _create_audit_event(tracked_model, product, instance, Audit_Action.CREATED, values or None)
         if isinstance(instance, Product):
             _create_product_group_event(instance.product_group_id, instance, "added")
         return
