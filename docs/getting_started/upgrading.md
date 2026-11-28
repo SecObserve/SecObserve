@@ -10,6 +10,12 @@
 
 * There will be specific upgrade instructions if necessary, e.g. when there are new configuration parameters.
 
+## Release 1.67.0
+
+**Notable changes**
+
+* The [exploit information](../integrations/exploit_information.md) from cvss-bt now only sets a CVSS vector for observations without any CVSS vector. Before, a CVSS 3 vector from cvss-bt was set for observations that had only a CVSS 4 vector from the scanner, and vice versa. Observations that already got such an additional vector lose it with their next import, while observations that are not imported again keep it.
+
 ## Release 1.65.0
 
 **Security notice**

@@ -13,6 +13,7 @@ from application.core.models import (
     Product_Member,
 )
 from application.core.queries.observation import get_current_modifying_observation_log
+from application.core.types import Observation_Log_Comment
 from application.import_observations.models import Parser
 from application.vex.models import VEX_Counter
 from application.vex.services.vex_base import (
@@ -76,8 +77,26 @@ class TestVexObservationPrefetch(TestCase):
                 observation=observation, user=user, vex_justification="component_not_present", comment="latest"
             )
             Observation_Log.objects.create(observation=observation, user=user, comment="newer non-modifying log")
+            Observation_Log.objects.create(
+                observation=observation,
+                user=user,
+                severity="High",
+                comment=Observation_Log_Comment.COMMENT_CVSS_UPDATED_BY_CVSS_BT,
+            )
+            Observation_Log.objects.create(
+                observation=observation,
+                user=user,
+                severity="Low",
+                comment=Observation_Log_Comment.COMMENT_UPDATED_BY_PARSER,
+            )
             expected[observation.pk] = latest.pk
-        expected[observations[2].pk] = None
+        # An automated log that changes the status is still the modifying log
+        expected[observations[2].pk] = Observation_Log.objects.create(
+            observation=observations[2],
+            user=user,
+            status="Resolved",
+            comment=Observation_Log_Comment.COMMENT_NOT_FOUND_IN_LATEST_SCAN,
+        ).pk
         hidden = Product.objects.create(name="hidden")
         Observation.objects.create(
             product=hidden,

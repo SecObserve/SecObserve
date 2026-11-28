@@ -50,7 +50,10 @@ from application.epss.queries.epss_score import get_epss_scores_by_cves
 from application.epss.queries.exploit_information import (
     get_exploit_information_by_cves,
 )
-from application.epss.services.cvss_bt import apply_exploit_information
+from application.epss.services.cvss_bt import (
+    apply_exploit_information,
+    write_exploit_information_log,
+)
 from application.epss.services.epss import apply_epss
 from application.import_observations.exceptions import ParserError
 from application.import_observations.models import (
@@ -510,24 +513,26 @@ def _process_current_observation(
     observation_before.update_impact_score = imported_observation.update_impact_score
 
     apply_epss(observation_before, epss_scores)
+    parser_severity = observation_before.current_severity
+    # Applied before the observation log is written, because the parser can remove a CVSS vector set by exploit
+    # information during the previous import, which sets it again. Severities ending up as before are no change.
     apply_exploit_information(observation_before, settings, exploit_informations)
     observation_before.import_last_seen = timezone.now()
 
-    # Write observation log if status or severity has been changed, it saves the observation as well
-    if (
-        previous_status == observation_before.current_status
-        and previous_severity == observation_before.current_severity
-    ):
-        save_changed_fields(observation_before, values_before)
-    else:
-        status = observation_before.current_status if previous_status != observation_before.current_status else ""
-        severity = (
-            observation_before.current_severity if previous_severity != observation_before.current_severity else ""
-        )
+    severity_changed = previous_severity != observation_before.current_severity
+    parser_log_severity = parser_severity if severity_changed and parser_severity != previous_severity else ""
+    exploit_information_log = severity_changed and observation_before.current_severity != parser_severity
+    status = observation_before.current_status if previous_status != observation_before.current_status else ""
 
+    # Write observation logs if status or severity has been changed, they save the observation as well
+    if not status and not parser_log_severity and not exploit_information_log:
+        save_changed_fields(observation_before, values_before)
+        return
+
+    if status or parser_log_severity:
         create_observation_log(
             observation=observation_before,
-            severity=severity,
+            severity=parser_log_severity,
             status=status,
             priority=None,
             priority_changed=False,
@@ -538,6 +543,10 @@ def _process_current_observation(
             risk_acceptance_expiry_date=observation_before.risk_acceptance_expiry_date,
             values_before=values_before,
         )
+        values_before = get_field_values(observation_before)
+
+    if exploit_information_log:
+        write_exploit_information_log(observation_before, values_before)
 
 
 def _update_origins(imported_observation: Observation, observation_before: Observation) -> None:
@@ -579,6 +588,7 @@ def _process_new_observation(
 
     # Observation has not been imported before, so it is a new one
     apply_epss(imported_observation, epss_scores)
+    parser_severity = imported_observation.current_severity
     apply_exploit_information(imported_observation, settings, exploit_informations)
     imported_observation.save()
 
@@ -588,7 +598,7 @@ def _process_new_observation(
 
     create_observation_log(
         observation=imported_observation,
-        severity=imported_observation.current_severity,
+        severity=parser_severity,
         status=imported_observation.current_status,
         priority=None,
         priority_changed=False,
@@ -598,6 +608,10 @@ def _process_new_observation(
         assessment_status=Assessment_Status.ASSESSMENT_STATUS_AUTO_APPROVED,
         risk_acceptance_expiry_date=imported_observation.risk_acceptance_expiry_date,
     )
+
+    # A severity changed by a CVSS vector from exploit information is shown in a separate log
+    if imported_observation.current_severity != parser_severity:
+        write_exploit_information_log(imported_observation, get_field_values(imported_observation))
 
 
 def _get_references_and_evidences(
